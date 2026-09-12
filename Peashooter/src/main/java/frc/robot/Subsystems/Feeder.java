@@ -20,28 +20,26 @@ public class Feeder extends SubsystemBase{
      * 
      */
     
-    SparkMax spindexterMotor = new SparkMax(1, MotorType.kBrushless);
+    SparkMax spindexterMotor = new SparkMax(0, MotorType.kBrushless);
     SparkMaxConfig spindexterConfig = new SparkMaxConfig();
 
-    SparkFlex towerMotor = new SparkFlex(0, MotorType.kBrushless);
+    SparkFlex towerMotor = new SparkFlex(1, MotorType.kBrushless);
     SparkFlexConfig towerConfig = new SparkFlexConfig();
     
     public Feeder(){
         spindexterConfig.idleMode(SparkMaxConfig.IdleMode.kBrake);
         spindexterMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        towerConfig.idleMode(IdleMode.kBrake);  
+        towerConfig.idleMode(IdleMode.kBrake).follow(spindexterMotor);  
         towerMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         
     }
 
     private void runFeeder(boolean forward){
         spindexterMotor.set(forward ? -1 : 1);
-        towerMotor.set(forward ? -1 : 1);
     }
 
     private void stopFeeder() {
         spindexterMotor.stopMotor();
-        towerMotor.stopMotor();
     }
 
     public Command load(boolean forward){
