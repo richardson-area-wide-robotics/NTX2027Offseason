@@ -1,4 +1,4 @@
-package frc.robot;
+package frc.robot.Subsystems;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,27 +17,30 @@ public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
 
-     Drive() {
+    public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
             swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(40,
-             new Pose2d(new Translation2d(2,2), new Rotation2d()));
+                new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public Command drive(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation) {
-    return this.run(() -> {
-        swerveDrive.drive(new Translation2d(translationX.getAsDouble(), translationY.getAsDouble()),
-            rotation.getAsDouble(),
-            fieldR,
-            false);
-    });
-
-    
-}
+        return this.run(() -> {
+            swerveDrive.drive(
+                new Translation2d(
+                    translationX.getAsDouble(),
+                    translationY.getAsDouble()
+                ),
+                rotation.getAsDouble(),
+                fieldR,
+                false
+            );
+        });
+    }
     public Command toggleFieldRelative() {
-    return this.runOnce(() -> fieldR = !fieldR);
-}
+        return this.runOnce(() -> fieldR = !fieldR);
+    }
 }
