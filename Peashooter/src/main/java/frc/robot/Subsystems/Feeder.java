@@ -27,7 +27,7 @@ public class Feeder extends SubsystemBase{
     
     public Feeder(){
         spindexterConfig.idleMode(SparkMaxConfig.IdleMode.kBrake);
-        spindexterMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+        spindexterMotor.configure(spindexterConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         towerConfig.idleMode(SparkFlexConfig.IdleMode.kBrake).follow(spindexterMotor);  
         towerMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
