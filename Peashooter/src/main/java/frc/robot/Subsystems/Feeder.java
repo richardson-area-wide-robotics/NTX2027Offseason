@@ -20,10 +20,10 @@ public class Feeder extends SubsystemBase{
      * 
      */
     
-    SparkMax spindexterMotor = new SparkMax(10, MotorType.kBrushless);
+    SparkMax spindexterMotor = new SparkMax(0, MotorType.kBrushless);
     SparkMaxConfig spindexterConfig = new SparkMaxConfig();
 
-    SparkFlex towerMotor = new SparkFlex(11, MotorType.kBrushless);
+    SparkFlex towerMotor = new SparkFlex(1, MotorType.kBrushless);
     SparkFlexConfig towerConfig = new SparkFlexConfig();
     
     public Feeder(){

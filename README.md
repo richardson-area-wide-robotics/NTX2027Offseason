@@ -1,13 +1,11 @@
 # NTX 2027 Offseason
 
-Offseason robot code for FRC Team 7525 (Richardson Area Wide Robotics). This repo holds two WPILib Java projects. Each one is a YAGSL swerve drive that runs in simulation.
+Offseason robot code for FRC Team 1745 (Richardson Area Wide Robotics). This repo holds two WPILib Java projects. Each one is a YAGSL swerve drive that runs in simulation.
 
 | Project | Description |
 | --- | --- |
-| [`Black team/`](Black%20team/) | Swerve drive project for the Black team. Also includes the CTRE Phoenix 6 vendordep. |
+| [`Black team/`](Black%20team/) | Swerve drive project for the Black team.|
 | [`Peashooter/`](Peashooter/) | Swerve drive project for Peashooter. |
-
-Right now the robot code in both projects is the same. The assignment for each one is in its own readme ([Black team](Black%20team/readme.md), [Peashooter](Peashooter/README.md)).
 
 ## Requirements
 
@@ -48,24 +46,6 @@ The drive command uses the controller on port 0.
 └── vendordeps/               # third-party library definitions
 ```
 
-## Swerve configuration
-
-The files in `src/main/deploy/swerve/` define a four-module swerve with these parts:
-
-- **Drive motors:** NEOs on SPARK MAX, 5.50:1 reduction, 3 in wheels
-- **Steer motors:** NEO 550s on SPARK MAX, 46.42:1 reduction, absolute encoders plugged into the SPARK MAX
-- **Gyro:** navX over SPI
-- **Module spacing:** 24 in × 24 in (each module is ±12 in from center)
-
-| Module | Drive CAN ID | Steer CAN ID |
-| --- | --- | --- |
-| Front left | 32 | 31 |
-| Front right | 12 | 11 |
-| Back left | 42 | 4 |
-| Back right | 22 | 21 |
-
-The robot starts at pose (2 m, 2 m) facing 0°.
-
 ## Vendor libraries
 
 - [YAGSL](https://github.com/BroncBotz3481/YAGSL) for the swerve drive
@@ -74,7 +54,3 @@ The robot starts at pose (2 m, 2 m) facing 0°.
 - [PathPlannerLib](https://pathplanner.dev/) for autonomous paths
 - ReduxLib, ThriftyLib, WPILib New Commands
 - Phoenix 6 (Black team only)
-
-## CI
-
-Each project has a GitHub Classroom workflow (`.github/workflows/classroom.yml`) that runs `gradle build`. GitHub only runs workflows from the repo root's `.github/` folder, so these don't run in this repo. They're left over from the original Classroom assignments.
