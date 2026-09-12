@@ -48,8 +48,10 @@ public class Intake extends SubsystemBase {
   private final Timer timer = new Timer();
 
   // establish motors
-  private final SparkFlex intakeMoveMotor = new SparkFlex(14, null);
+  private final SparkFlex intakeMoveMotor = new SparkFlex(12, null);
   private final SparkFlex intakeSpinMotor = new SparkFlex(13, null);
+  private final SparkFlex intakeSpinMotor2 = new SparkFlex(13+5, null);
+
 
   public Command moveIntakeCommand() {
     return new FunctionalCommand(
@@ -81,10 +83,10 @@ public class Intake extends SubsystemBase {
   }
 
   public Command spinIntakeCommand() {
-    return this.runEnd(() -> intakeSpinMotor.set(INTAKE_SPIN_SPEED), () -> intakeSpinMotor.set(0));
+    return this.runEnd(() -> {intakeSpinMotor.set(INTAKE_SPIN_SPEED); intakeSpinMotor2.set(INTAKE_SPIN_SPEED); }, () -> {intakeSpinMotor.set(0); intakeSpinMotor2.set(0);});
   }
 
   public Command reverseIntakeCommand() {
-    return this.runEnd(() -> intakeSpinMotor.set(-INTAKE_SPIN_SPEED), () -> intakeSpinMotor.set(0));
+    return this.runEnd(() -> {intakeSpinMotor.set(-INTAKE_SPIN_SPEED); intakeSpinMotor2.set(-INTAKE_SPIN_SPEED); }, () -> {intakeSpinMotor.set(0); intakeSpinMotor2.set(0);});
   }
 }
