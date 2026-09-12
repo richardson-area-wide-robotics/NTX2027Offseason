@@ -47,20 +47,21 @@ public class Intake extends SubsystemBase {
   // timer
   private final Timer timer = new Timer();
 
-  // establish motors
-  private final SparkFlex intakeMoveMotor = new SparkFlex(12, null);
-  private final SparkFlex intakeSpinMotor = new SparkFlex(13, null);
-  private final SparkFlex intakeSpinMotor2 = new SparkFlex(13+5, null);
+  // Up down motor
+  private final SparkFlex intakeMoveMotor = new SparkFlex(12, MotorType.kBrushless);
+
+  //Wheel Motors
+  private final SparkFlex intakeSpinMotorOne = new SparkFlex(13, MotorType.kBrushless);
+  private final SparkFlex intakeSpinMotorTwo = new SparkFlex(15, MotorType.kBrushless);
 
 
   public Command moveIntakeCommand() {
     return new FunctionalCommand(
-        // start timer
         () -> {
           timer.reset();
           timer.start();
         },
-        // run evil motor
+
         () -> {
           if (currentPosition == VerticalMotion.UP) {
             intakeMoveMotor.set(INTAKE_MOVE_SPEED); // Move down
@@ -68,25 +69,43 @@ public class Intake extends SubsystemBase {
             intakeMoveMotor.set(-INTAKE_MOVE_SPEED); // Move up
           }
         },
-        // stop
+
         (interrupted) -> {
           intakeMoveMotor.set(0);
           timer.stop();
           if (!interrupted) {
-            // swap the position state
+
             currentPosition =
                 (currentPosition == VerticalMotion.UP) ? VerticalMotion.DOWN : VerticalMotion.UP;
           }
         },
-        // finish
+
         () -> timer.hasElapsed(INTAKE_MOVE_TIME_SECONDS), this);
   }
 
+  // Intake Balls Command
   public Command spinIntakeCommand() {
-    return this.runEnd(() -> {intakeSpinMotor.set(INTAKE_SPIN_SPEED); intakeSpinMotor2.set(INTAKE_SPIN_SPEED); }, () -> {intakeSpinMotor.set(0); intakeSpinMotor2.set(0);});
+    return this.runEnd(
+        () -> {
+          intakeSpinMotorOne.set(INTAKE_SPIN_SPEED);
+          intakeSpinMotorTwo.set(INTAKE_SPIN_SPEED);
+        },
+        () -> {
+          intakeSpinMotorOne.set(0);
+          intakeSpinMotorTwo.set(0);
+        });
   }
 
+  // Outake Balls Command
   public Command reverseIntakeCommand() {
-    return this.runEnd(() -> {intakeSpinMotor.set(-INTAKE_SPIN_SPEED); intakeSpinMotor2.set(-INTAKE_SPIN_SPEED); }, () -> {intakeSpinMotor.set(0); intakeSpinMotor2.set(0);});
+    return this.runEnd(
+        () -> {
+          intakeSpinMotorOne.set(-INTAKE_SPIN_SPEED);
+          intakeSpinMotorTwo.set(-INTAKE_SPIN_SPEED);
+        },
+        () -> {
+          intakeSpinMotorOne.set(0);
+          intakeSpinMotorTwo.set(0);
+        });
   }
 }
