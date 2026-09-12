@@ -22,61 +22,63 @@ public class Intake extends SubsystemBase {
   // vars for the intake movement
   private static final double INTAKE_MOVE_SPEED = 1.0;
   private static final double INTAKE_MOVE_TIME_SECONDS = 1.0;
-  public enum VerticalMotion {
-    UP(true),
-    DOWN(true),
-    STATIONARY(false);
-
-    private final boolean isMoving;
-
-    VerticalMotion(boolean isMoving) {
-      this.isMoving = isMoving;
+  public static boolean INTAKE_IS_UP = true;
+   /*  public enum VerticalMotion {
+      UP(true),
+      DOWN(true),
+      STATIONARY(false);
+  
+      private final boolean isMoving;
+  
+      VerticalMotion(boolean isMoving) {
+        this.isMoving = isMoving;
+      }
+  
+      public boolean isMoving() {
+        return isMoving;
+      }
     }
-
-    public boolean isMoving() {
-      return isMoving;
-    }
-  }
-
-  // track position
-  private VerticalMotion currentPosition = VerticalMotion.UP;
-
-  // vars for spin thing
-  private static final double INTAKE_SPIN_SPEED = 1.0;
-
-  // timer
-  private final Timer timer = new Timer();
-
-  // Up down motor
-  private final SparkFlex intakeMoveMotor = new SparkFlex(12, MotorType.kBrushless);
-
-  //Wheel Motors
-  private final SparkFlex intakeSpinMotorOne = new SparkFlex(13, MotorType.kBrushless);
-  private final SparkFlex intakeSpinMotorTwo = new SparkFlex(15, MotorType.kBrushless);
-
-
-  public Command moveIntakeCommand() {
-    return new FunctionalCommand(
-        () -> {
-          timer.reset();
-          timer.start();
-        },
-
-        () -> {
-          if (currentPosition == VerticalMotion.UP) {
-            intakeMoveMotor.set(INTAKE_MOVE_SPEED); // Move down
-          } else if (currentPosition == VerticalMotion.DOWN) {
-            intakeMoveMotor.set(-INTAKE_MOVE_SPEED); // Move up
-          }
-        },
-
-        (interrupted) -> {
-          intakeMoveMotor.set(0);
-          timer.stop();
-          if (!interrupted) {
-
-            currentPosition =
-                (currentPosition == VerticalMotion.UP) ? VerticalMotion.DOWN : VerticalMotion.UP;
+  */
+  
+    // track position
+    //private VerticalMotion currentPosition = VerticalMotion.UP;
+  
+    // vars for spin thing
+    private static final double INTAKE_SPIN_SPEED = 1.0;
+  
+    // timer
+    private final Timer timer = new Timer();
+  
+    // Up down motor
+    private final SparkFlex intakeMoveMotor = new SparkFlex(12, MotorType.kBrushless);
+  
+    //Wheel Motors
+    private final SparkFlex intakeSpinMotorOne = new SparkFlex(13, MotorType.kBrushless);
+    private final SparkFlex intakeSpinMotorTwo = new SparkFlex(15, MotorType.kBrushless);
+  
+  
+    public Command moveIntakeCommand() {
+      return new FunctionalCommand(
+        // change timer to pid and move2
+          () -> {
+            timer.reset();
+            timer.start();
+          },
+  
+          () -> {
+            if (INTAKE_IS_UP == true) {
+              intakeMoveMotor.set(INTAKE_MOVE_SPEED); // Move down
+            } else if (INTAKE_IS_UP == false) {
+              intakeMoveMotor.set(-INTAKE_MOVE_SPEED); // Move up
+            }
+          },
+  
+          (interrupted) -> {
+            intakeMoveMotor.set(0);
+            timer.stop();
+            if (!interrupted) {
+  
+            INTAKE_IS_UP = !INTAKE_IS_UP;
           }
         },
 
@@ -109,3 +111,4 @@ public class Intake extends SubsystemBase {
         });
   }
 }
+
