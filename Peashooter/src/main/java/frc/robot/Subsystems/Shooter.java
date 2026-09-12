@@ -21,6 +21,7 @@ SparkClosedLoopController leaderPID = leader.getClosedLoopController();
     public Shooter() {
         SparkFlexConfig leaderConfig = new SparkFlexConfig();
         leaderConfig.closedLoop.pid(0.0004, 0, 0, null);
+        leaderConfig.idleMode(SparkFlexConfig.IdleMode.kBrake);
 
         SparkFlexConfig followerConfig = new SparkFlexConfig();
         followerConfig.follow(leader);

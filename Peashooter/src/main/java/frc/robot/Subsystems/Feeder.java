@@ -5,7 +5,6 @@ import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
@@ -29,9 +28,8 @@ public class Feeder extends SubsystemBase{
     public Feeder(){
         spindexterConfig.idleMode(SparkMaxConfig.IdleMode.kBrake);
         spindexterMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        towerConfig.idleMode(IdleMode.kBrake).follow(spindexterMotor);  
+        towerConfig.idleMode(SparkFlexConfig.IdleMode.kBrake).follow(spindexterMotor);  
         towerMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        
     }
 
     private void runFeeder(boolean forward){
