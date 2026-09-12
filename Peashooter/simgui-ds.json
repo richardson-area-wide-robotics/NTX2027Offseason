@@ -9,26 +9,34 @@
       "axisConfig": [
         {
           "decKey": 65,
-          "incKey": 68
+          "incKey": 68,
+          "keyRate": 1.0
         },
         {
           "decKey": 87,
-          "incKey": 83
+          "incKey": 83,
+          "keyRate": 1.0
         },
         {
+          "incKey": 82
+        },
+        {
+          "incKey": 84
+        },
+        {
+          "decKey": 69,
           "incKey": 81
-        },
-        {
-          "incKey": 69
         }
       ],
-      "axisCount": 4,
-      "buttonCount": 4,
+      "axisCount": 5,
+      "buttonCount": 6,
       "buttonKeys": [
         90,
         88,
         67,
-        86
+        86,
+        340,
+        32
       ],
       "povConfig": [
         {
