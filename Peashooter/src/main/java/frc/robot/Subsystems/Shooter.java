@@ -17,10 +17,9 @@ SparkFlex leader = new SparkFlex(10, MotorType.kBrushless);
 SparkFlex follower = new SparkFlex(11, MotorType.kBrushless);
 SparkClosedLoopController leaderPID = leader.getClosedLoopController();
 
-
     public Shooter() {
         SparkFlexConfig leaderConfig = new SparkFlexConfig();
-        leaderConfig.closedLoop.pid(0.0004, 0, 0, null);
+        leaderConfig.closedLoop.pid(0.0004, 0, 0);
         leaderConfig.idleMode(SparkFlexConfig.IdleMode.kBrake);
 
         SparkFlexConfig followerConfig = new SparkFlexConfig();

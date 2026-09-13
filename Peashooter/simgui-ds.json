@@ -35,8 +35,8 @@
         88,
         67,
         86,
-        340,
-        32
+        75,
+        76
       ],
       "povConfig": [
         {
@@ -55,12 +55,10 @@
     {
       "axisConfig": [
         {
-          "decKey": 74,
-          "incKey": 76
+          "decKey": 74
         },
         {
-          "decKey": 73,
-          "incKey": 75
+          "decKey": 73
         }
       ],
       "axisCount": 2,
