@@ -1,0 +1,15 @@
+# Code owners are requested for review automatically on every pull request.
+#
+# These are listed as individuals because the "mentors" team does not have
+# access to this repo -- every collaborator was added directly. If the team is
+# ever given write access, replace the four lines below with:
+#
+#     *  @richardson-area-wide-robotics/mentors
+#
+# and it stays correct as mentors come and go.
+
+*  @Stuart1745 @alexbhandari @nbgray @wsferenc
+
+# The build gate and the rules that protect main. Changes here should always
+# get a mentor's eyes, even if the rest of the repo loosens up later.
+/.github/  @Stuart1745 @alexbhandari @nbgray @wsferenc
