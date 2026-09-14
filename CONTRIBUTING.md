@@ -62,10 +62,15 @@ means you believe it is safe to put on the robot.
 | Rule | Why |
 | --- | --- |
 | No direct pushes | Everything gets looked at by a second person |
-| Pull request must be approved | Someone besides the author agrees it's ready |
+| Pull request must be approved by one person | Someone besides the author agrees it's ready |
 | `CI` must pass | Broken code never lands on the branch we deploy from |
 | Approvals reset on a new push | An approval covers the code that was reviewed |
 | No force pushes to `main` | History on `main` stays intact |
+
+Any collaborator's approval counts — you do not need a mentor, and reviewing
+each other's code is most of the point. Mentors can merge their own pull request
+without waiting for an approval, for the Thursday-night-before-competition case.
+Nobody, mentors included, can merge something that fails `CI`.
 
 If you are stuck on something and the rules are in the way, ask a mentor. They
 are not a puzzle to route around -- the branch that goes on a competition

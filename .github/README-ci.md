@@ -32,21 +32,39 @@ no edit.
 
 ## The rules on `main`
 
-[`rulesets/protect-main.json`](rulesets/protect-main.json) is the ruleset applied
-to `main`, kept here so changes to it get reviewed like code. To re-apply it
-after an edit:
+Two rulesets are applied to `main`, and the JSON for both lives here so changes
+to them get reviewed like code.
+
+| File | ID | What it does | Who can bypass |
+| --- | --- | --- | --- |
+| [`rulesets/protect-main-build.json`](rulesets/protect-main-build.json) | 23315767 | `CI` must pass; no force pushes; `main` can't be deleted | **Nobody** |
+| [`rulesets/protect-main-review.json`](rulesets/protect-main-review.json) | 23315816 | Pull request required, 1 approval, approvals dismissed on a new push | The four mentors |
+
+They are split because a ruleset's bypass list is all-or-nothing — a bypass
+actor skips every rule in that ruleset. Splitting them is what lets a mentor
+merge their own pull request without waiting for an approval while the build
+gate still applies to them. Put the two rule sets in one ruleset and a mentor
+bypass would skip `CI` too.
+
+Note what the split does *not* allow: a mentor still cannot push straight to
+`main`, because a freshly pushed commit has no passing `CI` run and the build
+ruleset has no bypass. Mentors can merge unreviewed; nobody can merge unbuilt.
+
+To re-apply after editing a file:
 
 ```bash
-gh api --method POST repos/richardson-area-wide-robotics/NTX2027Offseason/rulesets \
-  --input .github/rulesets/protect-main.json
+# update in place -- keeps the ID, which is what you almost always want
+gh api --method PUT repos/richardson-area-wide-robotics/NTX2027Offseason/rulesets/23315767 \
+  --input .github/rulesets/protect-main-build.json
 ```
 
-To update an existing one, `PUT` to `.../rulesets/{id}` instead. `gh api
-repos/richardson-area-wide-robotics/NTX2027Offseason/rulesets` lists the IDs.
+`POST` to `.../rulesets` (no ID) creates a new one instead. `gh api
+repos/richardson-area-wide-robotics/NTX2027Offseason/rulesets` lists what
+exists, and `gh api repos/.../rules/branches/main` shows what is actually in
+force on the branch.
 
-It is a *ruleset*, not classic branch protection, because classic protection
-lets repository admins push straight through by default. A ruleset applies to
-everyone unless a bypass actor is named, and right now none is.
+These are *rulesets*, not classic branch protection, because classic protection
+lets repository admins push straight through by default.
 
 ### The gap worth knowing about
 
@@ -57,8 +75,9 @@ accidental push to `main`; it does not stop someone who decides to go around it.
 Closing that properly is one of:
 
 - drop the admins who don't need admin down to write, or
-- move the ruleset to the organization level, where only org owners can change
-  it (Settings → Rules at the org, or `POST /orgs/{org}/rulesets`).
+- move both rulesets to the organization level, where only org owners can change
+  them (Settings → Rules at the org, or `POST /orgs/{org}/rulesets`). The same
+  JSON works, with `conditions` widened to name the repositories it covers.
 
 ## Where this is going
 

@@ -1,0 +1,31 @@
+{
+  "name": "Protect main - review",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["~DEFAULT_BRANCH"],
+      "exclude": []
+    }
+  },
+  "bypass_actors": [
+    { "actor_id": 666947, "actor_type": "User", "bypass_mode": "always" },
+    { "actor_id": 3032338, "actor_type": "User", "bypass_mode": "always" },
+    { "actor_id": 6568456, "actor_type": "User", "bypass_mode": "always" },
+    { "actor_id": 152928373, "actor_type": "User", "bypass_mode": "always" }
+  ],
+  "rules": [
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 1,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_review_thread_resolution": false,
+        "automatic_copilot_code_review_enabled": false,
+        "allowed_merge_methods": ["squash", "merge", "rebase"]
+      }
+    }
+  ]
+}
