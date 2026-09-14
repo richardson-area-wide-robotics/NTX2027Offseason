@@ -18,6 +18,30 @@ names change the moment a project is added or renamed, and a required check that
 no longer exists blocks every pull request forever while looking like it is
 just "pending". The `CI` name never changes.
 
+## When a build fails and the code is fine
+
+The first push to `main` failed on both projects with
+`java.net.SocketTimeoutException: Read timed out`, thrown from
+`org.gradle.wrapper.Install`. That is not the robot code — that is the Gradle
+*wrapper* failing to download Gradle itself from `services.gradle.org`. A plain
+re-run went green with no change.
+
+Two things made that likely, and both are fixed now:
+
+- The distribution was re-downloaded on every job. `setup-java`'s gradle cache
+  covers `~/.gradle/caches` and `~/.gradle/wrapper`, but WPILib's wrapper sets
+  `distributionPath=permwrapper/dists`, so ~100 MB came down fresh every time —
+  twice per run, once per project. The "Cache the Gradle distribution" step
+  covers that path now.
+- `networkTimeout` in `gradle-wrapper.properties` was 10 s, which is tight for a
+  100 MB download. It is 60 s now, in both projects. This also helps students
+  building for the first time on school wifi.
+
+If a build still fails somewhere in `org.gradle.wrapper` or on a `Could not
+resolve` against `frcmaven.wpi.edu`, it is upstream and a re-run is the right
+response. A failure in `> Task :compileJava` is real and belongs to whoever
+pushed.
+
 ## Adding a project
 
 Add it to the matrix in `build.yml`:

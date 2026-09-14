@@ -46,6 +46,19 @@ jobs:
           java-version: "17"
           cache: gradle
 
+      - name: Cache the Gradle distribution
+        # setup-java's gradle cache covers ~/.gradle/caches and ~/.gradle/wrapper.
+        # WPILib's wrapper puts the distribution in ~/.gradle/permwrapper/dists
+        # instead (distributionPath in gradle-wrapper.properties), so without
+        # this the wrapper re-downloads ~100 MB of Gradle on every single job.
+        # That is slow, and it is the flaky part: a timeout there fails the
+        # build before a line of robot code is compiled.
+        uses: actions/cache@v6
+        with:
+          path: ~/.gradle/permwrapper
+          key: gradle-dist-${{ runner.os }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-dist-${{ runner.os }}-
+
       - name: Make gradlew executable
         # Windows checkouts drop the executable bit, so a student committing
         # from VS Code on Windows can silently break this for everyone.
