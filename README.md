@@ -75,6 +75,12 @@ The robot starts at pose (2 m, 2 m) facing 0°.
 - ReduxLib, ThriftyLib, WPILib New Commands
 - Phoenix 6 (Black team only)
 
+## Contributing
+
+`main` is protected. Branch, open a pull request, get a green build and an approval, then merge — [CONTRIBUTING.md](CONTRIBUTING.md) walks through it.
+
 ## CI
 
-Each project has a GitHub Classroom workflow (`.github/workflows/classroom.yml`) that runs `gradle build`. GitHub only runs workflows from the repo root's `.github/` folder, so these don't run in this repo. They're left over from the original Classroom assignments.
+[`.github/workflows/build.yml`](.github/workflows/build.yml) runs `./gradlew build` on both projects for every pull request into `main`, and again on `main` after a merge. The `CI` check has to be green before a pull request can merge. Mentor notes are in [`.github/README-ci.md`](.github/README-ci.md).
+
+Each project also still carries a GitHub Classroom workflow at `<project>/.github/workflows/classroom.yml`. GitHub only runs workflows from the repo root's `.github/` folder, so those don't run — they're leftovers from the original Classroom assignments.
