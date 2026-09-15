@@ -20,10 +20,10 @@ SparkClosedLoopController leaderPID = leader.getClosedLoopController();
     public Shooter() {
         SparkFlexConfig leaderConfig = new SparkFlexConfig();
         leaderConfig.closedLoop.pid(0.0004, 0, 0);
-        leaderConfig.idleMode(SparkFlexConfig.IdleMode.kBrake);
+        leaderConfig.idleMode(SparkFlexConfig.IdleMode.kCoast);
 
         SparkFlexConfig followerConfig = new SparkFlexConfig();
-        followerConfig.follow(leader);
+        followerConfig.follow(leader, true).idleMode(SparkFlexConfig.IdleMode.kCoast);
 
         leader.configure(leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         follower.configure(followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

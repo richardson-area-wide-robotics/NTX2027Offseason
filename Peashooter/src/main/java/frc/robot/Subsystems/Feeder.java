@@ -28,13 +28,13 @@ public class Feeder extends SubsystemBase{
     public Feeder(){
         spindexterConfig.idleMode(SparkMaxConfig.IdleMode.kBrake);
         spindexterMotor.configure(spindexterConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-        towerConfig.idleMode(SparkFlexConfig.IdleMode.kBrake).follow(spindexterMotor);  
+        towerConfig.idleMode(SparkFlexConfig.IdleMode.kBrake);  
         towerMotor.configure(towerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
     }
 
     private void runFeeder(boolean forward){
-        spindexterMotor.set(forward ? -1 : 1);
-        towerMotor.set(forward ? -1 : 1);
+        spindexterMotor.set(forward ? -0.5 : 0.5);
+        towerMotor.set(forward ? -0.5 : 0.5);
     }
 
     private void stopFeeder() {

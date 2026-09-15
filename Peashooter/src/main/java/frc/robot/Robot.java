@@ -27,12 +27,13 @@ public class Robot extends TimedRobot {
 
     controller.rightBumper().whileTrue(feeder.load(true)); //load
     controller.leftBumper().whileTrue(feeder.load(false)); //unload
-    controller.a().onTrue(drive.toggleFieldRelative());
+    controller.y().onTrue(drive.toggleFieldRelative());
     controller.rightTrigger().whileTrue(intake.spinIntakeCommand()); //balls in
     controller.leftTrigger().whileTrue(intake.reverseIntakeCommand()); //balls out
     controller.povUp().onTrue(intake.moveIntakeCommand());//switch intake command
     controller.povDown().onTrue(intake.moveIntakeCommand()); //switch i
     controller.b().whileTrue(shooter.shootA());
+    controller.a().whileTrue(shooter.shootB());
 
 }
 

@@ -75,7 +75,7 @@ public class Intake extends SubsystemBase {
     return this.runEnd(
         () -> {
           intakeSpinMotorOne.set(INTAKE_SPIN_SPEED);
-          intakeSpinMotorTwo.set(INTAKE_SPIN_SPEED);
+          intakeSpinMotorTwo.set(-INTAKE_SPIN_SPEED);
         },
         () -> {
           intakeSpinMotorOne.set(0);
@@ -88,7 +88,7 @@ public class Intake extends SubsystemBase {
     return this.runEnd(
         () -> {
           intakeSpinMotorOne.set(-INTAKE_SPIN_SPEED);
-          intakeSpinMotorTwo.set(-INTAKE_SPIN_SPEED);
+          intakeSpinMotorTwo.set(INTAKE_SPIN_SPEED);
         },
         () -> {
           intakeSpinMotorOne.set(0);
