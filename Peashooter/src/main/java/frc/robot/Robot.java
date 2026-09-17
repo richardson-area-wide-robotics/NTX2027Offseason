@@ -19,7 +19,7 @@ public class Robot extends TimedRobot {
   public Robot() {
 
     drive.setDefaultCommand(drive.drive(
-        () -> controller.getLeftX(),
+        () -> -controller.getLeftX(),
         () -> controller.getLeftY(),
         () -> controller.getRightX()
       )
@@ -27,7 +27,7 @@ public class Robot extends TimedRobot {
 
     controller.rightBumper().whileTrue(feeder.load(true)); //load
     controller.leftBumper().whileTrue(feeder.load(false)); //unload
-    controller.y().onTrue(drive.toggleFieldRelative());
+    controller.y().onTrue(drive.resetPosition());
     controller.rightTrigger().whileTrue(intake.spinIntakeCommand()); //balls in
     controller.leftTrigger().whileTrue(intake.reverseIntakeCommand()); //balls out
     controller.povUp().onTrue(intake.moveIntakeCommand());//switch intake command

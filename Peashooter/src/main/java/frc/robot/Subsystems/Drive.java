@@ -20,7 +20,7 @@ public class Drive extends SubsystemBase {
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(40,
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(400,
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -42,5 +42,8 @@ public class Drive extends SubsystemBase {
     }
     public Command toggleFieldRelative() {
         return this.runOnce(() -> fieldR = !fieldR);
+    }
+    public Command resetPosition() {
+        return this.runOnce(() -> swerveDrive.zeroGyro());
     }
 }

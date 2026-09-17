@@ -30,7 +30,7 @@ public class Intake extends SubsystemBase {
   private static final double kI = 0.0;
   private static final double kD = 0.0;
  
-  private static final double INTAKE_SPIN_SPEED = 1.0;
+  private static final double INTAKE_SPIN_SPEED = .5;
  
   // Up down motor
   private final SparkFlex intakeMoveMotor = new SparkFlex(12, MotorType.kBrushless);
