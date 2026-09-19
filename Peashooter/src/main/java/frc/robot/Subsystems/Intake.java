@@ -29,7 +29,7 @@ public class Intake extends SubsystemBase {
   // Up down motor
   private final SparkFlex intakeMoveMotor = new SparkFlex(12, MotorType.kBrushless);
   private final SparkClosedLoopController moveController = intakeMoveMotor.getClosedLoopController();
-  private final RelativeEncoder moveEncoder = intakeMoveMotor.getEncoder();
+  private final RelativeEncoder moveEncoder = intakeMoveMotor.getEncoder(); 
 
   // Wheel Motors
   private final SparkFlex intakeSpinMotorOne = new SparkFlex(13, MotorType.kBrushless);

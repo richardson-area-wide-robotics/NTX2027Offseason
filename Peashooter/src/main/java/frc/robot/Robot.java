@@ -1,5 +1,9 @@
 package frc.robot;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -16,7 +20,19 @@ public class Robot extends TimedRobot {
   Shooter shooter = new Shooter();
   CommandXboxController controller = new CommandXboxController(0);
 
+  private Command autonomousCommand; 
   public Robot() {
+
+  
+    NamedCommands.registerCommand("Shoot A", shooter.shootA());
+    NamedCommands.registerCommand("Shoot B", shooter.shootB());
+    NamedCommands.registerCommand("Intake Balls", intake.spinIntakeCommand());
+    NamedCommands.registerCommand("Reverse Intake", intake.reverseIntakeCommand());
+    NamedCommands.registerCommand("Move Intake", intake.moveIntakeCommand());
+    NamedCommands.registerCommand("Load Feeder", feeder.load(true));
+    NamedCommands.registerCommand("Unload Feeder", feeder.load(false));
+
+    drive.setupPathPlanner();
 
     drive.setDefaultCommand(drive.drive(
         () -> -controller.getLeftX(),
@@ -25,17 +41,16 @@ public class Robot extends TimedRobot {
       )
     );
 
-    controller.rightBumper().whileTrue(feeder.load(true)); //load
-    controller.leftBumper().whileTrue(feeder.load(false)); //unload
+    controller.rightBumper().whileTrue(feeder.load(true));
+    controller.leftBumper().whileTrue(feeder.load(false));
     controller.y().onTrue(drive.resetPosition());
-    controller.rightTrigger().whileTrue(intake.spinIntakeCommand()); //balls in
-    controller.leftTrigger().whileTrue(intake.reverseIntakeCommand()); //balls out
-    controller.povUp().onTrue(intake.moveIntakeCommand());//switch intake command
-    controller.povDown().onTrue(intake.moveIntakeCommand()); //switch i
+    controller.rightTrigger().whileTrue(intake.spinIntakeCommand());
+    controller.leftTrigger().whileTrue(intake.reverseIntakeCommand());
+    controller.povUp().onTrue(intake.moveIntakeCommand());
+    controller.povDown().onTrue(intake.moveIntakeCommand());
     controller.b().whileTrue(shooter.shootA());
     controller.a().whileTrue(shooter.shootB());
-
-}
+  }
 
   @Override
   public void robotPeriodic() {
@@ -43,7 +58,10 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void autonomousInit() {}
+  public void autonomousInit() {
+    autonomousCommand = AutoBuilder.buildAuto("kadiri auto");
+    if (autonomousCommand != null) { autonomousCommand.schedule(); }
+  }
 
   @Override
   public void autonomousPeriodic() {}
