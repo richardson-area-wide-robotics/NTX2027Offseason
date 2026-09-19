@@ -3,10 +3,12 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Subsystems.Intake;
 
 public class Robot extends TimedRobot {
 
   Drive drive = new Drive();
+  Intake intake = new Intake();
   CommandXboxController controller = new CommandXboxController(0);
 
   public Robot() {
@@ -17,6 +19,8 @@ public class Robot extends TimedRobot {
         () -> controller.getRightX()));
 
         controller.a().onTrue(drive.toggleFieldRelative());
+        controller.rightTrigger().whileTrue(intake.spinIntakeCommand());
+        controller.leftTrigger().whileTrue(intake.reverseIntakeCommand());
 }
 
  
