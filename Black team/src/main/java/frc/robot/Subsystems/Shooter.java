@@ -16,33 +16,26 @@ public class Shooter extends SubsystemBase {
     private final SparkMaxConfig shooterMotorConfig = new SparkMaxConfig();
     private final SparkClosedLoopController shooterMotorPID = shooterMotor.getClosedLoopController();
     
-    private double hubTargetRPM = 5000.0;
-    private double cornerATargetRPM = 5000.0;
-    private double cornerBTargetRPM = 5000.0;
-    private double p = 0.0001;
-    private double i = 0;
-    private double d = 0;
-
     public Shooter() {
-    shooterMotorConfig.closedLoop.pid(p, i, d);
+    shooterMotorConfig.closedLoop.pid(1, 0, 0);
     shooterMotor.configure(shooterMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 }
 
     public Command shootHub() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(hubTargetRPM, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(1000, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
     public Command shootCornerA() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(cornerATargetRPM, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(2000, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
     public Command shootCornerB() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(cornerBTargetRPM, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(2000, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
