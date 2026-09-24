@@ -26,7 +26,7 @@ public class Drive extends SubsystemBase {
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(4,
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(40,
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -84,10 +84,10 @@ public class Drive extends SubsystemBase {
         return this.run(() -> {
             swerveDrive.drive(
                 new Translation2d(
-                    translationX.getAsDouble(),
-                    translationY.getAsDouble()
+                    translationX.getAsDouble()*5,
+                    translationY.getAsDouble()*5
                 ),
-                rotation.getAsDouble(),
+                rotation.getAsDouble()*3,
                 fieldR,
                 false
             );

@@ -36,4 +36,8 @@ SparkClosedLoopController leaderPID = leader.getClosedLoopController();
     public Command shootA() {
         return this.startEnd(() -> leaderPID.setSetpoint(3200, ControlType.kVelocity), () -> leader.set(0));
     }
+
+    public Command shootX() {
+        return this.startEnd(() -> leaderPID.setSetpoint(9999, ControlType.kVelocity), () -> leader.set(0));
+    }
 }

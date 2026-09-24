@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -48,8 +49,10 @@ public class Robot extends TimedRobot {
     controller.leftTrigger().whileTrue(intake.reverseIntakeCommand());
     controller.povUp().onTrue(intake.moveIntakeCommand());
     controller.povDown().onTrue(intake.moveIntakeCommand());
-    controller.b().whileTrue(shooter.shootA());
-    controller.a().whileTrue(shooter.shootB());
+    controller.b().whileTrue(shooter.shootB());
+    controller.a().whileTrue(shooter.shootA());
+    controller.x().whileTrue(shooter.shootX());
+
   }
 
   @Override
