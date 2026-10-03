@@ -7,7 +7,57 @@
         {
           "type": "path",
           "data": {
-            "pathName": "intake and shoot"
+            "pathName": "w auto path 1"
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "w auto path 2"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Move Intake Down"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Balls"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "w auto path 3"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Move Intake Up"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Hub"
           }
         }
       ]
