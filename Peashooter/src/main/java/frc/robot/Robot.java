@@ -27,10 +27,11 @@ public class Robot extends TimedRobot {
 
   
     NamedCommands.registerCommand("Shoot Hub", shooter.shootA());
+    NamedCommands.registerCommand("Shoot Corner", shooter.shootCorner());
     NamedCommands.registerCommand("Shoot Tower", shooter.shootB());
     NamedCommands.registerCommand("Intake Balls", intake.spinIntakeCommand());
     NamedCommands.registerCommand("Reverse Intake", intake.reverseIntakeCommand());
-     NamedCommands.registerCommand("Move Intake Up", intake.retractIntakeCommand());
+    NamedCommands.registerCommand("Move Intake Up", intake.retractIntakeCommand());
     NamedCommands.registerCommand("Move Intake Down", intake.deployIntakeCommand());
     NamedCommands.registerCommand("Load Feeder", feeder.load(true));
     NamedCommands.registerCommand("Unload Feeder", feeder.load(false));
