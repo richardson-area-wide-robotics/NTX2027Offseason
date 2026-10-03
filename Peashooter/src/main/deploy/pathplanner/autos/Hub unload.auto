@@ -11,9 +11,16 @@
           }
         },
         {
-          "type": "named",
+          "type": "parallel",
           "data": {
-            "name": "Shoot Hub"
+            "commands": [
+              {
+                "type": "named",
+                "data": {
+                  "name": "Load Feeder"
+                }
+              }
+            ]
           }
         }
       ]
