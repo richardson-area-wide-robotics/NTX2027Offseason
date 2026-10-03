@@ -67,7 +67,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousInit() {
-    autonomousCommand = AutoBuilder.buildAuto("kadiri auto");
+    autonomousCommand = AutoBuilder.buildAuto("W auto");
     if (autonomousCommand != null) { autonomousCommand.schedule(); }
   }
 
