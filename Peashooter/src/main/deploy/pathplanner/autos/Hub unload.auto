@@ -19,12 +19,6 @@
                 "data": {
                   "name": "Load Feeder"
                 }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Shoot Hub"
-                }
               }
             ]
           }
