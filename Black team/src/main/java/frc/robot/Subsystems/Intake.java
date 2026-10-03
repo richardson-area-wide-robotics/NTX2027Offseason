@@ -1,5 +1,15 @@
 package frc.robot.Subsystems;
 
-public class Intake {
-    
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+public class Intake extends SubsystemBase {
+// Wheel Motors
+  private final SparkFlex intakeSpinMotorOne = new SparkFlex(13, MotorType.kBrushless);
+  private final SparkFlex intakeSpinMotorTwo = new SparkFlex(15, MotorType.kBrushless);
+
+  
+
 }
