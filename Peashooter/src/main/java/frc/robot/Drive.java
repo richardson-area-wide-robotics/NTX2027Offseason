@@ -94,10 +94,10 @@ public class Drive extends SubsystemBase {
             SmartDashboard.putNumber("y", translationY.getAsDouble());
             swerveDrive.drive(
                 new Translation2d(
-                    translationX.getAsDouble(),
-                    translationY.getAsDouble()
+                    translationX.getAsDouble()*swerveDrive.getMaximumChassisVelocity(),
+                    translationY.getAsDouble()*swerveDrive.getMaximumChassisVelocity()
                 ),
-                rotation.getAsDouble()*3,
+                rotation.getAsDouble()*swerveDrive.getMaximumChassisAngularVelocity(),
                 fieldR,
                 false
             );
