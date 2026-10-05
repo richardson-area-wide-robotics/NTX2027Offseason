@@ -33,8 +33,8 @@ public class Feeder extends SubsystemBase{
     }
 
     private void runFeeder(boolean forward){
-        spindexterMotor.set(forward ? -0.5 : 0.5);
-        towerMotor.set(forward ? -0.5 : 0.5);
+        spindexterMotor.set(forward ? 0.5 : -0.5);
+        towerMotor.set(forward ? 0.5 : -0.5);
     }
 
     private void stopFeeder() {
