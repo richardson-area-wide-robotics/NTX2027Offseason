@@ -68,7 +68,7 @@ public class Drive extends SubsystemBase {
 
                 // Holonomic controller
                 new PPHolonomicDriveController(
-                        new PIDConstants(20.0, 0.0, 0.1),
+                        new PIDConstants(5.0, 0.0, 0.1),
                         new PIDConstants(5.0, 0.0, 0.0)
                 ),
 
@@ -97,7 +97,7 @@ public class Drive extends SubsystemBase {
                     translationX.getAsDouble()*swerveDrive.getMaximumChassisVelocity(),
                     translationY.getAsDouble()*swerveDrive.getMaximumChassisVelocity()
                 ),
-                rotation.getAsDouble()*swerveDrive.getMaximumChassisAngularVelocity(),
+                rotation.getAsDouble()*3,
                 fieldR,
                 false
             );
