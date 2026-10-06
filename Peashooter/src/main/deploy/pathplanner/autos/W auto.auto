@@ -25,6 +25,19 @@
                 "data": {
                   "name": "Move Intake Down"
                 }
+              }
+            ]
+          }
+        },
+        {
+          "type": "deadline",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "w auto path 3"
+                }
               },
               {
                 "type": "named",
@@ -42,7 +55,7 @@
               {
                 "type": "path",
                 "data": {
-                  "pathName": "w auto path 3"
+                  "pathName": "w auto path 4"
                 }
               },
               {
@@ -52,6 +65,12 @@
                 }
               }
             ]
+          }
+        },
+        {
+          "type": "wait",
+          "data": {
+            "waitTime": 1.0
           }
         },
         {
