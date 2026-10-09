@@ -1,4 +1,4 @@
-package frc.robot.Subsystems;
+package frc.robot.subsystems;
 
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkClosedLoopController;
@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Shooter extends SubsystemBase {
-    private final SparkMax shooterMotor = new SparkMax(0, MotorType.kBrushless);
+    private final SparkMax shooterMotor = new SparkMax(10, MotorType.kBrushless);
     private final SparkMaxConfig shooterMotorConfig = new SparkMaxConfig();
     private final SparkClosedLoopController shooterMotorPID = shooterMotor.getClosedLoopController();
     
@@ -23,19 +23,19 @@ public class Shooter extends SubsystemBase {
 
     public Command shootHub() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(1000, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(2600, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
     public Command shootCornerA() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(2000, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(4000, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
     public Command shootCornerB() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(2000, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(6300, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
