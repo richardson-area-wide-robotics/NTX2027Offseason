@@ -17,6 +17,7 @@ public class Shooter extends SubsystemBase {
     private final SparkClosedLoopController shooterMotorPID = shooterMotor.getClosedLoopController();
     
     public Shooter() {
+    shooterMotorConfig.inverted(true);
     shooterMotorConfig.closedLoop.pid(1, 0, 0);
     shooterMotor.configure(shooterMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 }
@@ -33,9 +34,9 @@ public class Shooter extends SubsystemBase {
             () -> shooterMotor.set(0)
         );
     }
-    public Command shootCornerB() {
+    public Command shootIntake() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(6300, SparkMax.ControlType.kVelocity),
+            () -> shooterMotor.set(-0.6),
             () -> shooterMotor.set(0)
         );
     }
