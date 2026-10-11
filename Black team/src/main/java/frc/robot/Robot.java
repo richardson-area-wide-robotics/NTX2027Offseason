@@ -21,10 +21,10 @@ public class Robot extends TimedRobot {
         () -> controller.getRightX()));
 
         controller.y().onTrue(drive.toggleFieldRelative());
-    controller.a().whileTrue(shooter.shootHub());
+    controller.rightTrigger().whileTrue(shooter.shootHub());
     controller.b().whileTrue(shooter.shootCornerA());
-    controller.povUp().whileTrue(shooter.shootIntake());
-    controller.povUp().whileTrue(intake.intakeIn());
+    controller.leftTrigger().whileTrue(shooter.shootIntake());
+    controller.leftTrigger().whileTrue(intake.intakeIn());
     controller.povDown().whileTrue(intake.intakeOut());
 
     controller.povLeft().whileTrue(intake.intakeIn());

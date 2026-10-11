@@ -24,13 +24,13 @@ public class Shooter extends SubsystemBase {
 
     public Command shootHub() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(2600, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(3500, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
     public Command shootCornerA() {
         return this.startEnd(
-            () -> shooterMotorPID.setSetpoint(4000, SparkMax.ControlType.kVelocity),
+            () -> shooterMotorPID.setSetpoint(5000, SparkMax.ControlType.kVelocity),
             () -> shooterMotor.set(0)
         );
     }
