@@ -1,0 +1,15 @@
+{
+  "_readme": "Read once at startup by frc.lib.swervetune. Every value below means 'leave YAGSL exactly as it is'. The laptop tool (tools/swervetune) writes measured values here when you press Save; see docs/SWERVE_TUNING_GUIDE.md before editing by hand.",
+  "steerFeedback": "motor",
+  "encoderAutoSync": { "enabled": false, "deadbandDeg": 1.0 },
+  "driveVelocityFilter": { "periodMs": 0, "depth": 0 },
+  "driveFeedforward": {},
+  "angularVelocityCompensation": { "teleop": false, "auto": false, "coefficient": 0.0 },
+  "operator": { "driverPort": 0, "overrideAxes": [0, 1, 4], "deadmanPort": 1, "deadmanButton": 6 },
+  "testLimits": {
+    "defaultSpeedCapMps": 1.0,
+    "maxSpeedCapMps": 3.0,
+    "minStartVoltsField": 11.8,
+    "minStartVoltsBlocks": 11.0
+  }
+}

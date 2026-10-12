@@ -52,4 +52,9 @@ public class Drive extends SubsystemBase {
     public Command toggleFieldRelative() {
     return this.runOnce(() -> fieldR = !fieldR);
 }
+
+    /** The YAGSL drive, for the swerve tuning tools. */
+    public SwerveDrive getSwerveDrive() {
+        return swerveDrive;
+    }
 }

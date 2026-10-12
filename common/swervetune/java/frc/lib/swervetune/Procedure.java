@@ -1,0 +1,73 @@
+package frc.lib.swervetune;
+
+/**
+ * One test the robot can run on request.
+ *
+ * <p>A procedure only collects data and moves motors. It never judges the result: the analysis,
+ * the advice and the pass/fail verdicts all live in the laptop tool, in one place, so that a
+ * student in the GUI and an agent on the command line are always told the same thing about the
+ * same run.
+ *
+ * <p>Life cycle, driven by {@link SwerveTune}: {@link #validate} once; then {@link #start} once
+ * the safety supervisor is satisfied; {@link #execute} every robot loop until it returns true;
+ * {@link #end} exactly once, including after an abort.
+ */
+public interface Procedure {
+
+  /** The name the laptop uses to ask for it, e.g. {@code steer_step}. */
+  String name();
+
+  /** Whether it commands any motor. Decides deadman, heartbeat and environment rules. */
+  boolean spinsWheels();
+
+  /** Whether the chassis is expected to travel. Decides the geofence. */
+  boolean movesChassis(TestContext ctx);
+
+  /** Whether the robot must be enabled. Capture-only procedures run disabled, safest of all. */
+  default boolean needsEnabled() {
+    return spinsWheels();
+  }
+
+  /** Environments it may run in. */
+  boolean allowedIn(TestEnvironment env);
+
+  /**
+   * Checks arguments and space before anything moves.
+   *
+   * @return null if it may run, otherwise a sentence saying what to change
+   */
+  String validate(TestContext ctx);
+
+  /** Distance from the start the run may legitimately reach, metres. The geofence is this. */
+  default double spaceBudgetM(TestContext ctx) {
+    return 0;
+  }
+
+  /** Longest it may take, seconds, after which it is aborted. */
+  double timeoutS(TestContext ctx);
+
+  /** How fast the sampler records, Hz. */
+  default double sampleRateHz(TestContext ctx) {
+    return 100;
+  }
+
+  /** Registers sampler channels and sends first commands. */
+  void start(TestContext ctx);
+
+  /**
+   * One robot loop.
+   *
+   * @param t seconds since {@link #start}
+   * @return true when finished
+   */
+  boolean execute(TestContext ctx, double t);
+
+  /** Stops what it was doing and restores anything it changed. Always called, even after abort. */
+  void end(TestContext ctx, boolean aborted);
+
+  /** 0 to 1, for a progress bar. */
+  double progress(TestContext ctx, double t);
+
+  /** Asks an open-ended procedure, such as a capture, to finish cleanly. */
+  default void requestStop() {}
+}

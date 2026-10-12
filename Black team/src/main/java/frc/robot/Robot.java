@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.lib.swervetune.SwerveTune;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
@@ -12,6 +13,8 @@ public class Robot extends TimedRobot {
   Shooter shooter = new Shooter();
   Intake intake = new Intake();
   CommandXboxController controller = new CommandXboxController(0);
+  // Swerve tuning and troubleshooting tools; see docs/SWERVE_TUNING_GUIDE.md.
+  SwerveTune tune = SwerveTune.install(drive.getSwerveDrive(), drive, "Black team");
 
   public Robot() {
 
@@ -38,6 +41,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    tune.periodic();
   }
 
   @Override

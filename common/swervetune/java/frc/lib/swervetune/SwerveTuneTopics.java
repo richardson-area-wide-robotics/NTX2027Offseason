@@ -1,0 +1,160 @@
+package frc.lib.swervetune;
+
+/**
+ * Every NetworkTables name the robot shares with the laptop tools.
+ *
+ * <p>The Python side keeps the same names in {@code tools/swervetune/contract.py}, and
+ * {@code tools/swervetune/tests/test_contract.py} reads this file and fails if the two disagree.
+ * Change a name here and that test tells you where else it has to change.
+ *
+ * <p>Everything lives under one root so a dashboard filter of {@code /SwerveTune} shows the whole
+ * conversation, and nothing here collides with YAGSL's own {@code SmartDashboard/swerve} tables.
+ */
+public final class SwerveTuneTopics {
+  private SwerveTuneTopics() {}
+
+  /** Bump when a topic's meaning changes, so an old laptop tool refuses a newer robot. */
+  public static final int PROTOCOL_VERSION = 1;
+
+  public static final String ROOT = "/SwerveTune";
+
+  // ---------------------------------------------------------------- robot identity (robot -> laptop)
+  public static final String PROTOCOL = ROOT + "/Protocol";
+  /**
+   * Random number chosen at every robot program start. Commands and gain changes must echo it.
+   *
+   * <p>NT4 servers keep a client's last values and a reconnecting client republishes them, so
+   * without this a laptop reconnecting after a robot reboot would replay its last command — and
+   * the robot would re-run a test nobody asked for.
+   */
+  public static final String BOOT_ID = ROOT + "/BootId";
+  public static final String ROBOT_NAME = ROOT + "/RobotName";
+  /** Lines describing what {@code swervetune.json} changed at startup, and any problems. */
+  public static final String STARTUP_REPORT = ROOT + "/StartupReport";
+  /** YAGSL module names in kinematics order, e.g. {@code frontleft}. */
+  public static final String MODULE_NAMES = ROOT + "/ModuleNames";
+  /** Module locations, metres, flattened {@code x0, y0, x1, y1, ...}. +x forward, +y left. */
+  public static final String MODULE_LOCATIONS = ROOT + "/ModuleLocationsM";
+  /** Free speed of a module from motor, gearing and wheel, m/s. What YAGSL desaturates to. */
+  public static final String MAX_MODULE_SPEED = ROOT + "/MaxModuleSpeedMps";
+  /** Where the steering PID gets its feedback: {@code motor} or {@code absolute}. */
+  public static final String STEER_FEEDBACK = ROOT + "/SteerFeedback";
+
+  // ---------------------------------------------------------------- environment (laptop -> robot)
+  /** {@code UNSET}, {@code SIM}, {@code BLOCKS} or {@code FIELD}. See {@link TestEnvironment}. */
+  public static final String ENV_MODE = ROOT + "/Env/Mode";
+  /** Whether field AprilTags are present. Off on a practice field without tags. */
+  public static final String ENV_APRILTAGS = ROOT + "/Env/AprilTags";
+  /** Clear floor in front of the robot, metres. Motion tests are sized to fit inside it. */
+  public static final String ENV_SPACE_FORWARD = ROOT + "/Env/SpaceForwardM";
+  /** Clear floor to each side, metres. */
+  public static final String ENV_SPACE_SIDE = ROOT + "/Env/SpaceSideM";
+  /** Fastest any test may drive, m/s. */
+  public static final String ENV_SPEED_CAP = ROOT + "/Env/SpeedCapMps";
+
+  // ---------------------------------------------------------------- environment as the robot sees it
+  public static final String ENV_ACTIVE = ROOT + "/Env/Active";
+  /** True once robot code has registered a vision pose source. */
+  public static final String ENV_VISION_AVAILABLE = ROOT + "/Env/VisionAvailable";
+  /** True when tags are switched on AND a vision source exists, so ground truth is real. */
+  public static final String ENV_VISION_IN_USE = ROOT + "/Env/VisionInUse";
+
+  // ---------------------------------------------------------------- client presence
+  /** Any increasing number, written by the laptop at 10 Hz or faster. Stale means the laptop is gone. */
+  public static final String CLIENT_HEARTBEAT = ROOT + "/Client/Heartbeat";
+  /** GUI hold-to-run. Only the GUI writes it, and only while a key is physically held. */
+  public static final String CLIENT_DEADMAN = ROOT + "/Client/Deadman";
+  /** Bump to abort whatever is running. */
+  public static final String CLIENT_ABORT_SEQ = ROOT + "/Client/AbortSeq";
+
+  // ---------------------------------------------------------------- commands (laptop -> robot)
+  /** Bump after writing the other Cmd topics; the robot acts once per new value. */
+  public static final String CMD_SEQ = ROOT + "/Cmd/Seq";
+  /** Must equal {@link #BOOT_ID} or the command is ignored. */
+  public static final String CMD_BOOT_ID = ROOT + "/Cmd/BootId";
+  public static final String CMD_TEST = ROOT + "/Cmd/Test";
+  /** {@code ALL}, a YAGSL module name, or {@code FL}/{@code FR}/{@code BL}/{@code BR}. */
+  public static final String CMD_MODULE = ROOT + "/Cmd/Module";
+  public static final String CMD_ARG_KEYS = ROOT + "/Cmd/ArgKeys";
+  public static final String CMD_ARG_VALUES = ROOT + "/Cmd/ArgValues";
+
+  // ---------------------------------------------------------------- acknowledgement (robot -> laptop)
+  // The answer to the most recent command: accepted, or refused and why. Kept apart from Status
+  // so a command refused while another test runs is not lost under that test's progress updates.
+  public static final String ACK_SEQ = ROOT + "/Ack/Seq";
+  public static final String ACK_ACCEPTED = ROOT + "/Ack/Accepted";
+  public static final String ACK_MESSAGE = ROOT + "/Ack/Message";
+
+  // ---------------------------------------------------------------- status (robot -> laptop)
+  public static final String STATUS_SEQ = ROOT + "/Status/Seq";
+  public static final String STATUS_TEST = ROOT + "/Status/Test";
+  /** {@code IDLE}, {@code WAITING}, {@code RUNNING}, {@code DONE}, {@code ABORTED}, {@code REFUSED}. */
+  public static final String STATUS_STATE = ROOT + "/Status/State";
+  public static final String STATUS_MESSAGE = ROOT + "/Status/Message";
+  public static final String STATUS_PROGRESS = ROOT + "/Status/Progress";
+  public static final String STATUS_DEADMAN_HELD = ROOT + "/Status/DeadmanHeld";
+
+  // ---------------------------------------------------------------- results (robot -> laptop)
+  public static final String RESULT_SEQ = ROOT + "/Result/Seq";
+  public static final String RESULT_TEST = ROOT + "/Result/Test";
+  /** {@code DONE} or {@code ABORTED}. An aborted run still publishes what it gathered. */
+  public static final String RESULT_OUTCOME = ROOT + "/Result/Outcome";
+  public static final String RESULT_CHANNELS = ROOT + "/Result/Channels";
+  /** Prefix for one {@code double[]} per channel: {@code RESULT_DATA + channelName}. */
+  public static final String RESULT_DATA = ROOT + "/Result/Data/";
+  public static final String RESULT_META_KEYS = ROOT + "/Result/MetaKeys";
+  public static final String RESULT_META_VALUES = ROOT + "/Result/MetaValues";
+  /** Free-text notes, one per line, e.g. why a run was cut short. */
+  public static final String RESULT_NOTES = ROOT + "/Result/Notes";
+
+  // ---------------------------------------------------------------- live gains (both directions)
+  /** Prefix for gain topics, e.g. {@code /SwerveTune/Gains/Steer/kP}. See {@link LiveGains}. */
+  public static final String GAINS = ROOT + "/Gains/";
+  /** Bump after writing gain topics; the robot applies the whole set once per new value. */
+  public static final String GAINS_APPLY_SEQ = ROOT + "/Gains/ApplySeq";
+  /** Must equal {@link #BOOT_ID} or the gain change is ignored. */
+  public static final String GAINS_BOOT_ID = ROOT + "/Gains/BootId";
+  /** Robot's echo of every gain it is actually running, {@code GAINS_APPLIED + key}. */
+  public static final String GAINS_APPLIED = ROOT + "/Gains/Applied/";
+  public static final String GAINS_APPLIED_SEQ = ROOT + "/Gains/AppliedSeq";
+  public static final String GAINS_APPLY_STATUS = ROOT + "/Gains/ApplyStatus";
+
+  // ---------------------------------------------------------------- live telemetry (robot -> laptop)
+  // Arrays are indexed by module, in MODULE_NAMES order. Published every robot loop.
+  public static final String LIVE = ROOT + "/Live/";
+  public static final String LIVE_STEER_DEG = LIVE + "SteerDeg";
+  public static final String LIVE_STEER_SETPOINT_DEG = LIVE + "SteerSetpointDeg";
+  /** Steering motor's own encoder, in module degrees. Should track SteerDeg within a degree or two. */
+  public static final String LIVE_STEER_MOTOR_DEG = LIVE + "SteerMotorDeg";
+  /** Absolute encoder before the YAGSL offset is subtracted. This is what offsets are taken from. */
+  public static final String LIVE_STEER_RAW_DEG = LIVE + "SteerRawDeg";
+  public static final String LIVE_DRIVE_MPS = LIVE + "DriveMps";
+  public static final String LIVE_DRIVE_SETPOINT_MPS = LIVE + "DriveSetpointMps";
+  public static final String LIVE_DRIVE_POSITION_M = LIVE + "DrivePositionM";
+  public static final String LIVE_DRIVE_VOLTS = LIVE + "DriveVolts";
+  public static final String LIVE_STEER_VOLTS = LIVE + "SteerVolts";
+  public static final String LIVE_DRIVE_AMPS = LIVE + "DriveAmps";
+  public static final String LIVE_STEER_AMPS = LIVE + "SteerAmps";
+  public static final String LIVE_DRIVE_TEMP_C = LIVE + "DriveTempC";
+  public static final String LIVE_STEER_TEMP_C = LIVE + "SteerTempC";
+  public static final String LIVE_FAULTS = LIVE + "Faults";
+  public static final String LIVE_ABS_READ_ISSUE = LIVE + "AbsoluteReadIssue";
+  /** Heading as odometry uses it: degrees, counter-clockwise positive. */
+  public static final String LIVE_HEADING_DEG = LIVE + "HeadingDeg";
+  /** Field-relative acceleration from the IMU, m/s^2, {@code x, y, z}. Empty if the IMU has none. */
+  public static final String LIVE_ACCEL = LIVE + "AccelMps2";
+  /** Odometry pose, {@code x m, y m, heading deg}. */
+  public static final String LIVE_POSE = LIVE + "Pose";
+  /** Vision pose when one is in use, same layout as LIVE_POSE; empty otherwise. */
+  public static final String LIVE_VISION_POSE = LIVE + "VisionPose";
+  public static final String LIVE_BUS_VOLTS = LIVE + "BusVolts";
+  /** {@code DISABLED}, {@code TELEOP}, {@code AUTO}, {@code TEST}, or {@code ESTOP}. */
+  public static final String LIVE_ROBOT_MODE = LIVE + "RobotMode";
+  public static final String LIVE_FMS_ATTACHED = LIVE + "FmsAttached";
+  /** Robot-side timestamp of this sample, seconds. */
+  public static final String LIVE_TIMESTAMP = LIVE + "Timestamp";
+
+  // ---------------------------------------------------------------- simulation only
+  /** Lets a laptop tool enable the simulated robot without the sim GUI. Ignored on a real robot. */
+  public static final String SIM_REQUEST_ENABLE = ROOT + "/Sim/RequestEnable";
+}

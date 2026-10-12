@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.lib.swervetune.SwerveTune;
 import frc.robot.Subsystems.Feeder;
 import frc.robot.Subsystems.Intake;
 import frc.robot.Subsystems.Shooter;
@@ -19,6 +20,8 @@ public class Robot extends TimedRobot {
   Intake intake = new Intake();
   Shooter shooter = new Shooter();
   CommandXboxController controller = new CommandXboxController(0);
+  // Swerve tuning and troubleshooting tools; see docs/SWERVE_TUNING_GUIDE.md.
+  SwerveTune tune = SwerveTune.install(drive.getSwerveDrive(), drive, "Peashooter");
   //CommandGenericHID controller = new CommandGenericHID(0);
 
   private Command autonomousCommand; 
@@ -62,6 +65,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    tune.periodic();
   }
 
   @Override

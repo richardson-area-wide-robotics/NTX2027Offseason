@@ -110,5 +110,10 @@ public class Drive extends SubsystemBase {
     public Command resetPosition() {
         return this.runOnce(() -> swerveDrive.zeroGyro());
     }
+
+    /** The YAGSL drive, for the swerve tuning tools. */
+    public SwerveDrive getSwerveDrive() {
+        return swerveDrive;
+    }
     
 }
