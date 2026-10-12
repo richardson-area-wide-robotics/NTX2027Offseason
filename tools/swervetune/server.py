@@ -222,7 +222,7 @@ def api_live(_):
         return {"connected": False}
     live = S.link.live()
     names = S.link.robot_info()["modules"]
-    S.flags = S.monitor.update(live, names)
+    S.flags = S.monitor.update(live, names, S.link.environment().get("active"))
     return {"connected": S.link.is_connected(), "live": live, "flags": S.flags,
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],

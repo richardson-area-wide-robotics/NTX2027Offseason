@@ -673,6 +673,10 @@ public final class SwerveTune {
     ctx.meta("space_side_m", ctx.spaceSideM);
     ctx.meta("vision_in_use", ctx.visionInUse ? 1 : 0);
     ctx.meta("boot_id", bootId);
+    // Self-describing results: the laptop checks real against configured ratios from these.
+    ctx.meta("drive_gear_ratio", io.driveGearRatio());
+    ctx.meta("steer_gear_ratio", io.steerGearRatio());
+    ctx.meta("steer_feedback_absolute", "absolute".equals(io.steerFeedback()) ? 1 : 0);
     ctx.note("Environment: " + ctx.env + (ctx.visionInUse ? ", AprilTags in use" : ", no AprilTags"));
     ctx.sampler.start(clock);
     if (!manualSampling) {

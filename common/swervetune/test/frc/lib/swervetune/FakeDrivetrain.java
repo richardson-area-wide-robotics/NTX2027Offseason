@@ -95,6 +95,16 @@ final class FakeDrivetrain implements DrivetrainIO {
   }
 
   @Override
+  public double driveGearRatio() {
+    return 5.5;
+  }
+
+  @Override
+  public double steerGearRatio() {
+    return 46.42;
+  }
+
+  @Override
   public String steerFeedback() {
     return "motor";
   }

@@ -485,6 +485,46 @@ SYMPTOMS = [
         ],
     },
     {
+        "id": "gear_ratio",
+        "title": "A module seems geared differently",
+        "looks_like": "One corner scrubs or fights the others, the robot crabs, a module's angle "
+                      "drifts away on every move, or the tool says a ratio looks wrong.",
+        "checks": [
+            check("In the hand check, did every module's steering motor move 1.00 times as far "
+                  "as the module (within 3%)?",
+                  "Guide, Hand check, Record steering. The motor encoder is converted with the "
+                  "configured steering ratio and the absolute encoder sits on the module itself, "
+                  "so their ratio is the real ratio over the configured one.",
+                  DISABLED,
+                  "The steering ratio in physicalproperties.json is not the module's real ratio, or "
+                  "one module has a different gearbox.",
+                  "MAXSwerve steering is 46.42:1. If every module is off by the same factor, fix the "
+                  "config; if one module is, inspect that module.",
+                  {"type": "guide", "step": "hand_check"}),
+            check("Driving straight on the floor, do all four modules report the same distance "
+                  "(within 3%)?",
+                  "Live view while driving straight for a few metres, or the module comparison in "
+                  "a floor drive_ff or spin run. On blocks this cannot be seen: the motor encoder "
+                  "cannot see the gearbox, only the floor couples the wheels.",
+                  FIELD,
+                  "A module reporting more or less distance than the others has a different "
+                  "reduction. On MAXSwerve the ratio is 3 x spur / pinion: 12T pinion 5.50, 13T "
+                  "5.08, 14T 4.71.",
+                  "Count that module's pinion and spur teeth. Fix the part, or give every module "
+                  "the same gearing; YAGSL uses one drive ratio for all four.",
+                  {"type": "run", "test": "drive_ff", "env": FIELD},
+                  {"monitor": ["drive_ratio_mismatch"]}),
+            check("Does the straight-line test agree with a tape measure within 3%?",
+                  "Straight line, then enter the tape distance in Runs.",
+                  FIELD,
+                  "Every module is geared differently from the config (more than 4% off matches a "
+                  "pinion step), or the wheel size is wrong (1-3% is tread wear).",
+                  "The report names the likely gearing. Count a pinion before changing the wheel "
+                  "diameter.",
+                  {"type": "run", "test": "straight", "env": FIELD}),
+        ],
+    },
+    {
         "id": "pod_drifts",
         "title": "Lines up at boot, gets worse during a match",
         "looks_like": "Wheels are straight after a restart but slowly stop lining up as the "

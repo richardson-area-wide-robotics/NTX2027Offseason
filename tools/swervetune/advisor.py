@@ -32,6 +32,7 @@ from __future__ import annotations
 import math
 
 from . import analysis as A
+from . import ratios as R
 
 # What "tight" means, per loop. Steering numbers are for a MAXSwerve-class module (NEO 550 at
 # 46.42:1): about 1400 deg/s free speed at the module, so a 90 degree move cannot take much under
@@ -296,6 +297,7 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
                 "There is room to be more aggressive: no overshoot and the motor is not working "
                 "flat out. Raise kP 40%.", gains_action(Steer__kP=_clamp_ratio(kP * 1.4, kP))))
 
+    F.extend(steer_ratio_findings(result))
     if worst["asym"] > 0.3:
         F.append(finding(
             "warn", f"Turns {worst['asym'] * 100:.0f}% faster one way than the other",
@@ -499,6 +501,7 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT):
                 "warn", f"Overshoots {os_:.0f}% on a step",
                 "Some overshoot on a hard step is expected, but this much shows up as a lurch. "
                 "Lower kP 25%.", gains_action(Drive__kP=_clamp_ratio(kP * 0.75, kP))))
+    F.extend(drive_ratio_findings(result))
     if spread > DRIVE_TARGETS["module_spread_pct"]:
         F.append(finding(
             "warn", f"Modules disagree by {spread:.0f}% at the same command",
@@ -589,6 +592,9 @@ def feedforward_report(result, gains=None):
                     "gears or a misaligned pinion. Spin it by hand and compare with the others.",
                     {"type": "troubleshoot", "symptom": "robot_slow"}))
     else:
+        phase = ch.get("phase") or []
+        powered = [p in (1, 2, 3, 4) for p in phase] if phase else None
+        F.extend(drive_ratio_findings(result, mask=powered))
         for n, f in good.items():
             if f.get("r2", 1) < 0.95:
                 F.append(finding("warn", f"{n}: weak fit (R² {f['r2']:.3f})",
@@ -610,10 +616,11 @@ def feedforward_report(result, gains=None):
             if ratio > 1.15 or ratio < 0.85:
                 F.append(finding(
                     "warn", f"Measured kV is {ratio * 100:.0f}% of what the motor physics predicts",
-                    "kV is set almost entirely by motor, gearing and wheel size. Far off means one "
-                    "of those in the config is not what is on the robot - the drive gear ratio "
-                    "(5.50 is MAXSwerve's 12-tooth pinion) or the wheel diameter. Count the pinion "
-                    "teeth and measure the wheel.",
+                    "kV is measured against the speed the motor's own encoder reports, so a wrong "
+                    "gear ratio or wheel size cancels out of it - it cannot be the cause. What moves "
+                    "kV is the motor: the config names one motor (NEO, Vortex, NEO 550) and another is "
+                    "fitted. A NEO configured where a Vortex is fitted reads about 84%. Heavy drag "
+                    "(a binding module, a dragging bumper) raises it instead.",
                     {"type": "troubleshoot", "symptom": "robot_slow"}))
         if len(good) == len(mods) and r2_min >= 0.95 and kv_spread <= 15:
             values = {}
@@ -698,6 +705,9 @@ def spin_report(result):
             "Turning faster than the wheels allow means the module locations in the config are "
             "larger than the real ones - often the frame size was entered instead of the distance "
             "between wheel centres. Measure axle centre to axle centre."))
+    radius = [math.hypot(meta.get(f"m{i}.x", 0.3), meta.get(f"m{i}.y", 0.3)) for i in range(max(mods) + 1)]
+    spinning = [abs(c) > 0.05 for c in cmd]
+    F.extend(drive_ratio_findings(result, mask=spinning, radius=radius))
     if w_ratio < 0.92 and g_ratio > 0:
         F.append(finding("warn", "Wheels fall short of the commanded spin",
                          "The drive velocity loop is not keeping up; tune drive first.",
@@ -741,6 +751,19 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
         scale = measured_forward_m / fwd if fwd else float("nan")
         report["measured"]["wheel_scale"] = scale
         report["targets"].append(_grade("odometry vs tape (|1 - ratio|)", abs(1 - scale), 0.01))
+        cfg = meta.get("drive_gear_ratio")
+        if A.finite(scale) and abs(1 - scale) > 0.04 and cfg:
+            # Odometry reads distance x configured/real; the tape is the truth.
+            real = cfg / scale
+            c = R.candidates(real, R.family(meta.get("steer_gear_ratio")))
+            if c:
+                F.append(finding(
+                    "warn", f"Every module is off by {abs(1 - scale) * 100:.0f}%: more than tread wear",
+                    f"Worn or compressed tread changes the effective wheel size by 1-3%. "
+                    f"{abs(1 - scale) * 100:.0f}% matches a different gear ratio on every module: "
+                    f"{c[0]['name']} ({c[0]['ratio']:.2f}:1) instead of the configured {cfg}:1. Count "
+                    "a pinion before changing the wheel size.",
+                    {"type": "troubleshoot", "symptom": "gear_ratio"}))
         if A.finite(scale) and abs(1 - scale) > 0.01:
             F.append(finding(
                 "warn", f"Odometry says {fwd:.3f} m, the tape says {measured_forward_m:.3f} m",
@@ -864,6 +887,86 @@ def hand_check(result, kind, expected_sign=1):
             motor = A.hand_motion(A.unwrap_deg(ch[f"m{i}.motor"]), expected_sign, min_travel=20)
             r = A.ratio(A.unwrap_deg(ch[f"m{i}.motor"]), A.unwrap_deg(ch[f"m{i}.steer"]))
             out[names[i]] = {"absolute": absolute, "motor": motor, "motor_per_module_deg": r}
+    return out
+
+
+# ============================================================================ gear ratios
+
+
+def _travel(ch, t, mods, names, mask=None, radius=None):
+    """Distance each module reported, from positions if recorded, else integrated speed."""
+    out = {}
+    for i in mods:
+        pos = ch.get(f"m{i}.pos")
+        v = ch.get(f"m{i}.v")
+        d = 0.0
+        for k in range(1, len(t)):
+            if mask is not None and not mask[k]:
+                continue
+            if pos:
+                step = pos[k] - pos[k - 1]
+            elif v:
+                step = v[k] * (t[k] - t[k - 1])
+            else:
+                continue
+            if A.finite(step):
+                d += abs(step)
+        out[names[i]] = d / radius[i] if radius else d
+    return out
+
+
+def drive_ratio_findings(result, mask=None, radius=None):
+    """On the floor only: a module whose reported travel differs from the rest has another ratio."""
+    if result.get("env") not in ("FIELD",):
+        return []
+    ch, meta = result["channels"], result.get("meta", {})
+    t = ch.get("t", [])
+    mods = _modules_in(ch, "v") or _modules_in(ch, "pos")
+    names = _module_names(result, max(mods) + 1 if mods else 0)
+    cfg = meta.get("drive_gear_ratio")
+    fam = R.family(meta.get("steer_gear_ratio"))
+    travel = _travel(ch, t, mods, names, mask, radius)
+    if min(travel.values() or [0]) < (0.5 if not radius else 1.0):
+        return []  # not enough travel to judge
+    out = []
+    for f in R.module_ratio_findings(travel, cfg or 1.0, fam):
+        text = R.describe(f) if cfg else (f"{f['module']} reports {abs(1 - f['travel_ratio']) * 100:.1f}% "
+                                          "different travel from the other modules over the same floor.")
+        out.append(finding(
+            "warn", f"{f['module']}: drive gear ratio looks different from the other modules",
+            text + " On the floor every wheel covers the same ground, so a different reported distance "
+            "means a different reduction - the motor encoder cannot see the gearbox. Count that "
+            "module's pinion teeth.", {"type": "troubleshoot", "symptom": "gear_ratio"},
+            ratio=f))
+    return out
+
+
+def steer_ratio_findings(result):
+    """Motor encoder against the absolute encoder: their ratio is real over configured reduction."""
+    ch, meta = result["channels"], result.get("meta", {})
+    if result.get("env") == "SIM" or meta.get("steer_feedback_absolute") == 1:
+        return []  # one physical sensor, or none: nothing to compare
+    cfg = meta.get("steer_gear_ratio")
+    mods = _modules_in(ch, "motor")
+    names = _module_names(result, max(mods) + 1 if mods else 0)
+    out = []
+    for i in mods:
+        motor = A.unwrap_deg(ch[f"m{i}.motor"])
+        absolute = A.unwrap_deg(ch.get(f"m{i}.steer", []))
+        if not absolute or (max(absolute) - min(absolute)) < 30:
+            continue
+        r = A.ratio(motor, absolute)
+        if A.finite(r) and abs(r - 1) > 0.03:
+            real = (cfg or 0) * r
+            known = [f"{n} ({v:.2f}:1)" for n, v in R.STEER if cfg and abs(v - real) / real < 0.03]
+            out.append(finding(
+                "warn", f"{names[i]}: steering motor moves {r:.3f}x as far as the module",
+                (f"The configured steering ratio is {cfg}:1 but this module behaves like {real:.2f}:1."
+                 if cfg else "The steering ratio in the config does not match this module.")
+                + (f" That matches {known[0]}." if known else "")
+                + " With a wrong steering ratio the motor encoder drifts away from the real angle on "
+                "every move. If r is near -1 instead, the steering motor inversion is wrong.",
+                {"type": "troubleshoot", "symptom": "gear_ratio"}, ratio=r))
     return out
 
 

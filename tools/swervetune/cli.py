@@ -194,7 +194,7 @@ def cmd_status(args, out):
         live = lk.live()
         mon = monitor.Monitor(current_limits(project_for_robot(args, lk)).get("drive", 40))
         for _ in range(int(args.watch / 0.05) or 1):
-            flags = mon.update(lk.live(), info["modules"])
+            flags = mon.update(lk.live(), info["modules"], env["active"])
             time.sleep(0.05)
         out.put(robot=info, environment=env, live=_clean(live), status=lk.status(),
                 gains=_clean(lk.gains()), flags=flags)
@@ -412,11 +412,12 @@ def cmd_watch(args, out):
         return out.done(2)
     try:
         names = lk.robot_info()["modules"]
+        env = lk.environment()["active"]
         mon = monitor.Monitor(current_limits(project_for_robot(args, lk)).get("drive", 40))
         end = time.time() + args.seconds
         seen = set()
         while time.time() < end:
-            for f in mon.update(lk.live(), names):
+            for f in mon.update(lk.live(), names, env):
                 key = (f["rule"], f["module"])
                 if key not in seen:
                     seen.add(key)

@@ -109,6 +109,16 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   }
 
   @Override
+  public double driveGearRatio() {
+    return modules[0].configuration.conversionFactors.drive.gearRatio;
+  }
+
+  @Override
+  public double steerGearRatio() {
+    return modules[0].configuration.conversionFactors.angle.gearRatio;
+  }
+
+  @Override
   public String steerFeedback() {
     return modules[0].getAngleMotor().usingExternalFeedbackSensor() ? "absolute" : "motor";
   }

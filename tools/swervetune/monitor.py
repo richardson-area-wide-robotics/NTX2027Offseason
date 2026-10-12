@@ -28,7 +28,12 @@ RULES = {
     "hot": ("brownout", "motor is over 70 °C"),
     "faults": ("pod_not_moving", "motor controller reports a fault"),
     "low_battery": ("brownout", "battery voltage is sagging below 8 V"),
+    "drive_ratio_mismatch": ("gear_ratio", "reports a different distance from the other modules"
+                                           " while driving straight - its gear ratio may differ"),
 }
+
+# Passive drive-ratio check: how much straight-line driving to collect before judging, metres.
+RATIO_MIN_TRAVEL_M = 3.0
 
 
 class Monitor:
@@ -39,6 +44,8 @@ class Monitor:
         self._active = {}      # (rule, module) -> flag dict
         self._last_clear = {}  # (rule, module) -> time the condition stopped
         self._err_hist = {}    # module -> recent (time, steering error) samples
+        self._ratio_last = None  # (positions, heading) at the previous straight-driving sample
+        self._ratio_travel = {}  # module -> metres reported while driving straight on the floor
 
     def _raise(self, rule, module, now, hold, detail, active):
         key = (rule, module)
@@ -60,8 +67,12 @@ class Monitor:
                     self._active.pop(key, None)
                     self._last_clear.pop(key, None)
 
-    def update(self, live, names=None):
-        """Feeds one snapshot. Returns the flags currently raised."""
+    def update(self, live, names=None, env=None):
+        """Feeds one snapshot. Returns the flags currently raised.
+
+        ``env`` is the robot's environment; the drive-ratio check only runs on the FIELD, because
+        only there does the chassis make every wheel cover the same ground.
+        """
         now = self.clock()
         enabled = live.get("mode") not in ("DISABLED", "ESTOP", "UNKNOWN", None)
         steer = live.get("steer") or []
@@ -119,10 +130,35 @@ class Monitor:
             self._raise("hot", name, now, 2.0, f"{max(dtemp[i], stemp[i]):.0f} °C", hot)
             f = faults[i] if i < len(faults) else ""
             self._raise("faults", name, now, 0.0, f, bool(f))
+        self._passive_ratio(live, names, n, enabled and env == "FIELD", now)
         bus = live.get("bus")
         self._raise("low_battery", None, now, 0.25, f"{bus:.1f} V" if A.finite(bus) else "",
                     enabled and A.finite(bus) and bus < 8.0)
         return self.flags()
+
+    def _passive_ratio(self, live, names, n, on_field, now):
+        pos, steer, v = live.get("pos") or [], live.get("steer") or [], live.get("v") or []
+        heading = live.get("heading")
+        straight = (on_field and n >= 3 and len(pos) == n and len(v) == n and A.finite(heading)
+                    and all(A.finite(x) for x in pos + steer + v)
+                    and max(abs(A.wrap180(a - steer[0])) for a in steer) < 3.0
+                    and min(abs(x) for x in v) > 0.3)
+        if straight and self._ratio_last is not None:
+            last_pos, last_heading = self._ratio_last
+            if abs(A.wrap180(heading - last_heading)) < 0.5:
+                for i in range(n):
+                    name = names[i] if i < len(names) else f"m{i}"
+                    self._ratio_travel[name] = self._ratio_travel.get(name, 0.0) + abs(pos[i] - last_pos[i])
+        self._ratio_last = (list(pos), heading) if straight else None
+        travel = self._ratio_travel
+        if len(travel) >= 3 and min(travel.values()) >= RATIO_MIN_TRAVEL_M:
+            from . import ratios as R
+            odd = {f["module"]: f for f in R.module_ratio_findings(travel, 1.0)}
+            for name in travel:
+                f = odd.get(name)
+                self._raise("drive_ratio_mismatch", name, now, 0.0,
+                            f"{(f['travel_ratio'] - 1) * 100:+.1f}% over {travel[name]:.1f} m" if f else "",
+                            f is not None)
 
     def flags(self):
         return sorted(self._active.values(), key=lambda f: (f["since"], f["rule"]))

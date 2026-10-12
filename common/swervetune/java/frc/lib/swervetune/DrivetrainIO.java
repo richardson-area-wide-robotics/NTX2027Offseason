@@ -42,6 +42,12 @@ public interface DrivetrainIO {
   /** Drive current limit from the configuration, amps. */
   double driveCurrentLimitA();
 
+  /** Configured drive reduction, motor turns per wheel turn. */
+  double driveGearRatio();
+
+  /** Configured steering reduction, motor turns per module turn. */
+  double steerGearRatio();
+
   /** {@code motor} or {@code absolute}: what the steering PID uses for feedback. */
   String steerFeedback();
 
