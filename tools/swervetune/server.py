@@ -26,8 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, contract as C, diagnose, explain, logsummary, monitor, plant, predict,
-               rehearse, runs, wiring, yagslcfg)
+from . import (advisor, akit, contract as C, diagnose, explain, logsummary, monitor, pdhports, plant,
+               predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -457,6 +457,92 @@ def api_wiring(query=None):
             "path": os.path.relpath(wiring.map_path(S.project), S.project.path)}
 
 
+PRACTICE_PORTS = (0, 1, 2, 3, 16, 17, 18, 19)
+
+
+def _pdh_plot(ch, rep):
+    """What the Wiring tab graphs: the channels that rose, and when each motor was pulsed."""
+    ports = sorted({r["port"] if r["port"] is not None else r.get("port_guess") for r in rep["rows"]} - {None})
+    t, slot, on = ch.get("t") or [], ch.get("slot") or [], ch.get("on") or []
+    spans, i, n = [], 0, min(len(t), len(slot), len(on))
+    while i < n:
+        if not on[i]:
+            i += 1
+            continue
+        j = i
+        while j + 1 < n and on[j + 1] and slot[j + 1] == slot[i]:
+            j += 1
+        k = int(slot[i])
+        row = rep["rows"][k] if k < len(rep["rows"]) else {}
+        spans.append({"x0": t[i], "x1": t[j], "name": row.get("name", f"pulse {k}"),
+                      "port": row.get("port"), "rise_a": row.get("rise_a")})
+        i = j + 1
+    return {"t": t, "channels": {str(p): ch.get(f"pdh{p}") or [] for p in ports}, "pulses": spans}
+
+
+def api_wiring_wiggle(query=None):
+    """Practice for the wiggle test: a made-up robot's live snapshot, with one loose CAN plug and
+    one loose power lead that act up only while their step is being wiggled."""
+    import random
+
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    m = S.wiring_map()
+    chain = m["buses"][0]["chain"]
+    devices = chain[1:-1]
+    q = query or {}
+    st = S.__dict__.get("_wiggle")
+    if q.get("reset") or not st or st["chain"] != chain:
+        k = min(4, len(chain) - 2)
+        st = S._wiggle = {"chain": chain, "bad_seg": [chain[k], chain[k + 1]],
+                          "bad_power": devices[len(devices) // 3] if devices else None,
+                          "rows": {n: {"name": n, "present": 1, "dropouts": 0, "resets": 0, "brownouts": 0}
+                                   for n in devices},
+                          "can": [0.35, 0, 0, 0, 0, 0], "rng": random.Random(7)}
+    rng, step = st["rng"], q.get("step", "")
+    if step == "can:" + "|".join(st["bad_seg"]):
+        st["can"][5] += rng.randint(2, 20)
+        if rng.random() < 0.25:
+            for n in chain[chain.index(st["bad_seg"][1]):-1]:
+                st["rows"][n]["dropouts"] += 1
+    elif st["bad_power"] and step == "power:" + st["bad_power"]:
+        r = st["rows"][st["bad_power"]]
+        if rng.random() < 0.3:
+            r["resets"] += 1
+        elif rng.random() < 0.3:
+            r["brownouts"] += 1
+    return {"ok": True, "practice": True,
+            "snapshot": {"motors": [dict(r) for r in st["rows"].values()], "can": list(st["can"])}}
+
+
+def api_wiring_pdhfind(query=None):
+    """PDH ports found from a pdh_map run, a practice log, or (read-only) practice data."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    q = query or {}
+    m = S.wiring_map()
+    if q.get("practice"):
+        names = [f"{n} {part}" for n in S.project.module_names() for part in ("drive", "steer")]
+        ports = list(PRACTICE_PORTS[:len(names)]) + [None] * max(0, len(names) - len(PRACTICE_PORTS))
+        if len(ports) > 3:
+            ports[3] = None   # one motor fed from somewhere else, to show what that looks like
+        ch, notes, meta = plant.pdh_pulses(names, ports, background={20: 2.5})
+        rep = pdhports.from_pulses({"channels": ch, "notes": notes, "meta": meta}, m)
+        rep["practice"] = True
+        rep["plot"] = _pdh_plot(ch, rep)
+    elif q.get("run"):
+        doc = runs.load(q["run"])
+        rep = pdhports.from_pulses(doc, m)
+        rep["plot"] = _pdh_plot(doc.get("channels") or {}, rep)
+    elif q.get("log"):
+        rep = pdhports.from_log(_log_series(q["log"]), m)
+    else:
+        return {"ok": False, "error": "Say where to look: a run, a log, or practice."}
+    rep["ok"] = True
+    rep["mapped"] = m.get("pdhPorts") or {}
+    return rep
+
+
 def api_wiring_termination(body):
     try:
         ohms = float(body.get("ohms"))
@@ -576,7 +662,8 @@ def api_sim(body):
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
-       "/api/logsummary": api_logsummary}
+       "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
+       "/api/wiring/wiggle": api_wiring_wiggle}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,

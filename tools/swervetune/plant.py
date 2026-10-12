@@ -479,3 +479,43 @@ def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.
         meta[f"slip_a_m{i}"] = slip_a[i]
         meta[f"peak_a_m{i}"] = peak[i]
     return out, meta
+
+
+def pdh_pulses(names, ports, volts=4.0, quiet_s=0.6, pulse_s=0.8, rate_hz=50, noise_a=0.06,
+               background=None, seed=3):
+    """A ``pdh_map`` run on blocks: ``(channels, notes, meta)``.
+
+    ``names`` are the pulsed motors in order (drive, steer, drive, steer...), ``ports`` their true
+    PDH ports (None for a motor fed from somewhere else). Battery-side current: a start-up spike
+    that settles to a steady draw, about duty x motor current. ``background`` is ``{port: amps}``
+    drawn all the time (a radio, a compressor). The PDH snapshot lags the command by one sample, as
+    on the robot. Readings are rounded to the PDH's 1/16 A steps.
+    """
+    rng = random.Random(seed)
+    dt = 1.0 / rate_hz
+    t_total = len(names) * (quiet_s + pulse_s)
+    ch = {"t": [], "slot": [], "on": []}
+    for p in range(24):
+        ch[f"pdh{p}"] = []
+    prev = [0.0] * 24
+    t = 0.0
+    while t < t_total:
+        k = int(t / (quiet_s + pulse_s))
+        into = t - k * (quiet_s + pulse_s) - quiet_s
+        on = into >= 0
+        now = [0.05 + (background or {}).get(p, 0.0) for p in range(24)]
+        if on and ports[k] is not None:
+            steer = names[k].endswith("steer")
+            steady = (0.35 if steer else 0.6) * volts / 4.0 * (1 + 0.2 * rng.random())
+            spike = (2.0 if steer else 4.0) * volts / 4.0 * math.exp(-into / 0.08)
+            now[ports[k]] += steady + spike
+        ch["t"].append(round(t, 6))
+        ch["slot"].append(float(k))
+        ch["on"].append(1.0 if on else 0.0)
+        for p in range(24):
+            ch[f"pdh{p}"].append(round(max(0.0, prev[p] + rng.gauss(0, noise_a)) * 16) / 16)
+        prev = now
+        t += dt
+    notes = [f"pulse {k}: {n}" for k, n in enumerate(names)]
+    meta = {"pulse_volts": volts, "quiet_s": quiet_s, "pulse_s": pulse_s, "pdh_channels": 24.0}
+    return ch, notes, meta

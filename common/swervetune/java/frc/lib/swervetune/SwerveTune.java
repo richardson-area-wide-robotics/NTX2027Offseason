@@ -88,6 +88,7 @@ public final class SwerveTune {
   private final long bootId;
   private final boolean manualSampling;
   private final Map<String, Supplier<Procedure>> procedures = new LinkedHashMap<>();
+  private Supplier<double[]> pdhSource = AkLogging::pdhCurrents;
 
   // laptop -> robot
   private final StringSubscriber envMode;
@@ -145,6 +146,7 @@ public final class SwerveTune {
   private int publishedReportLines = -1;
   private DashboardAlerts dashboard;
   private double[] lastCan = new double[0];
+  private long canErrorLoops;
   private long publishedEvents = -1;
   private final DoubleArrayPublisher livePose;
   private final DoubleArrayPublisher liveVisionPose;
@@ -249,6 +251,7 @@ public final class SwerveTune {
     procedures.put("spin", SpinProcedure::new);
     procedures.put("straight", StraightLineProcedure::new);
     procedures.put("slip", SlipProcedure::new);
+    procedures.put("pdh_map", PdhMapProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -512,7 +515,18 @@ public final class SwerveTune {
     liveArray(SwerveTuneTopics.MOTORS_BUS_VOLTS).set(busVolts);
     liveArray(SwerveTuneTopics.MOTORS_CAN_IDS).set(canIds);
     lastCan = signals.canStatus();
-    liveArray(SwerveTuneTopics.WIRING_CAN).set(lastCan);
+    if (lastCan.length >= 5) {
+      // The error counters recover within milliseconds, so a laptop polling a few times a second
+      // misses most glitches; a running count of loops that saw any does not.
+      if (lastCan[3] > 0 || lastCan[4] > 0) {
+        canErrorLoops++;
+      }
+      double[] withCount = java.util.Arrays.copyOf(lastCan, 6);
+      withCount[5] = canErrorLoops;
+      liveArray(SwerveTuneTopics.WIRING_CAN).set(withCount);
+    } else {
+      liveArray(SwerveTuneTopics.WIRING_CAN).set(lastCan);
+    }
     if (dashboard != null) {
       dashboard.update(list, lastCan);
     }
@@ -829,6 +843,7 @@ public final class SwerveTune {
         signals::enabled, this::visionPoseArray);
     c.drivePolicyA = drivePolicyA();
     c.driveLimitA = driveLimitA();
+    c.pdhCurrents = pdhSource;
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
@@ -848,6 +863,7 @@ public final class SwerveTune {
         this::visionPoseArray);
     ctx.drivePolicyA = c.drivePolicyA;
     ctx.driveLimitA = c.driveLimitA;
+    ctx.pdhCurrents = pdhSource;
     proc = p;
     profile = prof;
     activeSeq = seq;
@@ -1187,5 +1203,10 @@ public final class SwerveTune {
 
   long bootId() {
     return bootId;
+  }
+
+  /** Where tests read the PDH's channel currents from, in place of AdvantageKit. */
+  void setPdhSource(Supplier<double[]> source) {
+    pdhSource = source;
   }
 }

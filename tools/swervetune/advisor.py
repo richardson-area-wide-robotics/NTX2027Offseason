@@ -1153,6 +1153,23 @@ def slip_report(result):
     return _finish(report)
 
 
+def pdh_map_report(result):
+    """The PDH-port pulse test: what was found. The Wiring tab compares it with the map and saves."""
+    from . import pdhports
+
+    r = pdhports.from_pulses(result)
+    n, found = len(r["rows"]), len(r["proposed"])
+    bad = any(f["level"] == "error" for f in r["findings"])
+    return {"test": "pdh_map", "env": result.get("env", ""),
+            "summary": (f"Found the PDH port of {found} of {n} swerve motors: "
+                        + ", ".join(f"{k} on {v}" for k, v in r["proposed"].items())
+                        + ". Open the Wiring tab to compare them with the map and save them.") if found
+            else "No PDH port found for any motor.",
+            "findings": [finding(f["level"], f["title"], f["why"]) for f in r["findings"]],
+            "targets": [], "score": 100 if n and found == n and not bad else None, "cost": None,
+            "next": None, "modules": {}, "pdh": r}
+
+
 def no_data_report(result):
     """A run that recorded nothing gets no score. An empty run must never read as a pass."""
     why = result.get("message") or "The run recorded no samples."
@@ -1187,5 +1204,7 @@ def analyze(result, gains=None, **kw):
         return health_report(result)
     if test == "slip":
         return slip_report(result)
+    if test == "pdh_map":
+        return pdh_map_report(result)
     return {"test": test, "summary": "No analysis for this test.", "findings": [], "targets": [],
             "next": None, "score": None}

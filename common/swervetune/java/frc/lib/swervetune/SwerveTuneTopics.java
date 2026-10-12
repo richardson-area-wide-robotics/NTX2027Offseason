@@ -188,7 +188,10 @@ public final class SwerveTuneTopics {
   public static final String MOTORS_BUS_VOLTS = MOTORS + "BusVolts";
   public static final String MOTORS_CAN_IDS = MOTORS + "CanIds";
 
-  /** The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors. */
+  /**
+   * The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors,
+   * and how many robot loops have seen any receive or transmit error since the code started.
+   */
   public static final String WIRING_CAN = ROOT + "/Wiring/Can";
 
   /** False when swervetune.json switched the guard off. */

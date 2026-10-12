@@ -41,7 +41,7 @@ class LogWriter:
 
     FLUSH_EVERY = 2000
     APPEND = {"double": "appendDouble", "string": "appendString", "int64": "appendInteger",
-              "boolean": "appendBoolean"}
+              "boolean": "appendBoolean", "double[]": "appendDoubleArray"}
 
     def __init__(self, path):
         self.log = _writer(path)

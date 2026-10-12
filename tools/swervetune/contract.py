@@ -120,6 +120,8 @@ MOTORS_RESETS = MOTORS + "Resets"
 MOTORS_BROWNOUTS = MOTORS + "Brownouts"
 MOTORS_BUS_VOLTS = MOTORS + "BusVolts"
 MOTORS_CAN_IDS = MOTORS + "CanIds"
+# Utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors, and the running
+# count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"
 
 # AdvantageKit's own live topics (NT4Publisher), read for power and CAN health.
@@ -240,4 +242,4 @@ GAIN_SPECS = {
 FF_SPECS = {"kS": (0, 1.5), "kV": (0.5, 8.0), "kA": (0, 4.0)}
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
-TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip")
+TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map")

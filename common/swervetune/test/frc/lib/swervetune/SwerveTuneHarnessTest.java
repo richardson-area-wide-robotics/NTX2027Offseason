@@ -501,6 +501,52 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
+  void thePdhMapPulsesOneMotorAtATimeAndRecordsEveryChannel() {
+    // Drive motor m on PDH port 2m, steering motor m on port 2m + 1; a steady 3 A on port 20.
+    tune.setPdhSource(() -> {
+      double[] a = new double[24];
+      for (int m = 0; m < 4; m++) {
+        a[2 * m] = Math.abs(io.driveVolts(m)) * 0.5;
+        a[2 * m + 1] = Math.abs(io.steerSetpointDeg(m) - io.steerDeg(m)) > 1 ? 1.5 : 0;
+      }
+      a[20] = 3;
+      return a;
+    });
+    io.chassisMoves = false; // on blocks
+    envMode.set("BLOCKS");
+    loop(2);
+    send("pdh_map", "ALL");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(700);
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message());
+    double[] slot = data("slot");
+    double[] on = data("on");
+    double[] p2 = data("pdh2");
+    assertEquals(24, Arrays.stream(nt.getStringArrayTopic(SwerveTuneTopics.RESULT_CHANNELS)
+        .subscribe(new String[0]).get()).filter(c -> c.startsWith("pdh")).count());
+    // The PDH snapshot is taken at the start of a loop, so it lags the command by one sample.
+    for (int i = 1; i < slot.length; i++) {
+      boolean pulsedNowOrJustBefore = (slot[i] == 2 && on[i] == 1) || (slot[i - 1] == 2 && on[i - 1] == 1);
+      if (!pulsedNowOrJustBefore) {
+        assertTrue(p2[i] < 0.01, "port 2 only draws while its own motor is pulsed (sample " + i + ")");
+      }
+    }
+    assertTrue(Arrays.stream(p2).max().orElse(0) > 1, "and it does draw then");
+    assertTrue(io.stopped);
+  }
+
+  @Test
+  void thePdhMapRefusesWithoutAPdhToRead() {
+    envMode.set("BLOCKS");
+    loop(2);
+    send("pdh_map", "ALL");
+    loop(1);
+    assertFalse(ackAccepted());
+    assertTrue(ackMessage().contains("No PDH currents"), ackMessage());
+  }
+
+  @Test
   void unknownTestsAndModulesAreNamedInTheRefusal() {
     envMode.set("BLOCKS");
     loop(1);

@@ -211,6 +211,8 @@ table.motors tr.flagged td { background: var(--bad-bg); }
   font-size: 11px; color: var(--ink); text-shadow: 0 0 3px var(--panel); }
 .callout { border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
 .callout.bad { background: var(--bad-bg); color: var(--bad); }
+.callout.warn { background: var(--warn-bg); border-left-color: var(--warn); }
+.callout.info { background: var(--info-bg); border-left-color: var(--info); }
 
 /* ---------------------------------------------------------------- learning */
 .term { text-decoration: underline dotted var(--accent); text-underline-offset: 3px; cursor: help; }
@@ -269,6 +271,12 @@ table.motors tr.flagged td { background: var(--bad-bg); }
 .swatch.ok { background: var(--ok-bg); border-color: var(--ok); }
 .swatch.warn { background: var(--warn-bg); border-color: var(--warn); }
 .swatch.bad { background: var(--bad-bg); border-color: var(--bad); }
+.wiggle-step { border: 2px solid var(--rule); border-radius: 10px; padding: 12px 14px; margin: 8px 0; transition: border-color .2s, background .2s; }
+.wiggle-step.hot { border-color: var(--warn); background: var(--warn-bg); }
+.wiggle-step .warn-text { color: var(--bad); }
+.wiggle-text { font-size: 1.15em; margin: 4px 0 8px; }
+.wiggle-list li { margin: 4px 0; }
+.wiggle-list li.current { font-weight: 600; }
 .pdh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
 .pdh-port { border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px; display: grid; gap: 2px; min-width: 0; }
 .pdh-port.empty { opacity: .55; }

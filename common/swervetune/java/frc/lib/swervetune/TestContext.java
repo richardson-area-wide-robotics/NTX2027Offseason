@@ -35,6 +35,11 @@ public final class TestContext {
   public double drivePolicyA = 80;
   /** The drive current limit in force when the test started, amps, to put back afterwards. */
   public double driveLimitA = 40;
+  /**
+   * Every PDH channel's current this loop, amps, from AdvantageKit's snapshot; empty when there is
+   * none (AdvantageKit not started, or no PDH on the bus).
+   */
+  public Supplier<double[]> pdhCurrents = () -> new double[0];
 
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();

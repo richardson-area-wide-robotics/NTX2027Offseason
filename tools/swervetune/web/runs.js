@@ -12,7 +12,7 @@
       <div class="row" style="justify-content:space-between;flex-wrap:wrap"><h2>Match logs</h2>
         <div class="row" style="flex-wrap:wrap"><input id="lg-folder" placeholder="Folder with .wpilog files (USB stick, AdvantageScope downloads)" style="min-width:22em" aria-label="Log folder">
         <button class="btn" id="lg-go">List logs</button></div></div>
-      <p class="hint">AdvantageKit writes one log per power-up to the USB stick in the roboRIO (/U/logs). Copy them here, or point at the folder AdvantageScope downloads to.</p>
+      <p class="hint">AdvantageKit writes one log per power-up: to the USB stick in the roboRIO (/U/logs) or, on a roboRIO 2 with no stick, to its SD card (/home/lvuser/logs; to download those, set AdvantageScope's roboRIO log folder to that path). A roboRIO 1 without a stick keeps no logs. Copy them here, or point at the folder AdvantageScope downloads to.</p>
       <div id="lg-list"></div><div id="lg-report"></div></div>
       <div class="panel">
       <div class="row" style="justify-content:space-between"><h2>Saved runs</h2>

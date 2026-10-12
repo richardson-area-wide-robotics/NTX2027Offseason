@@ -26,8 +26,8 @@ import re
 import sys
 import time
 
-from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor, plant,
-               predict, rehearse, runs, wiring, yagslcfg)
+from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor,
+               pdhports, plant, predict, rehearse, runs, wiring, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -354,6 +354,29 @@ def cmd_export(args, out):
     out.put(path=path, entries=names)
     out.say(f"Wrote {path}: {len(names)} entries. Open it in AdvantageScope"
             + (", or in SysId (mechanism 'drive', one motor per module)." if doc.get("test") == "drive_ff" else "."))
+    return out.done()
+
+
+def cmd_pdhports(args, out):
+    """Which PDH port feeds each motor, from a pdh_map run or a practice log."""
+    project = resolve_project(args.project) if args.project else None
+    m = wiring.load_map(project) if project else None
+    src = args.source
+    if src.lower().endswith(".wpilog"):
+        rep = pdhports.from_log(logsummary.read(src), m)
+    else:
+        rep = pdhports.from_pulses(runs.load(src), m)
+    out.put(pdh=_clean(rep))
+    for r in rep["rows"]:
+        port = r["port"] if r["port"] is not None else "-"
+        extra = (f"rise {r['rise_a']:.2f} A" if r.get("rise_a") is not None
+                 else f"match {r['corr']:.2f}" if r.get("corr") is not None else "")
+        out.say(f"  {r['name']:24s} port {port!s:>3}  {r['status']:9s} {extra:14s} map: "
+                f"{r['mapped'] if r['mapped'] is not None else '-'} ({r['verdict']})")
+    for f in rep["findings"]:
+        out.say(f"  {f['level']}: {f['title']}. {f['why']}")
+    if not project:
+        out.say("  (add --project Peashooter to compare with that robot's wiring map)")
     return out.done()
 
 
@@ -710,6 +733,10 @@ def build_parser():
     s = sub.add_parser("logsummary", help="what went wrong in a match log (.wpilog), and where to look")
     s.add_argument("log")
     s.set_defaults(fn=cmd_logsummary)
+
+    s = sub.add_parser("pdhports", help="which PDH port feeds each motor: from a pdh_map run or a .wpilog")
+    s.add_argument("source", help="a saved pdh_map run (file name) or a practice log (.wpilog)")
+    s.set_defaults(fn=cmd_pdhports)
 
     s = sub.add_parser("layout", help="write the AdvantageScope layout for each robot")
     s.add_argument("--out-dir", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "advantagescope"))

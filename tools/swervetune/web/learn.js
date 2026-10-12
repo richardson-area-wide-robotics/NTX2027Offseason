@@ -32,7 +32,7 @@ const Learn = (() => {
     { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "slip_current"] },
     { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "environment", "deadman", "what_if"] },
     { id: "motors", title: "9. Keeping motors alive", lessons: ["heat_estimate", "derate", "stall", "thermal_override"] },
-    { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["can_bus", "can_termination", "power_path"] },
+    { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["can_bus", "can_termination", "power_path", "battery_current", "wiggle_test"] },
     { id: "profile", title: "11. Second order: motion profiles (after first-order tuning works)", locked: true,
       lessons: ["motion_profile", "trapezoid_profile", "cruise_velocity", "max_acceleration", "ff_uses_setpoint", "maxmotion_position", "maxmotion_velocity", "allowed_profile_error", "profiled_pid"] },
   ];
@@ -210,6 +210,14 @@ const Learn = (() => {
       body: ["Current flows from the battery through the main breaker to the PDH, out through a port's breaker and along two leads to the controller, and back. Every crimp, Wago and screw terminal on the way is a small resistor.",
         "Resistance turns current into lost voltage (V = I x R). A good feed loses about 0.6 V at 40 A. A loose joint can lose several volts: the controller sees a low supply, warns, and if it drops too far it reboots - vanishing from the CAN bus while it restarts.",
         "The tool compares the voltage each controller sees with the PDH's, at the current the PDH measured on that port, to estimate each feed's resistance. One controller rebooting points at its own feed; many at once points upstream, at the battery or main breaker."] },
+    battery_current: { title: "Battery-side current", short: "The PDH measures the current a controller takes from the battery. Below full speed that is much less than the current in the motor.",
+      body: ["A motor controller is a fast switch. At 25% output it connects the motor to the battery a quarter of the time; the rest of the time the motor's current keeps circulating through the controller, not the battery.",
+        "Power in equals power out (minus a little heat), so battery current = motor current x output fraction. A drive motor pulling 20 A at 25% output takes only about 5 A from its PDH port.",
+        "That is why the PDH port finder looks for which channel <i>rises</i>, not for the motor's own number, and why a motor stalled at low output can be hot while its breaker never notices."] },
+    wiggle_test: { title: "The wiggle test", short: "With the robot on and disabled, gently move each cable and plug in turn while a tool watches for errors. The step that makes something happen is where the bad connection is.",
+      body: ["Loose plugs and cracked wires usually work fine when nothing moves, and fail when the robot hits something. Wiggling recreates that one place at a time.",
+        "The tool watches every controller (did it drop off the bus, reboot, or see its supply dip?) and the CAN bus's error counters. Because the counters recover within milliseconds, the robot counts every loop that saw an error, so a glitch too short for a person to notice still shows.",
+        "Go in order along the CAN chain, then each controller's power leads, then the main power. Keep hands out while the robot is enabled."] },
     motion_profile: { title: "Motion profile", short: "Instead of jumping the setpoint, move it smoothly along a planned path of position, speed and acceleration.",
       body: ["A step asks for the impossible: be there now. A profile asks for something the mechanism can actually do: speed up at a set rate, cruise, slow down. Feedback then only has to follow, so it can be stiffer without overshoot, and current spikes vanish.",
         "This is 'second order' control: the plan limits both velocity and acceleration. Do it after the first-order loops (feedforward and PID) work - a profile on top of a badly tuned loop just hides the problem."], links: ["trap", "profiled"] },
@@ -245,7 +253,7 @@ const Learn = (() => {
     ["motion profile", "motion_profile"], ["trapezoid", "trapezoid_profile"], ["MAXMotion", "maxmotion_position"], ["heat estimate", "heat_estimate"],
     ["derate", "derate"], ["stall", "stall"], ["bevel gear", "bevel_gear"], ["straight-edge", "straight_edge"],
     ["coast", "coast_mode"], ["redeploy", "redeploy"], ["slip current", "slip_current"], ["traction", "traction"], ["slip", "traction"], ["CAN bus", "can_bus"],
-    ["terminator", "can_termination"], ["termination", "can_termination"], ["power leads", "power_path"], ["PDH port", "power_path"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
+    ["terminator", "can_termination"], ["termination", "can_termination"], ["power leads", "power_path"], ["PDH port", "power_path"], ["battery side", "battery_current"], ["wiggle test", "wiggle_test"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
   ];
 
   // ---------------------------------------------------------------- the hover card
