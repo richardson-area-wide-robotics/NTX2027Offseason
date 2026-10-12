@@ -123,6 +123,15 @@ const Guide = (() => {
       tune: "steer",
       status: () => { const r = lastRun("steer_step", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 
+    { id: "slip", learn: ["traction", "slip_current", "current_limit"], title: "Find where the wheels slip", where: "On the floor, front bumper against a solid wall",
+      why: "The drive current limit decides how hard the robot can accelerate. Above the current where a wheel breaks loose, more current only spins the wheel: it wastes battery, wears the tread, and makes odometry count distance the robot never travelled. This measures that current on your carpet, for each corner, so the limit sits just below it instead of at a datasheet number.",
+      need: ["A solid wall: the field wall or a shop wall, not a table or a door", "Carpet like the competition's", "A fresh battery", "Someone holding the deadman"],
+      todo: ["Set the environment to On the floor.", "Put the front bumper flat against the wall, every wheel pointing straight at it. Nobody between the robot and the wall.",
+             "Open the tuner (Slip current, Robot) and Run. The push builds over a few seconds; each wheel chirps once as it slips and is cut at once.",
+             "Press Do this on the recommended limit and Write the file. Change PathPlanner's drive current limit to match, redeploy, then measure the feedforward."],
+      tune: "slip",
+      status: () => { const r = lastRun("slip", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
+
     { id: "ff", learn: ["feedforward", "kS", "kV", "kA"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
       need: ["3 m or more of clear carpet ahead", "A fresh battery", "Deadman held"],

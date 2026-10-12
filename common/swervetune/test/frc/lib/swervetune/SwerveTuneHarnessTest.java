@@ -241,6 +241,86 @@ class SwerveTuneHarnessTest {
     assertTrue(left[0] > 14 && left[0] <= 15, Arrays.toString(left));
   }
 
+  private double meta(String key) {
+    String[] keys = nt.getStringArrayTopic(SwerveTuneTopics.RESULT_META_KEYS).subscribe(new String[0]).get();
+    double[] vals = nt.getDoubleArrayTopic(SwerveTuneTopics.RESULT_META_VALUES).subscribe(new double[0]).get();
+    for (int i = 0; i < keys.length; i++) {
+      if (keys[i].equals(key)) {
+        return vals[i];
+      }
+    }
+    return Double.NaN;
+  }
+
+  private String notes() {
+    return String.join(" | ", nt.getStringArrayTopic(SwerveTuneTopics.RESULT_NOTES).subscribe(new String[0]).get());
+  }
+
+  @Test
+  void slipTestFindsEachWheelsBreakawayAndPutsTheLimitBack() {
+    double[] truth = {38, 42, 45, 41};
+    io.wallSlipA = truth.clone();
+    envMode.set("FIELD");
+    ds.deadman = true;
+    loop(2);
+    send("slip", "ALL", "ceiling_a", "80"); // over the 60 A policy for a NEO of unknown version
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(900);
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message() + " " + notes());
+    for (int m = 0; m < 4; m++) {
+      assertEquals(truth[m], meta("slip_a_m" + m), 0.5, "module " + m);
+      assertTrue(io.slipping[m]);
+    }
+    assertEquals(60, meta("ceiling_a"), 1e-9, "never above the policy");
+    assertEquals(List.of(60, 40), io.limitsSet, "raised for the run, then put back");
+    assertEquals(0, meta("wall_lost"), 1e-9);
+    assertFalse(owner.held);
+  }
+
+  @Test
+  void aCarpetThatOutgripsTheCeilingIsReportedNotForced() {
+    io.wallSlipA = new double[] {70, 70, 70, 70};
+    envMode.set("FIELD");
+    ds.deadman = true;
+    loop(2);
+    send("slip", "ALL", "ceiling_a", "50");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(900);
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message());
+    for (int m = 0; m < 4; m++) {
+      assertTrue(Double.isNaN(meta("slip_a_m" + m)), "nothing slipped");
+      assertEquals(50, meta("peak_a_m" + m), 0.5);
+    }
+    assertEquals(40, io.driveLimitA, 1e-9);
+  }
+
+  @Test
+  void slipTestStopsIfTheRobotIsNotAgainstAWall() {
+    envMode.set("FIELD");
+    ds.deadman = true;
+    loop(2);
+    send("slip", "ALL");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(200);
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message());
+    assertEquals(1, meta("wall_lost"), 1e-9);
+    assertTrue(notes().contains("driving, not slipping"), notes());
+    assertEquals(40, io.driveLimitA, 1e-9);
+  }
+
+  @Test
+  void slipTestIsRefusedOnBlocks() {
+    envMode.set("BLOCKS");
+    loop(2);
+    send("slip", "ALL");
+    loop(1);
+    assertFalse(ackAccepted());
+    assertTrue(ackMessage().contains("cannot run"), ackMessage());
+  }
+
   @Test
   void aCommandForAnEarlierRobotProgramIsIgnored() {
     envMode.set("BLOCKS");

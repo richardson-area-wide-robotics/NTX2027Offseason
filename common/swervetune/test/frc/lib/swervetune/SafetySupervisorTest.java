@@ -158,6 +158,23 @@ class SafetySupervisorTest {
   }
 
   @Test
+  void aWallPushExpectsTheStallButNotMotion() {
+    TestProfile wall = new TestProfile(true, false, 1.0, 0.0, true);
+    Inputs in = ok(TestEnvironment.FIELD);
+    in.controllerDeadman = true;
+    in.maxDriveCurrentFraction = 0.95;
+    in.speedAtMaxCurrentMps = 0.0;
+    in.nowS = 5;
+    assertTrue(sup.check(in, wall, true).isOk());
+    in.nowS = 8;
+    assertTrue(sup.check(in, wall, true).isOk(), "stalled against the wall is the test");
+    in.displacementM = 0.4;
+    var v = sup.check(in, wall, true);
+    assertEquals(Action.ABORT, v.action());
+    assertTrue(v.reason().contains("not against a solid wall"), v.reason());
+  }
+
+  @Test
   void overspeedAborts() {
     Inputs in = ok(TestEnvironment.BLOCKS);
     in.maxWheelSpeedMps = 2.0;

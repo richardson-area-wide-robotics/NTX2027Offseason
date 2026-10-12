@@ -218,4 +218,4 @@ GAIN_SPECS = {
 FF_SPECS = {"kS": (0, 1.5), "kV": (0.5, 8.0), "kA": (0, 4.0)}
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
-TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight")
+TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip")

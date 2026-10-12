@@ -81,6 +81,8 @@ public final class SafetySupervisor {
     public double sustainS = 0.15;
     /** Stall must hold this long, seconds. Accelerating from rest briefly looks like a stall. */
     public double stallSustainS = 0.4;
+    /** In a wall push, the chassis moving this far means it is not against a wall, metres. */
+    public double wallTravelM = 0.3;
   }
 
   /** Everything the supervisor looks at, gathered fresh each loop. */
@@ -124,7 +126,13 @@ public final class SafetySupervisor {
 
   /** What the running test is allowed to do, so the rules that apply can be chosen. */
   public record TestProfile(
-      boolean spinsWheels, boolean movesChassis, double speedCapMps, double spaceBudgetM) {}
+      boolean spinsWheels, boolean movesChassis, double speedCapMps, double spaceBudgetM,
+      boolean pushesWall) {
+    public TestProfile(boolean spinsWheels, boolean movesChassis, double speedCapMps,
+        double spaceBudgetM) {
+      this(spinsWheels, movesChassis, speedCapMps, spaceBudgetM, false);
+    }
+  }
 
   private final Limits limits;
   private double blocksMotionSince = Double.NaN;
@@ -253,11 +261,20 @@ public final class SafetySupervisor {
                 "Left the declared space: %.2f m from the start, budget %.2f m.",
                 in.displacementM, test.spaceBudgetM()));
       }
-      boolean stalled =
-          in.maxDriveCurrentFraction > limits.stallCurrentFraction
-              && Math.abs(in.speedAtMaxCurrentMps) < limits.stallSpeedMps;
-      if (sustained(stalled, in.nowS, SustainTimer.STALL)) {
-        return Verdict.abort("Wheels stalled at high current: the robot is pushing on something.");
+      if (test.pushesWall()) {
+        // Pushing at high current with the wheels still is the test; moving is the fault.
+        if (in.displacementM > limits.wallTravelM) {
+          return Verdict.abort(String.format(
+              "The robot moved %.2f m: it is not against a solid wall, or the wall gave way.",
+              in.displacementM));
+        }
+      } else {
+        boolean stalled =
+            in.maxDriveCurrentFraction > limits.stallCurrentFraction
+                && Math.abs(in.speedAtMaxCurrentMps) < limits.stallSpeedMps;
+        if (sustained(stalled, in.nowS, SustainTimer.STALL)) {
+          return Verdict.abort("Wheels stalled at high current: the robot is pushing on something.");
+        }
       }
     }
 

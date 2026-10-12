@@ -393,10 +393,12 @@ SYMPTOMS = [
         "title": "Wheels spin when accelerating",
         "looks_like": "Wheels break loose on hard acceleration, and autos end short.",
         "checks": [
-            check("Is the drive current limit below the traction limit?",
-                  "Config tab shows where the wheels should start to slip.", DISABLED,
-                  "The motors can push harder than the carpet holds.",
-                  "Lower the drive current limit to the suggested value.", None,
+            check("Is the drive current limit at or below where the wheels really slip?",
+                  "Guide: 'Find where the wheels slip' measures it with a bumper against a wall. "
+                  "Until then the Config tab gives an estimate from the robot's weight.", FIELD,
+                  "The motors can push harder than the carpet holds, so they spin the wheels.",
+                  "Run the slip test and use the limit it recommends: 90% of the weakest corner.",
+                  {"type": "run", "test": "slip", "env": FIELD},
                   {"lint": ["drive_current_over_traction"]}),
             check("Is the tread in good shape?", "Look at it.", DISABLED,
                   "Worn tread grips less and changes the wheel diameter.", "Replace it.", None),

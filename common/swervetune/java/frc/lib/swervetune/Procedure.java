@@ -23,6 +23,14 @@ public interface Procedure {
   /** Whether the chassis is expected to travel. Decides the geofence. */
   boolean movesChassis(TestContext ctx);
 
+  /**
+   * Whether the robot is meant to push against a wall. The field's stall rule is then the point
+   * of the test, not a fault, so it is replaced by a rule that the chassis must not move.
+   */
+  default boolean pushesWall() {
+    return false;
+  }
+
   /** Whether the robot must be enabled. Capture-only procedures run disabled, safest of all. */
   default boolean needsEnabled() {
     return spinsWheels();

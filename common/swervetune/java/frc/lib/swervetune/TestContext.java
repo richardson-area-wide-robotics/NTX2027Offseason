@@ -31,6 +31,11 @@ public final class TestContext {
   /** Vision pose {@code {x, y, deg}} when vision is in use and has one, otherwise null. */
   public final Supplier<double[]> visionPose;
 
+  /** The team's current policy for the drive motors, amps: no test may exceed it. */
+  public double drivePolicyA = 80;
+  /** The drive current limit in force when the test started, amps, to put back afterwards. */
+  public double driveLimitA = 40;
+
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();
 

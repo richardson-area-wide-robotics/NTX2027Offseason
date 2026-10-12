@@ -1033,6 +1033,126 @@ def steer_ratio_findings(result):
 # ============================================================================ dispatch
 
 
+# ============================================================================ slip
+
+
+SLIP_MARGIN = 0.90  # the limit sits this far below the weakest corner's breakaway current
+
+
+def _abbr(name):
+    """frontleft -> FL, back_right -> BR; anything else unchanged."""
+    n = name.lower()
+    fb = "F" if "front" in n else "B" if "back" in n or "rear" in n else ""
+    lr = "L" if "left" in n else "R" if "right" in n else ""
+    return fb + lr if fb and lr else name
+
+
+def slip_report(result):
+    """The wall push: each wheel's breakaway current, and the drive current limit to use."""
+    ch = result["channels"]
+    meta = result.get("meta", {})
+    env = result.get("env", "")
+    t = ch.get("t", [])
+    mods = _modules_in(ch, "amps")
+    names = _module_names(result, max(mods) + 1 if mods else 0)
+    thr = meta.get("slip_mps", 0.15)
+    ceiling = meta.get("ceiling_a")
+    policy = meta.get("policy_a") or ceiling
+    before = meta.get("limit_before_a")
+    report = {"test": "slip", "env": env, "practice": bool(result.get("practice")), "modules": {},
+              "findings": [], "targets": [], "annotations": []}
+    F = report["findings"]
+    if meta.get("wall_lost") == 1:
+        F.append(finding(
+            "error", "The robot drove instead of pushing: it was not against a wall",
+            "A wheel turned at a current far too low to be slipping, so the chassis was free to move. "
+            "Put the front bumper flat against something solid - the field wall, or a wall in the "
+            "shop - with every wheel pointing into it, and run again.",
+            {"type": "run", "test": "slip", "env": "FIELD"}))
+        report["summary"] = "Slip test: not against a wall, nothing measured"
+        return _finish(report)
+    if env == "SIM":
+        F.append(finding("info", "Simulation has no carpet",
+                         "This proves the test runs; the numbers mean nothing. Run it on the robot."))
+
+    found = {}
+    for i in mods:
+        amps = [abs(a) if A.finite(a) else float("nan") for a in ch[f"m{i}.amps"]]
+        v = ch.get(f"m{i}.v") or [0.0] * len(amps)
+        k = next((j for j in range(len(v) - 1)
+                  if A.finite(v[j]) and A.finite(v[j + 1]) and abs(v[j]) > thr and abs(v[j + 1]) > thr), None)
+        upto = [a for a in amps[:(k + 1 if k is not None else len(amps))] if A.finite(a)]
+        peak = max(upto) if upto else float("nan")
+        m = {"slipped": k is not None, "peak_a": peak,
+             "slip_a": peak if k is not None else None, "slip_t": t[k] if k is not None else None}
+        report["modules"][names[i]] = m
+        if k is not None:
+            found[names[i]] = peak
+            report["annotations"].append({
+                "type": "point", "t": t[k], "y": peak, "learn": "traction", "label": f"{_abbr(names[i])} {peak:.0f} A",
+                "text": f"{names[i]} breaks loose at {peak:.1f} A: past this its push is more than the carpet "
+                        "holds, so the wheel spins instead of pushing harder."})
+    if ceiling:
+        report["annotations"].append({"type": "band", "x0": t[0] if t else 0, "x1": t[-1] if t else 1,
+                                      "y0": 0.95 * ceiling, "y1": ceiling, "learn": "current_limit",
+                                      "text": f"The ceiling for this run, {ceiling:.0f} A: never above the team's policy."})
+
+    n = len(mods)
+    report["targets"] = [_grade("wheels that slipped", len(found), n, lower_is_better=False)]
+    if not found:
+        rec = int(min(x for x in (policy, ceiling) if x))
+        report["recommended_a"] = rec
+        F.append(finding(
+            "ok", f"No wheel slipped up to {ceiling:.0f} A",
+            "This carpet grips better than the ceiling allows, so traction is not what limits "
+            f"acceleration here - the team's {policy:.0f} A policy is. "
+            + ("" if not before or before >= rec else f"The robot ran at {before:.0f} A; {rec} A is allowed. ")
+            + "Keep the policy limit.",
+            {"type": "config", "file": "modules/physicalproperties.json", "path": ["currentLimit", "drive"],
+             "value": rec} if before and abs(before - rec) >= 1 else None))
+        report["summary"] = f"Slip test: no slip up to {ceiling:.0f} A"
+        return _finish(report)
+
+    weakest = min(found, key=found.get)
+    low, high = found[weakest], max(found.values())
+    spread = (high - low) / low * 100 if low > 0 else 0.0
+    rec = int(SLIP_MARGIN * low)
+    if policy:
+        rec = min(rec, int(policy))
+    report["recommended_a"] = rec
+    report["targets"].append(_grade("slip spread between corners (%)", spread, 25.0))
+    listing = ", ".join(f"{n2} {a:.1f} A" for n2, a in sorted(found.items(), key=lambda kv: kv[1]))
+    F.append(finding(
+        "ok", f"Drive current limit: {rec} A",
+        f"Breakaway currents: {listing}. The weakest corner, {weakest}, sets the limit: 90% of "
+        f"{low:.1f} A leaves room for a different carpet at an event and for tread that wears. Just "
+        "below slip is the hardest the carpet lets the robot accelerate; above it the wheel only "
+        "spins, wasting battery and making odometry count distance the robot never travelled. "
+        "Change PathPlanner's drive current limit to match (Settings, Robot Config); the linter "
+        "checks they agree. Then redeploy and measure the feedforward again.",
+        {"type": "config", "file": "modules/physicalproperties.json", "path": ["currentLimit", "drive"],
+         "value": rec}))
+    if before and before > low:
+        F.append(finding(
+            "warn", f"The limit in use, {before:.0f} A, is above where {weakest} slips",
+            "Hard acceleration spins that wheel today. The robot loses push it could have had, the "
+            "tread wears, and the odometry drifts."))
+    if spread > 25:
+        F.append(finding(
+            "warn", f"Corners slip at very different currents ({low:.0f} to {high:.0f} A)",
+            "The robot's weight is not shared evenly: the corner that slips first carries the least. "
+            "A battery or a heavy mechanism far from the center does this. The lightest corner sets "
+            "the limit for all four, so evening out the weight raises it."))
+    never = [names[i] for i in mods if not report["modules"][names[i]]["slipped"]]
+    if never:
+        F.append(finding("info", f"{', '.join(never)} never slipped up to {ceiling:.0f} A",
+                         "Those corners carry more weight. The limit still has to protect the "
+                         "lightest one."))
+    report["summary"] = f"Slip test: weakest corner {weakest} at {low:.1f} A; recommended limit {rec} A"
+    _practice_note(result, report)
+    return _finish(report)
+
+
 def no_data_report(result):
     """A run that recorded nothing gets no score. An empty run must never read as a pass."""
     why = result.get("message") or "The run recorded no samples."
@@ -1065,5 +1185,7 @@ def analyze(result, gains=None, **kw):
         return straight_report(result, kw.get("measured_forward_m"), kw.get("measured_lateral_m"))
     if test == "capture":
         return health_report(result)
+    if test == "slip":
+        return slip_report(result)
     return {"test": test, "summary": "No analysis for this test.", "findings": [], "targets": [],
             "next": None, "score": None}

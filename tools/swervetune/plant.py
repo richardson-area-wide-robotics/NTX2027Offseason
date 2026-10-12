@@ -367,3 +367,115 @@ def true_drive_feedforward(surface="floor", robot_mass_kg=55.0, kS_volts=0.15):
     mass_equiv = m.J * (m.gear / m.r) ** 2
     kA = mass_equiv / force_per_volt
     return {"kS": kS_volts, "kV": kV, "kA": kA}
+
+
+# ---------------------------------------------------------------------------- wall push
+
+
+def wall_loads(robot_mass_kg=55.0, front_share=0.46, seed=1):
+    """Normal force on each wheel, newtons: front pair, then back pair, a little uneven."""
+    rng = random.Random(seed)
+    g = 9.81
+    shares = [front_share / 2, front_share / 2, (1 - front_share) / 2, (1 - front_share) / 2]
+    return [robot_mass_kg * g * s * (1 + 0.04 * (rng.random() - 0.5)) for s in shares]
+
+
+def true_slip_currents(robot_mass_kg=55.0, mu_static=1.1, front_share=0.46, gear=5.5,
+                       wheel_d_in=3.0, seed=1):
+    """The current at which each modelled wheel breaks loose, to check an analysis against."""
+    motor = Motor("neo")
+    r = wheel_d_in * 0.0254 / 2
+    return [mu_static * n * r / (gear * motor.Kt) + motor.free_i
+            for n in wall_loads(robot_mass_kg, front_share, seed)]
+
+
+def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.46, gear=5.5,
+              wheel_d_in=3.0, ceiling_a=60.0, ramp_vps=1.0, slip_mps=0.15, limit_before_a=40.0,
+              rate_hz=200, bus=12.0, seed=1):
+    """Same shape as the robot's slip test: four modules, a bumper against a wall.
+
+    Returns ``(channels, meta)``. Each wheel is stalled until its push beats static friction, then
+    spins against kinetic friction; it is cut, as on the robot, once its speed stays above
+    ``slip_mps`` for two 20 ms loops.
+    """
+    motor = Motor("neo")
+    r = wheel_d_in * 0.0254 / 2
+    loads = wall_loads(robot_mass_kg, front_share, seed)
+    J = 3.0e-5 + 1.1e-4 / gear ** 2
+    fric = motor.Kt * motor.free_i  # internal friction torque at the motor
+    n = len(loads)
+    w = [0.0] * n
+    slipping = [False] * n
+    cut = [False] * n
+    fast = [0] * n
+    hist = [[] for _ in range(n)]
+    pos = [0.0] * n
+    meas = [0.0] * n
+    align, dt = 0.8, 0.0005
+    total = align + 12.0 / ramp_vps + 1
+    keys = ["t", "phase", "cmd"] + [f"m{i}.{k}" for i in range(n) for k in ("volts", "amps", "v", "pos")]
+    out = {k: [] for k in keys + ["heading", "x", "y", "ax", "ay", "vbus"]}
+    t, next_sample, next_loop, next_ms = 0.0, 0.0, 0.0, 0.0
+    applied, amps = [0.0] * n, [0.0] * n
+    peak = [0.0] * n
+    slip_a = [float("nan")] * n
+    done_at = None
+    while t <= total and (done_at is None or t < done_at + 0.3):
+        cmd = 0.0 if t < align else min(12.0, ramp_vps * (t - align))
+        for i in range(n):
+            v_cmd = 0.0 if cut[i] else cmd
+            vlt = motor.limit_volts(v_cmd, w[i], ceiling_a)
+            cur = motor.current(vlt, w[i])
+            torque = motor.Kt * cur
+            if not slipping[i]:
+                if (torque - fric) * gear / r >= mu_static * loads[i]:
+                    slipping[i] = True
+                else:
+                    w[i] = 0.0
+            if slipping[i]:
+                load = mu_kinetic * loads[i] * r / gear + fric
+                w[i] += (torque - load) / J * dt
+                if w[i] < 0:
+                    w[i] = 0.0
+            pos[i] += w[i] / gear * r * dt
+            applied[i], amps[i] = vlt, abs(cur)
+        if t >= next_ms:  # the SPARK's speed reading: the last 16 ms of travel
+            for i in range(n):
+                hist[i].append(pos[i])
+                if len(hist[i]) > 17:
+                    hist[i].pop(0)
+                meas[i] = (hist[i][-1] - hist[i][0]) / ((len(hist[i]) - 1) / 1000.0) if len(hist[i]) > 1 else 0.0
+            next_ms += 0.001
+        if t >= next_loop:  # the 50 Hz robot loop, as SlipProcedure does it
+            for i in range(n):
+                if cut[i]:
+                    continue
+                peak[i] = max(peak[i], amps[i])
+                fast[i] = fast[i] + 1 if abs(meas[i]) > slip_mps else 0
+                if fast[i] >= 2:
+                    cut[i] = True
+                    slip_a[i] = peak[i]
+            if done_at is None and all(cut):
+                done_at = t
+            next_loop += 0.02
+        if t >= next_sample:
+            out["t"].append(t)
+            out["phase"].append(0 if t < align else 1)
+            out["cmd"].append(cmd)
+            for i in range(n):
+                out[f"m{i}.volts"].append(applied[i])
+                out[f"m{i}.amps"].append(amps[i])
+                out[f"m{i}.v"].append(meas[i])
+                out[f"m{i}.pos"].append(pos[i])
+            for k in ("heading", "x", "y", "ax", "ay"):
+                out[k].append(0.0)
+            out["vbus"].append(bus)
+            next_sample += 1.0 / rate_hz
+        t += dt
+    meta = {"ceiling_a": ceiling_a, "policy_a": ceiling_a, "limit_before_a": limit_before_a,
+            "ramp_vps": ramp_vps, "slip_mps": slip_mps, "direction": 1, "wall_lost": 0,
+            "min_plausible_slip_a": 8.0}
+    for i in range(n):
+        meta[f"slip_a_m{i}"] = slip_a[i]
+        meta[f"peak_a_m{i}"] = peak[i]
+    return out, meta

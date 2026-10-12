@@ -245,6 +245,7 @@ public final class SwerveTune {
     procedures.put("drive_ff", DriveFeedforwardProcedure::new);
     procedures.put("spin", SpinProcedure::new);
     procedures.put("straight", StraightLineProcedure::new);
+    procedures.put("slip", SlipProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -404,6 +405,22 @@ public final class SwerveTune {
     if (config.motorGuard) {
       watch(name, new SparkChannel(spark, simulation), kind, true, true);
     }
+  }
+
+  /** The team's current policy for the drive motors, from swervetune.json's inventory. */
+  private double drivePolicyA() {
+    return config.motorKinds.getOrDefault("drive", io.driveMotorKind()).policyAmps;
+  }
+
+  /** The drive current limit in force now: the guard's, if it is watching, else YAGSL's. */
+  private double driveLimitA() {
+    for (String name : drivetrainMotors) {
+      MotorGuard.Motor m = guard.motor(name);
+      if (m != null && name.endsWith(" drive")) {
+        return m.baseLimitA();
+      }
+    }
+    return io.driveCurrentLimitA();
   }
 
   /** The guard itself, for robot code that wants to read a motor's state. */
@@ -779,13 +796,15 @@ public final class SwerveTune {
     TestContext c = new TestContext(io, args, env, modules, cap, fwd, side, visionInUseNow(),
         sampler, signals.enabled(),
         signals::enabled, this::visionPoseArray);
+    c.drivePolicyA = drivePolicyA();
+    c.driveLimitA = driveLimitA();
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
       return;
     }
     SafetySupervisor.TestProfile prof = new SafetySupervisor.TestProfile(
-        p.spinsWheels(), p.movesChassis(c), cap, p.spaceBudgetM(c));
+        p.spinsWheels(), p.movesChassis(c), cap, p.spaceBudgetM(c), p.pushesWall());
     why = supervisor.refuseStart(gatherInputs(now), prof, p.needsEnabled());
     if (why != null) {
       ack(seq, false, why);
@@ -796,6 +815,8 @@ public final class SwerveTune {
     ctx = new TestContext(io, args, env, modules, cap, c.spaceForwardM, c.spaceSideM,
         c.visionInUse, Sampler.create(capacity), c.enabledAtStart, signals::enabled,
         this::visionPoseArray);
+    ctx.drivePolicyA = c.drivePolicyA;
+    ctx.driveLimitA = c.driveLimitA;
     proc = p;
     profile = prof;
     activeSeq = seq;

@@ -183,6 +183,14 @@ public interface DrivetrainIO {
   /** {@code {kS, kV, kA}} currently used by one module. */
   double[] driveFeedforward(int module);
 
+  /**
+   * Sets every drive motor's smart current limit, never saved to flash. For the slip test, which
+   * raises it for the run and puts it back.
+   */
+  default ApplyResult setDriveCurrentLimit(int amps) {
+    return ApplyResult.failed("this drivetrain cannot change its current limit");
+  }
+
   // ------------------------------------------------------------------ motor protection
   /** One module's drive motor controller, for the {@link MotorGuard}; null if it cannot be watched. */
   default MotorGuard.MotorChannel driveMotorChannel(int module) {

@@ -136,7 +136,15 @@ const Plot = (() => {
     g.setLineDash([]);
     g.globalAlpha = 1;
 
-    // Markers on top of the data.
+    // Markers on top of the data. Labels step down until they clear the ones already drawn.
+    const placed = [];
+    const labelAt = (text, x, y) => {
+      const w = g.measureText(text).width;
+      let yy = y;
+      for (let k = 0; k < 5 && placed.some(r => x < r.x + r.w && x + w > r.x && Math.abs(yy - r.y) < 12); k++) yy += 13;
+      placed.push({ x, y: yy, w });
+      g.fillText(text, x, yy);
+    };
     for (const a of notes) {
       const col = css(TONE[a.learn] || "--ink");
       g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.5;
@@ -145,7 +153,7 @@ const Plot = (() => {
         if (px < L || px > L + pw) continue;
         g.beginPath(); g.arc(px, py, 5, 0, Math.PI * 2); g.stroke();
         g.beginPath(); g.arc(px, py, 2, 0, Math.PI * 2); g.fill();
-        if (a.label) g.fillText(a.label, px + 7, py - 6);
+        if (a.label) labelAt(a.label, px + 7, py - 6);
         hits.push({ a, rank: 0, x: px - 9, y: py - 9, w: 18, h: 18 });
       } else if (a.type === "rise" && isFinite(a.y0) && isFinite(a.y1)) {
         const xa = X(a.x0), xb = X(a.x1), ya = Y(a.y0), yb = Y(a.y1);

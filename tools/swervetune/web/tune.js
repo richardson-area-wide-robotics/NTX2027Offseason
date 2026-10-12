@@ -10,6 +10,8 @@ const Tune = (() => {
       blurb: "How well each wheel holds the speed it is told. On blocks it only checks direction and delay; tune it on the floor, where the wheel carries the robot." },
     ff: { label: "Feedforward", test: "drive_ff", practice: true,
       blurb: "Measures, per module, the voltage it takes to start moving (kS), to hold each speed (kV) and to accelerate (kA). The biggest single step to a tight drivetrain. Floor for real numbers; blocks finds a binding module." },
+    slip: { label: "Slip current", test: "slip", practice: true,
+      blurb: "Finds the drive current where each wheel starts to slip on this carpet, so the current limit can sit just below it instead of at a datasheet number. Front bumper flat against a solid wall, every wheel pointing into it. The push ramps up until each wheel breaks loose; each is cut the moment it slips, and the tool recommends a limit." },
     spin: { label: "Spin", test: "spin", practice: false,
       blurb: "Spins in place both ways and compares command, gyro and wheels. Finds an inverted gyro and wrong module positions." },
     straight: { label: "Straight line", test: "straight", practice: false,
@@ -137,6 +139,7 @@ const Tune = (() => {
   function fields() {
     if (loop === "steer") return GAINS.steer;
     if (loop === "drive") return GAINS.drive;
+    if (loop === "slip") return [];
     if (loop === "ff") {
       const mods = target === "practice" ? ["frontleft"] : App.modules();
       return mods.flatMap(m => [[`FF/${m}/kS`, `${abbr(m)} kS`, "volts"], [`FF/${m}/kV`, `${abbr(m)} kV`, "V per m/s"], [`FF/${m}/kA`, `${abbr(m)} kA`, "V per m/s²"]]);
@@ -147,6 +150,10 @@ const Tune = (() => {
   function paintGains() {
     const g = liveGains();
     $("#gainsrc", root).textContent = target === "practice" ? "practice copy" : (App.connected() ? "running on the robot" : "connect to see the robot's");
+    if (!fields().length) {
+      $("#gains", root).innerHTML = `<p class="hint">Nothing to set by hand here: the test measures the drive ${Learn.term("current_limit", "current limit")} and offers to write it to the files.</p>`;
+      return;
+    }
     $("#gains", root).innerHTML = fields().map(([key, label, unit]) => {
       const v = key in edits ? edits[key] : g[key];
       const lk = learnKey(key);
@@ -186,6 +193,8 @@ const Tune = (() => {
     const env = App.env();
     if (env === "UNSET") return "Say where the robot is first (Environment, at the top).";
     if ((loop === "straight") && env === "BLOCKS") return "The straight-line test needs the robot on the floor.";
+    if (loop === "slip" && env === "BLOCKS") return "The slip test needs the robot on carpet with a bumper against a wall: set On the floor.";
+    if (loop === "slip" && env === "FIELD") return "Front bumper flat against a solid wall, every wheel pointing into it. Hold SPACE (or the tester's controller bumper) for the whole run.";
     if (env === "FIELD") return "On the floor: hold SPACE (or the tester's controller bumper) for the whole run.";
     return "";
   }
@@ -237,6 +246,10 @@ const Tune = (() => {
       out.push({ x: t, y: rate, color: COLORS[0], alpha: a, label: faded ? null : "gyro rad/s" });
     } else if (doc.test === "straight") {
       out.push({ x: ch.x || [], y: ch.y || [], color: COLORS[0], alpha: a, label: faded ? null : "odometry path (m)" });
+    } else if (doc.test === "slip") {
+      for (const i of modIdx(ch, "amps")) out.push({ x: t, y: ch[`m${i}.amps`].map(Math.abs), color: COLORS[i % 4], alpha: a, label: label(i) });
+      const cap = (doc.meta || {}).ceiling_a;
+      if (cap && !faded) out.push({ x: [t[0], t[t.length - 1]], y: [cap, cap], color: "--bad", dash: [6, 4], width: 1, label: "ceiling" });
     } else if (doc.test === "capture") {
       for (const i of modIdx(ch, "steer")) out.push({ x: t, y: ch[`m${i}.steer`], color: COLORS[i % 4], alpha: a, label: label(i) });
     }
@@ -245,7 +258,7 @@ const Tune = (() => {
 
   function axes(doc) {
     return { steer_step: ["s", "degrees"], drive_step: ["s", "m/s"], drive_ff: ["m/s", "volts"], spin: ["s", "rad/s"],
-             straight: ["x (m)", "y (m)"], capture: ["s", "degrees"] }[doc.test] || ["s", ""];
+             straight: ["x (m)", "y (m)"], capture: ["s", "degrees"], slip: ["s", "amps"] }[doc.test] || ["s", ""];
   }
 
   function explained() {
@@ -286,7 +299,7 @@ const Tune = (() => {
     }
     const [xl, yl] = axes(current);
     Plot.draw($("#plot", root), { series: s, xrange: zoom, xlabel: xl, ylabel: yl,
-      annotations: ex ? notes(ex.response) : [], readout: ex ? x => readout(ex, x) : null });
+      annotations: ex ? notes(ex.response) : ((current.report || {}).annotations || []), readout: ex ? x => readout(ex, x) : null });
     $("#explain-head", root).hidden = !ex;
     $("#plot2wrap", root).hidden = !ex;
     $("#explain-hint", root).hidden = !ex;
@@ -541,6 +554,7 @@ const Tune = (() => {
 
   async function saveGains() {
     if (target === "practice") { App.toast("Practice gains are not the robot's. Try them on the robot, then save."); return; }
+    if (loop === "slip") { App.toast("Use 'Do this' on the recommended limit to write it to the files."); return; }
     const prefix = { steer: ["Steer"], drive: ["Drive"], ff: ["FF"], spin: ["Chassis", "EncoderSync"], straight: ["Chassis", "EncoderSync"] }[loop];
     await App.previewAndSave({ kind: "gains", keys: prefix }, "Save the gains the robot is running");
   }

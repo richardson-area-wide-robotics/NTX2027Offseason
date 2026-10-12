@@ -27,9 +27,9 @@ const Learn = (() => {
     { id: "ff", title: "2. Feedforward: answer before the question", lessons: ["feedforward", "kS", "kV", "kA"] },
     { id: "fb", title: "3. Feedback: fix what feedforward missed", lessons: ["feedback", "kP", "kD", "kI", "integral_windup", "iZone", "rev_units"] },
     { id: "read", title: "4. Reading a step response", lessons: ["step_response", "dead_time", "rise_time", "overshoot", "settling_time", "steady_state_error", "oscillation"] },
-    { id: "limits", title: "5. When the motor can't do what it's told", lessons: ["saturation", "current_limit", "voltage_sag", "ramp_rate"] },
+    { id: "limits", title: "5. When the motor can't do what it's told", lessons: ["saturation", "current_limit", "traction", "voltage_sag", "ramp_rate"] },
     { id: "sensors", title: "6. Sensors: what the controller can see", lessons: ["quantization", "velocity_filter", "motor_encoder", "absolute_encoder", "offset", "inversion", "gear_ratio", "encoder_sync"] },
-    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy"] },
+    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "slip_current"] },
     { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "environment", "deadman", "what_if"] },
     { id: "motors", title: "9. Keeping motors alive", lessons: ["heat_estimate", "derate", "stall", "thermal_override"] },
     { id: "profile", title: "10. Second order: motion profiles (after first-order tuning works)", locked: true,
@@ -127,6 +127,10 @@ const Learn = (() => {
     current_limit: { title: "Current limit", short: "The most current the SPARK lets the motor draw. It protects the motor and the wheels' grip, and caps acceleration.",
       body: ["Current makes torque, torque makes acceleration - and heat. The smart current limit holds current to a set value by turning the voltage down. The team policy: NEO 550 20 A, NEO V1.1 60 A, NEO 2.0 and Vortex 80 A.",
         "On a drive motor, a limit above what the carpet can hold just spins the wheel."] },
+    traction: { title: "Traction", short: "The most push the carpet can pass from a wheel to the robot: grip times the weight on that wheel. Past it, the wheel spins.",
+      body: ["A wheel pushes the robot through friction with the carpet. The most it can pass on is the grip (the coefficient of friction) times the weight pressing that wheel down. Push harder and the wheel breaks loose and spins.",
+        "A spinning wheel pushes less, not more - sliding friction is lower than gripping friction. It also wears the tread, and the encoder counts distance the robot never travelled, so odometry drifts.",
+        "Each corner carries a different share of the weight, so each slips at a different push. The lightest corner slips first."] },
     voltage_sag: { title: "Voltage sag", short: "The battery voltage drops when lots of current flows, so the same duty cycle gives fewer volts.",
       body: ["A tired battery or a robot drawing hard (all four drive motors accelerating) can sag below 10 V. Feedforward in volts compensates; WPILib recommends setVoltage() for that reason. Tests refuse to start on a low battery because every number would change."], links: ["issues", "combine"] },
     ramp_rate: { title: "Ramp rate", short: "Limits how quickly the output can change. In YAGSL it also slows every correction the closed loop makes.",
@@ -164,6 +168,11 @@ const Learn = (() => {
       body: ["Averaging removes the encoder's last-bit flicker. Checking the spread catches a bumped wheel. Both make the offset the real position, not a moment's guess."] },
     redeploy: { title: "Why redeploy", short: "Offsets and gains live in JSON files the robot reads once, at startup. Changing the files does nothing until the code is deployed and restarted.",
       body: ["The tool writes the robot project's files on the laptop. Deploying copies them to the robot; the robot reads them when its code starts. That is also why 'Apply live' changes vanish at the next restart: only the files are permanent - and the commit makes them the team's."] },
+
+    slip_current: { title: "Slip current", short: "The drive current at which a wheel breaks loose. The drive current limit belongs just below it - measured on your carpet, not guessed.",
+      body: ["Motor current makes torque, torque makes the wheel push. So 'the push where the wheel slips' is a current, and the drive current limit can be set right under it.",
+        "The test: a bumper flat against a wall so the robot cannot move, then a slowly rising push. While the wheels grip, they stay still and the current climbs. The moment a wheel slips, its encoder speed jumps. The highest current before that is its breakaway current, and that wheel is cut at once to spare the tread.",
+        "The limit is set to 90% of the weakest corner: carpets differ between venues and tread wears. It never goes above the team's policy for the motor. A datasheet-only limit like 80 A on a 55 kg robot is far above where its wheels slip - all that extra current only spins them."] },
 
     swerve_module: { title: "Swerve module", short: "Two loops per corner: steering (an angle) and drive (a speed). Eight loops for the robot.",
       body: ["The steering loop is a position loop, like WPILib's turret tutorial. The drive loop is a velocity loop, like its flywheel tutorial. Tune steering first: a drive loop can't be judged while the wheel points the wrong way."], links: ["turret", "flywheel"] },
@@ -222,7 +231,7 @@ const Learn = (() => {
     ["kP", "kP"], ["kD", "kD"], ["kI", "kI"], ["kS", "kS"], ["kV", "kV"], ["kA", "kA"], ["PID", "feedback"], ["battery", "voltage_sag"],
     ["motion profile", "motion_profile"], ["trapezoid", "trapezoid_profile"], ["MAXMotion", "maxmotion_position"], ["heat estimate", "heat_estimate"],
     ["derate", "derate"], ["stall", "stall"], ["bevel gear", "bevel_gear"], ["straight-edge", "straight_edge"],
-    ["coast", "coast_mode"], ["redeploy", "redeploy"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
+    ["coast", "coast_mode"], ["redeploy", "redeploy"], ["slip current", "slip_current"], ["traction", "traction"], ["slip", "traction"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
   ];
 
   // ---------------------------------------------------------------- the hover card

@@ -387,6 +387,10 @@ def api_practice(body):
                               ff=(g.get(f"FF/{m}/kS", 0), g.get(f"FF/{m}/kV", 2.915),
                                   g.get(f"FF/{m}/kA", 0)))
         doc = {"test": "drive_step", "module": "ALL"}
+    elif loop == "slip":
+        ch, meta = plant.wall_push(mu_static=float(body.get("mu", 1.1)),
+                                   limit_before_a=g.get("Limit/Drive", 40.0))
+        doc = {"test": "slip", "module": "ALL", "meta": meta}
     else:
         ch = plant.drive_ff(surface=surface, quasi_s=6, max_v=6,
                             meas_period_ms=int(g.get("Drive/VelPeriodMs") or 16),

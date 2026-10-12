@@ -38,6 +38,15 @@ final class FakeDrivetrain implements DrivetrainIO {
   };
   boolean coast;
   boolean stopped;
+  /**
+   * Wall mode for the slip test: each wheel's breakaway current, amps, with a bumper against a
+   * wall. Null when there is no wall. A wheel stays still until its current passes this.
+   */
+  double[] wallSlipA;
+  final boolean[] slipping = new boolean[4];
+  final double[] amps = new double[4];
+  double driveLimitA = 40;
+  final List<Integer> limitsSet = new ArrayList<>();
 
   FakeDrivetrain() {
     for (int m = 0; m < 4; m++) {
@@ -56,6 +65,20 @@ final class FakeDrivetrain implements DrivetrainIO {
         steer[m] = (steer[m] + err * Math.min(1, dt / 0.05) + 360) % 360;
       }
       double target = Double.isFinite(speedCmd[m]) ? speedCmd[m] : volts[m] / 2.9;
+      if (wallSlipA != null) {
+        // Against a wall the wheel is stalled: current is volts over the NEO's resistance, up to
+        // the limit, until it beats the carpet's grip; then it spins and the current falls.
+        double stalled = Math.min(Math.abs(volts[m]) / 0.114, driveLimitA);
+        if (!slipping[m] && stalled >= wallSlipA[m]) {
+          slipping[m] = true;
+        }
+        if (!slipping[m]) {
+          speed[m] = 0;
+          amps[m] = stalled;
+          continue;
+        }
+        amps[m] = 0.6 * stalled;
+      }
       speed[m] += (target - speed[m]) * Math.min(1, dt / 0.08);
       position[m] += speed[m] * dt;
       double a = Math.toRadians(steer[m]);
@@ -66,7 +89,7 @@ final class FakeDrivetrain implements DrivetrainIO {
       omega += (-speed[m] * Math.cos(a) * r[1] + speed[m] * Math.sin(a) * r[0])
           / (r[0] * r[0] + r[1] * r[1]) / 4;
     }
-    if (chassisMoves) {
+    if (chassisMoves && wallSlipA == null) {
       double h = Math.toRadians(heading);
       x += (vx * Math.cos(h) - vy * Math.sin(h)) * dt;
       y += (vx * Math.sin(h) + vy * Math.cos(h)) * dt;
@@ -97,7 +120,14 @@ final class FakeDrivetrain implements DrivetrainIO {
 
   @Override
   public double driveCurrentLimitA() {
-    return 40;
+    return driveLimitA;
+  }
+
+  @Override
+  public ApplyResult setDriveCurrentLimit(int a) {
+    driveLimitA = a;
+    limitsSet.add(a);
+    return ApplyResult.ok("drive current limit " + a + " A");
   }
 
   @Override
@@ -162,7 +192,7 @@ final class FakeDrivetrain implements DrivetrainIO {
 
   @Override
   public double driveAmps(int m) {
-    return Math.abs(speed[m]) * 3;
+    return wallSlipA != null ? amps[m] : Math.abs(speed[m]) * 3;
   }
 
   @Override

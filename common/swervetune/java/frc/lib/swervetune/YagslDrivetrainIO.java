@@ -529,6 +529,14 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   }
 
   @Override
+  public ApplyResult setDriveCurrentLimit(int amps) {
+    // The same stall-only limit YAGSL sets from physicalproperties.json, so putting it back
+    // restores exactly what YAGSL configured.
+    return label(configureAll(true, false, c -> c.smartCurrentLimit(amps)),
+        "drive current limit " + amps + " A");
+  }
+
+  @Override
   public ApplyResult useAbsoluteSteerFeedback() {
     for (SwerveModule module : modules) {
       if (module.configuration.conversionFactors.angle.factor != 360) {
