@@ -73,6 +73,15 @@ public final class MotorGuard {
     /** Changes the smart current limit, never saved to flash. False if the controller refused. */
     boolean setCurrentLimit(int amps);
 
+    /**
+     * The supply voltage at the controller's own terminals. Compared with the PDH's voltage under
+     * load, it shows the resistance of that controller's power wiring: a loose connection shows up
+     * as a sag only that controller sees.
+     */
+    default double busVolts() {
+      return Double.NaN;
+    }
+
     /** True in simulation, where a controller has no real current or temperature to report. */
     default boolean simulated() {
       return false;
@@ -100,6 +109,7 @@ public final class MotorGuard {
     double lastLimitSendS = Double.NEGATIVE_INFINITY;
     double tempC = Double.NaN;
     double amps = Double.NaN;
+    double busVolts = Double.NaN;
 
     Motor(String name, MotorKind kind, MotorChannel channel, boolean stallTimer) {
       this.name = name;
@@ -133,6 +143,11 @@ public final class MotorGuard {
 
     public double amps() {
       return amps;
+    }
+
+    /** Supply voltage at the controller, volts; NaN if unknown. */
+    public double busVolts() {
+      return busVolts;
     }
 
     public double stallSeconds() {
@@ -305,6 +320,7 @@ public final class MotorGuard {
     double rot = m.channel.motorRotations();
     m.amps = amps;
     m.tempC = temp;
+    m.busVolts = m.channel.busVolts();
     if (Double.isFinite(rot) && Double.isFinite(m.lastRotations) && dt > 0) {
       m.rpm = (rot - m.lastRotations) / dt * 60.0;
     }

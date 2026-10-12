@@ -78,6 +78,11 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   }
 
   @Override
+  public double busVolts() {
+    return simulation ? Double.NaN : spark.getBusVoltage();
+  }
+
+  @Override
   public double appliedDuty() {
     return simulation ? Double.NaN : spark.getAppliedOutput();
   }

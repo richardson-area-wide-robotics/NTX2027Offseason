@@ -17,6 +17,7 @@
           <td>${esc(x.robot || "")}</td><td>${esc(x.test)}</td><td>${x.practice ? "practice" : esc(x.env || "")}</td>
           <td>${esc(x.outcome || "")}</td><td class="num">${x.score == null ? "–" : x.score}</td><td class="small">${esc(x.summary || "")}</td>
           <td><button class="btn small" data-open="${esc(x.file)}">Open</button>
+          <button class="btn small" data-export="${esc(x.file)}" title="Write a WPILOG that AdvantageScope opens${x.test === "drive_ff" ? ", and SysId reads" : ""}">Export</button>
           ${x.test === "straight" ? `<button class="btn small" data-tape="${esc(x.file)}">Enter tape</button>` : ""}</td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty">No runs yet.</div>`}</div>`;
     $$("#rf button", root).forEach(b => { b.classList.toggle("on", b.dataset.f === filter); b.onclick = () => { filter = b.dataset.f; paint(); }; });
@@ -27,6 +28,10 @@
       Tune.show(d);
     });
     $$("[data-tape]", root).forEach(b => b.onclick = () => tape(b.dataset.tape));
+    $$("[data-export]", root).forEach(b => b.onclick = async () => {
+      const r = await App.api("/api/export", { file: b.dataset.export });
+      App.toast(r.ok ? `Wrote ${r.path}. Open it in AdvantageScope${r.sysid ? " or SysId" : ""}.` : (r.error || "Export failed."), 8000);
+    });
   }
 
   function tape(file) {

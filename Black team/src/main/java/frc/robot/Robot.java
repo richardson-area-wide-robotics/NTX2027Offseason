@@ -1,14 +1,15 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.lib.swervetune.AkLogging;
 import frc.lib.swervetune.SwerveTune;
+import org.littletonrobotics.junction.LoggedRobot;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
   Drive drive = new Drive();
   Shooter shooter = new Shooter();
@@ -18,6 +19,8 @@ public class Robot extends TimedRobot {
   SwerveTune tune = SwerveTune.install(drive.getSwerveDrive(), drive, "Black team");
 
   public Robot() {
+    // AdvantageKit first: every match logged to the USB stick and streamed to AdvantageScope.
+    AkLogging.start("Black team");
     // Heat, stall and failure protection for every mechanism motor; the swerve motors are
     // already watched.
     shooter.watchMotors(tune::watchMotor);

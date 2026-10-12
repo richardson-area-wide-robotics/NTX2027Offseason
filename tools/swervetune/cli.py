@@ -26,8 +26,8 @@ import re
 import sys
 import time
 
-from . import (advisor, analysis, contract as C, diagnose, explain, monitor, plant, predict, rehearse,
-               runs, yagslcfg)
+from . import (advisor, akit, analysis, contract as C, diagnose, explain, monitor, plant, predict,
+               rehearse, runs, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -344,6 +344,25 @@ def cmd_predict(args, out):
             cells.append("never" if key == "settling_time" and p["summary"][col].get("settled") is False
                          else "-" if v is None else f"{v * scale:.3g}{unit}")
         out.say(f"  {label:10s} " + " ".join(f"{c:>10s}" for c in cells))
+    return out.done()
+
+
+def cmd_export(args, out):
+    doc = runs.load(args.run)
+    path = args.out or os.path.join(runs.RUNS, os.path.splitext(doc["_file"])[0] + ".wpilog")
+    names = akit.export_run(doc, path)
+    out.put(path=path, entries=names)
+    out.say(f"Wrote {path}: {len(names)} entries. Open it in AdvantageScope"
+            + (", or in SysId (mechanism 'drive', one motor per module)." if doc.get("test") == "drive_ff" else "."))
+    return out.done()
+
+
+def cmd_layout(args, out):
+    projects = [resolve_project(args.project)] if args.project else [yagslcfg.Project(d) for d in project_dirs()]
+    paths = [akit.write_layout(p, args.out_dir) for p in projects]
+    out.put(layouts=paths)
+    for p in paths:
+        out.say(f"Wrote {p}. In AdvantageScope: File > Import Layout.")
     return out.done()
 
 
@@ -664,6 +683,15 @@ def build_parser():
     s.add_argument("gains", nargs="+", help="Name=value, e.g. Steer/kP=0.02 FF/frontleft/kS=0.15")
     s.add_argument("--module", type=int, default=0, help="channel index, e.g. 0")
     s.set_defaults(fn=cmd_predict)
+
+    s = sub.add_parser("export", help="a saved run as a WPILOG for AdvantageScope (and SysId for drive_ff)")
+    s.add_argument("run")
+    s.add_argument("--out", help="output .wpilog path (default: next to the run)")
+    s.set_defaults(fn=cmd_export)
+
+    s = sub.add_parser("layout", help="write the AdvantageScope layout for each robot")
+    s.add_argument("--out-dir", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "advantagescope"))
+    s.set_defaults(fn=cmd_layout)
 
     s = sub.add_parser("gains", help="show or change live gains")
     s.add_argument("action", nargs="?", default="show", choices=["show", "set"])

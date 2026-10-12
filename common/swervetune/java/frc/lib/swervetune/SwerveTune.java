@@ -623,6 +623,7 @@ public final class SwerveTune {
       publishLive(now);
       publishMotors();
       handleMotorOverride(now);
+      AkLogging.record(io, guard.motors(), state == State.RUNNING ? lastTest : "");
       handleSimEnable();
       gains.poll();
       handleAbort();

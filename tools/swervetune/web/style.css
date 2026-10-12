@@ -5,7 +5,8 @@
   --ok: #1f7a45; --ok-bg: #e0f1e7; --warn: #8a5a00; --warn-bg: #fbefd6;
   --bad: #b0342b; --bad-bg: #f9e2df; --info: #3e5b8a; --info-bg: #e3eaf6;
   --sp: #7a8794; --grid: #e3e8ec;
-  --s0: #0b6e7a; --s1: #b0342b; --s2: #6b4fb8; --s3: #a8691a;
+  /* AdvantageScope's GraphColors, so a module is the same color here and there. */
+  --s0: #2b66a2; --s1: #e5b31b; --s2: #af2437; --s3: #80588e;
   --mono: Consolas, "Cascadia Mono", "SF Mono", Menlo, monospace;
   --sans: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
   color-scheme: light;
@@ -17,7 +18,7 @@
     --ok: #6fd39a; --ok-bg: #173323; --warn: #f0bf5a; --warn-bg: #392d13;
     --bad: #f2918a; --bad-bg: #431f1c; --info: #9db8ea; --info-bg: #1d2a42;
     --sp: #8796a3; --grid: #22303b;
-    --s0: #4fc0cc; --s1: #f2918a; --s2: #b9a2f5; --s3: #e6b062;
+    --s0: #5b93d1; --s1: #e5b31b; --s2: #e0505f; --s3: #b48cc4;
     color-scheme: dark;
   }
 }

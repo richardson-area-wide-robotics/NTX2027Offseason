@@ -26,8 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
-from . import (advisor, contract as C, diagnose, explain, monitor, plant, predict, rehearse, runs,
-               yagslcfg)
+from . import (advisor, akit, contract as C, diagnose, explain, monitor, plant, predict, rehearse,
+               runs, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -330,6 +330,13 @@ def api_run(name):
     return doc
 
 
+def api_export(body):
+    doc = runs.load(body["file"])
+    path = os.path.join(runs.RUNS, os.path.splitext(doc["_file"])[0] + ".wpilog")
+    names = akit.export_run(doc, path)
+    return {"ok": True, "path": path, "entries": len(names), "sysid": doc.get("test") == "drive_ff"}
+
+
 def api_predict(body):
     """'What if': the same run, predicted with changed gains. Gains not given keep their value."""
     doc = runs.load(body["file"])
@@ -441,7 +448,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,
         "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
-        "/api/motors/override": api_motor_override, "/api/predict": api_predict}
+        "/api/motors/override": api_motor_override, "/api/predict": api_predict,
+        "/api/export": api_export}
 
 
 class Handler(BaseHTTPRequestHandler):

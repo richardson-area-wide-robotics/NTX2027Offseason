@@ -5,16 +5,17 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.lib.swervetune.AkLogging;
 import frc.lib.swervetune.SwerveTune;
+import org.littletonrobotics.junction.LoggedRobot;
 import frc.robot.Subsystems.Feeder;
 import frc.robot.Subsystems.Intake;
 import frc.robot.Subsystems.Shooter;
 
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
 
   Drive drive = new Drive();
   Feeder feeder = new Feeder();
@@ -27,6 +28,8 @@ public class Robot extends TimedRobot {
 
   private Command autonomousCommand; 
   public Robot() {
+    // AdvantageKit first: every match logged to the USB stick and streamed to AdvantageScope.
+    AkLogging.start("Peashooter");
     // Heat, stall and failure protection for every mechanism motor; the swerve motors are
     // already watched.
     feeder.watchMotors(tune::watchMotor);
