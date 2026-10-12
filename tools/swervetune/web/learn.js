@@ -29,7 +29,7 @@ const Learn = (() => {
     { id: "read", title: "4. Reading a step response", lessons: ["step_response", "dead_time", "rise_time", "overshoot", "settling_time", "steady_state_error", "oscillation"] },
     { id: "limits", title: "5. When the motor can't do what it's told", lessons: ["saturation", "current_limit", "traction", "voltage_sag", "ramp_rate"] },
     { id: "sensors", title: "6. Sensors: what the controller can see", lessons: ["quantization", "velocity_filter", "motor_encoder", "absolute_encoder", "offset", "inversion", "gear_ratio", "encoder_sync"] },
-    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "slip_current", "camera_mount"] },
+    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "slip_current", "camera_mount", "field_survey"] },
     { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "environment", "deadman", "what_if"] },
     { id: "motors", title: "9. Keeping motors alive", lessons: ["heat_estimate", "derate", "stall", "thermal_override"] },
     { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["can_bus", "can_termination", "power_path", "battery_current", "wiggle_test"] },
@@ -214,6 +214,10 @@ const Learn = (() => {
       body: ["The camera knows where the tag is relative to itself. The field layout knows where the tag is on the field. Chaining them gives where the camera is on the field, and the mount takes that back to the robot's center.",
         "A position error moves every pose by the same distance. An angle error is worse: it grows with distance, about 1.7 cm per meter for each degree, so a tag 4 m away puts the pose 7 cm off for one degree of tilt the code doesn't know about.",
         "Measuring the mount with a tape is hard - where exactly is the center of a lens, and how much is it tilted? A tag on a wall at a measured spot gives the answer from the camera itself, and doing it from several spots shows how well the tape measurements agree."] },
+    field_survey: { title: "Surveying the field's tags", short: "Localization trusts every AprilTag to be exactly where the official layout says. People hang them, so measure where they really are.",
+      body: ["Two tags in the same camera frame fix where they sit relative to each other, whatever the robot's own position. Many frames tie whole groups of tags together; each group is then fitted onto the official layout, and what is left over is how far each tag really is from its place.",
+        "Every measurement has noise, so a tag is only changed when it moved by clearly more than its own uncertainty - three times it, and at least a centimeter. Noise must never move a tag.",
+        "Anything more than 30 cm off is refused: that is a misread or a tag on the wrong bracket, not something to copy into the robot. And a whole structure moved as one piece looks right this way: its tags still agree with each other."] },
     battery_current: { title: "Battery-side current", short: "The PDH measures the current a controller takes from the battery. Below full speed that is much less than the current in the motor.",
       body: ["A motor controller is a fast switch. At 25% output it connects the motor to the battery a quarter of the time; the rest of the time the motor's current keeps circulating through the controller, not the battery.",
         "Power in equals power out (minus a little heat), so battery current = motor current x output fraction. A drive motor pulling 20 A at 25% output takes only about 5 A from its PDH port.",
@@ -257,7 +261,7 @@ const Learn = (() => {
     ["motion profile", "motion_profile"], ["trapezoid", "trapezoid_profile"], ["MAXMotion", "maxmotion_position"], ["heat estimate", "heat_estimate"],
     ["derate", "derate"], ["stall", "stall"], ["bevel gear", "bevel_gear"], ["straight-edge", "straight_edge"],
     ["coast", "coast_mode"], ["redeploy", "redeploy"], ["slip current", "slip_current"], ["traction", "traction"], ["slip", "traction"], ["CAN bus", "can_bus"],
-    ["terminator", "can_termination"], ["termination", "can_termination"], ["power leads", "power_path"], ["PDH port", "power_path"], ["battery side", "battery_current"], ["camera mount", "camera_mount"], ["wiggle test", "wiggle_test"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
+    ["terminator", "can_termination"], ["termination", "can_termination"], ["power leads", "power_path"], ["PDH port", "power_path"], ["battery side", "battery_current"], ["camera mount", "camera_mount"], ["field survey", "field_survey"], ["wiggle test", "wiggle_test"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
   ];
 
   // ---------------------------------------------------------------- the hover card

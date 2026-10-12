@@ -26,8 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, camcal, contract as C, diagnose, explain, geometry, logsummary, monitor,
-               pdhports, plant, predict, rehearse, runs, wiring, yagslcfg)
+from . import (advisor, akit, camcal, contract as C, diagnose, explain, fieldsurvey, geometry, logsummary,
+               monitor, pdhports, plant, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -325,6 +325,20 @@ def _edits_from(body):
     raise ValueError("unknown save kind")
 
 
+def _layout_path():
+    return os.path.join(S.project.path, "src", "main", "deploy", "apriltags", "surveyed.json")
+
+
+def _layout_change(body):
+    text = body.get("text") or ""
+    d = json.loads(text)
+    if not isinstance(d.get("tags"), list) or "field" not in d:
+        raise ValueError("not an AprilTag layout")
+    path = _layout_path()
+    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    return path, old, text
+
+
 def _wiring_change(body):
     path = wiring.map_path(S.project)
     old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
@@ -334,8 +348,11 @@ def _wiring_change(body):
 def api_save_preview(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
-    if body.get("kind") == "wiring":
-        path, old, new = _wiring_change(body)
+    if body.get("kind") in ("wiring", "layout"):
+        try:
+            path, old, new = (_wiring_change if body["kind"] == "wiring" else _layout_change)(body)
+        except (ValueError, KeyError) as e:
+            return {"ok": False, "error": f"Not saved: {e}"}
         rel = os.path.relpath(path, S.project.path).replace(os.sep, "/")
         return {"ok": True, "diff": yagslcfg.diff(old, new, rel) if old != new else "", "files": [rel]}
     changes = S.project.preview(_edits_from(body))
@@ -346,8 +363,12 @@ def api_save_preview(body):
 def api_save_apply(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
-    if body.get("kind") == "wiring":
-        path, old, new = _wiring_change(body)
+    if body.get("kind") in ("wiring", "layout"):
+        try:
+            path, old, new = (_wiring_change if body["kind"] == "wiring" else _layout_change)(body)
+        except (ValueError, KeyError) as e:
+            return {"ok": False, "error": f"Not saved: {e}"}
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(new)
         S._wiring = None
@@ -550,6 +571,76 @@ def api_camcal_sample(body):
                        f"tags {sorted(seen_tags) or 'none'}. Check the name matches PhotonVision's page, the "
                        "pipeline is in AprilTag 3D mode, and robot code passes sightings (PhotonVisionSource).")
     return out
+
+
+SURVEY = {"running": False, "sightings": [], "keys": set(), "thread": None}
+
+
+def api_survey_start(_):
+    """Starts recording every camera's tags until stopped."""
+    if not S.link or not S.link.is_connected():
+        return {"ok": False, "error": "Connect to the robot first (or try Practice)."}
+    if SURVEY["running"]:
+        return {"ok": True}
+    SURVEY.update(running=True, sightings=[], keys=set())
+
+    def work():
+        while SURVEY["running"]:
+            try:
+                for s in S.link.sightings():
+                    key = (s["camera"], s["tag"], s["t"])
+                    if key not in SURVEY["keys"]:
+                        SURVEY["keys"].add(key)
+                        SURVEY["sightings"].append(s)
+            except Exception:  # noqa: BLE001 - a dropped connection just pauses the recording
+                pass
+            time.sleep(0.02)
+
+    SURVEY["thread"] = threading.Thread(target=work, name="swervetune-survey", daemon=True)
+    SURVEY["thread"].start()
+    return {"ok": True}
+
+
+def api_survey_stop(_):
+    SURVEY["running"] = False
+    return api_survey_state()
+
+
+def api_survey_state(_query=None):
+    s = SURVEY["sightings"]
+    frames = {}
+    for x in s:
+        frames.setdefault((x["camera"], x["t"]), set()).add(x["tag"])
+    return {"ok": True, "running": SURVEY["running"], "sightings": len(s),
+            "views": sum(1 for v in frames.values() if len(v) >= 2), "tags": sorted({x["tag"] for x in s})}
+
+
+PRACTICE_SURVEY = {5: (0.04, 0.0, 0.0, 0, 0, 0), 26: (0.0, 0.0, 0.0, 0, 0, 3.0),
+                   21: (0.0, -0.025, 0.01, 0, 0, 0), 9: (0.45, 0.0, 0.0, 0, 0, 0)}
+
+
+def api_survey_solve(body):
+    """Works out where every recorded tag really is (or a practice field's)."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    variant = body.get("variant") or None
+    if body.get("practice"):
+        sightings = plant.field_frames(moved=PRACTICE_SURVEY)
+    else:
+        sightings = list(SURVEY["sightings"])
+    r = fieldsurvey.survey(sightings, variant)
+    r["practice"] = bool(body.get("practice"))
+    if r["practice"]:
+        r["truth"] = {str(k): v for k, v in PRACTICE_SURVEY.items()}
+    if r.get("variant"):
+        lay = fieldsurvey.official(r["variant"])
+        r["official"] = {str(i): {"x": t[1][0], "y": t[1][1], "yaw": camcal.mat_to_euler(t[0])[2]}
+                         for i, t in lay["tags"].items()}
+        r["field"] = lay["field"]
+    r.pop("poses", None)
+    if S.project:
+        r["path"] = os.path.relpath(_layout_path(), S.project.path).replace(os.sep, "/")
+    return r
 
 
 PRACTICE_MOUNT = (0.28, -0.12, 0.52, 0.0, -18.0, 8.0)
@@ -788,7 +879,8 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
-       "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin}
+       "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
+       "/api/survey/state": api_survey_state}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -799,7 +891,9 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
         "/api/export": api_export, "/api/wiring/termination": api_wiring_termination,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
-        "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve}
+        "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve,
+        "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,
+        "/api/survey/solve": api_survey_solve}
 
 
 class Handler(BaseHTTPRequestHandler):

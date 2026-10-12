@@ -84,6 +84,8 @@ main { padding: 16px; max-width: 1400px; margin: 0 auto; }
 @media (max-width: 900px) { .grid2, .split { grid-template-columns: minmax(0, 1fr); } }
 .panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; align-content: start; }
 .stack { display: grid; gap: 12px; min-width: 0; align-content: start; }
+/* Grid children default to min-width: auto and grow to fit a wide table; let them shrink so .tblwrap scrolls. */
+.panel > *, .stack > * { min-width: 0; }
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
@@ -279,6 +281,21 @@ table.motors tr.flagged td { background: var(--bad-bg); }
 .geo-diagram .ext { stroke: var(--muted); stroke-dasharray: 3 3; }
 .geo-diagram .lbl { font: 600 12px var(--sans); fill: var(--ink); }
 .warn-ink { color: var(--warn); font-weight: 600; }
+.fs-map { width: 100%; height: auto; display: block; margin: 8px 0 2px; }
+.fs-map .fs-field { fill: var(--bg); stroke: var(--muted); stroke-width: 1.5; }
+.fs-tag circle { stroke: var(--panel); stroke-width: 1.5; }
+.fs-map .fs-label { font: 600 10px var(--mono); fill: var(--ink); }
+.fs-tag .fs-face { stroke: var(--ink); stroke-width: 1.5; }
+.fs-tag.ok circle, .fs-key.ok::before { fill: var(--ok); background: var(--ok); }
+.fs-tag.moved circle, .fs-key.moved::before { fill: var(--warn); background: var(--warn); }
+.fs-tag.bad circle, .fs-key.bad::before { fill: var(--bad); background: var(--bad); }
+.fs-tag.lone circle, .fs-key.lone::before { fill: var(--info); background: var(--info); }
+.fs-tag.unseen circle, .fs-key.unseen::before { fill: var(--rule); background: var(--rule); }
+.fs-arrow { stroke-width: 2.5; stroke-linecap: round; }
+.fs-arrow.moved { stroke: var(--warn); }
+.fs-arrow.bad { stroke: var(--bad); }
+.fs-key { margin-left: 8px; white-space: nowrap; }
+.fs-key::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
 .wiggle-step { border: 2px solid var(--rule); border-radius: 10px; padding: 12px 14px; margin: 8px 0; transition: border-color .2s, background .2s; }
 .wiggle-step.hot { border-color: var(--warn); background: var(--warn-bg); }
 .wiggle-step .warn-text { color: var(--bad); }

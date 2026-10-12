@@ -23,10 +23,14 @@ import org.photonvision.targeting.PhotonTrackedTarget;
  * alpha. Then add {@code ../common/swervetune-photonvision/java} to the project's sourceSets and:
  *
  * <pre>
+ *   AprilTagFieldLayout field = FieldLayouts.load(
+ *       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField)).layout();
  *   tune.setVisionSource(new PhotonVisionSource(
- *       "front", AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
- *       tune.cameraMount("front").orElse(ROUGH_ROBOT_TO_CAMERA)));
+ *       "front", field, tune.cameraMount("front").orElse(ROUGH_ROBOT_TO_CAMERA)));
  * </pre>
+ *
+ * <p>{@code FieldLayouts.load} puts in the tag positions the Calibrate tab's field survey measured,
+ * if one is deployed.
  *
  * <p>{@code cameraMount} reads where the camera sits from swervetune.json, which the Calibrate tab
  * measures; until then, a tape-measured guess keeps the robot running.

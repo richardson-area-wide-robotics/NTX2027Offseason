@@ -576,3 +576,50 @@ def camera_sightings(mount, placements, n=20, noise_m=0.004, noise_deg=0.3, ambi
                             "t": i * 0.05})
         out.append(dict(p, samples=samples))
     return out
+
+
+def field_frames(variant="welded", moved=None, mount=(0.28, -0.12, 0.52, 0.0, -15.0, 0.0), fov_deg=75.0,
+                 vfov_deg=50.0, max_range=5.0, noise_m=0.003, noise_deg=0.2, seed=8):
+    """Sightings from a camera driven over a grid of robot poses on a field whose tags are where
+    ``moved`` says: ``{id: (dx, dy, dz, droll, dpitch, dyaw)}`` meters and degrees from the official
+    layout. One frame per pose; a tag is seen when it is in view, in range and facing the camera."""
+    from . import camcal as K, fieldsurvey as FS
+
+    rng = random.Random(seed)
+    layout = FS.official(variant)
+    truth = {}
+    for i, (r, t) in layout["tags"].items():
+        d = (moved or {}).get(i, (0, 0, 0, 0, 0, 0))
+        truth[i] = (K._mul(K.euler_to_mat(*d[3:]), r), [t[0] + d[0], t[1] + d[1], t[2] + d[2]])
+    rc = (K.euler_to_mat(*mount[3:]), list(mount[:3]))
+    out, frame = [], 0
+    length, width = layout["field"]["length"], layout["field"]["width"]
+    x = 1.0
+    while x < length - 0.9:
+        y = 0.9
+        while y < width - 0.8:
+            for heading in range(0, 360, 30):
+                fc = K.compose((K.euler_to_mat(0, 0, heading), [x, y, 0.0]), rc)
+                inv = K.inverse(fc)
+                frame += 1
+                for i, ft in truth.items():
+                    r, t = K.compose(inv, ft)
+                    dist = math.sqrt(sum(v * v for v in t))
+                    if t[0] < 0.4 or dist > max_range:
+                        continue
+                    if abs(math.degrees(math.atan2(t[1], t[0]))) > fov_deg / 2 or abs(math.degrees(math.atan2(t[2], t[0]))) > vfov_deg / 2:
+                        continue
+                    normal = K._vec(r, [1, 0, 0])            # the tag's face, in the camera frame
+                    facing = -sum(n * v for n, v in zip(normal, t)) / dist
+                    if facing < math.cos(math.radians(65)):
+                        continue
+                    k = (dist / 2.0) ** 2
+                    jitter = K.euler_to_mat(*(rng.gauss(0, noise_deg * k) for _ in range(3)))
+                    q = K.mat_to_quat(K._mul(r, jitter))
+                    out.append({"camera": "front", "tag": i, "x": t[0] + rng.gauss(0, noise_m * k),
+                                "y": t[1] + rng.gauss(0, noise_m * k), "z": t[2] + rng.gauss(0, noise_m * k),
+                                "qw": q[0], "qx": q[1], "qy": q[2], "qz": q[3], "ambiguity": 0.05,
+                                "t": frame * 0.02})
+            y += 1.4
+        x += 1.4
+    return out

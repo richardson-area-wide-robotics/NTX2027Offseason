@@ -5,7 +5,7 @@
 (() => {
   const root = $("#tab-calibrate");
   let pushRun = null, wheels = null;
-  let spots = [];
+  let spots = [], surveyTimer = null;
 
   root.innerHTML = `
     <div class="stack">
@@ -84,6 +84,26 @@
         <div id="cc-spots"></div>
         <div class="row"><button class="btn" id="cc-solve" disabled>Work it out</button><button class="btn" id="cc-clear">Clear the spots</button></div>
         <div id="cc-out"></div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+          <h2><span class="term" data-learn="field_survey">Field tags</span></h2>
+          <button class="btn" id="fs-practice">Practice</button>
+        </div>
+        <p class="small">Tags on a real field are hung by people: a few centimeters off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
+        <ol class="small">
+          <li>On the field, robot disabled. Drive slowly (or push the robot) so the camera sees <b>two or more tags at once</b>, within about 4 m: in front of each hub face, the trenches, the outposts, the towers.</li>
+          <li><b>Start recording</b>, cover every group of tags for a minute or two, then <b>Stop</b>.</li>
+          <li><b>Work it out</b>. Only tags measured to have really moved are changed; the rest keep their official place.</li>
+        </ol>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="btn primary" id="fs-start">Start recording</button>
+          <button class="btn" id="fs-stop" disabled>Stop</button>
+          <label class="small">Field <select id="fs-variant"><option value="">Tell from the tags</option><option value="welded">Welded</option><option value="andymark">AndyMark</option></select></label>
+          <button class="btn" id="fs-solve">Work it out</button>
+          <span class="small muted" id="fs-state"></span>
+        </div>
+        <div id="fs-out"></div>
       </div>
     </div>`;
 
@@ -200,6 +220,79 @@
     spots = (r.placements || []).map(p => Object.assign(p, { practice: true }));
     paintSpots();
     showMount(r);
+  };
+
+  // ---------------------------------------------------------------- field survey
+  async function surveyState() {
+    const r = await App.api("/api/survey/state");
+    $("#fs-state", root).textContent = `${r.running ? "Recording: " : ""}${r.sightings} sightings, ${r.views} views with two or more tags, ${r.tags.length} tags seen`;
+    $("#fs-start", root).disabled = r.running;
+    $("#fs-stop", root).disabled = !r.running;
+    if (!r.running) { clearInterval(surveyTimer); surveyTimer = null; }
+  }
+
+  function fieldMap(r) {
+    const f = r.field, W = 760, H = Math.round(W * f.width / f.length), k = W / f.length, EX = 20, MAXPX = 60;
+    const X = x => x * k, Y = y => H - y * k;
+    const rows = Object.fromEntries((r.rows || []).map(x => [x.id, x]));
+    const labels = [];   // tags within a label's height of each other share one label
+    const marks = Object.entries(r.official).map(([id, o]) => {
+      const row = rows[id], cls = !row ? "unseen" : !row.measured ? "lone" : !row.trusted ? "bad" : row.significant ? "moved" : "ok";
+      const a = o.yaw * Math.PI / 180, nx = Math.cos(a) * 9, ny = Math.sin(a) * 9;
+      const near = labels.find(l => Math.hypot(l.x - X(o.x), l.y - Y(o.y)) < 14);
+      if (near) near.ids.push(id); else labels.push({ x: X(o.x), y: Y(o.y), ids: [id] });
+      let arrow = "";
+      if (row && row.measured && (row.significant || !row.trusted)) {
+        let dx = row.dx_cm / 100 * EX * k, dy = -row.dy_cm / 100 * EX * k;
+        const len = Math.hypot(dx, dy);
+        if (len > MAXPX) { dx *= MAXPX / len; dy *= MAXPX / len; }   // a wild one still fits the map
+        arrow = `<line x1="${X(o.x)}" y1="${Y(o.y)}" x2="${X(o.x) + dx}" y2="${Y(o.y) + dy}" class="fs-arrow ${cls}"></line>`;
+      }
+      const tip = row ? `Tag ${id}: ${row.measured ? `${fmt(row.moved_cm, 1)} cm, ${fmt(row.turned_deg, 1)}° from official (±${fmt(row.sigma_cm, 1)} cm, ${row.views} views)` : "seen, not measured"}` : `Tag ${id}: not seen`;
+      return `<g class="fs-tag ${cls}"><title>${esc(tip)}</title>${arrow}
+        <line x1="${X(o.x)}" y1="${Y(o.y)}" x2="${X(o.x) + nx}" y2="${Y(o.y) - ny}" class="fs-face"></line>
+        <circle cx="${X(o.x)}" cy="${Y(o.y)}" r="5"></circle></g>`;
+    }).join("");
+    const text = labels.map(l => `<text x="${l.x + 7}" y="${l.y - 7}" class="fs-label">${l.ids.join(", ")}</text>`).join("");
+    return `<svg viewBox="-12 -16 ${W + 60} ${H + 30}" class="fs-map" role="img" aria-label="Field map of AprilTags and how far each was measured from its official place">
+      <rect x="0" y="0" width="${W}" height="${H}" class="fs-field"></rect>${marks}${text}</svg>
+      <p class="hint">Arrows show how far a tag moved, drawn ${EX} times longer (the longest are cut short). Hover a tag for its numbers.
+        <span class="fs-key ok">official</span> <span class="fs-key moved">moved</span> <span class="fs-key bad">refused</span> <span class="fs-key lone">not measured</span> <span class="fs-key unseen">not seen</span></p>`;
+  }
+
+  function showSurvey(r) {
+    const out = $("#fs-out", root);
+    if (r.ok === false) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+    const moved = (r.rows || []).filter(x => x.measured && (x.significant || !x.trusted));
+    out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up drive on a field with three tags moved (4 cm, 2.7 cm, a 3° turn) and one on the wrong bracket. Nothing here can be saved.</div>` : ""}
+      ${r.official ? fieldMap(r) : ""}
+      ${moved.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Tag</th><th>Moved</th><th>x / y / z</th><th>Turned</th><th>±</th><th>Views</th><th></th></tr></thead><tbody>
+        ${moved.map(x => `<tr><td>${x.id}</td><td class="num mono">${fmt(x.moved_cm, 1)} cm</td>
+          <td class="num mono">${fmt(x.dx_cm, 1)} / ${fmt(x.dy_cm, 1)} / ${fmt(x.dz_cm, 1)}</td><td class="num mono">${fmt(x.turned_deg, 1)}°</td>
+          <td class="num mono small">${fmt(x.sigma_cm, 1)} cm, ${fmt(x.sigma_deg, 1)}°</td><td class="num">${x.views}</td>
+          <td>${x.trusted ? `<span class="chip warn">corrected</span>` : `<span class="chip bad">kept official</span>`}</td></tr>`).join("")}
+      </tbody></table></div>` : ""}
+      ${findings(r.findings)}
+      ${r.layout_text && !r.practice && moved.some(x => x.trusted) ? `<button class="btn primary" id="fs-save">Save the surveyed layout (${esc(r.path || "")})…</button>` : ""}`;
+    const b = $("#fs-save", out);
+    if (b) b.onclick = () => App.previewAndSave({ kind: "layout", text: r.layout_text }, "Surveyed AprilTag layout");
+  }
+
+  $("#fs-start", root).onclick = async () => {
+    const r = await App.api("/api/survey/start", {});
+    if (!r.ok) { App.toast(r.error, 6000); return; }
+    clearInterval(surveyTimer);
+    surveyTimer = setInterval(surveyState, 1000);
+    surveyState();
+  };
+  $("#fs-stop", root).onclick = async () => { await App.api("/api/survey/stop", {}); surveyState(); };
+  $("#fs-solve", root).onclick = async () => {
+    $("#fs-out", root).innerHTML = `<p class="hint">Working it out (a few seconds)…</p>`;
+    showSurvey(await App.api("/api/survey/solve", { variant: $("#fs-variant", root).value }));
+  };
+  $("#fs-practice", root).onclick = async () => {
+    $("#fs-out", root).innerHTML = `<p class="hint">Working it out (a few seconds)…</p>`;
+    showSurvey(await App.api("/api/survey/solve", { practice: true }));
   };
 
   // ---------------------------------------------------------------- spin
