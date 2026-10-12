@@ -17,6 +17,12 @@ public class Robot extends TimedRobot {
   SwerveTune tune = SwerveTune.install(drive.getSwerveDrive(), drive, "Black team");
 
   public Robot() {
+    // Heat, stall and failure protection for every mechanism motor; the swerve motors are
+    // already watched.
+    shooter.watchMotors(tune::watchMotor);
+    intake.watchMotors(tune::watchMotor);
+    // To let the driver hold off heat shutoffs for 20 s in a match (stalls still cut out):
+    // controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
 
     drive.setDefaultCommand(drive.drive(
         () -> controller.getLeftX(),

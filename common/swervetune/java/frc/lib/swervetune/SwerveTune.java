@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import com.revrobotics.spark.SparkBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -127,6 +128,22 @@ public final class SwerveTune {
   private final StringArrayPublisher resultNotes;
   private final Map<String, DoubleArrayPublisher> resultData = new HashMap<>();
   private final Map<String, DoubleArrayPublisher> live = new HashMap<>();
+
+  // motor guard
+  private final MotorGuard guard = new MotorGuard();
+  private final Map<String, StringArrayPublisher> liveStrings = new HashMap<>();
+  private final List<String> drivetrainMotors = new ArrayList<>();
+  private final IntegerSubscriber overrideSeq;
+  private final IntegerSubscriber overrideBootId;
+  private final StringSubscriber overrideName;
+  private final DoubleSubscriber overrideSeconds;
+  private final IntegerPublisher overrideAckSeq;
+  private final StringPublisher overrideAckMessage;
+  private final StringArrayPublisher motorsReport;
+  private final StringArrayPublisher motorsEvents;
+  private long lastOverrideSeq;
+  private int publishedReportLines = -1;
+  private long publishedEvents = -1;
   private final DoubleArrayPublisher livePose;
   private final DoubleArrayPublisher liveVisionPose;
   private final DoubleArrayPublisher liveAccel;
@@ -183,7 +200,7 @@ public final class SwerveTune {
   public static SwerveTune install(SwerveDrive swerveDrive, Subsystem driveSubsystem, String robotName) {
     Path file = Filesystem.getDeployDirectory().toPath().resolve("swerve").resolve("swervetune.json");
     SwerveTuneConfig config = SwerveTuneConfig.load(file);
-    return new SwerveTune(
+    SwerveTune tune = new SwerveTune(
         new YagslDrivetrainIO(swerveDrive),
         NetworkTableInstance.getDefault(),
         new RobotSignals.Wpilib(
@@ -194,6 +211,11 @@ public final class SwerveTune {
         RobotBase.isSimulation(),
         new DriveOwnership.CommandsV2(driveSubsystem),
         false);
+    tune.guard.setAlertSink(text -> {
+      System.out.println("[swervetune] motors: " + text);
+      DriverStation.reportWarning("[motors] " + text, false);
+    });
+    return tune;
   }
 
   SwerveTune(
@@ -241,6 +263,16 @@ public final class SwerveTune {
     cmdArgKeys = nt.getStringArrayTopic(SwerveTuneTopics.CMD_ARG_KEYS).subscribe(new String[0]);
     cmdArgValues = nt.getDoubleArrayTopic(SwerveTuneTopics.CMD_ARG_VALUES).subscribe(new double[0]);
     simEnable = nt.getBooleanTopic(SwerveTuneTopics.SIM_REQUEST_ENABLE).subscribe(false);
+    overrideSeq = nt.getIntegerTopic(SwerveTuneTopics.MOTORS_OVERRIDE_SEQ).subscribe(0);
+    overrideBootId = nt.getIntegerTopic(SwerveTuneTopics.MOTORS_OVERRIDE_BOOT_ID).subscribe(0);
+    overrideName = nt.getStringTopic(SwerveTuneTopics.MOTORS_OVERRIDE_NAME).subscribe("ALL");
+    overrideSeconds = nt.getDoubleTopic(SwerveTuneTopics.MOTORS_OVERRIDE_SECONDS).subscribe(0);
+    overrideAckSeq = nt.getIntegerTopic(SwerveTuneTopics.MOTORS_OVERRIDE_ACK_SEQ).publish();
+    overrideAckMessage = nt.getStringTopic(SwerveTuneTopics.MOTORS_OVERRIDE_ACK_MESSAGE).publish();
+    motorsReport = nt.getStringArrayTopic(SwerveTuneTopics.MOTORS_REPORT).publish();
+    motorsEvents = nt.getStringArrayTopic(SwerveTuneTopics.MOTORS_EVENTS).publish();
+    nt.getBooleanTopic(SwerveTuneTopics.MOTORS_GUARD_ON).publish().set(config.motorGuard);
+    watchDrivetrain();
 
     envActive = nt.getStringTopic(SwerveTuneTopics.ENV_ACTIVE).publish();
     visionAvailable = nt.getBooleanTopic(SwerveTuneTopics.ENV_VISION_AVAILABLE).publish();
@@ -296,7 +328,171 @@ public final class SwerveTune {
     gains = new LiveGains(nt, io, config, bootId);
     lastCmdSeq = cmdSeq.get();
     lastAbortSeq = abortSeq.get();
+    lastOverrideSeq = overrideSeq.get();
     publishStatus(false);
+  }
+
+  // ------------------------------------------------------------------ motor guard
+
+  private void watchDrivetrain() {
+    if (!config.motorGuard) {
+      guard.note("Motor guard switched off in swervetune.json: no heat, stall or failure"
+          + " protection.");
+      return;
+    }
+    if (simulation) {
+      guard.note("Simulation: the SPARKs report no current or temperature here, so the heat, stall"
+          + " and failure checks have nothing to judge. They run on the real robot.");
+    }
+    MotorKind drive = config.motorKinds.getOrDefault("drive", io.driveMotorKind());
+    MotorKind steer = config.motorKinds.getOrDefault("steer", io.steerMotorKind());
+    boolean anyDrive = false;
+    boolean anySteer = false;
+    for (int m = 0; m < io.moduleCount(); m++) {
+      String module = io.moduleName(m);
+      anyDrive |= watch(module + " drive", io.driveMotorChannel(m), drive, false, false);
+      anySteer |= watch(module + " steer", io.steerMotorChannel(m), steer, false, true);
+    }
+    unknownNote(anyDrive, "Drive", drive, "drive");
+    unknownNote(anySteer, "Steering", steer, "steer");
+  }
+
+  private void unknownNote(boolean watched, String what, MotorKind kind, String key) {
+    if (watched && kind == MotorKind.NEO_UNKNOWN) {
+      guard.note(String.format("%s motors: NEO V1.1 or NEO 2.0? They look identical electrically,"
+          + " so the stricter %d A policy applies until swervetune.json says, e.g."
+          + " \"motors\": {\"%s\": \"NEO 2.0\"}.", what, kind.policyAmps, key));
+    }
+  }
+
+  /** Registers one motor; false if there was nothing to watch or the name was taken. */
+  private boolean watch(String name, MotorGuard.MotorChannel channel, MotorKind kind,
+      boolean mechanism, boolean stallTimer) {
+    if (channel == null) {
+      return false;
+    }
+    MotorKind k = config.motorKinds.getOrDefault(name, kind);
+    try {
+      guard.register(name, channel, k, config.enforceCurrentPolicy, stallTimer);
+    } catch (IllegalArgumentException e) {
+      guard.note(e.getMessage() + "; the second one is not watched.");
+      return false;
+    }
+    if (!mechanism) {
+      drivetrainMotors.add(name);
+    } else if (k == MotorKind.NEO_UNKNOWN) {
+      guard.note(String.format("%s: a NEO of unknown version, so %d A. If it is a NEO 550 it needs"
+          + " 20 A: say so in swervetune.json, \"motors\": {\"%s\": \"NEO 550\"}.", name,
+          k.policyAmps, name));
+    }
+    return true;
+  }
+
+  /**
+   * Watches a mechanism motor for heat, stalls and failure, and holds it to the team's current
+   * policy. Call once per motor at startup, typically through a subsystem's {@code watchMotors}:
+   *
+   * <pre>
+   *   shooter.watchMotors(tune::watchMotor);
+   * </pre>
+   *
+   * @param name unique and readable, e.g. {@code "Shooter leader"}; swervetune.json's motor
+   *     inventory can override the kind by this name
+   * @param kind what the motor is. A SPARK MAX cannot tell a NEO 550 from a NEO: say which
+   */
+  public void watchMotor(String name, SparkBase spark, MotorKind kind) {
+    if (config.motorGuard) {
+      watch(name, new SparkChannel(spark, simulation), kind, true, true);
+    }
+  }
+
+  /** The guard itself, for robot code that wants to read a motor's state. */
+  public MotorGuard motors() {
+    return guard;
+  }
+
+  /**
+   * Holds every motor's heat shutoff at half current for a while: for a match where losing a
+   * motor costs more than the motor. Bind it to a button. Stalls still cut out.
+   *
+   * @return what happened, for a log or a dashboard
+   */
+  public String overrideMotorShutoffs(double seconds) {
+    return guard.override("ALL", seconds, clock.getAsDouble());
+  }
+
+  private void handleMotorOverride(double now) {
+    long seq = overrideSeq.get();
+    if (seq == lastOverrideSeq) {
+      return;
+    }
+    lastOverrideSeq = seq;
+    String msg = overrideBootId.get() != bootId
+        ? "Ignored: that override was sent to an earlier boot of the robot."
+        : guard.override(overrideName.get(), overrideSeconds.get(), now);
+    overrideAckMessage.set(msg);
+    overrideAckSeq.set(seq);
+  }
+
+  private StringArrayPublisher liveStrings(String topic) {
+    return liveStrings.computeIfAbsent(topic, k -> nt.getStringArrayTopic(k).publish());
+  }
+
+  private void publishMotors() {
+    List<MotorGuard.Motor> list = guard.motors();
+    int n = list.size();
+    String[] names = new String[n];
+    String[] kinds = new String[n];
+    String[] stages = new String[n];
+    String[] causes = new String[n];
+    String[] flags = new String[n];
+    double[] heat = new double[n];
+    double[] temp = new double[n];
+    double[] amps = new double[n];
+    double[] limit = new double[n];
+    double[] base = new double[n];
+    double[] stall = new double[n];
+    double[] override = new double[n];
+    double now = clock.getAsDouble();
+    for (int i = 0; i < n; i++) {
+      MotorGuard.Motor m = list.get(i);
+      names[i] = m.name;
+      kinds[i] = m.kind.label;
+      stages[i] = m.stage().name();
+      causes[i] = m.cause();
+      flags[i] = m.flags();
+      heat[i] = 100 * m.heatFraction();
+      temp[i] = m.tempC();
+      amps[i] = m.amps();
+      limit[i] = m.activeLimitA();
+      base[i] = m.baseLimitA();
+      stall[i] = m.stallSeconds();
+      override[i] = m.overrideRemainingS(now);
+    }
+    liveStrings(SwerveTuneTopics.MOTORS_NAMES).set(names);
+    liveStrings(SwerveTuneTopics.MOTORS_KINDS).set(kinds);
+    liveStrings(SwerveTuneTopics.MOTORS_STAGE).set(stages);
+    liveStrings(SwerveTuneTopics.MOTORS_CAUSE).set(causes);
+    liveStrings(SwerveTuneTopics.MOTORS_FLAGS).set(flags);
+    liveArray(SwerveTuneTopics.MOTORS_HEAT_PCT).set(heat);
+    liveArray(SwerveTuneTopics.MOTORS_TEMP_C).set(temp);
+    liveArray(SwerveTuneTopics.MOTORS_AMPS).set(amps);
+    liveArray(SwerveTuneTopics.MOTORS_LIMIT_A).set(limit);
+    liveArray(SwerveTuneTopics.MOTORS_BASE_LIMIT_A).set(base);
+    liveArray(SwerveTuneTopics.MOTORS_STALL_S).set(stall);
+    liveArray(SwerveTuneTopics.MOTORS_OVERRIDE_S).set(override);
+    List<String> report = guard.report();
+    if (report.size() != publishedReportLines) {
+      publishedReportLines = report.size();
+      motorsReport.set(report.toArray(new String[0]));
+      for (String line : report) {
+        System.out.println("[swervetune] motors: " + line);
+      }
+    }
+    if (guard.eventCount() != publishedEvents) {
+      publishedEvents = guard.eventCount();
+      motorsEvents.set(guard.events().toArray(new String[0]));
+    }
   }
 
   /** Applies what {@code swervetune.json} asks for, once, and says what it did. */
@@ -405,8 +601,11 @@ public final class SwerveTune {
     try {
       trackClient(now);
       trackChassis(now);
+      guard.update(now);
       pollVision(now);
       publishLive(now);
+      publishMotors();
+      handleMotorOverride(now);
       handleSimEnable();
       gains.poll();
       handleAbort();
@@ -492,6 +691,11 @@ public final class SwerveTune {
     DrivetrainIO.GyroStatus gyro = io.gyroStatus();
     in.gyroConnected = gyro.connected();
     in.gyroCalibrating = gyro.calibrating();
+    MotorGuard.Motor worst = guard.worst(drivetrainMotors);
+    if (worst != null && worst.stage().ordinal() >= MotorGuard.Stage.DERATE.ordinal()) {
+      in.hotMotor = String.format("The %s motor is at %s (%s).", worst.name, worst.stage(),
+          worst.cause());
+    }
     return in;
   }
 

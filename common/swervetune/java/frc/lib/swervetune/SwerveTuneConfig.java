@@ -67,6 +67,19 @@ public final class SwerveTuneConfig {
 
   public final SafetySupervisor.Limits limits = new SafetySupervisor.Limits();
 
+  /** Watch every motor for heat, stalls and failure ({@link MotorGuard}). */
+  public boolean motorGuard = true;
+
+  /** Lower any current limit above the team policy for its motor, until the next reboot. */
+  public boolean enforceCurrentPolicy = true;
+
+  /**
+   * What each motor really is, by {@code "drive"}, {@code "steer"} or a motor's full name such as
+   * {@code "Shooter leader"}. A NEO V1.1 and a NEO 2.0 cannot be told apart electrically, and a NEO
+   * 550 on a SPARK MAX looks like any NEO, so only this inventory can say.
+   */
+  public final Map<String, MotorKind> motorKinds = new LinkedHashMap<>();
+
   /** Problems found while reading, shown on the laptop at connect. */
   public final List<String> warnings = new ArrayList<>();
 
@@ -151,6 +164,24 @@ public final class SwerveTuneConfig {
       c.overrideAxes = a;
     }
     c.limits.driverOverride = num(op.get("overrideThreshold"), c.limits.driverOverride);
+
+    Map<String, Object> motors = map(m.get("motors"));
+    c.motorGuard = bool(motors.get("guard"), true);
+    c.enforceCurrentPolicy = bool(motors.get("enforcePolicy"), true);
+    for (Map.Entry<String, Object> e : motors.entrySet()) {
+      if (e.getKey().equals("guard") || e.getKey().equals("enforcePolicy")
+          || e.getKey().startsWith("_")) {
+        continue;
+      }
+      String kind = str(e.getValue(), "");
+      String k = kind.toLowerCase(java.util.Locale.ROOT);
+      if (!(k.contains("neo") || k.contains("vortex") || k.contains("550") || k.contains("flex"))) {
+        c.warnings.add("motors." + e.getKey() + ": \"" + kind + "\" is not a REV motor this knows"
+            + " (NEO V1.1, NEO 2.0, NEO 550, NEO Vortex); ignored.");
+        continue;
+      }
+      c.motorKinds.put(e.getKey(), MotorKind.parse(kind));
+    }
 
     Map<String, Object> t = map(m.get("testLimits"));
     c.defaultSpeedCapMps = num(t.get("defaultSpeedCapMps"), c.defaultSpeedCapMps);

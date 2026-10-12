@@ -22,6 +22,7 @@ import argparse
 import json
 import math
 import os
+import re
 import sys
 import time
 
@@ -429,6 +430,47 @@ def cmd_watch(args, out):
         lk.close()
 
 
+def _fmt(x, spec):
+    if isinstance(x, (int, float)) and x == x:
+        return format(x, spec)
+    width = re.match(r"\d*", spec).group(0)
+    return format("-", ">" + width) if width else "-"
+
+
+def cmd_motors(args, out):
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        if args.override is not None:
+            reply = lk.override_motors(args.override, args.seconds)
+            out.put(override=reply)
+            out.say(reply)
+        m = lk.motors()
+        out.put(motors=_clean(m))
+        if not m["guard_on"]:
+            out.say("Motor guard is switched OFF in swervetune.json: no heat, stall or failure protection.")
+        for line in m["report"]:
+            out.say("  startup: " + line)
+        if not m["motors"]:
+            out.say("No motors are being watched.")
+        out.say(f"  {'motor':22s} {'kind':18s} {'stage':8s} {'heat':>5s} {'temp':>5s} {'amps':>5s}"
+                f" {'limit':>7s} {'stall':>5s}  why")
+        for r in m["motors"]:
+            limit = f"{_fmt(r['limit'], '.0f')}/{_fmt(r['base_limit'], '.0f')}"
+            out.say(f"  {r['name']:22s} {r['kind']:18s} {r['stage']:8s} {_fmt(r['heat_pct'], '4.0f')}%"
+                    f" {_fmt(r['temp'], '5.0f')} {_fmt(r['amps'], '5.1f')} {limit:>7s}"
+                    f" {_fmt(r['stall_s'], '5.1f')}  {r['cause'] or ''}"
+                    + (f"  override {r['override_s']:.0f} s" if (r['override_s'] or 0) > 0 else ""))
+            if r["flags"]:
+                out.say(f"  {'':22s} ! {r['flags']}")
+        for line in m["events"][-args.events:]:
+            out.say("  event: " + line)
+        return out.done()
+    finally:
+        lk.close()
+
+
 def cmd_practice(args, out):
     surface = args.surface
     if args.loop == "steer":
@@ -578,6 +620,14 @@ def build_parser():
     s = sub.add_parser("watch", help="print problems as the monitor spots them")
     s.add_argument("--seconds", type=float, default=30)
     s.set_defaults(fn=cmd_watch)
+
+    s = sub.add_parser("motors", help="heat, stalls and failures for every watched motor")
+    s.add_argument("--override", metavar="NAME", help="hold heat shutoffs at half current: a motor"
+                   " name or ALL (stalls still cut out)")
+    s.add_argument("--seconds", type=float, default=C.MAX_OVERRIDE_S,
+                   help=f"override length, at most {C.MAX_OVERRIDE_S} s; 0 cancels")
+    s.add_argument("--events", type=int, default=10, help="recent stage changes to show")
+    s.set_defaults(fn=cmd_motors)
 
     for name, fn, help_ in (("practice", cmd_practice, "one run on the practice pod"),
                             ("rehearse", cmd_rehearse, "the full advice loop on the practice pod")):

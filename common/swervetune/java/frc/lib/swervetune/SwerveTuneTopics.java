@@ -149,6 +149,46 @@ public final class SwerveTuneTopics {
   public static final String LIVE_POSE = LIVE + "Pose";
   /** Vision pose when one is in use, same layout as LIVE_POSE; empty otherwise. */
   public static final String LIVE_VISION_POSE = LIVE + "VisionPose";
+
+  // ---------------------------------------------------------------- motor guard, robot -> laptop
+  /** Every watched motor, swerve and mechanism alike; the arrays below follow this order. */
+  public static final String MOTORS = ROOT + "/Motors/";
+  public static final String MOTORS_NAMES = MOTORS + "Names";
+  /** {@link MotorKind#label}, e.g. {@code "NEO 550"}. */
+  public static final String MOTORS_KINDS = MOTORS + "Kinds";
+  /** OK, WARN, DERATE or SHUTOFF. */
+  public static final String MOTORS_STAGE = MOTORS + "Stage";
+  /** Heat estimate, percent of what burns the windings out. */
+  public static final String MOTORS_HEAT_PCT = MOTORS + "HeatPct";
+  public static final String MOTORS_TEMP_C = MOTORS + "TempC";
+  public static final String MOTORS_AMPS = MOTORS + "Amps";
+  /** Current limit in force now, amps. */
+  public static final String MOTORS_LIMIT_A = MOTORS + "LimitA";
+  /** Current limit when cool, amps. */
+  public static final String MOTORS_BASE_LIMIT_A = MOTORS + "BaseLimitA";
+  public static final String MOTORS_STALL_S = MOTORS + "StallS";
+  public static final String MOTORS_OVERRIDE_S = MOTORS + "OverrideS";
+  /** Why each motor is at its stage; empty when OK. */
+  public static final String MOTORS_CAUSE = MOTORS + "Cause";
+  /** Failures the guard cannot fix: unplugged, open phase, faults. Empty when none. */
+  public static final String MOTORS_FLAGS = MOTORS + "Flags";
+  /** Stage changes, newest last. */
+  public static final String MOTORS_EVENTS = MOTORS + "Events";
+  /** What registration found: limits over policy, unknown motor types. */
+  public static final String MOTORS_REPORT = MOTORS + "Report";
+  /** False when swervetune.json switched the guard off. */
+  public static final String MOTORS_GUARD_ON = MOTORS + "GuardOn";
+
+  // ---------------------------------------------------------------- motor guard, laptop -> robot
+  /** Bumped to request an override; ignored unless {@link #MOTORS_OVERRIDE_BOOT_ID} matches. */
+  public static final String MOTORS_OVERRIDE_SEQ = MOTORS + "Override/Seq";
+  public static final String MOTORS_OVERRIDE_BOOT_ID = MOTORS + "Override/BootId";
+  /** A motor name, or ALL. */
+  public static final String MOTORS_OVERRIDE_NAME = MOTORS + "Override/Name";
+  /** Seconds, at most {@link MotorGuard#MAX_OVERRIDE_S}; 0 cancels. */
+  public static final String MOTORS_OVERRIDE_SECONDS = MOTORS + "Override/Seconds";
+  public static final String MOTORS_OVERRIDE_ACK_SEQ = MOTORS + "Override/AckSeq";
+  public static final String MOTORS_OVERRIDE_ACK_MESSAGE = MOTORS + "Override/AckMessage";
   /** Vision observations so far, {@code {accepted, rejected}}. */
   public static final String LIVE_VISION_COUNTS = LIVE + "VisionCounts";
   /** Why the most recent rejected observation was rejected. */

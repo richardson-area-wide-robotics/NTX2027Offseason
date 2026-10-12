@@ -537,7 +537,65 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT):
 # ============================================================================ feedforward
 
 
-def feedforward_report(result, gains=None):
+def motor_trend_findings(fits, history):
+    """Compares this run's per-module kV and kS with earlier runs of the same robot.
+
+    Each module is judged relative to the others in the same run, so a cold morning, a fresh
+    battery or a firmware change that moves every module together cannot raise a false alarm; one
+    motor drifting away from its siblings can. A motor's magnets weaken when it is cooked: it then
+    spins faster per volt, so its kV (volts per m/s) falls. Growing drag - a dry bearing, debris,
+    a pinion working loose - shows as kS climbing instead.
+    """
+    F = []
+    now = {n: f for n, f in fits.items() if f.get("ok")}
+    if len(now) < 3:
+        return F
+
+    def shares(mods, key):
+        vals = {n: f[key] for n, f in mods.items() if f.get("ok") and A.finite(f.get(key))}
+        med = A.median(list(vals.values()))
+        return {n: v / med for n, v in vals.items()} if A.finite(med) and med > 0 else {}
+
+    earlier_kv = [shares(h["modules"], "kV") for h in history]
+    earlier_ks = [shares(h["modules"], "kS") for h in history]
+    since = next((h.get("saved") for h in history), None)
+    kv_now, ks_now = shares(now, "kV"), shares(now, "kS")
+    ks_med_now = A.median([f["kS"] for f in now.values()])
+    for n in now:
+        past = [e[n] for e in earlier_kv if n in e]
+        if len(past) >= 2 and n in kv_now:
+            change = kv_now[n] / A.median(past) - 1
+            if change < -0.05:
+                F.append(finding(
+                    "warn", f"{n}: kV down {-change * 100:.0f}% against the other modules since "
+                            f"{_day(since)}",
+                    "That motor now spins faster per volt than it used to, compared with its "
+                    "siblings: the signature of magnets weakened by overheating (or a different "
+                    "motor fitted since). A weakened motor makes less torque per amp and runs "
+                    "hotter for the same work. Check the Motors panel's heat history for it, and "
+                    "plan to replace it before it fails in a match.",
+                    {"type": "troubleshoot", "symptom": "motor_dead"}))
+        past_s = [e[n] for e in earlier_ks if n in e]
+        if len(past_s) >= 2 and n in ks_now and A.finite(ks_med_now):
+            base = A.median(past_s)
+            grew = ks_now[n] / base if base > 0 else float("inf")
+            if grew > 1.5 and (ks_now[n] - base) * ks_med_now > 0.05:
+                F.append(finding(
+                    "warn", f"{n}: needs {(grew - 1) * 100:.0f}% more voltage to start turning than "
+                            f"it used to, against the other modules",
+                    "Friction in that module is growing: a dry or failing bearing, debris in the "
+                    "gears, a rubbing wheel or a pinion working loose. Spin it by hand with the "
+                    "others for comparison.",
+                    {"type": "troubleshoot", "symptom": "motor_hot"}))
+    return F
+
+
+def _day(stamp):
+    s = str(stamp or "")
+    return f"{s[0:4]}-{s[4:6]}-{s[6:8]}" if len(s) >= 8 and s[:8].isdigit() else "earlier runs"
+
+
+def feedforward_report(result, gains=None, history=None):
     ch = result["channels"]
     env = result.get("env", "")
     meta = result.get("meta", {})
@@ -633,6 +691,8 @@ def feedforward_report(result, gains=None):
                 "Apply these live, then rerun drive_step: the speed error should collapse and the "
                 "drive kP can come down to a gentle correction. Save writes them to swervetune.json.",
                 {"type": "gains", "values": {k: round(v, 4) for k, v in values.items()}}))
+    if history:
+        F.extend(motor_trend_findings(fits, history))
     met = sum(t["met"] for t in report["targets"])
     report["summary"] = (f"Feedforward: {len(good)}/{len(mods)} modules fitted, kV spread "
                          f"{kv_spread:.0f}%" + (" (blocks: friction only)" if blocks else ""))
@@ -992,7 +1052,13 @@ def analyze(result, gains=None, **kw):
     if test == "drive_step":
         return drive_report(result, gains, **{k: v for k, v in kw.items() if k == "current_limit"})
     if test == "drive_ff":
-        return feedforward_report(result, gains)
+        history = kw.get("history")
+        if history is None and not result.get("practice"):
+            from . import runs
+            history = runs.ff_history((result.get("robot") or {}).get("name"),
+                                      result.get("env") == "BLOCKS", before=result.get("saved"),
+                                      exclude=result.get("_file"))
+        return feedforward_report(result, gains, history)
     if test == "spin":
         return spin_report(result)
     if test == "straight":

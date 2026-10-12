@@ -30,6 +30,19 @@ class ConfigAndSamplerTest {
   }
 
   @Test
+  void theMotorInventoryNamesWhatEachMotorReallyIs() {
+    SwerveTuneConfig c = SwerveTuneConfig.parse("{\"motors\": {\"drive\": \"NEO 2.0\","
+        + " \"steer\": \"neo550\", \"Shooter\": \"Falcon 500\", \"enforcePolicy\": false}}");
+    assertEquals(MotorKind.NEO_2_0, c.motorKinds.get("drive"));
+    assertEquals(MotorKind.NEO_550, c.motorKinds.get("steer"));
+    assertFalse(c.motorKinds.containsKey("Shooter"));
+    assertTrue(c.warnings.stream().anyMatch(w -> w.contains("Falcon 500")), c.warnings.toString());
+    assertFalse(c.enforceCurrentPolicy);
+    assertTrue(c.motorGuard, "the guard is on unless switched off");
+    assertTrue(SwerveTuneConfig.parse("{}").enforceCurrentPolicy);
+  }
+
+  @Test
   void missingFileChangesNothing() {
     SwerveTuneConfig c = SwerveTuneConfig.load(Path.of("definitely/not/here.json"));
     assertEquals("motor", c.steerFeedback);

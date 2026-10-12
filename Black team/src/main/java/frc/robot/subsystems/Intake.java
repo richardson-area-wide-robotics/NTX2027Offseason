@@ -9,6 +9,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.swervetune.MotorKind;
+import frc.lib.swervetune.MotorWatcher;
 
 /** Simple intake: one NEO on a SPARK MAX, in or out. */
 public class Intake extends SubsystemBase {
@@ -33,5 +35,10 @@ public class Intake extends SubsystemBase {
   /** Intake out while held. */
   public Command intakeOut() {
     return startEnd(() -> motor.set(OUT_SPEED), motor::stopMotor);
+  }
+
+  /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
+  public void watchMotors(MotorWatcher w) {
+    w.watch("Intake", motor, MotorKind.NEO_UNKNOWN);
   }
 }

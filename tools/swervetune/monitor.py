@@ -31,7 +31,15 @@ RULES = {
     "gyro_problem": ("field_relative_wrong", "gyro is not connected, still calibrating, or faulted"),
     "drive_ratio_mismatch": ("gear_ratio", "reports a different distance from the other modules"
                                            " while driving straight - its gear ratio may differ"),
+    "motor_hot": ("motor_hot", "is hot: the motor guard has stepped in"),
+    "motor_failing": ("motor_dead", "shows signs of failing: unplugged, an open phase, or a fault"),
+    "motor_hotter_than_siblings": ("motor_hot", "runs much hotter than the matching motors on the"
+                                                " other modules: binding, a dragging bearing or a"
+                                                " failing motor"),
 }
+
+# One swerve motor this much hotter than the median of its siblings, C, is not the duty cycle.
+SIBLING_HOT_C = 15.0
 
 # Passive drive-ratio check: how much straight-line driving to collect before judging, metres.
 RATIO_MIN_TRAVEL_M = 3.0
@@ -56,8 +64,9 @@ class Monitor:
             if now - start >= hold and key not in self._active:
                 symptom, text = RULES[rule]
                 who = f"Module {module}" if module is not None else "The robot"
+                sentence = f"{module} motor {text}." if rule.startswith("motor_") else f"{who}: {text}."
                 self._active[key] = {"rule": rule, "module": module, "symptom": symptom,
-                                     "text": f"{who}: {text}.", "detail": detail, "since": start}
+                                     "text": sentence, "detail": detail, "since": start}
             elif key in self._active:
                 self._active[key]["detail"] = detail
         else:
@@ -89,6 +98,8 @@ class Monitor:
         amps, issue = arr("drive_amps"), arr("abs_issue")
         dtemp, stemp = arr("drive_temp"), arr("steer_temp")
         faults = live.get("faults") or [""] * n
+        motors = live.get("motors") or []
+        guarded = bool(motors)
         for i in range(n):
             name = names[i] if i < len(names) else f"m{i}"
             moving_cmd = A.finite(v_sp[i]) and abs(v_sp[i]) > 0.1
@@ -127,11 +138,13 @@ class Monitor:
             stall = (enabled and A.finite(amps[i]) and amps[i] > 0.85 * self.limit
                      and A.finite(v[i]) and abs(v[i]) < 0.15)
             self._raise("stall", name, now, 0.4, f"{amps[i]:.0f} A", stall)
-            hot = max(x for x in (dtemp[i], stemp[i], 0) if A.finite(x)) > 70
+            # With the motor guard running, its kind-aware rules below replace this one.
+            hot = not guarded and max(x for x in (dtemp[i], stemp[i], 0) if A.finite(x)) > 70
             self._raise("hot", name, now, 2.0, f"{max(dtemp[i], stemp[i]):.0f} °C", hot)
             f = faults[i] if i < len(faults) else ""
             self._raise("faults", name, now, 0.0, f, bool(f))
         self._passive_ratio(live, names, n, enabled and env == "FIELD", now)
+        self._motor_rules(motors, now)
         gyro = live.get("gyro") or []
         bad_gyro = len(gyro) >= 4 and (gyro[1] != "connected" or gyro[2] != "ready" or bool(gyro[3]))
         detail = ", ".join(x for x in gyro[:4] if x) if gyro else ""
@@ -164,6 +177,30 @@ class Monitor:
                 self._raise("drive_ratio_mismatch", name, now, 0.0,
                             f"{(f['travel_ratio'] - 1) * 100:+.1f}% over {travel[name]:.1f} m" if f else "",
                             f is not None)
+
+    def _motor_rules(self, motors, now):
+        for m in motors:
+            name = m.get("name") or "?"
+            stage = m.get("stage") or "OK"
+            detail = f"{stage}: {m.get('cause') or ''}".rstrip(": ")
+            self._raise("motor_hot", name, now, 0.0, detail, stage != "OK")
+            self._raise("motor_failing", name, now, 0.0, m.get("flags") or "", bool(m.get("flags")))
+        # Swerve motors come in matched sets doing nearly the same work; one running far hotter
+        # than the rest is mechanical drag or a dying motor, whatever the absolute number.
+        for suffix in (" drive", " steer"):
+            group = [m for m in motors if (m.get("name") or "").endswith(suffix)
+                     and A.finite(m.get("temp")) and 0 < m["temp"] < 150]
+            temps = sorted(m["temp"] for m in group)
+            for m in group:
+                others = list(temps)
+                others.remove(m["temp"])
+                if len(others) < 2:
+                    continue
+                mid = others[len(others) // 2] if len(others) % 2 else \
+                    (others[len(others) // 2 - 1] + others[len(others) // 2]) / 2
+                gap = m["temp"] - mid
+                self._raise("motor_hotter_than_siblings", m["name"], now, 5.0,
+                            f"{m['temp']:.0f} °C vs {mid:.0f} °C", gap > SIBLING_HOT_C)
 
     def flags(self):
         return sorted(self._active.values(), key=lambda f: (f["since"], f["rule"]))

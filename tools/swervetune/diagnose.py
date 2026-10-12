@@ -525,6 +525,98 @@ SYMPTOMS = [
         ],
     },
     {
+        "id": "motor_hot",
+        "title": "A motor gets hot, goes weak or cuts out",
+        "looks_like": "A wheel or mechanism loses power partway through a match or a practice, "
+                      "the Driver Station shows a [motors] warning, or the Motors panel shows "
+                      "WARN, DERATE or SHUTOFF.",
+        "checks": [
+            check("Is every motor's current limit within the team policy: NEO 550 20 A, NEO V1.1 "
+                  "60 A, NEO 2.0 80 A, NEO Vortex 80 A?",
+                  "Config tab, and the startup report at the top of the Motors panel: the robot "
+                  "lowers any limit over the policy at boot and says which.",
+                  DISABLED,
+                  "A limit over the policy lets a motor make heat faster than it can shed it. In "
+                  "REV's tests a NEO 550 at 40 A burnt out in about 27 s.",
+                  "Set the limit in the code (or physicalproperties.json for swerve) to the policy. "
+                  "Tell swervetune.json what each NEO really is: a NEO 1.1 and a NEO 2.0 look "
+                  "identical to the robot.",
+                  {"type": "config", "file": "modules/physicalproperties.json"},
+                  {"lint": ["drive_current_over_policy", "steer_current_over_policy"]}),
+            check("Robot disabled and in coast, does the mechanism turn freely by hand?",
+                  "Binding, a rubbing belt, a bent shaft or a tight bearing makes a motor work all "
+                  "the time. On swerve, the tool compares each motor with the same motor on the "
+                  "other modules.",
+                  DISABLED,
+                  "Drag: the motor is working against friction, not the job.",
+                  "Find and free the binding. A swerve motor much hotter than its three siblings "
+                  "is the giveaway.",
+                  None,
+                  {"monitor": ["motor_hotter_than_siblings"]}),
+            check("Is the motor free of jams and hard stops (stall time stays at 0 in the Motors "
+                  "panel)?",
+                  "Motors panel, Stall column, while the mechanism is used.",
+                  BLOCKS,
+                  "A motor pushing into a hard stop draws its full limit and does nothing; the "
+                  "stall timer derates it and then cuts it.",
+                  "Add a soft limit or a limit switch, hold with less current, or end the command "
+                  "at the target instead of pushing on.",
+                  None,
+                  {"monitor": ["motor_hot"]}),
+            check("Does it only get hot after long, hard, honest use?",
+                  "Watch the heat estimate across a practice match. A NEO 550 has very little "
+                  "metal to soak up heat; its windings heat in seconds and its sensor lags by tens "
+                  "of seconds, which is why the guard trusts its heat estimate first.",
+                  FIELD,
+                  "The motor is too small or geared too fast for the job.",
+                  "Gear it down, add a fan (a NEO 550 benefits most), share the load between two "
+                  "motors, or move up a motor size. The thermal override is for the last seconds of "
+                  "a match only: it never lifts a stall cut."),
+        ],
+    },
+    {
+        "id": "motor_dead",
+        "title": "A motor does nothing, or runs weak or rough",
+        "looks_like": "A motor that should run does not, buzzes, cogs, or is clearly weaker than "
+                      "its twin; or the Motors panel shows a flag next to it.",
+        "checks": [
+            check("Is its controller free of faults?",
+                  "Motors panel, Flags column; the SPARK's LED blinks orange or red on a fault.",
+                  DISABLED,
+                  "The fault names the problem: 'sensor' is the encoder or hall cable, 'gate "
+                  "driver' is a shorted phase or a burnt motor.",
+                  "Reseat the encoder cable and check the power leads. A gate driver fault that "
+                  "comes back after clearing means replacing the motor or the controller.",
+                  None,
+                  {"monitor": ["motor_failing"]}),
+            check("When it is told to run, does current flow?",
+                  "Motors panel, Amps column. Output with no current and no motion is flagged "
+                  "automatically after half a second.",
+                  BLOCKS,
+                  "Output without current: an unplugged power lead, a broken phase wire, or a "
+                  "burnt winding.",
+                  "Check all three motor phase leads and the power connector. A burnt motor often "
+                  "turns lumpy by hand and smells of varnish.",
+                  None,
+                  {"monitor": ["motor_failing"]}),
+            check("Unplugged, does the motor turn smoothly by hand, with no grinding or cogging?",
+                  "Disconnect the phase leads first: a shorted winding makes a motor feel lumpy "
+                  "even unpowered.",
+                  DISABLED,
+                  "Damaged bearings or windings.",
+                  "Replace the motor."),
+            check("For a drive motor: does drive_ff measure the same kV as on the other modules "
+                  "and in its own earlier runs?",
+                  "Run drive_ff on blocks; the report compares each module's kV and kS with the "
+                  "others and with earlier saved runs.",
+                  BLOCKS,
+                  "kV falling over weeks means magnets weakened by heat; kS rising means growing "
+                  "drag in the bearings or gearbox.",
+                  "Replace the motor, or clean and re-shim the module, before it fails in a match.",
+                  {"type": "run", "test": "drive_ff", "env": BLOCKS}),
+        ],
+    },
+    {
         "id": "pod_drifts",
         "title": "Lines up at boot, gets worse during a match",
         "looks_like": "Wheels are straight after a restart but slowly stop lining up as the "

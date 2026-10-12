@@ -126,6 +126,7 @@ class CrossReferenceTest(unittest.TestCase):
         src = open(os.path.join(PKG, "yagslcfg.py"), encoding="utf-8").read()
         lint_ids = set(re.findall(r'_f\(\s*[^,]+,\s*f?"([\w{}]+)"', src))
         lint_ids |= {"drive_f_ignored", "angle_f_ignored"}
+        lint_ids |= {i.replace("{part}", p) for i in lint_ids if "{part}" in i for p in ("drive", "steer")}
         for s in diagnose.SYMPTOMS:
             for c in s["checks"]:
                 for lid in (c.get("auto") or {}).get("lint", []):

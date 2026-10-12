@@ -43,7 +43,7 @@ a { color: var(--accent); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
 .chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--rule); background: var(--bg);
   border-radius: 999px; padding: 2px 10px; font-size: 12px; white-space: nowrap; }
-.chip.env { cursor: pointer; }
+.chip.env, button.chip { cursor: pointer; }
 .chip.good { background: var(--ok-bg); color: var(--ok); border-color: transparent; }
 .chip.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
 .chip.bad { background: var(--bad-bg); color: var(--bad); border-color: transparent; }
@@ -193,3 +193,20 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 .envopt { display: grid; gap: 6px; border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
 .envopt.on { border-color: var(--accent); background: var(--bg); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------------------------------------------------------------- motors */
+.table-wrap { overflow-x: auto; }
+table.motors { width: 100%; border-collapse: collapse; }
+table.motors th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 4px 8px;
+  border-bottom: 1px solid var(--rule); }
+table.motors td { padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+table.motors tr.flagged td { background: var(--bad-bg); }
+.heat { position: relative; width: 110px; height: 18px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+.heat > div { height: 100%; }
+.heat > div.good { background: var(--ok); }
+.heat > div.warn { background: var(--warn); }
+.heat > div.bad { background: var(--bad); }
+.heat > span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; color: var(--ink); text-shadow: 0 0 3px var(--panel); }
+.callout { border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
+.callout.bad { background: var(--bad-bg); color: var(--bad); }

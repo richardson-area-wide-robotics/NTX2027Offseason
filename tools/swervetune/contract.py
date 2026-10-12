@@ -96,6 +96,32 @@ LIVE_ACCEL = LIVE + "AccelMps2"
 LIVE_GYRO = LIVE + "Gyro"
 LIVE_POSE = LIVE + "Pose"
 LIVE_VISION_POSE = LIVE + "VisionPose"
+
+# motor guard, robot -> laptop: every watched motor, swerve and mechanism; arrays follow Names
+MOTORS = ROOT + "/Motors/"
+MOTORS_NAMES = MOTORS + "Names"
+MOTORS_KINDS = MOTORS + "Kinds"
+MOTORS_STAGE = MOTORS + "Stage"
+MOTORS_HEAT_PCT = MOTORS + "HeatPct"
+MOTORS_TEMP_C = MOTORS + "TempC"
+MOTORS_AMPS = MOTORS + "Amps"
+MOTORS_LIMIT_A = MOTORS + "LimitA"
+MOTORS_BASE_LIMIT_A = MOTORS + "BaseLimitA"
+MOTORS_STALL_S = MOTORS + "StallS"
+MOTORS_OVERRIDE_S = MOTORS + "OverrideS"
+MOTORS_CAUSE = MOTORS + "Cause"
+MOTORS_FLAGS = MOTORS + "Flags"
+MOTORS_EVENTS = MOTORS + "Events"
+MOTORS_REPORT = MOTORS + "Report"
+MOTORS_GUARD_ON = MOTORS + "GuardOn"
+
+# motor guard, laptop -> robot
+MOTORS_OVERRIDE_SEQ = MOTORS + "Override/Seq"
+MOTORS_OVERRIDE_BOOT_ID = MOTORS + "Override/BootId"
+MOTORS_OVERRIDE_NAME = MOTORS + "Override/Name"
+MOTORS_OVERRIDE_SECONDS = MOTORS + "Override/Seconds"
+MOTORS_OVERRIDE_ACK_SEQ = MOTORS + "Override/AckSeq"
+MOTORS_OVERRIDE_ACK_MESSAGE = MOTORS + "Override/AckMessage"
 LIVE_VISION_COUNTS = LIVE + "VisionCounts"
 LIVE_VISION_LAST_REJECT = LIVE + "VisionLastReject"
 LIVE_BUS_VOLTS = LIVE + "BusVolts"
@@ -123,6 +149,52 @@ LIVE_MODULE_ARRAYS = {
     "steer_temp": LIVE_STEER_TEMP_C,
     "abs_issue": LIVE_ABS_READ_ISSUE,
 }
+
+# Per-motor columns of the motor guard's table.
+MOTOR_STRINGS = {
+    "name": MOTORS_NAMES,
+    "kind": MOTORS_KINDS,
+    "stage": MOTORS_STAGE,
+    "cause": MOTORS_CAUSE,
+    "flags": MOTORS_FLAGS,
+}
+MOTOR_NUMBERS = {
+    "heat_pct": MOTORS_HEAT_PCT,
+    "temp": MOTORS_TEMP_C,
+    "amps": MOTORS_AMPS,
+    "limit": MOTORS_LIMIT_A,
+    "base_limit": MOTORS_BASE_LIMIT_A,
+    "stall_s": MOTORS_STALL_S,
+    "override_s": MOTORS_OVERRIDE_S,
+}
+STAGES = ("OK", "WARN", "DERATE", "SHUTOFF")
+
+# Mirrors MotorKind.java: label, the team's current policy in amps, and the sensor temperatures
+# that warn, derate and shut off, in C. The contract test checks every number.
+MOTOR_KINDS = {
+    "NEO_550": ("NEO 550", 20, 45, 55, 65),
+    "NEO_V1_1": ("NEO V1.1", 60, 70, 80, 90),
+    "NEO_2_0": ("NEO 2.0", 80, 70, 80, 90),
+    "NEO_UNKNOWN": ("NEO (1.1 or 2.0?)", 60, 70, 80, 90),
+    "VORTEX": ("NEO Vortex", 80, 85, 100, 110),
+}
+# Longest thermal override the robot grants, seconds (MotorGuard.MAX_OVERRIDE_S).
+MAX_OVERRIDE_S = 20
+
+
+def motor_kind_from_text(text):
+    """MotorKind.parse in Python: an inventory name or YAGSL type to a MOTOR_KINDS key."""
+    t = (text or "").lower().replace(" ", "").replace(".", "")
+    if "550" in t:
+        return "NEO_550"
+    if "vortex" in t or "sparkflex" in t:
+        return "VORTEX"
+    if "neo20" in t or "neo2_0" in t or "neo_2_0" in t or t == "neo2":
+        return "NEO_2_0"
+    if "neo11" in t or "neov11" in t or "neo_v1_1" in t or "neo1_1" in t:
+        return "NEO_V1_1"
+    return "NEO_UNKNOWN"
+
 
 # Gains the robot accepts live, and the range it accepts them in. Mirrors LiveGains.SPECS; the
 # contract test checks both the names and the bounds.

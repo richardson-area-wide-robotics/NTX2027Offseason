@@ -21,6 +21,7 @@ import math
 import os
 import re
 
+from . import contract as C
 from .plant import MOTORS
 
 G = 9.81
@@ -573,9 +574,29 @@ def lint(project):
             F.append(_f("info", "drive_current_low",
                         f"Drive current limit {d_lim:.0f} A leaves acceleration on the table",
                         f"Wheels would grip up to about {slip:.0f} A. Fine if brownouts are the worry."))
-    if a_lim < 15 or a_lim > 40:
+    # ---- the team's current policy (Stuart, 2026-10): Vortex 80, NEO 1.1 60, NEO 2.0 80, NEO 550 20
+    inventory = p.tune.get("motors", {}) if isinstance(p.tune.get("motors"), dict) else {}
+    for part, kind, limit, key in (("drive", dk, d_lim, "drive"), ("steer", p.steer_kind(), a_lim, "angle")):
+        mk = C.motor_kind_from_text(inventory.get(part) or {"neo550": "neo550", "vortex": "vortex",
+                                                            "neo": "neo"}.get(kind or "", ""))
+        if kind not in ("neo550", "vortex", "neo"):
+            continue
+        label, policy = C.MOTOR_KINDS[mk][0], C.MOTOR_KINDS[mk][1]
+        if limit > policy:
+            unknown = (" A NEO V1.1 and a NEO 2.0 look identical to the robot; if these are NEO 2.0s"
+                       f", say so in swervetune.json (\"motors\": {{\"{part}\": \"NEO 2.0\"}}) and"
+                       " the policy is 80 A." if mk == "NEO_UNKNOWN" else "")
+            F.append(_f(
+                "warn", f"{part}_current_over_policy",
+                f"{'Drive' if part == 'drive' else 'Steering'} current limit {limit:.0f} A is over the "
+                f"{policy} A policy for a {label}",
+                f"The team limits a {label} to {policy} A. The motor guard lowers it at every boot and "
+                f"says so; set it here so the code and the robot agree.{unknown}",
+                {"kind": "edit", "file": "modules/physicalproperties.json",
+                 "path": ["currentLimit", key], "value": policy}))
+    if a_lim < 15:
         F.append(_f("info", "steer_current", f"Steering current limit {a_lim:.0f} A",
-                    "20-30 A suits a NEO 550: lower is sluggish on carpet, higher overheats it."))
+                    "Below about 15 A a NEO 550 steers sluggishly on carpet."))
 
     # ---- the max speed handed to YAGSL
     ms, where, literal = p.create_swerve_max_speed()

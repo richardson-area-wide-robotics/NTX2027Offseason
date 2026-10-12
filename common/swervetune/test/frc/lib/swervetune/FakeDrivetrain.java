@@ -32,6 +32,10 @@ final class FakeDrivetrain implements DrivetrainIO {
   boolean gyroConnected = true;
   boolean gyroCalibrating = false;
   final List<String> applied = new ArrayList<>();
+  /** Steering motors as the motor guard sees them: NEO 550s at 20 A. Drive motors are not watched. */
+  final FakeMotorChannel[] steerMotors = {
+    new FakeMotorChannel(20), new FakeMotorChannel(20), new FakeMotorChannel(20), new FakeMotorChannel(20)
+  };
   boolean coast;
   boolean stopped;
 
@@ -334,5 +338,15 @@ final class FakeDrivetrain implements DrivetrainIO {
   @Override
   public double[] driveFeedforward(int m) {
     return ff[m].clone();
+  }
+
+  @Override
+  public MotorGuard.MotorChannel steerMotorChannel(int m) {
+    return steerMotors[m];
+  }
+
+  @Override
+  public MotorKind steerMotorKind() {
+    return MotorKind.NEO_550;
   }
 }

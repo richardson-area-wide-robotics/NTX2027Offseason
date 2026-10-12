@@ -210,6 +210,7 @@ def api_state(_):
     st = {"connected": S.link is not None and S.link.is_connected(), "target": S.target,
           "project": S.project.name if S.project else None, "test": S.test_state,
           "last_run": S.last_run, "connect_error": S.connect_error}
+    st.update(motor_kinds=C.MOTOR_KINDS, max_override_s=C.MAX_OVERRIDE_S)
     if S.link:
         st.update(robot=S.link.robot_info(), environment=S.link.environment(),
                   status=S.link.status(), gains=S.link.gains())
@@ -226,7 +227,15 @@ def api_live(_):
     return {"connected": S.link.is_connected(), "live": live, "flags": S.flags,
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],
-            "deadman": S.link.get("bool", C.STATUS_DEADMAN_HELD)}
+            "deadman": S.link.get("bool", C.STATUS_DEADMAN_HELD),
+            "motor_guard": {k: v for k, v in S.link.motors().items() if k != "motors"}}
+
+
+def api_motor_override(body):
+    if not S.link:
+        return {"ok": False, "error": "Not connected."}
+    seconds = max(0.0, min(float(body.get("seconds", C.MAX_OVERRIDE_S)), C.MAX_OVERRIDE_S))
+    return {"ok": True, "message": S.link.override_motors(str(body.get("name") or "ALL"), seconds)}
 
 
 def api_env(body):
@@ -413,7 +422,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,
-        "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim}
+        "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
+        "/api/motors/override": api_motor_override}
 
 
 class Handler(BaseHTTPRequestHandler):

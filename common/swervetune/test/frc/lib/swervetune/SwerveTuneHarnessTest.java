@@ -197,6 +197,51 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
+  void aHotSteeringMotorStopsATestAndSaysWhich() {
+    envMode.set("BLOCKS");
+    loop(2);
+    send("steer_step", "FL", "hold_s", "2", "settle_s", "0.5");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(10);
+    assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
+    io.steerMotors[1].tempC = 56; // a NEO 550 past its 55 C derate line
+    loop(3);
+    assertEquals(SwerveTune.State.ABORTED, tune.state());
+    assertTrue(tune.message().contains("frontright steer") && tune.message().contains("cool"),
+        tune.message());
+    String[] names = nt.getStringArrayTopic(SwerveTuneTopics.MOTORS_NAMES).subscribe(new String[0]).get();
+    String[] stages = nt.getStringArrayTopic(SwerveTuneTopics.MOTORS_STAGE).subscribe(new String[0]).get();
+    assertEquals("frontright steer", names[1]);
+    assertEquals("DERATE", stages[1]);
+    assertEquals(10, io.steerMotors[1].limit, "half of its 20 A");
+    assertFalse(owner.held, "the driver gets the robot back");
+  }
+
+  @Test
+  void aThermalOverrideFromTheLaptopIsAcknowledgedOnlyForThisBoot() {
+    loop(2);
+    IntegerPublisher oSeq = nt.getIntegerTopic(SwerveTuneTopics.MOTORS_OVERRIDE_SEQ).publish();
+    IntegerPublisher oBoot = nt.getIntegerTopic(SwerveTuneTopics.MOTORS_OVERRIDE_BOOT_ID).publish();
+    StringPublisher oName = nt.getStringTopic(SwerveTuneTopics.MOTORS_OVERRIDE_NAME).publish();
+    DoublePublisher oSecs = nt.getDoubleTopic(SwerveTuneTopics.MOTORS_OVERRIDE_SECONDS).publish();
+    var ack = nt.getStringTopic(SwerveTuneTopics.MOTORS_OVERRIDE_ACK_MESSAGE).subscribe("");
+    oName.set("ALL");
+    oSecs.set(15);
+    oBoot.set(tune.bootId() + 1);
+    oSeq.set(1);
+    loop(2);
+    assertTrue(ack.get().contains("earlier boot"), ack.get());
+    oBoot.set(tune.bootId());
+    oSeq.set(2);
+    loop(2);
+    assertTrue(ack.get().contains("Thermal override for every motor: 15 s"), ack.get());
+    double[] left = nt.getDoubleArrayTopic(SwerveTuneTopics.MOTORS_OVERRIDE_S).subscribe(new double[0]).get();
+    assertEquals(4, left.length);
+    assertTrue(left[0] > 14 && left[0] <= 15, Arrays.toString(left));
+  }
+
+  @Test
   void aCommandForAnEarlierRobotProgramIsIgnored() {
     envMode.set("BLOCKS");
     loop(1);

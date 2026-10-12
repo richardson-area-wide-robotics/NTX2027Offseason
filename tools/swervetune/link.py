@@ -292,6 +292,7 @@ class RobotLink:
             "mode": self.get("str", C.LIVE_ROBOT_MODE) or "UNKNOWN",
             "fms": self.get("bool", C.LIVE_FMS_ATTACHED),
             "t": self.get("double", C.LIVE_TIMESTAMP),
+            "motors": self.motors()["motors"],
         })
         return out
 
@@ -422,6 +423,37 @@ class RobotLink:
                 return self.get("str", C.GAINS_APPLY_STATUS), self.gains()
             time.sleep(0.02)
         return "No answer from the robot about the gain change.", self.gains()
+
+    # ------------------------------------------------------------------ motor guard
+    def motors(self):
+        """Every watched motor as a dict, with the guard's startup report and recent events."""
+        cols = {k: list(self.get("str[]", t)) for k, t in C.MOTOR_STRINGS.items()}
+        cols.update({k: list(self.get("double[]", t)) for k, t in C.MOTOR_NUMBERS.items()})
+        rows = [{k: (v[i] if i < len(v) else None) for k, v in cols.items()}
+                for i in range(len(cols["name"]))]
+        return {
+            "guard_on": bool(self.get("bool", C.MOTORS_GUARD_ON, True)),
+            "motors": rows,
+            "report": list(self.get("str[]", C.MOTORS_REPORT)),
+            "events": list(self.get("str[]", C.MOTORS_EVENTS)),
+        }
+
+    def override_motors(self, name="ALL", seconds=C.MAX_OVERRIDE_S, timeout=3.0):
+        """Holds heat shutoffs at half current for a while (0 cancels). Returns the robot's answer."""
+        self.put("str", C.MOTORS_OVERRIDE_NAME, name)
+        self.put("double", C.MOTORS_OVERRIDE_SECONDS, float(seconds))
+        self.put("int", C.MOTORS_OVERRIDE_BOOT_ID, self.get("int", C.BOOT_ID))
+        self.flush()
+        time.sleep(0.05)
+        seq = int(time.time() * 1000) % (2 ** 52)
+        self.put("int", C.MOTORS_OVERRIDE_SEQ, seq)
+        self.flush()
+        end = time.time() + timeout
+        while time.time() < end:
+            if self.get("int", C.MOTORS_OVERRIDE_ACK_SEQ) == seq:
+                return self.get("str", C.MOTORS_OVERRIDE_ACK_MESSAGE)
+            time.sleep(0.02)
+        return "No answer from the robot about the override."
 
     # ------------------------------------------------------------------ simulation
     def sim_enable(self, on):

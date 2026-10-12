@@ -10,6 +10,8 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.swervetune.MotorKind;
+import frc.lib.swervetune.MotorWatcher;
 
 public class Shooter extends SubsystemBase{
 // ids 10, 11
@@ -41,5 +43,11 @@ SparkClosedLoopController leaderPID = leader.getClosedLoopController();
     }
     public Command shootX() {
         return this.startEnd(() -> leaderPID.setSetpoint(9999, ControlType.kVelocity), () -> leader.set(0));
+    }
+
+    /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
+    public void watchMotors(MotorWatcher w) {
+        w.watch("Shooter leader", leader, MotorKind.VORTEX);
+        w.watch("Shooter follower", follower, MotorKind.VORTEX);
     }
 }

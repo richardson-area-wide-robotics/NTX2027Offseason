@@ -28,6 +28,7 @@
     <button id="env-chip" class="chip env" title="Where is the robot?">Environment: UNSET</button>
     <span id="tags-chip" class="chip">AprilTags off</span>
     <span id="deadman-chip" class="chip" title="Hold SPACE, or the tester's controller right bumper">Deadman</span>
+    <button id="motors-chip" class="chip" title="Motor heat and health" hidden>Motors OK</button>
   </div>
   <button id="abort" class="abort" title="Stop the test now (Esc)">ABORT</button>
 </header>
@@ -41,6 +42,7 @@
 <nav class="tabs" role="tablist">
   <button role="tab" data-tab="guide" class="on">Guide</button>
   <button role="tab" data-tab="live">Live</button>
+  <button role="tab" data-tab="motors">Motors</button>
   <button role="tab" data-tab="tune">Tune</button>
   <button role="tab" data-tab="trouble">Troubleshoot</button>
   <button role="tab" data-tab="config">Config</button>
@@ -50,6 +52,7 @@
 <main>
   <section id="tab-guide" class="tab on"></section>
   <section id="tab-live" class="tab"></section>
+  <section id="tab-motors" class="tab"></section>
   <section id="tab-tune" class="tab"></section>
   <section id="tab-trouble" class="tab"></section>
   <section id="tab-config" class="tab"></section>
@@ -66,6 +69,7 @@
 <script src="plot.js"></script>
 <script src="app.js"></script>
 <script src="live.js"></script>
+<script src="motors.js"></script>
 <script src="tune.js"></script>
 <script src="guide.js"></script>
 <script src="trouble.js"></script>

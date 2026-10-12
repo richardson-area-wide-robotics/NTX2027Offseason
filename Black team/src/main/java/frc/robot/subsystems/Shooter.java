@@ -10,6 +10,8 @@ import com.revrobotics.ResetMode;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.swervetune.MotorKind;
+import frc.lib.swervetune.MotorWatcher;
 
 public class Shooter extends SubsystemBase {
     private final SparkMax shooterMotor = new SparkMax(10, MotorType.kBrushless);
@@ -39,5 +41,11 @@ public class Shooter extends SubsystemBase {
             () -> shooterMotor.set(-0.6),
             () -> shooterMotor.set(0)
         );
+    }
+
+    /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
+    public void watchMotors(MotorWatcher w) {
+        // A SPARK MAX cannot tell a NEO 550 from a NEO: check what is fitted and correct this.
+        w.watch("Shooter", shooterMotor, MotorKind.NEO_UNKNOWN);
     }
 }

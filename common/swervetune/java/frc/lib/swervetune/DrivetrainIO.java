@@ -182,4 +182,23 @@ public interface DrivetrainIO {
 
   /** {@code {kS, kV, kA}} currently used by one module. */
   double[] driveFeedforward(int module);
+
+  // ------------------------------------------------------------------ motor protection
+  /** One module's drive motor controller, for the {@link MotorGuard}; null if it cannot be watched. */
+  default MotorGuard.MotorChannel driveMotorChannel(int module) {
+    return null;
+  }
+
+  default MotorGuard.MotorChannel steerMotorChannel(int module) {
+    return null;
+  }
+
+  /** The best guess at what the drive motors are, before swervetune.json's inventory says. */
+  default MotorKind driveMotorKind() {
+    return MotorKind.NEO_UNKNOWN;
+  }
+
+  default MotorKind steerMotorKind() {
+    return MotorKind.NEO_UNKNOWN;
+  }
 }

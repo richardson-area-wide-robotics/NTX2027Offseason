@@ -10,6 +10,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.swervetune.MotorKind;
+import frc.lib.swervetune.MotorWatcher;
 
 public class Feeder extends SubsystemBase{
 
@@ -45,4 +47,11 @@ public class Feeder extends SubsystemBase{
     public Command load(boolean forward){
         return this.runEnd(() -> runFeeder(forward), () -> stopFeeder());
     }
-}   
+
+    /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
+    public void watchMotors(MotorWatcher w) {
+        // A SPARK MAX cannot tell a NEO 550 from a NEO: check what is fitted and correct this.
+        w.watch("Spindexter", spindexterMotor, MotorKind.NEO_UNKNOWN);
+        w.watch("Tower", towerMotor, MotorKind.VORTEX);
+    }
+}

@@ -62,3 +62,29 @@ def list_runs(limit=50):
                     "cost": rep.get("cost"), "summary": rep.get("summary"),
                     "robot": (d.get("robot") or {}).get("name")})
     return out
+
+
+def ff_history(robot, blocks, before=None, exclude=None, limit=200):
+    """Earlier drive_ff fits for one robot, oldest first: ``[{"saved", "modules"}]``.
+
+    Only runs in the same place (blocks or floor: a free wheel's kV is not a loaded one's), not
+    practice runs, and only those saved before ``before`` so re-analysing an old run never compares
+    it with its own future.
+    """
+    out = []
+    for f in sorted(glob.glob(os.path.join(RUNS, "*.json")))[-limit:]:
+        if exclude and os.path.basename(f) == exclude:
+            continue
+        try:
+            with open(f, encoding="utf-8") as fh:
+                d = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        rep = d.get("report") or {}
+        if (d.get("test") != "drive_ff" or d.get("practice") or not rep.get("modules")
+                or (d.get("robot") or {}).get("name") != robot
+                or (d.get("env") == "BLOCKS") != bool(blocks)
+                or (before and str(d.get("saved", "")) >= str(before))):
+            continue
+        out.append({"saved": d.get("saved"), "modules": rep["modules"]})
+    return out

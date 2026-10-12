@@ -115,6 +115,11 @@ public final class SafetySupervisor {
     public double busVolts = 12.5;
     public boolean gyroConnected = true;
     public boolean gyroCalibrating = false;
+    /**
+     * Set when a drivetrain motor is derated or shut off by the {@link MotorGuard}, saying which and
+     * why; empty otherwise.
+     */
+    public String hotMotor = "";
   }
 
   /** What the running test is allowed to do, so the rules that apply can be chosen. */
@@ -208,6 +213,12 @@ public final class SafetySupervisor {
             ? Verdict.abort("The gyro started calibrating mid-test; its readings cannot be trusted.")
             : Verdict.waitFor("The gyro is calibrating. Keep the robot completely still.");
       }
+    }
+    if (!in.hotMotor.isEmpty()) {
+      return started
+          ? Verdict.abort(in.hotMotor + " Its current limit was cut, so nothing measured from here"
+              + " on would be true. Let it cool.")
+          : Verdict.waitFor(in.hotMotor + " Waiting for it to cool.");
     }
     if (in.driverStickMax > limits.driverOverride) {
       return Verdict.abort("Driver moved a stick. Control handed back.");

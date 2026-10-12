@@ -572,4 +572,41 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   public double[] driveFeedforward(int m) {
     return feedforward[m].clone();
   }
+
+  // ------------------------------------------------------------------ motor protection
+
+  @Override
+  public MotorGuard.MotorChannel driveMotorChannel(int m) {
+    SparkBase s = spark(modules[m].getDriveMotor());
+    return s == null ? null : new SparkChannel(s, sim);
+  }
+
+  @Override
+  public MotorGuard.MotorChannel steerMotorChannel(int m) {
+    SparkBase s = spark(modules[m].getAngleMotor());
+    return s == null ? null : new SparkChannel(s, sim);
+  }
+
+  @Override
+  public MotorKind driveMotorKind() {
+    return kindOf(modules[0].getDriveMotor());
+  }
+
+  @Override
+  public MotorKind steerMotorKind() {
+    return kindOf(modules[0].getAngleMotor());
+  }
+
+  /**
+   * From the motor model YAGSL picked for the JSON {@code type} ({@code sparkmax_neo550} gives a
+   * NEO 550's free speed). A NEO V1.1 and a NEO 2.0 share one model, so a NEO stays "unknown"
+   * until swervetune.json's motor inventory says which.
+   */
+  private static MotorKind kindOf(SwerveMotor motor) {
+    if (motor.getMotor() instanceof SparkFlex) {
+      return MotorKind.VORTEX;
+    }
+    double rpm = motor.getSimMotor().freeSpeedRadPerSec * 60 / (2 * Math.PI);
+    return rpm > 9000 ? MotorKind.NEO_550 : rpm > 6200 ? MotorKind.VORTEX : MotorKind.NEO_UNKNOWN;
+  }
 }

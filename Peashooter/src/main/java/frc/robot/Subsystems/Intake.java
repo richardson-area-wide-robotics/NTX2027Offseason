@@ -12,6 +12,8 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.swervetune.MotorKind;
+import frc.lib.swervetune.MotorWatcher;
 
 public class Intake extends SubsystemBase {
 
@@ -94,5 +96,12 @@ public class Intake extends SubsystemBase {
           intakeSpinMotorOne.set(0);
           intakeSpinMotorTwo.set(0);
         });
+  }
+
+  /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
+  public void watchMotors(MotorWatcher w) {
+    w.watch("Intake pivot", intakeMoveMotor, MotorKind.VORTEX);
+    w.watch("Intake roller 1", intakeSpinMotorOne, MotorKind.VORTEX);
+    w.watch("Intake roller 2", intakeSpinMotorTwo, MotorKind.VORTEX);
   }
 }

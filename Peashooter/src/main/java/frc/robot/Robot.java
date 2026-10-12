@@ -26,6 +26,13 @@ public class Robot extends TimedRobot {
 
   private Command autonomousCommand; 
   public Robot() {
+    // Heat, stall and failure protection for every mechanism motor; the swerve motors are
+    // already watched.
+    feeder.watchMotors(tune::watchMotor);
+    intake.watchMotors(tune::watchMotor);
+    shooter.watchMotors(tune::watchMotor);
+    // To let the driver hold off heat shutoffs for 20 s in a match (stalls still cut out):
+    // controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
 
   
     NamedCommands.registerCommand("Shoot Hub", shooter.shootA());
