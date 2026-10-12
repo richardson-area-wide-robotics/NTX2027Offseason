@@ -149,6 +149,10 @@ public final class SwerveTuneTopics {
   public static final String LIVE_POSE = LIVE + "Pose";
   /** Vision pose when one is in use, same layout as LIVE_POSE; empty otherwise. */
   public static final String LIVE_VISION_POSE = LIVE + "VisionPose";
+  /** Vision observations so far, {@code {accepted, rejected}}. */
+  public static final String LIVE_VISION_COUNTS = LIVE + "VisionCounts";
+  /** Why the most recent rejected observation was rejected. */
+  public static final String LIVE_VISION_LAST_REJECT = LIVE + "VisionLastReject";
   public static final String LIVE_BUS_VOLTS = LIVE + "BusVolts";
   /** {@code DISABLED}, {@code TELEOP}, {@code AUTO}, {@code TEST}, or {@code ESTOP}. */
   public static final String LIVE_ROBOT_MODE = LIVE + "RobotMode";

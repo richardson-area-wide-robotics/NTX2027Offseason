@@ -166,6 +166,12 @@ public final class SwerveTune {
   private int accelSamples;
   private boolean lastSimEnable;
   private Supplier<Optional<Pose2d>> vision;
+  private VisionSource visionSource;
+  private final VisionGate visionGate = new VisionGate();
+  private double[] lastVisionPose;
+  private double lastVisionTimeS = Double.NEGATIVE_INFINITY;
+  private final DoubleArrayPublisher liveVisionCounts;
+  private final StringPublisher liveVisionReject;
 
   /**
    * Builds the harness for a YAGSL drivetrain and reads {@code deploy/swerve/swervetune.json}.
@@ -257,6 +263,8 @@ public final class SwerveTune {
     resultNotes = nt.getStringArrayTopic(SwerveTuneTopics.RESULT_NOTES).publish();
     livePose = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_POSE).publish();
     liveVisionPose = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_VISION_POSE).publish();
+    liveVisionCounts = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_VISION_COUNTS).publish();
+    liveVisionReject = nt.getStringTopic(SwerveTuneTopics.LIVE_VISION_LAST_REJECT).publish();
     liveAccel = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_ACCEL).publish();
     liveHeading = nt.getDoubleTopic(SwerveTuneTopics.LIVE_HEADING_DEG).publish();
     liveBus = nt.getDoubleTopic(SwerveTuneTopics.LIVE_BUS_VOLTS).publish();
@@ -345,6 +353,38 @@ public final class SwerveTune {
     this.vision = visionPose;
   }
 
+  /**
+   * Gives tests AprilTag ground truth from cameras, every observation checked by
+   * {@link VisionGate} first. Preferred over {@link #setVisionPoseSupplier}: rejected frames are
+   * counted with a reason, so a bad camera transform shows up as a rejection count, not as a
+   * confidently wrong test result. For the Luma P1/P2, wrap PhotonLib; see
+   * docs/VISION_LUMA_PHOTONVISION.md.
+   */
+  public void setVisionSource(VisionSource source) {
+    this.visionSource = source;
+  }
+
+  /** The gate the tools use, so robot code can apply the same rules to its pose estimator. */
+  public VisionGate visionGate() {
+    return visionGate;
+  }
+
+  private void pollVision(double now) {
+    if (visionSource == null) {
+      return;
+    }
+    double[] pose = io.pose();
+    for (VisionSource.Observation o : visionSource.poll()) {
+      VisionGate.Verdict v = visionGate.check(o, now, new double[] {pose[0], pose[1]});
+      if (v.accepted() && o.timestampS() >= lastVisionTimeS) {
+        lastVisionPose = new double[] {o.xM(), o.yM(), o.headingDeg()};
+        lastVisionTimeS = o.timestampS();
+      }
+    }
+    liveVisionCounts.set(new double[] {visionGate.accepted(), visionGate.rejected()});
+    liveVisionReject.set(visionGate.lastReject());
+  }
+
   /** True while a test is driving the motors. A drive command can check this and stand down. */
   public boolean isTestActive() {
     return state == State.RUNNING && proc != null && proc.spinsWheels();
@@ -365,6 +405,7 @@ public final class SwerveTune {
     try {
       trackClient(now);
       trackChassis(now);
+      pollVision(now);
       publishLive(now);
       handleSimEnable();
       gains.poll();
@@ -761,7 +802,7 @@ public final class SwerveTune {
 
   private void publishStatus(boolean deadmanHeld) {
     envActive.set(environment().name());
-    visionAvailable.set(vision != null);
+    visionAvailable.set(vision != null || visionSource != null);
     visionInUse.set(visionInUseNow());
     statusSeq.set(activeSeq);
     statusTest.set(lastTest);
@@ -772,12 +813,16 @@ public final class SwerveTune {
   }
 
   private boolean visionInUseNow() {
-    return vision != null && envTags.get();
+    return (vision != null || visionSource != null) && envTags.get();
   }
 
   private double[] visionPoseArray() {
     if (!visionInUseNow()) {
       return null;
+    }
+    if (visionSource != null) {
+      boolean fresh = clock.getAsDouble() - lastVisionTimeS < visionGate.limits().maxAgeS;
+      return fresh ? lastVisionPose : null;
     }
     return vision.get()
         .map(p -> new double[] {p.getX(), p.getY(), p.getRotation().getDegrees()})

@@ -286,6 +286,8 @@ class RobotLink:
             "accel": list(self.get("double[]", C.LIVE_ACCEL)),
             "pose": list(self.get("double[]", C.LIVE_POSE)),
             "vision_pose": list(self.get("double[]", C.LIVE_VISION_POSE)),
+            "vision_counts": list(self.get("double[]", C.LIVE_VISION_COUNTS)),
+            "vision_last_reject": self.get("str", C.LIVE_VISION_LAST_REJECT),
             "bus": self.get("double", C.LIVE_BUS_VOLTS),
             "mode": self.get("str", C.LIVE_ROBOT_MODE) or "UNKNOWN",
             "fms": self.get("bool", C.LIVE_FMS_ATTACHED),
