@@ -1,4 +1,6 @@
 // Small canvas plotter: lines and points against a shared x axis, theme-aware, no libraries.
+// Annotations (shaded spans, bands, markers, brackets) carry a lesson key and a sentence about
+// that moment; hovering one teaches it (see learn.js). A cursor shows a readout at any time.
 "use strict";
 
 const Plot = (() => {
@@ -45,6 +47,7 @@ const Plot = (() => {
     if (!series.length) {
       g.fillStyle = muted;
       g.fillText(opts.empty || "No data yet", 16, 24);
+      canvas._plot = null;
       return;
     }
     let [x0, x1] = opts.xrange || extent(series, "x");
@@ -73,6 +76,33 @@ const Plot = (() => {
     g.fillStyle = muted;
     if (opts.xlabel) g.fillText(opts.xlabel, L + pw - g.measureText(opts.xlabel).width, h - 4);
     if (opts.ylabel) g.fillText(opts.ylabel, L + 4, T + 10);
+
+    const hits = [];
+    const notes = opts.annotations || [];
+    g.save();
+    g.beginPath(); g.rect(L, T, pw, ph); g.clip();
+    // Areas behind the data.
+    for (const a of notes) {
+      if (a.type !== "vspan" && a.type !== "band") continue;
+      const col = css(TONE[a.learn] || "--info");
+      const xa = X(a.x0), xb = Math.max(X(a.x1), xa + 2);
+      g.globalAlpha = a.type === "band" ? 0.10 : 0.16;
+      g.fillStyle = col;
+      if (a.type === "vspan") {
+        g.fillRect(xa, T, xb - xa, ph);
+        hits.push({ a, rank: 3, x: xa, y: T, w: xb - xa, h: ph });
+      } else {
+        const ya = Y(a.y1), yb = Y(a.y0);
+        g.fillRect(xa, ya, xb - xa, yb - ya);
+        hits.push({ a, rank: 4, x: xa, y: ya, w: xb - xa, h: Math.max(4, yb - ya) });
+      }
+      g.globalAlpha = 1;
+      if (a.label && a.type === "vspan") {
+        g.fillStyle = col;
+        g.fillText(a.label, xa + 3, T + ph - 6);
+      }
+    }
+    g.restore();
 
     // data
     g.save();
@@ -106,6 +136,40 @@ const Plot = (() => {
     g.setLineDash([]);
     g.globalAlpha = 1;
 
+    // Markers on top of the data.
+    for (const a of notes) {
+      const col = css(TONE[a.learn] || "--ink");
+      g.strokeStyle = col; g.fillStyle = col; g.lineWidth = 1.5;
+      if (a.type === "point" && isFinite(a.t) && isFinite(a.y)) {
+        const px = X(a.t), py = Y(a.y);
+        if (px < L || px > L + pw) continue;
+        g.beginPath(); g.arc(px, py, 5, 0, Math.PI * 2); g.stroke();
+        g.beginPath(); g.arc(px, py, 2, 0, Math.PI * 2); g.fill();
+        if (a.label) g.fillText(a.label, px + 7, py - 6);
+        hits.push({ a, rank: 0, x: px - 9, y: py - 9, w: 18, h: 18 });
+      } else if (a.type === "rise" && isFinite(a.y0) && isFinite(a.y1)) {
+        const xa = X(a.x0), xb = X(a.x1), ya = Y(a.y0), yb = Y(a.y1);
+        g.beginPath(); g.arc(xa, ya, 3.5, 0, Math.PI * 2); g.stroke();
+        g.beginPath(); g.arc(xb, yb, 3.5, 0, Math.PI * 2); g.stroke();
+        const yr = T + ph - 14;
+        g.setLineDash([3, 3]);
+        g.beginPath(); g.moveTo(xa, ya); g.lineTo(xa, yr); g.moveTo(xb, yb); g.lineTo(xb, yr); g.stroke();
+        g.setLineDash([]);
+        g.beginPath(); g.moveTo(xa, yr); g.lineTo(xb, yr); g.stroke();
+        g.fillText(a.label || "rise", xa + 2, yr - 3);
+        hits.push({ a, rank: 1, x: xa - 4, y: Math.min(ya, yb) - 4, w: xb - xa + 8, h: yr - Math.min(ya, yb) + 8 });
+      } else if (a.type === "bracket" && isFinite(a.y0) && isFinite(a.y1)) {
+        const px = X(a.t) - 6, ya = Y(a.y0), yb = Y(a.y1);
+        g.beginPath(); g.moveTo(px - 4, ya); g.lineTo(px, ya); g.lineTo(px, yb); g.lineTo(px - 4, yb); g.stroke();
+        g.fillText(a.label || "left", px - 4 - g.measureText(a.label || "left").width, (ya + yb) / 2 + 4);
+        hits.push({ a, rank: 0, x: px - 40, y: Math.min(ya, yb) - 6, w: 46, h: Math.abs(yb - ya) + 12 });
+      }
+    }
+    g.lineWidth = 1;
+    canvas._plot = { X, Y, x0, x1, y0, y1, L, T, pw, ph, hits: hits.sort((p, q) => p.rank - q.rank) };
+    canvas._opts = opts;
+    wire(canvas);
+
     // legend
     let lx = L + 8;
     const ly = T + 14;
@@ -119,6 +183,51 @@ const Plot = (() => {
       lx += 26 + g.measureText(s.label).width;
       if (lx > L + pw - 60) break;
     }
+  }
+
+  // Lesson colours: red for flat out, amber for limits and ringing, green for good, blue otherwise.
+  const TONE = { saturation: "--bad", current_limit: "--warn", oscillation: "--warn", overshoot: "--warn",
+                 steady_state_error: "--bad", dead_time: "--info", feedforward: "--ok", settling_time: "--ok",
+                 rise_time: "--accent", kP: "--s0", kD: "--s2", kI: "--s3", ramp_rate: "--warn" };
+
+  // Hover: teach the annotation under the pointer; otherwise move the cursor and its readout.
+  function wire(canvas) {
+    if (canvas._wired) return;
+    canvas._wired = true;
+    const wrap = canvas.parentElement;
+    let line = null, box = null;
+    if (wrap && wrap.classList.contains("plotwrap")) {
+      line = document.createElement("div"); line.className = "plot-cursor"; line.hidden = true; wrap.appendChild(line);
+      box = document.createElement("div"); box.className = "plot-readout"; box.hidden = true; wrap.appendChild(box);
+    }
+    let teaching = false;
+    canvas.addEventListener("mousemove", e => {
+      const P = canvas._plot, o = canvas._opts || {};
+      if (!P) return;
+      const r = canvas.getBoundingClientRect();
+      const mx = e.clientX - r.left, my = e.clientY - r.top;
+      const hit = P.hits.find(h => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h && h.rank !== 4)
+        || P.hits.find(h => mx >= h.x && mx <= h.x + h.w && my >= h.y && my <= h.y + h.h);
+      if (hit && (typeof Learn !== "undefined")) { Learn.showAt(hit.a.learn, e.clientX, e.clientY, hit.a.text); teaching = true; }
+      else if (teaching && (typeof Learn !== "undefined")) { Learn.hide(); teaching = false; }
+      if (!line || mx < P.L || mx > P.L + P.pw) { if (line) { line.hidden = true; box.hidden = true; } return; }
+      const xv = P.x0 + (mx - P.L) / P.pw * (P.x1 - P.x0);
+      line.hidden = false;
+      line.style.left = mx + "px"; line.style.top = P.T + "px"; line.style.height = P.ph + "px";
+      const html = o.readout ? o.readout(xv) : "";
+      box.hidden = !html || !!hit;
+      if (html) {
+        box.innerHTML = html;
+        const right = mx > P.L + P.pw * 0.6;
+        box.style.left = right ? "" : (mx + 10) + "px";
+        box.style.right = right ? (canvas.clientWidth - mx + 10) + "px" : "";
+        box.style.top = (P.T + 4) + "px";
+      }
+    });
+    canvas.addEventListener("mouseleave", () => {
+      if (line) { line.hidden = true; box.hidden = true; }
+      if (teaching && (typeof Learn !== "undefined")) { Learn.hide(); teaching = false; }
+    });
   }
 
   return { draw };

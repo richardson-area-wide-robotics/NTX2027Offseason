@@ -31,6 +31,20 @@ const Tune = (() => {
 
   let loop = "steer", target = "robot", surface = "floor", module = "ALL", pattern = 0;
   let edits = {}, practiceGains = null, current = null, compare = null, zoom = null;
+  let xmod = 0, whatIf = { values: {}, pred: null, seq: 0 }, predTimer = null, stepSel = null;
+  // With the whole run in view, only what needs attention is marked; pick a step to see it all.
+  const ALARMS = new Set(["saturation", "current_limit", "ramp_rate", "overshoot", "oscillation", "steady_state_error"]);
+  // Sliders in the "what if" panel: gain key, lesson, the slider's top end when the gain is 0.
+  const XGAINS = {
+    steer: [["Steer/kP", "kP", 0.08], ["Steer/kD", "kD", 2.0], ["Steer/kI", "kI", 0.0005], ["Steer/IZone", "iZone", 10]],
+    drive: [["Drive/kP", "kP", 0.3], ["FF/{m}/kS", "kS", 0.5], ["FF/{m}/kV", "kV", 4.0]],
+  };
+  const NOTE_LABEL = { dead_time: "dead time", saturation: "flat out", current_limit: "current limit", oscillation: "ringing",
+                       overshoot: "overshoot", steady_state_error: "left", rise_time: "rise", kP: "P max", kD: "D brakes",
+                       feedforward: "FF share", ramp_rate: "ramp" };
+  const learnKey = key => /kP$/.test(key) ? "kP" : /kI$/.test(key) ? "kI" : /kD$/.test(key) ? "kD" : /IZone$/.test(key) ? "iZone"
+    : /RampS$/.test(key) ? "ramp_rate" : /VelPeriodMs|VelDepth/.test(key) ? "velocity_filter" : /kS$/.test(key) ? "kS"
+    : /kV$/.test(key) ? "kV" : /kA$/.test(key) ? "kA" : /EncoderSync/.test(key) ? "encoder_sync" : null;
 
   root.innerHTML = `
     <div class="split">
@@ -70,11 +84,28 @@ const Tune = (() => {
             <label class="row small"><input type="checkbox" id="cmp"> overlay the run before</label>
           </div>
           <div id="practice-flag" class="practice-flag" hidden>Practice pod: a model of a MAXSwerve module, not your robot.</div>
-          <canvas class="plot" id="plot"></canvas>
+          <div class="plotwrap"><canvas class="plot" id="plot" aria-label="The setpoint and what the mechanism did"></canvas></div>
           <div class="steps" id="steps"></div>
+          <div id="explain-head" class="row" style="justify-content:space-between" hidden>
+            <h3>What the controller <span class="term" data-learn="error">saw</span> and <span class="term" data-learn="control_effort">did</span></h3>
+            <label class="row small">Explain <select id="xmod"></select></label>
+          </div>
+          <div class="plotwrap" id="plot2wrap" hidden><canvas class="plot short" id="plot2" aria-label="The controller's output, split into its parts, in volts"></canvas></div>
+          <p class="hint" id="explain-hint" hidden>Volts, so the parts add up. Hover the graph to read every part at that moment; hover a shaded area or a marker to learn what is happening there.</p>
           <div class="tblwrap" id="metrics"></div>
         </div>
         <div class="panel" id="report"><span class="hint">Run a test and the analysis and advice appear here.</span></div>
+        <div class="panel" id="whatif" hidden>
+          <div class="row" style="justify-content:space-between"><h3><span class="term" data-learn="what_if">What if…</span></h3><span class="small" id="wi-quality"></span></div>
+          <p class="hint">Drag a gain: the dashed line on the top graph becomes the prediction for this same run with the new value. Then run it for real - the robot has the final word.</p>
+          <div id="wi-sliders" class="wi-sliders"></div>
+          <div id="wi-table" class="tblwrap"></div>
+          <div class="row"><button class="btn" id="wi-use">Put these in the gains box</button><button class="btn" id="wi-reset">Back to the run's gains</button></div>
+        </div>
+        <div class="panel" id="story-panel" hidden>
+          <h3 id="story-head">What this run shows</h3>
+          <ol id="story" class="story small"></ol>
+        </div>
       </div>
     </div>`;
 
@@ -118,7 +149,8 @@ const Tune = (() => {
     $("#gainsrc", root).textContent = target === "practice" ? "practice copy" : (App.connected() ? "running on the robot" : "connect to see the robot's");
     $("#gains", root).innerHTML = fields().map(([key, label, unit]) => {
       const v = key in edits ? edits[key] : g[key];
-      return `<label class="gain">${esc(label)}<input type="number" step="any" data-key="${esc(key)}" value="${v == null || !isFinite(v) ? "" : +(+v).toPrecision(6)}" class="${key in edits ? "changed" : ""}"><span class="unit">${esc(unit)}</span></label>`;
+      const lk = learnKey(key);
+      return `<label class="gain">${lk ? `<span class="term" data-learn="${lk}">${esc(label)}</span>` : esc(label)}<input type="number" step="any" data-key="${esc(key)}" value="${v == null || !isFinite(v) ? "" : +(+v).toPrecision(6)}" class="${key in edits ? "changed" : ""}"><span class="unit">${esc(unit)}</span></label>`;
     }).join("");
     $$("#gains input", root).forEach(inp => inp.oninput = () => {
       const k = inp.dataset.key;
@@ -216,12 +248,157 @@ const Tune = (() => {
              straight: ["x (m)", "y (m)"], capture: ["s", "degrees"] }[doc.test] || ["s", ""];
   }
 
+  function explained() {
+    const e = current && current.explain;
+    return e && e.modules && e.modules[xmod] ? e.modules[xmod] : null;
+  }
+
+  function at(ex, x) {
+    const t = ex.t;
+    let lo = 0, hi = t.length - 1;
+    while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (t[mid] <= x) lo = mid; else hi = mid; }
+    return Math.abs(t[hi] - x) < Math.abs(t[lo] - x) ? hi : lo;
+  }
+
+  function readout(ex, x) {
+    const k = at(ex, x), u = ex.units;
+    const v = (a, d = 2) => fmt(ex[a][k], d);
+    return `<b>${fmt(ex.t[k], 3)} s</b> · ${esc(abbr(ex.module))}<br>
+      told ${v("sp", 2)}${u} · ${ex.loop === "steer" ? "wheel" : "wheel speed"} ${v("measured", 2)}${u}<br>
+      the loop sees ${v("seen", 2)}${u} · <b>error ${v("error", 2)}${u}</b><br>
+      <span class="c-p">P ${v("p")}</span> · <span class="c-i">I ${v("i")}</span> · <span class="c-d">D ${v("d")}</span>${ex.loop === "drive" ? ` · <span class="c-ff">FF ${v("ff")}</span>` : ""} V<br>
+      asked <b>${v("asked")} V</b> · applied <b>${v("applied")} V</b> · battery ${v("battery", 1)} V`;
+  }
+
+  function notes(list) {
+    return (list || []).filter(a => stepSel == null ? ALARMS.has(a.learn) : a.step === stepSel)
+      .map(a => Object.assign({ label: stepSel == null ? null : NOTE_LABEL[a.learn] }, a));
+  }
+
   function redraw() {
     if (!current) return;
     const s = seriesFor(current, false);
     if (compare && $("#cmp", root).checked && compare.test === current.test) s.unshift(...seriesFor(compare, true));
+    const ex = explained();
+    const p = whatIf.pred;
+    if (ex && p && p.ok && whatIf.file === current._file && whatIf.index === ex.index) {
+      s.push({ x: p.t, y: p.predicted, color: "--accent", dash: [2, 3], width: 2.2, label: "what if" });
+    }
     const [xl, yl] = axes(current);
-    Plot.draw($("#plot", root), { series: s, xrange: zoom, xlabel: xl, ylabel: yl });
+    Plot.draw($("#plot", root), { series: s, xrange: zoom, xlabel: xl, ylabel: yl,
+      annotations: ex ? notes(ex.response) : [], readout: ex ? x => readout(ex, x) : null });
+    $("#explain-head", root).hidden = !ex;
+    $("#plot2wrap", root).hidden = !ex;
+    $("#explain-hint", root).hidden = !ex;
+    if (!ex) return;
+    const t = ex.t, neg = ex.battery.map(b => -b);
+    const c = [
+      { x: t, y: ex.battery, color: "--bad", dash: [6, 4], width: 1, label: "battery" },
+      { x: t, y: neg, color: "--bad", dash: [6, 4], width: 1 },
+      ...(ex.loop === "drive" ? [{ x: t, y: ex.ff, color: "--sp", width: 1.6, label: "FF" }] : []),
+      { x: t, y: ex.p, color: "--s0", width: 1.4, label: "P" },
+      ...(ex.gains.kI ? [{ x: t, y: ex.i, color: "--s3", width: 1.4, label: "I" }] : []),
+      ...(ex.gains.kD ? [{ x: t, y: ex.d, color: "--s2", width: 1.4, label: "D" }] : []),
+      { x: t, y: ex.asked, color: "--ink", dash: [4, 3], width: 1.2, label: "asked" },
+      { x: t, y: ex.applied, color: "--ink", width: 1.8, label: "applied" },
+    ];
+    const lim = Math.max(...ex.battery.filter(isFinite), 12) * 1.15;
+    Plot.draw($("#plot2", root), { series: c, xrange: zoom, xlabel: "s", ylabel: "volts", yrange: [-lim, lim],
+      annotations: notes(ex.controller), readout: x => readout(ex, x) });
+  }
+
+  // ---------------------------------------------------------------- the story and "what if"
+  function paintStory() {
+    const ex = explained();
+    $("#story-panel", root).hidden = !ex || !ex.story.length;
+    if (!ex) return;
+    const chip = n => `<span class="chip learn-chip" data-learn="${esc(n.learn)}">${esc((Learn.L[n.learn] || {}).title || n.learn)}</span>`;
+    let items;
+    if (stepSel != null) {
+      // One step, in time order: what happened, moment by moment.
+      items = ex.story.filter(n => n.step === stepSel).map(n => `<li><span class="mono">${fmt(n.t, 2)} s</span> ${chip(n)} ${Learn.link(n.text, 3)}</li>`);
+      $("#story-head", root).textContent = `Step ${stepSel}, moment by moment`;
+    } else {
+      // Whole run: each idea once, from the biggest step that shows it, and how often it happened.
+      const steps = new Set(ex.story.map(n => n.step)).size;
+      const by = {};
+      for (const n of ex.story) {
+        const b = by[n.learn] || (by[n.learn] = { n, steps: new Set() });
+        b.steps.add(n.step);
+        if ((n.size || 0) > (b.n.size || 0)) b.n = n;
+      }
+      const order = ["dead_time", "kP", "rise_time", "saturation", "current_limit", "ramp_rate", "kD", "overshoot", "oscillation", "settling_time", "steady_state_error", "feedforward"];
+      items = Object.values(by).sort((a, b) => order.indexOf(a.n.learn) - order.indexOf(b.n.learn)).map(b =>
+        `<li>${chip(b.n)} <span class="muted small">in ${b.steps.size} of ${steps} steps · biggest:</span>
+          <button class="btn small" data-step="${b.n.step}">step ${b.n.step}</button> ${Learn.link(b.n.text, 3)}</li>`);
+      $("#story-head", root).textContent = "What this run shows";
+    }
+    $("#story", root).innerHTML = items.join("") + (stepSel == null ? `<li class="muted" style="list-style:none">Pick a step above the graphs to read it moment by moment.</li>` : "");
+    $$("[data-step]", root).forEach(b => b.onclick = () => selectStep(+b.dataset.step));
+  }
+
+  function wiKeys(ex) {
+    return XGAINS[ex.loop].map(([k, lk, top]) => [k.replace("{m}", ex.module), lk, top]);
+  }
+
+  function paintWhatIf() {
+    const ex = explained();
+    const panel = $("#whatif", root);
+    panel.hidden = !ex || !current._file;
+    if (panel.hidden) return;
+    const g = current.gains || {};
+    $("#wi-sliders", root).innerHTML = wiKeys(ex).map(([key, lk, top]) => {
+      const base = +(g[key] || 0), val = key in whatIf.values ? whatIf.values[key] : base;
+      const max = Math.max(top, base * 4);
+      return `<label class="wi"><span class="term" data-learn="${lk}">${esc(lk === "iZone" ? "IZone" : lk)}</span>
+        <input type="range" min="0" max="${max}" step="${max / 400}" value="${val}" data-key="${esc(key)}" aria-label="${esc(lk)}">
+        <span class="mono" data-v="${esc(key)}">${+(+val).toPrecision(3)}</span><span class="muted small">ran ${+(+base).toPrecision(3)}</span></label>`;
+    }).join("");
+    $$("#wi-sliders input", root).forEach(inp => inp.oninput = () => {
+      whatIf.values[inp.dataset.key] = +inp.value;
+      $(`[data-v="${CSS.escape(inp.dataset.key)}"]`, root).textContent = +(+inp.value).toPrecision(3);
+      clearTimeout(predTimer);
+      predTimer = setTimeout(predictNow, 180);
+    });
+    paintPrediction();
+  }
+
+  async function predictNow() {
+    const ex = explained();
+    if (!ex || !current._file) return;
+    const seq = ++whatIf.seq;
+    const r = await App.api("/api/predict", { file: current._file, module: ex.index, gains: whatIf.values });
+    if (seq !== whatIf.seq) return;
+    Object.assign(whatIf, { pred: r, file: current._file, index: ex.index });
+    paintPrediction();
+    redraw();
+  }
+
+  function paintPrediction() {
+    const p = whatIf.pred, ex = explained();
+    const q = $("#wi-quality", root), box = $("#wi-table", root);
+    if (!p || !ex || whatIf.file !== current._file || whatIf.index !== ex.index) { q.textContent = ""; box.innerHTML = ""; return; }
+    if (!p.ok) { q.textContent = ""; box.innerHTML = `<p class="hint">${esc(p.reason || p.error || "No prediction.")}</p>`; return; }
+    q.innerHTML = `<span class="chip ${p.quality === "good" ? "good" : p.quality === "fair" ? "warn" : "bad"}">model ${esc(p.quality)}</span>`;
+    const S = p.summary, u = p.units;
+    const row = (label, lk, f) => `<tr><td><span class="term" data-learn="${lk}">${label}</span></td>${["measured", "replay", "predicted"].map(k => `<td class="num">${f(S[k] || {})}</td>`).join("")}</tr>`;
+    const ms = v => v == null ? "–" : fmt(v * 1000, 0) + " ms";
+    box.innerHTML = `<table class="t"><thead><tr><th></th><th>This run</th><th>Model replay</th><th>Prediction</th></tr></thead><tbody>
+      ${row("Rise", "rise_time", s => ms(s.rise_time))}
+      ${row("Overshoot", "overshoot", s => s.overshoot_pct == null ? "–" : fmt(s.overshoot_pct, 1) + "%")}
+      ${row("Settle", "settling_time", s => s.settled === false ? "never" : ms(s.settling_time))}
+      ${row("Left over", "steady_state_error", s => s.steady_state_error == null ? "–" : fmt(s.steady_state_error, 3) + u)}
+      ${row("Swings", "oscillation", s => s.oscillations == null ? "–" : s.oscillations)}</tbody></table>
+      <p class="hint">${esc(p.note)} Learned: kS ${fmt(p.model.kS, 3)} V, kV ${fmt(p.model.kV, 4)}, kA ${fmt(p.model.kA, 5)}; the recording runs ${p.delay_ms} ms late.</p>`;
+  }
+
+  function paintExplain() {
+    const e = current && current.explain;
+    const sel = $("#xmod", root);
+    sel.innerHTML = e && e.modules ? e.modules.map((m, i) => `<option value="${i}">${esc(abbr(m.module))}</option>`).join("") : "";
+    sel.value = String(xmod);
+    paintStory();
+    paintWhatIf();
   }
 
   function paintSteps() {
@@ -236,16 +413,21 @@ const Tune = (() => {
     for (let i = 1; i <= sp.length; i++) {
       if (i === sp.length || Math.abs(sp[i] - sp[i - 1]) > 1e-6) { segs.push([start, i - 1]); start = i; }
     }
-    box.innerHTML = `<button class="btn small ${zoom ? "" : "on"}" data-z="all">Whole run</button>` +
+    box.innerHTML = `<button class="btn small ${stepSel == null ? "on" : ""}" data-z="all">Whole run</button>` +
       segs.slice(1).map(([a, b], k) => {
         const d = sp[a] - sp[a - 1];
-        return `<button class="btn small" data-a="${t[a]}" data-b="${t[b]}">Step ${k + 1}: ${d > 0 ? "+" : ""}${+d.toFixed(2)}</button>`;
+        return `<button class="btn small ${stepSel === k + 1 ? "on" : ""}" data-k="${k + 1}" data-a="${t[a]}" data-b="${t[b]}">Step ${k + 1}: ${d > 0 ? "+" : ""}${+d.toFixed(2)}</button>`;
       }).join("");
-    $$("button", box).forEach(b => b.onclick = () => {
-      zoom = b.dataset.z ? null : [Math.max(0, +b.dataset.a - 0.05), +b.dataset.b];
-      $$("button", box).forEach(x => x.classList.toggle("on", x === b));
-      redraw();
-    });
+    $$("button", box).forEach(b => b.onclick = () => selectStep(b.dataset.z ? null : +b.dataset.k));
+  }
+
+  function selectStep(k) {
+    const b = k == null ? null : $(`#steps button[data-k="${k}"]`, root);
+    stepSel = b ? k : null;
+    zoom = b ? [Math.max(0, +b.dataset.a - 0.05), +b.dataset.b] : null;
+    $$("#steps button", root).forEach(x => x.classList.toggle("on", x === b || (!b && x.dataset.z)));
+    paintStory();
+    redraw();
   }
 
   function paintMetrics() {
@@ -264,8 +446,9 @@ const Tune = (() => {
         rows.push(`<tr><td>${abbr(name)}</td><td colspan="8" class="mono">kS ${fmt(m.kS, 3)} V · kV ${fmt(m.kV, 3)} V/(m/s) · kA ${fmt(m.kA, 3)} V/(m/s²) · R² ${fmt(m.r2, 4)} · ${m.samples || 0} samples ${m.ok === false ? "· " + esc(m.reason) : ""}</td></tr>`);
       }
     }
-    $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th>Step</th><th>Delay ms</th>
-      <th>Rise ms</th><th>Overshoot %</th><th>Settle ms</th><th>Left over</th><th>Swings</th><th>Flat out %</th></tr></thead>
+    const th = (label, lk) => `<th><span class="term" data-learn="${lk}">${label}</span></th>`;
+    $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th>Step</th>${th("Delay ms", "dead_time")}
+      ${th("Rise ms", "rise_time")}${th("Overshoot %", "overshoot")}${th("Settle ms", "settling_time")}${th("Left over", "steady_state_error")}${th("Swings", "oscillation")}${th("Flat out %", "saturation")}</tr></thead>
       <tbody>${rows.join("")}</tbody></table>` : "";
   }
 
@@ -313,7 +496,7 @@ const Tune = (() => {
       <span>${esc(t.name)}</span><span class="v">${typeof t.value === "number" ? fmt(t.value, 3) : esc(t.value)} / ${esc(t.target)}</span></div>`).join("");
     const findings = (rep.findings || []).map((f, i) => `<div class="finding">
       <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
-      <div class="why">${esc(f.why)}</div>
+      <div class="why">${Learn.link(f.why, 3)}</div>
       ${f.action ? `<div class="row"><button class="btn small ${f === rep.next ? "primary" : ""}" data-i="${i}">${f === rep.next ? "Try this" : "Do this"}</button>
         <span class="small muted">${esc(describeAction(f.action))}</span></div>` : ""}</div>`).join("");
     box.innerHTML = `<div class="stack">
@@ -329,8 +512,12 @@ const Tune = (() => {
     if (current && current.test === doc.test) compare = current;
     current = doc;
     zoom = null;
+    stepSel = null;
+    xmod = 0;
+    whatIf = { values: {}, pred: null, seq: whatIf.seq };
     $("#res-title", root).textContent = `${doc.test} · ${doc.env || ""} · ${doc.outcome || ""}${doc._file ? " · " + doc._file : ""}`;
     $("#practice-flag", root).hidden = !doc.practice;
+    paintExplain();
     redraw();
     paintSteps();
     paintMetrics();
@@ -364,7 +551,7 @@ const Tune = (() => {
     edits = {};
     if (!LOOPS[l].practice) target = "robot";
     $$("#loopseg button", root).forEach(b => b.classList.toggle("on", b.dataset.loop === l));
-    $("#blurb", root).textContent = LOOPS[l].blurb;
+    $("#blurb", root).innerHTML = Learn.link(LOOPS[l].blurb, 3);
     $("#modrow", root).hidden = l !== "steer";
     sync();
     loadHistory();
@@ -394,6 +581,14 @@ const Tune = (() => {
   $("#revert", root).onclick = () => { edits = {}; paintGains(); };
   $("#save", root).onclick = saveGains;
   $("#cmp", root).onchange = redraw;
+  $("#xmod", root).onchange = e => { xmod = +e.target.value; whatIf = { values: {}, pred: null, seq: whatIf.seq }; paintStory(); paintWhatIf(); redraw(); };
+  $("#wi-reset", root).onclick = () => { whatIf = { values: {}, pred: null, seq: whatIf.seq + 1 }; paintWhatIf(); redraw(); };
+  $("#wi-use", root).onclick = () => {
+    if (!Object.keys(whatIf.values).length) { App.toast("Drag a slider first."); return; }
+    Object.assign(edits, whatIf.values);
+    paintGains();
+    App.toast(target === "practice" ? "In the gains box. Press Use these, then Run, to check the prediction." : "In the gains box. Apply live and Run to see what the robot really does.", 6000);
+  };
   window.addEventListener("resize", redraw);
 
   App.on("state", () => { if (root.classList.contains("on") && !Object.keys(edits).length) { sync(); } });

@@ -15,7 +15,7 @@
           <div id="motor-off" class="callout bad" hidden>The motor guard is switched off in swervetune.json: nothing protects these motors from heat, stalls or failure.</div>
           <div class="table-wrap">
             <table class="motors">
-              <thead><tr><th>Motor</th><th>Stage</th><th>Heat</th><th>Temp</th><th>Current</th><th>Stall</th><th>Why</th></tr></thead>
+              <thead><tr><th>Motor</th><th><span class="term" data-learn="derate">Stage</span></th><th><span class="term" data-learn="heat_estimate">Heat</span></th><th>Temp</th><th><span class="term" data-learn="current_limit">Current</span></th><th><span class="term" data-learn="stall">Stall</span></th><th>Why</th></tr></thead>
               <tbody id="motor-rows"><tr><td colspan="7" class="muted">Connect to a robot to see its motors.</td></tr></tbody>
             </table>
           </div>
@@ -27,7 +27,7 @@
       </div>
       <div class="stack">
         <div class="panel">
-          <h3>Thermal override</h3>
+          <h3><span class="term" data-learn="thermal_override">Thermal override</span></h3>
           <p class="small">For the end of a match, when losing a motor costs more than the motor. Holds heat
             shutoffs at half current for up to <span id="ovr-max">20</span> s. Never lifts a stall cut, and never
             holds off a motor already 10 °C past its shutoff or at 95% heat: past those it is being destroyed.</p>

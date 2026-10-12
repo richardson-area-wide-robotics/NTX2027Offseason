@@ -26,7 +26,8 @@ import re
 import sys
 import time
 
-from . import advisor, analysis, contract as C, diagnose, monitor, plant, rehearse, runs, yagslcfg
+from . import (advisor, analysis, contract as C, diagnose, explain, monitor, plant, predict, rehearse,
+               runs, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -287,6 +288,62 @@ def cmd_analyze(args, out):
                           measured_lateral_m=args.tape_lateral)
     out.put(report=_clean(rep), run_file=doc["_file"])
     print_report(out, rep)
+    return out.done()
+
+
+def _run_limits(args, doc):
+    if doc.get("practice"):
+        return {"steer": 20.0, "drive": 40.0}
+    try:
+        return current_limits(resolve_project(args.project) if args.project else None) or {"steer": 20.0, "drive": 40.0}
+    except Exception:  # noqa: BLE001 - limits only sharpen the explanation
+        return {"steer": 20.0, "drive": 40.0}
+
+
+def cmd_explain(args, out):
+    doc = runs.load(args.run)
+    e = explain.explain(doc, doc.get("gains"), _run_limits(args, doc))
+    if not e or not e["modules"]:
+        out.say("Only steer_step and drive_step runs can be explained.")
+        return out.done(1)
+    mods = e["modules"] if args.module is None else [m for m in e["modules"] if m["index"] == args.module]
+    slim = [{k: m[k] for k in ("module", "index", "loop", "units", "sensor", "gains", "story")} for m in mods]
+    out.put(explain=_clean(slim), run_file=doc["_file"])
+    for m in mods:
+        out.say(f"{m['module']} ({m['loop']}, the loop sees {m['sensor']}):")
+        for n in m["story"]:
+            if args.step is None or n["step"] == args.step:
+                out.say(f"  {n['t']:6.2f} s  [{n['learn']}] {n['text']}")
+    return out.done()
+
+
+def cmd_predict(args, out):
+    doc = runs.load(args.run)
+    new = dict(doc.get("gains") or {})
+    for kv in args.gains:
+        k, _, v = kv.partition("=")
+        new[k.strip()] = float(v)
+    loop = "steer" if doc.get("test") == "steer_step" else "drive"
+    p = predict.predict(doc, doc.get("gains") or {}, new, args.module,
+                        current_limit=_run_limits(args, doc).get(loop))
+    if not p.get("ok"):
+        out.put(prediction=_clean(p))
+        out.say(p.get("reason", "No prediction."))
+        return out.done(1)
+    out.put(prediction=_clean({k: v for k, v in p.items() if k not in ("t", "sp", "measured", "replay", "predicted")}))
+    out.say(f"{p['module']}: model {p['quality']} ({p['relative_error'] * 100:.1f}% replay error, recording "
+            f"{p['delay_ms']} ms late). {p['note']}")
+    rows = (("rise_time", "rise", 1000, "ms"), ("overshoot_pct", "overshoot", 1, "%"),
+            ("settling_time", "settle", 1000, "ms"), ("steady_state_error", "left over", 1, p["units"]),
+            ("oscillations", "swings", 1, ""))
+    out.say(f"  {'':10s} {'this run':>10s} {'replay':>10s} {'predicted':>10s}")
+    for key, label, scale, unit in rows:
+        cells = []
+        for col in ("measured", "replay", "predicted"):
+            v = p["summary"][col].get(key)
+            cells.append("never" if key == "settling_time" and p["summary"][col].get("settled") is False
+                         else "-" if v is None else f"{v * scale:.3g}{unit}")
+        out.say(f"  {label:10s} " + " ".join(f"{c:>10s}" for c in cells))
     return out.done()
 
 
@@ -595,6 +652,18 @@ def build_parser():
     s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward m")
     s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways m")
     s.set_defaults(fn=cmd_analyze)
+
+    s = sub.add_parser("explain", help="what the controller saw and did in a saved step run")
+    s.add_argument("run")
+    s.add_argument("--module", type=int, help="channel index, e.g. 0")
+    s.add_argument("--step", type=int, help="only this step")
+    s.set_defaults(fn=cmd_explain)
+
+    s = sub.add_parser("predict", help="'what if': a saved step run predicted with changed gains")
+    s.add_argument("run")
+    s.add_argument("gains", nargs="+", help="Name=value, e.g. Steer/kP=0.02 FF/frontleft/kS=0.15")
+    s.add_argument("--module", type=int, default=0, help="channel index, e.g. 0")
+    s.set_defaults(fn=cmd_predict)
 
     s = sub.add_parser("gains", help="show or change live gains")
     s.add_argument("action", nargs="?", default="show", choices=["show", "set"])

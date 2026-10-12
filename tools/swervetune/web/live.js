@@ -100,19 +100,19 @@
       const fault = live.faults && live.faults[i];
       return `<div class="mod ${flagged.has(name) ? "flag" : ""}"><b>${abbr(name)} <span class="muted small">${esc(name)}</span></b>
         <div class="kv">
-          <span>Angle</span><span>${fmt(live.steer[i], 1)}° (told ${fmt(live.steer_sp[i], 1)}°, off ${fmt(err, 1)}°)</span>
-          <span>Motor encoder</span><span>${fmt(live.steer_motor[i] % 360, 1)}° (gap ${fmt(gap, 1)}°)</span>
-          <span>Raw absolute</span><span>${fmt(live.steer_raw[i], 1)}°</span>
+          <span><span class="term" data-learn="setpoint">Angle</span></span><span>${fmt(live.steer[i], 1)}° (told ${fmt(live.steer_sp[i], 1)}°, off ${fmt(err, 1)}°)</span>
+          <span><span class="term" data-learn="motor_encoder">Motor encoder</span></span><span>${fmt(live.steer_motor[i] % 360, 1)}° (gap ${fmt(gap, 1)}°)</span>
+          <span><span class="term" data-learn="absolute_encoder">Raw absolute</span></span><span>${fmt(live.steer_raw[i], 1)}°</span>
           <span>Speed</span><span>${fmt(live.v[i], 2)} m/s (told ${fmt(live.v_sp[i], 2)})</span>
-          <span>Current</span><span>drive ${fmt(live.drive_amps[i], 1)} A · steer ${fmt(live.steer_amps[i], 1)} A</span>
-          <span>Temperature</span><span>drive ${fmt(live.drive_temp[i], 0)} °C · steer ${fmt(live.steer_temp[i], 0)} °C</span>
+          <span><span class="term" data-learn="current_limit">Current</span></span><span>drive ${fmt(live.drive_amps[i], 1)} A · steer ${fmt(live.steer_amps[i], 1)} A</span>
+          <span><span class="term" data-learn="heat_estimate">Temperature</span></span><span>drive ${fmt(live.drive_temp[i], 0)} °C · steer ${fmt(live.steer_temp[i], 0)} °C</span>
           ${fault ? `<span>Faults</span><span style="color:var(--bad)">${esc(fault)}</span>` : ""}
         </div></div>`;
     }).join("");
 
     const flags = L.flags || [];
     $("#flags", root).innerHTML = flags.length ? flags.map(f => `<div class="flagrow">
-        <span>${esc(f.text)} <span class="mono small">${esc(f.detail || "")}</span></span>
+        <span>${Learn.link(f.text, 2)} <span class="mono small">${esc(f.detail || "")}</span></span>
         <button class="btn small" data-sym="${esc(f.symptom)}">Troubleshoot</button></div>`).join("")
       : `<span class="hint">Nothing. Problems the tool spots while you drive appear here, with a link to the fix.</span>`;
     $$("#flags [data-sym]", root).forEach(b => b.onclick = () => Trouble.open(b.dataset.sym));

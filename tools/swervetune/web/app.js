@@ -282,6 +282,7 @@ async function pollState() {
 }
 
 $$(".tabs button").forEach(b => b.onclick = () => App.show(b.dataset.tab));
+$("#lessons").onclick = () => Learn.open(null);
 $("#modal").addEventListener("click", e => { if (e.target.id === "modal") App.closeModal(); });
 
 window.addEventListener("DOMContentLoaded", async () => {

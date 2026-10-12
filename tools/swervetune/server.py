@@ -26,7 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlparse
 
-from . import advisor, contract as C, diagnose, monitor, plant, rehearse, runs, yagslcfg
+from . import (advisor, contract as C, diagnose, explain, monitor, plant, predict, rehearse, runs,
+               yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -325,7 +326,19 @@ def api_run(name):
     lim = S.limits()
     doc["report"] = advisor.analyze(doc, doc.get("gains"),
                                     current_limit=lim["steer" if doc.get("test") == "steer_step" else "drive"])
+    doc["explain"] = explain.explain(doc, doc.get("gains"), lim)
     return doc
+
+
+def api_predict(body):
+    """'What if': the same run, predicted with changed gains. Gains not given keep their value."""
+    doc = runs.load(body["file"])
+    now = {k: float(v) for k, v in (doc.get("gains") or {}).items() if isinstance(v, (int, float))}
+    new = dict(now)
+    new.update({k: float(v) for k, v in (body.get("gains") or {}).items()})
+    lim = S.limits() if not doc.get("practice") else {"steer": 20.0, "drive": 40.0}
+    loop = "steer" if doc.get("test") == "steer_step" else "drive"
+    return predict.predict(doc, now, new, int(body.get("module", 0)), current_limit=lim.get(loop))
 
 
 def api_analyze(body):
@@ -384,6 +397,7 @@ def api_practice(body):
     rep = advisor.analyze(doc, g)
     path = runs.save(doc, rep, g, practice=True)
     doc["report"] = rep
+    doc["explain"] = explain.explain(doc, g, {"steer": 20.0, "drive": 40.0})
     doc["_file"] = os.path.basename(path)
     doc["gains"] = g
     return doc
@@ -423,7 +437,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,
         "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
-        "/api/motors/override": api_motor_override}
+        "/api/motors/override": api_motor_override, "/api/predict": api_predict}
 
 
 class Handler(BaseHTTPRequestHandler):

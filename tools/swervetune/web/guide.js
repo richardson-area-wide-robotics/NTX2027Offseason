@@ -9,7 +9,7 @@ const Guide = (() => {
   const lastRun = (test, env, pred) => runsCache.find(r => r.test === test && !r.practice && (!env || r.env === env) && (!pred || pred(r)));
 
   const STEPS = [
-    { id: "connect", title: "Connect and check the configuration", where: "Anywhere",
+    { id: "connect", learn: ["control_loop", "gear_ratio", "current_limit"], title: "Connect and check the configuration", where: "Anywhere",
       why: "Most swerve problems are a wrong number in a JSON file. The tool reads every file, does the physics, and lists what does not add up - before anything moves.",
       need: ["The laptop on the robot's network (or the simulator running)"],
       todo: ["Pick the robot code at the top (Black team or Peashooter).", "Press Connect.", "Read every red and yellow item in the Config tab. Fix the red ones before going on."],
@@ -21,14 +21,14 @@ const Guide = (() => {
           <div class="row"><button class="btn" data-go="config">Open the Config tab</button></div>`;
       } },
 
-    { id: "health", title: "Sensor health", where: "Robot disabled",
+    { id: "health", learn: ["quantization", "motor_encoder", "absolute_encoder"], title: "Sensor health", where: "Robot disabled",
       why: "A noisy encoder or a drifting gyro makes every later number wrong. Two seconds standing still finds both.",
       need: ["Robot on, disabled, not moving"],
       todo: ["Leave the robot completely still.", "Press Run health check."],
       run: { label: "Run health check", test: "capture", args: { duration_s: 3 } },
       status: () => { const r = lastRun("capture"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 
-    { id: "hand", title: "Hand check: every direction", where: "Robot disabled, motors coasting",
+    { id: "hand", learn: ["hand_check", "coast_mode", "inversion", "motor_encoder", "absolute_encoder", "gear_ratio"], title: "Hand check: every direction", where: "Robot disabled, motors coasting",
       why: "Every later test assumes it knows which way is positive. A backwards sign makes a module run away or fight the others, and it looks like a tuning problem. Turning things by hand finds it in a minute, with nothing powered.",
       need: ["Robot disabled", "Somewhere to stand at each corner"],
       todo: ["Press Record wheels (20 s). Turn each module so its wheel points straight ahead, then roll that wheel so its TOP moves toward the front of the robot, about one turn. Do all four, one direction only.",
@@ -61,7 +61,7 @@ const Guide = (() => {
         $("#g-hs", box).onclick = () => go("steer");
       } },
 
-    { id: "offsets", title: "Set the wheel offsets", where: "Robot disabled, motors coasting",
+    { id: "offsets", learn: ["offset", "absolute_encoder", "bevel_gear", "straight_edge", "hold_still", "coast_mode", "redeploy"], title: "Set the wheel offsets", where: "Robot disabled, motors coasting",
       why: "The offset tells the code where 'straight ahead' is for each module. One degree off is about 1.7 cm of sideways drift for every metre driven. Copied or rounded offsets are the most common swerve fault.",
       need: ["A straight-edge (a long level or a piece of aluminium extrusion)"],
       todo: ["Turn every module so its wheel points straight ahead with its bevel gear facing the robot's LEFT side. All four the same way.",
@@ -91,7 +91,7 @@ const Guide = (() => {
         };
       } },
 
-    { id: "directions", title: "On blocks: every wheel drives the right way", where: "On blocks",
+    { id: "directions", learn: ["inversion", "environment"], title: "On blocks: every wheel drives the right way", where: "On blocks",
       why: "With the robot in the air you can watch each tyre. A wheel that rolls backwards fights the other three and drags the robot sideways.",
       need: ["Blocks under the frame, all four wheels clear", "Environment set to On blocks"],
       todo: ["Set the environment to On blocks.", "Press Run directions and watch the TOP of each tyre while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did."],
@@ -109,47 +109,54 @@ const Guide = (() => {
         };
       } },
 
-    { id: "steer-blocks", title: "Steering, on blocks", where: "On blocks",
+    { id: "steer-blocks", learn: ["step_response", "kP", "kD", "dead_time", "saturation"], title: "Steering, on blocks", where: "On blocks",
       why: "Get the steering loop stable and quick in the air first, where nothing fights it.",
       need: ["On blocks"],
       todo: ["Open the tuner (Steering, Robot).", "Run, read the advice, press Try this, run again. Repeat until the targets are met.", "Do not save yet: the floor will change the numbers."],
       tune: "steer",
       status: () => { const r = lastRun("steer_step", "BLOCKS"); return !r ? "todo" : r.score >= 80 ? "done" : "attention"; } },
 
-    { id: "steer-floor", title: "Steering, on the floor", where: "On the floor (the robot does not drive)",
+    { id: "steer-floor", learn: ["carpet_scrub", "steady_state_error", "kI", "iZone", "what_if"], title: "Steering, on the floor", where: "On the floor (the robot does not drive)",
       why: "Carpet holds a wheel still until the loop pushes hard enough. Gains that look perfect on blocks usually leave each wheel a few degrees short on carpet - and that is sideways drift.",
       need: ["Robot on carpet", "Environment set to On the floor", "Someone holding the deadman"],
       todo: ["Open the tuner (Steering, Robot). The wheels turn in place; the robot stays put.", "Follow the advice until every target is met.", "Save to files."],
       tune: "steer",
       status: () => { const r = lastRun("steer_step", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 
-    { id: "ff", title: "Measure the feedforward", where: "On the floor, about 3 m clear",
+    { id: "ff", learn: ["feedforward", "kS", "kV", "kA"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
       need: ["3 m or more of clear carpet ahead", "A fresh battery", "Deadman held"],
       todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few metres.", "If every module fitted, press Try this to apply, then Save to files."],
       tune: "ff",
       status: () => { const r = lastRun("drive_ff", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 
-    { id: "drive", title: "Drive speed", where: "On the floor",
+    { id: "drive", learn: ["feedback", "kP", "velocity_filter", "ff_uses_setpoint"], title: "Drive speed", where: "On the floor",
       why: "With the feedforward measured, the drive PID only has to correct small errors, so it can stay gentle and quiet.",
       need: ["Clear carpet", "Deadman held"],
       todo: ["Open the tuner (Drive speed, Robot).", "Follow the advice until every target is met.", "Save to files."],
       tune: "drive",
       status: () => { const r = lastRun("drive_step", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 
-    { id: "spin", title: "Spin check", where: "On the floor, clear all round",
+    { id: "spin", learn: ["swerve_module", "module_flip"], title: "Spin check", where: "On the floor, clear all round",
       why: "Command, gyro and wheels must agree on how fast the robot turns. This finds an inverted gyro and module positions entered wrong.",
       need: ["About 1 m clear all round", "Deadman held"],
       todo: ["Open the tuner (Spin, Robot) and Run.", "Fix anything it reports."],
       tune: "spin",
       status: () => { const r = lastRun("spin", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 
-    { id: "straight", title: "Straight line", where: "On the floor, 3 m clear",
+    { id: "straight", learn: ["gear_ratio", "offset"], title: "Straight line", where: "On the floor, 3 m clear",
       why: "The acceptance test. With no heading correction, whatever the robot does is the drivetrain itself.",
       need: ["A tape measure and a tape mark at the start (unless AprilTags are on)", "Deadman held"],
       todo: ["Mark the floor at the robot's centre.", "Open the tuner (Straight line, Robot) and Run.", "Measure where it stopped; enter it in Runs to get the wheel scale."],
       tune: "straight",
       status: () => { const r = lastRun("straight", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
+
+    { id: "profile", title: "Advanced: second-order motion profiles", where: "After steering and drive pass on the floor",
+      learn: ["motion_profile", "trapezoid_profile", "cruise_velocity", "max_acceleration", "ff_uses_setpoint", "maxmotion_position", "maxmotion_velocity", "allowed_profile_error"],
+      why: "A step asks a mechanism to be somewhere instantly; a motion profile plans a path it can actually follow, limiting both speed and acceleration. That is second-order control, and REV's MAXMotion runs it inside the SPARK. It only helps once the first-order loops - feedforward and PID - are already right, so this step stays locked until they pass.",
+      need: ["Steering on the floor and drive speed both passing their targets"],
+      todo: ["Read the lessons below, in order.", "The profile tuner arrives here once the first-order steps pass on a real robot."],
+      status: () => firstOrderDone() ? "todo" : "locked" },
 
     { id: "commit", title: "Save and commit", where: "Laptop",
       why: "Gains changed live are gone at the next restart. The files in the repository are the robot's real settings.",
@@ -163,6 +170,12 @@ const Guide = (() => {
 
   async function save() { await App.api("/api/progress", progress); }
 
+  // First-order tuning is done when steering on the floor and drive speed both pass.
+  function firstOrderDone() {
+    const s = lastRun("steer_step", "FIELD"), d = lastRun("drive_step", "FIELD");
+    return !!(s && s.score === 100 && d && d.score === 100);
+  }
+
   async function refresh() {
     const r = await App.api("/api/runs");
     runsCache = r.runs || [];
@@ -175,15 +188,16 @@ const Guide = (() => {
     root.innerHTML = `<div class="split">
       <div class="panel"><h3>The path to a tight swerve</h3><div class="guide-steps">${STEPS.map((s, i) => {
         const st = s.status();
-        return `<button class="gstep ${s.id === active ? "on" : ""} ${st}" data-s="${s.id}"><span class="n">${st === "done" ? "✓" : i + 1}</span>
+        return `<button class="gstep ${s.id === active ? "on" : ""} ${st}" data-s="${s.id}"><span class="n">${st === "done" ? "✓" : st === "locked" ? "🔒" : i + 1}</span>
           <span><span>${esc(s.title)}</span><br><span class="where">${esc(s.where)}</span></span></button>`;
       }).join("")}</div></div>
       <div class="panel" id="gbody">
         <div class="row" style="justify-content:space-between"><h2>${esc(step.title)}</h2><span class="chip">${esc(step.where)}</span></div>
-        <div class="callout"><b>Why:</b> ${esc(step.why)}</div>
+        <div class="callout"><b>Why:</b> ${Learn.link(step.why, 3)}</div>
+        ${(step.learn || []).length ? `<div class="row learn-row"><span class="small muted">Learn:</span>${Learn.chips(step.learn)}</div>` : ""}
         ${step.where.startsWith("On the floor") ? `<div class="callout safety"><b>Safety:</b> the robot moves. Clear the space, set the environment to On the floor with real measurements, and keep the deadman in the hand of someone watching the robot. Esc or the red button stops everything.</div>` : ""}
-        <div><b>You need</b><ul style="margin:4px 0 0;padding-left:18px">${step.need.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>
-        <div><b>Do this</b><ol class="do">${step.todo.map(t => `<li>${esc(t)}</li>`).join("")}</ol></div>
+        <div><b>You need</b><ul style="margin:4px 0 0;padding-left:18px">${step.need.map(n => `<li>${Learn.link(n, 2)}</li>`).join("")}</ul></div>
+        <div><b>Do this</b><ol class="do">${step.todo.map(t => `<li>${Learn.link(t, 2)}</li>`).join("")}</ol></div>
         <div class="row">
           ${step.run ? `<button class="btn primary" id="g-run">${esc(step.run.label)}</button>` : ""}
           ${step.tune ? `<button class="btn primary" id="g-tune">Open the tuner</button>` : ""}
@@ -210,5 +224,5 @@ const Guide = (() => {
   App.on("tab", t => { if (t === "guide") refresh(); });
   App.on("lint", () => { if (root.classList.contains("on")) paint(); });
   App.on("run", () => { if (root.classList.contains("on")) refresh(); });
-  return { refresh };
+  return { refresh, firstOrderDone };
 })();
