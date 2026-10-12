@@ -92,6 +92,9 @@
     $("#live-pose", root).textContent = live.pose && live.pose.length
       ? `Odometry x ${fmt(live.pose[0])} m, y ${fmt(live.pose[1])} m · heading ${fmt(live.heading, 1)}°`
         + (live.vision_pose && live.vision_pose.length ? ` · vision x ${fmt(live.vision_pose[0])} y ${fmt(live.vision_pose[1])}` : "")
+        + (live.vision_counts && live.vision_counts.length && (live.vision_counts[0] || live.vision_counts[1])
+          ? ` · vision ${live.vision_counts[0]} accepted, ${live.vision_counts[1]} rejected`
+            + (live.vision_last_reject ? ` (last: ${live.vision_last_reject})` : "") : "")
       : "";
 
     $("#mods", root).innerHTML = (L.names || []).map((name, i) => {
