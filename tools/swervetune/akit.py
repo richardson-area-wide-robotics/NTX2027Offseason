@@ -32,10 +32,41 @@ def _writer(path):
     return DataLogWriter(path)
 
 
+class LogWriter:
+    """A WPILOG writer that flushes every 2,000 records.
+
+    robotpy's DataLogWriter fails with "resource deadlock would occur" once its buffer fills, at
+    roughly 75,000 records; flushing often keeps it from filling.
+    """
+
+    FLUSH_EVERY = 2000
+    APPEND = {"double": "appendDouble", "string": "appendString", "int64": "appendInteger",
+              "boolean": "appendBoolean"}
+
+    def __init__(self, path):
+        self.log = _writer(path)
+        self.count = 0
+
+    def entry(self, name, kind, metadata="", ts=0):
+        log, fn = self.log, getattr(self.log, self.APPEND[kind])
+        eid = log.start(name, kind, metadata, ts)
+        writer = self
+
+        class _E:
+            def append(self, value, stamp):
+                fn(eid, value, stamp)
+                writer.count += 1
+                if writer.count % writer.FLUSH_EVERY == 0:
+                    log.flush()
+        return _E()
+
+    def close(self):
+        self.log.flush()
+        self.log.stop()
+
+
 def export_run(doc, path):
     """Writes one saved run as a WPILOG. Returns the entry names written."""
-    from wpiutil.log import DoubleLogEntry, StringLogEntry
-
     ch = doc.get("channels") or {}
     t = ch.get("t") or []
     if not t:
@@ -43,37 +74,34 @@ def export_run(doc, path):
     test = doc.get("test", "run")
     base = f"/SwerveTune/{test}/"
     ts = [1_000_000 + int(round((x - t[0]) * 1e6)) for x in t]  # start one second in
-    log = _writer(path)
+    log = LogWriter(path)
     names = []
     for key, values in ch.items():
         if key == "t" or not isinstance(values, list) or len(values) != len(t):
             continue
-        e = DoubleLogEntry(log, base + key, "", ts[0])
+        e = log.entry(base + key, "double", "", ts[0])
         for v, stamp in zip(values, ts):
             if v is not None:
                 e.append(float(v), stamp)
         names.append(base + key)
     for key, value in (doc.get("meta") or {}).items():
         if isinstance(value, (int, float)):
-            DoubleLogEntry(log, base + "meta/" + key, "", ts[0]).append(float(value), ts[0])
-    notes = StringLogEntry(log, base + "notes", "", ts[0])
+            log.entry(base + "meta/" + key, "double", "", ts[0]).append(float(value), ts[0])
+    notes = log.entry(base + "notes", "string", "", ts[0])
     for line in doc.get("notes") or []:
         notes.append(str(line), ts[0])
     if test == "drive_ff" and ch.get("phase"):
         names += _sysid_entries(log, doc, ch, ts)
-    log.flush()
-    log.stop()
+    log.close()
     return names
 
 
 def _sysid_entries(log, doc, ch, ts):
     """The drive_ff run in SysIdRoutineLog's own names and units."""
-    from wpiutil.log import DoubleLogEntry, StringLogEntry
-
     mech = "drive"
     modules = (doc.get("robot") or {}).get("modules") or []
     out = []
-    state = StringLogEntry(log, "sysid-test-state-" + mech, "", ts[0])
+    state = log.entry("sysid-test-state-" + mech, "string", "", ts[0])
     last = None
     for phase, stamp in zip(ch["phase"], ts):
         s = SYSID_STATES.get(int(phase), "none") if phase is not None else "none"
@@ -92,7 +120,7 @@ def _sysid_entries(log, doc, ch, ts):
             if not series:
                 continue
             entry_name = f"{field}-{name}-{mech}"
-            e = DoubleLogEntry(log, entry_name, unit, ts[0])
+            e = log.entry(entry_name, "double", unit, ts[0])
             for v, stamp in zip(series, ts):
                 if v is not None:
                     e.append(float(v), stamp)

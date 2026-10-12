@@ -67,7 +67,15 @@ public final class AkLogging {
         DriverStation.reportWarning("[AdvantageKit] " + where, false);
       }
     } else {
-      where = "Simulation: streaming live to AdvantageScope; nothing is saved.";
+      // Off by default so simulation never fills a disk; set AKIT_SIM_LOG to a folder to keep logs
+      // from a simulated run, e.g. to test the post-match summary.
+      String simLog = System.getenv("AKIT_SIM_LOG");
+      if (simLog != null && !simLog.isBlank()) {
+        Logger.addDataReceiver(new WPILOGWriter(simLog));
+        where = "Simulation: logging to " + simLog + " and streaming to AdvantageScope.";
+      } else {
+        where = "Simulation: streaming live to AdvantageScope; nothing is saved.";
+      }
     }
     Logger.addDataReceiver(new NT4Publisher());
     Logger.recordMetadata("LogDestination", where);

@@ -9,6 +9,12 @@
     const r = await App.api("/api/runs");
     const list = (r.runs || []).filter(x => filter === "all" || (filter === "practice") === !!x.practice);
     root.innerHTML = `<div class="panel">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap"><h2>Match logs</h2>
+        <div class="row" style="flex-wrap:wrap"><input id="lg-folder" placeholder="Folder with .wpilog files (USB stick, AdvantageScope downloads)" style="min-width:22em" aria-label="Log folder">
+        <button class="btn" id="lg-go">List logs</button></div></div>
+      <p class="hint">AdvantageKit writes one log per power-up to the USB stick in the roboRIO (/U/logs). Copy them here, or point at the folder AdvantageScope downloads to.</p>
+      <div id="lg-list"></div><div id="lg-report"></div></div>
+      <div class="panel">
       <div class="row" style="justify-content:space-between"><h2>Saved runs</h2>
         <div class="seg" id="rf"><button data-f="robot">Robot</button><button data-f="practice">Practice</button><button data-f="all">All</button></div></div>
       <p class="hint">Stored in tools/swervetune/runs (not committed). Reopening a run re-analyses it with the current advice.</p>
@@ -28,10 +34,47 @@
       Tune.show(d);
     });
     $$("[data-tape]", root).forEach(b => b.onclick = () => tape(b.dataset.tape));
+    let folder = "";
+    try { folder = localStorage.getItem("swervetune.logfolder") || ""; } catch (e) { /* storage blocked */ }
+    $("#lg-folder", root).value = folder;
+    $("#lg-go", root).onclick = () => listLogs($("#lg-folder", root).value);
+    if (folder) listLogs(folder);
     $$("[data-export]", root).forEach(b => b.onclick = async () => {
       const r = await App.api("/api/export", { file: b.dataset.export });
       App.toast(r.ok ? `Wrote ${r.path}. Open it in AdvantageScope${r.sysid ? " or SysId" : ""}.` : (r.error || "Export failed."), 8000);
     });
+  }
+
+  async function listLogs(folder) {
+    try { localStorage.setItem("swervetune.logfolder", folder); } catch (e) { /* storage blocked */ }
+    const r = await App.api("/api/logs?folder=" + encodeURIComponent(folder));
+    const box = $("#lg-list", root);
+    if (!r.ok) { box.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+    box.innerHTML = r.files.length ? `<div class="tblwrap"><table class="t"><tbody>${r.files.map(f => `<tr>
+        <td class="mono small">${esc(f.name)}</td><td class="num small">${fmt(f.size / 1e6, 1)} MB</td>
+        <td class="small">${new Date(f.mtime * 1000).toLocaleString()}</td>
+        <td><button class="btn small" data-log="${esc(f.path)}">Summarize</button></td></tr>`).join("")}</tbody></table></div>`
+      : `<p class="hint">No .wpilog files in that folder.</p>`;
+    $$("[data-log]", box).forEach(b => b.onclick = () => summarize(b.dataset.log));
+  }
+
+  async function summarize(path) {
+    const box = $("#lg-report", root);
+    box.innerHTML = `<p class="hint">Reading ${esc(path)}…</p>`;
+    const r = await App.api("/api/logsummary?file=" + encodeURIComponent(path));
+    if (r.ok === false) { box.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+    const i = r.info || {};
+    box.innerHTML = `<h3>${esc(r.summary)}</h3>
+      <p class="small muted">${i.FMSAttached ? `${esc(i.EventName || "")} ${esc(i.MatchType || "")} ${esc(i.MatchNumber || "")} · ` : ""}${fmt(r.duration_s, 0)} s ·
+        ${r.phases.filter(p => p[2] !== "disabled").map(p => `${p[2]} ${fmt(p[1] - p[0], 0)} s`).join(", ") || "never enabled"}
+        ${r.battery_min != null ? ` · battery low ${fmt(r.battery_min, 1)} V` : ""}</p>
+      ${(r.findings || []).length ? `<h3>Where to look</h3>${r.findings.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span>
+        ${f.when ? `<span class="small muted">${esc(f.when)}</span>` : ""}</div><div class="why">${Learn.link(f.why, 3)}</div></div>`).join("")}` : ""}
+      <h3>What happened</h3>
+      ${r.events.length ? `<ol class="story small">${r.events.map(e => `<li><span class="level ${e.level}">${e.level}</span>
+        <span class="mono">${esc(e.when)}</span> ${Learn.link(e.text, 2)}
+        <button class="btn small" data-at="${e.t}">See on the wiring map</button></li>`).join("")}</ol>` : `<p class="hint">Nothing went wrong in this log.</p>`}`;
+    $$("[data-at]", box).forEach(b => b.onclick = () => { Wiring.showLog(path, +b.dataset.at); });
   }
 
   function tape(file) {

@@ -26,8 +26,8 @@ import re
 import sys
 import time
 
-from . import (advisor, akit, analysis, contract as C, diagnose, explain, monitor, plant, predict,
-               rehearse, runs, yagslcfg)
+from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor, plant,
+               predict, rehearse, runs, wiring, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -354,6 +354,24 @@ def cmd_export(args, out):
     out.put(path=path, entries=names)
     out.say(f"Wrote {path}: {len(names)} entries. Open it in AdvantageScope"
             + (", or in SysId (mechanism 'drive', one motor per module)." if doc.get("test") == "drive_ff" else "."))
+    return out.done()
+
+
+def cmd_logsummary(args, out):
+    project = resolve_project(args.project) if args.project else None
+    m = wiring.load_map(project) if project else None
+    rep = logsummary.summarize_file(args.log, m)
+    out.put(summary=_clean(rep))
+    info = rep["info"]
+    out.say(f"{os.path.basename(args.log)}: {rep['summary']}"
+            + (f"  ({info.get('EventName', '')} {info.get('MatchType', '')} {info.get('MatchNumber', '')})"
+               if info.get("FMSAttached") else ""))
+    for e in rep["events"]:
+        out.say(f"  {e['when']:>18s}  {e['level']:5s}  {e['text']}")
+    for f in rep["findings"]:
+        out.say(f"  where to look: {f['title']}. {f['why']}")
+    if not project:
+        out.say("  (add --project Peashooter to judge dropouts with that robot's wiring map)")
     return out.done()
 
 
@@ -688,6 +706,10 @@ def build_parser():
     s.add_argument("run")
     s.add_argument("--out", help="output .wpilog path (default: next to the run)")
     s.set_defaults(fn=cmd_export)
+
+    s = sub.add_parser("logsummary", help="what went wrong in a match log (.wpilog), and where to look")
+    s.add_argument("log")
+    s.set_defaults(fn=cmd_logsummary)
 
     s = sub.add_parser("layout", help="write the AdvantageScope layout for each robot")
     s.add_argument("--out-dir", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "advantagescope"))

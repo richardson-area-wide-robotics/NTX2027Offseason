@@ -26,8 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, contract as C, diagnose, explain, monitor, plant, predict, rehearse,
-               runs, wiring, yagslcfg)
+from . import (advisor, akit, contract as C, diagnose, explain, logsummary, monitor, plant, predict,
+               rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -396,13 +396,54 @@ def _demo_snapshot(m, kind):
     return {"motors": rows, "can": can}
 
 
+_LOG_CACHE = {}
+
+
+def _log_series(path):
+    if not path.lower().endswith(".wpilog") or not os.path.isfile(path):
+        raise ValueError("not a .wpilog file: " + path)
+    key = (path, os.path.getmtime(path))
+    if key not in _LOG_CACHE:
+        _LOG_CACHE.clear()
+        _LOG_CACHE[key] = logsummary.read(path)
+    return _LOG_CACHE[key]
+
+
+def api_logs(query=None):
+    """The .wpilog files in a folder, newest first."""
+    folder = os.path.expanduser((query or {}).get("folder") or "")
+    if not folder or not os.path.isdir(folder):
+        return {"ok": False, "error": "Not a folder: " + folder}
+    files = []
+    for name in os.listdir(folder):
+        if name.lower().endswith(".wpilog"):
+            full = os.path.join(folder, name)
+            files.append({"name": name, "path": full, "size": os.path.getsize(full),
+                          "mtime": os.path.getmtime(full)})
+    files.sort(key=lambda f: -f["mtime"])
+    return {"ok": True, "folder": folder, "files": files[:200]}
+
+
+def api_logsummary(query=None):
+    path = (query or {}).get("file") or ""
+    rep = logsummary.summarize(_log_series(path), S.wiring_map())
+    rep["ok"] = True
+    rep["file"] = path
+    return rep
+
+
 def api_wiring(query=None):
-    """The map, every device, the bus lengths and the live diagnosis (or a practice fault)."""
+    """The map, every device, the bus lengths and the live diagnosis (or a practice fault, or a
+    moment from a match log)."""
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
     m = S.wiring_map()
-    demo = (query or {}).get("demo")
-    if demo in DEMOS:
+    q = query or {}
+    demo = q.get("demo")
+    if q.get("log"):
+        snap = logsummary.snapshot_at(_log_series(q["log"]), float(q.get("t", 0)))
+        demo = None
+    elif demo in DEMOS:
         snap = _demo_snapshot(m, demo)
     elif S.link and S.link.is_connected():
         live = S.link.live()
@@ -534,7 +575,8 @@ def api_sim(body):
 
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
-       "/api/progress": api_progress_get, "/api/wiring": api_wiring}
+       "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
+       "/api/logsummary": api_logsummary}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,

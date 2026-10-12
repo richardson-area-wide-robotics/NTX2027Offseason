@@ -2,10 +2,10 @@
 // look when something is wrong. The map lives in the robot project (src/main/deploy/wiring.json).
 "use strict";
 
-(() => {
+const Wiring = (() => {
   const root = $("#tab-wiring");
   const SVGNS = "http://www.w3.org/2000/svg";
-  let data = null, editing = null, demo = "", timer = null, focus = null;
+  let data = null, editing = null, demo = "", timer = null, focus = null, logAt = null;
 
   root.innerHTML = `
     <div class="stack">
@@ -54,7 +54,8 @@
   // ---------------------------------------------------------------- data
   async function refresh() {
     if (editing) return;
-    const d = await App.api("/api/wiring" + (demo ? "?demo=" + encodeURIComponent(demo) : ""));
+    const q = logAt ? `?log=${encodeURIComponent(logAt.path)}&t=${logAt.t}` : demo ? "?demo=" + encodeURIComponent(demo) : "";
+    const d = await App.api("/api/wiring" + q);
     if (d.ok === false) { $("#w-meta", root).textContent = d.error; return; }
     data = d;
     paint();
@@ -92,7 +93,10 @@
     $("#w-meta", root).innerHTML = `${esc(data.path)} · ${chain.length - 2} devices on ${esc(bus.name)} ·
       bus about ${fmt(len, 1)} m (${measured} of ${segs} segments measured; CAN allows 40 m) ·
       ${bus.orderConfirmed ? `<span class="chip good">order checked on the robot</span>` : `<span class="chip warn">order not checked yet</span>`}
-      ${data.demo ? `<span class="chip info">practice: ${esc(data.demos[data.demo])}</span>` : live ? "" : `<span class="chip">no live data</span>`}`;
+      ${logAt ? `<span class="chip info">from the log at ${fmt(logAt.t, 2)} s <button class="btn small" id="w-live">back to live</button></span>`
+        : data.demo ? `<span class="chip info">practice: ${esc(data.demos[data.demo])}</span>` : live ? "" : `<span class="chip">no live data</span>`}`;
+    const back = $("#w-live", root);
+    if (back) back.onclick = () => { logAt = null; refresh(); };
 
     const svg = $("#w-svg", root);
     svg.innerHTML = "";
@@ -225,7 +229,7 @@
 
   // ---------------------------------------------------------------- controls
   $("#w-edit", root).onclick = () => { if (data) openEditor(); };
-  $("#w-demo", root).onchange = e => { demo = e.target.value; refresh(); };
+  $("#w-demo", root).onchange = e => { demo = e.target.value; logAt = null; refresh(); };
   $("#w-ohms-go", root).onclick = async () => {
     const v = await App.api("/api/wiring/termination", { ohms: $("#w-ohms", root).value });
     $("#w-ohms-out", root).innerHTML = `<div class="finding"><div class="head"><span class="level ${v.level}">${v.level}</span><span class="title">${esc(v.title)}</span></div><div class="why">${Learn.link(v.why, 3)}</div></div>`;
@@ -242,4 +246,8 @@
     timer = setInterval(refresh, 1000);
   });
   window.addEventListener("resize", () => { if (data && root.classList.contains("on")) paint(); });
+  return {
+    /** Shows the map as it was at a moment in a match log. */
+    showLog(path, t) { logAt = { path, t }; App.show("wiring"); },
+  };
 })();

@@ -41,6 +41,11 @@ FEED_R_WARN = 0.035       # ohms, PDH to controller and back: 12 AWG and two goo
 FEED_R_BAD = 0.070
 
 
+def _times(n):
+    n = int(n)
+    return "once" if n == 1 else f"{n} times"
+
+
 def _level(lvl, title, why, where=None, fix=None):
     d = {"level": lvl, "title": title, "why": why}
     if where:
@@ -275,7 +280,7 @@ def diagnose(m, snapshot, devices=None):
                 for i in dropped:
                     name = chain[i]
                     F.append(_level(
-                        "warn", f"{name} has dropped off the CAN bus {rows[name]['dropouts']:.0f} times",
+                        "warn", f"{name} has dropped off the CAN bus {_times(rows[name]['dropouts'])}",
                         "Only it dropped, so its own power is the likeliest cause (a brief loss of power "
                         "makes a controller vanish from the bus while it restarts), then its CAN plugs.",
                         {"devices": [name], "pdh_port": ports.get(name)}))
@@ -283,13 +288,13 @@ def diagnose(m, snapshot, devices=None):
     for name, r in rows.items():
         if (r.get("resets") or 0) > 0:
             F.append(_level(
-                "warn", f"{name} lost power and rebooted {r['resets']:.0f} times",
+                "warn", f"{name} lost power and rebooted {_times(r['resets'])}",
                 f"A controller only reboots when its supply drops out. Check its power leads, {port(name)} "
                 "and the breaker in it (fully seated?), and the Wago or crimp joints in between.",
                 {"devices": [name], "pdh_port": ports.get(name)}))
         if (r.get("brownouts") or 0) > 0:
             F.append(_level(
-                "warn", f"{name} saw low supply voltage {r['brownouts']:.0f} times",
+                "warn", f"{name} saw low supply voltage {_times(r['brownouts'])}",
                 "If the battery and PDH held up at the same time, the voltage was lost in this "
                 "controller's own feed: a loose joint or a thin wire.",
                 {"devices": [name], "pdh_port": ports.get(name)}))
@@ -317,7 +322,7 @@ def diagnose(m, snapshot, devices=None):
         util, bus_off, tx_full, rx_err, tx_err = can[:5]
         if bus_off > 0:
             F.append(_level(
-                "error", f"The CAN bus shut itself down {bus_off:.0f} times",
+                "error", f"The CAN bus shut itself down {_times(bus_off)}",
                 "Bus-off happens when transmissions keep failing: missing or doubled termination, CAN-H and "
                 "CAN-L swapped somewhere, a short, or a break. Check termination with a multimeter "
                 "(about 60 ohms, powered off).", {"bus": True}))
@@ -329,7 +334,7 @@ def diagnose(m, snapshot, devices=None):
                 {"bus": True}))
         if tx_full > 0:
             F.append(_level(
-                "info", f"The roboRIO's transmit queue filled {tx_full:.0f} times",
+                "info", f"The roboRIO's transmit queue filled {_times(tx_full)}",
                 "Frames waited to be sent: a busy bus, or nobody acknowledging (a disconnected bus).",
                 {"bus": True}))
         u = util if util <= 1 else util / 100
