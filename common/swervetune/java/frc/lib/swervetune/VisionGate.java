@@ -17,23 +17,23 @@ public final class VisionGate {
   public static final class Limits {
     /** Older than this and the frame no longer describes where the robot is, seconds. */
     public double maxAgeS = 0.5;
-    /** Single tags are trusted only this close; error grows with distance squared, metres. */
+    /** Single tags are trusted only this close; error grows with distance squared, meters. */
     public double maxSingleTagDistanceM = 4.0;
-    /** Multi-tag solves are constrained enough to use further out, metres. */
+    /** Multi-tag solves are constrained enough to use further out, meters. */
     public double maxMultiTagDistanceM = 6.0;
     /** A lone tag above this ambiguity has two valid solutions; PhotonVision's own figure. */
     public double maxSingleTagAmbiguity = 0.2;
-    /** A solve this far above or below the floor is wrong, metres. */
+    /** A solve this far above or below the floor is wrong, meters. */
     public double maxZErrorM = 0.4;
-    /** Field size, metres. 2026 REBUILT is 16.54 x 8.07. */
+    /** Field size, meters. 2026 REBUILT is 16.54 x 8.07. */
     public double fieldLengthM = 16.54;
 
     public double fieldWidthM = 8.07;
-    /** How far outside the perimeter a pose may land and still be believed, metres. */
+    /** How far outside the perimeter a pose may land and still be believed, meters. */
     public double fieldMarginM = 0.5;
     /** A single tag claiming a bigger jump than this is likelier a misread ID than a teleport. */
     public double maxSingleTagJumpM = 1.5;
-    /** Translational std dev for one tag at 1 m, metres; scaled by distance squared. */
+    /** Translational std dev for one tag at 1 m, meters; scaled by distance squared. */
     public double singleTagXyStdDevM = 0.35;
     /** Rotational std dev for one tag at 1 m, radians. */
     public double singleTagThetaStdDevRad = Math.toRadians(20.0);

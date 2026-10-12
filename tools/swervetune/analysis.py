@@ -97,7 +97,7 @@ def segments(t, sp, min_change=1e-6):
 
 
 def smooth(xs, window):
-    """Centred moving median. Keeps edges sharp while removing single-count sensor steps."""
+    """Centered moving median. Keeps edges sharp while removing single-count sensor steps."""
     if window <= 1 or len(xs) < window:
         return list(xs)
     h = window // 2

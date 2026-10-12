@@ -1,4 +1,4 @@
-"""Saved test runs: one JSON file per run, so any result can be re-analysed or compared later.
+"""Saved test runs: one JSON file per run, so any result can be re-analyzed or compared later.
 
 Runs live in ``tools/swervetune/runs/`` (git-ignored: they are data, not code). A run file holds
 the raw channels, the gains in effect when it ran, and the analysis report at the time - re-running
@@ -68,7 +68,7 @@ def ff_history(robot, blocks, before=None, exclude=None, limit=200):
     """Earlier drive_ff fits for one robot, oldest first: ``[{"saved", "modules"}]``.
 
     Only runs in the same place (blocks or floor: a free wheel's kV is not a loaded one's), not
-    practice runs, and only those saved before ``before`` so re-analysing an old run never compares
+    practice runs, and only those saved before ``before`` so re-analyzing an old run never compares
     it with its own future.
     """
     out = []

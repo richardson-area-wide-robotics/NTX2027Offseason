@@ -6,7 +6,7 @@ package frc.lib.swervetune;
  *
  * <p>Why it matters: above the slip current, more current cannot push the robot any harder - the
  * carpet will not pass on more force - so it only spins the wheel. That wastes battery, heats the
- * motor, wears the tread, and makes odometry count distance the robot never travelled. A limit
+ * motor, wears the tread, and makes odometry count distance the robot never traveled. A limit
  * just below slip gives the hardest acceleration the carpet allows and keeps every wheel gripping.
  *
  * <p>The method is the standard wall push. The robot sits with a bumper flat against a solid wall,
@@ -18,7 +18,7 @@ package frc.lib.swervetune;
  * current reaches the ceiling, which is never above the team's policy for the motor.
  *
  * <p>For the run only, the drive current limit is raised to the ceiling, never saved to flash, and
- * put back afterwards whatever happens. The laptop analyses the samples and recommends a limit.
+ * put back afterwards whatever happens. The laptop analyzes the samples and recommends a limit.
  *
  * <p>Wheels that turn at a current far too low to be slipping mean the robot is driving, not
  * pushing: it is not against a wall. The run stops at once and says so.

@@ -4,7 +4,7 @@ package frc.lib.swervetune;
  * Drives a measured straight line with no heading correction, then optionally comes back.
  *
  * <p>The acceptance test for everything else. With the heading controller off, whatever the robot
- * does is the drivetrain's own behaviour: a module offset a degree out, one weak corner, or a gyro
+ * does is the drivetrain's own behavior: a module offset a degree out, one weak corner, or a gyro
  * scale error all show up as heading drift and sideways drift that a corrected run would hide.
  *
  * <p>Ground truth, in order of preference:

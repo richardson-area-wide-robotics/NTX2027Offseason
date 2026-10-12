@@ -12,7 +12,7 @@ A check can carry automatic evidence the tool gathers itself:
 * ``test``    - a test to run, judged by :mod:`advisor`
 
 When evidence exists the tool pre-answers the question and shows why; the student confirms.
-Where only eyes can tell - which way the top of a tyre moves - the check says exactly what to
+Where only eyes can tell - which way the top of a tire moves - the check says exactly what to
 watch for.
 """
 
@@ -113,7 +113,7 @@ SYMPTOMS = [
                   {"type": "guide", "step": "offsets"},
                   {"lint": ["drive_inversion_mixed"]}),
             check("On blocks, with all wheels pointed forward and driving slowly forward, does the "
-                  "TOP of every tyre roll toward the front of the robot?",
+                  "TOP of every tire roll toward the front of the robot?",
                   "Tune tab, Drive, run drive_step on blocks and watch the tops of the tyres. That "
                   "is the direction the robot would go.",
                   BLOCKS,
@@ -202,7 +202,7 @@ SYMPTOMS = [
                   FIELD,
                   "Module locations in the config do not match the robot, or the gyro scale is "
                   "off.",
-                  "Measure axle centre to axle centre and fix the module location values.",
+                  "Measure axle center to axle center and fix the module location values.",
                   {"type": "run", "test": "spin", "env": FIELD}),
         ],
     },
@@ -276,7 +276,7 @@ SYMPTOMS = [
             check("Is it only at a crawl that the wheels don't turn?",
                   "YAGSL deliberately holds the last angle below 1% of top speed (anti-jitter).",
                   FIELD,
-                  "That is intended behaviour, not a fault.",
+                  "That is intended behavior, not a fault.",
                   "Nothing to fix. If it bothers drivers, the stick deadband is the place to "
                   "look.", None),
         ],
@@ -322,7 +322,7 @@ SYMPTOMS = [
                   "confirm.",
                   {"type": "troubleshoot", "symptom": "robot_wrong_direction"}),
             check("Are the offsets right (wheels straight read 0° within a degree)?",
-                  "A degree of offset is about 1.7 cm of sideways drift per metre.", DISABLED,
+                  "A degree of offset is about 1.7 cm of sideways drift per meter.", DISABLED,
                   "An offset is out.", "Recapture offsets.", {"type": "guide", "step": "offsets"}),
             check("Does steer_step on the floor show small-step error under 0.75°?",
                   "Carpet holds a soft steering loop a few degrees short.", FIELD,
@@ -471,9 +471,9 @@ SYMPTOMS = [
     {
         "id": "pod_jitter",
         "title": "Modules twitch while the robot sits still",
-        "looks_like": "Enabled with the sticks centred, wheels twitch or buzz.",
+        "looks_like": "Enabled with the sticks centered, wheels twitch or buzz.",
         "checks": [
-            check("With sticks centred, do the setpoints in the Live view stay still?",
+            check("With sticks centered, do the setpoints in the Live view stay still?",
                   "Stick drift below the deadband should command nothing.", BLOCKS,
                   "The sticks are drifting through the deadband.",
                   "Raise the deadband (0.08-0.1) or replace the controller.", None),
@@ -505,7 +505,7 @@ SYMPTOMS = [
                   {"type": "guide", "step": "hand_check"}),
             check("Driving straight on the floor, do all four modules report the same distance "
                   "(within 3%)?",
-                  "Live view while driving straight for a few metres, or the module comparison in "
+                  "Live view while driving straight for a few meters, or the module comparison in "
                   "a floor drive_ff or spin run. On blocks this cannot be seen: the motor encoder "
                   "cannot see the gearbox, only the floor couples the wheels.",
                   FIELD,

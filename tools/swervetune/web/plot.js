@@ -193,7 +193,7 @@ const Plot = (() => {
     }
   }
 
-  // Lesson colours: red for flat out, amber for limits and ringing, green for good, blue otherwise.
+  // Lesson colors: red for flat out, amber for limits and ringing, green for good, blue otherwise.
   const TONE = { saturation: "--bad", current_limit: "--warn", oscillation: "--warn", overshoot: "--warn",
                  steady_state_error: "--bad", dead_time: "--info", feedforward: "--ok", settling_time: "--ok",
                  rise_time: "--accent", kP: "--s0", kD: "--s2", kI: "--s3", ramp_rate: "--warn" };

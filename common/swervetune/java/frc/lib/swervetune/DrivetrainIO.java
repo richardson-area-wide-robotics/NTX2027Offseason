@@ -11,7 +11,7 @@ import java.util.Optional;
  * read or driven, the change is confined to one adapter class, and every test procedure, safety
  * rule and laptop tool carries on unchanged.
  *
- * <p>Units are fixed here so they cannot drift: metres, metres per second, degrees, volts, amps.
+ * <p>Units are fixed here so they cannot drift: meters, meters per second, degrees, volts, amps.
  * Angles are counter-clockwise positive seen from above, as WPILib uses them.
  */
 public interface DrivetrainIO {
@@ -43,7 +43,7 @@ public interface DrivetrainIO {
   /** Configuration name, e.g. {@code frontleft}. */
   String moduleName(int module);
 
-  /** Module position from robot centre, metres, {@code {x, y}}. */
+  /** Module position from robot center, meters, {@code {x, y}}. */
   double[] moduleLocationM(int module);
 
   /** Free speed of a module from motor, gearing and wheel diameter, m/s. */

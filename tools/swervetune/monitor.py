@@ -41,7 +41,7 @@ RULES = {
 # One swerve motor this much hotter than the median of its siblings, C, is not the duty cycle.
 SIBLING_HOT_C = 15.0
 
-# Passive drive-ratio check: how much straight-line driving to collect before judging, metres.
+# Passive drive-ratio check: how much straight-line driving to collect before judging, meters.
 RATIO_MIN_TRAVEL_M = 3.0
 
 
@@ -54,7 +54,7 @@ class Monitor:
         self._last_clear = {}  # (rule, module) -> time the condition stopped
         self._err_hist = {}    # module -> recent (time, steering error) samples
         self._ratio_last = None  # (positions, heading) at the previous straight-driving sample
-        self._ratio_travel = {}  # module -> metres reported while driving straight on the floor
+        self._ratio_travel = {}  # module -> meters reported while driving straight on the floor
 
     def _raise(self, rule, module, now, hold, detail, active):
         key = (rule, module)

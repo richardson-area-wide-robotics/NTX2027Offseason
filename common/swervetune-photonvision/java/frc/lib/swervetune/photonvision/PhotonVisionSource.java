@@ -44,7 +44,7 @@ public final class PhotonVisionSource implements VisionSource {
    * @param cameraName exactly as the camera's PhotonVision web page shows it; a mismatch fails
    *     silently, with no error and no poses
    * @param layout the field's AprilTag layout (welded or AndyMark: they differ by up to 3.6 cm)
-   * @param robotToCamera robot centre at the floor to the camera lens, metres and radians
+   * @param robotToCamera robot center at the floor to the camera lens, meters and radians
    */
   public PhotonVisionSource(String cameraName, AprilTagFieldLayout layout, Transform3d robotToCamera) {
     this.name = cameraName;

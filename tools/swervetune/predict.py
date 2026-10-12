@@ -7,7 +7,7 @@ a module is better tried on a model first. So:
 1. **Identify** a small model of the mechanism from one recorded step test: how many volts it
    takes to start moving (kS), to hold a speed (kV), to accelerate (kA), plus the motor's own
    current limit and the controller's speed filter. Units are the loop's: degrees for steering,
-   metres per second for drive.
+   meters per second for drive.
 2. **Replay** the run on the model with the gains that were in force, and compare with what the
    robot did. That comparison is the model's honesty: if the replay misses, the prediction will
    too, and the result says so.
@@ -59,7 +59,7 @@ def identify(t, sp, y, volts, loop, motor_kind, gear, current_limit, units_per_m
     """Fits ``V = kS*sgn(w) + kV*w + kA*a`` (w the loop's speed) from a step test.
 
     ``units_per_motor_rad`` converts motor shaft radians to the loop's units (degrees of module,
-    or metres of wheel travel), so the motor's back-EMF and current limit can be put in those
+    or meters of wheel travel), so the motor's back-EMF and current limit can be put in those
     units. ``vel_window_ms`` is how late the recorded speed is (drive only), so acceleration is
     lined up with the voltage that caused it.
     """
@@ -253,7 +253,7 @@ def predict(result, gains_now, gains_new, module=0, current_limit=None, motor_ki
         y = ch.get(f"m{m}.v")
         gear = meta.get("drive_gear_ratio") or 5.5
         kind = motor_kind or "neo"
-        units = wheel_d_in * 0.0254 / 2 / gear  # wheel metres per motor radian
+        units = wheel_d_in * 0.0254 / 2 / gear  # wheel meters per motor radian
         limit = current_limit or 40.0
         period = int(gains_now.get("Drive/VelPeriodMs") or 32)
         depth = int(gains_now.get("Drive/VelDepth") or 8)

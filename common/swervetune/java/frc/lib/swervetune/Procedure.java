@@ -46,7 +46,7 @@ public interface Procedure {
    */
   String validate(TestContext ctx);
 
-  /** Distance from the start the run may legitimately reach, metres. The geofence is this. */
+  /** Distance from the start the run may legitimately reach, meters. The geofence is this. */
   default double spaceBudgetM(TestContext ctx) {
     return 0;
   }

@@ -26,8 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, contract as C, diagnose, explain, logsummary, monitor, pdhports, plant,
-               predict, rehearse, runs, wiring, yagslcfg)
+from . import (advisor, akit, contract as C, diagnose, explain, geometry, logsummary, monitor, pdhports,
+               plant, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -362,7 +362,7 @@ def api_runs(_):
 
 def api_run(name):
     doc = runs.load(name)
-    # Re-analyse on every open: the advisor may be newer than the run, and the channels are kept.
+    # Re-analyze on every open: the advisor may be newer than the run, and the channels are kept.
     lim = S.limits()
     doc["report"] = advisor.analyze(doc, doc.get("gains"),
                                     current_limit=lim["steer" if doc.get("test") == "steer_step" else "drive"])
@@ -455,6 +455,71 @@ def api_wiring(query=None):
             "lengths": [wiring.bus_length(b) for b in m["buses"]], "snapshot": snap,
             "findings": wiring.diagnose(m, snap), "demos": DEMOS, "demo": demo if demo in DEMOS else None,
             "path": os.path.relpath(wiring.map_path(S.project), S.project.path)}
+
+
+def _edit_dicts(edits):
+    return [{"file": f, "path": list(p), "value": v} for f, p, v in edits]
+
+
+def api_geometry_tape(body):
+    """Module locations from a tape-measured wheelbase and track width."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    try:
+        r = geometry.tape_locations(S.project, float(body.get("wheelbase_in")), float(body.get("track_in")))
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "Type both measurements, in inches."}
+    r["edits"] = _edit_dicts(r["edits"])
+    r["ok"] = True
+    return r
+
+
+PRACTICE_WHEELS = (0.982, 1.0, 0.998, 1.003)
+
+
+def api_geometry_wheels(body):
+    """Each wheel's real size from a push in coast (a capture run), or practice data."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    cfg = S.project.wheel_d_in()
+    names = S.project.module_names()
+    if body.get("practice"):
+        k = PRACTICE_WHEELS[:len(names)] + (1.0,) * max(0, len(names) - len(PRACTICE_WHEELS))
+        angles = [0.0] * len(names)
+        if len(angles) > 1:
+            angles[1] = 4.0   # one wheel not quite straight, to show the correction
+        doc = {"channels": plant.coast_push(tape_m=3.0, real_in=tuple(cfg * x for x in k),
+                                            configured_in=cfg, angles_deg=tuple(angles))}
+        tape = 3.0
+    else:
+        try:
+            tape = float(body.get("tape_m"))
+        except (TypeError, ValueError):
+            return {"ok": False, "error": "Type how far the robot moved, in meters."}
+        doc = runs.load(body["file"])
+        names = (doc.get("robot") or {}).get("modules") or names
+    r = geometry.wheel_sizes(doc, tape, cfg, names)
+    r["edits"] = _edit_dicts(r.get("edits", []))
+    r["ok"] = True
+    r["practice"] = bool(body.get("practice"))
+    return r
+
+
+def api_geometry_spin(query=None):
+    """The newest floor spin, judged against the module positions and (optionally) wheel sizes."""
+    ratio = float((query or {}).get("configured_over_real") or 1.0)
+    robot = S.project.name.lower() if S.project else ""
+    spins = [r for r in runs.list_runs(300) if r["test"] == "spin" and r["env"] == "FIELD"
+             and not r["practice"] and r["outcome"] == "DONE"]
+    mine = [r for r in spins if (r.get("robot") or "").lower() == robot] or spins
+    if not mine:
+        out = geometry.spin_check({})
+        out.update(ok=True, run=None)
+        return out
+    doc = runs.load(mine[0]["file"])
+    out = geometry.spin_check(advisor.spin_report(doc).get("measured"), ratio)
+    out.update(ok=True, run=mine[0]["file"], saved=mine[0].get("saved"))
+    return out
 
 
 PRACTICE_PORTS = (0, 1, 2, 3, 16, 17, 18, 19)
@@ -663,7 +728,7 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
-       "/api/wiring/wiggle": api_wiring_wiggle}
+       "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -672,7 +737,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,
         "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
-        "/api/export": api_export, "/api/wiring/termination": api_wiring_termination}
+        "/api/export": api_export, "/api/wiring/termination": api_wiring_termination,
+        "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels}
 
 
 class Handler(BaseHTTPRequestHandler):

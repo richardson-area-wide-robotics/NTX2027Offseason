@@ -15,15 +15,15 @@ public interface VisionSource {
   /**
    * One pose estimate from one camera frame.
    *
-   * @param xM field x, metres, WPILib blue-origin field frame
-   * @param yM field y, metres
-   * @param zM height of the solved robot origin, metres; near zero for a believable solve
+   * @param xM field x, meters, WPILib blue-origin field frame
+   * @param yM field y, meters
+   * @param zM height of the solved robot origin, meters; near zero for a believable solve
    * @param headingDeg robot heading, degrees, counter-clockwise positive
    * @param timestampS when the frame was captured, robot clock seconds (PhotonLib already reports
    *     this timebase)
    * @param tagCount tags used in the solve
    * @param ambiguity worst single-tag pose ambiguity, 0 to 1; above 0.2 is a coin flip; -1 unknown
-   * @param nearestTagM distance to the nearest tag used, metres
+   * @param nearestTagM distance to the nearest tag used, meters
    * @param camera which camera, for telemetry
    */
   record Observation(

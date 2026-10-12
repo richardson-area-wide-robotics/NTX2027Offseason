@@ -41,7 +41,7 @@ final class SpinProcedure implements Procedure {
     return env.allowsActuation;
   }
 
-  /** Distance from robot centre to the furthest module, metres. */
+  /** Distance from robot center to the furthest module, meters. */
   static double maxRadius(DrivetrainIO io) {
     double r = 0.1;
     for (int m = 0; m < io.moduleCount(); m++) {

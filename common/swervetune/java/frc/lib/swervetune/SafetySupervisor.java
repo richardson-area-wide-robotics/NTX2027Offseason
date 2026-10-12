@@ -81,7 +81,7 @@ public final class SafetySupervisor {
     public double sustainS = 0.15;
     /** Stall must hold this long, seconds. Accelerating from rest briefly looks like a stall. */
     public double stallSustainS = 0.4;
-    /** In a wall push, the chassis moving this far means it is not against a wall, metres. */
+    /** In a wall push, the chassis moving this far means it is not against a wall, meters. */
     public double wallTravelM = 0.3;
   }
 
@@ -97,7 +97,7 @@ public final class SafetySupervisor {
     public boolean controllerDeadman;
     /** Largest absolute driver stick deflection, 0..1. */
     public double driverStickMax;
-    /** Distance from where the test started, metres, from odometry. */
+    /** Distance from where the test started, meters, from odometry. */
     public double displacementM;
     /** Largest measured wheel speed, m/s. */
     public double maxWheelSpeedMps;

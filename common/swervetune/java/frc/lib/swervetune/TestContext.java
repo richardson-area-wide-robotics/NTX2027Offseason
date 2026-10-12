@@ -16,7 +16,7 @@ public final class TestContext {
   public final int[] modules;
   /** Fastest any wheel may be commanded, m/s. */
   public final double speedCapMps;
-  /** Clear floor ahead and to the side, metres. */
+  /** Clear floor ahead and to the side, meters. */
   public final double spaceForwardM;
 
   public final double spaceSideM;

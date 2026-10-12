@@ -222,7 +222,7 @@ def cmd_env(args, out):
         return out.done(2)
     try:
         if args.mode and args.mode.upper() == "FIELD" and not (args.space and args.side):
-            return out.done(out.fail("FIELD needs --space and --side: metres of clear floor ahead "
+            return out.done(out.fail("FIELD needs --space and --side: meters of clear floor ahead "
                                      "and to each side. Measure them."))
         lk.set_environment(args.mode, None if args.tags is None else args.tags == "on",
                            args.space, args.side, args.cap)
@@ -701,13 +701,13 @@ def build_parser():
     s.add_argument("--cap", type=float, help="speed cap for tests, m/s")
     s.set_defaults(fn=cmd_env)
 
-    s = sub.add_parser("run", help="run a test on the robot and analyse it")
+    s = sub.add_parser("run", help="run a test on the robot and analyze it")
     s.add_argument("test", help=", ".join(C.TESTS))
     s.add_argument("--module", default="ALL", help="ALL, FL, FR, BL, BR or a module name")
     s.add_argument("--arg", action="append", help="test argument key=value, repeatable")
     s.set_defaults(fn=cmd_run)
 
-    s = sub.add_parser("analyze", help="re-analyse a saved run")
+    s = sub.add_parser("analyze", help="re-analyze a saved run")
     s.add_argument("run")
     s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward m")
     s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways m")

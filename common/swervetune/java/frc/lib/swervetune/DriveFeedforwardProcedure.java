@@ -191,11 +191,11 @@ final class DriveFeedforwardProcedure implements Procedure {
 
     if (ctx.env == TestEnvironment.FIELD && volts != 0) {
       double[] pose = io.pose();
-      double travelled = Math.hypot(pose[0] - phaseStartX, pose[1] - phaseStartY);
-      if (travelled > 0.85 * budgetM) {
+      double traveled = Math.hypot(pose[0] - phaseStartX, pose[1] - phaseStartY);
+      if (traveled > 0.85 * budgetM) {
         if (!cutShort) {
           ctx.note(String.format("Phase '%s' cut short at %.2f m to stay inside the space.",
-              timeline.get(seg).label(), travelled));
+              timeline.get(seg).label(), traveled));
         }
         cutShort = true;
         volts = 0;

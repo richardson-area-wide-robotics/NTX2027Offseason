@@ -7,7 +7,7 @@ same way::
       "test": "steer_step", "env": "FIELD", "practice": False,
       "summary": "one line a person can read",
       "score": 0-100,          # share of the targets met
-      "cost": float,           # lower is better; what an agent should minimise
+      "cost": float,           # lower is better; what an agent should minimize
       "targets": [{"name", "value", "target", "met"}],
       "modules": {name: {...metrics...}},
       "findings": [ {level, title, why, action?} ],   # most important first
@@ -201,7 +201,7 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
 
     if worst["steps"] == 0:
         if not report["findings"]:
-            return no_data_report(dict(result, message="No step could be analysed: the setpoint "
+            return no_data_report(dict(result, message="No step could be analyzed: the setpoint "
                                        "never changed or the angle never moved."))
         report["targets"], report["cost"] = [], None  # nothing measured, so nothing is met
     if any(f["level"] == "error" for f in report["findings"]):
@@ -270,8 +270,8 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
                     "warn", f"Small corrections stop {worst['sse']:.1f}° short",
                     "Friction (carpet scrub, mostly) holds the wheel until the error is big enough "
                     "for kP to push through it. Every degree of steering error is about "
-                    f"{math.tan(math.radians(1)) * 100:.1f} cm of sideways drift per metre driven, "
-                    f"so this one is about {lateral:.1f} cm per metre. Raise kP 50%.",
+                    f"{math.tan(math.radians(1)) * 100:.1f} cm of sideways drift per meter driven, "
+                    f"so this one is about {lateral:.1f} cm per meter. Raise kP 50%.",
                     gains_action(Steer__kP=new_kp)))
             elif kI == 0:
                 F.append(finding(
@@ -406,7 +406,7 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT):
                        "high_speed_error": max(high_err) if high_err else float("nan")}
     if not dead and not steady:
         if not F:
-            return no_data_report(dict(result, message="No speed step could be analysed: the "
+            return no_data_report(dict(result, message="No speed step could be analyzed: the "
                                        "wheels never moved."))
         report["targets"], report["cost"] = [], None
     if any(f["level"] == "error" for f in F):
@@ -728,7 +728,7 @@ def spin_report(result):
         wheel.append(math.copysign(A.mean(wheel_rates), w))
         want.append(w)
     if not want:
-        report["summary"] = "No spin segments to analyse."
+        report["summary"] = "No spin segments to analyze."
         return _finish(report)
     g_ratio = A.mean([g / w for g, w in zip(gyro, want)])
     w_ratio = A.mean([x / w for x, w in zip(wheel, want)])
@@ -758,13 +758,13 @@ def spin_report(result):
         F.append(finding(
             "warn", f"Robot turned {g_ratio / w_ratio * 100:.0f}% as fast as its wheels imply",
             "Either the wheels are slipping (try a lower spin rate), or the module locations in the "
-            "module JSON files are smaller than the real ones. Measure axle centre to axle centre."))
+            "module JSON files are smaller than the real ones. Measure axle center to axle center."))
     elif g_ratio / max(w_ratio, 1e-6) > 1.05:
         F.append(finding(
             "warn", f"Robot turned {g_ratio / w_ratio * 100:.0f}% as fast as its wheels imply",
             "Turning faster than the wheels allow means the module locations in the config are "
             "larger than the real ones - often the frame size was entered instead of the distance "
-            "between wheel centres. Measure axle centre to axle centre."))
+            "between wheel centers. Measure axle center to axle center."))
     radius = [math.hypot(meta.get(f"m{i}.x", 0.3), meta.get(f"m{i}.y", 0.3)) for i in range(max(mods) + 1)]
     spinning = [abs(c) > 0.05 for c in cmd]
     F.extend(drive_ratio_findings(result, mask=spinning, radius=radius))
@@ -834,7 +834,7 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
                  "path": ["conversionFactors", "drive", "diameter"], "value": f"x{scale:.4f}"}))
     if measured_lateral_m is not None:
         report["measured"]["tape_lateral_m"] = measured_lateral_m
-        report["targets"].append(_grade("sideways drift per metre (m)",
+        report["targets"].append(_grade("sideways drift per meter (m)",
                                         abs(measured_lateral_m) / max(dist, 0.1), 0.01))
     if abs(dh) > 1.0:
         F.append(finding(
@@ -1127,7 +1127,7 @@ def slip_report(result):
         f"Breakaway currents: {listing}. The weakest corner, {weakest}, sets the limit: 90% of "
         f"{low:.1f} A leaves room for a different carpet at an event and for tread that wears. Just "
         "below slip is the hardest the carpet lets the robot accelerate; above it the wheel only "
-        "spins, wasting battery and making odometry count distance the robot never travelled. "
+        "spins, wasting battery and making odometry count distance the robot never traveled. "
         "Change PathPlanner's drive current limit to match (Settings, Robot Config); the linter "
         "checks they agree. Then redeploy and measure the feedforward again.",
         {"type": "config", "file": "modules/physicalproperties.json", "path": ["currentLimit", "drive"],

@@ -345,7 +345,7 @@ public final class MotorGuard {
     }
     String who = targets.size() == 1 ? targets.get(0).name : "every motor";
     String text = s == 0
-        ? "Thermal override cancelled for " + who + "."
+        ? "Thermal override canceled for " + who + "."
         : String.format("Thermal override for %s: %.0f s. Heat shutoffs are held at half current;"
             + " stalls still cut out.", who, s);
     event(nowS, text);

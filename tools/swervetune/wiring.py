@@ -10,7 +10,7 @@ read electrically: CAN has no notion of position. A student confirms it by looki
 **The rules** turn what the robot reports into where to look:
 
 * A controller passes CAN straight through, even unpowered. So **one device missing on its own,
-  with its neighbours present, is that device**: its power (PDH port, breaker, leads) or the
+  with its neighbors present, is that device**: its power (PDH port, breaker, leads) or the
   controller itself. **Everything from some point to the end of the chain missing together is the
   cable or plug at that point** - and that break also cuts the far terminator off, so the devices
   still connected see errors.
@@ -256,7 +256,7 @@ def diagnose(m, snapshot, devices=None):
                     nb = [chain[j] for j in (i - 1, i + 1) if 0 <= j < len(chain)]
                     F.append(_level(
                         "error", f"{name} is off the CAN bus on its own",
-                        f"Its neighbours ({', '.join(nb)}) are still heard, and CAN passes through a "
+                        f"Its neighbors ({', '.join(nb)}) are still heard, and CAN passes through a "
                         f"controller even unpowered, so the cable is fine. Most likely {name} has no "
                         f"power: {port(name)}, its breaker, or its power leads. Otherwise the controller "
                         "itself (a blink code on its LED says which).",

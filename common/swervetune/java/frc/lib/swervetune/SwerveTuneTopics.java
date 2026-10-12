@@ -33,7 +33,7 @@ public final class SwerveTuneTopics {
   public static final String STARTUP_REPORT = ROOT + "/StartupReport";
   /** YAGSL module names in kinematics order, e.g. {@code frontleft}. */
   public static final String MODULE_NAMES = ROOT + "/ModuleNames";
-  /** Module locations, metres, flattened {@code x0, y0, x1, y1, ...}. +x forward, +y left. */
+  /** Module locations, meters, flattened {@code x0, y0, x1, y1, ...}. +x forward, +y left. */
   public static final String MODULE_LOCATIONS = ROOT + "/ModuleLocationsM";
   /** Free speed of a module from motor, gearing and wheel, m/s. What YAGSL desaturates to. */
   public static final String MAX_MODULE_SPEED = ROOT + "/MaxModuleSpeedMps";
@@ -45,9 +45,9 @@ public final class SwerveTuneTopics {
   public static final String ENV_MODE = ROOT + "/Env/Mode";
   /** Whether field AprilTags are present. Off on a practice field without tags. */
   public static final String ENV_APRILTAGS = ROOT + "/Env/AprilTags";
-  /** Clear floor in front of the robot, metres. Motion tests are sized to fit inside it. */
+  /** Clear floor in front of the robot, meters. Motion tests are sized to fit inside it. */
   public static final String ENV_SPACE_FORWARD = ROOT + "/Env/SpaceForwardM";
-  /** Clear floor to each side, metres. */
+  /** Clear floor to each side, meters. */
   public static final String ENV_SPACE_SIDE = ROOT + "/Env/SpaceSideM";
   /** Fastest any test may drive, m/s. */
   public static final String ENV_SPEED_CAP = ROOT + "/Env/SpeedCapMps";

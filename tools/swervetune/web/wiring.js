@@ -136,12 +136,12 @@ const Wiring = (() => {
     const H = pad * 2 + Math.ceil(chain.length / perRow) * (bh + gy) - gy;
     svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
     svg.style.height = H + "px";
-    const centre = i => ({ x: pos[i].x + bw / 2, y: pos[i].y + bh / 2 });
+    const center = i => ({ x: pos[i].x + bw / 2, y: pos[i].y + bh / 2 });
     const idx = Object.fromEntries(chain.map((n, i) => [n, i]));
 
     // the cable: CAN-H and CAN-L side by side
     for (let i = 0; i + 1 < chain.length; i++) {
-      const a = centre(i), b = centre(i + 1);
+      const a = center(i), b = center(i + 1);
       for (const [off, cls] of [[-3, "can-h"], [3, "can-l"]]) {
         const vertical = Math.abs(a.y - b.y) > 1;
         el("line", { x1: a.x + (vertical ? off : 0), y1: a.y + (vertical ? 0 : off), x2: b.x + (vertical ? off : 0),
@@ -150,7 +150,7 @@ const Wiring = (() => {
     }
     for (const s of hl.segs) {
       if (!(s.a in idx) || !(s.b in idx)) continue;
-      const a = centre(idx[s.a]), b = centre(idx[s.b]);
+      const a = center(idx[s.a]), b = center(idx[s.b]);
       const g = el("g", { class: "suspect" }, svg);
       el("title", {}, g, s.f.title + ". " + s.f.why);
       el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "suspect-line" }, g);

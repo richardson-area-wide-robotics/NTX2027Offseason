@@ -569,7 +569,7 @@ def lint(project):
         F.append(_f("info", "steer_p_soft", f"Steering kP {a_p:g} may be soft on carpet",
                     f"Carpet scrub holds a wheel still until kP times the error overcomes it. At kP "
                     f"{a_p:g}, small corrections can stop a few degrees short on the floor, and each "
-                    "degree is about 1.7 cm of sideways drift per metre. Measure it: run steer_step "
+                    "degree is about 1.7 cm of sideways drift per meter. Measure it: run steer_step "
                     "on the floor.", {"kind": "tune", "loop": "steer"}))
 
     # ---- current limits and traction

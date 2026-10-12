@@ -1,4 +1,4 @@
-/* Swerve Tools: a pit-side instrument panel. One accent (signal teal), semantic colours for state. */
+/* Swerve Tools: a pit-side instrument panel. One accent (signal teal), semantic colors for state. */
 :root {
   --bg: #eef1f4; --panel: #ffffff; --ink: #17202a; --muted: #5b6977; --rule: #d3dae1;
   --accent: #0b6e7a; --accent-ink: #ffffff;
@@ -271,6 +271,14 @@ table.motors tr.flagged td { background: var(--bad-bg); }
 .swatch.ok { background: var(--ok-bg); border-color: var(--ok); }
 .swatch.warn { background: var(--warn-bg); border-color: var(--warn); }
 .swatch.bad { background: var(--bad-bg); border-color: var(--bad); }
+.geo-diagram { width: 100%; max-width: 340px; display: block; margin: 0 auto; }
+.geo-diagram .frame { fill: none; stroke: var(--muted); stroke-width: 2; }
+.geo-diagram .wheel { fill: var(--ink); opacity: .75; }
+.geo-diagram .axle { fill: var(--accent); }
+.geo-diagram .dim { stroke: var(--accent); stroke-width: 2; }
+.geo-diagram .ext { stroke: var(--muted); stroke-dasharray: 3 3; }
+.geo-diagram .lbl { font: 600 12px var(--sans); fill: var(--ink); }
+.warn-ink { color: var(--warn); font-weight: 600; }
 .wiggle-step { border: 2px solid var(--rule); border-radius: 10px; padding: 12px 14px; margin: 8px 0; transition: border-color .2s, background .2s; }
 .wiggle-step.hot { border-color: var(--warn); background: var(--warn-bg); }
 .wiggle-step .warn-text { color: var(--bad); }

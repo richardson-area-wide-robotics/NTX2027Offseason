@@ -8,7 +8,7 @@
       <div class="panel">
         <div class="row" style="justify-content:space-between">
           <h2>From above</h2>
-          <span class="hint">Front of the robot is up. Grey dashes: where each pod is told to point. Bar: wheel speed.</span>
+          <span class="hint">Front of the robot is up. Gray dashes: where each pod is told to point. Bar: wheel speed.</span>
         </div>
         <svg id="robot" class="robot-svg" viewBox="-200 -200 400 400" role="img" aria-label="Swerve modules seen from above"></svg>
         <div class="row small muted" id="live-pose"></div>

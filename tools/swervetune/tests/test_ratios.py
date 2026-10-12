@@ -88,13 +88,13 @@ class AdvisorRatioTest(unittest.TestCase):
 
 
 class PassiveMonitorTest(unittest.TestCase):
-    def drive(self, env, scales, metres=4.0):
+    def drive(self, env, scales, meters=4.0):
         now = [0.0]
         m = monitor.Monitor(clock=lambda: now[0])
         names = ["fl", "fr", "bl", "br"]
         pos = [0.0] * 4
         flags = []
-        for _ in range(int(metres / 0.02)):
+        for _ in range(int(meters / 0.02)):
             now[0] += 0.02
             pos = [p + 0.02 * s for p, s in zip(pos, scales)]
             live = {"mode": "TELEOP", "steer": [0.0] * 4, "steer_sp": [0.0] * 4, "steer_motor": [0.0] * 4,
@@ -112,7 +112,7 @@ class PassiveMonitorTest(unittest.TestCase):
         self.assertEqual(self.drive("BLOCKS", [1, 1, 0.92, 1]), [])
 
     def test_silent_until_enough_travel(self):
-        self.assertEqual(self.drive("FIELD", [1, 1, 0.92, 1], metres=2.0), [])
+        self.assertEqual(self.drive("FIELD", [1, 1, 0.92, 1], meters=2.0), [])
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ do before touching a robot, so an AI agent can rehearse a tuning strategy offlin
 analysis code is tested against a plant whose true parameters are known. Every number a robot
 cares about must come from the robot. The GUI and the CLI label every practice result as such.
 
-What is modelled, and how faithfully:
+What is modeled, and how faithfully:
 
 * DC motors from datasheet constants (NEO, NEO 550, Vortex), with back-EMF, current, a smart
   current limit and supply voltage. Good.
@@ -382,7 +382,7 @@ def wall_loads(robot_mass_kg=55.0, front_share=0.46, seed=1):
 
 def true_slip_currents(robot_mass_kg=55.0, mu_static=1.1, front_share=0.46, gear=5.5,
                        wheel_d_in=3.0, seed=1):
-    """The current at which each modelled wheel breaks loose, to check an analysis against."""
+    """The current at which each modeled wheel breaks loose, to check an analysis against."""
     motor = Motor("neo")
     r = wheel_d_in * 0.0254 / 2
     return [mu_static * n * r / (gear * motor.Kt) + motor.free_i
@@ -519,3 +519,32 @@ def pdh_pulses(names, ports, volts=4.0, quiet_s=0.6, pulse_s=0.8, rate_hz=50, no
     notes = [f"pulse {k}: {n}" for k, n in enumerate(names)]
     meta = {"pulse_volts": volts, "quiet_s": quiet_s, "pulse_s": pulse_s, "pdh_channels": 24.0}
     return ch, notes, meta
+
+
+def coast_push(tape_m=3.0, real_in=(4.0, 4.0, 4.0, 4.0), configured_in=4.0, angles_deg=(0, 0, 0, 0),
+               curve_deg=0.0, push_s=4.0, rate_hz=50, seed=4):
+    """A capture run of the robot pushed straight in coast: channels like the robot records.
+
+    Every wheel rolls over the same ground; its encoder counts that distance (times the cosine of
+    its angle) scaled by configured/real diameter, so worn tread reads long.
+    """
+    rng = random.Random(seed)
+    dt = 1.0 / rate_hz
+    n = len(real_in)
+    ch = {"t": [], "heading": []}
+    for i in range(n):
+        ch[f"m{i}.pos"], ch[f"m{i}.steer"], ch[f"m{i}.v"] = [], [], []
+    t, total = 0.0, push_s + 1.0
+    while t <= total:
+        u = min(1.0, max(0.0, (t - 0.5) / push_s))
+        s = tape_m * (3 * u * u - 2 * u ** 3)           # a smooth start and stop
+        v = tape_m * 6 * u * (1 - u) / push_s if 0 < u < 1 else 0.0
+        ch["t"].append(round(t, 6))
+        ch["heading"].append(curve_deg * u + rng.gauss(0, 0.05))
+        for i in range(n):
+            k = configured_in / real_in[i] * math.cos(math.radians(angles_deg[i]))
+            ch[f"m{i}.pos"].append(s * k + rng.gauss(0, 0.0005))
+            ch[f"m{i}.steer"].append(angles_deg[i] + rng.gauss(0, 0.3))
+            ch[f"m{i}.v"].append(v * k)
+        t += dt
+    return ch
