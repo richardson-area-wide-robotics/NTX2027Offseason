@@ -101,6 +101,26 @@ jobs:
         run: python -m unittest discover -s swervetune/tests -v
         working-directory: tools
 
+  pathplanner:
+    # Does each robot's PathPlanner settings.json, paths and autos describe the same robot as its
+    # code? Fails on a mismatch (gearing, wheel size, module positions, speed, current, mass, MOI),
+    # a named command the code never registers, or a missing path or auto. Suggested, not required,
+    # like the tools job: out of the "CI" check that branch protection requires.
+    name: PathPlanner matches the code
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Check
+        run: python tools/swervetune ppcheck
+
   ci:
     # One stable check name for branch protection to require. The matrix job
     # names change whenever a project is added or renamed; this one does not.

@@ -27,7 +27,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, camcal, contract as C, diagnose, explain, fieldsurvey, geometry, logsummary,
-               monitor, pdhports, plant, predict, rehearse, runs, wiring, yagslcfg)
+               monitor, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -340,6 +340,25 @@ def _layout_change(body):
     return path, old, text
 
 
+def _pathplanner_change(_body):
+    """PathPlanner's settings.json made to match the code. The fixes come from a fresh check here,
+    never from the browser."""
+    S.reload_project()
+    path = ppcheck.settings_path(S.project)
+    old = open(path, encoding="utf-8").read()
+    _, new = ppcheck.fixed_text(S.project, ppcheck.check(S.project)["fixes"])
+    return path, old, new
+
+
+def api_ppcheck(_query=None):
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    S.reload_project()
+    r = ppcheck.check(S.project)
+    r["ok"] = True
+    return r
+
+
 def _wiring_change(body):
     path = wiring.map_path(S.project)
     old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
@@ -349,10 +368,10 @@ def _wiring_change(body):
 def api_save_preview(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
-    if body.get("kind") in ("wiring", "layout"):
+    if body.get("kind") in ("wiring", "layout", "pathplanner"):
         try:
-            path, old, new = (_wiring_change if body["kind"] == "wiring" else _layout_change)(body)
-        except (ValueError, KeyError) as e:
+            path, old, new = CHANGES[body["kind"]](body)
+        except (ValueError, KeyError, OSError) as e:
             return {"ok": False, "error": f"Not saved: {e}"}
         rel = os.path.relpath(path, S.project.path).replace(os.sep, "/")
         return {"ok": True, "diff": yagslcfg.diff(old, new, rel) if old != new else "", "files": [rel]}
@@ -364,18 +383,24 @@ def api_save_preview(body):
 def api_save_apply(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
-    if body.get("kind") in ("wiring", "layout"):
+    if body.get("kind") in ("wiring", "layout", "pathplanner"):
         try:
-            path, old, new = (_wiring_change if body["kind"] == "wiring" else _layout_change)(body)
-        except (ValueError, KeyError) as e:
+            path, old, new = CHANGES[body["kind"]](body)
+        except (ValueError, KeyError, OSError) as e:
             return {"ok": False, "error": f"Not saved: {e}"}
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(new)
         S._wiring = None
+        if body["kind"] == "pathplanner":
+            S.reload_project()
         return {"ok": True, "diff": yagslcfg.diff(old, new, os.path.basename(path))}
     text = S.project.apply(_edits_from(body))
     return {"ok": True, "diff": text}
+
+
+CHANGES = {"wiring": lambda b: _wiring_change(b), "layout": lambda b: _layout_change(b),
+           "pathplanner": lambda b: _pathplanner_change(b)}
 
 
 def api_runs(_):
@@ -890,7 +915,7 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
-       "/api/survey/state": api_survey_state}
+       "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,

@@ -27,7 +27,7 @@ import sys
 import time
 
 from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor,
-               pdhports, plant, predict, rehearse, runs, wiring, yagslcfg)
+               pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -357,6 +357,39 @@ def cmd_export(args, out):
     out.say(f"Wrote {path}: {len(names)} entries. Open it in AdvantageScope"
             + (", or in SysId (mechanism 'drive', one motor per module)." if doc.get("test") == "drive_ff" else "."))
     return out.done()
+
+
+def cmd_ppcheck(args, out):
+    """Does PathPlanner describe the same robot as the code? Exit 1 on any error, for CI."""
+    projects = [resolve_project(args.project)] if args.project else [yagslcfg.Project(d) for d in project_dirs()]
+    errors = 0
+    results = {}
+    for p in projects:
+        r = ppcheck.check(p)
+        results[p.name] = _clean({k: v for k, v in r.items() if k != "fixes"})
+        if not r["used"]:
+            out.say(f"=== {p.name}: doesn't use PathPlanner")
+            continue
+        out.say(f"=== {p.name}")
+        for row in r["rows"]:
+            if row["status"] != "ok":
+                out.say(f"  {row['status']:8s} {row['key']:18s} PathPlanner {row['pathplanner']!s:10s} code "
+                        f"{row['code']!s:10s} ({row['source']})")
+        for f in r["findings"]:
+            out.say(f"  [{f['level'].upper()}] {f['title']}")
+        errors += sum(1 for f in r["findings"] if f["level"] == "error")
+        if args.fix and r["fixes"]:
+            path, new = ppcheck.fixed_text(p, r["fixes"])
+            old = open(path, encoding="utf-8").read()
+            out.say(yagslcfg.diff(old, new, os.path.relpath(path, p.path)))
+            if args.yes:
+                with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                    fh.write(new)
+                out.say(f"  wrote {path}: reopen the PathPlanner app so it doesn't write its old values back")
+            else:
+                out.say("  (add --yes to write it)")
+    out.put(pathplanner=results, errors=errors)
+    return out.done(1 if errors else 0)
 
 
 def cmd_pdhports(args, out):
@@ -735,6 +768,11 @@ def build_parser():
     s = sub.add_parser("logsummary", help="what went wrong in a match log (.wpilog), and where to look")
     s.add_argument("log")
     s.set_defaults(fn=cmd_logsummary)
+
+    s = sub.add_parser("ppcheck", help="does PathPlanner describe the same robot as the code? (exit 1 if not)")
+    s.add_argument("--fix", action="store_true", help="show the settings.json change that makes it match")
+    s.add_argument("--yes", action="store_true", help="with --fix: write it")
+    s.set_defaults(fn=cmd_ppcheck)
 
     s = sub.add_parser("pdhports", help="which PDH port feeds each motor: from a pdh_map run or a .wpilog")
     s.add_argument("source", help="a saved pdh_map run (file name) or a practice log (.wpilog)")

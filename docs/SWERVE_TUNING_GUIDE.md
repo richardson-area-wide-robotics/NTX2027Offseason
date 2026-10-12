@@ -88,6 +88,17 @@ table, says why). Edits wait while a test is running and are refused with the FM
 app and AdvantageScope always show the same values, and every change goes into the match log.
 `"advantageScopeTuning": true` in `swervetune.json` turns this on; both robots have it on.
 
+## Keeping PathPlanner in step
+
+PathPlanner keeps its own copy of the robot (`deploy/pathplanner/settings.json`) and plans every
+auto from it. The Config tab's **PathPlanner against the code** panel compares every setting with
+where the truth lives (the YAGSL files, `MAX_SPEED` in `Drive.java`, and the mass and moment of
+inertia measured in the Calibrate tab), checks each path's speed and acceleration limits against
+what the robot can do, and checks every named command an auto uses is registered in the code.
+**Make PathPlanner match the code** writes the settings with a diff preview; close the PathPlanner
+app first, or it writes its old values back. The same check runs as `py -3.12 tools/swervetune
+ppcheck`, and on every pull request as the suggested "PathPlanner matches the code" check.
+
 ## Saving what you find
 
 Gains changed live (in the app or in AdvantageScope) are lost when the robot code restarts. **Save to the robot files** shows

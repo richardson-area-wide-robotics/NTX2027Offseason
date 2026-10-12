@@ -645,50 +645,21 @@ def lint(project):
             F.append(_f("error", "can_duplicate", f"CAN ID {cid} used twice: {', '.join(users)}",
                         "Two devices on one ID answer each other's messages; both misbehave."))
 
-    # ---- PathPlanner agreement
-    pp = p.pathplanner
-    if pp and dk:
-        diffs = []
-        pp_motor = (pp.get("driveMotorType") or "").lower()
-        if pp_motor and motor_kind(pp_motor) not in (dk, None):
-            diffs.append(f"drive motor {pp.get('driveMotorType')} vs YAGSL {dk}")
-        if abs(float(pp.get("driveGearing", p.drive_gear())) - p.drive_gear()) > 0.01:
-            diffs.append(f"gearing {pp.get('driveGearing')} vs {p.drive_gear()}")
-        r_yagsl = p.wheel_d_in() * 0.0254 / 2
-        if abs(float(pp.get("driveWheelRadius", r_yagsl)) - r_yagsl) > 0.001:
-            diffs.append(f"wheel radius {pp.get('driveWheelRadius')} m vs {r_yagsl:.4f} m")
-        locs = [(m["location"]["front"] * 0.0254, m["location"]["left"] * 0.0254) for m in mods.values()]
-        half_x = max(abs(x) for x, _ in locs)
-        if pp.get("flModuleX") is not None and abs(float(pp["flModuleX"]) - half_x) > 0.005:
-            diffs.append(f"module x {pp['flModuleX']} m vs {half_x:.4f} m")
-        if pp.get("maxDriveSpeed") and abs(float(pp["maxDriveSpeed"]) - vmax) > 0.3:
-            diffs.append(f"max drive speed {pp['maxDriveSpeed']} vs {vmax:.2f} m/s")
-        if pp.get("driveCurrentLimit") and abs(float(pp["driveCurrentLimit"]) - d_lim) > 1:
-            diffs.append(f"drive current {pp['driveCurrentLimit']} A vs {d_lim:.0f} A")
-        defaults = abs(float(pp.get("robotMass", 0)) - PP_DEFAULT_MASS) < 0.5 or abs(
-            float(pp.get("robotMOI", 0)) - PP_DEFAULT_MOI) < 0.001
-        if diffs:
-            F.append(_f(
-                "error" if len(diffs) >= 3 else "warn", "pathplanner_mismatch",
-                f"PathPlanner's robot config disagrees with YAGSL ({len(diffs)} items)",
-                "PathPlanner plans every auto from its own robot model: motor, gearing, wheel size "
-                "and module positions set how fast it thinks the robot can accelerate and turn. "
-                "When they describe a different robot, paths ask for the impossible and the robot "
-                "falls behind or overshoots. Fix them in the PathPlanner app (Settings, Robot "
-                "Config): " + "; ".join(diffs) + ".", {"kind": "manual", "file": "pathplanner/settings.json"},
-                differences=diffs))
-        if defaults:
-            moi, moi_src = p.moi()
-            F.append(_f("warn", "pathplanner_defaults",
-                        f"PathPlanner mass {pp.get('robotMass')} kg / MOI {pp.get('robotMOI')} kg·m² "
-                        "look like the app's defaults",
-                        "Those are the values a new project starts with, not this robot's. PathPlanner "
-                        "uses mass for how hard the robot can accelerate and MOI for how hard it can "
-                        "start and stop turning, so both shape every auto. Weigh the robot with "
-                        "bumpers and battery and put it in swervetune.json (robotMassKg). Until MOI is "
-                        f"measured, {moi:.2f} kg·m² is a better start ({moi_src}); set robotMoiKgM2 "
-                        "when you have a measured value. Then copy both into PathPlanner.",
-                        moi_estimate=round(moi, 2)))
+    # ---- PathPlanner agreement (the whole check lives in ppcheck)
+    from . import ppcheck
+
+    for f in ppcheck.check(p)["findings"]:
+        lvl, title, why, fix = f["level"], f["title"], f["why"], {"kind": "pathplanner"}
+        if lvl == "info":
+            continue
+        if f["kind"] == "names":
+            F.append(_f(lvl, "pathplanner_names", title, why, fix))
+        elif f["kind"] == "limits":
+            F.append(_f(lvl, "pathplanner_limits", title, why, fix))
+        elif "default" in title:
+            F.append(_f(lvl, "pathplanner_defaults", title, why, fix))
+        else:
+            F.append(_f(lvl, "pathplanner_mismatch", title, why, fix))
 
     # ---- library versions and the 2027 road
     yv = p.vendordeps.get("YAGSL", "")
