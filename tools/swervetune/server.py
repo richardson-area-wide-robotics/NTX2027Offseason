@@ -553,6 +553,24 @@ def api_geometry_wheels(body):
     return r
 
 
+def api_gyro(body):
+    """Drift and tilt from a still capture, or scale from full turns (or practice data)."""
+    kind = body.get("kind", "still")
+    if body.get("practice"):
+        ch = plant.gyro_capture(kind, seconds=60 if kind == "still" else 40, drift_dpm=0.3, scale=0.985,
+                                tilt=(1.2, -0.8))
+        doc = {"channels": ch}
+    else:
+        doc = runs.load(body["file"])
+    try:
+        turns = int(body.get("turns", 5))
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "How many full turns?"}
+    r = geometry.gyro_still(doc) if kind == "still" else geometry.gyro_turns(doc, turns)
+    r.update(ok=True, practice=bool(body.get("practice")), kind=kind)
+    return r
+
+
 def api_geometry_spin(query=None):
     """The newest floor spin, judged against the module positions and (optionally) wheel sizes."""
     ratio = float((query or {}).get("configured_over_real") or 1.0)
@@ -928,7 +946,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
         "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve,
         "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,
-        "/api/survey/solve": api_survey_solve}
+        "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro}
 
 
 class Handler(BaseHTTPRequestHandler):

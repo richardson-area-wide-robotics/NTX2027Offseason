@@ -14,6 +14,9 @@ package frc.lib.swervetune;
  *       and that the steering gear ratio in the config matches the real one.
  *   <li><b>offsets</b> — every wheel set straight ahead by hand; the laptop computes new
  *       absolute encoder offsets from what was recorded.
+ *   <li><b>gyro</b> — a minute standing still (drift, and the mount's tilt), or full turns ending
+ *       back on a line (scale). Without coast it runs enabled too, and never takes the drivetrain,
+ *       so a driver can turn the robot with the sticks while it records.
  * </ul>
  *
  * <p>With {@code coast=1} the motors are switched to coast so the modules can be turned by hand,
@@ -85,6 +88,8 @@ final class CaptureProcedure implements Procedure {
     }
     ctx.sampler
         .angle("heading", io::headingDeg)
+        .channel("roll", () -> io.gyroTiltDeg()[0])
+        .channel("pitch", () -> io.gyroTiltDeg()[1])
         .channel("ax", () -> io.accelMps2().map(a -> a[0]).orElse(Double.NaN))
         .channel("ay", () -> io.accelMps2().map(a -> a[1]).orElse(Double.NaN))
         .channel("vbus", io::busVolts);

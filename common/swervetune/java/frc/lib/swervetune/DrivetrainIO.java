@@ -104,6 +104,14 @@ public interface DrivetrainIO {
   double headingDeg();
 
   /**
+   * The gyro's own roll and pitch, degrees, before any zeroing: on a level floor, how far the gyro
+   * is mounted off level. NaN when the gyro can't say.
+   */
+  default double[] gyroTiltDeg() {
+    return new double[] {Double.NaN, Double.NaN};
+  }
+
+  /**
    * Acceleration, m/s^2, {@code {x, y, z}}, if the IMU reports it. A navX gives it in the field frame
    * with gravity removed; a Canandgyro in its own frame with gravity in z. Horizontal magnitude, which
    * is all the safety rules use, is the same either way for a gyro mounted flat.

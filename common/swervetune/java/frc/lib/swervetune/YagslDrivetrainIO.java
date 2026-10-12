@@ -16,6 +16,7 @@ import com.studica.frc.AHRS;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -264,6 +265,15 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   @Override
   public double headingDeg() {
     return drive.getYaw().getDegrees();
+  }
+
+  @Override
+  public double[] gyroTiltDeg() {
+    if (sim) {
+      return new double[] {0, 0};
+    }
+    Rotation3d r = drive.getGyro().getRawRotation3d();
+    return new double[] {Math.toDegrees(r.getX()), Math.toDegrees(r.getY())};
   }
 
   @Override

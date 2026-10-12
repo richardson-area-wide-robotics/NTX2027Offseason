@@ -55,7 +55,7 @@ To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) 
 | **Motors** | Each motor's heat, current and health. Warns before a motor overheats, and stops one that's stalled or failing. |
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. |
 | **Tune** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. |
-| **Calibrate** | Measuring the robot itself: module positions, wheel sizes, where the cameras sit, and where the field's AprilTags really are. |
+| **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, where the cameras sit, and where the field's AprilTags really are. |
 | **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. |
 | **Config** | Checks the swerve config files for mistakes, with one-click fixes. |
 | **Runs** | Every saved test, and **Match logs**: what went wrong in a match and where to look. |

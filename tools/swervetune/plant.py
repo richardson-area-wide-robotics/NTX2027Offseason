@@ -671,3 +671,25 @@ def spin_ff(moi=6.0, mass=55.0, radius=0.431, kS=0.15, kV_lin=2.9, kA_lin=0.45, 
     for i, (x, y) in enumerate(xy):
         meta[f"m{i}.x"], meta[f"m{i}.y"] = x, y
     return ch, meta
+
+
+def gyro_capture(kind="still", seconds=60.0, drift_dpm=0.2, scale=1.0, turns=5, tilt=(1.0, -0.5), rate_hz=50,
+                 noise_deg=0.02, seed=11):
+    """A capture's heading, roll and pitch: standing still, or ``turns`` counter-clockwise turns that
+    end back where they started. ``scale`` is what the gyro reads per real degree."""
+    rng = random.Random(seed)
+    ch = {"t": [], "heading": [], "roll": [], "pitch": []}
+    n = int(seconds * rate_hz)
+    for i in range(n):
+        t = i / rate_hz
+        if kind == "still":
+            real = 0.0
+        else:
+            u = min(1.0, max(0.0, (t - 3.0) / max(1.0, seconds - 6.0)))
+            real = 360.0 * turns * (3 * u * u - 2 * u ** 3)
+        heading = real * scale + drift_dpm * t / 60 + rng.gauss(0, noise_deg)
+        ch["t"].append(round(t, 6))
+        ch["heading"].append(((heading + 180) % 360) - 180)   # the robot reports it wrapped
+        ch["roll"].append(tilt[0] + rng.gauss(0, 0.05))
+        ch["pitch"].append(tilt[1] + rng.gauss(0, 0.05))
+    return ch

@@ -201,3 +201,103 @@ def spin_check(spin_report_measured, configured_over_real=1.0):
                     "and check the wheel sizes with a push. If both are right, the wheels slipped: spin "
                     "slower and repeat."))
     return {"gyro_over_wheels": gw, "radius_ratio": radius_ratio, "findings": F}
+
+
+# ============================================================================ the gyro
+#
+# Where the gyro sits doesn't matter for localization: odometry uses only the heading, and every
+# point of a rigid robot turns by the same angle. What matters is how it reads:
+#
+# * drift: the heading creeping while nothing moves (startup calibration with the robot moving, a
+#   warm sensor);
+# * scale: a gyro that reads 1% short turns ten spins into 36 degrees of heading error, and field-
+#   relative driving and every auto inherit it;
+# * tilt: a gyro mounted off level reads turns short (by the cosine of the tilt, unless it corrects
+#   for it), and its roll and pitch read that tilt on a level floor.
+
+DRIFT_WARN_DPM = 0.5
+SCALE_OK = 0.0025
+SCALE_BAD = 0.01
+TILT_WARN_DEG = 3.0
+
+
+def _tilt(ch):
+    roll = [v for v in ch.get("roll") or [] if A.finite(v)]
+    pitch = [v for v in ch.get("pitch") or [] if A.finite(v)]
+    return (A.mean(roll) if roll else None, A.mean(pitch) if pitch else None)
+
+
+def _tilt_finding(ch, F):
+    roll, pitch = _tilt(ch)
+    if roll is None or pitch is None:
+        return None
+    tilt = math.hypot(roll, pitch)
+    if tilt > TILT_WARN_DEG:
+        F.append(_f("warn", f"The gyro is mounted {tilt:.1f} degrees off level (roll {roll:.1f}, pitch {pitch:.1f})",
+                    "On a level floor its roll and pitch should read near zero. A tilted gyro can read turns "
+                    f"short by about {(1 - math.cos(math.radians(tilt))) * 100:.2f}%, and its startup calibration "
+                    "is less sure of which way is down. Mount it flat and firm, away from vibrating mechanisms."))
+    return tilt
+
+
+def gyro_still(capture):
+    """Drift and mount tilt from a capture with the robot standing still."""
+    ch = capture.get("channels") or {}
+    t, h = ch.get("t") or [], A.unwrap_deg(ch.get("heading") or [])
+    F = []
+    if len(t) < 20 or t[-1] - t[0] < 10:
+        return {"findings": [_f("error", "Too short to judge drift", "Record at least 30 s with the robot still.")]}
+    # Least-squares slope, so one noisy sample at either end doesn't decide it.
+    tm, hm = A.mean(t), A.mean(h)
+    slope = sum((a - tm) * (b - hm) for a, b in zip(t, h)) / sum((a - tm) ** 2 for a in t)
+    dpm = slope * 60
+    moved = max(h) - min(h)
+    tilt = _tilt_finding(ch, F)
+    if abs(dpm) > DRIFT_WARN_DPM:
+        F.append(_f("warn", f"The heading drifts {abs(dpm):.2f} degrees a minute standing still",
+                    "Over a 2.5-minute match that is several degrees of field-relative error. Keep the robot "
+                    "completely still while the gyro calibrates after power-on (the top bar shows it), keep it "
+                    "away from motors' magnetic fields and vibration, and re-run this once it has warmed up. "
+                    "AprilTags correct heading as they are seen."))
+    else:
+        F.append(_f("ok", f"Drift {abs(dpm):.2f} degrees a minute", "Fine for a match."))
+    return {"drift_deg_per_min": dpm, "spread_deg": moved, "tilt_deg": tilt, "seconds": t[-1] - t[0],
+            "findings": F}
+
+
+def gyro_turns(capture, turns):
+    """Scale and direction from full counter-clockwise turns that end back on the starting line."""
+    ch = capture.get("channels") or {}
+    h = A.unwrap_deg(ch.get("heading") or [])
+    F = []
+    if len(h) < 10:
+        return {"findings": [_f("error", "Nothing recorded", "Record the turns first.")]}
+    # The start and end values are the robot sitting on the line: average the still ends.
+    k = max(3, len(h) // 40)
+    delta = A.median(h[-k:]) - A.median(h[:k])
+    want = 360.0 * turns
+    if delta < 0 and abs(abs(delta) - want) < 180:
+        F.append(_f("error", "Counter-clockwise turns read as clockwise",
+                    "WPILib and YAGSL want counter-clockwise positive. With it backwards, field-relative driving "
+                    "rotates the wrong way as the robot turns. Flip invertedIMU in swervedrive.json (the spin test "
+                    "checks the same thing). If the robot really turned clockwise, record again counter-clockwise."))
+    seen = abs(delta) / 360.0
+    if abs(seen - turns) > 0.25:
+        return {"delta_deg": delta, "findings": F + [_f(
+            "error", f"It read {seen:.2f} turns, not {turns}",
+            "Did it make exactly that many turns and stop on the line? Count again, or change the number of "
+            "turns to what was really done.")]}
+    err = abs(delta) / want - 1
+    tilt = _tilt_finding(ch, F)
+    if abs(err) <= SCALE_OK:
+        F.append(_f("ok", f"The gyro read {abs(delta):.1f} of {want:.0f} degrees ({err * 100:+.2f}%)",
+                    "Within a quarter of a percent: under a degree of error per turn."))
+    else:
+        F.append(_f("error" if abs(err) > SCALE_BAD else "warn",
+                    f"The gyro reads turns {abs(err) * 100:.2f}% {'long' if err > 0 else 'short'} "
+                    f"({abs(delta):.1f} of {want:.0f} degrees)",
+                    f"About {abs(err) * 360:.1f} degrees of heading error for every turn, which field-relative "
+                    "driving and every auto inherit. YAGSL can't rescale a gyro, so fix the cause: mount it level "
+                    "and firm, check it isn't near a motor, and repeat. AprilTags correct heading as they are "
+                    "seen. If it stays above 1%, a software correction (wrapping YAGSL's gyro) is the next step."))
+    return {"delta_deg": delta, "turns": turns, "scale_error": err, "tilt_deg": tilt, "findings": F}

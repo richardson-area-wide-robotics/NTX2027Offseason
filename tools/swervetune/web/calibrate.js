@@ -62,6 +62,25 @@
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+          <h2><span class="term" data-learn="gyro">Gyro</span></h2>
+          <button class="btn" id="gy-practice">Practice</button>
+        </div>
+        <p class="small">Where the gyro sits on the robot doesn't matter for localization: odometry uses only the heading, and every part of the robot turns by the same angle. What matters is how well it reads: does the heading creep while nothing moves, does a full turn read 360 degrees, and is it mounted level.</p>
+        <ol class="small">
+          <li><b>Standing still:</b> after the gyro has finished calibrating (the top bar), record a minute with nobody touching the robot.</li>
+          <li><b>Full turns:</b> line a bumper edge up with a tape line on the floor. Start recording, then turn the robot counter-clockwise (seen from above) exactly that many full turns, with the sticks or by hand, and stop with the same edge back on the line. Press <b>Back on the line</b>.</li>
+        </ol>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="btn" id="gy-still">Record a minute still</button>
+          <label class="small">Full turns <input type="number" id="gy-turns" value="5" min="1" max="20" style="width:5em"></label>
+          <button class="btn" id="gy-turn">Start recording the turns</button>
+          <button class="btn primary" id="gy-done" hidden>Back on the line</button>
+          <span class="small muted" id="gy-state"></span>
+        </div>
+        <div id="gy-out"></div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2><span class="term" data-learn="moment_of_inertia">Mass and moment of inertia</span></h2>
           <button class="btn" id="mi-practice">Practice</button>
         </div>
@@ -186,6 +205,43 @@
     showWheels(await App.api("/api/geometry/wheels", { file: pushRun, tape_m: $("#cg-tape-m", root).value }));
   };
   $("#cg-wheel-practice", root).onclick = async () => showWheels(await App.api("/api/geometry/wheels", { practice: true }));
+
+  // ---------------------------------------------------------------- gyro
+  function showGyro(r, append) {
+    const out = $("#gy-out", root);
+    if (r.ok === false) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+    const head = r.kind === "still"
+      ? `Standing still: drift ${fmt(Math.abs(r.drift_deg_per_min), 2)} degrees a minute${r.tilt_deg != null ? `, mounted ${fmt(r.tilt_deg, 1)} degrees off level` : ""}.`
+      : r.scale_error != null ? `${r.turns} turns read ${fmt(Math.abs(r.delta_deg), 1)} degrees (${r.scale_error >= 0 ? "+" : ""}${fmt(r.scale_error * 100, 2)}%).` : "";
+    const html = `${r.practice && !append ? `<div class="callout info">Practice: a made-up gyro that drifts a little, reads turns 1.5% short, and sits slightly off level.</div>` : ""}
+      ${head ? `<p><b>${esc(head)}</b></p>` : ""}${findings(r.findings)}`;
+    out.innerHTML = append ? out.innerHTML + html : html;
+  }
+
+  $("#gy-still", root).onclick = async () => {
+    $("#gy-state", root).textContent = "Recording a minute: don't touch the robot.";
+    try {
+      const doc = await App.runTest("capture", "ALL", { duration_s: 60 });
+      showGyro(await App.api("/api/gyro", { kind: "still", file: doc._file }));
+      $("#gy-state", root).textContent = "";
+    } catch (e) { $("#gy-state", root).textContent = e.message; }
+  };
+  $("#gy-turn", root).onclick = async () => {
+    const turns = +$("#gy-turns", root).value || 5;
+    $("#gy-state", root).textContent = `Recording: turn it ${turns} times counter-clockwise, then stop on the line.`;
+    $("#gy-done", root).hidden = false;
+    try {
+      const doc = await App.runTest("capture", "ALL", { duration_s: 120 });
+      showGyro(await App.api("/api/gyro", { kind: "turns", file: doc._file, turns }));
+      $("#gy-state", root).textContent = "";
+    } catch (e) { $("#gy-state", root).textContent = e.message; }
+    $("#gy-done", root).hidden = true;
+  };
+  $("#gy-done", root).onclick = () => App.api("/api/stop", {});
+  $("#gy-practice", root).onclick = async () => {
+    showGyro(await App.api("/api/gyro", { kind: "still", practice: true }));
+    showGyro(await App.api("/api/gyro", { kind: "turns", practice: true, turns: 5 }), true);
+  };
 
   // ---------------------------------------------------------------- mass and moment of inertia
   function showInertia(doc) {
