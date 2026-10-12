@@ -211,6 +211,15 @@ public final class SwerveTuneTopics {
   public static final String LIVE_VISION_COUNTS = LIVE + "VisionCounts";
   /** Why the most recent rejected observation was rejected. */
   public static final String LIVE_VISION_LAST_REJECT = LIVE + "VisionLastReject";
+
+  /**
+   * The tags in each camera's newest frame, 10 numbers a tag: tag ID, the tag's x, y, z (meters)
+   * and quaternion w, x, y, z in the camera frame, ambiguity, timestamp. For the camera calibration.
+   */
+  public static final String LIVE_VISION_SIGHTINGS = LIVE + "VisionSightings";
+
+  /** Which camera saw each tag in {@link #LIVE_VISION_SIGHTINGS}, in the same order. */
+  public static final String LIVE_VISION_SIGHTING_CAMERAS = LIVE + "VisionSightingCameras";
   public static final String LIVE_BUS_VOLTS = LIVE + "BusVolts";
   /** {@code DISABLED}, {@code TELEOP}, {@code AUTO}, {@code TEST}, or {@code ESTOP}. */
   public static final String LIVE_ROBOT_MODE = LIVE + "RobotMode";

@@ -39,4 +39,37 @@ public interface VisionSource {
 
   /** Every new observation since the last call. Called once per robot loop. */
   List<Observation> poll();
+
+  /**
+   * One AprilTag in one camera frame, exactly as the camera saw it: the tag's pose in the camera's
+   * frame, WPILib axes (x out of the lens, y left, z up; the tag's own x axis points out of its
+   * face). Nothing is filtered: these are for measuring where the camera sits.
+   *
+   * @param camera which camera
+   * @param tagId the tag's ID
+   * @param xM tag center, meters, in the camera frame
+   * @param qw tag rotation in the camera frame, as a quaternion (w, x, y, z)
+   * @param ambiguity this tag's pose ambiguity, 0 to 1; -1 unknown
+   * @param timestampS when the frame was captured, robot clock seconds
+   */
+  record TagSighting(
+      String camera,
+      int tagId,
+      double xM,
+      double yM,
+      double zM,
+      double qw,
+      double qx,
+      double qy,
+      double qz,
+      double ambiguity,
+      double timestampS) {}
+
+  /**
+   * The tags in the newest frame from each camera, from the frames {@link #poll} last read. Empty
+   * when this source cannot say; then the camera calibration has nothing to work with.
+   */
+  default List<TagSighting> sightings() {
+    return List.of();
+  }
 }

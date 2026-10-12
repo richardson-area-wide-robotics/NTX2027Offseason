@@ -1,6 +1,8 @@
 package frc.lib.swervetune;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
@@ -640,6 +642,30 @@ public final class SwerveTune {
     }
     liveVisionCounts.set(new double[] {visionGate.accepted(), visionGate.rejected()});
     liveVisionReject.set(visionGate.lastReject());
+    List<VisionSource.TagSighting> seen = visionSource.sightings();
+    double[] flat = new double[seen.size() * 10];
+    String[] cams = new String[seen.size()];
+    for (int i = 0; i < seen.size(); i++) {
+      VisionSource.TagSighting s = seen.get(i);
+      System.arraycopy(new double[] {s.tagId(), s.xM(), s.yM(), s.zM(), s.qw(), s.qx(), s.qy(), s.qz(),
+          s.ambiguity(), s.timestampS()}, 0, flat, 10 * i, 10);
+      cams[i] = s.camera();
+    }
+    liveArray(SwerveTuneTopics.LIVE_VISION_SIGHTINGS).set(flat);
+    liveStrings(SwerveTuneTopics.LIVE_VISION_SIGHTING_CAMERAS).set(cams);
+  }
+
+  /**
+   * Where camera {@code name} sits on the robot, from swervetune.json's {@code "cameras"} (which the
+   * Calibrate tab measures), for {@code PhotonVisionSource}. Empty when it isn't there yet.
+   */
+  public Optional<Transform3d> cameraMount(String name) {
+    double[] v = config.cameras.get(name);
+    if (v == null) {
+      return Optional.empty();
+    }
+    return Optional.of(new Transform3d(v[0], v[1], v[2],
+        new Rotation3d(Math.toRadians(v[3]), Math.toRadians(v[4]), Math.toRadians(v[5]))));
   }
 
   /** True while a test is driving the motors. A drive command can check this and stand down. */

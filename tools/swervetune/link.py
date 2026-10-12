@@ -301,6 +301,18 @@ class RobotLink:
         })
         return out
 
+    def sightings(self):
+        """The tags in each camera's newest frame, as dicts (see ``camcal``)."""
+        flat = list(self.get("double[]", C.LIVE_VISION_SIGHTINGS))
+        cams = list(self.get("str[]", C.LIVE_VISION_SIGHTING_CAMERAS))
+        out = []
+        for i in range(len(flat) // 10):
+            v = flat[10 * i:10 * i + 10]
+            out.append({"camera": cams[i] if i < len(cams) else "", "tag": int(v[0]), "x": v[1], "y": v[2],
+                        "z": v[3], "qw": v[4], "qx": v[5], "qy": v[6], "qz": v[7], "ambiguity": v[8],
+                        "t": v[9]})
+        return out
+
     def status(self):
         return {
             "seq": self.get("int", C.STATUS_SEQ),

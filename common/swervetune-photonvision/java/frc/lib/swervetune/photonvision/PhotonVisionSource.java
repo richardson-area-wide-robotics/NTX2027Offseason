@@ -2,6 +2,7 @@ package frc.lib.swervetune.photonvision;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Quaternion;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.lib.swervetune.VisionSource;
 import java.util.ArrayList;
@@ -23,8 +24,12 @@ import org.photonvision.targeting.PhotonTrackedTarget;
  *
  * <pre>
  *   tune.setVisionSource(new PhotonVisionSource(
- *       "front", AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField), ROBOT_TO_CAMERA));
+ *       "front", AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
+ *       tune.cameraMount("front").orElse(ROUGH_ROBOT_TO_CAMERA)));
  * </pre>
+ *
+ * <p>{@code cameraMount} reads where the camera sits from swervetune.json, which the Calibrate tab
+ * measures; until then, a tape-measured guess keeps the robot running.
  *
  * <p>Uses the 2026 estimator API (strategy chosen per call; the constructor-chosen strategy and
  * {@code update()} are deprecated in 2026 and gone in 2027): a multi-tag solve done on the camera,
@@ -39,6 +44,7 @@ public final class PhotonVisionSource implements VisionSource {
   private final String name;
   private final PhotonCamera camera;
   private final PhotonPoseEstimator estimator;
+  private List<TagSighting> sightings = List.of();
 
   /**
    * @param cameraName exactly as the camera's PhotonVision web page shows it; a mismatch fails
@@ -64,6 +70,17 @@ public final class PhotonVisionSource implements VisionSource {
       if (!result.hasTargets()) {
         continue;
       }
+      List<TagSighting> seen = new ArrayList<>();
+      for (PhotonTrackedTarget t : result.getTargets()) {
+        if (t.getFiducialId() < 0) {
+          continue;
+        }
+        Transform3d c2t = t.getBestCameraToTarget();
+        Quaternion q = c2t.getRotation().getQuaternion();
+        seen.add(new TagSighting(name, t.getFiducialId(), c2t.getX(), c2t.getY(), c2t.getZ(),
+            q.getW(), q.getX(), q.getY(), q.getZ(), t.getPoseAmbiguity(), result.getTimestampSeconds()));
+      }
+      sightings = seen;
       Optional<EstimatedRobotPose> est = estimator.estimateCoprocMultiTagPose(result);
       if (est.isEmpty()) {
         est = estimator.estimateLowestAmbiguityPose(result);
@@ -71,6 +88,11 @@ public final class PhotonVisionSource implements VisionSource {
       est.ifPresent(e -> out.add(toObservation(e)));
     }
     return out;
+  }
+
+  @Override
+  public List<TagSighting> sightings() {
+    return sightings;
   }
 
   private Observation toObservation(EstimatedRobotPose e) {

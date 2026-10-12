@@ -26,8 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, contract as C, diagnose, explain, geometry, logsummary, monitor, pdhports,
-               plant, predict, rehearse, runs, wiring, yagslcfg)
+from . import (advisor, akit, camcal, contract as C, diagnose, explain, geometry, logsummary, monitor,
+               pdhports, plant, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -522,6 +522,66 @@ def api_geometry_spin(query=None):
     return out
 
 
+def _camera_mounts():
+    return dict((S.project.data.get("swervetune.json") or {}).get("cameras") or {}) if S.project else {}
+
+
+def api_camcal_sample(body):
+    """About two seconds of one camera's sightings of one tag, for one spot."""
+    if not S.link or not S.link.is_connected():
+        return {"ok": False, "error": "Connect to the robot first (or try Practice)."}
+    cam, tag = body.get("camera", ""), int(body.get("tag_id", -1))
+    seconds = min(5.0, max(0.5, float(body.get("seconds", 2.0))))
+    got, seen_cams, seen_tags, stamps = [], set(), set(), set()
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        for s in S.link.sightings():
+            seen_cams.add(s["camera"])
+            seen_tags.add(s["tag"])
+            key = (s["camera"], s["tag"], s["t"])
+            if s["camera"] == cam and s["tag"] == tag and key not in stamps:
+                stamps.add(key)
+                got.append(s)
+        time.sleep(0.04)
+    out = {"ok": True, "samples": got, "count": len(got), "cameras_seen": sorted(seen_cams),
+           "tags_seen": sorted(seen_tags)}
+    if not got:
+        out["hint"] = (f"Camera {cam!r} reported no tag {tag}. Seen: cameras {sorted(seen_cams) or 'none'}, "
+                       f"tags {sorted(seen_tags) or 'none'}. Check the name matches PhotonVision's page, the "
+                       "pipeline is in AprilTag 3D mode, and robot code passes sightings (PhotonVisionSource).")
+    return out
+
+
+PRACTICE_MOUNT = (0.28, -0.12, 0.52, 0.0, -18.0, 8.0)
+PRACTICE_SPOTS = [{"side": "front", "distance_m": 2.0, "lateral_m": 0.0, "height_m": 0.6, "tag_id": 7},
+                  {"side": "front", "distance_m": 1.5, "lateral_m": 0.5, "height_m": 0.6, "tag_id": 7},
+                  {"side": "front", "distance_m": 2.6, "lateral_m": -0.4, "height_m": 0.6, "tag_id": 7}]
+
+
+def api_camcal_solve(body):
+    """The camera mount from every spot taken (or from practice spots)."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    cam = body.get("camera") or "front"
+    if body.get("practice"):
+        placements = plant.camera_sightings(PRACTICE_MOUNT, PRACTICE_SPOTS)
+    else:
+        placements = body.get("placements") or []
+    r = camcal.solve(cam, placements, _camera_mounts().get(cam))
+    r["ok"] = True
+    r["practice"] = bool(body.get("practice"))
+    if r["practice"]:
+        r["placements"] = [{k: v for k, v in p.items() if k != "samples"} | {"count": len(p["samples"])}
+                           for p in placements]
+        r["true_mount"] = dict(zip(("x", "y", "z", "roll", "pitch", "yaw"), PRACTICE_MOUNT))
+        r["edit"] = None
+    if r.get("edit"):
+        f, p, v = r["edit"]
+        r["edits"] = [{"file": f, "path": list(p), "value": v}]
+    r["current"] = _camera_mounts().get(cam)
+    return r
+
+
 PRACTICE_PORTS = (0, 1, 2, 3, 16, 17, 18, 19)
 
 
@@ -738,7 +798,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
         "/api/export": api_export, "/api/wiring/termination": api_wiring_termination,
-        "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels}
+        "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
+        "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve}
 
 
 class Handler(BaseHTTPRequestHandler):

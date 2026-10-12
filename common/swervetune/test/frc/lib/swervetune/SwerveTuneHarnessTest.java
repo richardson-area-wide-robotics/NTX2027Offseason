@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -110,7 +111,9 @@ class SwerveTuneHarnessTest {
     nt = NetworkTableInstance.create();
     io = new FakeDrivetrain();
     SwerveTuneConfig config = SwerveTuneConfig.parse(
-        "{\"driveFeedforward\": {\"backright\": {\"kS\": 0.2, \"kV\": 2.5, \"kA\": 0.4}}}");
+        "{\"driveFeedforward\": {\"backright\": {\"kS\": 0.2, \"kV\": 2.5, \"kA\": 0.4}},"
+        + " \"cameras\": {\"front\": {\"x\": 0.3, \"y\": -0.1, \"z\": 0.5, \"pitch\": -15, \"yaw\": 10},"
+        + " \"rear\": {\"x\": 0.3}}}");
     tune = new SwerveTune(io, nt, ds, () -> now[0], "test robot", config, false, owner, true);
     cmdSeq = nt.getIntegerTopic(SwerveTuneTopics.CMD_SEQ).publish();
     cmdBoot = nt.getIntegerTopic(SwerveTuneTopics.CMD_BOOT_ID).publish();
@@ -544,6 +547,41 @@ class SwerveTuneHarnessTest {
     loop(1);
     assertFalse(ackAccepted());
     assertTrue(ackMessage().contains("No PDH currents"), ackMessage());
+  }
+
+  @Test
+  void cameraMountsComeFromTheConfigAndAnIncompleteOneIsNotUsed() {
+    Transform3d front = tune.cameraMount("front").orElseThrow();
+    assertEquals(0.3, front.getX(), 1e-12);
+    assertEquals(-0.1, front.getY(), 1e-12);
+    assertEquals(0.5, front.getZ(), 1e-12);
+    assertEquals(-15, Math.toDegrees(front.getRotation().getY()), 1e-9, "pitch, negative looking up");
+    assertEquals(10, Math.toDegrees(front.getRotation().getZ()), 1e-9);
+    assertTrue(tune.cameraMount("rear").isEmpty(), "x alone is not a mount");
+    assertTrue(tune.cameraMount("left").isEmpty());
+  }
+
+  @Test
+  void everyTagInTheNewestFramesIsPublishedForCalibration() {
+    tune.setVisionSource(new VisionSource() {
+      @Override
+      public List<Observation> poll() {
+        return List.of();
+      }
+
+      @Override
+      public List<TagSighting> sightings() {
+        return List.of(new TagSighting("front", 7, 1.5, 0.1, 0.2, 1, 0, 0, 0, 0.05, 12.5),
+            new TagSighting("rear", 3, 2.0, -0.4, 0.1, 0, 0, 0, 1, -1, 12.6));
+      }
+    });
+    loop(1);
+    double[] flat = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_VISION_SIGHTINGS).subscribe(new double[0]).get();
+    String[] cams = nt.getStringArrayTopic(SwerveTuneTopics.LIVE_VISION_SIGHTING_CAMERAS).subscribe(new String[0]).get();
+    assertEquals(20, flat.length);
+    assertArrayEquals(new double[] {7, 1.5, 0.1, 0.2, 1, 0, 0, 0, 0.05, 12.5}, Arrays.copyOf(flat, 10), 1e-12);
+    assertEquals(3, flat[10]);
+    assertArrayEquals(new String[] {"front", "rear"}, cams);
   }
 
   @Test

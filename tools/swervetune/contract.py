@@ -142,6 +142,10 @@ MOTORS_OVERRIDE_ACK_SEQ = MOTORS + "Override/AckSeq"
 MOTORS_OVERRIDE_ACK_MESSAGE = MOTORS + "Override/AckMessage"
 LIVE_VISION_COUNTS = LIVE + "VisionCounts"
 LIVE_VISION_LAST_REJECT = LIVE + "VisionLastReject"
+# Each camera's newest tags, 10 numbers a tag: ID, x y z (m) and quaternion w x y z of the tag in the
+# camera frame, ambiguity, timestamp; and which camera saw each.
+LIVE_VISION_SIGHTINGS = LIVE + "VisionSightings"
+LIVE_VISION_SIGHTING_CAMERAS = LIVE + "VisionSightingCameras"
 LIVE_BUS_VOLTS = LIVE + "BusVolts"
 LIVE_ROBOT_MODE = LIVE + "RobotMode"
 LIVE_FMS_ATTACHED = LIVE + "FmsAttached"

@@ -548,3 +548,31 @@ def coast_push(tape_m=3.0, real_in=(4.0, 4.0, 4.0, 4.0), configured_in=4.0, angl
             ch[f"m{i}.v"].append(v * k)
         t += dt
     return ch
+
+
+def camera_sightings(mount, placements, n=20, noise_m=0.004, noise_deg=0.3, ambiguity=0.05, seed=6):
+    """What a camera at ``mount`` = (x, y, z, roll, pitch, yaw) reports for a wall tag at each
+    placement: the placements with ``samples`` filled in, as the robot would publish them.
+
+    Noise grows with the square of the range, as a tag's pixels shrink.
+    """
+    from . import camcal as K
+
+    rng = random.Random(seed)
+    rc = (K.euler_to_mat(*mount[3:]), list(mount[:3]))
+    out = []
+    for p in placements:
+        rt = K.tag_in_robot(p["side"], p["distance_m"], p["lateral_m"], p["height_m"])
+        r, t = K.compose(K.inverse(rc), rt)
+        rng_m = math.sqrt(sum(x * x for x in t))
+        k = (rng_m / 2.0) ** 2
+        samples = []
+        for i in range(n):
+            jitter = K.euler_to_mat(*(rng.gauss(0, noise_deg * k) for _ in range(3)))
+            q = K.mat_to_quat(K._mul(r, jitter))
+            samples.append({"tag": p["tag_id"], "x": t[0] + rng.gauss(0, noise_m * k),
+                            "y": t[1] + rng.gauss(0, noise_m * k), "z": t[2] + rng.gauss(0, noise_m * k),
+                            "qw": q[0], "qx": q[1], "qy": q[2], "qz": q[3], "ambiguity": ambiguity,
+                            "t": i * 0.05})
+        out.append(dict(p, samples=samples))
+    return out

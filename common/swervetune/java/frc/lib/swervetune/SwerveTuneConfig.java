@@ -80,6 +80,13 @@ public final class SwerveTuneConfig {
    */
   public final Map<String, MotorKind> motorKinds = new LinkedHashMap<>();
 
+  /**
+   * Where each camera sits on the robot, by the name its PhotonVision page shows: {@code {x, y, z}}
+   * meters from the robot's center at the floor (x forward, y left, z up), then {@code {roll,
+   * pitch, yaw}} degrees (pitch negative when the camera looks up). The Calibrate tab measures them.
+   */
+  public final Map<String, double[]> cameras = new LinkedHashMap<>();
+
   /** Problems found while reading, shown on the laptop at connect. */
   public final List<String> warnings = new ArrayList<>();
 
@@ -181,6 +188,21 @@ public final class SwerveTuneConfig {
         continue;
       }
       c.motorKinds.put(e.getKey(), MotorKind.parse(kind));
+    }
+
+    for (Map.Entry<String, Object> e : map(m.get("cameras")).entrySet()) {
+      if (e.getKey().startsWith("_")) {
+        continue;
+      }
+      Map<String, Object> cam = map(e.getValue());
+      double[] v = {num(cam.get("x"), Double.NaN), num(cam.get("y"), Double.NaN),
+          num(cam.get("z"), Double.NaN), num(cam.get("roll"), 0), num(cam.get("pitch"), 0),
+          num(cam.get("yaw"), 0)};
+      if (!Double.isFinite(v[0]) || !Double.isFinite(v[1]) || !Double.isFinite(v[2])) {
+        c.warnings.add("cameras." + e.getKey() + ": needs x, y and z in meters; ignored.");
+        continue;
+      }
+      c.cameras.put(e.getKey(), v);
     }
 
     Map<String, Object> t = map(m.get("testLimits"));

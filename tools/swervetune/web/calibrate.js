@@ -5,6 +5,7 @@
 (() => {
   const root = $("#tab-calibrate");
   let pushRun = null, wheels = null;
+  let spots = [];
 
   root.innerHTML = `
     <div class="stack">
@@ -58,6 +59,31 @@
         <p class="small">After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune tab). Turning on the spot, the gyro's turn rate against the wheels' speeds says whether the two agree as a whole.</p>
         <div class="row"><button class="btn" id="cg-spin">Check the newest floor spin</button></div>
         <div id="cg-spin-out"></div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+          <h2><span class="term" data-learn="camera_mount">Camera positions</span></h2>
+          <button class="btn" id="cc-practice">Practice</button>
+        </div>
+        <p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses 3.5 cm at 2 m. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
+        <ol class="small">
+          <li>Tape one AprilTag <b>flat on a wall</b>, its center at a measured height. FRC tags are 6.5 in across the black square; PhotonVision's tag size must match.</li>
+          <li>Put the robot with the camera's side facing the wall, <b>square to it</b>: both bumper corners the same distance from the wall.</li>
+          <li>Measure the wall to the robot's <b>center</b> (to the bumper, plus half the robot's length with bumpers), and how far the tag is left (+) or right (-) of the robot's center line, looking from the robot.</li>
+          <li><b>Take a sighting</b> (2 s, robot still). Then move: closer, further, to each side. Three spots or more, then <b>Work it out</b>.</li>
+        </ol>
+        <div class="row" style="flex-wrap:wrap;gap:10px">
+          <label class="small">Camera <input id="cc-cam" value="front" style="width:8em" aria-label="Camera name, as PhotonVision shows it"></label>
+          <label class="small">Tag ID <input type="number" id="cc-tag" value="1" min="0" style="width:5em"></label>
+          <label class="small">Side facing the wall <select id="cc-side"><option>front</option><option>back</option><option>left</option><option>right</option></select></label>
+          <label class="small">Wall to center (m) <input type="number" id="cc-d" step="0.005" style="width:6em"></label>
+          <label class="small">Tag left of center (m) <input type="number" id="cc-l" step="0.005" value="0" style="width:6em"></label>
+          <label class="small">Tag height (m) <input type="number" id="cc-h" step="0.005" style="width:6em"></label>
+          <button class="btn primary" id="cc-take">Take a sighting</button>
+        </div>
+        <div id="cc-spots"></div>
+        <div class="row"><button class="btn" id="cc-solve" disabled>Work it out</button><button class="btn" id="cc-clear">Clear the spots</button></div>
+        <div id="cc-out"></div>
       </div>
     </div>`;
 
@@ -122,6 +148,59 @@
     showWheels(await App.api("/api/geometry/wheels", { file: pushRun, tape_m: $("#cg-tape-m", root).value }));
   };
   $("#cg-wheel-practice", root).onclick = async () => showWheels(await App.api("/api/geometry/wheels", { practice: true }));
+
+  // ---------------------------------------------------------------- camera positions
+  const AXES = [{ k: "x", u: "m", d: 3 }, { k: "y", u: "m", d: 3 }, { k: "z", u: "m", d: 3 },
+    { k: "roll", u: "°", d: 1 }, { k: "pitch", u: "°", d: 1 }, { k: "yaw", u: "°", d: 1 }];
+
+  function paintSpots() {
+    const box = $("#cc-spots", root);
+    box.innerHTML = spots.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>#</th><th>Side</th><th>Wall to center</th><th>Tag left</th><th>Tag height</th><th>Tag</th><th>Sightings</th><th></th></tr></thead><tbody>
+      ${spots.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.side)}</td><td class="num mono">${fmt(s.distance_m, 3)} m</td><td class="num mono">${fmt(s.lateral_m, 3)} m</td>
+        <td class="num mono">${fmt(s.height_m, 3)} m</td><td class="num">${s.tag_id}</td><td class="num">${s.count ?? (s.samples || []).length}</td>
+        <td>${s.practice ? "" : `<button class="btn small" data-drop="${i}" aria-label="Remove spot ${i + 1}">Remove</button>`}</td></tr>`).join("")}
+      </tbody></table></div>` : "";
+    $$("[data-drop]", box).forEach(b => b.onclick = () => { spots.splice(+b.dataset.drop, 1); paintSpots(); });
+    $("#cc-solve", root).disabled = !spots.some(s => !s.practice);
+  }
+
+  function showMount(r) {
+    const out = $("#cc-out", root);
+    if (!r.ok) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+    const res = r.result, cur = r.current, truth = r.true_mount;
+    out.innerHTML = `${r.practice ? `<div class="callout info">Practice: three made-up spots of a camera whose real mount is known (last column). Nothing here can be saved.</div>` : ""}
+      ${res ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th></th><th>Now in swervetune.json</th><th>Measured</th>${truth ? "<th>Really</th>" : ""}</tr></thead><tbody>
+        ${AXES.map(({ k, u, d }) => `<tr><td>${k}</td><td class="num mono">${cur && cur[k] != null ? fmt(cur[k], d) + " " + u : "–"}</td>
+          <td class="num mono"><b>${fmt(res[k], d)} ${u}</b></td>${truth ? `<td class="num mono">${fmt(truth[k], d)} ${u}</td>` : ""}</tr>`).join("")}
+      </tbody></table></div>
+      <p class="small muted">From ${r.spread.spots} spot${r.spread.spots === 1 ? "" : "s"}; they agree within ${fmt(r.spread.cm, 1)} cm and ${fmt(r.spread.deg, 1)}°. Pitch is negative when the camera looks up.</p>` : ""}
+      ${findings(r.findings)}${r.edits && !r.practice ? saveButton("cc-save", r.edits) : ""}`;
+    const b = $("#cc-save", out);
+    if (b) b.onclick = () => App.previewAndSave({ kind: "edits", edits: r.edits }, "Camera position for " + r.camera);
+  }
+
+  $("#cc-take", root).onclick = async () => {
+    spots = spots.filter(s => !s.practice);
+    const spot = { side: $("#cc-side", root).value, distance_m: +$("#cc-d", root).value, lateral_m: +$("#cc-l", root).value,
+      height_m: +$("#cc-h", root).value, tag_id: +$("#cc-tag", root).value };
+    if (!(spot.distance_m > 0 && spot.height_m > 0)) { App.toast("Type the wall distance and the tag height first."); return; }
+    $("#cc-take", root).disabled = true;
+    try {
+      const r = await App.api("/api/camcal/sample", { camera: $("#cc-cam", root).value, tag_id: spot.tag_id, seconds: 2 });
+      if (!r.ok) { App.toast(r.error, 6000); return; }
+      if (!r.count) { $("#cc-out", root).innerHTML = `<p class="hint">${esc(r.hint)}</p>`; return; }
+      spots.push(Object.assign(spot, { samples: r.samples }));
+      paintSpots();
+    } finally { $("#cc-take", root).disabled = false; }
+  };
+  $("#cc-solve", root).onclick = async () => showMount(await App.api("/api/camcal/solve", { camera: $("#cc-cam", root).value, placements: spots.filter(s => !s.practice) }));
+  $("#cc-clear", root).onclick = () => { spots = []; paintSpots(); $("#cc-out", root).innerHTML = ""; };
+  $("#cc-practice", root).onclick = async () => {
+    const r = await App.api("/api/camcal/solve", { camera: "practice", practice: true });
+    spots = (r.placements || []).map(p => Object.assign(p, { practice: true }));
+    paintSpots();
+    showMount(r);
+  };
 
   // ---------------------------------------------------------------- spin
   $("#cg-spin", root).onclick = async () => {
