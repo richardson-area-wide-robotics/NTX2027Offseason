@@ -28,6 +28,7 @@ RULES = {
     "hot": ("brownout", "motor is over 70 °C"),
     "faults": ("pod_not_moving", "motor controller reports a fault"),
     "low_battery": ("brownout", "battery voltage is sagging below 8 V"),
+    "gyro_problem": ("field_relative_wrong", "gyro is not connected, still calibrating, or faulted"),
     "drive_ratio_mismatch": ("gear_ratio", "reports a different distance from the other modules"
                                            " while driving straight - its gear ratio may differ"),
 }
@@ -131,6 +132,10 @@ class Monitor:
             f = faults[i] if i < len(faults) else ""
             self._raise("faults", name, now, 0.0, f, bool(f))
         self._passive_ratio(live, names, n, enabled and env == "FIELD", now)
+        gyro = live.get("gyro") or []
+        bad_gyro = len(gyro) >= 4 and (gyro[1] != "connected" or gyro[2] != "ready" or bool(gyro[3]))
+        detail = ", ".join(x for x in gyro[:4] if x) if gyro else ""
+        self._raise("gyro_problem", None, now, 0.5, detail, bad_gyro)
         bus = live.get("bus")
         self._raise("low_battery", None, now, 0.25, f"{bus:.1f} V" if A.finite(bus) else "",
                     enabled and A.finite(bus) and bus < 8.0)

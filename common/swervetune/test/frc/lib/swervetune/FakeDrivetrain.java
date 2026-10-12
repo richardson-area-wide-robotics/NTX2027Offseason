@@ -29,6 +29,8 @@ final class FakeDrivetrain implements DrivetrainIO {
   double[] steerPid = {0.01, 0, 0.001, 0};
   double[] drivePid = {0.002, 0, 0, 0};
   double[][] ff = new double[4][];
+  boolean gyroConnected = true;
+  boolean gyroCalibrating = false;
   final List<String> applied = new ArrayList<>();
   boolean coast;
   boolean stopped;
@@ -192,6 +194,11 @@ final class FakeDrivetrain implements DrivetrainIO {
   @Override
   public Optional<double[]> accelMps2() {
     return Optional.of(new double[] {0, 0, 0});
+  }
+
+  @Override
+  public GyroStatus gyroStatus() {
+    return new GyroStatus("fake", gyroConnected, gyroCalibrating, "");
   }
 
   @Override

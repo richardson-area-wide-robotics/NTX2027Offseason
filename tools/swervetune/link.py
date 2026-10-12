@@ -281,6 +281,7 @@ class RobotLink:
         out = {k: list(self.get("double[]", t)) for k, t in C.LIVE_MODULE_ARRAYS.items()}
         out.update({
             "faults": list(self.get("str[]", C.LIVE_FAULTS)),
+            "gyro": list(self.get("str[]", C.LIVE_GYRO)),
             "heading": self.get("double", C.LIVE_HEADING_DEG),
             "accel": list(self.get("double[]", C.LIVE_ACCEL)),
             "pose": list(self.get("double[]", C.LIVE_POSE)),

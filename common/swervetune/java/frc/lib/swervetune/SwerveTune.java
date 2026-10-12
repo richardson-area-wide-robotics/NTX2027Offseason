@@ -136,6 +136,7 @@ public final class SwerveTune {
   private final StringPublisher liveMode;
   private final BooleanPublisher liveFms;
   private final StringArrayPublisher liveFaults;
+  private final StringArrayPublisher liveGyro;
   private final DoubleArrayPublisher liveAbsIssue;
 
   // the run in progress, or the last one
@@ -263,6 +264,7 @@ public final class SwerveTune {
     liveMode = nt.getStringTopic(SwerveTuneTopics.LIVE_ROBOT_MODE).publish();
     liveFms = nt.getBooleanTopic(SwerveTuneTopics.LIVE_FMS_ATTACHED).publish();
     liveFaults = nt.getStringArrayTopic(SwerveTuneTopics.LIVE_FAULTS).publish();
+    liveGyro = nt.getStringArrayTopic(SwerveTuneTopics.LIVE_GYRO).publish();
     liveAbsIssue = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_ABS_READ_ISSUE).publish();
 
     // Identity. Published once; the laptop reads it on connect.
@@ -446,6 +448,9 @@ public final class SwerveTune {
       in.horizontalAccelSmoothedMps2 = sum / n;
     }
     in.busVolts = io.busVolts();
+    DrivetrainIO.GyroStatus gyro = io.gyroStatus();
+    in.gyroConnected = gyro.connected();
+    in.gyroCalibrating = gyro.calibrating();
     return in;
   }
 
@@ -832,6 +837,9 @@ public final class SwerveTune {
     liveArray(SwerveTuneTopics.LIVE_STEER_TEMP_C).set(steerTemp);
     liveAbsIssue.set(absIssue);
     liveFaults.set(faults);
+    DrivetrainIO.GyroStatus gyro = io.gyroStatus();
+    liveGyro.set(new String[] {gyro.type(), gyro.connected() ? "connected" : "NOT CONNECTED",
+        gyro.calibrating() ? "calibrating" : "ready", gyro.faults()});
     livePose.set(io.pose());
     double[] vp = visionPoseArray();
     liveVisionPose.set(vp == null ? new double[0] : vp);

@@ -113,6 +113,8 @@ public final class SafetySupervisor {
      */
     public double horizontalAccelSmoothedMps2 = Double.NaN;
     public double busVolts = 12.5;
+    public boolean gyroConnected = true;
+    public boolean gyroCalibrating = false;
   }
 
   /** What the running test is allowed to do, so the rules that apply can be chosen. */
@@ -171,6 +173,10 @@ public final class SafetySupervisor {
               + " number this test measures. Swap it.",
           in.busVolts, minVolts);
     }
+    if (in.env != TestEnvironment.SIM && !in.gyroConnected) {
+      return "The gyro is not reporting. The on-blocks check and impact detection both depend on it."
+          + " Check its CAN or USB connection.";
+    }
     if (in.env == TestEnvironment.FIELD && test.movesChassis() && test.spaceBudgetM() <= 0) {
       return "Tell the tool how much clear floor there is before running a test that drives.";
     }
@@ -192,6 +198,16 @@ public final class SafetySupervisor {
     }
     if (in.heartbeatAgeS > limits.heartbeatTimeoutS) {
       return Verdict.abort("Lost the laptop tool's heartbeat.");
+    }
+    if (in.env != TestEnvironment.SIM) {
+      if (!in.gyroConnected) {
+        return Verdict.abort("The gyro stopped reporting.");
+      }
+      if (in.gyroCalibrating) {
+        return started
+            ? Verdict.abort("The gyro started calibrating mid-test; its readings cannot be trusted.")
+            : Verdict.waitFor("The gyro is calibrating. Keep the robot completely still.");
+      }
     }
     if (in.driverStickMax > limits.driverOverride) {
       return Verdict.abort("Driver moved a stick. Control handed back.");

@@ -1,5 +1,7 @@
 package frc.lib.swervetune;
 
+import com.reduxrobotics.sensors.canandgyro.Canandgyro;
+import com.reduxrobotics.sensors.canandgyro.CanandgyroFaults;
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.ResetMode;
@@ -10,6 +12,7 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import com.studica.frc.AHRS;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -265,7 +268,37 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
 
   @Override
   public Optional<double[]> accelMps2() {
+    if (!sim && drive.getGyro().getIMU() instanceof Canandgyro c) {
+      // YAGSL 2026.4.1 multiplies the Canandgyro's acceleration, already in g, by 9.81 / 16384,
+      // so it reads about 16,384 times too small and impact detection would never fire. Read it
+      // directly instead.
+      return Optional.of(new double[] {
+          c.getAccelerationX() * 9.81, c.getAccelerationY() * 9.81, c.getAccelerationZ() * 9.81});
+    }
     return drive.getAccel().map(a -> new double[] {a.getX(), a.getY(), a.getZ()});
+  }
+
+  @Override
+  public GyroStatus gyroStatus() {
+    if (sim) {
+      return new GyroStatus("simulated", true, false, "");
+    }
+    Object imu = drive.getGyro().getIMU();
+    if (imu instanceof Canandgyro c) {
+      CanandgyroFaults f = c.getActiveFaults();
+      List<String> faults = new ArrayList<>();
+      if (f.canIDConflict()) faults.add("CAN ID conflict");
+      if (f.canGeneralError()) faults.add("CAN error");
+      if (f.hardwareFault()) faults.add("hardware fault");
+      if (f.outOfTemperatureRange()) faults.add("out of temperature range");
+      if (f.angularVelocitySaturation()) faults.add("rotation rate saturated");
+      if (f.accelerationSaturation()) faults.add("acceleration saturated");
+      return new GyroStatus("Canandgyro", c.isConnected(), c.isCalibrating(), String.join(", ", faults));
+    }
+    if (imu instanceof AHRS navx) {
+      return new GyroStatus("navX", navx.isConnected(), navx.isCalibrating(), "");
+    }
+    return new GyroStatus(imu == null ? "unknown" : imu.getClass().getSimpleName(), true, false, "");
   }
 
   @Override

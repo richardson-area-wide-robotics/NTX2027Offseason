@@ -204,6 +204,28 @@ class SafetySupervisorTest {
   }
 
   @Test
+  void aDeadGyroBlindsTheInterlocksSoMotionIsRefused() {
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    in.gyroConnected = false;
+    assertTrue(sup.refuseStart(in, steering, true).contains("gyro"));
+    assertEquals(Action.ABORT, sup.check(in, steering, true).action());
+    Inputs sim = ok(TestEnvironment.SIM);
+    sim.gyroConnected = false;
+    assertNull(sup.refuseStart(sim, steering, true), "simulation has no physical gyro to lose");
+  }
+
+  @Test
+  void aCalibratingGyroMeansWaitBeforeAndStopAfter() {
+    Inputs in = ok(TestEnvironment.FIELD);
+    in.controllerDeadman = true;
+    in.gyroCalibrating = true;
+    var before = sup.check(in, driving, false);
+    assertEquals(Action.WAIT, before.action());
+    assertTrue(before.reason().contains("still"));
+    assertEquals(Action.ABORT, sup.check(in, driving, true).action());
+  }
+
+  @Test
   void parseNeverGuessesAnEnvironmentThatAllowsMotion() {
     assertEquals(TestEnvironment.FIELD, TestEnvironment.parse(" field "));
     assertEquals(TestEnvironment.UNSET, TestEnvironment.parse("feild"));

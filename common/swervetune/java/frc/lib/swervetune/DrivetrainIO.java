@@ -16,6 +16,16 @@ import java.util.Optional;
  */
 public interface DrivetrainIO {
 
+  /**
+   * What the gyro is and whether it can be trusted right now.
+   *
+   * @param type what is fitted, e.g. {@code navX}, {@code Canandgyro}, {@code simulated}
+   * @param connected reporting at all
+   * @param calibrating still settling after power-on; it must be kept still until this is false
+   * @param faults active faults, comma separated; empty when healthy
+   */
+  record GyroStatus(String type, boolean connected, boolean calibrating, String faults) {}
+
   /** Result of a live configuration change. */
   record ApplyResult(boolean ok, String message) {
     public static ApplyResult ok(String message) {
@@ -93,8 +103,15 @@ public interface DrivetrainIO {
   /** Heading as odometry uses it, degrees, counter-clockwise positive. Unwrapped is not required. */
   double headingDeg();
 
-  /** Field-frame acceleration, m/s^2, {@code {x, y, z}}, if the IMU reports it. */
+  /**
+   * Acceleration, m/s^2, {@code {x, y, z}}, if the IMU reports it. A navX gives it in the field frame
+   * with gravity removed; a Canandgyro in its own frame with gravity in z. Horizontal magnitude, which
+   * is all the safety rules use, is the same either way for a gyro mounted flat.
+   */
   Optional<double[]> accelMps2();
+
+  /** The gyro's health. Motion tests wait for a calibrating gyro and stop if it drops out. */
+  GyroStatus gyroStatus();
 
   /** Odometry pose, {@code {x m, y m, heading deg}}. */
   double[] pose();
