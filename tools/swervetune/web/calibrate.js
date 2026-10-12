@@ -62,6 +62,24 @@
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+          <h2><span class="term" data-learn="moment_of_inertia">Mass and moment of inertia</span></h2>
+          <button class="btn" id="mi-practice">Practice</button>
+        </div>
+        <p class="small">PathPlanner plans every auto from the robot's mass and its moment of inertia (how hard it is to start and stop turning). Weigh the robot with bumpers and battery. The moment of inertia can't be weighed: spinning the robot in place, with every wheel pushing along its circle, measures it against how hard the robot is to push in a straight line.</p>
+        <div class="row" style="flex-wrap:wrap">
+          <label class="small">Mass with bumpers and battery (kg) <input type="number" id="mi-mass" step="0.1" min="10" max="80" style="width:7em"></label>
+          <button class="btn" id="mi-mass-save">Save the mass…</button>
+          <span class="small muted" id="mi-now"></span>
+        </div>
+        <ol class="small">
+          <li>Measure the feedforward on the floor first (Guide step 9, <b>drive_ff</b>): this compares against it.</li>
+          <li>Robot on the floor, at least a meter clear all round. Hold the deadman for about 20 seconds while it spins each way, slowly, then briskly.</li>
+        </ol>
+        <div class="row"><button class="btn primary" id="mi-run">Spin and measure</button></div>
+        <div id="mi-out"></div>
+      </div>
+      <div class="panel">
+        <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2><span class="term" data-learn="camera_mount">Camera positions</span></h2>
           <button class="btn" id="cc-practice">Practice</button>
         </div>
@@ -168,6 +186,38 @@
     showWheels(await App.api("/api/geometry/wheels", { file: pushRun, tape_m: $("#cg-tape-m", root).value }));
   };
   $("#cg-wheel-practice", root).onclick = async () => showWheels(await App.api("/api/geometry/wheels", { practice: true }));
+
+  // ---------------------------------------------------------------- mass and moment of inertia
+  function showInertia(doc) {
+    const r = doc.report || doc, out = $("#mi-out", root);
+    const a = (r.measured || {}).angular || {};
+    const act = r.next && r.next.action;
+    out.innerHTML = `${doc.practice ? `<div class="callout info">Practice: a made-up robot of 55 kg whose moment of inertia is really 6.0 kg·m². Nothing here can be saved.</div>` : ""}
+      <p><b>${esc(r.summary || "")}</b></p>
+      ${a.ok ? `<p class="small muted">Turning: kS ${fmt(a.kS, 3)} V, kV ${fmt(a.kV, 3)} V per rad/s, kA ${fmt(a.kA, 3)} V per rad/s² (R² ${fmt(a.r2, 3)}).</p>` : ""}
+      ${findings(r.findings)}
+      ${act && act.type === "config" && !doc.practice ? `<button class="btn primary" id="mi-save">Save to swervetune.json…</button>` : ""}`;
+    const b = $("#mi-save", out);
+    if (b) b.onclick = () => App.previewAndSave({ kind: "edit", file: act.file, path: act.path, value: act.value }, "Moment of inertia");
+  }
+
+  async function showMass() {
+    const lint = App.lint || await App.api("/api/lint");
+    const s = (lint && lint.summary) || {};
+    if (s.mass_kg) $("#mi-now", root).textContent = `Now: ${fmt(s.mass_kg, 1)} kg (${s.mass_source || ""})`;
+  }
+  $("#mi-mass-save", root).onclick = async () => {
+    const kg = +$("#mi-mass", root).value;
+    if (!(kg >= 10 && kg <= 80)) { App.toast("Type the weighed mass in kilograms (10 to 80)."); return; }
+    if (await App.previewAndSave({ kind: "edit", file: "swervetune.json", path: ["robotMassKg"], value: kg }, "Robot mass")) showMass();
+  };
+  $("#mi-run", root).onclick = async () => {
+    if (!["FIELD", "SIM"].includes(App.env())) { App.toast("Set the environment to On the floor first (top bar)."); return; }
+    $("#mi-out", root).innerHTML = `<p class="hint">Hold the deadman: spinning each way, slowly then briskly (about 20 s)…</p>`;
+    try { showInertia(await App.runTest("spin_ff", "ALL", {})); } catch (e) { $("#mi-out", root).innerHTML = `<p class="hint">${esc(e.message)}</p>`; }
+  };
+  $("#mi-practice", root).onclick = async () => showInertia(await App.api("/api/practice", { loop: "spin_ff" }));
+  App.on("tab", t => { if (t === "calibrate") showMass(); });
 
   // ---------------------------------------------------------------- camera positions
   const AXES = [{ k: "x", u: "m", d: 3 }, { k: "y", u: "m", d: 3 }, { k: "z", u: "m", d: 3 },

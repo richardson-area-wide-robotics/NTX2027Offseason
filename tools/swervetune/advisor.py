@@ -1170,6 +1170,110 @@ def pdh_map_report(result):
             "next": None, "modules": {}, "pdh": r}
 
 
+MOI_PLAUSIBLE = (1.5, 15.0)    # kg m^2: an FRC robot with bumpers and battery
+SCRUB_TOLERANCE = 0.15
+
+
+def robot_context(project):
+    """What only the laptop knows about the robot, for the reports that need it (spin_ff)."""
+    if project is None:
+        return {}
+    mass, source = project.mass()
+    moi, _ = project.moi()
+    return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi}
+
+
+def spin_ff_report(result, history=None, mass_kg=None, mass_source="", moi_estimate=None):
+    """The spin_ff run: the robot's angular feedforward, and from it the moment of inertia.
+
+    Each module rolls along its tangent, so the drive feedforward applies with the wheel speed
+    r*w: V = kS sgn(w) + (kV r) w + kA_ang alpha, and kA_ang = kA_lin MOI / (mass r). With the
+    linear kA from drive_ff and the mass, MOI = mass r kA_ang / kA_lin.
+    """
+    ch, meta, env = result["channels"], result.get("meta", {}), result.get("env", "")
+    report = {"test": "spin_ff", "env": env, "practice": bool(result.get("practice")), "modules": {},
+              "findings": [], "targets": []}
+    F = report["findings"]
+    if env == "BLOCKS":
+        report["summary"] = "On blocks nothing turns: run it on the floor."
+        F.append(finding("error", "spin_ff needs the robot on the floor",
+                         "The moment of inertia is the robot resisting being turned; on blocks there is no "
+                         "robot to turn.", {"type": "run", "test": "spin_ff", "env": "FIELD"}))
+        return _finish(report)
+    t = ch.get("t", [])
+    heading = [math.radians(h) for h in A.unwrap_deg(ch.get("heading", []))]
+    mods = _modules_in(ch, "volts")
+    n = len(t)
+    w = [0.0] * n
+    for k in range(1, n - 1):
+        w[k] = (heading[k + 1] - heading[k - 1]) / max(1e-6, t[k + 1] - t[k - 1])
+    volts = [A.mean([ch[f"m{i}.volts"][k] for i in mods]) for k in range(n)]
+    fit = A.fit_feedforward(t, volts, w, min_speed=0.05)
+    radii = [math.hypot(meta.get(f"m{i}.x", 0), meta.get(f"m{i}.y", 0)) for i in mods]
+    good_r = [x for x in radii if x > 0]
+    r = A.mean(good_r) if good_r else float("nan")
+    report["measured"] = {"angular": fit, "radius_m": r}
+    if not fit.get("ok"):
+        report["summary"] = "No usable angular fit."
+        F.append(finding("error", "The spin couldn't be fitted", fit.get("reason", "the fit failed")
+                         + ". Check every module pointed along its tangent during the run, and the gyro "
+                           "reads the turn (the spin test checks both)."))
+        return _finish(report)
+    kA_ang, kV_ang = fit["kA"], fit["kV"]
+    lin = []
+    for entry in reversed(history or []):
+        lin = [m for m in (entry.get("modules") or {}).values() if m.get("ok") and m.get("kA", 0) > 0]
+        if lin:
+            break
+    report["targets"] = [_grade("angular fit R²", fit.get("r2", 0), 0.95, lower_is_better=False)]
+    if not lin:
+        report["summary"] = f"Angular kA {kA_ang:.3f} V/(rad/s²); the MOI needs the linear one from drive_ff."
+        F.append(finding("warn", "Measure the drive feedforward on the floor first",
+                         "The moment of inertia comes from comparing how hard the robot is to turn with how "
+                         "hard it is to push, so it needs drive_ff's linear kA from the floor.",
+                         {"type": "run", "test": "drive_ff", "env": "FIELD"}))
+        return _finish(report)
+    kA_lin = A.median([m["kA"] for m in lin])
+    kV_lin = A.median([m["kV"] for m in lin])
+    scrub = (kV_ang / r) / kV_lin if r > 0 and kV_lin > 0 else float("nan")
+    report["measured"].update(kA_lin=kA_lin, kV_lin=kV_lin, turn_vs_straight_kv=scrub)
+    if A.finite(scrub) and abs(scrub - 1) > SCRUB_TOLERANCE:
+        more = "more" if scrub > 1 else "less"
+        F.append(finding("warn", f"Turning took {abs(scrub - 1) * 100:.0f}% {more} voltage per wheel speed "
+                                 "than driving straight",
+                         "Rolling along their tangents, the wheels should need the same voltage per m/s as "
+                         "driving straight. More means they scrub: modules not quite on their tangents, or "
+                         "module positions in the config that don't match the robot (measure them in the "
+                         "Calibrate tab). The MOI is still a fair estimate, but check that first.",
+                         {"type": "troubleshoot", "symptom": "skew_when_rotating"}))
+    if mass_kg is None:
+        report["summary"] = f"Angular kA {kA_ang:.3f}; the MOI needs the robot's mass."
+        F.append(finding("warn", "Weigh the robot to get its moment of inertia",
+                         "Put robotMassKg (with bumpers and battery) in swervetune.json, then re-open this run."))
+        return _finish(report)
+    moi = mass_kg * r * kA_ang / kA_lin
+    report["measured"]["moi_kg_m2"] = moi
+    plausible = MOI_PLAUSIBLE[0] <= moi <= MOI_PLAUSIBLE[1]
+    report["targets"].append(_grade("MOI plausible (1 = yes)", 1.0 if plausible else 0.0, 1.0,
+                                    lower_is_better=False))
+    est = f" (the estimate was {moi_estimate:.2f})" if moi_estimate else ""
+    assumed = "assumed" in (mass_source or "")
+    report["summary"] = f"Moment of inertia {moi:.2f} kg·m²{est}, from {mass_kg:.0f} kg."
+    if not plausible:
+        F.append(finding("error", f"{moi:.2f} kg·m² is not a plausible moment of inertia",
+                         f"FRC robots come out between {MOI_PLAUSIBLE[0]} and {MOI_PLAUSIBLE[1]}. Check the "
+                         "linear kA came from a floor drive_ff run on this robot, and the mass."))
+        return _finish(report)
+    F.append(finding("warn",
+                     f"Moment of inertia: {moi:.2f} kg·m²{est}",
+                     "PathPlanner uses it for how hard the robot can start and stop turning. Save it to "
+                     "swervetune.json, then copy it into PathPlanner (Settings, Robot Config, MOI)."
+                     + (" It used an assumed 55 kg: weigh the robot and re-open this run." if assumed else ""),
+                     {"type": "config", "file": "swervetune.json", "path": ["robotMoiKgM2"],
+                      "value": round(moi, 2)}))
+    return _finish(report)
+
+
 def no_data_report(result):
     """A run that recorded nothing gets no score. An empty run must never read as a pass."""
     why = result.get("message") or "The run recorded no samples."
@@ -1194,7 +1298,7 @@ def analyze(result, gains=None, **kw):
             from . import runs
             history = runs.ff_history((result.get("robot") or {}).get("name"),
                                       result.get("env") == "BLOCKS", before=result.get("saved"),
-                                      exclude=result.get("_file"))
+                                      exclude=result.get("_file"), env=result.get("env") or None)
         return feedforward_report(result, gains, history)
     if test == "spin":
         return spin_report(result)
@@ -1206,5 +1310,14 @@ def analyze(result, gains=None, **kw):
         return slip_report(result)
     if test == "pdh_map":
         return pdh_map_report(result)
+    if test == "spin_ff":
+        history = kw.get("history")
+        if history is None and not result.get("practice"):
+            from . import runs
+            history = runs.ff_history((result.get("robot") or {}).get("name"), False,
+                                      before=result.get("saved"), exclude=result.get("_file"),
+                                      env=result.get("env") or None)
+        return spin_ff_report(result, history, kw.get("mass_kg"), kw.get("mass_source", ""),
+                              kw.get("moi_estimate"))
     return {"test": test, "summary": "No analysis for this test.", "findings": [], "targets": [],
             "next": None, "score": None}

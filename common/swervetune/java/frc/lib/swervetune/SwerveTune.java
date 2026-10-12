@@ -254,6 +254,7 @@ public final class SwerveTune {
     procedures.put("straight", StraightLineProcedure::new);
     procedures.put("slip", SlipProcedure::new);
     procedures.put("pdh_map", PdhMapProcedure::new);
+    procedures.put("spin_ff", SpinFeedforwardProcedure::new);
 
     List<String> startup = applyStartupConfig();
 

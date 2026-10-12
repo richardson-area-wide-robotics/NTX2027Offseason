@@ -623,3 +623,51 @@ def field_frames(variant="welded", moved=None, mount=(0.28, -0.12, 0.52, 0.0, -1
             y += 1.4
         x += 1.4
     return out
+
+
+def spin_ff(moi=6.0, mass=55.0, radius=0.431, kS=0.15, kV_lin=2.9, kA_lin=0.45, ramp_vps=0.75,
+            max_v=4.0, step_v=3.0, dyn_s=1.0, rest_s=1.0, rate_hz=100, gyro_noise_deg=0.02, seed=9):
+    """The robot's spin_ff: every module on its tangent, the same voltage on every drive motor.
+
+    Rotation obeys the drive feedforward turned sideways: V = kS sgn(w) + kV_lin r w + kA_ang alpha,
+    with kA_ang = kA_lin * MOI / (mass * r). Returns ``(channels, meta)``.
+    """
+    rng = random.Random(seed)
+    kA_ang = kA_lin * moi / (mass * radius)
+    quasi_s = max(2.0, max_v / ramp_vps)
+    plan = [(0, 0.6), (1, quasi_s), (5, rest_s), (2, quasi_s), (5, rest_s), (3, dyn_s), (5, rest_s),
+            (4, dyn_s), (5, rest_s)]
+    corners = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+    xy = [(sx * radius / math.sqrt(2), sy * radius / math.sqrt(2)) for sx, sy in corners]
+    ch = {"t": [], "phase": [], "cmd": [], "heading": []}
+    for i in range(4):
+        ch[f"m{i}.volts"], ch[f"m{i}.v"], ch[f"m{i}.amps"] = [], [], []
+    dt, w, th, t, nxt = 0.0005, 0.0, 0.0, 0.0, 0.0
+    for phase, dur in plan:
+        t0 = t
+        while t < t0 + dur - 1e-9:
+            into = t - t0
+            v = {1: min(ramp_vps * into, max_v), 2: -min(ramp_vps * into, max_v), 3: step_v,
+                 4: -step_v}.get(phase, 0.0)
+            drive = v - kV_lin * radius * w
+            if abs(w) < 1e-4 and abs(v) <= kS:
+                alpha, w = 0.0, 0.0
+            else:
+                alpha = (drive - math.copysign(kS, w if abs(w) >= 1e-4 else v)) / kA_ang
+            w += alpha * dt
+            th += w * dt
+            if t >= nxt - 1e-12:
+                ch["t"].append(round(t, 6))
+                ch["phase"].append(float(phase))
+                ch["cmd"].append(v)
+                ch["heading"].append(math.degrees(th) + rng.gauss(0, gyro_noise_deg))
+                for i in range(4):
+                    ch[f"m{i}.volts"].append(v + rng.gauss(0, 0.01))
+                    ch[f"m{i}.v"].append(w * radius)
+                    ch[f"m{i}.amps"].append(abs(alpha) * 5 + abs(w))
+                nxt += 1.0 / rate_hz
+            t += dt
+    meta = {"ramp_vps": ramp_vps, "max_v": max_v, "step_v": step_v, "kv_nominal": kV_lin}
+    for i, (x, y) in enumerate(xy):
+        meta[f"m{i}.x"], meta[f"m{i}.y"] = x, y
+    return ch, meta

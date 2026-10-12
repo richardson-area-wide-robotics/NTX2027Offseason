@@ -147,7 +147,8 @@ const Guide = (() => {
     { id: "ff", learn: ["feedforward", "kS", "kV", "kA"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
       need: ["3 m or more of clear carpet ahead", "A fresh battery", "Deadman held"],
-      todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "If every module fitted, press Try this to apply, then Save to files."],
+      todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "If every module fitted, press Try this to apply, then Save to files.",
+             "Then, in the Calibrate tab, weigh the robot and measure its moment of inertia: PathPlanner needs both."],
       tune: "ff",
       status: () => { const r = lastRun("drive_ff", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 

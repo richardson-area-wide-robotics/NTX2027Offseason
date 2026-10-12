@@ -269,7 +269,8 @@ def cmd_run(args, out):
             return out.done(out.fail("Refused: " + res.message))
         lim = current_limits(project)
         rep = advisor.analyze(doc, gains,
-                              current_limit=lim.get("steer" if args.test == "steer_step" else "drive", 40))
+                              current_limit=lim.get("steer" if args.test == "steer_step" else "drive", 40),
+                              **advisor.robot_context(project))
         path = runs.save(doc, rep, gains)
         out.put(outcome=res.outcome, message=res.message, notes=res.notes, run_file=os.path.basename(path),
                 report=_clean(rep), samples=len(res.channels.get("t", [])))
@@ -284,8 +285,9 @@ def cmd_run(args, out):
 
 def cmd_analyze(args, out):
     doc = runs.load(args.run)
+    project = resolve_project(args.project) if args.project else None
     rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=args.tape_forward,
-                          measured_lateral_m=args.tape_lateral)
+                          measured_lateral_m=args.tape_lateral, **advisor.robot_context(project))
     out.put(report=_clean(rep), run_file=doc["_file"])
     print_report(out, rep)
     return out.done()

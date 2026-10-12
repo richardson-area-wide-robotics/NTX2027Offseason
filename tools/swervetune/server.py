@@ -176,7 +176,8 @@ class Session:
                     return
                 lim = self.limits()
                 rep = advisor.analyze(doc, gains,
-                                      current_limit=lim["steer" if test == "steer_step" else "drive"])
+                                      current_limit=lim["steer" if test == "steer_step" else "drive"],
+                                      **advisor.robot_context(self.project))
                 path = runs.save(doc, rep, gains)
                 self.last_run = os.path.basename(path)
                 self.test_state.update(running=False, state=res.outcome, message=res.message,
@@ -386,7 +387,8 @@ def api_run(name):
     # Re-analyze on every open: the advisor may be newer than the run, and the channels are kept.
     lim = S.limits()
     doc["report"] = advisor.analyze(doc, doc.get("gains"),
-                                    current_limit=lim["steer" if doc.get("test") == "steer_step" else "drive"])
+                                    current_limit=lim["steer" if doc.get("test") == "steer_step" else "drive"],
+                                    **advisor.robot_context(S.project))
     doc["explain"] = explain.explain(doc, doc.get("gains"), lim)
     return doc
 
@@ -831,6 +833,14 @@ def api_practice(body):
                               ff=(g.get(f"FF/{m}/kS", 0), g.get(f"FF/{m}/kV", 2.915),
                                   g.get(f"FF/{m}/kA", 0)))
         doc = {"test": "drive_step", "module": "ALL"}
+    elif loop == "spin_ff":
+        ch, meta = plant.spin_ff(moi=6.0, mass=55.0)
+        doc = {"test": "spin_ff", "module": "ALL", "meta": meta, "channels": ch, "practice": True,
+               "env": "FIELD", "robot": {"name": "practice pod", "modules": rehearse.MODULES}, "outcome": "DONE"}
+        hist = [{"modules": {m: {"ok": True, "kA": 0.45, "kV": 2.9} for m in rehearse.MODULES}}]
+        rep = advisor.analyze(doc, g, history=hist, mass_kg=55.0, mass_source="practice", moi_estimate=6.6)
+        doc.update(report=rep, gains=g)
+        return doc
     elif loop == "slip":
         ch, meta = plant.wall_push(mu_static=float(body.get("mu", 1.1)),
                                    limit_before_a=g.get("Limit/Drive", 40.0))

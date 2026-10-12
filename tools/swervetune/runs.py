@@ -64,10 +64,11 @@ def list_runs(limit=50):
     return out
 
 
-def ff_history(robot, blocks, before=None, exclude=None, limit=200):
+def ff_history(robot, blocks, before=None, exclude=None, limit=200, env=None):
     """Earlier drive_ff fits for one robot, oldest first: ``[{"saved", "modules"}]``.
 
-    Only runs in the same place (blocks or floor: a free wheel's kV is not a loaded one's), not
+    Only runs in the same place (blocks or floor: a free wheel's kV is not a loaded one's; and with
+    ``env``, exactly that environment, so the simulator's runs never stand in for the robot's), not
     practice runs, and only those saved before ``before`` so re-analyzing an old run never compares
     it with its own future.
     """
@@ -84,6 +85,7 @@ def ff_history(robot, blocks, before=None, exclude=None, limit=200):
         if (d.get("test") != "drive_ff" or d.get("practice") or not rep.get("modules")
                 or (d.get("robot") or {}).get("name") != robot
                 or (d.get("env") == "BLOCKS") != bool(blocks)
+                or (env and d.get("env") != env)
                 or (before and str(d.get("saved", "")) >= str(before))):
             continue
         out.append({"saved": d.get("saved"), "modules": rep["modules"]})
