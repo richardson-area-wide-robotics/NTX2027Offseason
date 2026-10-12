@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.lib.swervetune.SwerveTune;
 import frc.robot.subsystems.Intake;
@@ -21,8 +22,8 @@ public class Robot extends TimedRobot {
     // already watched.
     shooter.watchMotors(tune::watchMotor);
     intake.watchMotors(tune::watchMotor);
-    // To let the driver hold off heat shutoffs for 20 s in a match (stalls still cut out):
-    // controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
+    // Back button: hold off heat shutoffs for 20 s in a match (stalls still cut out).
+    controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
 
     drive.setDefaultCommand(drive.drive(
         () -> controller.getLeftX(),

@@ -45,7 +45,6 @@ public class Shooter extends SubsystemBase {
 
     /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
     public void watchMotors(MotorWatcher w) {
-        // A SPARK MAX cannot tell a NEO 550 from a NEO: check what is fitted and correct this.
-        w.watch("Shooter", shooterMotor, MotorKind.NEO_UNKNOWN);
+        w.watch("Shooter", shooterMotor, MotorKind.NEO_2_0);
     }
 }

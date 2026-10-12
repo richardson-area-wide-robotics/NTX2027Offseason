@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.swervetune.MotorKind;
 import frc.lib.swervetune.MotorWatcher;
 
-/** Simple intake: one NEO on a SPARK MAX, in or out. */
+/** Simple intake: one NEO 2.0 on a SPARK MAX, in or out. */
 public class Intake extends SubsystemBase {
 
   private static final int CAN_ID = 9;
@@ -39,6 +39,6 @@ public class Intake extends SubsystemBase {
 
   /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
   public void watchMotors(MotorWatcher w) {
-    w.watch("Intake", motor, MotorKind.NEO_UNKNOWN);
+    w.watch("Intake", motor, MotorKind.NEO_2_0);
   }
 }

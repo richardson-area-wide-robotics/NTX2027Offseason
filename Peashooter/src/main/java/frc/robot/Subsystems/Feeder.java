@@ -50,8 +50,7 @@ public class Feeder extends SubsystemBase{
 
     /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
     public void watchMotors(MotorWatcher w) {
-        // A SPARK MAX cannot tell a NEO 550 from a NEO: check what is fitted and correct this.
-        w.watch("Spindexter", spindexterMotor, MotorKind.NEO_UNKNOWN);
+        w.watch("Spindexter", spindexterMotor, MotorKind.NEO_2_0);
         w.watch("Tower", towerMotor, MotorKind.VORTEX);
     }
 }

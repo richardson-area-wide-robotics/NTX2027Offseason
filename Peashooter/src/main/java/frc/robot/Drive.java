@@ -25,13 +25,16 @@ import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 public class Drive extends SubsystemBase {
+    // NEO, 5.50:1, 3 in wheel: about 4.1 m/s free speed; 3.9 leaves headroom for the loop to correct.
+    // This is what full stick means: getMaximumChassisVelocity() returns it.
+    private static final double MAX_SPEED = 3.9;
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
 
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(40,
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(MAX_SPEED,
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);

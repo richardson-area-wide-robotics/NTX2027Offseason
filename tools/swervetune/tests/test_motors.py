@@ -94,24 +94,32 @@ class MonitorMotorTest(unittest.TestCase):
 
 
 class PolicyLintTest(unittest.TestCase):
+    def black_team_with(self, motors):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        dst = os.path.join(tmp.name, "robot")
+        shutil.copytree(BLACK, dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
+        tune = os.path.join(dst, "src", "main", "deploy", "swerve", "swervetune.json")
+        data = json.loads(read(tune))
+        data["motors"] = motors
+        with open(tune, "w", encoding="utf-8") as fh:
+            json.dump(data, fh)
+        return {f["id"]: f for f in yagslcfg.lint(yagslcfg.Project(dst))}
+
+    def test_black_team_as_built_is_within_policy(self):
+        ids = {f["id"] for f in yagslcfg.lint(yagslcfg.Project(BLACK))}
+        self.assertFalse({"drive_current_over_policy", "steer_current_over_policy"} & ids,
+                         "NEO 2.0 drives allow 80 A")
+
     def test_black_team_drive_limit_is_over_the_unknown_neo_policy(self):
-        found = {f["id"]: f for f in yagslcfg.lint(yagslcfg.Project(BLACK))}
+        found = self.black_team_with({"guard": True})
         f = found["drive_current_over_policy"]
         self.assertIn("80 A is over the 60 A policy", f["title"])
         self.assertEqual(f["fix"]["value"], 60)
         self.assertNotIn("steer_current_over_policy", found)
 
-    def test_saying_the_neos_are_2_0s_raises_the_policy_to_80(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            dst = os.path.join(tmp, "robot")
-            shutil.copytree(BLACK, dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
-            tune = os.path.join(dst, "src", "main", "deploy", "swerve", "swervetune.json")
-            data = json.loads(read(tune))
-            data.setdefault("motors", {})["drive"] = "NEO 2.0"
-            with open(tune, "w", encoding="utf-8") as fh:
-                json.dump(data, fh)
-            ids = {f["id"] for f in yagslcfg.lint(yagslcfg.Project(dst))}
-            self.assertNotIn("drive_current_over_policy", ids)
+    def test_saying_the_neos_are_1_1s_lowers_the_policy_to_60(self):
+        self.assertIn("drive_current_over_policy", self.black_team_with({"drive": "NEO V1.1"}))
 
     def test_peashooter_is_within_policy(self):
         ids = {f["id"] for f in yagslcfg.lint(yagslcfg.Project(PEA))}

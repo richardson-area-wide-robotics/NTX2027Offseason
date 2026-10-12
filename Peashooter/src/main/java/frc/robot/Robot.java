@@ -7,6 +7,7 @@ import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.lib.swervetune.SwerveTune;
 import frc.robot.Subsystems.Feeder;
@@ -31,8 +32,8 @@ public class Robot extends TimedRobot {
     feeder.watchMotors(tune::watchMotor);
     intake.watchMotors(tune::watchMotor);
     shooter.watchMotors(tune::watchMotor);
-    // To let the driver hold off heat shutoffs for 20 s in a match (stalls still cut out):
-    // controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
+    // Back button: hold off heat shutoffs for 20 s in a match (stalls still cut out).
+    controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
 
   
     NamedCommands.registerCommand("Shoot Hub", shooter.shootA());

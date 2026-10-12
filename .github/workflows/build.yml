@@ -78,6 +78,25 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  tools:
+    # The laptop swerve tools' own tests (tools/swervetune). Suggested, not required: this job is
+    # deliberately left out of the "CI" check below, which is what branch protection requires.
+    name: Swerve tools (Python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Test
+        run: python -m unittest discover -s swervetune/tests -v
+        working-directory: tools
+
   ci:
     # One stable check name for branch protection to require. The matrix job
     # names change whenever a project is added or renamed; this one does not.

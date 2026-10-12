@@ -67,10 +67,21 @@ class LintRealRobotsTest(unittest.TestCase):
 
     def test_peashooter(self):
         ids = self.ids(PEA)
-        for expected in ("max_speed_unreal", "pathplanner_mismatch", "pathplanner_defaults",
-                         "drive_p_hot", "steer_ramp"):
+        for expected in ("pathplanner_mismatch", "pathplanner_defaults", "drive_p_hot", "steer_ramp"):
             self.assertIn(expected, ids)
         self.assertNotIn("drive_inversion_mixed", ids)
+        self.assertNotIn("max_speed_unreal", ids, "fixed: createSwerveDrive(MAX_SPEED = 3.9)")
+
+    def test_an_impossible_max_speed_is_caught(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dst = os.path.join(tmp, "robot")
+            shutil.copytree(PEA, dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
+            drive = os.path.join(dst, "src", "main", "java", "frc", "robot", "Drive.java")
+            with open(drive, encoding="utf-8") as fh:
+                src = fh.read()
+            with open(drive, "w", encoding="utf-8") as fh:
+                fh.write(src.replace("createSwerveDrive(MAX_SPEED,", "createSwerveDrive(40,"))
+            self.assertIn("max_speed_unreal", self.ids(dst))
 
     def test_physics(self):
         p = yagslcfg.Project(PEA)

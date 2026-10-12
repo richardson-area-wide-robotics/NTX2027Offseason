@@ -301,6 +301,26 @@ class Project:
             return float(pp["robotMass"]), "PathPlanner settings"
         return 55.0, "assumed (set robotMassKg in swervetune.json)"
 
+    def moi(self):
+        """Robot moment of inertia about its center, kg m^2, and where it came from.
+
+        Until it is measured, a uniform slab the size of the frame plus bumpers: m (L^2 + W^2) / 12.
+        Real robots carry weight near the edges (bumpers, battery), so expect 10-30% more.
+        """
+        if self.tune.get("robotMoiKgM2"):
+            return float(self.tune["robotMoiKgM2"]), "swervetune.json"
+        pp = self.pathplanner or {}
+        if pp.get("robotMOI") and abs(pp["robotMOI"] - PP_DEFAULT_MOI) > 0.001:
+            return float(pp["robotMOI"]), "PathPlanner settings"
+        mods = [self.module(n) for n in self.module_names()]
+        xs = [abs(m["location"]["front"]) * 0.0254 for m in mods]
+        ys = [abs(m["location"]["left"]) * 0.0254 for m in mods]
+        bumper = 0.12  # module center to bumper face, each side
+        length, width = 2 * (max(xs) + bumper), 2 * (max(ys) + bumper)
+        mass, _ = self.mass()
+        return mass * (length ** 2 + width ** 2) / 12, (
+            f"estimated as a {length:.2f} x {width:.2f} m slab (set robotMoiKgM2 in swervetune.json)")
+
     def create_swerve_max_speed(self):
         """The maxSpeed literal passed to SwerveParser.createSwerveDrive, resolved if a constant."""
         for rel, src in self.java.items():
@@ -658,12 +678,17 @@ def lint(project):
                 "Config): " + "; ".join(diffs) + ".", {"kind": "manual", "file": "pathplanner/settings.json"},
                 differences=diffs))
         if defaults:
+            moi, moi_src = p.moi()
             F.append(_f("warn", "pathplanner_defaults",
                         f"PathPlanner mass {pp.get('robotMass')} kg / MOI {pp.get('robotMOI')} kg·m² "
                         "look like the app's defaults",
-                        "Those are the values a new project starts with, not this robot's. Weigh the "
-                        "robot with bumpers and battery; the 2026 branch has an on-robot inertia "
-                        "measurement worth porting when you need rotation accuracy."))
+                        "Those are the values a new project starts with, not this robot's. PathPlanner "
+                        "uses mass for how hard the robot can accelerate and MOI for how hard it can "
+                        "start and stop turning, so both shape every auto. Weigh the robot with "
+                        "bumpers and battery and put it in swervetune.json (robotMassKg). Until MOI is "
+                        f"measured, {moi:.2f} kg·m² is a better start ({moi_src}); set robotMoiKgM2 "
+                        "when you have a measured value. Then copy both into PathPlanner.",
+                        moi_estimate=round(moi, 2)))
 
     # ---- library versions and the 2027 road
     yv = p.vendordeps.get("YAGSL", "")
