@@ -26,6 +26,15 @@ public interface RobotSignals {
   /** Whether the driver is holding the deadman button. */
   boolean controllerDeadman();
 
+  /**
+   * The CAN bus: {@code {utilization 0-1, busOffCount, txFullCount, receiveErrors, transmitErrors}}.
+   * The error numbers are the CAN controller's live error counters, not totals: above zero means
+   * errors are happening now. Bus-off and TX-full are counts since power-on. Empty if unknown.
+   */
+  default double[] canStatus() {
+    return new double[0];
+  }
+
   /** WPILib 2026 Driver Station implementation. */
   final class Wpilib implements RobotSignals {
     private final int port;
@@ -78,6 +87,13 @@ public interface RobotSignals {
         }
       }
       return max;
+    }
+
+    @Override
+    public double[] canStatus() {
+      edu.wpi.first.hal.can.CANStatus s = edu.wpi.first.wpilibj.RobotController.getCANStatus();
+      return new double[] {s.percentBusUtilization, s.busOffCount, s.txFullCount,
+          s.receiveErrorCount, s.transmitErrorCount};
     }
 
     @Override

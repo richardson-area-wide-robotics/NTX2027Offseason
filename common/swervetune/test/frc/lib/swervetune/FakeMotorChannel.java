@@ -19,6 +19,10 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
   String faults = "";
   String sticky = "";
   int sends;
+  boolean present = true;
+  boolean resetFlag;
+  boolean brownout;
+  int canId = 7;
 
   FakeMotorChannel(int configuredLimitA) {
     this.configured = configuredLimitA;
@@ -72,6 +76,31 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
     }
     limit = amps;
     return true;
+  }
+
+  @Override
+  public boolean canPresent() {
+    return present;
+  }
+
+  @Override
+  public boolean resetSeen() {
+    return resetFlag;
+  }
+
+  @Override
+  public void clearResetFlag() {
+    resetFlag = false;
+  }
+
+  @Override
+  public boolean brownoutWarning() {
+    return brownout;
+  }
+
+  @Override
+  public int canId() {
+    return canId;
   }
 
   @Override

@@ -143,6 +143,8 @@ public final class SwerveTune {
   private final StringArrayPublisher motorsEvents;
   private long lastOverrideSeq;
   private int publishedReportLines = -1;
+  private DashboardAlerts dashboard;
+  private double[] lastCan = new double[0];
   private long publishedEvents = -1;
   private final DoubleArrayPublisher livePose;
   private final DoubleArrayPublisher liveVisionPose;
@@ -211,6 +213,7 @@ public final class SwerveTune {
         RobotBase.isSimulation(),
         new DriveOwnership.CommandsV2(driveSubsystem),
         false);
+    tune.dashboard = new DashboardAlerts();
     tune.guard.setAlertSink(text -> {
       System.out.println("[swervetune] motors: " + text);
       DriverStation.reportWarning("[motors] " + text, false);
@@ -379,6 +382,10 @@ public final class SwerveTune {
       guard.note(e.getMessage() + "; the second one is not watched.");
       return false;
     }
+    if (channel instanceof SparkChannel sc && !sc.bootReport().isEmpty()) {
+      guard.note(String.format("%s (CAN %d) reported since it powered on: %s.", name, channel.canId(),
+          sc.bootReport()));
+    }
     if (!mechanism) {
       drivetrainMotors.add(name);
     } else if (k == MotorKind.NEO_UNKNOWN) {
@@ -470,6 +477,12 @@ public final class SwerveTune {
     double[] base = new double[n];
     double[] stall = new double[n];
     double[] override = new double[n];
+    double[] present = new double[n];
+    double[] drops = new double[n];
+    double[] resets = new double[n];
+    double[] brownouts = new double[n];
+    double[] busVolts = new double[n];
+    double[] canIds = new double[n];
     double now = clock.getAsDouble();
     for (int i = 0; i < n; i++) {
       MotorGuard.Motor m = list.get(i);
@@ -485,6 +498,23 @@ public final class SwerveTune {
       base[i] = m.baseLimitA();
       stall[i] = m.stallSeconds();
       override[i] = m.overrideRemainingS(now);
+      present[i] = m.present() ? 1 : 0;
+      drops[i] = m.dropouts();
+      resets[i] = m.resets();
+      brownouts[i] = m.brownouts();
+      busVolts[i] = m.busVolts();
+      canIds[i] = m.canId();
+    }
+    liveArray(SwerveTuneTopics.MOTORS_PRESENT).set(present);
+    liveArray(SwerveTuneTopics.MOTORS_DROPOUTS).set(drops);
+    liveArray(SwerveTuneTopics.MOTORS_RESETS).set(resets);
+    liveArray(SwerveTuneTopics.MOTORS_BROWNOUTS).set(brownouts);
+    liveArray(SwerveTuneTopics.MOTORS_BUS_VOLTS).set(busVolts);
+    liveArray(SwerveTuneTopics.MOTORS_CAN_IDS).set(canIds);
+    lastCan = signals.canStatus();
+    liveArray(SwerveTuneTopics.WIRING_CAN).set(lastCan);
+    if (dashboard != null) {
+      dashboard.update(list, lastCan);
     }
     liveStrings(SwerveTuneTopics.MOTORS_NAMES).set(names);
     liveStrings(SwerveTuneTopics.MOTORS_KINDS).set(kinds);

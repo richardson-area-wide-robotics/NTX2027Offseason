@@ -244,3 +244,37 @@ table.motors tr.flagged td { background: var(--bad-bg); }
 @media (max-width: 640px) { .wi { grid-template-columns: 3.5em 1fr 4.5em; } .wi > :last-child { display: none; } }
 .gstep.locked { opacity: .65; }
 #loopseg { flex-wrap: wrap; }
+
+/* ---------------------------------------------------------------- wiring */
+.schematic-wrap { overflow-x: auto; }
+.schematic { width: 100%; min-width: 600px; display: block; }
+.schematic .wire { stroke-width: 3; }
+.schematic .wire.can-h, .swatch.can-h { stroke: #e5b31b; background: #e5b31b; }
+.schematic .wire.can-l { stroke: #3b875a; }
+.schematic .node { cursor: pointer; }
+.schematic .node .box { fill: var(--panel); stroke: var(--rule); stroke-width: 1.5; }
+.schematic .node.ok .box { fill: var(--ok-bg); stroke: var(--ok); }
+.schematic .node.warn .box { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 2.5; }
+.schematic .node.bad .box { fill: var(--bad-bg); stroke: var(--bad); stroke-width: 3; }
+.schematic .node.focus .box { stroke: var(--accent); stroke-width: 3.5; }
+.schematic .node:focus-visible .box { stroke: var(--accent); stroke-width: 3.5; }
+.schematic .nm { font: 600 13px var(--sans); fill: var(--ink); }
+.schematic .sub { font: 12px var(--mono); fill: var(--muted); }
+.schematic .ohm { font: 700 15px var(--sans); fill: var(--accent); }
+.schematic .suspect-line { stroke: var(--bad); stroke-width: 7; stroke-dasharray: 10 6; opacity: .85; }
+.schematic .suspect-dot { fill: var(--bad); }
+.schematic .suspect-mark { font: 800 15px var(--sans); fill: #fff; }
+.schematic .warn-text { font: 600 12px var(--sans); fill: var(--bad); }
+.swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: middle; border: 1px solid var(--rule); }
+.swatch.ok { background: var(--ok-bg); border-color: var(--ok); }
+.swatch.warn { background: var(--warn-bg); border-color: var(--warn); }
+.swatch.bad { background: var(--bad-bg); border-color: var(--bad); }
+.pdh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.pdh-port { border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px; display: grid; gap: 2px; min-width: 0; }
+.pdh-port.empty { opacity: .55; }
+.pdh-port .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdh-bar { height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.pdh-bar > div { height: 100%; background: var(--accent); }
+ol.chain-edit { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+ol.chain-edit li { display: grid; grid-template-columns: 2em 1fr 5em auto; gap: 6px; align-items: center; }
+ol.chain-edit input { width: 5em; }

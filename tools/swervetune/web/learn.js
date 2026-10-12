@@ -32,7 +32,8 @@ const Learn = (() => {
     { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "slip_current"] },
     { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "environment", "deadman", "what_if"] },
     { id: "motors", title: "9. Keeping motors alive", lessons: ["heat_estimate", "derate", "stall", "thermal_override"] },
-    { id: "profile", title: "10. Second order: motion profiles (after first-order tuning works)", locked: true,
+    { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["can_bus", "can_termination", "power_path"] },
+    { id: "profile", title: "11. Second order: motion profiles (after first-order tuning works)", locked: true,
       lessons: ["motion_profile", "trapezoid_profile", "cruise_velocity", "max_acceleration", "ff_uses_setpoint", "maxmotion_position", "maxmotion_velocity", "allowed_profile_error", "profiled_pid"] },
   ];
 
@@ -197,6 +198,18 @@ const Learn = (() => {
     thermal_override: { title: "Thermal override", short: "For the end of a match: hold a heat shutoff at half current for up to 20 s. Never lifts a stall cut.",
       body: ["Sometimes losing the motor costs more than the motor. The override holds a heat SHUTOFF at DERATE instead, for at most 20 s, and never past a sensor 10 °C over shutoff or a 95% heat estimate."] },
 
+    can_bus: { title: "The CAN bus", short: "One pair of twisted wires (yellow CAN-H, green CAN-L) daisy-chained through every controller. Every device hears every message.",
+      body: ["Each controller has a CAN ID and two CAN connections joined inside it, so the cable passes straight through - even when the controller has no power. The chain runs from the roboRIO to the far end, usually the PDH.",
+        "That pass-through is the key to finding faults. One device missing while its neighbours are heard means that device (its power, or the controller). Everything past one point missing together means the cable or a plug at that point.",
+        "CAN has no idea of position, so the order along the cable can't be read from the robot: someone checks it by eye once, and the map remembers it."] },
+    can_termination: { title: "CAN termination", short: "A 120 ohm resistor at each end of the CAN chain stops signals echoing back. Exactly two: about 60 ohms measured across the bus, power off.",
+      body: ["A fast signal reaching the open end of a wire bounces back and garbles the next bits. A 120 ohm terminator at each end soaks it up. The roboRIO has one built in; the PDH has one you switch on.",
+        "With every device powered off, a multimeter across CAN-H and CAN-L reads both in parallel: about 60 ohms. 120 means one end is missing (or the cable is broken between you and it); 40 means one too many; near zero is a short.",
+        "Bad termination shows up as CAN errors and, at worst, the bus shutting itself down (bus-off)."] },
+    power_path: { title: "The power path", short: "Battery, main breaker, PDH, a breaker per port, then the leads to each controller. Every joint adds a little resistance; a bad one adds a lot.",
+      body: ["Current flows from the battery through the main breaker to the PDH, out through a port's breaker and along two leads to the controller, and back. Every crimp, Wago and screw terminal on the way is a small resistor.",
+        "Resistance turns current into lost voltage (V = I x R). A good feed loses about 0.6 V at 40 A. A loose joint can lose several volts: the controller sees a low supply, warns, and if it drops too far it reboots - vanishing from the CAN bus while it restarts.",
+        "The tool compares the voltage each controller sees with the PDH's, at the current the PDH measured on that port, to estimate each feed's resistance. One controller rebooting points at its own feed; many at once points upstream, at the battery or main breaker."] },
     motion_profile: { title: "Motion profile", short: "Instead of jumping the setpoint, move it smoothly along a planned path of position, speed and acceleration.",
       body: ["A step asks for the impossible: be there now. A profile asks for something the mechanism can actually do: speed up at a set rate, cruise, slow down. Feedback then only has to follow, so it can be stiffer without overshoot, and current spikes vanish.",
         "This is 'second order' control: the plan limits both velocity and acceleration. Do it after the first-order loops (feedforward and PID) work - a profile on top of a badly tuned loop just hides the problem."], links: ["trap", "profiled"] },
@@ -231,7 +244,8 @@ const Learn = (() => {
     ["kP", "kP"], ["kD", "kD"], ["kI", "kI"], ["kS", "kS"], ["kV", "kV"], ["kA", "kA"], ["PID", "feedback"], ["battery", "voltage_sag"],
     ["motion profile", "motion_profile"], ["trapezoid", "trapezoid_profile"], ["MAXMotion", "maxmotion_position"], ["heat estimate", "heat_estimate"],
     ["derate", "derate"], ["stall", "stall"], ["bevel gear", "bevel_gear"], ["straight-edge", "straight_edge"],
-    ["coast", "coast_mode"], ["redeploy", "redeploy"], ["slip current", "slip_current"], ["traction", "traction"], ["slip", "traction"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
+    ["coast", "coast_mode"], ["redeploy", "redeploy"], ["slip current", "slip_current"], ["traction", "traction"], ["slip", "traction"], ["CAN bus", "can_bus"],
+    ["terminator", "can_termination"], ["termination", "can_termination"], ["power leads", "power_path"], ["PDH port", "power_path"], ["keep the wheels still", "hold_still"], ["hand check", "hand_check"],
   ];
 
   // ---------------------------------------------------------------- the hover card

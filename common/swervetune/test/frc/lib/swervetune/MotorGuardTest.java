@@ -250,6 +250,57 @@ class MotorGuardTest {
     assertTrue(m.flags().contains("since last cleared: sensor"), m.flags());
   }
 
+  // ------------------------------------------------------------------ wiring
+
+  @Test
+  void aControllerThatDropsOffTheBusIsCountedAndJudgedOnNothingStale() {
+    FakeMotorChannel c = new FakeMotorChannel(40);
+    c.demandA = 60;
+    c.ignoresLimit = true;
+    Motor m = add("Feeder", c, MotorKind.NEO_2_0, false);
+    run(1);
+    double heat = m.heatFraction();
+    c.present = false;
+    run(3);
+    assertFalse(m.present());
+    assertEquals(1, m.dropouts());
+    assertEquals(heat, m.heatFraction(), 1e-12, "its frozen 60 A must not keep heating the estimate");
+    assertTrue(m.flags().contains("not heard"), m.flags());
+    c.present = true;
+    run(0.1);
+    c.present = false;
+    run(0.1);
+    assertEquals(2, m.dropouts());
+    assertTrue(guard.events().stream().anyMatch(e -> e.contains("Feeder dropped off the CAN bus")));
+  }
+
+  @Test
+  void aRebootMeansItLostPowerAndIsCountedOnce() {
+    FakeMotorChannel c = new FakeMotorChannel(40);
+    Motor m = add("Feeder", c, MotorKind.NEO_2_0, true);
+    c.resetFlag = true;
+    run(0.5);
+    assertEquals(1, m.resets());
+    assertFalse(c.resetFlag, "the flag is cleared so the next reboot counts again");
+    c.resetFlag = true;
+    run(0.1);
+    assertEquals(2, m.resets());
+    assertTrue(guard.events().stream().anyMatch(e -> e.contains("lost power")));
+  }
+
+  @Test
+  void lowSupplyWarningsAreCountedByEpisode() {
+    FakeMotorChannel c = new FakeMotorChannel(40);
+    Motor m = add("Feeder", c, MotorKind.NEO_2_0, true);
+    c.brownout = true;
+    run(0.5);
+    c.brownout = false;
+    run(0.1);
+    c.brownout = true;
+    run(0.1);
+    assertEquals(2, m.brownouts());
+  }
+
   // ------------------------------------------------------------------ policy and plumbing
 
   @Test

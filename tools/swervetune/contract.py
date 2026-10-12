@@ -114,6 +114,22 @@ MOTORS_FLAGS = MOTORS + "Flags"
 MOTORS_EVENTS = MOTORS + "Events"
 MOTORS_REPORT = MOTORS + "Report"
 MOTORS_GUARD_ON = MOTORS + "GuardOn"
+MOTORS_PRESENT = MOTORS + "Present"
+MOTORS_DROPOUTS = MOTORS + "Dropouts"
+MOTORS_RESETS = MOTORS + "Resets"
+MOTORS_BROWNOUTS = MOTORS + "Brownouts"
+MOTORS_BUS_VOLTS = MOTORS + "BusVolts"
+MOTORS_CAN_IDS = MOTORS + "CanIds"
+WIRING_CAN = ROOT + "/Wiring/Can"
+
+# AdvantageKit's own live topics (NT4Publisher), read for power and CAN health.
+AK = "/AdvantageKit"
+AK_PDH_CURRENTS = AK + "/PowerDistribution/ChannelCurrent"
+AK_PDH_VOLTAGE = AK + "/PowerDistribution/Voltage"
+AK_PDH_FAULTS = AK + "/PowerDistribution/Faults"
+AK_PDH_STICKY = AK + "/PowerDistribution/StickyFaults"
+AK_BATTERY = AK + "/SystemStats/BatteryVoltage"
+AK_BROWNED_OUT = AK + "/SystemStats/BrownedOut"
 
 # motor guard, laptop -> robot
 MOTORS_OVERRIDE_SEQ = MOTORS + "Override/Seq"
@@ -166,6 +182,12 @@ MOTOR_NUMBERS = {
     "base_limit": MOTORS_BASE_LIMIT_A,
     "stall_s": MOTORS_STALL_S,
     "override_s": MOTORS_OVERRIDE_S,
+    "present": MOTORS_PRESENT,
+    "dropouts": MOTORS_DROPOUTS,
+    "resets": MOTORS_RESETS,
+    "brownouts": MOTORS_BROWNOUTS,
+    "bus_volts": MOTORS_BUS_VOLTS,
+    "can_id": MOTORS_CAN_IDS,
 }
 STAGES = ("OK", "WARN", "DERATE", "SHUTOFF")
 

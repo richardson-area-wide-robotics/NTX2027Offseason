@@ -82,6 +82,28 @@ public final class MotorGuard {
       return Double.NaN;
     }
 
+    /** Whether the controller is being heard on the CAN bus right now. */
+    default boolean canPresent() {
+      return true;
+    }
+
+    /** Whether the controller has rebooted - lost power, however briefly - since the flag was cleared. */
+    default boolean resetSeen() {
+      return false;
+    }
+
+    default void clearResetFlag() {}
+
+    /** Whether the controller is warning of a low supply voltage right now. */
+    default boolean brownoutWarning() {
+      return false;
+    }
+
+    /** CAN ID, or -1 if unknown. */
+    default int canId() {
+      return -1;
+    }
+
     /** True in simulation, where a controller has no real current or temperature to report. */
     default boolean simulated() {
       return false;
@@ -110,6 +132,13 @@ public final class MotorGuard {
     double tempC = Double.NaN;
     double amps = Double.NaN;
     double busVolts = Double.NaN;
+    boolean present = true;
+    int dropouts;
+    double lastDropS = Double.NEGATIVE_INFINITY;
+    int resets;
+    double lastResetS = Double.NEGATIVE_INFINITY;
+    int brownouts;
+    boolean brownout;
 
     Motor(String name, MotorKind kind, MotorChannel channel, boolean stallTimer) {
       this.name = name;
@@ -143,6 +172,38 @@ public final class MotorGuard {
 
     public double amps() {
       return amps;
+    }
+
+    /** Whether it is heard on the CAN bus now. */
+    public boolean present() {
+      return present;
+    }
+
+    /** Times it has dropped off the CAN bus since the robot code started. */
+    public int dropouts() {
+      return dropouts;
+    }
+
+    public double lastDropS() {
+      return lastDropS;
+    }
+
+    /** Times it has rebooted - lost power - since the robot code started. */
+    public int resets() {
+      return resets;
+    }
+
+    public double lastResetS() {
+      return lastResetS;
+    }
+
+    /** Times it has warned of a low supply voltage. */
+    public int brownouts() {
+      return brownouts;
+    }
+
+    public int canId() {
+      return channel.canId();
     }
 
     /** Supply voltage at the controller, volts; NaN if unknown. */
@@ -314,6 +375,35 @@ public final class MotorGuard {
 
   private void step(Motor m, double nowS, double dt) {
     MotorKind k = m.kind;
+    // Wiring: is it still on the bus, has it rebooted, is its supply sagging?
+    boolean present = m.channel.canPresent();
+    if (m.present && !present) {
+      m.dropouts++;
+      m.lastDropS = nowS;
+      event(nowS, m.name + " dropped off the CAN bus. Check its CAN plugs and the cable before it.");
+    } else if (!m.present && present) {
+      event(nowS, m.name + " is back on the CAN bus.");
+    }
+    m.present = present;
+    if (!present) {
+      // Its readings are frozen at the last frame heard: judge nothing from them.
+      m.amps = Double.NaN;
+      m.lastRotations = Double.NaN;
+      m.flags = "not heard on the CAN bus";
+      return;
+    }
+    if (m.channel.resetSeen()) {
+      m.resets++;
+      m.lastResetS = nowS;
+      m.channel.clearResetFlag();
+      event(nowS, m.name + " rebooted: it lost power for a moment. Check its power leads, the PDH"
+          + " port and its breaker.");
+    }
+    boolean bo = m.channel.brownoutWarning();
+    if (bo && !m.brownout) {
+      m.brownouts++;
+    }
+    m.brownout = bo;
     double amps = m.channel.amps();
     double temp = m.channel.tempC();
     double duty = m.channel.appliedDuty();

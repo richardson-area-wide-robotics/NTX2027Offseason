@@ -122,7 +122,8 @@ class RobotLink:
         # A new NT4 subscriber reads its default until the server's first value arrives. Subscribing
         # to the whole /SwerveTune tree up front keeps every value cached here, so the first read of
         # any topic is the robot's value, not a stale default.
-        self._everything = ntcore.MultiSubscriber(self.inst, [C.ROOT + "/"])
+        self._everything = ntcore.MultiSubscriber(
+            self.inst, [C.ROOT + "/", C.AK + "/PowerDistribution/", C.AK + "/SystemStats/"])
         self._pubs = {}
         self._subs = {}
         self._hb_value = 0.0
@@ -293,6 +294,10 @@ class RobotLink:
             "fms": self.get("bool", C.LIVE_FMS_ATTACHED),
             "t": self.get("double", C.LIVE_TIMESTAMP),
             "motors": self.motors()["motors"],
+            "can": list(self.get("double[]", C.WIRING_CAN)),
+            "pdh": {"currents": list(self.get("double[]", C.AK_PDH_CURRENTS)),
+                    "voltage": self.get("double", C.AK_PDH_VOLTAGE)},
+            "battery": self.get("double", C.AK_BATTERY),
         })
         return out
 

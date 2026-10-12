@@ -176,6 +176,21 @@ public final class SwerveTuneTopics {
   public static final String MOTORS_EVENTS = MOTORS + "Events";
   /** What registration found: limits over policy, unknown motor types. */
   public static final String MOTORS_REPORT = MOTORS + "Report";
+  /** 1 while the controller is heard on the CAN bus, 0 when it is not. */
+  public static final String MOTORS_PRESENT = MOTORS + "Present";
+  /** Times each has dropped off the CAN bus since the robot code started. */
+  public static final String MOTORS_DROPOUTS = MOTORS + "Dropouts";
+  /** Times each has rebooted, which means it lost power. */
+  public static final String MOTORS_RESETS = MOTORS + "Resets";
+  /** Times each has warned of low supply voltage. */
+  public static final String MOTORS_BROWNOUTS = MOTORS + "Brownouts";
+  /** Supply voltage at each controller, volts. */
+  public static final String MOTORS_BUS_VOLTS = MOTORS + "BusVolts";
+  public static final String MOTORS_CAN_IDS = MOTORS + "CanIds";
+
+  /** The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors. */
+  public static final String WIRING_CAN = ROOT + "/Wiring/Can";
+
   /** False when swervetune.json switched the guard off. */
   public static final String MOTORS_GUARD_ON = MOTORS + "GuardOn";
 

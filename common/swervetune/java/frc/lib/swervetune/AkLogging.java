@@ -107,7 +107,7 @@ public final class AkLogging {
       String[] k = KEYS.computeIfAbsent(m.name, name -> {
         String b = "Motors/" + name + "/";
         return new String[] {b + "Stage", b + "HeatPct", b + "TempC", b + "Amps", b + "LimitA",
-            b + "BusVolts", b + "Flags"};
+            b + "BusVolts", b + "Flags", b + "Present", b + "Dropouts", b + "Resets", b + "Brownouts"};
       });
       Logger.recordOutput(k[0], m.stage().name());
       Logger.recordOutput(k[1], 100 * m.heatFraction());
@@ -116,6 +116,10 @@ public final class AkLogging {
       Logger.recordOutput(k[4], m.activeLimitA());
       Logger.recordOutput(k[5], m.busVolts());
       Logger.recordOutput(k[6], m.flags());
+      Logger.recordOutput(k[7], m.present());
+      Logger.recordOutput(k[8], m.dropouts());
+      Logger.recordOutput(k[9], m.resets());
+      Logger.recordOutput(k[10], m.brownouts());
     }
     Logger.recordOutput("SwerveTune/Test", test);
   }

@@ -31,6 +31,7 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   private final int freeLimitA;
   private final int limitRpm;
   private final double positionFactor;
+  private final String bootReport;
 
   public SparkChannel(SparkBase spark, boolean simulation) {
     this.spark = spark;
@@ -50,6 +51,57 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
     this.freeLimitA = free;
     this.limitRpm = rpm;
     this.positionFactor = factor;
+    // What it remembers from before the robot code started - a brownout in the last match, a CAN
+    // fault - is evidence worth keeping. Record it, then clear, so anything new means "since now".
+    String report = "";
+    if (!simulation) {
+      java.util.List<String> seen = new ArrayList<>();
+      if (spark.hasStickyFault()) {
+        faults(spark.getStickyFaults(), seen);
+      }
+      if (spark.hasStickyWarning()) {
+        SparkBase.Warnings w = spark.getStickyWarnings();
+        if (w.brownout) seen.add("low supply voltage");
+        if (w.overcurrent) seen.add("overcurrent");
+        if (w.sensor) seen.add("sensor warning");
+      }
+      report = String.join(", ", seen);
+      spark.clearFaults();
+    }
+    this.bootReport = report;
+  }
+
+  /** Sticky faults it carried when the robot code started, before they were cleared. */
+  public String bootReport() {
+    return bootReport;
+  }
+
+  @Override
+  public boolean canPresent() {
+    // REVLib returns no status frame once none has arrived for 500 ms.
+    return simulation || spark.getPeriodicStatus0() != null;
+  }
+
+  @Override
+  public boolean resetSeen() {
+    return !simulation && spark.hasStickyWarning() && spark.getStickyWarnings().hasReset;
+  }
+
+  @Override
+  public void clearResetFlag() {
+    if (!simulation) {
+      spark.clearFaults();
+    }
+  }
+
+  @Override
+  public boolean brownoutWarning() {
+    return !simulation && spark.hasActiveWarning() && spark.getWarnings().brownout;
+  }
+
+  @Override
+  public int canId() {
+    return spark.getDeviceId();
   }
 
   private static SparkBaseConfigAccessor accessor(SparkBase s) {

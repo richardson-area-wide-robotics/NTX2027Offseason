@@ -24,10 +24,10 @@ import time
 import traceback
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote, urlparse
+from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, contract as C, diagnose, explain, monitor, plant, predict, rehearse,
-               runs, yagslcfg)
+               runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -122,6 +122,29 @@ class Session:
             finally:
                 self.link = None
                 self.target = None
+
+    def wiring_map(self):
+        if not self.project:
+            return None
+        if getattr(self, "_wiring", None) is None or self._wiring[0] != self.project.path:
+            self._wiring = (self.project.path, wiring.load_map(self.project))
+        return self._wiring[1]
+
+    def feed_sample(self, live, m):
+        """Collects (PDH volts, controller volts, PDH port current) per mapped controller."""
+        hist = self.__dict__.setdefault("_feed", {})
+        pdh = live.get("pdh") or {}
+        currents, pv = pdh.get("currents") or [], pdh.get("voltage")
+        for r in live.get("motors") or []:
+            port = (m or {}).get("pdhPorts", {}).get(r.get("name"))
+            if port is None or port >= len(currents) or r.get("bus_volts") is None:
+                continue
+            h = hist.setdefault(r["name"], [])
+            h.append((pv, r["bus_volts"], currents[port]))
+            del h[:-3000]
+
+    def feed_resistances(self):
+        return {n: wiring.feed_resistance(h) for n, h in self.__dict__.get("_feed", {}).items()}
 
     def limits(self):
         if not self.project:
@@ -225,6 +248,7 @@ def api_live(_):
     live = S.link.live()
     names = S.link.robot_info()["modules"]
     S.flags = S.monitor.update(live, names, S.link.environment().get("active"))
+    S.feed_sample(live, S.wiring_map())
     return {"connected": S.link.is_connected(), "live": live, "flags": S.flags,
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],
@@ -301,9 +325,19 @@ def _edits_from(body):
     raise ValueError("unknown save kind")
 
 
+def _wiring_change(body):
+    path = wiring.map_path(S.project)
+    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    return path, old, wiring.map_text(body["map"])
+
+
 def api_save_preview(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
+    if body.get("kind") == "wiring":
+        path, old, new = _wiring_change(body)
+        rel = os.path.relpath(path, S.project.path).replace(os.sep, "/")
+        return {"ok": True, "diff": yagslcfg.diff(old, new, rel) if old != new else "", "files": [rel]}
     changes = S.project.preview(_edits_from(body))
     return {"ok": True, "diff": "".join(yagslcfg.diff(o, n, f) for f, (o, n) in changes.items()),
             "files": list(changes)}
@@ -312,6 +346,12 @@ def api_save_preview(body):
 def api_save_apply(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
+    if body.get("kind") == "wiring":
+        path, old, new = _wiring_change(body)
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(new)
+        S._wiring = None
+        return {"ok": True, "diff": yagslcfg.diff(old, new, os.path.basename(path))}
     text = S.project.apply(_edits_from(body))
     return {"ok": True, "diff": text}
 
@@ -328,6 +368,60 @@ def api_run(name):
                                     current_limit=lim["steer" if doc.get("test") == "steer_step" else "drive"])
     doc["explain"] = explain.explain(doc, doc.get("gains"), lim)
     return doc
+
+
+DEMOS = {
+    "tail": "A CAN cable pulled out partway along the chain",
+    "single": "One controller with no power",
+    "resets": "A loose power lead: one controller keeps rebooting",
+    "busoff": "No terminator at the far end",
+}
+
+
+def _demo_snapshot(m, kind):
+    chain = [n for n in m["buses"][0]["chain"] if n not in ("roboRIO", "PDH")]
+    rows = [{"name": n, "present": 1, "dropouts": 0, "resets": 0, "brownouts": 0} for n in chain]
+    can = [0.35, 0, 0, 0, 0]
+    k = max(1, len(rows) // 2)
+    if kind == "tail":
+        for r in rows[k:]:
+            r["present"], r["dropouts"] = 0, 1
+        can = [0.2, 0, 3, 96, 0]
+    elif kind == "single" and rows:
+        rows[k]["present"], rows[k]["dropouts"] = 0, 1
+    elif kind == "resets" and rows:
+        rows[k]["resets"], rows[k]["brownouts"], rows[k]["dropouts"] = 3, 2, 3
+    elif kind == "busoff":
+        can = [0.1, 4, 25, 128, 255]
+    return {"motors": rows, "can": can}
+
+
+def api_wiring(query=None):
+    """The map, every device, the bus lengths and the live diagnosis (or a practice fault)."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    m = S.wiring_map()
+    demo = (query or {}).get("demo")
+    if demo in DEMOS:
+        snap = _demo_snapshot(m, demo)
+    elif S.link and S.link.is_connected():
+        live = S.link.live()
+        snap = {"motors": live.get("motors"), "can": live.get("can"), "pdh": live.get("pdh"),
+                "feed_r": S.feed_resistances()}
+    else:
+        snap = {}
+    return {"ok": True, "map": m, "devices": wiring.devices_by_name(S.project, m),
+            "lengths": [wiring.bus_length(b) for b in m["buses"]], "snapshot": snap,
+            "findings": wiring.diagnose(m, snap), "demos": DEMOS, "demo": demo if demo in DEMOS else None,
+            "path": os.path.relpath(wiring.map_path(S.project), S.project.path)}
+
+
+def api_wiring_termination(body):
+    try:
+        ohms = float(body.get("ohms"))
+    except (TypeError, ValueError):
+        ohms = None
+    return wiring.termination_verdict(ohms)
 
 
 def api_export(body):
@@ -440,7 +534,7 @@ def api_sim(body):
 
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
-       "/api/progress": api_progress_get}
+       "/api/progress": api_progress_get, "/api/wiring": api_wiring}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -449,7 +543,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,
         "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
-        "/api/export": api_export}
+        "/api/export": api_export, "/api/wiring/termination": api_wiring_termination}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -475,7 +569,7 @@ class Handler(BaseHTTPRequestHandler):
         path = urlparse(self.path).path
         try:
             if path in GET:
-                return self._send(200, GET[path](None))
+                return self._send(200, GET[path](dict(parse_qsl(urlparse(self.path).query))))
             if path.startswith("/api/runs/"):
                 return self._send(200, api_run(unquote(path[len("/api/runs/"):])))
             if path.startswith("/api/diagnose/"):
