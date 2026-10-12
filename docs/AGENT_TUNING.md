@@ -82,6 +82,9 @@ findings  [{level, title, why, action?}], most important first
 next      the first finding's action, or null
 ```
 
+People can also change gains from AdvantageScope's tuning mode while you work. Run `gains show`
+before each test, and if a gain isn't what you last set, ask before going on.
+
 Act on `next` and only on `next`:
 
 - `{"type": "gains", "values": {...}}`: `gains set` exactly those values, then rerun the same test.

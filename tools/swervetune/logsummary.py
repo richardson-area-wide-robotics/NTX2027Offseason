@@ -13,7 +13,9 @@ from __future__ import annotations
 from . import wiring
 
 PREFIXES = ("/DriverStation/", "/SystemStats/", "/PowerDistribution/", "/RealOutputs/Motors/",
-            "/RealOutputs/LoggedRobot/FullCycleMS", "/RealOutputs/SwerveTune/Test", "/RealMetadata/")
+            "/RealOutputs/LoggedRobot/FullCycleMS", "/RealOutputs/SwerveTune/Test",
+            "/RealOutputs/SwerveTune/Gains/", "/RealMetadata/")
+GAINS = "/RealOutputs/SwerveTune/Gains/"
 PDH_FAULT_BITS = {24: "brownout", 25: "CAN warning", 26: "hardware fault"}
 PDH_STICKY_BITS = {24: "brownout", 25: "CAN warning", 26: "CAN bus-off", 27: "hardware fault",
                    28: "firmware fault", 29: "reset"}
@@ -200,6 +202,14 @@ def summarize(series, wiring_map=None):
                 if f and f not in seen and "not heard" not in f:
                     seen.add(f)
                     ev(ts, "warn", f"{m}: {f}.", None, {"devices": [m]})
+
+    # Gains changed while the robot code ran (from the laptop or AdvantageScope): a robot that
+    # drove differently halfway through has its reason here.
+    for key in sorted(k for k in series if k.startswith(GAINS)):
+        pts = series[key]
+        for (_, a), (ts, b) in zip(pts, pts[1:]):
+            if a != b:
+                ev(ts, "info", f"Gain {key[len(GAINS):]} changed from {a:g} to {b:g} (live, not saved).")
 
     # Group dropouts that happened together, and judge each group with the wiring rules.
     drops.sort()

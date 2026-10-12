@@ -78,9 +78,19 @@ To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) 
 Each step says why it matters, what you need, and what to do. Steps tick themselves off when a
 test passes.
 
+## Tuning from AdvantageScope
+
+The same live gains are in AdvantageScope too. Connect it with the **NetworkTables 4
+(AdvantageKit)** live source, turn on tuning mode (the slider icon), and open the **Tuning,
+SwerveTune** table: type a new value and press Enter. The robot checks it against the same limits
+as the app, and puts the field back to what is really running if it refuses (`Status`, in the same
+table, says why). Edits wait while a test is running and are refused with the FMS attached. The
+app and AdvantageScope always show the same values, and every change goes into the match log.
+`"advantageScopeTuning": true` in `swervetune.json` turns this on; both robots have it on.
+
 ## Saving what you find
 
-Gains changed live are lost when the robot code restarts. **Save to the robot files** shows
+Gains changed live (in the app or in AdvantageScope) are lost when the robot code restarts. **Save to the robot files** shows
 exactly which lines change (a diff) before it writes anything. Then:
 
 1. Redeploy, reconnect, and check the startup list on the Live tab shows your new values.

@@ -68,6 +68,9 @@ RESULT_NOTES = ROOT + "/Result/Notes"
 
 # live gains
 GAINS = ROOT + "/Gains/"
+# The same gains, where AdvantageScope's tuning mode can edit them (with advantageScopeTuning on),
+# plus Status: what happened to the last edit.
+TUNING = "/Tuning/SwerveTune/"
 GAINS_APPLY_SEQ = ROOT + "/Gains/ApplySeq"
 GAINS_BOOT_ID = ROOT + "/Gains/BootId"
 GAINS_APPLIED = ROOT + "/Gains/Applied/"

@@ -696,6 +696,12 @@ public final class SwerveTune {
       AkLogging.record(io, guard.motors(), state == State.RUNNING ? lastTest : "");
       handleSimEnable();
       gains.poll();
+      gains.pollTuning(signals.fmsAttached() ? "the FMS is attached"
+          : state == State.RUNNING || state == State.WAITING ? "a test is running" : null);
+      Map<String, Double> gainsNow = gains.takeChanged();
+      if (gainsNow != null) {
+        AkLogging.recordGains(gainsNow);
+      }
       handleAbort();
       handleCommand(now);
       runActive(now);

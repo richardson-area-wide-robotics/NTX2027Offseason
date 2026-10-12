@@ -40,6 +40,9 @@ def write_log(path):
     brown = Entry(log, "/SystemStats/BrownedOut", "boolean")
     off = Entry(log, "/SystemStats/CANBus/OffCount", "int64")
     faults = Entry(log, "/PowerDistribution/Faults", "int64")
+    kp = Entry(log, "/RealOutputs/SwerveTune/Gains/Steer/kP", "double")
+    kp.append(0.01, us(0.5))
+    kp.append(0.02, us(30.0))
     motors = {}
     for m in "ABCD":
         b = f"/RealOutputs/Motors/{m}/"
@@ -85,7 +88,8 @@ class LogSummaryTest(unittest.TestCase):
     def test_each_planted_fault_is_found_at_its_time(self):
         for expected in ("teleop +24.0 s | Off the CAN bus for up to 0.4", "The CAN bus shut itself down",
                          "teleop +44.0 s | Brownout for 0.2", "teleop +59.0 s | B lost power and rebooted",
-                         "A saw low supply voltage", "PDH port 3's breaker tripped (B)", "A: motor guard WARN"):
+                         "A saw low supply voltage", "PDH port 3's breaker tripped (B)", "A: motor guard WARN",
+                         "teleop +14.0 s | Gain Steer/kP changed from 0.01 to 0.02"):
             self.assertIn(expected, self.text)
 
     def test_a_dropout_run_points_at_the_cable_at_its_start(self):

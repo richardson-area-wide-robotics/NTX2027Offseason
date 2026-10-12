@@ -69,6 +69,11 @@ public final class SwerveTuneConfig {
 
   /** Watch every motor for heat, stalls and failure ({@link MotorGuard}). */
   public boolean motorGuard = true;
+  /**
+   * Publish the live gains under {@code /Tuning/SwerveTune}, where AdvantageScope's tuning mode can
+   * edit them. Off unless the file says so.
+   */
+  public boolean advantageScopeTuning = false;
 
   /** Lower any current limit above the team policy for its motor, until the next reboot. */
   public boolean enforceCurrentPolicy = true;
@@ -174,6 +179,7 @@ public final class SwerveTuneConfig {
 
     Map<String, Object> motors = map(m.get("motors"));
     c.motorGuard = bool(motors.get("guard"), true);
+    c.advantageScopeTuning = bool(m.get("advantageScopeTuning"), false);
     c.enforceCurrentPolicy = bool(motors.get("enforcePolicy"), true);
     for (Map.Entry<String, Object> e : motors.entrySet()) {
       if (e.getKey().equals("guard") || e.getKey().equals("enforcePolicy")

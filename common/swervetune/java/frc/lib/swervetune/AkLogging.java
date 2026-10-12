@@ -196,6 +196,19 @@ public final class AkLogging {
     return deleted;
   }
 
+  /**
+   * Every live gain, whenever one changes (and once at the start), so a match log says what the
+   * robot was running. Under {@code RealOutputs/SwerveTune/Gains/}.
+   */
+  static void recordGains(Map<String, Double> gains) {
+    if (!started) {
+      return;
+    }
+    for (Map.Entry<String, Double> e : gains.entrySet()) {
+      Logger.recordOutput("SwerveTune/Gains/" + e.getKey(), e.getValue());
+    }
+  }
+
   /** Warns once if the disk being logged to runs low during a long session. */
   private static void checkSpace() {
     if (logFolder == null || warnedLowSpace || ++loops < SPACE_CHECK_LOOPS) {

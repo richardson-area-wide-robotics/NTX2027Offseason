@@ -110,6 +110,12 @@ public final class SwerveTuneTopics {
   // ---------------------------------------------------------------- live gains (both directions)
   /** Prefix for gain topics, e.g. {@code /SwerveTune/Gains/Steer/kP}. See {@link LiveGains}. */
   public static final String GAINS = ROOT + "/Gains/";
+
+  /**
+   * Every live gain again, in the table AdvantageScope's tuning mode can edit (when
+   * {@code advantageScopeTuning} is on), plus {@code Status}: what happened to the last edit.
+   */
+  public static final String TUNING = "/Tuning/SwerveTune/";
   /** Bump after writing gain topics; the robot applies the whole set once per new value. */
   public static final String GAINS_APPLY_SEQ = ROOT + "/Gains/ApplySeq";
   /** Must equal {@link #BOOT_ID} or the gain change is ignored. */

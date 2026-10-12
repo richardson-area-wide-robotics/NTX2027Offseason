@@ -14,5 +14,6 @@
     "maxSpeedCapMps": 3.0,
     "minStartVoltsField": 11.8,
     "minStartVoltsBlocks": 11.0
-  }
+  },
+  "advantageScopeTuning": true
 }

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.IntegerPublisher;
@@ -113,7 +114,7 @@ class SwerveTuneHarnessTest {
     SwerveTuneConfig config = SwerveTuneConfig.parse(
         "{\"driveFeedforward\": {\"backright\": {\"kS\": 0.2, \"kV\": 2.5, \"kA\": 0.4}},"
         + " \"cameras\": {\"front\": {\"x\": 0.3, \"y\": -0.1, \"z\": 0.5, \"pitch\": -15, \"yaw\": 10},"
-        + " \"rear\": {\"x\": 0.3}}}");
+        + " \"rear\": {\"x\": 0.3}}, \"advantageScopeTuning\": true}");
     tune = new SwerveTune(io, nt, ds, () -> now[0], "test robot", config, false, owner, true);
     cmdSeq = nt.getIntegerTopic(SwerveTuneTopics.CMD_SEQ).publish();
     cmdBoot = nt.getIntegerTopic(SwerveTuneTopics.CMD_BOOT_ID).publish();
@@ -582,6 +583,66 @@ class SwerveTuneHarnessTest {
     assertArrayEquals(new double[] {7, 1.5, 0.1, 0.2, 1, 0, 0, 0, 0.05, 12.5}, Arrays.copyOf(flat, 10), 1e-12);
     assertEquals(3, flat[10]);
     assertArrayEquals(new String[] {"front", "rear"}, cams);
+  }
+
+  private DoubleEntry tuning(String key) {
+    return nt.getDoubleTopic(SwerveTuneTopics.TUNING + key).getEntry(Double.NaN);
+  }
+
+  private String tuningStatus() {
+    return nt.getStringTopic(SwerveTuneTopics.TUNING + "Status").subscribe("").get();
+  }
+
+  @Test
+  void anAdvantageScopeEditAppliesAndBothViewsAgree() {
+    loop(1);
+    assertEquals(0.01, tuning("Steer/kP").get(), 1e-12, "AdvantageScope sees what is running");
+    tuning("Steer/kP").set(0.02);
+    loop(2);
+    assertEquals(0.02, io.steerPid[0], 1e-12);
+    assertEquals(0.001, io.steerPid[2], 1e-12, "the rest of the group is kept");
+    double echoed = nt.getDoubleTopic(SwerveTuneTopics.GAINS_APPLIED + "Steer/kP").subscribe(-1).get();
+    assertEquals(0.02, echoed, 1e-12, "the laptop sees it too");
+    assertTrue(tuningStatus().startsWith("Applied"), tuningStatus());
+  }
+
+  @Test
+  void anOutOfRangeEditSnapsBack() {
+    loop(1);
+    tuning("Drive/kP").set(50);
+    loop(2);
+    assertEquals(0.002, io.drivePid[0], 1e-12, "never reached the motor");
+    assertEquals(0.002, tuning("Drive/kP").get(), 1e-12, "AdvantageScope shows what is really running");
+    assertTrue(tuningStatus().contains("REFUSED"), tuningStatus());
+  }
+
+  @Test
+  void editsWaitUntilNoTestIsRunning() {
+    envMode.set("BLOCKS");
+    loop(2);
+    send("steer_step", "FL", "hold_s", "0.3", "settle_s", "0.2");
+    loop(5);
+    tuning("Steer/kP").set(0.03);
+    loop(2);
+    assertEquals(0.01, io.steerPid[0], 1e-12, "a mid-test change would spoil the measurement");
+    assertEquals(0.01, tuning("Steer/kP").get(), 1e-12);
+    assertTrue(tuningStatus().contains("a test is running"), tuningStatus());
+  }
+
+  @Test
+  void aLaptopChangeShowsUpInAdvantageScope() {
+    loop(1);
+    DoublePublisher kp = nt.getDoubleTopic(SwerveTuneTopics.GAINS + "Steer/kP").publish();
+    IntegerPublisher apply = nt.getIntegerTopic(SwerveTuneTopics.GAINS_APPLY_SEQ).publish();
+    IntegerPublisher boot = nt.getIntegerTopic(SwerveTuneTopics.GAINS_BOOT_ID).publish();
+    kp.set(0.015);
+    boot.set(tune.bootId());
+    apply.set(7);
+    loop(2);
+    assertEquals(0.015, tuning("Steer/kP").get(), 1e-12);
+    loop(2);
+    String status = nt.getStringTopic(SwerveTuneTopics.GAINS_APPLY_STATUS).subscribe("").get();
+    assertTrue(status.startsWith("Applied"), "AdvantageScope's echo is not mistaken for an edit: " + status);
   }
 
   @Test

@@ -18,6 +18,12 @@ import java.util.Map;
  * {@code ApplySeq}. The robot applies the whole set together, once, so a P and a D changed at the
  * same moment land together rather than one loop apart.
  *
+ * <p>With {@code "advantageScopeTuning": true} in swervetune.json, every gain is also published
+ * under {@code /Tuning/SwerveTune/...}, the table AdvantageScope's tuning mode edits. An edit there
+ * goes through the same bounds; it is refused while a test is running (it would spoil the
+ * measurement) or with the FMS attached, and the field then snaps back to what is really running.
+ * Both views always show the same values, whoever changed them.
+ *
  * <p>Three rules hold everywhere:
  *
  * <ul>
@@ -80,6 +86,12 @@ final class LiveGains {
   private final IntegerPublisher appliedSeq;
   private final StringPublisher status;
   private long lastSeq;
+  /** AdvantageScope's view, when the tuning bridge is on: the entries and what was last shown. */
+  private final Map<String, DoubleEntry> tuning = new LinkedHashMap<>();
+  private final Map<String, Double> shown = new LinkedHashMap<>();
+  private final StringPublisher tuningStatus;
+  /** Whether a gain changed since {@link #takeChanged} was last asked; true at the start. */
+  private boolean changed = true;
 
   LiveGains(NetworkTableInstance nt, DrivetrainIO io, SwerveTuneConfig config, long bootId) {
     this.io = io;
@@ -135,6 +147,30 @@ final class LiveGains {
     lastSeq = applySeq.get();
     appliedSeq.set(lastSeq);
     status.set("Running the gains from the JSON files.");
+    if (config.advantageScopeTuning) {
+      for (Map.Entry<String, Double> e : current.entrySet()) {
+        DoubleEntry entry = nt.getDoubleTopic(SwerveTuneTopics.TUNING + e.getKey()).getEntry(e.getValue());
+        entry.set(e.getValue());
+        tuning.put(e.getKey(), entry);
+        shown.put(e.getKey(), e.getValue());
+      }
+      tuningStatus = nt.getStringTopic(SwerveTuneTopics.TUNING + "Status").publish();
+      tuningStatus.set("Edit a value to try it live. Not saved: use Save in the swerve tools to keep it.");
+    } else {
+      tuningStatus = null;
+    }
+  }
+
+  /**
+   * Every gain, if any changed since the last call (and on the first call), else null. Asked from
+   * the robot loop, so AdvantageKit records it in that loop's cycle.
+   */
+  Map<String, Double> takeChanged() {
+    if (!changed) {
+      return null;
+    }
+    changed = false;
+    return Map.copyOf(current);
   }
 
   /** Current value of a gain the robot is running. */
@@ -160,7 +196,49 @@ final class LiveGains {
     for (Map.Entry<String, DoubleEntry> e : requested.entrySet()) {
       wanted.put(e.getKey(), e.getValue().get());
     }
+    String msg = apply(wanted);
+    appliedSeq.set(seq);
+    status.set(msg);
+  }
 
+  /**
+   * Applies AdvantageScope's edits, if the tuning bridge is on and anything was edited. Call every
+   * loop.
+   *
+   * @param blockedReason why edits can't be applied right now, or null when they can
+   */
+  void pollTuning(String blockedReason) {
+    if (tuning.isEmpty()) {
+      return;
+    }
+    Map<String, Double> wanted = new LinkedHashMap<>(current);
+    List<String> edited = new ArrayList<>();
+    for (Map.Entry<String, DoubleEntry> e : tuning.entrySet()) {
+      double v = e.getValue().get();
+      if (Double.compare(v, shown.get(e.getKey())) != 0) {
+        wanted.put(e.getKey(), v);
+        edited.add(e.getKey());
+      }
+    }
+    if (edited.isEmpty()) {
+      return;
+    }
+    String msg;
+    if (blockedReason != null) {
+      msg = "Not applied (" + String.join(", ", edited) + "): " + blockedReason + ".";
+      sync();
+    } else {
+      msg = apply(wanted);
+    }
+    tuningStatus.set(msg);
+    status.set(msg);
+  }
+
+  /**
+   * Applies every group with a changed value, refusing a whole group if any value in it is out of
+   * bounds, then shows what is really running everywhere. Returns the sentence for a person.
+   */
+  private String apply(Map<String, Double> wanted) {
     // Which groups changed, and which are out of bounds.
     Map<String, List<String>> changedGroups = new LinkedHashMap<>();
     List<String> refused = new ArrayList<>();
@@ -197,19 +275,32 @@ final class LiveGains {
       }
     }
 
-    // Put any refused or failed value back, so the laptop shows what is really running.
+    sync();
+    if (!done.isEmpty()) {
+      changed = true;
+    }
+    String msg = done.isEmpty() ? "Nothing changed." : "Applied: " + String.join("; ", done) + ".";
+    if (!refused.isEmpty()) {
+      msg += " REFUSED: " + String.join("; ", refused) + ".";
+    }
+    return msg + " Not saved: Save in the tool to keep it.";
+  }
+
+  /** Puts what is really running back on every view: the laptop's, the echo, AdvantageScope's. */
+  private void sync() {
     for (Map.Entry<String, Double> e : current.entrySet()) {
       if (Double.compare(requested.get(e.getKey()).get(), e.getValue()) != 0) {
         requested.get(e.getKey()).set(e.getValue());
       }
       applied.get(e.getKey()).set(e.getValue());
+      DoubleEntry t = tuning.get(e.getKey());
+      if (t != null) {
+        if (Double.compare(t.get(), e.getValue()) != 0) {
+          t.set(e.getValue());
+        }
+        shown.put(e.getKey(), e.getValue());
+      }
     }
-    appliedSeq.set(seq);
-    String msg = done.isEmpty() ? "Nothing changed." : "Applied: " + String.join("; ", done) + ".";
-    if (!refused.isEmpty()) {
-      msg += " REFUSED: " + String.join("; ", refused) + ".";
-    }
-    status.set(msg + " Not saved: Save in the tool to keep it.");
   }
 
   private DrivetrainIO.ApplyResult applyGroup(String group, Map<String, Double> w) {
