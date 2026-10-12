@@ -72,6 +72,8 @@ public final class SwerveTune {
   }
 
   private static final double MAX_WAIT_S = 60;
+  /** Floor space assumed in simulation when none is declared: the simulated field has no walls nearby. */
+  private static final double SIM_SPACE_M = 8.0;
 
   private final DrivetrainIO io;
   private final NetworkTableInstance nt;
@@ -518,8 +520,14 @@ public final class SwerveTune {
     double cap = Math.max(0.1, Math.min(config.maxSpeedCapMps, speedCap.get()));
     TestArgs args = TestArgs.of(cmdArgKeys.get(), cmdArgValues.get());
     Sampler sampler = Sampler.create(16);
-    TestContext c = new TestContext(io, args, env, modules, cap, Math.max(0, spaceForward.get()),
-        Math.max(0, spaceSide.get()), visionInUseNow(), sampler, signals.enabled(),
+    double fwd = Math.max(0, spaceForward.get());
+    double side = Math.max(0, spaceSide.get());
+    if (env == TestEnvironment.SIM) {
+      fwd = Math.max(fwd, SIM_SPACE_M);
+      side = Math.max(side, SIM_SPACE_M);
+    }
+    TestContext c = new TestContext(io, args, env, modules, cap, fwd, side, visionInUseNow(),
+        sampler, signals.enabled(),
         signals::enabled, this::visionPoseArray);
     String why = p.validate(c);
     if (why != null) {
@@ -840,14 +848,18 @@ public final class SwerveTune {
     if (!simulation) {
       return;
     }
-    boolean want = simEnable.get();
-    if (want != lastSimEnable) {
-      lastSimEnable = want;
-      DriverStationSim.setDsAttached(true);
-      DriverStationSim.setAutonomous(false);
-      DriverStationSim.setTest(false);
-      DriverStationSim.setEnabled(want);
-      DriverStationSim.notifyNewData();
+    // Act only on values a client actually wrote. Reading the current value instead would see the
+    // default (false) as soon as the client that enabled the robot disconnected, and disable it.
+    for (var v : simEnable.readQueue()) {
+      boolean want = v.value;
+      if (want != lastSimEnable) {
+        lastSimEnable = want;
+        DriverStationSim.setDsAttached(true);
+        DriverStationSim.setAutonomous(false);
+        DriverStationSim.setTest(false);
+        DriverStationSim.setEnabled(want);
+        DriverStationSim.notifyNewData();
+      }
     }
   }
 

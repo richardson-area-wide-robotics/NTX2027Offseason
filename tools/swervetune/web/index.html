@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swerve Tools</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">Swerve Tools</div>
+  <label class="field">Robot code
+    <select id="project"></select>
+  </label>
+  <div class="conn">
+    <select id="target" aria-label="Connect to">
+      <option value="robot">Robot (team number)</option>
+      <option value="sim">Simulator on this laptop</option>
+      <option value="host">Address…</option>
+    </select>
+    <input id="host" placeholder="10.17.45.2" hidden>
+    <button id="connect" class="btn">Connect</button>
+    <span id="conn-dot" class="dot" title="Not connected"></span>
+  </div>
+  <div class="chips">
+    <span id="mode-chip" class="chip">no robot</span>
+    <span id="bus-chip" class="chip mono">– V</span>
+    <button id="env-chip" class="chip env" title="Where is the robot?">Environment: UNSET</button>
+    <span id="tags-chip" class="chip">AprilTags off</span>
+    <span id="deadman-chip" class="chip" title="Hold SPACE, or the tester's controller right bumper">Deadman</span>
+  </div>
+  <button id="abort" class="abort" title="Stop the test now (Esc)">ABORT</button>
+</header>
+
+<div id="banner" class="banner" hidden>
+  <div class="banner-text"><b id="banner-state"></b> <span id="banner-msg"></span></div>
+  <div class="bar"><div id="banner-bar"></div></div>
+  <div id="banner-hint" class="banner-hint" hidden>Hold <kbd>SPACE</kbd> (or the tester's controller right bumper) to run. Let go to stop.</div>
+</div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="guide" class="on">Guide</button>
+  <button role="tab" data-tab="live">Live</button>
+  <button role="tab" data-tab="tune">Tune</button>
+  <button role="tab" data-tab="trouble">Troubleshoot</button>
+  <button role="tab" data-tab="config">Config</button>
+  <button role="tab" data-tab="runs">Runs</button>
+</nav>
+
+<main>
+  <section id="tab-guide" class="tab on"></section>
+  <section id="tab-live" class="tab"></section>
+  <section id="tab-tune" class="tab"></section>
+  <section id="tab-trouble" class="tab"></section>
+  <section id="tab-config" class="tab"></section>
+  <section id="tab-runs" class="tab"></section>
+</main>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="plot.js"></script>
+<script src="app.js"></script>
+<script src="live.js"></script>
+<script src="tune.js"></script>
+<script src="guide.js"></script>
+<script src="trouble.js"></script>
+<script src="config.js"></script>
+<script src="runs.js"></script>
+</body>
+</html>

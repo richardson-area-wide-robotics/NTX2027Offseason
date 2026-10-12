@@ -1,0 +1,623 @@
+"""Command line for the swerve tools - for people, and for AI agents (add ``--json``).
+
+    py -3.12 tools/swervetune lint                      # check both robots' configs, no robot needed
+    py -3.12 tools/swervetune gui                       # the student GUI in a browser
+    py -3.12 tools/swervetune status --project Peashooter
+    py -3.12 tools/swervetune env --mode BLOCKS
+    py -3.12 tools/swervetune run steer_step --module FL
+    py -3.12 tools/swervetune gains set Steer/kP=0.015
+    py -3.12 tools/swervetune save gains --yes
+    py -3.12 tools/swervetune practice steer --kp 0.02 --surface floor
+    py -3.12 tools/swervetune brief                     # the rules an agent must follow
+
+With ``--json`` every command prints exactly one JSON object, so an agent can parse it. The
+safety rules an agent cannot get round live on the robot (bounds, deadman, interlocks); the ones
+here keep it from wasting a run: a gain may change by at most 2x per step unless --force, and
+nothing is written to the repository without --yes.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import sys
+import time
+
+from . import advisor, analysis, contract as C, diagnose, monitor, plant, rehearse, runs, yagslcfg
+
+REPO = runs.REPO
+MAX_STEP_RATIO = 2.0
+
+
+# ---------------------------------------------------------------------------- output
+
+
+class Out:
+    def __init__(self, as_json):
+        self.json = as_json
+        self.data = {"ok": True}
+
+    def say(self, text=""):
+        if not self.json:
+            print(text)
+
+    def put(self, **kw):
+        self.data.update(kw)
+
+    def fail(self, message, **kw):
+        self.data.update(ok=False, error=message, **kw)
+        if not self.json:
+            print(f"ERROR: {message}", file=sys.stderr)
+        return 2
+
+    def done(self, code=0):
+        if self.json:
+            print(json.dumps(self.data, default=_jsonable, indent=1))
+        return code
+
+
+def _jsonable(o):
+    if isinstance(o, float) and not math.isfinite(o):
+        return None
+    return str(o)
+
+
+def _clean(o):
+    """NaN and infinity are not JSON; agents get null instead."""
+    if isinstance(o, float):
+        return o if math.isfinite(o) else None
+    if isinstance(o, dict):
+        return {k: _clean(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_clean(v) for v in o]
+    return o
+
+
+def print_report(out, rep):
+    if not rep:
+        return
+    out.say(f"\n{rep.get('summary', '')}")
+    if rep.get("score") is not None:
+        out.say(f"score {rep['score']}/100   cost {rep.get('cost')}")
+    for t in rep.get("targets", []):
+        v = t["value"]
+        vs = f"{v:.3f}" if isinstance(v, float) and math.isfinite(v) else str(v)
+        out.say(f"  [{'x' if t['met'] else ' '}] {t['name']}: {vs} (target {t['target']})")
+    for f in rep.get("findings", []):
+        out.say(f"\n  {f['level'].upper()}: {f['title']}")
+        out.say("    " + f["why"])
+        if f.get("action"):
+            out.say("    -> " + json.dumps(f["action"]))
+
+
+# ---------------------------------------------------------------------------- projects and links
+
+
+def project_dirs():
+    return yagslcfg.find_projects(REPO)
+
+
+def resolve_project(name):
+    if not name:
+        return None
+    for d in project_dirs():
+        if os.path.basename(d).lower() == name.lower() or os.path.abspath(d) == os.path.abspath(name):
+            return yagslcfg.Project(d)
+    if os.path.isdir(name):
+        return yagslcfg.Project(name)
+    raise SystemExit(f"No robot project called {name!r}. Known: "
+                     + ", ".join(os.path.basename(d) for d in project_dirs()))
+
+
+def open_link(args, out):
+    from . import link as L
+
+    if L.ntcore is None:
+        out.fail(L.INSTALL_HINT)
+        return None
+    team = args.team
+    if not team and args.project:
+        team = L.team_from_project(resolve_project(args.project).path)
+    hosts = L.candidate_hosts(team=team, host=args.host, sim=args.sim)
+    lk = L.RobotLink(hosts, client_name="swervetune-cli")
+    if not lk.wait_connected(args.connect_timeout):
+        lk.close()
+        out.fail("Could not reach the robot at " + ", ".join(hosts) + ". Is robot code running? "
+                 "On a laptop with a VPN, run tools/robot_preflight.ps1.", tried=hosts)
+        return None
+    if not lk.has_harness():
+        lk.close()
+        out.fail("Connected, but the robot code does not have SwerveTune installed.")
+        return None
+    proto = lk.get("int", C.PROTOCOL)
+    if proto != C.PROTOCOL_VERSION:
+        lk.close()
+        out.fail(f"Robot speaks SwerveTune protocol {proto}, this tool speaks "
+                 f"{C.PROTOCOL_VERSION}. Deploy matching code or update the tool.")
+        return None
+    lk.start_heartbeat()
+    return lk
+
+
+def project_for_robot(args, lk):
+    if args.project:
+        return resolve_project(args.project)
+    name = lk.robot_info().get("name") if lk else None
+    try:
+        return resolve_project(name) if name else None
+    except SystemExit:
+        return None
+
+
+def current_limits(project):
+    if not project:
+        return {}
+    lim = project.phys.get("currentLimit", {})
+    return {"steer": float(lim.get("angle", 20)), "drive": float(lim.get("drive", 40))}
+
+
+# ---------------------------------------------------------------------------- commands
+
+
+def cmd_lint(args, out):
+    projects = [resolve_project(args.project)] if args.project else [yagslcfg.Project(d) for d in project_dirs()]
+    result = {}
+    for p in projects:
+        findings = yagslcfg.lint(p)
+        result[p.name] = {"summary": yagslcfg.summary(p), "findings": findings}
+        s = result[p.name]["summary"]
+        out.say(f"\n=== {p.name}  (team {p.team})")
+        out.say(f"  drive {s['drive_motor']} {s['drive_gear']}:1 on {s['wheel_diameter_in']} in wheels,"
+                f" free speed {s['max_module_speed_mps']:.2f} m/s; steering {s['steer_motor']}"
+                f" {s['steer_gear']}:1")
+        if s.get("traction_current_a"):
+            out.say(f"  wheels slip at about {s['traction_current_a']:.0f} A per motor"
+                    f" ({s['mass_kg']:.0f} kg, {s['mass_source']})")
+        for f in findings:
+            out.say(f"\n  [{f['level'].upper()}] {f['title']}")
+            out.say("    " + f["why"])
+            if f.get("fix"):
+                out.say("    fix: " + json.dumps(f["fix"]))
+    out.put(projects=_clean(result))
+    return out.done()
+
+
+def cmd_status(args, out):
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        info = lk.robot_info()
+        env = lk.environment()
+        live = lk.live()
+        mon = monitor.Monitor(current_limits(project_for_robot(args, lk)).get("drive", 40))
+        for _ in range(int(args.watch / 0.05) or 1):
+            flags = mon.update(lk.live(), info["modules"])
+            time.sleep(0.05)
+        out.put(robot=info, environment=env, live=_clean(live), status=lk.status(),
+                gains=_clean(lk.gains()), flags=flags)
+        out.say(f"{info['name']} at {info['address']}  mode {live['mode']}  battery {live['bus']:.1f} V")
+        out.say(f"environment {env['active']}  apriltags {'on' if env['apriltags'] else 'off'}"
+                f"  space {env['space_forward']:.1f} x {env['space_side']:.1f} m  cap {env['speed_cap']:.1f} m/s")
+        for line in info["startup_report"]:
+            out.say("  startup: " + line)
+        for i, n in enumerate(info["modules"]):
+            out.say(f"  {n:11s} steer {live['steer'][i]:7.1f}° (sp {live['steer_sp'][i]:7.1f})"
+                    f"  speed {live['v'][i]:+5.2f} m/s  drive {live['drive_amps'][i]:4.1f} A"
+                    f"  {live['faults'][i] if i < len(live['faults']) else ''}")
+        for f in flags:
+            out.say(f"  ! {f['text']} {f['detail']}  (troubleshoot: {f['symptom']})")
+        return out.done()
+    finally:
+        lk.close()
+
+
+def cmd_env(args, out):
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        if args.mode and args.mode.upper() == "FIELD" and not (args.space and args.side):
+            return out.done(out.fail("FIELD needs --space and --side: metres of clear floor ahead "
+                                     "and to each side. Measure them."))
+        lk.set_environment(args.mode, None if args.tags is None else args.tags == "on",
+                           args.space, args.side, args.cap)
+        time.sleep(0.3)
+        env = lk.environment()
+        out.put(environment=env)
+        out.say(f"robot now says: {env['active']}, apriltags {'on' if env['apriltags'] else 'off'},"
+                f" space {env['space_forward']} x {env['space_side']} m, cap {env['speed_cap']} m/s")
+        return out.done()
+    finally:
+        lk.close()
+
+
+def _parse_kv(items):
+    out = {}
+    for it in items or []:
+        if "=" not in it:
+            raise SystemExit(f"expected key=value, got {it!r}")
+        k, v = it.split("=", 1)
+        out[k.strip()] = float(v)
+    return out
+
+
+def cmd_run(args, out):
+    if args.test not in C.TESTS:
+        return out.done(out.fail(f"unknown test {args.test!r}; known: {', '.join(C.TESTS)}"))
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        project = project_for_robot(args, lk)
+        gains = lk.gains()
+        last = {}
+
+        def on_status(st):
+            if st["message"] != last.get("m"):
+                out.say(f"  [{st['state']}] {st['message']}")
+                last["m"] = st["message"]
+
+        res = lk.run_test(args.test, args.module, _parse_kv(args.arg), on_status=on_status)
+        doc = res.to_json()
+        if not res.accepted:
+            out.put(accepted=False, message=res.message)
+            return out.done(out.fail("Refused: " + res.message))
+        lim = current_limits(project)
+        rep = advisor.analyze(doc, gains,
+                              current_limit=lim.get("steer" if args.test == "steer_step" else "drive", 40))
+        path = runs.save(doc, rep, gains)
+        out.put(outcome=res.outcome, message=res.message, notes=res.notes, run_file=os.path.basename(path),
+                report=_clean(rep), samples=len(res.channels.get("t", [])))
+        out.say(f"{res.outcome}: {res.message}  ({len(res.channels.get('t', []))} samples, saved {os.path.basename(path)})")
+        for n in res.notes:
+            out.say("  note: " + n)
+        print_report(out, rep)
+        return out.done(0 if res.outcome == "DONE" else 1)
+    finally:
+        lk.close()
+
+
+def cmd_analyze(args, out):
+    doc = runs.load(args.run)
+    rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=args.tape_forward,
+                          measured_lateral_m=args.tape_lateral)
+    out.put(report=_clean(rep), run_file=doc["_file"])
+    print_report(out, rep)
+    return out.done()
+
+
+def cmd_gains(args, out):
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        now = lk.gains()
+        if args.action == "show" or not args.values:
+            out.put(gains=_clean(now))
+            for k, v in now.items():
+                out.say(f"  {k:28s} {v}")
+            return out.done()
+        want = _parse_kv(args.values)
+        problems = []
+        for k, v in want.items():
+            if k not in now:
+                problems.append(f"{k} is not a live gain")
+                continue
+            spec = C.GAIN_SPECS.get(k) or C.FF_SPECS.get(k.split("/")[-1])
+            if spec and not (spec[0] <= v <= spec[1]):
+                problems.append(f"{k}={v} is outside the robot's range {spec}")
+            old = now[k]
+            if (not args.force and isinstance(old, float) and math.isfinite(old) and old > 0 and v > 0
+                    and (v / old > MAX_STEP_RATIO or old / v > MAX_STEP_RATIO)):
+                problems.append(f"{k}: {old} -> {v} is more than a {MAX_STEP_RATIO:g}x step; change"
+                                " one thing a little at a time (or --force)")
+        if problems:
+            return out.done(out.fail("; ".join(problems)))
+        status, after = lk.set_gains(want)
+        out.put(status=status, gains=_clean(after))
+        out.say(status)
+        return out.done(0 if "REFUSED" not in status else 1)
+    finally:
+        lk.close()
+
+
+def cmd_save(args, out):
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        project = project_for_robot(args, lk)
+        if not project:
+            return out.done(out.fail("Which project? Pass --project."))
+        live = lk.gains()
+        edits = yagslcfg.edits_for_gains(project, {k: v for k, v in live.items()
+                                                   if isinstance(v, float) and math.isfinite(v)
+                                                   and (not args.keys or any(k.startswith(p) for p in args.keys))})
+        changes = project.preview(edits)
+        text = "".join(yagslcfg.diff(o, n, f) for f, (o, n) in changes.items())
+        out.put(diff=text, files=list(changes))
+        if not changes:
+            out.say("The files already hold these gains. Nothing to save.")
+            return out.done()
+        out.say(text)
+        if not args.yes:
+            out.say("Not written. Rerun with --yes to write these changes, then redeploy.")
+            out.put(written=False)
+            return out.done()
+        project.apply(edits)
+        out.put(written=True)
+        out.say("Written. Redeploy for them to load at boot; review with git diff and commit.")
+        return out.done()
+    finally:
+        lk.close()
+
+
+def cmd_offsets(args, out):
+    doc = runs.load(args.run)
+    if doc.get("test") != "capture":
+        return out.done(out.fail("Offsets come from a capture run with every wheel set straight ahead."))
+    project = resolve_project(args.project or (doc.get("robot") or {}).get("name"))
+    res = advisor.offsets_from_capture(doc, project.offsets())
+    out.put(offsets=res)
+    unsteady = [n for n, r in res.items() if not r["steady"]]
+    for n, r in res.items():
+        out.say(f"  {n:11s} read {r['reading_deg']:+7.2f}°  offset {r['old']:7.2f} -> {r['new']:7.2f}"
+                + ("   (moved during capture!)" if not r["steady"] else ""))
+    if unsteady:
+        return out.done(out.fail("A module moved during the capture: " + ", ".join(unsteady)
+                                 + ". Hold them still and capture again."))
+    edits = [(f"modules/{n}.json", ("absoluteEncoderOffset",), r["new"]) for n, r in res.items()]
+    changes = project.preview(edits)
+    out.say("".join(yagslcfg.diff(o, n, f) for f, (o, n) in changes.items()))
+    if args.yes:
+        project.apply(edits)
+        out.say("Written. Redeploy, then check every wheel reads 0° when straight.")
+    else:
+        out.say("Not written. Rerun with --yes to write, then redeploy.")
+    out.put(written=bool(args.yes))
+    return out.done()
+
+
+def cmd_diagnose(args, out):
+    if not args.symptom:
+        out.put(symptoms=[{"id": s["id"], "title": s["title"], "looks_like": s["looks_like"]}
+                          for s in diagnose.SYMPTOMS])
+        for s in diagnose.SYMPTOMS:
+            out.say(f"  {s['id']:22s} {s['title']}")
+        return out.done()
+    if args.symptom not in diagnose.BY_ID:
+        return out.done(out.fail(f"unknown symptom; run 'diagnose' to list them"))
+    lint = []
+    if args.project:
+        lint = yagslcfg.lint(resolve_project(args.project))
+    ev = diagnose.evaluate(args.symptom, lint, [])
+    out.put(symptom=ev)
+    out.say(f"{ev['title']}: {ev['looks_like']}")
+    for i, c in enumerate(ev["checks"]):
+        mark = {"no": "PROBLEM", "yes": "ok"}.get(c.get("auto_answer"), "check")
+        out.say(f"\n {i + 1}. [{mark}] {c['q']}")
+        out.say(f"    how ({c['where']}): {c['how']}")
+        if c.get("auto_answer") == "no":
+            out.say(f"    found: {', '.join(c['evidence'])}")
+        out.say(f"    if not: {c['if_no']}  ->  {c['fix']}")
+    return out.done()
+
+
+def cmd_watch(args, out):
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        names = lk.robot_info()["modules"]
+        mon = monitor.Monitor(current_limits(project_for_robot(args, lk)).get("drive", 40))
+        end = time.time() + args.seconds
+        seen = set()
+        while time.time() < end:
+            for f in mon.update(lk.live(), names):
+                key = (f["rule"], f["module"])
+                if key not in seen:
+                    seen.add(key)
+                    out.say(f"{time.strftime('%H:%M:%S')}  {f['text']} {f['detail']}  -> {f['symptom']}")
+            time.sleep(0.02)
+        out.put(flags=mon.flags())
+        return out.done()
+    finally:
+        lk.close()
+
+
+def cmd_practice(args, out):
+    surface = args.surface
+    if args.loop == "steer":
+        ch = plant.steer_step(rehearse.STEER_PATTERN, kP=args.kp, kI=args.ki, kD=args.kd,
+                              i_zone=args.izone, ramp_s=args.ramp, surface=surface)
+        doc = {"test": "steer_step", "channels": ch}
+        gains = {"Steer/kP": args.kp, "Steer/kI": args.ki, "Steer/kD": args.kd,
+                 "Steer/IZone": args.izone, "Steer/RampS": args.ramp}
+    else:
+        ch = plant.drive_step(rehearse.DRIVE_PATTERN, kP=args.kp, kI=args.ki, kD=args.kd,
+                              ramp_s=args.ramp, surface=surface, ff=(args.ks, args.kv, args.ka),
+                              meas_period_ms=args.vel_period or 32, meas_depth=args.vel_depth or 8)
+        doc = {"test": "drive_step", "channels": ch}
+        gains = {"Drive/kP": args.kp, "Drive/kI": args.ki, "Drive/kD": args.kd,
+                 "Drive/RampS": args.ramp, "Drive/VelPeriodMs": args.vel_period,
+                 "Drive/VelDepth": args.vel_depth}
+        gains.update({f"FF/frontleft/{k}": v for k, v in (("kS", args.ks), ("kV", args.kv), ("kA", args.ka))})
+    doc.update(practice=True, env="FIELD" if surface == "floor" else "BLOCKS",
+               robot={"name": "practice pod", "modules": rehearse.MODULES})
+    rep = advisor.analyze(doc, gains)
+    path = runs.save(doc, rep, gains, practice=True)
+    out.put(report=_clean(rep), run_file=os.path.basename(path))
+    out.say("PRACTICE POD - a model, not your robot.")
+    print_report(out, rep)
+    return out.done()
+
+
+def cmd_rehearse(args, out):
+    if args.loop == "steer":
+        start = {"Steer/kP": args.kp, "Steer/kI": 0.0, "Steer/kD": args.kd, "Steer/IZone": 0.0,
+                 "Steer/RampS": args.ramp}
+    else:
+        start = {"Drive/kP": args.kp, "Drive/kI": 0.0, "Drive/kD": args.kd, "Drive/RampS": args.ramp,
+                 "Drive/VelPeriodMs": 0, "Drive/VelDepth": 0}
+    hist = rehearse.rehearse(args.loop, start, surface=args.surface, rounds=args.rounds,
+                             log=lambda e: out.say(f"  round {e['round']}: score {e['score']} cost"
+                                                   f" {e['cost']} -> {e['advice']}"))
+    out.put(history=_clean(hist), final=_clean(hist[-1] if hist else None))
+    return out.done()
+
+
+def cmd_sim(args, out):
+    args.sim = True
+    lk = open_link(args, out)
+    if not lk:
+        return out.done(2)
+    try:
+        lk.sim_enable(args.state == "on")
+        time.sleep(0.4)
+        out.put(mode=lk.live()["mode"])
+        out.say("simulated robot mode: " + lk.live()["mode"])
+        return out.done()
+    finally:
+        lk.close()
+
+
+def cmd_brief(args, out):
+    path = os.path.join(REPO, "docs", "AGENT_TUNING.md")
+    text = open(path, encoding="utf-8").read() if os.path.exists(path) else "docs/AGENT_TUNING.md is missing."
+    out.put(brief=text)
+    out.say(text)
+    return out.done()
+
+
+def cmd_gui(args, out):
+    from . import server
+
+    return server.main(args)
+
+
+# ---------------------------------------------------------------------------- parser
+
+
+def _common(parser, suppress):
+    """Options that work before or after the command: ``lint --project X`` and ``--project X lint``."""
+    d = (lambda v: argparse.SUPPRESS) if suppress else (lambda v: v)
+    parser.add_argument("--json", action="store_true", default=d(False),
+                        help="print one JSON object (for agents)")
+    parser.add_argument("--project", default=d(None), help="robot project folder, e.g. Peashooter")
+    parser.add_argument("--host", default=d(None),
+                        help="robot address (default: from the project's team number)")
+    parser.add_argument("--team", type=int, default=d(None), help="team number, if not in the project")
+    parser.add_argument("--sim", action="store_true", default=d(False),
+                        help="talk to the simulator on this laptop")
+    parser.add_argument("--connect-timeout", type=float, default=d(6.0))
+
+
+class _Sub(argparse.ArgumentParser):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+        _common(self, suppress=True)
+
+
+def build_parser():
+    p = argparse.ArgumentParser(prog="swervetune", description=__doc__,
+                                formatter_class=argparse.RawDescriptionHelpFormatter)
+    _common(p, suppress=False)
+    sub = p.add_subparsers(dest="cmd", required=True, parser_class=_Sub)
+
+    sub.add_parser("lint", help="check YAGSL configs (no robot needed)").set_defaults(fn=cmd_lint)
+
+    s = sub.add_parser("status", help="robot, environment, live modules, problems")
+    s.add_argument("--watch", type=float, default=1.0, help="seconds of live data to judge")
+    s.set_defaults(fn=cmd_status)
+
+    s = sub.add_parser("env", help="tell the robot where it is")
+    s.add_argument("--mode", choices=["BLOCKS", "FIELD", "UNSET", "blocks", "field", "unset"])
+    s.add_argument("--tags", choices=["on", "off"], help="AprilTags present")
+    s.add_argument("--space", type=float, help="clear floor ahead, m")
+    s.add_argument("--side", type=float, help="clear floor to each side, m")
+    s.add_argument("--cap", type=float, help="speed cap for tests, m/s")
+    s.set_defaults(fn=cmd_env)
+
+    s = sub.add_parser("run", help="run a test on the robot and analyse it")
+    s.add_argument("test", help=", ".join(C.TESTS))
+    s.add_argument("--module", default="ALL", help="ALL, FL, FR, BL, BR or a module name")
+    s.add_argument("--arg", action="append", help="test argument key=value, repeatable")
+    s.set_defaults(fn=cmd_run)
+
+    s = sub.add_parser("analyze", help="re-analyse a saved run")
+    s.add_argument("run")
+    s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward m")
+    s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways m")
+    s.set_defaults(fn=cmd_analyze)
+
+    s = sub.add_parser("gains", help="show or change live gains")
+    s.add_argument("action", nargs="?", default="show", choices=["show", "set"])
+    s.add_argument("values", nargs="*", help="Name=value, e.g. Steer/kP=0.015")
+    s.add_argument("--force", action="store_true", help="allow more than a 2x step")
+    s.set_defaults(fn=cmd_gains)
+
+    s = sub.add_parser("save", help="write the robot's live gains into the JSON files")
+    s.add_argument("what", choices=["gains"])
+    s.add_argument("--keys", nargs="*", help="only gains starting with these, e.g. Steer FF")
+    s.add_argument("--yes", action="store_true", help="actually write")
+    s.set_defaults(fn=cmd_save)
+
+    s = sub.add_parser("offsets", help="new absolute offsets from a straight-wheels capture")
+    s.add_argument("run")
+    s.add_argument("--yes", action="store_true")
+    s.set_defaults(fn=cmd_offsets)
+
+    s = sub.add_parser("diagnose", help="the troubleshooter")
+    s.add_argument("symptom", nargs="?")
+    s.set_defaults(fn=cmd_diagnose)
+
+    s = sub.add_parser("watch", help="print problems as the monitor spots them")
+    s.add_argument("--seconds", type=float, default=30)
+    s.set_defaults(fn=cmd_watch)
+
+    for name, fn, help_ in (("practice", cmd_practice, "one run on the practice pod"),
+                            ("rehearse", cmd_rehearse, "the full advice loop on the practice pod")):
+        s = sub.add_parser(name, help=help_)
+        s.add_argument("loop", choices=["steer", "drive"])
+        s.add_argument("--surface", choices=["floor", "blocks"], default="floor")
+        s.add_argument("--kp", type=float, default=0.01)
+        s.add_argument("--ki", type=float, default=0.0)
+        s.add_argument("--kd", type=float, default=0.0)
+        s.add_argument("--izone", type=float, default=0.0)
+        s.add_argument("--ramp", type=float, default=0.0)
+        s.add_argument("--ks", type=float, default=0.0)
+        s.add_argument("--kv", type=float, default=2.915)
+        s.add_argument("--ka", type=float, default=0.0)
+        s.add_argument("--vel-period", type=int, default=0)
+        s.add_argument("--vel-depth", type=int, default=0)
+        s.add_argument("--rounds", type=int, default=12)
+        s.set_defaults(fn=fn)
+
+    s = sub.add_parser("sim", help="enable or disable the simulated robot")
+    s.add_argument("state", choices=["on", "off"])
+    s.set_defaults(fn=cmd_sim)
+
+    sub.add_parser("brief", help="the rules an AI agent follows").set_defaults(fn=cmd_brief)
+
+    s = sub.add_parser("gui", help="open the GUI in a browser")
+    s.add_argument("--port", type=int, default=5806)
+    s.add_argument("--no-browser", action="store_true")
+    s.set_defaults(fn=cmd_gui)
+    return p
+
+
+def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
+    args = build_parser().parse_args(argv)
+    out = Out(args.json)
+    try:
+        return args.fn(args, out)
+    except KeyboardInterrupt:
+        return out.done(130)

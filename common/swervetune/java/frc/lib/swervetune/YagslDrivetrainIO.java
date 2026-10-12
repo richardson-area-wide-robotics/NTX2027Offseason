@@ -59,6 +59,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   private final SwerveModule[] modules;
   private final double[] steerCommandDeg;
   private final double[] driveCommandMps;
+  private final double[] driveCommandVolts;
   private final double[][] feedforward;
   private final boolean sim;
 
@@ -69,6 +70,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
     int n = modules.length;
     steerCommandDeg = new double[n];
     driveCommandMps = new double[n];
+    driveCommandVolts = new double[n];
     feedforward = new double[n][];
     for (int m = 0; m < n; m++) {
       steerCommandDeg[m] = Double.NaN;
@@ -170,7 +172,9 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
 
   @Override
   public double driveVolts(int m) {
-    return volts(modules[m].getDriveMotor());
+    // In simulation YAGSL drives maple-sim directly and the SPARK never sees the command, so its
+    // applied output reads zero; report what was commanded instead.
+    return sim ? driveCommandVolts[m] : volts(modules[m].getDriveMotor());
   }
 
   @Override
@@ -280,6 +284,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   @Override
   public void setDriveVolts(int m, double volts) {
     driveCommandMps[m] = Double.NaN;
+    driveCommandVolts[m] = volts;
     if (sim) {
       double angle = Double.isFinite(steerCommandDeg[m]) ? steerCommandDeg[m] : steerDeg(m);
       modules[m].getSimModule().runDriveMotorCharacterization(Rotation2d.fromDegrees(angle), volts);
@@ -305,6 +310,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
     for (int m = 0; m < modules.length; m++) {
       steerCommandDeg[m] = Double.NaN;
       driveCommandMps[m] = Double.NaN;
+      driveCommandVolts[m] = Double.NaN;
     }
   }
 

@@ -88,7 +88,9 @@ test {
 }
 
 // Simulation configuration (e.g. environment variables).
-wpi.sim.addGui().defaultEnabled = true
+// ./gradlew simulateJava -PheadlessSim runs with no window, for scripts and AI agents that
+// enable the robot themselves (tools/swervetune sim on).
+wpi.sim.addGui().defaultEnabled = !project.hasProperty('headlessSim')
 wpi.sim.addDriverstation()
 
 // Setting up my Jar File. In this case, adding all libraries into the main jar ('fat jar')
