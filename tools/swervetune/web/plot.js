@@ -210,7 +210,8 @@ const Plot = (() => {
                  steady_state_error: "--bad", dead_time: "--info", feedforward: "--ok", settling_time: "--ok",
                  rise_time: "--accent", kP: "--s0", kD: "--s2", kI: "--s3", ramp_rate: "--warn" };
 
-  // Hover: teach the annotation under the pointer; otherwise move the cursor and its readout.
+  // Hover, or a tap or sideways drag on a touch screen: teach the annotation under the pointer;
+  // otherwise move the cursor and its readout.
   function wire(canvas) {
     if (canvas._wired) return;
     canvas._wired = true;
@@ -221,7 +222,9 @@ const Plot = (() => {
       box = document.createElement("div"); box.className = "plot-readout"; box.hidden = true; wrap.appendChild(box);
     }
     let teaching = false;
-    canvas.addEventListener("mousemove", e => {
+    // A vertical swipe still scrolls the page; a sideways one moves the cursor.
+    canvas.style.touchAction = "pan-y";
+    const point = e => {
       const P = canvas._plot, o = canvas._opts || {};
       if (!P) return;
       const r = canvas.getBoundingClientRect();
@@ -243,8 +246,13 @@ const Plot = (() => {
         box.style.right = right ? (canvas.clientWidth - mx + 10) + "px" : "";
         box.style.top = (P.T + 4) + "px";
       }
-    });
-    canvas.addEventListener("mouseleave", () => {
+    };
+    canvas.addEventListener("pointermove", point);
+    canvas.addEventListener("pointerdown", point);
+    // The page hides a card on any click outside it; a tap that just showed one keeps it.
+    canvas.addEventListener("click", e => { if (teaching) e.stopPropagation(); });
+    canvas.addEventListener("pointerleave", e => {
+      if (e.pointerType === "touch") return;  // a lifted finger leaves the readout where it was
       if (line) { line.hidden = true; box.hidden = true; }
       if (teaching && (typeof Learn !== "undefined")) { Learn.hide(); teaching = false; }
     });
