@@ -42,7 +42,7 @@ const Wiring = (() => {
           <div class="panel">
             <h3 data-tip="wiring.ohms"><span class="term" tabindex="0" data-learn="can_termination">Termination check</span></h3>
             <p class="small">Robot <b>off</b>. Multimeter on ohms, probes on CAN-H (yellow) and CAN-L (green) at any free CAN plug.</p>
-            <div class="row"><label class="row small">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
+            <div class="row"><label class="row small" data-tip="wiring.ohms-in">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
           </div>
           <div class="panel" id="w-editor" hidden></div>

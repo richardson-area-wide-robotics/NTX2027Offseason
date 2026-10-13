@@ -170,7 +170,7 @@
           <td class="mono small">${esc(x.firmware || "")}</td>
           <td>${esc(x.motor || "?")}${x.measured ? ` <span class="small muted">(measures as ${esc(x.measured)})</span>` : ""}</td>
           <td class="small muted">${esc(x.motor_source)}</td>
-          <td><select data-inv="${i}" aria-label="What ${esc(x.name)} drives"><option value="">${x.key === x.name ? "leave" : `leave (all ${esc(x.key)})`}</option>
+          <td><select data-inv="${i}" data-tip="motors.inv.pick" data-quiet aria-label="What ${esc(x.name)} drives"><option value="">${x.key === x.name ? "leave" : `leave (all ${esc(x.key)})`}</option>
             ${r.choices.map(c => `<option ${c === (r.inventory[x.name] || (x.key !== x.name ? r.inventory[x.key] : "")) ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></td></tr>`).join("")}
       </tbody></table></div>
       ${r.measured_run ? `<p class="small muted">Drive motors measured from ${esc(r.measured_run)}.</p>` : ""}

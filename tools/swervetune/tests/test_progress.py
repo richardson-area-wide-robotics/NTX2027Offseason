@@ -42,7 +42,23 @@ class ProgressTest(unittest.TestCase):
     def test_the_newest_result_replaces_the_last(self):
         progress.record_run("Peashooter", self.run_doc(), {"score": 100}, "a.json")
         progress.record_run("Peashooter", self.run_doc(), {"score": 60}, "b.json")
-        self.assertEqual(progress.load("Peashooter")["runs"]["steer_step/FIELD"], {"score": 60, "file": "b.json", "saved": "x"})
+        self.assertEqual(progress.load("Peashooter")["runs"]["steer_step/FIELD"],
+                         {"score": 60, "file": "b.json", "saved": "x", "limited": False, "needs_truth": False})
+
+    def test_a_run_on_one_module_never_counts(self):
+        # The troubleshooter's "pick FL only" must not tick a step for all four modules.
+        self.assertFalse(progress.record_run("Peashooter", dict(self.run_doc(), module="FL"), {"score": 100}, "a"))
+
+    def test_hardware_limited_steering_is_recorded(self):
+        progress.record_run("Peashooter", self.run_doc(), {"score": 80, "limited": True}, "a.json")
+        self.assertTrue(progress.load("Peashooter")["runs"]["steer_step/FIELD"]["limited"])
+
+    def test_a_straight_line_needs_a_ground_truth(self):
+        doc = dict(self.run_doc(), test="straight")
+        progress.record_run("Peashooter", doc, {"score": 100, "measured": {}}, "a.json")
+        self.assertTrue(progress.load("Peashooter")["runs"]["straight/FIELD"]["needs_truth"])
+        progress.record_run("Peashooter", doc, {"score": 100, "measured": {"tape_forward_m": 2.0}}, "b.json")
+        self.assertFalse(progress.load("Peashooter")["runs"]["straight/FIELD"]["needs_truth"])
 
     def test_a_person_cannot_write_run_results(self):
         progress.update("Peashooter", {"runs": {"steer_step/FIELD": {"score": 100}}})

@@ -161,7 +161,7 @@
   }
 
   function saveButton(id, edits) {
-    return edits && edits.length ? `<button class="btn primary" id="${id}">Save to the robot files…</button>` : "";
+    return edits && edits.length ? `<button class="btn primary" id="${id}" data-tip="cal.save">Save to the robot files…</button>` : "";
   }
 
   // ---------------------------------------------------------------- tape

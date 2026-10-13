@@ -16,6 +16,12 @@ const Guide = (() => {
   // The newest real result of a test, recorded by the server when the run was saved.
   const result = (test, env) => (progress.runs || {})[`${test}/${env}`];
   const graded = (test, env, pass = 100) => { const r = result(test, env); return !r ? "todo" : r.score >= pass ? "done" : "attention"; };
+  // Steering on the floor is done at every target, or when nothing is left to tune ("as good as its
+  // limits allow": the hardware, not the gains).
+  const steerFloor = () => { const r = result("steer_step", "FIELD"); return !r ? "todo" : (r.score === 100 || r.limited) ? "done" : "attention"; };
+  // The straight line is graded on a ground truth: a tape entered in Runs, or AprilTags.
+  const straightDone = () => { const r = result("straight", "FIELD"); return !r ? "todo" : r.needs_truth ? "attention" : r.score === 100 ? "done" : "attention"; };
+  let dirErr = null;  // the directions run's own verdict: a wheel it saw drive backwards
   const sim = () => App.connected() && (App.env() === "SIM" || App.state.target === "sim");
 
   // The swerve configuration's findings: PathPlanner's auto checks are for whoever writes the autos.
@@ -62,14 +68,17 @@ const Guide = (() => {
             const doc = await App.runTest("capture", "ALL", { duration_s: 20, coast: 1 });
             const v = await App.api("/api/handcheck", { file: doc._file, kind, sign: 1 });
             const steerOk = r => r.absolute.verdict === "AGREES" && r.motor.verdict === "AGREES" && Math.abs(r.motor_per_module_deg - 1) < 0.03;
+            // The badge shows what is wrong, worst first: AGREES only when the row is right.
+            const steerWord = r => r.absolute.verdict !== "AGREES" ? r.absolute.verdict : r.motor.verdict !== "AGREES" ? "MOTOR " + r.motor.verdict
+              : Math.abs(r.motor_per_module_deg - 1) >= 0.03 ? "RATIO" : "AGREES";
             const rows = Object.entries(v).map(([name, r]) => kind === "wheel"
               ? `<div class="verdict"><span class="level ${r.drive.verdict === "AGREES" ? "ok" : "error"}" data-tip="guide.verdict">${r.drive.verdict}</span><b>${abbr(name)}</b> wheel: drive encoder moved ${fmt(r.drive.net, 3)} m</div>`
-              : `<div class="verdict"><span class="level ${steerOk(r) ? "ok" : "error"}" data-tip="guide.verdict">${r.absolute.verdict}</span>
+              : `<div class="verdict"><span class="level ${steerOk(r) ? "ok" : "error"}" data-tip="guide.verdict">${steerWord(r)}</span>
                  <b>${abbr(name)}</b> steering: absolute ${fmt(r.absolute.net, 1)}°, motor encoder ${r.motor.verdict} ${fmt(r.motor.net, 1)}°, motor per module ${fmt(r.motor_per_module_deg, 3)}</div>`);
             const ok = Object.values(v).every(r => kind === "wheel" ? r.drive.verdict === "AGREES" : steerOk(r));
             handView = handView.replace(new RegExp(`<h3 data-k="${kind}">[\\s\\S]*?(?=<h3 data-k=|$)`), "")
               + `<h3 data-k="${kind}">${kind === "wheel" ? "Wheels" : "Steering"}</h3>` + rows.join("") +
-              (ok ? "" : `<p class="hint">INVERTED: flip that setting for that module (see Troubleshoot). NO_MOTION: it did not move far enough, or that sensor is not reporting. AMBIGUOUS: it was rocked; move it one way only and record again.</p>`);
+              (ok ? "" : `<p class="hint">INVERTED: flip that setting for that module. NO_MOTION: it did not move far enough, or that sensor is not reporting. AMBIGUOUS: it was rocked; move it one way only and record again. RATIO: the steering motor turned a different number of degrees than the module, so the gear ratio in the files is wrong. <button class="btn small" data-trouble="${kind === "wheel" ? "wheel_backwards" : "gear_ratio"}">Open Troubleshoot</button></p>`);
             const k = kind === "wheel" ? "handWheel" : "handSteer";
             const next = { ...progress, [k]: ok ? "pass" : "fail" };
             next.hand = next.handWheel === "pass" && next.handSteer === "pass" ? "pass"
@@ -78,6 +87,7 @@ const Guide = (() => {
             paint();
           } catch (e) { App.toast(e.message, 6000); }
         };
+        box.addEventListener("click", e => { const b = e.target.closest("[data-trouble]"); if (b) Trouble.open(b.dataset.trouble); });
         $("#g-hw", box).onclick = () => go("wheel");
         $("#g-hs", box).onclick = () => go("steer");
       } },
@@ -127,7 +137,8 @@ const Guide = (() => {
         $("#g-dirok", box).onclick = async () => {
           const dirs = {};
           $$(".g-dir", box).forEach(c => { dirs[c.value] = c.checked; });
-          const pass = Object.values(dirs).every(Boolean);
+          let pass = Object.values(dirs).every(Boolean);
+          if (pass && dirErr) { App.toast("The run itself says: " + dirErr + ". Watch the tires again.", 7000); pass = false; }
           if (await mark({ dirs, directions: pass ? "pass" : "fail" })) paint();
           if (!pass) Trouble.open("wheel_backwards");
         };
@@ -135,8 +146,8 @@ const Guide = (() => {
 
     { id: "steer-blocks", env: "BLOCKS", learn: ["step_response", "kP", "kD", "dead_time", "saturation"], title: "Steering, on blocks", where: "On blocks",
       why: "Get the steering loop stable and quick in the air first, where nothing fights it. It passes at 80 out of 100 here: the floor finishes the job.",
-      need: ["On blocks", "Someone holding the deadman during each run"],
-      todo: ["Open the tuner (Steering, Robot).", "Run, read the advice, press Try this, run again. Repeat until it scores 80 or more.", "Do not save yet: the floor will change the numbers."],
+      need: ["On blocks, robot enabled", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
+      todo: ["Open the tuner (Steering, Robot).", "Run, read the advice, press Try this, run again. Repeat until it scores 80 or more (the score is on the result, under the run's title).", "Do not save yet: the floor will change the numbers."],
       tune: "steer",
       status: () => graded("steer_step", "BLOCKS", 80) },
 
@@ -154,55 +165,70 @@ const Guide = (() => {
 
     { id: "steer-floor", env: "FIELD", learn: ["carpet_scrub", "steady_state_error", "kI", "iZone", "what_if"], title: "Steering, on the floor", where: "On the floor (the robot does not drive)",
       why: "Carpet holds a wheel still until the loop pushes hard enough. Gains that look perfect on blocks usually leave each wheel a few degrees short on carpet - and that is sideways drift.",
-      need: ["Robot on carpet, enabled", "The tester's controller in Driver Station port 1: its right bumper is the deadman, held for the whole run"],
+      need: ["Robot on carpet, enabled", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
       todo: ["Open the tuner (Steering, Robot). The wheels turn in place; the robot stays put.", "Follow the advice until every target is met.", "Save to files."],
       tune: "steer",
-      status: () => graded("steer_step", "FIELD") },
+      status: steerFloor },
 
     { id: "slip", env: "FIELD", learn: ["traction", "slip_current", "current_limit"], title: "Find where the wheels slip", where: "On the floor, front bumper against a solid wall",
       why: "The drive current limit decides how hard the robot can accelerate. Above the current where a wheel breaks loose, more current only spins the wheel: it wastes battery, wears the tread, and makes odometry count distance the robot never traveled. This measures that current on your carpet, for each corner, so the limit sits just below it instead of at a datasheet number.",
-      need: ["A solid wall: the field wall or a shop wall, not a table or a door", "Carpet like the competition's", "A fresh battery", "The tester's controller in port 1, right bumper held as the deadman"],
-      todo: ["Put the front bumper flat against the wall, every wheel pointing straight at it. Nobody between the robot and the wall.",
+      need: ["A solid wall: the field wall or a shop wall, not a table or a door", "Carpet like the competition's", "A fresh battery", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
+      todo: ["With the robot DISABLED, put the front bumper flat against the wall, every wheel pointing straight at it. Then everyone steps back, nobody between the robot and the wall, and the robot is enabled.",
              "Open the tuner (Slip current, Robot) and Run. The push builds over a few seconds; each wheel chirps once as it slips and is cut at once.",
              "Press Try this on the recommended limit and Write the file. Change PathPlanner's drive current limit to match, redeploy, then measure the feedforward."],
       tune: "slip",
       status: () => graded("slip", "FIELD") },
 
-    { id: "ff", env: "FIELD", learn: ["feedforward", "kS", "kV", "kA"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
+    { id: "ff", env: "FIELD", learn: ["feedforward", "kS", "kV", "kA", "r_squared"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
-      need: ["3 m or more of clear carpet ahead", "A fresh battery", "The tester's controller in port 1, right bumper held as the deadman"],
-      todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "If every module fitted, press Try this to apply, then Save to files.",
+      need: ["3 m or more of clear carpet ahead", "A fresh battery", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
+      todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "Press Try this when it offers the measured feedforward (if it asks for something else first, do that): it applies them and opens Drive speed, the next step.",
              "Then, in the Calibrate tab, weigh the robot and measure its moment of inertia: PathPlanner needs both."],
       tune: "ff",
       status: () => graded("drive_ff", "FIELD") },
 
     { id: "drive", env: "FIELD", learn: ["feedback", "kP", "velocity_filter", "ff_uses_setpoint"], title: "Drive speed", where: "On the floor",
       why: "With the feedforward measured, the drive PID only has to correct small errors, so it can stay gentle and quiet.",
-      need: ["Clear carpet", "Deadman held"],
+      need: ["Clear carpet", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
       todo: ["Open the tuner (Drive speed, Robot).", "Follow the advice until every target is met.", "Save to files."],
       tune: "drive",
       status: () => graded("drive_step", "FIELD") },
 
     { id: "spin", env: "FIELD", learn: ["swerve_module", "module_flip", "gyro"], title: "Spin check", where: "On the floor, clear all round",
       why: "Command, gyro and wheels must agree on how fast the robot turns. This finds an inverted gyro and module positions entered wrong.",
-      need: ["About 1 m clear all round", "Deadman held"],
+      need: ["About 1 m clear all round", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
       todo: ["Open the tuner (Spin, Robot) and Run.", "Fix anything it reports."],
       tune: "spin",
       status: () => graded("spin", "FIELD") },
 
     { id: "straight", env: "FIELD", learn: ["wheel_size", "gear_ratio", "offset"], title: "Straight line", where: "On the floor, 3 m clear",
       why: "The acceptance test. With no heading correction, whatever the robot does is the drivetrain itself.",
-      need: ["A tape measure and a tape mark at the start (unless AprilTags are on)", "Deadman held"],
-      todo: ["Mark the floor at the robot's center.", "Open the tuner (Straight line, Robot) and Run. Without AprilTags it stops at the far end.", "Measure from the start mark to the robot's center where it stopped, in meters; enter it in Runs to get the wheel scale."],
+      need: ["A tape measure and a tape mark at the start (AprilTags in view at both ends do it instead)", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
+      todo: ["Mark the floor at the robot's center.", "Open the tuner (Straight line, Robot) and Run. It stops at the far end.", "Measure from the start mark to the robot's center where it stopped, in meters, and enter it in Runs (Measured with a tape). This step ticks only once a tape (or AprilTags) measured the run."],
       tune: "straight",
-      status: () => graded("straight", "FIELD") },
+      status: straightDone },
+
+    { id: "sticks", env: "FIELD", learn: ["field_relative", "robot_mode"], title: "Drive it with the sticks", where: "On the floor, clear all round",
+      why: "Every test so far drove the robot from the tools. The driver's sticks go through the robot code's own mapping, and a sign flipped there makes the robot drive backwards or turn the wrong way at the first match. The 2026 shop runbook called it the likeliest surprise of the day.",
+      need: ["About 2 m clear all round", "The driver's controller in Driver Station port 0", "The robot enabled in Teleop, at low speed"],
+      todo: ["Stand behind the robot, facing the way it faces. Push the LEFT stick gently forward: the robot must drive away from you.",
+             "Push the LEFT stick gently left: the robot must slide to your left, without turning.",
+             "Push the RIGHT stick gently left: the robot must turn counter-clockwise (to its left), seen from above.",
+             "Disable, then press the button that says what happened."],
+      status: () => progress.sticks === "pass" ? "done" : progress.sticks === "fail" ? "attention" : "todo",
+      body: () => `<div class="row"><button class="btn primary" id="g-sticks-ok" data-tip="guide.sticks.ok">All three went the right way</button>
+        <button class="btn" id="g-sticks-bad" data-tip="guide.sticks.bad">Something went the wrong way</button></div>`,
+      mount: box => {
+        $("#g-sticks-ok", box).onclick = async () => { if (await mark({ sticks: "pass" })) paint(); };
+        $("#g-sticks-bad", box).onclick = async () => { if (await mark({ sticks: "fail" })) paint(); Trouble.open("robot_wrong_direction"); };
+      } },
 
     { id: "profile", env: null, title: "Advanced: second-order motion profiles", where: "After steering and drive pass on the floor",
       learn: ["motion_profile", "trapezoid_profile", "cruise_velocity", "max_acceleration", "ff_uses_setpoint", "maxmotion_position", "maxmotion_velocity", "allowed_profile_error"],
       why: "A step asks a mechanism to be somewhere instantly; a motion profile plans a path it can actually follow, limiting both speed and acceleration. That is second-order control, and REV's MAXMotion runs it inside the SPARK. It only helps once the first-order loops - feedforward and PID - are already right, so this step stays locked until they pass.",
       need: ["Steering on the floor and drive speed both passing their targets"],
       todo: ["Read the lessons below, in order.", "The profile tuner arrives here once the first-order steps pass on a real robot."],
-      status: () => firstOrderDone() ? "todo" : "locked" },
+      status: () => firstOrderDone() ? "optional" : "locked" },
 
     { id: "commit", env: null, title: "Save and commit", where: "Laptop",
       why: "Gains changed live are gone at the next restart. The files in the repository are the robot's real settings.",
@@ -214,10 +240,15 @@ const Guide = (() => {
       mount: box => { $("#g-commit", box).onclick = async () => { if (await mark({ commit: progress.commit === "done" ? "" : "done" })) paint(); }; } },
   ];
 
-  const STATE_WORD = { done: "✓ Done", attention: "Needs a look", locked: "Locked" };
+  const STATE_WORD = { done: "✓ Done", attention: "Needs a look", locked: "Locked", optional: "Optional" };
   const SAFETY = {
-    FIELD: "the robot moves. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot.",
-    BLOCKS: "the wheels spin while the deadman is held, starting with a short kick that checks they are off the floor. All four must be clear of the floor, and hands, hair and cables clear of every wheel.",
+    FIELD: "the robot moves. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot. Disable it before anyone walks up to it; enable only when everyone is clear.",
+    BLOCKS: "the wheels spin while the deadman is held, starting with a short kick that checks they are off the floor. All four must be clear of the floor, and hands, hair and cables clear of every wheel. Disable before anyone touches a wheel.",
+  };
+  // A step whose risk differs from its place's: steering on carpet turns the wheels, not the robot.
+  const SAFETY_STEP = {
+    "steer-floor": "the wheels turn on the carpet; the robot stays put but can twitch. Feet clear of the wheels, deadman held, and disable before anyone touches it.",
+    sticks: "the robot drives from the driver's sticks, with no deadman: everyone clear, gentle pushes, and someone at the Driver Station ready to disable.",
   };
 
   // Saves marks a person or a measurement set. In the simulator nothing is ticked: it teaches the
@@ -231,14 +262,14 @@ const Guide = (() => {
 
   // First-order tuning is done when steering on the floor and drive speed both pass.
   function firstOrderDone() {
-    const s = result("steer_step", "FIELD"), d = result("drive_step", "FIELD");
-    return !!(s && s.score === 100 && d && d.score === 100);
+    const d = result("drive_step", "FIELD");
+    return steerFloor() === "done" && !!(d && d.score === 100);
   }
 
   async function refresh() {
     progress = await App.api("/api/progress");
     progress.runs = progress.runs || {};
-    if (!picked) active = (STEPS.find(s => !["done", "locked"].includes(s.status())) || STEPS[STEPS.length - 1]).id;
+    if (!picked) active = (STEPS.find(s => !["done", "locked", "optional"].includes(s.status())) || STEPS[STEPS.length - 1]).id;
     paint();
   }
 
@@ -292,7 +323,7 @@ const Guide = (() => {
       <div class="panel" id="gbody">
         <h2 tabindex="-1">${idx + 1}. ${esc(step.title)}</h2>
         <div id="g-where-row"></div>
-        ${SAFETY[step.env] ? `<div class="callout safety"><b>Safety:</b> ${SAFETY[step.env]} Esc or ABORT stops everything.</div>` : ""}
+        ${SAFETY_STEP[step.id] || SAFETY[step.env] ? `<div class="callout safety"><b>Safety:</b> ${SAFETY_STEP[step.id] || SAFETY[step.env]} Esc or ABORT stops everything.</div>` : ""}
         <div><b>You need</b><ul style="margin:4px 0 0;padding-left:18px">${step.need.map(n => `<li>${Learn.link(n, 2)}</li>`).join("")}</ul></div>
         <div><b>Do this</b><ol class="do">${step.todo.map(t => `<li>${Learn.link(t, 2)}</li>`).join("")}</ol></div>
         ${step.run || step.tune ? `<div class="row">
@@ -301,7 +332,7 @@ const Guide = (() => {
         </div>` : ""}
         <div id="g-extra">${step.body ? step.body() : ""}</div>
         <div id="g-result">${shown[step.id] || ""}</div>
-        ${st === "done" && next ? `<div class="row"><button class="btn primary" data-step="${next.id}" data-tip="guide.next">Next: ${idx + 2}. ${esc(next.title)} →</button></div>` : ""}
+        ${(st === "done" || st === "optional") && next ? `<div class="row"><button class="btn primary" data-step="${next.id}" data-tip="guide.next">Next: ${idx + 2}. ${esc(next.title)} →</button></div>` : ""}
         <div class="callout"><b>Why this step:</b> ${Learn.link(step.why, 3)}</div>
         ${(step.learn || []).length ? `<div class="row learn-row"><span class="small muted">Learn:</span>${Learn.chips(step.learn)}</div>` : ""}
       </div></div>`;
@@ -311,7 +342,8 @@ const Guide = (() => {
     $$("[data-step]", root).forEach(b => b.onclick = () => go(b.dataset.step));
     $$("[data-go]", root).forEach(b => b.onclick = () => App.show(b.dataset.go));
     if (step.mount) step.mount($("#gbody", root));
-    if (step.tune) $("#g-tune", root).onclick = () => Tune.open(step.tune, { target: "robot" });
+    // The Guide's runs are on every module with the standard steps, whatever Tune was left on.
+    if (step.tune) $("#g-tune", root).onclick = () => Tune.open(step.tune, { target: "robot", fresh: true });
     if (step.run) $("#g-run", root).onclick = async () => {
       if (step.env === "BLOCKS" && App.env() !== "BLOCKS" && !sim()) { openEnvironment("BLOCKS"); return; }
       try {
@@ -320,6 +352,10 @@ const Guide = (() => {
         shown[step.id] = `<div class="panel"><b>${esc(rep.summary || doc.outcome)}</b>${(rep.findings || []).map(f =>
           `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${Learn.link(f.why, 2)}</div></div>`).join("")}</div>`;
         if (step.run.record && doc.outcome === "DONE" && !doc.practice && doc.env !== "SIM") await mark({ [step.run.record]: rep.score === 100 ? "pass" : "fail" });
+        if (step.id === "directions") {
+          const e = (rep.findings || []).find(f => f.level === "error");
+          dirErr = doc.outcome === "DONE" && e ? e.title : null;
+        }
         paint();
       } catch (e) { App.toast(e.message, 6000); }
     };

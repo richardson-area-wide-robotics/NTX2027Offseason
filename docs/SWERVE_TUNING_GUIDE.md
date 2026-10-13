@@ -4,7 +4,7 @@ A browser app on the laptop that tunes and checks our YAGSL swerve drives (Peash
 team), keeps the motors from cooking themselves, and helps find wiring faults. It teaches as it
 goes: hover any underlined word, or press **Lessons**, for the control theory behind it.
 
-Everything works without a robot too: each tool has a **Practice** button with made-up data, so
+Much works without a robot too: most tuners and tools have a **Practice** button with made-up data, so
 you can learn it at home.
 
 ## Setting up (once per laptop)
@@ -104,7 +104,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 
 ## The path (the Guide tab)
 
-The same 15 steps, with the same numbers, as the Guide tab:
+The same 16 steps, with the same numbers, as the Guide tab:
 
 1. Connect and check the configuration.
 2. Sensor health (robot disabled).
@@ -120,9 +120,10 @@ The same 15 steps, with the same numbers, as the Guide tab:
 10. Measure the feedforward.
 11. Drive speed.
 12. Spin check.
-13. Straight line.
-14. Advanced: motion profiles. This step stays locked until steering and drive pass on the floor.
-15. Save and commit.
+13. Straight line (graded on a tape, or AprilTags at both ends).
+14. Drive it with the sticks: forward, sideways and turning each go the right way.
+15. Advanced: motion profiles. Optional, and locked until steering and drive pass on the floor.
+16. Save and commit.
 
 Each step says where the robot must be (and checks it), why it matters, what you need, and what
 to do. A step ticks itself off when a test on the real robot passes; simulator and practice runs

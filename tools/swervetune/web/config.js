@@ -49,8 +49,8 @@
           <div class="why">${Learn.link(f.why, 3)}</div>
           ${f.fix && f.fix.kind === "edit" ? `<div class="row"><button class="btn small" data-fix="${i}" data-tip="config.fix" data-quiet>Preview the fix</button><span class="small muted">${esc(f.fix.file)}: ${esc(f.fix.path.join("."))} = ${esc(JSON.stringify(f.fix.value))}</span></div>` : ""}
           ${f.fix && f.fix.kind === "manual" && f.fix.instruction ? `<div class="small mono">${esc(f.fix.file)}: ${esc(f.fix.instruction)}</div>` : ""}
-          ${f.fix && f.fix.kind === "guide" ? `<div class="row"><button class="btn small" data-guide="${esc(f.fix.step || "")}">Open the Guide</button></div>` : ""}
-          ${f.fix && f.fix.kind === "tune" ? `<div class="row"><button class="btn small" data-tune="${esc(f.fix.loop)}">Open the ${esc(({ steer: "Steering", drive: "Drive speed", ff: "Feedforward", slip: "Slip current", spin: "Spin", straight: "Straight line" })[f.fix.loop] || "")} tuner</button></div>` : ""}
+          ${f.fix && f.fix.kind === "guide" ? `<div class="row"><button class="btn small" data-guide="${esc(f.fix.step || "")}" data-tip="config.guide">Open the Guide</button></div>` : ""}
+          ${f.fix && f.fix.kind === "tune" ? `<div class="row"><button class="btn small" data-tune="${esc(f.fix.loop)}" data-tip="config.tune">Open the ${esc(({ steer: "Steering", drive: "Drive speed", ff: "Feedforward", slip: "Slip current", spin: "Spin", straight: "Straight line" })[f.fix.loop] || "")} tuner</button></div>` : ""}
         </div>`).join("") : `<span class="level ok">ok</span> Nothing found in the swerve files.`}
         ${pp.length ? `<div class="finding"><div class="head"><span class="level ${pp.some(f => f.level === "error") ? "error" : "warn"}">auto</span><span class="title">${pp.length} PathPlanner item${pp.length === 1 ? "" : "s"} for whoever writes the autos</span></div>
           <div class="row"><button class="btn small" data-pp="1">See the PathPlanner check</button></div></div>` : ""}</div></div>

@@ -15,7 +15,7 @@ const Tune = (() => {
     spin: { label: "Spin", test: "spin", practice: false,
       blurb: "Spins in place both ways and compares command, gyro and wheels. Finds an inverted gyro and wrong module positions." },
     straight: { label: "Straight line", test: "straight", practice: false,
-      blurb: "Drives a measured line with no heading correction. Scores against AprilTags if on, otherwise a tape measure from your start mark." },
+      blurb: "Drives a measured line with no heading correction and stops at the far end. Scores against a tape measure from your start mark, or AprilTags in view at both ends." },
   };
   const GAINS = {
     steer: [["Steer/kP", "kP", "output per degree of error"], ["Steer/kI", "kI", "per degree, per ms"],
@@ -112,7 +112,7 @@ const Tune = (() => {
           </div>
           <div id="practice-flag" class="practice-flag" hidden>Practice pod: a model of a MAXSwerve module, not your robot.</div>
           <div id="empty-run" class="callout"><b>Start here.</b> No run yet. The practice pod is a model of one MAXSwerve module: nothing moves, so it's the place to learn what each gain does before touching the robot.
-            <div class="row" style="margin-top:8px"><button class="btn primary" id="try-practice">Try the practice pod</button></div></div>
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="try-practice" data-tip="tune.try-practice">Try the practice pod</button></div></div>
           <div id="next-step" class="next-step" hidden></div>
           <div id="run-view" class="stack" hidden>
             <div class="plotwrap"><canvas class="plot" id="plot" aria-label="The setpoint and what the mechanism did" aria-describedby="story"></canvas></div>
@@ -581,7 +581,7 @@ const Tune = (() => {
     const next = nextIdx >= 0 ? rep.findings[nextIdx] : null;
     const where = target === "practice" ? ", then runs again on the practice pod" : next && next.action.type === "gains" ? ", live on the robot" : "";
     card.innerHTML = `<p><b>${esc(rep.summary || "")}</b></p>
-      ${T.length ? `<p class="small">${T.filter(t => t.met).length} of ${T.length} goals met.</p>` : ""}
+      ${T.length ? `<p class="small">${T.filter(t => t.met).length} of ${T.length} goals met${rep.score != null ? ` · score ${rep.score}` : ""}.</p>` : ""}
       ${next && next.action.type !== "stop" ? `<div class="row"><button class="btn primary" data-i="${nextIdx}" data-tip="tune.next" data-quiet>Try this</button>
         <span><b>${esc(next.title)}</b> <span class="small muted">${esc(describeAction(next.action))}${where}</span></span></div>` : ""}
       ${whatChanged()}`;
@@ -717,6 +717,14 @@ const Tune = (() => {
   return {
     open(l, opts = {}) {
       if (opts.target) target = opts.target;
+      if (opts.fresh) {
+        // From the Guide: every module, the standard steps. A one-corner run (the troubleshooter's
+        // "pick FL only") never stands in for all four.
+        module = "ALL"; pattern = 0;
+        const m = $("#module", root), p = $("#pattern", root);
+        if (m) m.value = "ALL";
+        if (p) p.value = "0";
+      }
       setLoop(l);
       App.show("tune");
     },

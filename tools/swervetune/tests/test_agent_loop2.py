@@ -108,3 +108,37 @@ class DeadmanTopicTest(unittest.TestCase):
             self.assertIn(C.CLIENT_DEADMAN, names)
         finally:
             lk.close()
+
+
+class GradingTest(unittest.TestCase):
+    def straight_doc(self, odo_m=2.0, vision_m=None):
+        n, dt = 300, 0.02
+        t = [k * dt for k in range(n)]
+        cmd = [0.0] * 30 + [1.0] * 100 + [0.0] * 170
+        x = [0.0] * 30 + [odo_m * (k / 100) for k in range(100)] + [odo_m] * 170
+        ch = {"t": t, "cmd_vx": cmd, "x": x, "y": [0.0] * n, "heading": [0.0] * n}
+        if vision_m is not None:
+            ch["vx_vision"] = [3.0] * 30 + [float("nan")] * 100 + [3.0 + vision_m] * 170
+            ch["vy_vision"] = [1.0] * n
+        return {"test": "straight", "env": "FIELD", "outcome": "DONE", "channels": ch, "meta": {"distance_m": 2.0}}
+
+    def test_apriltags_at_both_ends_grade_the_straight_line(self):
+        rep = advisor.analyze(self.straight_doc(odo_m=2.0, vision_m=2.1), {})
+        self.assertAlmostEqual(rep["measured"]["vision_forward_m"], 2.1, places=6)
+        self.assertTrue(any("AprilTags say 2.100 m" in f["title"] for f in rep["findings"]), [f["title"] for f in rep["findings"]])
+
+    def test_without_tape_or_tags_nothing_measured_the_distance(self):
+        rep = advisor.analyze(self.straight_doc(), {})
+        self.assertNotIn("vision_forward_m", rep["measured"])
+        self.assertNotIn("tape_forward_m", rep["measured"])
+
+    def test_a_carpet_that_grips_past_the_ceiling_passes_the_slip_test(self):
+        n = 200
+        ch = {"t": [k * 0.02 for k in range(n)]}
+        for m in range(4):
+            ch[f"m{m}.amps"] = [min(80.0, k * 0.6) for k in range(n)]
+            ch[f"m{m}.v"] = [0.0] * n
+        rep = advisor.analyze({"test": "slip", "env": "FIELD", "outcome": "DONE", "channels": ch,
+                               "meta": {"ceiling_a": 80, "policy_a": 80, "limit_before_a": 80}}, {})
+        self.assertEqual(rep["score"], 100, [f["title"] for f in rep["findings"]])
+        self.assertEqual(rep["wheels_slipped"], 0)

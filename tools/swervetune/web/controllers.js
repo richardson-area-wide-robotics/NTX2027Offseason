@@ -197,8 +197,8 @@
     const box = $("#ct-step-box", root);
     box.innerHTML = `<p><b>${esc(step.title)}.</b> ${esc(step.text)}</p>
       <div class="bar"><div id="ct-bar"></div></div>
-      <div class="row">${step.manual ? `<button class="btn primary" id="ct-done">Done</button>` : ""}
-        <button class="btn" id="ct-cancel">Cancel</button></div>`;
+      <div class="row">${step.manual ? `<button class="btn primary" id="ct-done" data-tip="ct.done">Done</button>` : ""}
+        <button class="btn" id="ct-cancel" data-tip="ct.cancel">Cancel</button></div>`;
     if (step.manual) $("#ct-done", box).onclick = finish;
     $("#ct-cancel", box).onclick = () => { recording = null; box.innerHTML = ""; paintSteps(); };
     paintSteps();
@@ -221,7 +221,7 @@
     box.innerHTML = `<p><b>${esc(step.title)}.</b> ${esc(step.text)}</p>
       <p class="small muted">The robot is recording what the Driver Station sends on port ${src}. Keep it disabled.${step.id === "buttons" ? " Each button lights as the robot sees it." : ""}</p>
       <div class="bar"><div id="ct-bar"></div></div>
-      <div class="row">${step.manual ? `<button class="btn primary" id="ct-done">Done</button>` : ""}</div>`;
+      <div class="row">${step.manual ? `<button class="btn primary" id="ct-done" data-tip="ct.done">Done</button>` : ""}</div>`;
     if (step.manual) $("#ct-done", box).onclick = () => App.api("/api/stop", {});
     paintSteps();
     const secs = step.manual ? 30 : step.secs;
@@ -255,7 +255,7 @@
       <span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")
       : `<p class="small">${esc(step.title)}: nothing wrong.</p>`;
     const next = STEPS[STEPS.indexOf(step) + 1];
-    if (next) box.innerHTML += `<div class="row"><button class="btn primary" id="ct-next">Next: ${esc(next.title)}</button></div>`;
+    if (next) box.innerHTML += `<div class="row"><button class="btn primary" id="ct-next" data-tip="ct.next">Next: ${esc(next.title)}</button></div>`;
     if (next) $("#ct-next", box).onclick = () => start(next);
     paintSteps();
     await report();

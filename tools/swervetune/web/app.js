@@ -97,7 +97,7 @@ const App = {
         <p>These lines change in the robot project. Nothing is written until you press Write. After
         writing, redeploy the robot code so it loads them at startup, then commit the change.</p>
         <pre class="diff">${colorDiff(p.diff)}</pre>
-        <div class="row"><button class="btn primary" id="m-write">Write files</button>
+        <div class="row"><button class="btn primary" id="m-write" data-tip="save.write">Write files</button>
         <button class="btn" id="m-cancel">Cancel</button></div>`, root => {
         $("#m-cancel", root).onclick = () => { this.closeModal(); resolve(false); };
         $("#m-write", root).onclick = async () => {
@@ -200,23 +200,23 @@ function openEnvironment(preset) {
   App.modal(`<h2>Where is the robot?</h2>
     <p>This decides which tests may run and how the robot keeps everyone safe. ${sim ? "<b>Simulation is always SIM.</b>" : ""}</p>
     <div class="grid2">
-      <div class="envopt" data-mode="BLOCKS"><b>On blocks</b>
+      <div class="envopt" data-mode="BLOCKS" data-tip="env.blocks"><b>On blocks</b>
         <span class="hint">Frame on blocks, all four wheels clear of the floor. Wheels spin only while someone holds the deadman; the robot must not move. If it turns, or a wheel works like it carries weight, the test stops.</span></div>
-      <div class="envopt" data-mode="FIELD"><b>On the floor</b>
+      <div class="envopt" data-mode="FIELD" data-tip="env.field"><b>On the floor</b>
         <span class="hint">It will really drive. Every motion test needs the deadman held, fits in the space below, and stops on impact or any stick.</span></div>
     </div>
     <div id="field-opts" class="stack">
       <div class="row">
-        <label class="gain">Clear floor ahead (m)<input type="number" id="env-fwd" step="0.1" min="0" value="${env.space_forward || ""}"></label>
-        <label class="gain">Clear to each side (m)<input type="number" id="env-side" step="0.1" min="0" value="${env.space_side || ""}"></label>
-        <label class="gain">Speed cap (m/s)<input type="number" id="env-cap" step="0.1" min="0.1" max="3" value="${env.speed_cap || 1.0}"></label>
+        <label class="gain" data-tip="env.ahead">Clear floor ahead (m)<input type="number" id="env-fwd" step="0.1" min="0" value="${env.space_forward || ""}"></label>
+        <label class="gain" data-tip="env.side">Clear to each side (m)<input type="number" id="env-side" step="0.1" min="0" value="${env.space_side || ""}"></label>
+        <label class="gain" data-tip="env.cap">Speed cap (m/s)<input type="number" id="env-cap" step="0.1" min="0.1" max="3" value="${env.speed_cap || 1.0}"></label>
       </div>
       <p class="hint">Measure the space; do not guess. Tests are sized to fit inside it and the robot stops if it leaves it.</p>
     </div>
-    <label class="row"><input type="checkbox" id="env-tags" ${env.apriltags ? "checked" : ""}> AprilTags are on this field
+    <label class="row" data-tip="env.tags"><input type="checkbox" id="env-tags" ${env.apriltags ? "checked" : ""}> AprilTags are on this field
       <span class="hint">${env.vision_available ? "Robot code has a vision source." : "Robot code has no vision source yet; tests use the gyro and a tape measure."}</span></label>
-    <label class="row"><input type="checkbox" id="env-confirm"> <span id="env-confirm-text"></span></label>
-    <div class="row"><button class="btn primary" id="env-save" disabled>Set</button>
+    <label class="row" data-tip="env.confirm"><input type="checkbox" id="env-confirm"> <span id="env-confirm-text"></span></label>
+    <div class="row"><button class="btn primary" id="env-save" disabled data-tip="env.set">Set</button>
       <button class="btn" id="env-cancel">Cancel</button></div>`, root => {
     const sync = () => {
       $$(".envopt", root).forEach(o => o.classList.toggle("on", o.dataset.mode === mode));
@@ -326,7 +326,9 @@ function paintHeader() {
     $("#banner-state").textContent = testName(status.test || t.test || "test") + " · " + (status.state || t.state || "");
     $("#banner-msg").textContent = status.message || t.message || "";
     $("#banner-bar").style.width = Math.round(100 * (status.progress || t.progress || 0)) + "%";
-    $("#banner-hold").hidden = !(env === "FIELD" || env === "BLOCKS");
+    // Only a test that moves a motor needs the deadman: not a capture, a hand check or a controller check.
+    const MOVES = ["drive_step", "drive_ff", "steer_step", "slip", "spin", "spin_ff", "straight", "pdh_map"];
+    $("#banner-hold").hidden = !((env === "FIELD" || env === "BLOCKS") && MOVES.includes(status.test || t.test));
   }
 }
 

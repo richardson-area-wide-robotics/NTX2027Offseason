@@ -466,7 +466,7 @@ def lint(project):
             "reads 180 degrees wrong, which confuses odometry and every tool that reads it. Redo "
             "that module's offset with the bevel gear facing the same way as the others, then set "
             "its drive inversion to match the rest.",
-            {"kind": "guide", "symptom": "wheel_backwards"}, inversions=drive_inv))
+            {"kind": "guide", "step": "offsets", "symptom": "wheel_backwards"}, inversions=drive_inv))
     for key in ("absoluteEncoderInverted",):
         vals = {n: bool(m.get(key, False)) for n, m in mods.items()}
         if len(set(vals.values())) > 1:

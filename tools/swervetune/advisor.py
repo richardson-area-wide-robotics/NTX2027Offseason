@@ -358,6 +358,8 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
     met = sum(t["met"] for t in report["targets"])
     if not any(f["level"] in ("warn", "error") for f in F):
         all_met = met == len(report["targets"])
+        if not all_met:
+            report["limited"] = True  # nothing left to tune: the Guide counts it done
         F.append(finding(
             "ok", "Steering meets every target" if all_met else "Steering is as good as its limits allow",
             "Save these gains so they survive a restart. Then run it once more on the floor if this "
@@ -745,7 +747,9 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
         for n, f in good.items():
             if f.get("r2", 1) < 0.95:
                 F.append(finding("warn", f"{n}: weak fit (R² {f['r2']:.3f})",
-                                 "Look for wheel slip or a bump during the run, then repeat it.",
+                                 "R² says how well the straight line through the run's points fits them: 1.00 "
+                                 "is perfect, under 0.95 something else pushed on the wheel. Look for wheel "
+                                 "slip or a bump during the run, then repeat it.",
                                  {"type": "run", "test": "drive_ff", "env": "FIELD", "args": {}}))
             if f.get("kA", 0) < 0:
                 F.append(finding("error", f"{n}: negative kA is not physical",
@@ -887,9 +891,9 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
         return _finish(report)
     # End of the outbound leg: last sample before the commanded speed first returns to zero.
     started = next((k for k, v in enumerate(cmd) if abs(v) > 1e-3), 0)
-    end = next((k for k in range(started, len(cmd)) if abs(cmd[k]) < 1e-6 and k > started + 5),
-               len(cmd) - 1)
-    end = min(len(t) - 1, end + int(0.5 / max(1e-3, (t[1] - t[0]) if len(t) > 1 else 0.01)))
+    stop = next((k for k in range(started, len(cmd)) if abs(cmd[k]) < 1e-6 and k > started + 5),
+                len(cmd) - 1)
+    end = min(len(t) - 1, stop + int(0.5 / max(1e-3, (t[1] - t[0]) if len(t) > 1 else 0.01)))
     h0 = math.radians(heading[0])
     dx, dy = x[end] - x[0], y[end] - y[0]
     fwd = dx * math.cos(h0) + dy * math.sin(h0)
@@ -899,11 +903,24 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
     report["measured"] = {"odometry_forward_m": fwd, "odometry_lateral_m": lat,
                           "heading_change_deg": dh, "commanded_m": dist}
     report["targets"] = [_grade("heading change (deg)", abs(dh), 1.0)]
+    # AprilTags, when a camera saw them standing still at the start and at the far end: the ground
+    # truth without a tape. The distance between the two poses (field frame, so its length).
+    vx, vy = ch.get("vx_vision") or [], ch.get("vy_vision") or []
+
+    def seen(k0, k1):
+        pts = [(vx[k], vy[k]) for k in range(max(0, k0), min(k1, len(vx), len(vy))) if A.finite(vx[k]) and A.finite(vy[k])]
+        return (A.mean([p[0] for p in pts]), A.mean([p[1] for p in pts])) if len(pts) >= 3 else None
+    v0, v1 = seen(0, started), seen(stop, end + 1)
+    truth = "the tape"
+    if measured_forward_m is None and v0 and v1:
+        measured_forward_m = math.hypot(v1[0] - v0[0], v1[1] - v0[1])
+        report["measured"]["vision_forward_m"] = measured_forward_m
+        truth = "AprilTags"
     if measured_forward_m is not None and fwd and not (0.9 <= measured_forward_m / fwd <= 1.1):
         # Wheels wear a few percent; 10% off is a measuring mistake (measured after the robot came
         # back, the wrong mark, feet for meters), never a wheel size to write into the files.
         F.append(finding(
-            "error", f"The tape says {measured_forward_m:.3f} m but the robot went out {fwd:.3f} m",
+            "error", f"{truth.capitalize()} say{'s' if truth == 'the tape' else ''} {measured_forward_m:.3f} m but the robot went out {fwd:.3f} m",
             "That is too far apart to be the wheels. Measure from the start mark to the robot's center "
             "where it stopped at the far end, in meters, and enter it again.",
             {"type": "troubleshoot", "symptom": "auto_inaccurate"}))
@@ -913,7 +930,7 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
         report["measured"]["tape_forward_m"] = measured_forward_m
         scale = measured_forward_m / fwd if fwd else float("nan")
         report["measured"]["wheel_scale"] = scale
-        report["targets"].append(_grade("odometry vs tape (|1 - ratio|)", abs(1 - scale), 0.01))
+        report["targets"].append(_grade(f"odometry vs {truth} (|1 - ratio|)", abs(1 - scale), 0.01))
         cfg = meta.get("drive_gear_ratio")
         if A.finite(scale) and abs(1 - scale) > 0.04 and cfg:
             # Odometry reads distance x configured/real; the tape is the truth.
@@ -929,7 +946,7 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
                     {"type": "troubleshoot", "symptom": "gear_ratio"}))
         if A.finite(scale) and abs(1 - scale) > 0.01:
             F.append(finding(
-                "warn", f"Odometry says {fwd:.3f} m, the tape says {measured_forward_m:.3f} m",
+                "warn", f"Odometry says {fwd:.3f} m, {truth} say{'s' if truth == 'the tape' else ''} {measured_forward_m:.3f} m",
                 f"Wheels are effectively {scale:.4f} times their configured size - tread wears and "
                 "compresses. Multiply the wheel diameter in physicalproperties.json by this, and the "
                 "PathPlanner wheel radius with it.",
@@ -1222,7 +1239,11 @@ def slip_report(result):
                                       "text": f"The ceiling for this run, {ceiling:.0f} A: never above the team's policy."})
 
     n = len(mods)
-    report["targets"] = [_grade("wheels that slipped", len(found), n, lower_is_better=False)]
+    # The test's job is a drive limit: from the weakest breakaway, or the policy itself when the carpet
+    # grips past the ceiling. Either is a pass; how many wheels slipped is information (a grippy
+    # carpet slipping none used to score 0, and the Guide step could never tick).
+    report["targets"] = [_grade("a drive limit found", 1, 1, lower_is_better=False)]
+    report["wheels_slipped"] = len(found)
     if not found:
         rec = int(min(x for x in (policy, ceiling) if x))
         report["recommended_a"] = rec

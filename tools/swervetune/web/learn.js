@@ -24,7 +24,7 @@ const Learn = (() => {
   // The course, in teaching order. "units" in a lesson tie it to the numbers the tool shows.
   const UNITS = [
     { id: "basics", title: "1. What a control loop is", lessons: ["control_loop", "setpoint", "measurement", "error", "control_effort"] },
-    { id: "ff", title: "2. Feedforward: answer before the question", lessons: ["feedforward", "kS", "kV", "kA"] },
+    { id: "ff", title: "2. Feedforward: answer before the question", lessons: ["feedforward", "kS", "kV", "kA", "r_squared"] },
     { id: "fb", title: "3. Feedback: fix what feedforward missed", lessons: ["feedback", "kP", "kD", "kI", "integral_windup", "iZone", "rev_units"] },
     { id: "read", title: "4. Reading a step response", lessons: ["step_response", "dead_time", "rise_time", "overshoot", "settling_time", "steady_state_error", "oscillation"] },
     { id: "limits", title: "5. When the motor can't do what it's told", lessons: ["saturation", "current_limit", "traction", "voltage_sag", "ramp_rate"] },
@@ -204,9 +204,13 @@ const Learn = (() => {
       body: ["Pointing 170° the other way is the same as pointing 10° and driving in reverse. YAGSL does this automatically, so steering never needs to move far."] },
     environment: { title: "Where the robot is", short: "On blocks: the wheels spin and the robot stays put. On the floor: it really drives. Simulator: the computer. The tool's safety rules change with it.",
       body: ["On blocks the gyro and cameras must NOT see motion, and no wheel may work like it carries weight - if either happens, the robot is not on blocks and the test stops. On the field a space budget is enforced and an impact stops everything. Both need a deadman held: \"on blocks\" is only what someone told the tool."] },
-    deadman: { title: "Deadman", short: "Hold it and the robot may move; let go and it stops. Held by whoever is watching the robot, never the laptop typist.",
+    deadman: { title: "Deadman", short: "Hold it and the robot may move; let go and it stops. Held by someone watching the robot: the tester's controller bumper is best.",
       body: ["Every test that moves a motor needs it held, on blocks and on the floor: the tester's controller right bumper (Driver Station port 1), or the Hold to run button on screen, pressed with the mouse or a finger.",
-        "No keyboard key does it: in the Driver Station the space bar is E-STOP, even when its window isn't in front, so a key on that laptop would stop the robot instead of running it."] },
+        "No keyboard key does it: in the Driver Station the space bar is E-STOP, even when its window isn't in front, so a key on that laptop would stop the robot instead of running it.",
+        "Prefer the bumper: the person holding it can stand where they see every wheel. Hold to run is for when the laptop sits beside the robot and whoever holds it can see the wheels too; the tool runs only on this laptop, not on a phone."] },
+    r_squared: { title: "R² (how well a fit fits)", short: "How well a straight line through the measured points fits them: 1.00 is perfect; under 0.95 something else pushed on the wheel.",
+      body: ["The feedforward test fits volts = kS + kV × speed + kA × acceleration to every sample. R² says how much of what was measured that line explains.",
+        "A slipping wheel, a bump in the carpet, a cable catching or someone touching the robot all add volts the line can't explain, and R² drops. Re-run it on clear carpet."], links: ["ff"] },
     robot_mode: { title: "Robot modes", short: "Disabled: nothing can move. Enabled: motors follow the code. E-stopped: off until the robot restarts. Only the Driver Station changes the mode.",
       body: ["The Driver Station decides the mode, never this tool. Disabled is the safe state: the roboRIO sends no motor commands, which is why the hand check and the offsets are done disabled. Enabled lets the code drive the motors, which every tuning test needs.",
         "E-stop is final: the robot stays off until it is rebooted. In the Driver Station, Enter disables and the space bar e-stops. This tool's ABORT button and Esc stop a test without e-stopping the robot."] },
@@ -535,7 +539,8 @@ const Learn = (() => {
   }
   const isLine = n => !!(n && n.classList && n.classList.contains("tipline"));
   function annotate() {
-    for (const el of main.querySelectorAll("[data-tip]")) {
+    const scope = [main, document.getElementById("modal")].filter(Boolean);
+    for (const el of scope.flatMap(r => [...r.querySelectorAll("[data-tip]")])) {
       // Drawings, segmented pickers and hover-only tips (data-quiet) get no printed line.
       if (el.hasAttribute("data-quiet") || el.closest("svg, .seg, .tipline")) continue;
       const t = tipOf(el);
@@ -553,7 +558,10 @@ const Learn = (() => {
       if (items.length) seg.after(line(items.map(([n, t]) => `<b>${esc(n)}:</b> ${esc(t[0])}`).join("<br>")));
     }
   }
-  const mo = new MutationObserver(() => { mo.disconnect(); annotate(); mo.observe(main, OBS); });
+  // Explain covers dialogs too: "Where is the robot?" is a safety dialog.
+  const modal = document.getElementById("modal");
+  const observe = () => { mo.observe(main, OBS); if (modal) mo.observe(modal, OBS); };
+  const mo = new MutationObserver(() => { mo.disconnect(); annotate(); observe(); });
   function setExplain(on) {
     explainOn = on;
     try { localStorage.setItem("swervetune.explain", on ? "on" : "off"); } catch (e) { /* storage blocked */ }
@@ -561,7 +569,7 @@ const Learn = (() => {
     const b = document.getElementById("explain");
     if (b) { b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "Explain: on" : "Explain: off"; }
     mo.disconnect();
-    if (on) { annotate(); mo.observe(main, OBS); }
+    if (on) { annotate(); observe(); }
     else {
       $$(".tipline", main).forEach(s => s.remove());
       $$("[aria-describedby^='tl-']", main).forEach(e => e.removeAttribute("aria-describedby"));

@@ -69,6 +69,9 @@ def counts(doc):
     if doc.get("practice") or doc.get("outcome") != "DONE":
         return None
     env, test = doc.get("env"), doc.get("test")
+    if doc.get("module") not in (None, "", "ALL"):
+        # A run on one module (troubleshooting one corner) says nothing about the other three.
+        return None
     if env not in REAL_ENVS or not test or test == "capture":
         # Captures are the Guide's own (health, hand check, offsets) and it records those itself.
         return None
@@ -82,7 +85,13 @@ def record_run(robot, doc, report, file):
         return False
     d = _read()
     p = d.setdefault(robot, {})
-    p.setdefault("runs", {})[key] = {"score": (report or {}).get("score"), "file": file,
-                                     "saved": doc.get("saved") or doc.get("started")}
+    rep = report or {}
+    measured = rep.get("measured") or {}
+    p.setdefault("runs", {})[key] = {
+        "score": rep.get("score"), "file": file, "saved": doc.get("saved") or doc.get("started"),
+        # Steering as good as its hardware allows is done; a straight line with no tape and no
+        # AprilTags hasn't measured the one thing it is for.
+        "limited": bool(rep.get("limited")),
+        "needs_truth": doc.get("test") == "straight" and not (measured.get("tape_forward_m") or measured.get("vision_forward_m"))}
     _write(d)
     return True

@@ -209,7 +209,7 @@ public final class SafetySupervisor {
       return null;
     }
     if (!in.env.allowsActuation) {
-      return "Say where the robot is first: SIM, BLOCKS or FIELD. Motion tests stay locked until"
+      return "Say where the robot is first: On blocks or On the floor. Motion tests stay locked until"
           + " you do.";
     }
     if (needsEnabled && in.heartbeatAgeS > limits.heartbeatTimeoutS) {
@@ -283,15 +283,15 @@ public final class SafetySupervisor {
                   && in.horizontalAccelSmoothedMps2 > limits.blocksAccelMps2);
       if (sustained(chassisMoving, in.nowS, SustainTimer.BLOCKS)) {
         return Verdict.abort(
-            "The chassis is moving, so the robot is NOT on blocks. Put it on blocks, or switch"
-                + " the environment to FIELD.");
+            "The chassis is moving, so the robot is NOT on blocks. Put it on blocks, or set"
+                + " On the floor.");
       }
       int m = carryingWheel(in);
       if (m >= 0) {
         return Verdict.abort(String.format("NOT on blocks: the %s wheel drew over %.0f A for %.2f s"
                 + " while its speed changed only %.2f m/s, so it is pushing weight (the robot's, on the"
                 + " floor) or rubbing on something. A wheel in the air spins up in a few hundredths of"
-                + " a second. Put the robot on blocks, or switch the environment to FIELD.",
+                + " a second. Put the robot on blocks, or set On the floor.",
             m < in.moduleNames.length ? in.moduleNames[m] : "module " + m, limits.carryAmps,
             limits.carryHoldS, Math.abs(Math.abs(in.wheelSpeedsMps[m]) - carryFromMps[m])));
       }

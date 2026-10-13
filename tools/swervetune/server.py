@@ -1070,8 +1070,12 @@ def api_predict(body):
 
 def api_analyze(body):
     doc = runs.load(body["file"])
-    return advisor.analyze(doc, doc.get("gains"), measured_forward_m=body.get("tape_forward"),
-                           measured_lateral_m=body.get("tape_lateral"))
+    rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=body.get("tape_forward"),
+                          measured_lateral_m=body.get("tape_lateral"))
+    if body.get("tape_forward") is not None and S.project:
+        # The tape is what the straight-line step is graded on: it ticks (or un-ticks) the step.
+        progress.record_run(S.project.name, doc, rep, doc.get("_file"))
+    return rep
 
 
 def api_offsets(body):

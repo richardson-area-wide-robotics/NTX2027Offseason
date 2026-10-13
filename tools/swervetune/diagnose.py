@@ -581,7 +581,7 @@ SYMPTOMS = [
                       "its twin; or the Motors panel shows a flag next to it.",
         "checks": [
             check("Is its controller free of faults?",
-                  "Motors panel, Flags column; the SPARK's LED blinks orange or red on a fault.",
+                  "Motors tab, the Why column; the SPARK's LED blinks orange or red on a fault.",
                   DISABLED,
                   "The fault names the problem: 'sensor' is the encoder or hall cable, 'gate "
                   "driver' is a shorted phase or a burnt motor.",
@@ -590,7 +590,7 @@ SYMPTOMS = [
                   None,
                   {"monitor": ["motor_failing"]}),
             check("When it is told to run, does current flow?",
-                  "Motors panel, Amps column. Output with no current and no motion is flagged "
+                  "Motors tab, the Current column. Output with no current and no motion is flagged "
                   "automatically after half a second.",
                   BLOCKS,
                   "Output without current: an unplugged power lead, a broken phase wire, or a "

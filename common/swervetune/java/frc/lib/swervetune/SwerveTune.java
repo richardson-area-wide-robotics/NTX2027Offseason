@@ -1201,8 +1201,8 @@ public final class SwerveTune {
       if (carrying >= Math.max(2, (judged + 1) / 2)) {
         finish(State.ABORTED, String.format("NOT on blocks: a short pulse sped the wheels up only %.2f m/s per"
                 + " amp-second (wheels in the air reach over %.1f), so they are carrying weight: the robot is on"
-                + " the floor, or the wheels touch the blocks. Put it on blocks, or switch the environment to"
-                + " FIELD.", median, lim.liftMinMpsPerAmpS));
+                + " the floor, or the wheels touch the blocks. Put it on blocks, or set On the floor.",
+            median, lim.liftMinMpsPerAmpS));
         return;
       }
       ctx.note(String.format("Lift check: wheels free (%.2f m/s per amp-second).", median));
