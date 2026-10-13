@@ -12,7 +12,10 @@
     const s = L.summary, F = L.findings || [];
     const mods = Object.entries(L.modules || {});
     // PathPlanner's findings are listed in full in their own panel below, so here they get one line.
-    const own = F.map((f, i) => [f, i]).filter(([f]) => !String(f.id || "").startsWith("pathplanner"));
+    // Errors first, then warnings, then notes: each keeps its index, so its fix button still finds it.
+    const RANK = { error: 0, warn: 1, info: 2 };
+    const own = F.map((f, i) => [f, i]).filter(([f]) => !String(f.id || "").startsWith("pathplanner"))
+      .sort(([a], [b]) => (RANK[a.level] ?? 3) - (RANK[b.level] ?? 3));
     const pp = F.filter(f => String(f.id || "").startsWith("pathplanner"));
     const tip = (key, text) => `<span class="term" tabindex="0" data-tip="${key}" data-quiet>${esc(text)}</span>`;
     const yes = v => v === true ? "<b>yes</b>" : v === false ? "no" : esc(String(v));
@@ -49,7 +52,7 @@
           "<b>Warnings</b> next: read them. Most are settled by the Guide's tests, which measure what the files can only guess.",
           "<b>Open the Guide</b> or <b>Open the tuner</b> takes you to the step that settles a finding."],
           good: "no errors. Warnings may stay until the Guide's tests have run." })}
-        <div>${own.length ? own.map(([f, i]) => `<div class="finding">
+        <div>${own.length ? own.map(([f, i]) => `<div class="finding" data-level="${esc(f.level)}">
           <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
           <div class="why">${Learn.link(f.why, 3)}</div>
           ${f.fix && f.fix.kind === "edit" ? `<div class="row"><button class="btn small" data-fix="${i}" data-tip="config.fix" data-quiet>Preview the fix</button><span class="small muted">${esc(f.fix.file)}: ${esc(f.fix.path.join("."))} = ${esc(JSON.stringify(f.fix.value))}</span></div>` : ""}
@@ -58,7 +61,7 @@
           ${f.fix && f.fix.kind === "tune" ? `<div class="row"><button class="btn small" data-tune="${esc(f.fix.loop)}" data-tip="config.tune">Open the ${esc(({ steer: "Steering", drive: "Drive speed", ff: "Feedforward", slip: "Slip current", spin: "Spin", straight: "Straight line" })[f.fix.loop] || "")} tuner</button></div>` : ""}
         </div>`).join("") : `<span class="level ok">ok</span> Nothing found in the swerve files.`}
         ${pp.length ? `<div class="finding"><div class="head"><span class="level ${pp.some(f => f.level === "error") ? "error" : "warn"}">auto</span><span class="title">${pp.length} PathPlanner item${pp.length === 1 ? "" : "s"} for whoever writes the autos</span></div>
-          <div class="row"><button class="btn small" data-pp="1">See the PathPlanner check</button></div></div>` : ""}</div></div>
+          <div class="row"><button class="btn small" data-pp="1" data-tip="config.see-pp">See the PathPlanner check</button></div></div>` : ""}</div></div>
     </div>
     <div class="panel" id="pp-panel" style="margin-top:12px"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>
     <div class="panel" id="dl-panel" style="margin-top:12px"><h2 data-tip="config.designs">Mechanism designs</h2>
@@ -103,7 +106,7 @@
           "Press <b>Make PathPlanner match the code</b> and check the diff.", "Rows marked <b>measure it</b> (mass, moment of inertia) come from Calibrate: measure them there, then come back."],
         good: "every row the same; the named commands each registered (\"Shoot B\" is kept on purpose)." })}
       <div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
-        ${(r.rows || []).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${esc(String(x.pathplanner ?? "–"))}</td>
+        ${(r.rows || []).slice().sort((a, b) => (a.status === "ok") - (b.status === "ok")).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${esc(String(x.pathplanner ?? "–"))}</td>
           <td class="num mono">${esc(String(x.code ?? "–"))}</td><td class="small">${esc(x.source)}</td>
           <td>${x.status === "ok" ? `<span class="muted small">✓ same</span>` : `<span class="chip ${STATUS[x.status] || ""}" ${x.status === "unknown" ? `data-tip="config.measure" data-quiet` : ""}>${esc(x.status === "unknown" ? "measure it" : x.status)}</span>`}</td></tr>`).join("")}
       </tbody></table></div>
@@ -163,10 +166,10 @@
           <label class="gain" data-tip="config.dl-mech">Mechanism name<input id="dl-mech" value="${esc(mech)}" placeholder="Shooter, Arm, Elevator"></label>
           ${d.kind === "drivetrain" || d.kind === "gearing" ? "" : `<div><b>Its motors</b> <span class="small muted">(the tool picked these from the name; change them if it guessed wrong)</span>
             ${r.motors.length ? "" : `<p class="small warn-ink">No motor's name starts with "${esc(mech)}": tick the ones this design is for.</p>`}
-            <div class="row" id="dl-motors">${choices.map(c => `<label class="row small"><input type="checkbox" value="${esc(c.name)}" ${r.motors.includes(c.name) ? "checked" : ""}>
+            <div class="row" id="dl-motors">${choices.map(c => `<label class="row small" data-tip="config.dl-motor" data-quiet><input type="checkbox" value="${esc(c.name)}" ${r.motors.includes(c.name) ? "checked" : ""}>
               ${esc(c.name)} <span class="muted">${esc(c.motor || "?")}</span></label>`).join("")}</div></div>`}
           <div><b>Checked against the robot</b>${findingsHtml(r.findings)}</div>
-          ${r.edits.length ? `<div><b>Numbers it can fill in</b>${r.edits.map((e, i) => `<label class="row small"><input type="checkbox" class="dl-edit" data-i="${i}"> ${esc(e.label)}</label>`).join("")}</div>` : ""}
+          ${r.edits.length ? `<div><b>Numbers it can fill in</b>${r.edits.map((e, i) => `<label class="row small" data-tip="config.dl-edit" data-quiet><input type="checkbox" class="dl-edit" data-i="${i}"> ${esc(e.label)}</label>`).join("")}</div>` : ""}
           <div class="row"><button class="btn primary" id="dl-save" data-tip="config.dl-save">Save the design${r.edits.length ? " and the ticked numbers" : ""}…</button></div>
         </div></div>`;
       $$("#dl-motors input", box).forEach(c => c.onchange = () => readLink($$("#dl-motors input:checked", box).map(x => x.value)));
@@ -199,7 +202,7 @@
           ${d.findings ? ["error", "warn"].map(l => { const n = d.findings.filter(f => f.level === l).length; return n ? ` <span class="level ${l}">${n} ${l}</span>` : ""; }).join("") : ""}</summary>
         ${d.design ? `<div class="grid2"><div>${saysHtml(d.describe)}<p class="small"><a href="${esc(d.url)}" target="_blank" rel="noopener">Open it in ${esc(d.design.source)}</a></p></div>
           <div>${findingsHtml(d.findings)}</div></div>` : ""}
-        <div class="row"><button class="btn small" data-forget="${esc(d.mechanism)}">Forget this design…</button></div></details>`).join("")
+        <div class="row"><button class="btn small" data-forget="${esc(d.mechanism)}" data-tip="config.dl-forget">Forget this design…</button></div></details>`).join("")
         : `<p class="hint">None saved yet.</p>`);
       $$("[data-forget]", box).forEach(b => b.onclick = async () => {
         if (await App.previewAndSave({ kind: "edit", file: "swervetune.json", path: ["designs", b.dataset.forget], value: null }, "Forget a design")) paintSaved();

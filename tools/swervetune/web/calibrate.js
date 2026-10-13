@@ -288,7 +288,7 @@
       <p><b>${esc(r.summary || "")}</b></p>
       ${a.ok ? `<p class="small muted">Turning: kS ${fmt(a.kS, 3)} V, kV ${fmt(a.kV, 3)} V per rad/s, kA ${fmt(a.kA, 3)} V per rad/s² (R² ${fmt(a.r2, 3)}).</p>` : ""}
       ${findings(r.findings)}
-      ${act && act.type === "config" && !doc.practice ? `<button class="btn primary" id="mi-save">Save to swervetune.json…</button>` : ""}`;
+      ${act && act.type === "config" && !doc.practice ? `<button class="btn primary" id="mi-save" data-tip="cal.save">Save to swervetune.json…</button>` : ""}`;
     const b = $("#mi-save", out);
     if (b) b.onclick = () => App.previewAndSave({ kind: "edit", file: act.file, path: act.path, value: act.value }, "Moment of inertia");
   }
@@ -299,7 +299,13 @@
     if (s.mass_kg) $("#mi-now", root).textContent = `Now: ${fmt(s.mass_kg, 1)} kg (${s.mass_source || ""})`;
     const assumed = /assumed/.test(s.mass_source || "");
     $("#mi-assumed", root).hidden = !assumed;
-    if (assumed) $("#mi-assumed", root).textContent = `Not weighed yet: PathPlanner is planning every auto with an assumed ${fmt(s.mass_kg, 0)} kg. Weigh the robot with bumpers and battery, and save it here.`;
+    if (!assumed) return;
+    // Two different guesses: PathPlanner plans with its own robotMass (74 kg out of the box), and
+    // this tool's estimates use its own assumption. Say both, so nobody thinks the autos use ours.
+    const pp = await App.api("/api/ppcheck");
+    const row = ((pp && pp.rows) || []).find(x => x.key === "robotMass");
+    const theirs = row && row.pathplanner != null ? `PathPlanner plans every auto with ${fmt(row.pathplanner, 0)} kg${row.status === "unknown" ? " (its default)" : ""}, and this` : "This";
+    $("#mi-assumed", root).textContent = `Not weighed yet: ${theirs} tool assumes ${fmt(s.mass_kg, 0)} kg. Weigh the robot with bumpers and battery, and save it here.`;
   }
   $("#mi-mass-save", root).onclick = async () => {
     const kg = +$("#mi-mass", root).value;
@@ -323,7 +329,7 @@
     box.innerHTML = spots.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>#</th><th>Side</th><th>Wall to center</th><th>Tag left</th><th>Tag height</th><th>Tag</th><th>Sightings</th><th></th></tr></thead><tbody>
       ${spots.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.side)}</td><td class="num mono">${fmt(s.distance_m, 3)} m</td><td class="num mono">${fmt(s.lateral_m, 3)} m</td>
         <td class="num mono">${fmt(s.height_m, 3)} m</td><td class="num">${s.tag_id}</td><td class="num">${s.count ?? (s.samples || []).length}</td>
-        <td>${s.practice ? "" : `<button class="btn small" data-drop="${i}" aria-label="Remove spot ${i + 1}">Remove</button>`}</td></tr>`).join("")}
+        <td>${s.practice ? "" : `<button class="btn small" data-drop="${i}" data-tip="cal.drop" data-quiet aria-label="Remove spot ${i + 1}">Remove</button>`}</td></tr>`).join("")}
       </tbody></table></div>` : "";
     $$("[data-drop]", box).forEach(b => b.onclick = () => { spots.splice(+b.dataset.drop, 1); paintSpots(); });
     $("#cc-solve", root).disabled = !spots.some(s => !s.practice);
@@ -420,7 +426,7 @@
           <td>${x.trusted ? `<span class="chip warn">corrected</span>` : `<span class="chip bad">kept official</span>`}</td></tr>`).join("")}
       </tbody></table></div>` : ""}
       ${findings(r.findings)}
-      ${r.layout_text && !r.practice && moved.some(x => x.trusted) ? `<button class="btn primary" id="fs-save">Save the surveyed layout (${esc(r.path || "")})…</button>` : ""}`;
+      ${r.layout_text && !r.practice && moved.some(x => x.trusted) ? `<button class="btn primary" id="fs-save" data-tip="cal.save">Save the surveyed layout (${esc(r.path || "")})…</button>` : ""}`;
     const b = $("#fs-save", out);
     if (b) b.onclick = async () => {
       if (!(await App.previewAndSave({ kind: "layout", text: r.layout_text }, "Surveyed AprilTag layout"))) return;
