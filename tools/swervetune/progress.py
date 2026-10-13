@@ -28,15 +28,37 @@ REAL_ENVS = ("BLOCKS", "FIELD")
 
 
 # The GUI's threads write progress too: one read-change-write at a time, or one loses the other's.
+# Reads take it as well: on Windows a file another thread has open can't be replaced.
 _LOCK = threading.RLock()
+# Another process (the command line, a virus scanner) may hold the file for a moment: wait this long.
+BUSY_TRIES, BUSY_WAIT_S = 40, 0.025
+
+
+def _busy(fn):
+    """Runs fn, waiting out a file another process holds open for a moment (Windows' PermissionError)."""
+    for i in range(BUSY_TRIES):
+        try:
+            return fn()
+        except PermissionError:
+            if i == BUSY_TRIES - 1:
+                raise
+            time.sleep(BUSY_WAIT_S)
+
+
+def _open_read():
+    with open(PATH, encoding="utf-8") as fh:
+        return fh.read()
 
 
 def _read():
     try:
-        with open(PATH, encoding="utf-8") as fh:
-            d = json.load(fh)
-    except OSError:
+        text = _busy(_open_read)
+    except FileNotFoundError:
         return {}
+    # Anything else (still held after the wait) is raised: an empty read here would be written back
+    # and erase every robot's progress.
+    try:
+        d = json.loads(text)
     except ValueError:
         # Unreadable: keep it aside rather than let the next write erase every robot's progress.
         try:
@@ -53,14 +75,22 @@ def _write(d):
     tmp = f"{PATH}.{os.getpid()}.{threading.get_ident()}.tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(d, fh, indent=1)
-    os.replace(tmp, PATH)
+    try:
+        _busy(lambda: os.replace(tmp, PATH))
+    except OSError:
+        try:
+            os.remove(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def load(robot):
     """One robot's progress: the marks a person set, plus ``runs`` keyed ``"<test>/<env>"``."""
     if not robot:
         return {}
-    p = _read().get(robot) or {}
+    with _LOCK:
+        p = _read().get(robot) or {}
     p.setdefault("runs", {})
     return p
 

@@ -80,6 +80,53 @@ class ProgressTest(unittest.TestCase):
         self.assertEqual(progress.load("Peashooter")["n"], 200)
         self.assertEqual(glob.glob(progress.PATH + ".*.tmp"), [], "no temp file left behind")
 
+    def test_reads_and_writes_together_lose_nothing(self):
+        # On Windows a file one thread is reading can't be replaced by another: a read outside the
+        # lock made a write fail and lost the change (190 of 200 landed).
+        stop = threading.Event()
+
+        def reader():
+            while not stop.is_set():
+                progress.load("Peashooter")
+
+        rs = [threading.Thread(target=reader) for _ in range(3)]
+        [t.start() for t in rs]
+        try:
+            ws = [threading.Thread(target=lambda: [progress.change("Peashooter", lambda p: p.__setitem__("n", p.get("n", 0) + 1))
+                                                   for _ in range(25)]) for _ in range(4)]
+            [t.start() for t in ws]
+            [t.join() for t in ws]
+        finally:
+            stop.set()
+            [t.join() for t in rs]
+        self.assertEqual(progress.load("Peashooter")["n"], 100)
+
+    def test_a_file_held_for_a_moment_is_waited_for_never_read_as_empty(self):
+        # Another process (the command line, a virus scanner) holding the file must not make a
+        # read look empty: the next write would erase every robot's progress.
+        progress.update("Black team", {"hand": "pass"})
+        real = progress._open_read
+        calls = []
+
+        def held_twice():
+            calls.append(1)
+            if len(calls) <= 2:
+                raise PermissionError("held by another process")
+            return real()
+        with mock.patch.object(progress, "_open_read", held_twice), mock.patch.object(progress, "BUSY_WAIT_S", 0):
+            progress.update("Peashooter", {"hand": "pass"})
+        self.assertEqual(progress.load("Black team")["hand"], "pass", "the other robot's progress survives")
+        self.assertEqual(progress.load("Peashooter")["hand"], "pass")
+
+    def test_a_file_held_too_long_fails_loudly_and_writes_nothing(self):
+        progress.update("Black team", {"hand": "pass"})
+        with mock.patch.object(progress, "_open_read", side_effect=PermissionError("held")), \
+                mock.patch.object(progress, "BUSY_WAIT_S", 0):
+            with self.assertRaises(PermissionError):
+                progress.update("Peashooter", {"hand": "pass"})
+        self.assertEqual(progress.load("Black team")["hand"], "pass")
+        self.assertNotIn("hand", progress.load("Peashooter"))
+
     def test_a_damaged_file_is_set_aside_not_erased(self):
         os.makedirs(os.path.dirname(progress.PATH), exist_ok=True)
         with open(progress.PATH, "w", encoding="utf-8") as fh:
