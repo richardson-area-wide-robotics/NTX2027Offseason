@@ -34,6 +34,41 @@ thinks it is, AprilTags and the deadman.
 To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) or with
 `./gradlew simulateJava` in the robot's folder.
 
+## The robot and Claude at the same time (two networks)
+
+In the shop the laptop is on two networks at once: its own Wi-Fi on the school network, with the
+VPN on it so Claude works, and a USB Wi-Fi adapter on the robot's radio. Only robot traffic
+(`10.17.45.x` for Peashooter, `10.99.90.x` for Black team) may use the USB adapter; everything else,
+the VPN included, must use the school Wi-Fi.
+
+1. Leave the laptop's own Wi-Fi on the school network, and connect the VPN as usual.
+2. Plug in the USB Wi-Fi adapter. In the Wi-Fi menu, pick that adapter from the list at the top
+   (it shows as "Wi-Fi 2" or similar) and join the robot's network with it. Not the other way
+   round: the school Wi-Fi stays on the laptop's own adapter.
+3. In the app, press **Check the networks** (under Connect, or after a failed Connect), or run
+   `py -3.12 tools/swervetune netcheck`. It says which network carries the robot, which carries
+   Claude, and what to change.
+4. **Once per laptop**, as Administrator, run the fix it gives you:
+
+   ```
+   powershell -ExecutionPolicy Bypass -File toolsobot_preflight.ps1 -Team 1745 -Fix
+   ```
+
+   The robot's radio hands out an internet gateway like any router. If Windows prefers the USB
+   adapter, the internet goes there, the VPN follows it to a radio with no internet, and Claude
+   drops. The fix sets the USB adapter's metric to 500 so it only ever carries robot traffic. It
+   stays set for that adapter; nothing else changes.
+
+If the check says the VPN blocks traffic outside the tunnel, robot packets die even with every
+route right: turn off the VPN's kill switch (WireGuard: Edit the tunnel, untick **Block untunneled
+traffic (kill-switch)**; other VPNs: allow local network access, or split tunneling). If Windows
+drops the robot's Wi-Fi as soon as the school Wi-Fi connects, it is "minimizing simultaneous
+connections": a mentor can turn that off in Group Policy (Network, Windows Connection Manager,
+**Minimize the number of simultaneous connections to the Internet or a Windows Domain**: Disabled).
+
+At events the robot radio joins the field, so in the pit connect with an Ethernet cable through a
+USB Ethernet adapter instead; the same check and the same fix apply to it.
+
 ## Staying safe
 
 - **The deadman.** On blocks and on the floor, nothing that moves a motor runs unless someone
@@ -269,6 +304,7 @@ prints the rules an agent follows (`docs/AGENT_TUNING.md`).
 
 - **"pyntcore is not installed"**: run the pip command above with `py -3.12`.
 - **Can't connect**: is the laptop on the robot's network (or is the simulator running)? Is the
-  team number right? The robot code must be this branch's: the tools check they match.
+  team number right? The robot code must be this branch's: the tools check they match. With two
+  networks or a VPN, press **Check the networks**.
 - **A Python change doesn't show up**: stop the app (Ctrl+C) and start it again. Browser-only
   changes just need a page reload.

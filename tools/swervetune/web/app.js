@@ -147,11 +147,38 @@ $("#connect").onclick = async () => {
   const r = await App.api("/api/connect", { target: $("#target").value, host: $("#host").value });
   $("#connect").disabled = false;
   if (!r.ok) App.modal(`<h2>Could not connect</h2><p>${esc(r.error)}</p>
-      <p class="hint">Robot code must be running with SwerveTune installed (it is, on this branch).
-      With a VPN on this laptop, run <code>tools\\robot_preflight.ps1</code>.</p>
-      <div class="row"><button class="btn" onclick="App.closeModal()">Close</button></div>`);
+      <p class="hint">Robot code must be running with SwerveTune installed (it is, on this branch). With the
+      robot on one network and the internet (or a VPN) on another, check how this laptop routes them.</p>
+      <div class="row"><button class="btn primary" id="cc-net" data-tip="net.check">Check the networks</button>
+        <button class="btn" onclick="App.closeModal()">Close</button></div>`, root => {
+        $("#cc-net", root).onclick = () => { App.closeModal(); checkNetworks(); };
+      });
   else { App.toast("Connected."); await refreshLint(); }
 };
+
+// ------------------------------------------------------------------ the robot and the internet at once
+// The laptop's own Wi-Fi on the school network (with the VPN, for Claude) and a USB Wi-Fi adapter on
+// the robot's radio. tools/robot_preflight.ps1 does the checking; this shows what it found.
+async function checkNetworks() {
+  App.modal(`<h2>The robot and the internet</h2><p class="hint">Checking how this laptop reaches each…</p>`);
+  const r = await App.api("/api/netcheck", {});
+  const word = { ok: "good", warn: "warn", fail: "bad", info: "info" };
+  App.modal(`<h2>The robot and the internet</h2>
+    ${r.error ? `<div class="callout warn">${esc(r.error)}</div>` : `
+    <p>${r.ok ? "Nothing blocking." : "Fix the red lines, then check again."}
+      The laptop's own Wi-Fi carries the internet (and the VPN, for Claude); the USB Wi-Fi adapter
+      carries only the robot.</p>
+    ${(r.checks || []).map(c => `<div class="finding"><div class="head"><span class="chip ${word[c.level] || ""}">${esc(c.level)}</span>
+      <span class="title">${esc(c.title)}</span></div><div class="why">${esc(c.why)}</div></div>`).join("")}
+    ${r.fix ? `<div class="callout warn"><b>One-time fix, as Administrator.</b> Open PowerShell as Administrator
+      (right-click it, Run as administrator) and run:<pre class="diff">${esc(r.fix)}</pre>
+      It sets the robot adapter's metric to 500, so it never carries the internet. Nothing else changes.</div>` : ""}`}
+    <div class="row"><button class="btn" id="nc-again" data-tip="net.check">Check again</button>
+      <button class="btn" onclick="App.closeModal()">Close</button></div>`, root => {
+    $("#nc-again", root).onclick = checkNetworks;
+  });
+}
+App.checkNetworks = checkNetworks;
 
 for (const b of ["#abort", "#abort-pin"]) $(b).onclick = () => abortNow();
 // Esc always sends ABORT, whatever else it closes. The toast says whether anything was running,

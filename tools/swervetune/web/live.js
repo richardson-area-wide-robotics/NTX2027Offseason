@@ -9,7 +9,8 @@
         <h2 data-tip="live.above">From above</h2>
         <p class="hint">Front is up. Dark bar: the wheel. Gray dashes: where it was told to point. Line from the center: speed, green on target, amber behind, red the wrong way.</p>
         <div id="live-empty" class="empty">Not connected. Connect to a robot or the simulator to see every module live.
-          <div class="row" style="justify-content:center;margin-top:10px"><button class="btn primary" data-connect>Connect</button></div></div>
+          <div class="row" style="justify-content:center;margin-top:10px"><button class="btn primary" data-connect>Connect</button>
+          <button class="btn" data-netcheck data-tip="net.check">Check the networks</button></div></div>
         <svg id="robot" class="robot-svg" viewBox="-200 -200 400 400" role="img" aria-label="Swerve modules seen from above" hidden></svg>
         <div class="row small muted" id="live-pose" data-tip="live.pose"></div>
       </div>
@@ -31,6 +32,7 @@
 
   const svg = $("#robot", root);
   $("[data-connect]", root).onclick = () => $("#connect").click();
+  $$("[data-netcheck]", root).forEach(b => b.onclick = () => App.checkNetworks());
   let built = false, pods = [];
   const NS = "http://www.w3.org/2000/svg";
   const el = (tag, attrs, parent) => {

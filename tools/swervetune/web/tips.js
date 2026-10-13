@@ -34,6 +34,8 @@ const TIPS = {
     "YAGSL reads each module's motor type from its own file; all four must match what is fitted. Redeploy afterwards so the robot uses it.", "motor_inventory"],
   "battery.next": ["The battery to put in next: a healthy one that has been off the robot longest.",
     "It's the likeliest to be charged and cool. The tool only knows when a battery was on the robot in a test or a match log, so it can't see the charger: check the charge before a match.", "battery"],
+  "net.check": ["Checks this laptop reaches the robot and the internet at the same time.",
+    "The laptop's own Wi-Fi carries the internet (and the VPN, for Claude); a USB Wi-Fi adapter carries only the robot. It finds which network each goes out on, and what to change if one is wrong.", null],
   "banner.hold": ["Press and hold with the mouse or a finger: the running test may move the robot only while you do.",
     "Let go, or move to another window, and the test stops. The tester's controller right bumper does the same job and is better: you can stand where you see the robot.", "deadman"],
   "header.motors": ["The hottest or least healthy motor. Tap it to open the Motors tab.",

@@ -30,7 +30,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
-               designcheck, designlinks, logsummary, monitor, motorinv, pdhports, plant, ppcheck, predict, progress,
+               designcheck, designlinks, logsummary, monitor, motorinv, netcheck, pdhports, plant, ppcheck, predict, progress,
                rehearse, revspecs, runs, wiring, yagslcfg)
 
 # A fresh secret each run: only the page this run served can change anything (see Handler).
@@ -230,6 +230,14 @@ def api_connect(body):
     with S.lock:
         ok = S.connect(body.get("target", "robot"), body.get("host"))
     return {"ok": ok, "error": S.connect_error}
+
+
+def api_netcheck(body=None):
+    """The robot and the internet (Claude, over a VPN) at the same time: tools/robot_preflight.ps1."""
+    from . import link as L
+
+    team = L.team_from_project(S.project.path) if S.project else None
+    return netcheck.run(team or 1745, (body or {}).get("adapter") or None)
 
 
 def api_disconnect(_):
@@ -1166,7 +1174,7 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
        "/api/motors/inventory": api_motor_inventory, "/api/battery": api_battery,
        "/api/controllers/code": api_controllers_code, "/api/controllers/history": api_controllers_history}
-POST = {"/api/project": api_set_project, "/api/connect": api_connect,
+POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netcheck": api_netcheck,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,

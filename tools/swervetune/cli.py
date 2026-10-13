@@ -27,7 +27,7 @@ import sys
 import time
 
 from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor, motorinv,
-               pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
+               netcheck, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -134,7 +134,7 @@ def open_link(args, out):
     if not lk.wait_connected(args.connect_timeout):
         lk.close()
         out.fail("Could not reach the robot at " + ", ".join(hosts) + ". Is robot code running? "
-                 "On a laptop with a VPN, run tools/robot_preflight.ps1.", tried=hosts)
+                 "With two networks or a VPN on this laptop, run: swervetune netcheck.", tried=hosts)
         return None
     if not lk.has_harness():
         lk.close()
@@ -786,6 +786,42 @@ def cmd_sim(args, out):
         lk.close()
 
 
+def cmd_netcheck(args, out):
+    from . import link as L
+
+    team = args.team
+    if not team and args.project:
+        team = L.team_from_project(resolve_project(args.project).path)
+    if team:
+        r = netcheck.run(team, args.adapter)
+    else:
+        # No robot named: try each robot's team in this repo, and report the one this laptop is on.
+        robots = {}
+        for p in yagslcfg.find_projects(REPO):
+            t = L.team_from_project(p)
+            if t:
+                robots.setdefault(t, os.path.basename(p))
+        robots = robots or {1745: "robot"}
+        for t in robots:
+            r = netcheck.run(t, args.adapter)
+            if r.get("robot_adapter") or r.get("error"):
+                break
+        else:
+            for c in r.get("checks", []):
+                if c.get("id") == "robot-adapter":
+                    c["title"] = "No adapter on a robot's network yet (" + ", ".join(
+                        f"{name} 10.{t // 100}.{t % 100}.x" for t, name in robots.items()) + ")"
+    if r.get("error"):
+        return out.done(out.fail(r["error"], code="BAD_ARGS"))
+    out.put(**{k: r.get(k) for k in ("ok", "team", "robot_adapter", "internet_adapter", "vpn", "checks", "fix")})
+    for c in r["checks"]:
+        out.say(f"  [{c['level'].upper():4s}] {c['title']}")
+        out.say(f"         {c['why']}")
+    if r.get("fix"):
+        out.say("  As Administrator: " + r["fix"])
+    return out.done(0 if r.get("ok") else 1)
+
+
 def cmd_brief(args, out):
     path = os.path.join(REPO, "docs", "AGENT_TUNING.md")
     text = open(path, encoding="utf-8").read() if os.path.exists(path) else "docs/AGENT_TUNING.md is missing."
@@ -961,6 +997,9 @@ def build_parser():
     s.add_argument("state", choices=["on", "off"])
     s.set_defaults(fn=cmd_sim)
 
+    s = sub.add_parser("netcheck", help="the robot and the internet (Claude, over a VPN) at the same time")
+    s.add_argument("--adapter", help="the network adapter on the robot's Wi-Fi, if it can't be found")
+    s.set_defaults(fn=cmd_netcheck)
     sub.add_parser("brief", help="the rules an AI agent follows").set_defaults(fn=cmd_brief)
 
     s = sub.add_parser("gui", help="open the GUI in a browser")

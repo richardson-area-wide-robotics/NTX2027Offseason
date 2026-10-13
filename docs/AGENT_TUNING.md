@@ -56,6 +56,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 |---|---|
 | `lint --project Peashooter` | Checks the YAGSL config files; no robot needed. Start here. |
 | `status` | Robot, environment, live modules, problems. |
+| `netcheck` | Whether this laptop reaches the robot and the internet at the same time (two networks, a VPN). Run it when `status` can't reach the robot, and tell the person what it says; never change a network setting yourself. |
 | `env --mode BLOCKS` / `env --mode FIELD --space 3 --side 1.5` | Tells the robot where it is. |
 | `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it, prints the report. |
 | `gains show` / `gains set Steer/kP=0.015 --why "<finding title>"` | Reads or changes live gains (lost at restart until saved). Always give `--why`: it goes into the robot's match log with the change. |
