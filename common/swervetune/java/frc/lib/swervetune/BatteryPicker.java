@@ -20,12 +20,16 @@ import java.util.List;
  * tired one before it browns out a match.
  *
  * <p>It is published as the same topics WPILib's {@code SendableChooser} uses, so it needs no
- * SmartDashboard (gone in WPILib 2027). A dashboard that reconnects after the robot reboots may send
- * back the pick it had before - the battery from before the swap - so a pick that arrives within
- * {@link #RESTORE_WINDOW_S} of a dashboard connecting is cleared, and the drive team picks again.
+ * SmartDashboard (gone in WPILib 2027). A dashboard that reconnects sends back the pick it had
+ * before - including one already connected when the robot code starts. After a fresh power-on that
+ * pick is the battery from before the swap, so a pick arriving within {@link #RESTORE_WINDOW_S} of a
+ * dashboard connecting is cleared and the drive team picks again. After a code restart (a redeploy,
+ * the roboRIO still powered) it is the same battery, and the restored pick is kept.
  */
 final class BatteryPicker {
   static final double RESTORE_WINDOW_S = 3.0;
+  /** Robot code starting this soon after the roboRIO powered up counts as a fresh power-on. */
+  static final double FRESH_POWER_ON_S = 120.0;
   static final List<String> DEFAULT_ROSTER = numbers(12);
 
   private final List<String> roster;
@@ -42,10 +46,20 @@ final class BatteryPicker {
 
   private String current = "";
   private String lastSeen = "";
-  private int dashboards = -1;
+  private int dashboards = 0;
+  private final boolean freshPowerOn;
   private double ignoreUntilS = Double.NEGATIVE_INFINITY;
 
   BatteryPicker(NetworkTableInstance nt, List<String> roster) {
+    this(nt, roster, true);
+  }
+
+  /**
+   * @param freshPowerOn true when the roboRIO has just powered up (a battery may have been swapped);
+   *     false when only the robot code restarted
+   */
+  BatteryPicker(NetworkTableInstance nt, List<String> roster, boolean freshPowerOn) {
+    this.freshPowerOn = freshPowerOn;
     this.roster = roster == null || roster.isEmpty() ? DEFAULT_ROSTER : List.copyOf(roster);
     String t = SwerveTuneTopics.BATTERY_CHOOSER;
     type = nt.getStringTopic(t + ".type").publish();
@@ -74,7 +88,8 @@ final class BatteryPicker {
    * @return the battery picked since boot, or "" until someone picks
    */
   String update(double nowS, int dashboards, double busVolts, boolean disabled) {
-    if (this.dashboards >= 0 && dashboards > this.dashboards) {
+    // A dashboard appearing (including one already there at the first loop) may put back its old pick.
+    if (dashboards > this.dashboards) {
       ignoreUntilS = nowS + RESTORE_WINDOW_S;
     }
     this.dashboards = dashboards;
@@ -87,9 +102,9 @@ final class BatteryPicker {
     if (s.isEmpty() || s.equals(current)) {
       return current;
     }
-    if (nowS < ignoreUntilS) {
-      // A dashboard putting back what it had before this boot: clear it so the next pick, even of
-      // the same number, is a change the robot sees.
+    if (nowS < ignoreUntilS && freshPowerOn) {
+      // A dashboard putting back what it had before this power-on: clear it so the next pick, even
+      // of the same number, is a change the robot sees.
       clearSelected.set("");
       lastSeen = "";
       return current;

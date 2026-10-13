@@ -48,6 +48,9 @@ final class FakeDrivetrain implements DrivetrainIO {
   double driveLimitA = 40;
   final List<Integer> limitsSet = new ArrayList<>();
 
+  /** Module free speed at 12 V, m/s: a NEO at 5.50:1 by default; 4.92 for the robots' Vortexes. */
+  double freeSpeedMps = 4.12;
+
   FakeDrivetrain() {
     for (int m = 0; m < 4; m++) {
       ff[m] = new double[] {0, 2.9, 0};
@@ -64,7 +67,7 @@ final class FakeDrivetrain implements DrivetrainIO {
         double err = ((steerCmd[m] - steer[m] + 540) % 360) - 180;
         steer[m] = (steer[m] + err * Math.min(1, dt / 0.05) + 360) % 360;
       }
-      double target = Double.isFinite(speedCmd[m]) ? speedCmd[m] : volts[m] / 2.9;
+      double target = Double.isFinite(speedCmd[m]) ? speedCmd[m] : volts[m] / 12.0 * freeSpeedMps;
       if (wallSlipA != null) {
         // Against a wall the wheel is stalled: current is volts over the NEO's resistance, up to
         // the limit, until it beats the carpet's grip; then it spins and the current falls.
@@ -115,7 +118,7 @@ final class FakeDrivetrain implements DrivetrainIO {
 
   @Override
   public double maxModuleSpeedMps() {
-    return 4.12;
+    return freeSpeedMps;
   }
 
   @Override

@@ -60,6 +60,13 @@ final class PdhMapProcedure implements Procedure {
   }
 
   @Override
+  public double expectedTopSpeedMps(TestContext ctx) {
+    // Wheels free on blocks: the pulse's volts over 12 V of the module's free speed.
+    double v = ctx.args.get("volts", 4.0, 1.0, 6.0);
+    return v / 12.0 * ctx.io.maxModuleSpeedMps();
+  }
+
+  @Override
   public double timeoutS(TestContext ctx) {
     return 2 * ctx.io.moduleCount() * (QUIET_S + PULSE_S) + 3;
   }

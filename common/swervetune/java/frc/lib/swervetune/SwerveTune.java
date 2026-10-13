@@ -343,7 +343,9 @@ public final class SwerveTune {
     nt.getStringArrayTopic(SwerveTuneTopics.STARTUP_REPORT).publish().set(startup.toArray(new String[0]));
 
     gains = new LiveGains(nt, io, config, bootId);
-    battery = new BatteryPicker(nt, config.batteries);
+    // The FPGA clock restarts only when the roboRIO powers up: early in it, this is a fresh power-on
+    // (maybe a new battery); later, only the robot code restarted (the same battery).
+    battery = new BatteryPicker(nt, config.batteries, clock.getAsDouble() < BatteryPicker.FRESH_POWER_ON_S);
     lastCmdSeq = cmdSeq.get();
     lastAbortSeq = abortSeq.get();
     lastOverrideSeq = overrideSeq.get();
@@ -719,9 +721,11 @@ public final class SwerveTune {
       handleMotorOverride(now);
       AkLogging.record(io, guard.motors(), state == State.RUNNING ? lastTest : "");
       handleSimEnable();
-      gains.poll();
-      gains.pollTuning(signals.fmsAttached() ? "the FMS is attached"
-          : state == State.RUNNING || state == State.WAITING ? "a test is running" : null);
+      // No gain changes during a match or a test, from any path: the laptop, an agent, AdvantageScope.
+      String gainsBlocked = signals.fmsAttached() ? "the FMS is attached"
+          : state == State.RUNNING || state == State.WAITING ? "a test is running" : null;
+      gains.poll(gainsBlocked);
+      gains.pollTuning(gainsBlocked);
       Map<String, Double> gainsNow = gains.takeChanged();
       if (gainsNow != null) {
         AkLogging.recordGains(gainsNow);
@@ -913,8 +917,11 @@ public final class SwerveTune {
       ack(seq, false, why);
       return;
     }
+    // A test that commands volts, not speed, says how fast its volts can spin the wheels, so the
+    // overspeed stop sits above that rather than at the speed cap it never asked for.
     SafetySupervisor.TestProfile prof = new SafetySupervisor.TestProfile(
-        p.spinsWheels(), p.movesChassis(c), cap, p.spaceBudgetM(c), p.pushesWall());
+        p.spinsWheels(), p.movesChassis(c), Math.max(cap, p.expectedTopSpeedMps(c)),
+        p.spaceBudgetM(c), p.pushesWall());
     why = supervisor.refuseStart(gatherInputs(now), prof, p.needsEnabled());
     if (why != null) {
       ack(seq, false, why);
@@ -1020,6 +1027,10 @@ public final class SwerveTune {
         finish(State.ABORTED, v.reason());
         return;
       }
+    } else if (in.fmsAttached) {
+      // A capture or controller check started in the pit must not run on into a match.
+      finish(State.ABORTED, "FMS attached: a match is starting.");
+      return;
     }
     if (t > timeoutS) {
       finish(State.ABORTED, String.format("Ran past its %.0f s time limit.", timeoutS));

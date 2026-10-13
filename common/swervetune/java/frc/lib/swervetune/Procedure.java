@@ -47,6 +47,15 @@ public interface Procedure {
   String validate(TestContext ctx);
 
   /** Distance from the start the run may legitimately reach, meters. The geofence is this. */
+  /**
+   * The fastest the wheels are expected to turn in this test, m/s; the overspeed stop sits a margin
+   * above it. Speed-commanded tests use the speed cap; a test that commands volts says what its
+   * volts give.
+   */
+  default double expectedTopSpeedMps(TestContext ctx) {
+    return ctx.speedCapMps;
+  }
+
   default double spaceBudgetM(TestContext ctx) {
     return 0;
   }

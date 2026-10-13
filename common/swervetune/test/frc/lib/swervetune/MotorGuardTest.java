@@ -238,6 +238,17 @@ class MotorGuardTest {
   }
 
   @Test
+  void aFaultyTemperatureSensorDoesNotCutTheMotor() {
+    FakeMotorChannel c = new FakeMotorChannel(80);
+    Motor m = add("frontleft drive", c, MotorKind.VORTEX, true);
+    c.tempC = 200; // a broken sensor or cable, not a motor at 200 C
+    c.demandA = 10;
+    run(1.0);
+    assertEquals(MotorGuard.Stage.OK, m.stage(), m.cause());
+    assertTrue(m.flags().contains("unplugged or faulty"), m.flags());
+  }
+
+  @Test
   void sensorNonsenseAndControllerFaultsAreFlagged() {
     FakeMotorChannel c = new FakeMotorChannel(40);
     Motor m = add("Feeder", c, MotorKind.NEO_UNKNOWN, true);

@@ -369,14 +369,25 @@ public final class MotorGuard {
     if (targets.isEmpty()) {
       return "No motor called " + name + ".";
     }
+    List<String> cannot = new ArrayList<>();
     for (Motor m : targets) {
       m.overrideUntilS = nowS + s;
+      if (s > 0 && m.stage == Stage.SHUTOFF) {
+        boolean tooHot = (plausibleTemp(m.tempC) && m.tempC >= m.kind.shutoffC + HYSTERESIS_C)
+            || m.heatFraction() >= NO_OVERRIDE_HEAT;
+        if (m.stallLatch == Stage.SHUTOFF) {
+          cannot.add(m.name + " (stalled: clear the jam)");
+        } else if (tooHot) {
+          cannot.add(m.name + " (too hot to save)");
+        }
+      }
     }
     String who = targets.size() == 1 ? targets.get(0).name : "every motor";
     String text = s == 0
         ? "Thermal override canceled for " + who + "."
-        : String.format("Thermal override for %s: %.0f s. Heat shutoffs are held at half current;"
-            + " stalls still cut out.", who, s);
+        : String.format("Thermal override for %s: %.0f s. Heat shutoffs run at half current;"
+            + " stalls still cut out.", who, s)
+            + (cannot.isEmpty() ? "" : " Still off: " + String.join(", ", cannot) + ".");
     event(nowS, text);
     return text;
   }
@@ -469,20 +480,23 @@ public final class MotorGuard {
         : m.stallS >= 3 ? Stage.WARN : Stage.OK;
     m.stallLatch = m.stallS == 0 ? Stage.OK : max(m.stallLatch, stallNow);
 
-    Stage sensor = sensorStage(k, temp, 0);
+    // A reading at or below 0 C or at 150 C and above is a faulty sensor or cable (flagged below),
+    // not a hot motor: it must not cut a motor mid-match on its own.
+    double trusted = plausibleTemp(temp) ? temp : Double.NaN;
+    Stage sensor = sensorStage(k, trusted, 0);
     Stage model = heatStage(heat, 0);
     Stage target = max(sensor, max(model, m.stallLatch));
 
     // Step down only once comfortably clear of the stage being left.
     if (target.ordinal() < m.stage.ordinal()) {
-      Stage cool = max(max(sensorStage(k, temp, HYSTERESIS_C), heatStage(heat, HYSTERESIS_HEAT)),
+      Stage cool = max(max(sensorStage(k, trusted, HYSTERESIS_C), heatStage(heat, HYSTERESIS_HEAT)),
           m.stallLatch);
       target = cool.ordinal() < m.stage.ordinal() ? cool : m.stage;
     }
 
     // An override holds a heat SHUTOFF at DERATE, within absolute limits; never a stall.
     boolean overriding = nowS < m.overrideUntilS;
-    boolean beyondSaving = (Double.isFinite(temp) && temp >= k.shutoffC + HYSTERESIS_C)
+    boolean beyondSaving = (Double.isFinite(trusted) && trusted >= k.shutoffC + HYSTERESIS_C)
         || heat >= NO_OVERRIDE_HEAT;
     boolean held = false;
     if (overriding && target == Stage.SHUTOFF && m.stallLatch != Stage.SHUTOFF && !beyondSaving) {
@@ -526,7 +540,7 @@ public final class MotorGuard {
     if (m.noCurrentS > 0.5) {
       flags.add("output but no current: unplugged power, an open phase or a burnt winding");
     }
-    if (Double.isFinite(temp) && (temp <= 0 || temp >= 150)) {
+    if (Double.isFinite(temp) && !plausibleTemp(temp)) {
       flags.add(String.format("temperature sensor reads %.0f C: unplugged or faulty", temp));
     }
     String active = m.channel.activeFaults();
@@ -565,6 +579,10 @@ public final class MotorGuard {
     String text = String.join(", ", why);
     boolean cooling = target.ordinal() > max(sensor, max(model, m.stallLatch)).ordinal();
     return cooling ? "cooling: " + text : text;
+  }
+
+  static boolean plausibleTemp(double c) {
+    return Double.isFinite(c) && c > 0 && c < 150;
   }
 
   private static Stage sensorStage(MotorKind k, double temp, double margin) {

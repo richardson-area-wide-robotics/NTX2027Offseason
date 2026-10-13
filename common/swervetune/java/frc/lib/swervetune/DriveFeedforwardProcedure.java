@@ -121,6 +121,12 @@ final class DriveFeedforwardProcedure implements Procedure {
   }
 
   @Override
+  public double expectedTopSpeedMps(TestContext ctx) {
+    plan(ctx);
+    return Math.max(maxVolts, stepVolts) / nominalKv(ctx);
+  }
+
+  @Override
   public double spaceBudgetM(TestContext ctx) {
     plan(ctx);
     return budgetM;

@@ -517,6 +517,36 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
+  void noGainChangesWithTheFmsAttached() {
+    ds.fms = true;
+    loop(1);
+    DoublePublisher kp = nt.getDoubleTopic(SwerveTuneTopics.GAINS + "Steer/kP").publish();
+    IntegerPublisher apply = nt.getIntegerTopic(SwerveTuneTopics.GAINS_APPLY_SEQ).publish();
+    IntegerPublisher boot = nt.getIntegerTopic(SwerveTuneTopics.GAINS_BOOT_ID).publish();
+    kp.set(0.02);
+    boot.set(tune.bootId());
+    apply.set(1);
+    loop(2);
+    assertEquals(0.01, io.steerPid[0], 1e-12, "a match is no time to change gains");
+    String status = nt.getStringTopic(SwerveTuneTopics.GAINS_APPLY_STATUS).subscribe("").get();
+    assertTrue(status.contains("REFUSED") && status.contains("FMS"), status);
+    double echoed = nt.getDoubleTopic(SwerveTuneTopics.GAINS_APPLIED + "Steer/kP").subscribe(-1).get();
+    assertEquals(0.01, echoed, 1e-12);
+  }
+
+  @Test
+  void aCaptureStopsWhenTheFmsAttaches() {
+    ds.enabled = false;
+    loop(1);
+    send("capture", "ALL", "duration_s", "30");
+    loop(5);
+    ds.fms = true;
+    loop(2);
+    assertEquals(SwerveTune.State.ABORTED, tune.state());
+    assertTrue(tune.message().contains("FMS"), tune.message());
+  }
+
+  @Test
   void startupConfigAppliesMeasuredFeedforwardByModuleName() {
     assertArrayEquals(new double[] {0.2, 2.5, 0.4}, io.ff[3], 1e-12);
     assertArrayEquals(new double[] {0, 2.9, 0}, io.ff[0], 1e-12);
@@ -618,6 +648,22 @@ class SwerveTuneHarnessTest {
       assertEquals(12.6 - 0.020 * a[i], v[i], 1e-9, "volts and amps are from the same loop");
     }
     assertTrue(Double.isNaN(meta("comp_volts")), "the fake drivetrain does not compensate");
+  }
+
+  @Test
+  void onAVortexTheBlocksPulsesDoNotTripTheOverspeedStopAtTheDefaultCap() {
+    // 4 V spins a free Vortex wheel at 5.50:1 to 1.64 m/s; the speed cap is 1.0. The stop must
+    // allow for the volts the test itself commands, or the PDH finder can never finish.
+    io.freeSpeedMps = 4.92;
+    tune.setPdhSource(() -> new double[24]);
+    io.chassisMoves = false;
+    envMode.set("BLOCKS");
+    loop(2);
+    send("pdh_map", "ALL");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(700);
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message());
   }
 
   @Test

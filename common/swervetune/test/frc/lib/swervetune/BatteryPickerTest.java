@@ -79,6 +79,23 @@ class BatteryPickerTest {
   }
 
   @Test
+  void aDashboardAlreadyConnectedAtTheFirstLoopIsAskedAgainAfterAPowerOn() {
+    // The usual order: the NT server starts first, Elastic reconnects while the robot code is still
+    // building the drivetrain, and its old pick is waiting at the first loop.
+    BatteryPicker p = new BatteryPicker(nt, List.of(), true);
+    dashboard.set("7");
+    assertEquals("", p.update(0.2, 1, 12.7, true), "maybe the battery from before the swap");
+    assertEquals("", str(SwerveTuneTopics.BATTERY_SELECTED));
+  }
+
+  @Test
+  void aCodeRestartKeepsThePickTheDashboardPutsBack() {
+    BatteryPicker p = new BatteryPicker(nt, List.of(), false);
+    dashboard.set("7");
+    assertEquals("7", p.update(0.2, 1, 12.7, true), "the roboRIO stayed on, so the battery did too");
+  }
+
+  @Test
   void theRosterComesFromTheConfigWithoutDuplicates() {
     SwerveTuneConfig c = SwerveTuneConfig.parse("{\"batteries\": [1, \"2024-3\", 1, \" \", 2.0]}");
     assertEquals(List.of("1", "2024-3", "2"), c.batteries);

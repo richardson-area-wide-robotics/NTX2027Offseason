@@ -179,8 +179,13 @@ final class LiveGains {
     return v == null ? Double.NaN : v;
   }
 
-  /** Applies a new set if the laptop has asked for one. Call every loop. */
-  void poll() {
+  /**
+   * Applies a new set if the laptop has asked for one. Call every loop.
+   *
+   * @param blockedReason why changes can't be applied right now (the FMS is attached, a test is
+   *     running), or null when they can; the same gate as AdvantageScope's edits
+   */
+  void poll(String blockedReason) {
     long seq = applySeq.get();
     if (seq == lastSeq) {
       return;
@@ -188,6 +193,12 @@ final class LiveGains {
     lastSeq = seq;
     if (applyBootId.get() != bootId) {
       status.set("Ignored a gain change meant for an earlier run of the robot program.");
+      appliedSeq.set(seq);
+      return;
+    }
+    if (blockedReason != null) {
+      sync(); // the laptop's boxes go back to what is really running
+      status.set("REFUSED: not applied while " + blockedReason + ".");
       appliedSeq.set(seq);
       return;
     }
