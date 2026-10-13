@@ -45,8 +45,13 @@ final class FakeDrivetrain implements DrivetrainIO {
   double[] wallSlipA;
   final boolean[] slipping = new boolean[4];
   final double[] amps = new double[4];
+  /** Each wheel's acceleration in the last step, m/s^2, for its current. */
+  final double[] accel = new double[4];
   double driveLimitA = 40;
   final List<Integer> limitsSet = new ArrayList<>();
+
+  /** How quickly a wheel follows its command, seconds. A wheel pushing a robot on carpet is slower. */
+  double driveLagS = 0.08;
 
   /** Module free speed at 12 V, m/s: a NEO at 5.50:1 by default; 4.92 for the robots' Vortexes. */
   double freeSpeedMps = 4.12;
@@ -82,7 +87,9 @@ final class FakeDrivetrain implements DrivetrainIO {
         }
         amps[m] = 0.6 * stalled;
       }
-      speed[m] += (target - speed[m]) * Math.min(1, dt / 0.08);
+      double before = speed[m];
+      speed[m] += (target - speed[m]) * Math.min(1, dt / driveLagS);
+      accel[m] = dt > 0 ? (speed[m] - before) / dt : 0;
       position[m] += speed[m] * dt;
       double a = Math.toRadians(steer[m]);
       vx += speed[m] * Math.cos(a) / 4;
@@ -195,7 +202,14 @@ final class FakeDrivetrain implements DrivetrainIO {
 
   @Override
   public double driveAmps(int m) {
-    return wallSlipA != null ? amps[m] : Math.abs(speed[m]) * 3;
+    if (wallSlipA != null) {
+      return amps[m];
+    }
+    // Friction, plus what it takes to speed the wheel up: just the wheel in the air (about 0.3 A
+    // per m/s^2), or a quarter of the robot on the floor (about 5.7). Capped at the limit.
+    double friction = Math.abs(speed[m]) > 0.01 ? 2.0 : 0.0;
+    double perAccel = chassisMoves ? 5.7 : 0.3;
+    return Math.min(driveLimitA, friction + perAccel * Math.abs(accel[m]));
   }
 
   @Override

@@ -12,8 +12,9 @@ import java.util.Locale;
  *   <li>On {@link #BLOCKS} the wheels spin but the chassis must not move, so the gyro, the
  *       accelerometer and any camera will <b>disagree with the wheels by design</b>. Tests there
  *       never use those sensors as ground truth, and the safety supervisor turns the disagreement
- *       around into an interlock: if the gyro sees the chassis turning while the wheels are
- *       driven, the robot is not on blocks and the test stops.
+ *       around into an interlock: if the gyro sees the chassis turning, or a wheel works like one
+ *       carrying weight, the robot is not on blocks and the test stops. "Blocks" is only what
+ *       someone told the tool, so a held deadman is required here too.
  *   <li>On {@link #FIELD} the robot really moves. Every test that spins a wheel needs a held
  *       deadman, is sized to the clear floor you declared, and stops on impact, stall, overspeed or
  *       a driver touching the sticks.
@@ -43,9 +44,13 @@ public enum TestEnvironment {
     this.chassisCanMove = chassisCanMove;
   }
 
-  /** Whether a motion test needs a deadman held for its whole duration. */
+  /**
+   * Whether a motion test needs a deadman held for its whole duration: on blocks too, since
+   * "blocks" is only what someone told the tool, and the deadman is the one thing that proves a
+   * person is watching. The simulator has no robot to watch.
+   */
   public boolean needsDeadman() {
-    return this == FIELD;
+    return this == FIELD || this == BLOCKS;
   }
 
   /**

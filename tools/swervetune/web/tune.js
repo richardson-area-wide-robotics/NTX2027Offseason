@@ -229,8 +229,9 @@ const Tune = (() => {
     if (env === "UNSET") return block("Say where the robot is first: press \"Where: not set\" at the top.");
     if (loop === "straight" && env === "BLOCKS") return block("The Straight line test needs the robot on the floor.");
     if (loop === "slip" && env === "BLOCKS") return block("The Slip current test needs the robot on carpet with a bumper against a wall: set On the floor.");
-    if (loop === "slip" && env === "FIELD") return say("Front bumper flat against a solid wall, every wheel pointing into it. Hold the tester's controller right bumper (or SPACE here) for the whole run.");
-    if (env === "FIELD") return say("On the floor: hold the tester's controller right bumper (or SPACE here) for the whole run.");
+    if (loop === "slip" && env === "FIELD") return say("Front bumper flat against a solid wall, every wheel pointing into it. Hold the deadman for the whole run: the tester's controller right bumper, or Hold to run on screen.");
+    if (env === "FIELD") return say("On the floor: hold the deadman for the whole run (the tester's controller right bumper, or Hold to run on screen).");
+    if (env === "BLOCKS") return say("On blocks: hold the deadman for the whole run (the tester's controller right bumper, or Hold to run on screen).");
     return say("");
   }
 

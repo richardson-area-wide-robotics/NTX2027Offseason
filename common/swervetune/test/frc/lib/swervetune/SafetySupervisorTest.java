@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import frc.lib.swervetune.SafetySupervisor.Action;
 import frc.lib.swervetune.SafetySupervisor.Inputs;
 import frc.lib.swervetune.SafetySupervisor.TestProfile;
+import frc.lib.swervetune.SafetySupervisor.Verdict;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +31,7 @@ class SafetySupervisorTest {
     in.busVolts = 12.5;
     in.horizontalAccelMps2 = 0.1;
     in.horizontalAccelSmoothedMps2 = 0.1;
+    in.controllerDeadman = true;
     return in;
   }
 
@@ -43,6 +45,7 @@ class SafetySupervisorTest {
   @Test
   void fieldWaitsForDeadmanBeforeStartAndAbortsWhenReleased() {
     Inputs in = ok(TestEnvironment.FIELD);
+    in.controllerDeadman = false;
     assertEquals(Action.WAIT, sup.check(in, driving, false).action());
     assertEquals(Action.ABORT, sup.check(in, driving, true).action());
   }
@@ -50,13 +53,72 @@ class SafetySupervisorTest {
   @Test
   void guiDeadmanCountsAsWellAsTheController() {
     Inputs in = ok(TestEnvironment.FIELD);
+    in.controllerDeadman = false;
     in.guiDeadman = true;
     assertTrue(sup.check(in, driving, true).isOk());
   }
 
   @Test
-  void blocksNeedsNoDeadman() {
-    assertTrue(sup.check(ok(TestEnvironment.BLOCKS), steering, true).isOk());
+  void blocksNeedsTheDeadmanToo() {
+    // "Blocks" is only what someone told the tool; a held deadman proves a person is watching.
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    in.controllerDeadman = false;
+    assertEquals(Action.WAIT, sup.check(in, steering, false).action());
+    assertEquals(Action.ABORT, sup.check(in, steering, true).action());
+    in.controllerDeadman = true;
+    assertTrue(sup.check(in, steering, true).isOk());
+  }
+
+  @Test
+  void theSimulatorNeedsNoDeadman() {
+    Inputs in = ok(TestEnvironment.SIM);
+    in.controllerDeadman = false;
+    assertTrue(sup.check(in, steering, true).isOk());
+  }
+
+  private static Inputs wheels(Inputs in, double now, double amps, double speed) {
+    in.nowS = now;
+    in.driveAmps = new double[] {amps, 2, 2, 2};
+    in.wheelSpeedsMps = new double[] {speed, 1, 1, 1};
+    in.moduleNames = new String[] {"frontleft", "frontright", "backleft", "backright"};
+    return in;
+  }
+
+  @Test
+  void aWheelThatWorksLikeItCarriesWeightIsNotOnBlocks() {
+    // On the floor: 20 A for 0.2 s and the wheel gains only 0.5 m/s.
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    for (int k = 0; k <= 10; k++) {
+      Verdict v = sup.check(wheels(in, k * 0.02, 20, k * 0.05), driving, true);
+      if (k < 8) {
+        assertTrue(v.isOk(), "not yet sustained at " + k);
+      } else {
+        assertEquals(Action.ABORT, v.action());
+        assertTrue(v.reason().startsWith("NOT on blocks: the frontleft wheel"), v.reason());
+        return;
+      }
+    }
+  }
+
+  @Test
+  void aWheelSpinningUpInTheAirIsFine() {
+    // In the air: a burst of current while the speed jumps, then friction.
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    double[][] samples = {{30, 0}, {25, 1.6}, {3, 2.4}, {2.5, 2.5}, {2.5, 2.5}, {2.5, 2.5}};
+    for (int k = 0; k < 30; k++) {
+      double[] s = samples[Math.min(k, samples.length - 1)];
+      assertTrue(sup.check(wheels(in, k * 0.02, s[0], s[1]), driving, true).isOk(), "sample " + k);
+    }
+  }
+
+  @Test
+  void aBriefSurgeIsNotCarrying() {
+    // A long run of high current is needed: one that keeps restarting never adds up.
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    for (int k = 0; k < 40; k++) {
+      double amps = k % 4 == 0 ? 20 : 2;
+      assertTrue(sup.check(wheels(in, k * 0.02, amps, 1.0), driving, true).isOk(), "sample " + k);
+    }
   }
 
   @Test

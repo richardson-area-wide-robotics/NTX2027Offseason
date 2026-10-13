@@ -13,9 +13,9 @@ yours, and nothing in the tools will stop you from breaking them:
 
 1. **A person holds the deadman for anything that moves.** Before any test that spins a wheel,
    confirm in this conversation that someone is at the robot, can see it, and is holding the
-   deadman (the tester's controller right bumper, or SPACE in the GUI; never SPACE on the Driver
-   Station laptop, where it is the E-STOP). The CLI keeps the laptop's heartbeat alive; it never
-   holds the deadman for anyone.
+   deadman (the tester's controller right bumper on Driver Station port 1, or the GUI's Hold to
+   run button). On blocks too: "blocks" is only what someone told the tool. The CLI keeps the
+   laptop's heartbeat alive; it never holds the deadman for anyone.
 2. **Only set the environment you were told.** `env --mode BLOCKS` only when a person says every
    wheel is off the ground. `env --mode FIELD --space <m> --side <m>` only with distances a
    person measured. Never guess, and never change the mode to make a refused test run.
@@ -39,8 +39,8 @@ yours, and nothing in the tools will stop you from breaking them:
 
 The robot refuses to start, or aborts, when: the FMS is attached; it is in autonomous; the
 environment is unset; the laptop heartbeat is lost (0.5 s); the gyro isn't reporting; a FIELD
-test has no measured clear space; the deadman is released mid-test; a driver touches a stick; the
-chassis turns while "on blocks"; the robot leaves its space (geofence), hits something (impact),
+test has no measured clear space; the deadman is released mid-test (on blocks or the floor); a driver
+touches a stick; the chassis turns, or a wheel works like it carries weight, while "on blocks"; the robot leaves its space (geofence), hits something (impact),
 pushes against something (stall) or goes faster than asked; the battery starts below 11.8 V on
 the floor (11.0 V on blocks) or sags below 7 V; a motor guard stage stops it. The refusal or
 abort reason comes back in the command's output: read it, act on it, and tell the person.

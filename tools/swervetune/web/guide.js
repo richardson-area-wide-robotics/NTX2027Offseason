@@ -115,9 +115,10 @@ const Guide = (() => {
 
     { id: "directions", env: "BLOCKS", learn: ["inversion", "environment"], title: "On blocks: every wheel drives the right way", where: "On blocks",
       why: "With the robot in the air you can watch each tire. A wheel that rolls backwards fights the other three and drags the robot sideways.",
-      need: ["Blocks under the frame, all four wheels clear", "The tool set to On blocks", "The robot enabled in the Driver Station (Teleop or Test): the first step that turns a motor"],
+      need: ["Blocks under the frame, all four wheels clear", "The tool set to On blocks", "The robot enabled in the Driver Station (Teleop or Test): the first step that turns a motor",
+             "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
       todo: ["Enable the robot in the Driver Station (Teleop or Test mode). The wheels stay still until you press Run.",
-             "Press Run directions and watch the TOP of each tire while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did, then Confirm."],
+             "Press Run directions, then hold the deadman. Watch the TOP of each tire while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did, then Confirm."],
       run: { label: "Run directions", test: "drive_step", args: { s0: 0.4, s1: 0, s2: -0.4, s3: 0, hold_s: 1.5 } },
       status: () => progress.directions === "pass" ? "done" : progress.directions === "fail" ? "attention" : "todo",
       body: () => `<div class="row">${App.modules().map(m => `<label class="row" data-tip="guide.dir"><input type="checkbox" class="g-dir" value="${esc(m)}" ${((progress.dirs || {})[m]) ? "checked" : ""}> ${abbr(m)} rolled forward</label>`).join("")}</div>
@@ -134,7 +135,7 @@ const Guide = (() => {
 
     { id: "steer-blocks", env: "BLOCKS", learn: ["step_response", "kP", "kD", "dead_time", "saturation"], title: "Steering, on blocks", where: "On blocks",
       why: "Get the steering loop stable and quick in the air first, where nothing fights it. It passes at 80 out of 100 here: the floor finishes the job.",
-      need: ["On blocks"],
+      need: ["On blocks", "Someone holding the deadman during each run"],
       todo: ["Open the tuner (Steering, Robot).", "Run, read the advice, press Try this, run again. Repeat until it scores 80 or more.", "Do not save yet: the floor will change the numbers."],
       tune: "steer",
       status: () => graded("steer_step", "BLOCKS", 80) },
@@ -216,7 +217,7 @@ const Guide = (() => {
   const STATE_WORD = { done: "✓ Done", attention: "Needs a look", locked: "Locked" };
   const SAFETY = {
     FIELD: "the robot moves. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot.",
-    BLOCKS: "the wheels spin. All four must be clear of the floor, and hands, hair and cables clear of every wheel.",
+    BLOCKS: "the wheels spin while the deadman is held. All four must be clear of the floor, and hands, hair and cables clear of every wheel.",
   };
 
   // Saves marks a person or a measurement set. In the simulator nothing is ticked: it teaches the

@@ -14,12 +14,13 @@ package frc.lib.swervetune;
  *       makes sure the test records that it was cut short rather than finishing "successfully".
  *   <li><b>Laptop gone</b> stops everything. A test started from a laptop must not keep running
  *       after the laptop that could stop it has disconnected.
- *   <li><b>Deadman</b> on {@link TestEnvironment#FIELD}: nothing that spins a wheel runs unless a
- *       person is holding it. Before a test starts that is a wait; releasing it mid-test aborts,
+ *   <li><b>Deadman</b> on {@link TestEnvironment#FIELD} and {@link TestEnvironment#BLOCKS}:
+ *       nothing that spins a wheel runs unless a person is holding it. Before a test starts that is a wait; releasing it mid-test aborts,
  *       because a step response with a gap in the middle is not a step response.
  *   <li><b>Driver override</b>: touching a stick aborts at once and hands the robot back.
  *   <li><b>Blocks interlock</b>: on blocks the gyro must not see the chassis turning while wheels
- *       are driven. If it does, the robot is on the floor, whatever the laptop was told.
+ *       are driven, and no wheel may work like one carrying weight. If either happens, the robot
+ *       is on the floor, whatever the laptop was told.
  *   <li><b>Geofence, impact, stall, overspeed</b> on the field.
  *   <li><b>Battery</b>: refuse to start on a tired pack, abort on a sag that risks a brownout.
  * </ul>
@@ -83,6 +84,19 @@ public final class SafetySupervisor {
     public double stallSustainS = 0.4;
     /** In a wall push, the chassis moving this far means it is not against a wall, meters. */
     public double wallTravelM = 0.3;
+    /**
+     * On blocks: a drive current above this, held for {@link #carryHoldS} while the wheel's speed
+     * changes by less than {@link #carrySpeedChangeMps}, means the wheel is carrying weight. A
+     * wheel in the air spins up within a few hundredths of a second and the current falls back to
+     * friction (2 to 3 A); one carrying a quarter of a 55 kg robot takes about twenty times longer.
+     * On the practice pod's physics no blocks run held 6 A for more than 0.02 s, and every floor run
+     * that stepped its speed was caught within 0.16 s of the step. To confirm on a robot.
+     */
+    public double carryAmps = 6.0;
+    /** How long a wheel's current must stay above {@link #carryAmps}, seconds. */
+    public double carryHoldS = 0.15;
+    /** A free wheel would change speed by far more than this in that time, m/s. */
+    public double carrySpeedChangeMps = 1.5;
   }
 
   /** Everything the supervisor looks at, gathered fresh each loop. */
@@ -105,6 +119,11 @@ public final class SafetySupervisor {
     public double maxDriveCurrentFraction;
     /** Wheel speed of the module drawing that current, m/s. */
     public double speedAtMaxCurrentMps;
+    /** Each module's drive current, amps, and wheel speed, m/s, for the carrying-weight check. */
+    public double[] driveAmps = new double[0];
+    public double[] wheelSpeedsMps = new double[0];
+    /** Each module's name, for saying which wheel. */
+    public String[] moduleNames = new String[0];
     /** Chassis yaw rate from the heading, deg/s. */
     public double yawRateDps;
     /** Horizontal acceleration magnitude, m/s^2, or NaN if the IMU gives none. Raw: impacts are spikes. */
@@ -138,6 +157,9 @@ public final class SafetySupervisor {
   private double blocksMotionSince = Double.NaN;
   private double brownoutSince = Double.NaN;
   private double stallSince = Double.NaN;
+  /** Per module: when its drive current went above {@link Limits#carryAmps}, and its speed then. */
+  private double[] carrySince = new double[0];
+  private double[] carryFromMps = new double[0];
 
   public SafetySupervisor(Limits limits) {
     this.limits = limits;
@@ -152,6 +174,8 @@ public final class SafetySupervisor {
     blocksMotionSince = Double.NaN;
     brownoutSince = Double.NaN;
     stallSince = Double.NaN;
+    carrySince = new double[0];
+    carryFromMps = new double[0];
   }
 
   /**
@@ -248,6 +272,15 @@ public final class SafetySupervisor {
             "The chassis is moving, so the robot is NOT on blocks. Put it on blocks, or switch"
                 + " the environment to FIELD.");
       }
+      int m = carryingWheel(in);
+      if (m >= 0) {
+        return Verdict.abort(String.format("NOT on blocks: the %s wheel drew over %.0f A for %.2f s"
+                + " while its speed changed only %.2f m/s, so it is pushing weight (the robot's, on the"
+                + " floor) or rubbing on something. A wheel in the air spins up in a few hundredths of"
+                + " a second. Put the robot on blocks, or switch the environment to FIELD.",
+            m < in.moduleNames.length ? in.moduleNames[m] : "module " + m, limits.carryAmps,
+            limits.carryHoldS, Math.abs(Math.abs(in.wheelSpeedsMps[m]) - carryFromMps[m])));
+      }
     }
 
     if (in.env == TestEnvironment.FIELD) {
@@ -292,6 +325,36 @@ public final class SafetySupervisor {
       return Verdict.abort(String.format("Battery sagged to %.1f V. Brownout risk.", in.busVolts));
     }
     return Verdict.OK;
+  }
+
+  /**
+   * The first module whose drive current has stayed above {@link Limits#carryAmps} for
+   * {@link Limits#carryHoldS} while its speed changed by less than {@link Limits#carrySpeedChangeMps}:
+   * a wheel carrying weight. -1 if none.
+   */
+  private int carryingWheel(Inputs in) {
+    int n = Math.min(in.driveAmps.length, in.wheelSpeedsMps.length);
+    if (carrySince.length != n) {
+      carrySince = new double[n];
+      carryFromMps = new double[n];
+      java.util.Arrays.fill(carrySince, Double.NaN);
+    }
+    for (int m = 0; m < n; m++) {
+      double v = Math.abs(in.wheelSpeedsMps[m]);
+      if (!(in.driveAmps[m] > limits.carryAmps)) {
+        carrySince[m] = Double.NaN;
+        continue;
+      }
+      if (Double.isNaN(carrySince[m])) {
+        carrySince[m] = in.nowS;
+        carryFromMps[m] = v;
+      }
+      if (in.nowS - carrySince[m] >= limits.carryHoldS
+          && Math.abs(v - carryFromMps[m]) < limits.carrySpeedChangeMps) {
+        return m;
+      }
+    }
+    return -1;
   }
 
   private enum SustainTimer {

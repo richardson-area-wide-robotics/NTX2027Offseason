@@ -829,10 +829,17 @@ public final class SwerveTune {
       in.displacementM = Math.hypot(p[0] - startPose[0], p[1] - startPose[1]);
     }
     double limit = Math.max(1, io.driveCurrentLimitA());
-    for (int m = 0; m < io.moduleCount(); m++) {
+    int modules = io.moduleCount();
+    in.driveAmps = new double[modules];
+    in.wheelSpeedsMps = new double[modules];
+    in.moduleNames = new String[modules];
+    for (int m = 0; m < modules; m++) {
       double v = Math.abs(io.driveMps(m));
       in.maxWheelSpeedMps = Math.max(in.maxWheelSpeedMps, v);
-      double frac = io.driveAmps(m) / limit;
+      in.driveAmps[m] = io.driveAmps(m);
+      in.wheelSpeedsMps[m] = v;
+      in.moduleNames[m] = io.moduleName(m);
+      double frac = in.driveAmps[m] / limit;
       if (frac > in.maxDriveCurrentFraction) {
         in.maxDriveCurrentFraction = frac;
         in.speedAtMaxCurrentMps = v;

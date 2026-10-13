@@ -80,6 +80,13 @@ input[type=number] { width: 7.5em; font-family: var(--mono); }
 .bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
 .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 .banner-hint { font-weight: 600; }
+.banner-hold { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.banner-hold[hidden] { display: none; }
+/* The deadman: big, and nothing a finger does (scroll, select, long-press menu) takes it away. */
+.hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  min-height: 48px; padding: 10px 22px; border-radius: 10px; border: 2px solid var(--ok); background: var(--panel);
+  color: var(--ink); font-weight: 800; letter-spacing: .02em; cursor: pointer; }
+.hold.held { background: var(--ok); color: var(--on-state); }
 
 .tabs { display: flex; gap: 2px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); overflow-x: auto; }
 .tabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; color: var(--muted);

@@ -157,6 +157,13 @@ class SwerveTuneHarnessTest {
     nt.close();
   }
 
+  /** On blocks, as a person would set it up: the chassis held still, the deadman held. */
+  private void onBlocks() {
+    envMode.set("BLOCKS");
+    io.chassisMoves = false;
+    ds.deadman = true;
+  }
+
   private void loop(int n) {
     for (int i = 0; i < n; i++) {
       io.step(0.02);
@@ -199,7 +206,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void aCommandTakingTheDrivetrainMidTestStopsIt() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("steer_step", "FL", "hold_s", "0.3", "settle_s", "0.2");
     loop(10);
@@ -212,7 +219,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void steerStepOnBlocksRunsToTheEndAndPublishesEverySample() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("steer_step", "FL", "hold_s", "0.3", "settle_s", "0.2");
     loop(1);
@@ -238,7 +245,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void aHotSteeringMotorStopsATestAndSaysWhich() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("steer_step", "FL", "hold_s", "2", "settle_s", "0.5");
     loop(1);
@@ -353,7 +360,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void slipTestIsRefusedOnBlocks() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("slip", "ALL");
     loop(1);
@@ -363,7 +370,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void aCommandForAnEarlierRobotProgramIsIgnored() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     cmdTest.set("steer_step");
     cmdModule.set("ALL");
@@ -386,7 +393,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void straightLineIsRefusedOnBlocks() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     send("straight", "ALL");
     loop(2);
@@ -396,7 +403,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void aSecondCommandWhileBusyIsRefusedAndTheFirstCarriesOn() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     send("steer_step", "ALL");
     loop(5);
@@ -409,7 +416,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void disablingMidRunAbortsCleanlyAndStillPublishesTheData() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     send("steer_step", "ALL");
     loop(30);
@@ -425,7 +432,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void theChassisTurningOnBlocksStopsTheTest() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     send("drive_step", "ALL");
     loop(10);
@@ -433,6 +440,44 @@ class SwerveTuneHarnessTest {
     loop(20);
     assertEquals(SwerveTune.State.ABORTED, tune.state());
     assertTrue(tune.message().contains("NOT on blocks"), tune.message());
+  }
+
+  @Test
+  void onBlocksNothingSpinsUntilTheDeadmanIsHeld() {
+    onBlocks();
+    ds.deadman = false;
+    loop(1);
+    send("drive_step", "ALL");
+    loop(10);
+    assertTrue(ackAccepted(), ackMessage());
+    assertEquals(SwerveTune.State.WAITING, tune.state());
+    assertTrue(tune.message().contains("deadman"), tune.message());
+    assertEquals(0, io.speed[0], 1e-9);
+    ds.deadman = true;
+    loop(3);
+    assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
+    loop(10);
+    ds.deadman = false;
+    loop(1);
+    assertEquals(SwerveTune.State.ABORTED, tune.state());
+    assertTrue(tune.message().contains("Deadman released"), tune.message());
+  }
+
+  @Test
+  void aRobotOnTheFloorCalledBlocksStopsWhenItsWheelsCarryIt() {
+    // B1 in the review: a drive test on carpet, told "blocks", drove 1.4 m without one abort.
+    onBlocks();
+    io.chassisMoves = true; // it is really on the floor,
+    io.driveLagS = 0.3; // so each wheel speeds up as slowly as one pushing a quarter of the robot
+    loop(1);
+    send("drive_step", "ALL");
+    loop(200);
+    assertEquals(SwerveTune.State.ABORTED, tune.state(), tune.message());
+    assertTrue(tune.message().startsWith("NOT on blocks"), tune.message());
+    // The gentle first steps (0.25 and 0.5 m/s) don't draw enough current for long enough to tell;
+    // the 1 m/s step does. The person holding the deadman covers what comes before it.
+    double travel = Math.hypot(io.x, io.y);
+    assertTrue(travel < 1.0, "stopped well short of the whole test's 1.4 m: " + travel);
   }
 
   @Test
@@ -478,7 +523,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void driverTouchingTheSticksTakesTheRobotBack() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     send("drive_step", "ALL");
     loop(10);
@@ -536,7 +581,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void changingTheEnvironmentMidTestStopsIt() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("steer_step", "FL", "hold_s", "2", "settle_s", "0.5");
     loop(1);
@@ -599,7 +644,7 @@ class SwerveTuneHarnessTest {
       return a;
     });
     io.chassisMoves = false; // on blocks
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("pdh_map", "ALL");
     loop(1);
@@ -660,7 +705,7 @@ class SwerveTuneHarnessTest {
     tune.setPdhSource(() -> new double[24]);
     tune.setPdhPowerSource(() -> new double[] {12.6 - 0.020 * amps[0], amps[0]});
     io.chassisMoves = false;
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("pdh_map", "ALL");
     loop(1);
@@ -691,7 +736,7 @@ class SwerveTuneHarnessTest {
     io.freeSpeedMps = 4.92;
     tune.setPdhSource(() -> new double[24]);
     io.chassisMoves = false;
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("pdh_map", "ALL");
     loop(1);
@@ -702,7 +747,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void thePdhMapRefusesWithoutAPdhToRead() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("pdh_map", "ALL");
     loop(1);
@@ -810,7 +855,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void editsWaitUntilNoTestIsRunning() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(2);
     send("steer_step", "FL", "hold_s", "0.3", "settle_s", "0.2");
     loop(5);
@@ -839,7 +884,7 @@ class SwerveTuneHarnessTest {
 
   @Test
   void unknownTestsAndModulesAreNamedInTheRefusal() {
-    envMode.set("BLOCKS");
+    onBlocks();
     loop(1);
     send("wiggle", "ALL");
     loop(1);

@@ -9,8 +9,9 @@ Two safety details:
 * The robot's heartbeat is gated on the **browser**: the page polls ``/api/live`` ten times a
   second, and if it stops (tab closed, laptop asleep) the heartbeat stops and any test on the
   robot ends within half a second.
-* The GUI deadman (hold the space bar) must be refreshed every 100 ms by the page while the key is
-  held. A dropped refresh releases it.
+* The GUI deadman (the page's Hold to run button, held by mouse or touch; never a key, since SPACE
+  is the Driver Station's E-STOP) must be refreshed every 100 ms by the page while it is held. A
+  dropped refresh releases it.
 """
 
 from __future__ import annotations

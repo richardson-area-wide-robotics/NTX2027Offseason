@@ -36,14 +36,15 @@ To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) 
 
 ## Staying safe
 
-- **The deadman.** On the floor, nothing that moves the robot runs unless someone holds the
-  deadman for the whole test: the tester's controller right bumper (Driver Station port 1), or
-  SPACE in the app. Let go and it stops. Don't use SPACE on the Driver Station laptop: there it is
-  the E-STOP. On blocks the deadman isn't required today (decision 20 asks whether it should be),
-  so stand clear of the wheels and keep ABORT or Esc in reach.
+- **The deadman.** On blocks and on the floor, nothing that moves a motor runs unless someone
+  holds the deadman for the whole test: the tester's controller right bumper (Driver Station port
+  1), or **Hold to run** in the app's test banner, pressed with the mouse or a finger. Let go and it
+  stops. No key does it: on the Driver Station laptop, SPACE is the E-STOP. Whoever holds it
+  stands where they can see the wheels.
 - **Tell it where the robot is.** "On blocks" means every wheel is off the ground. "On the
-  floor" needs the clear distance ahead and to each side, measured. If the robot is turning while
-  it's supposed to be on blocks, it stops: it knows it's on the floor.
+  floor" needs the clear distance ahead and to each side, measured. If the robot turns while it's
+  supposed to be on blocks, or a wheel works like it's carrying weight, it stops: it knows it's on
+  the floor.
 - **Stopping.** The red ABORT button or Esc stops everything. The Driver Station's disable is the
   real emergency stop and always works. Touching a joystick also hands the robot straight back.
 - It will not run on a match field (FMS attached) or in autonomous, and it stops if the laptop

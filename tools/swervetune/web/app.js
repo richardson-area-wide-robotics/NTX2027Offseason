@@ -174,7 +174,7 @@ function openEnvironment(preset) {
     <p>This decides which tests may run and how the robot keeps everyone safe. ${sim ? "<b>Simulation is always SIM.</b>" : ""}</p>
     <div class="grid2">
       <div class="envopt" data-mode="BLOCKS"><b>On blocks</b>
-        <span class="hint">Frame on blocks, all four wheels clear of the floor. Wheels spin; the robot must not move. If the gyro sees it turn, the test stops.</span></div>
+        <span class="hint">Frame on blocks, all four wheels clear of the floor. Wheels spin only while someone holds the deadman; the robot must not move. If it turns, or a wheel works like it carries weight, the test stops.</span></div>
       <div class="envopt" data-mode="FIELD"><b>On the floor</b>
         <span class="hint">It will really drive. Every motion test needs the deadman held, fits in the space below, and stops on impact or any stick.</span></div>
     </div>
@@ -196,7 +196,7 @@ function openEnvironment(preset) {
       $("#field-opts", root).hidden = mode !== "FIELD";
       $("#env-confirm-text", root).textContent = mode === "FIELD"
         ? "People are clear of the robot's path, and the person holding the deadman can see the robot."
-        : "All four wheels are off the floor and free to spin, and hands are clear of them.";
+        : "All four wheels are off the floor and free to spin, hands are clear of them, and the person holding the deadman can see them.";
     };
     $$(".envopt", root).forEach(o => o.onclick = () => { mode = o.dataset.mode; sync(); });
     $("#env-confirm", root).onchange = e => { $("#env-save", root).disabled = !e.target.checked; };
@@ -216,28 +216,35 @@ function openEnvironment(preset) {
   });
 }
 
-// ------------------------------------------------------------------ deadman: hold SPACE
-let deadmanTimer = null;
-function typing() {
-  const a = document.activeElement;
-  return a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT");
-}
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { abortNow(); if (!$("#modal").hidden) App.closeModal(); return; }
-  if (e.code === "Space" && !typing()) {
-    e.preventDefault();
-    if (!deadmanTimer) {
-      const send = () => App.api("/api/deadman", { held: true });
-      send();
-      deadmanTimer = setInterval(send, 100);
-    }
-  }
+  if (e.key === "Escape") { abortNow(); if (!$("#modal").hidden) App.closeModal(); }
 });
+
+// ------------------------------------------------------------------ deadman: the Hold to run button
+// Held by mouse or touch, refreshed every 100 ms; anything that could mean "let go" lets go. Never a
+// key: on the Driver Station laptop SPACE is the Driver Station's E-STOP, whatever has focus.
+let deadmanTimer = null;
+function holdDeadman(e) {
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  e.preventDefault();
+  try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) { /* released anyway on pointerup */ }
+  if (deadmanTimer) return;
+  const send = () => App.api("/api/deadman", { held: true });
+  send();
+  deadmanTimer = setInterval(send, 100);
+  $("#hold").classList.add("held");
+  $("#hold").textContent = "Holding: let go to stop";
+}
 function releaseDeadman() {
   if (deadmanTimer) { clearInterval(deadmanTimer); deadmanTimer = null; App.api("/api/deadman", { held: false }); }
+  $("#hold").classList.remove("held");
+  $("#hold").textContent = "Hold to run";
 }
-document.addEventListener("keyup", e => { if (e.code === "Space") releaseDeadman(); });
+$("#hold").addEventListener("pointerdown", holdDeadman);
+["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => $("#hold").addEventListener(ev, releaseDeadman));
+$("#hold").addEventListener("contextmenu", e => e.preventDefault());  // a long press on a phone
 window.addEventListener("blur", releaseDeadman);
+document.addEventListener("visibilitychange", () => { if (document.hidden) releaseDeadman(); });
 
 // ------------------------------------------------------------------ polling
 // A chip's classes: "chip", its own (data-chip), and its state. Rewritten on every repaint, so
@@ -258,7 +265,7 @@ function paintHeader() {
   if (on && st.target && document.activeElement !== $("#target")) $("#target").value = st.target;
   const env = App.env();
   ["env-chip", "bus-chip", "battery-chip", "tags-chip"].forEach(id => { $("#" + id).hidden = !on; });
-  $("#deadman-chip").hidden = !(on && env === "FIELD");
+  $("#deadman-chip").hidden = !(on && (env === "FIELD" || env === "BLOCKS"));
   if (on && live) {
     const m = live.mode;
     setChip($("#mode-chip"), (st.robot && st.robot.name ? st.robot.name + " · " : "") + (MODE_WORD[m] || m),
@@ -285,13 +292,14 @@ function paintHeader() {
   const banner = $("#banner");
   const running = t.running || status.state === "RUNNING" || status.state === "WAITING";
   banner.hidden = !running;
+  if (!running && deadmanTimer) releaseDeadman();
   if (running) {
     const waiting = status.state === "WAITING" || t.state === "WAITING";
     banner.className = "banner" + (waiting ? " waiting" : "");
     $("#banner-state").textContent = testName(status.test || t.test || "test") + " · " + (status.state || t.state || "");
     $("#banner-msg").textContent = status.message || t.message || "";
     $("#banner-bar").style.width = Math.round(100 * (status.progress || t.progress || 0)) + "%";
-    $("#banner-hint").hidden = !(env === "FIELD");
+    $("#banner-hold").hidden = !(env === "FIELD" || env === "BLOCKS");
   }
 }
 
