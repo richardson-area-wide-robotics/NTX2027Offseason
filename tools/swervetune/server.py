@@ -26,7 +26,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, battery, camcal, contract as C, diagnose, explain, fieldsurvey, geometry, logsummary,
+from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
+               logsummary,
                monitor, motorinv, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -562,6 +563,53 @@ def api_battery_pick(body):
     return {"ok": True, "id": bid}
 
 
+_CONTROLLER_STEPS = {"rest": controllers.rest, "sticks": controllers.sticks, "returns": controllers.returns,
+                     "triggers": controllers.triggers, "buttons": controllers.buttons}
+
+
+def api_controllers_code(_query=None):
+    """The deadbands the robot code applies to the sticks."""
+    if not S.project:
+        return {"ok": True, "deadbands": []}
+    S.reload_project()
+    return {"ok": True, "project": S.project.name, "deadbands": controllers.code_deadbands(S.project)}
+
+
+def api_controllers_step(body):
+    fn = _CONTROLLER_STEPS.get((body or {}).get("step"))
+    if not fn:
+        return {"ok": False, "error": "Which step?"}
+    samples = body.get("samples") or []
+    out = fn(samples)
+    out.update(ok=True, interval_ms=controllers.update_interval_ms(samples), n=len(samples))
+    return out
+
+
+def api_controllers_report(body):
+    db = controllers.code_deadbands(S.project) if S.project else []
+    out = controllers.report((body or {}).get("steps") or {}, db)
+    out["ok"] = True
+    return out
+
+
+def api_controllers_save(body):
+    b = body or {}
+    label = str(b.get("label") or "").strip()
+    if not label:
+        return {"ok": False, "error": "Name the controller first (Driver, Operator, Spare 1...)."}
+    rep = b.get("report") or {}
+    entry = {"when": time.strftime("%Y%m%d-%H%M%S"), "label": label, "device": str(b.get("device") or "")[:120],
+             "worst_offset": rep.get("worst_offset"), "recommended_deadband": rep.get("recommended_deadband"),
+             "verdict": rep.get("verdict"), "problems": [f["title"] for f in rep.get("findings") or []
+                                                         if f.get("level") in ("warn", "error")]}
+    runs.controller_log_add(entry)
+    return {"ok": True, "entry": entry}
+
+
+def api_controllers_history(_query=None):
+    return {"ok": True, "history": runs.controller_log()[-200:]}
+
+
 def api_wiring(query=None):
     """The map, every device, the bus lengths and the live diagnosis (or a practice fault, or a
     moment from a match log)."""
@@ -1018,7 +1066,8 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
        "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
-       "/api/motors/inventory": api_motor_inventory, "/api/battery": api_battery}
+       "/api/motors/inventory": api_motor_inventory, "/api/battery": api_battery,
+       "/api/controllers/code": api_controllers_code, "/api/controllers/history": api_controllers_history}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -1031,7 +1080,9 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
         "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve,
         "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,
-        "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro, "/api/battery/pick": api_battery_pick}
+        "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro, "/api/battery/pick": api_battery_pick,
+        "/api/controllers/step": api_controllers_step, "/api/controllers/report": api_controllers_report,
+        "/api/controllers/save": api_controllers_save}
 
 
 class Handler(BaseHTTPRequestHandler):

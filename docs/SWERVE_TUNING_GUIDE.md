@@ -56,6 +56,7 @@ To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) 
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. |
 | **Tune** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, where the cameras sit, and where the field's AprilTags really are. |
+| **Controllers** | Checks the drive team's controllers, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
 | **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. |
 | **Config** | Checks the swerve config files for mistakes, with one-click fixes. |
 | **Runs** | Every saved test, and **Match logs**: what went wrong in a match and where to look. |
@@ -128,6 +129,25 @@ then measures that battery, and **How each battery is doing** in the picker show
 the season. A loose Anderson connector or main-breaker bolt looks exactly like a tired battery, so
 check those before retiring one. The list of numbers lives in `swervetune.json` (`"batteries"`);
 **Edit the battery list** changes it.
+
+## The drive team's controllers
+
+Plug a controller into the laptop with USB, open **Controllers**, press any button on it, and name
+it (Driver, Operator, Spare 1). Then run the five steps; it takes about a minute:
+
+1. **Hands off**: where each stick rests when nobody touches it.
+2. **Circle the sticks**: whether each reaches full deflection in every direction.
+3. **Flick and let go**: whether the spring brings it back to center every time.
+4. **Squeeze the triggers**: 0 at rest, 1 squeezed.
+5. **Press every button**: each press seen once. A worn button "bounces", and the robot sees a
+   double-tap.
+
+The report says whether the controller is fit for a match and what deadband it needs. Peashooter's
+code ignores stick values under 0.1, Black team's under 0.08; a stick that drifts past that makes
+the robot creep by itself. Check every controller at the start of an event and after one is
+dropped, and save each check: **Every controller checked** shows which ones are wearing out.
+Xbox controllers have no gyro (and the Driver Station can't read a PlayStation controller's), so
+drift here means the sticks.
 
 ## After a match
 

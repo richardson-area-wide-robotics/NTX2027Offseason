@@ -18,6 +18,14 @@ RUNS = os.path.join(HERE, "runs")
 REPO = os.path.dirname(os.path.dirname(HERE))
 
 
+# Ledgers that aren't runs live apart, so nothing reading runs/*.json mistakes one for a run.
+DATA = os.path.join(RUNS, "data")
+
+
+def _is_run(d):
+    return isinstance(d, dict) and bool(d.get("test"))
+
+
 def _slug(s):
     return re.sub(r"[^A-Za-z0-9]+", "-", str(s)).strip("-").lower() or "x"
 
@@ -55,6 +63,8 @@ def list_runs(limit=50):
                 d = json.load(fh)
         except (OSError, ValueError):
             continue
+        if not _is_run(d):
+            continue
         rep = d.get("report") or {}
         out.append({"file": os.path.basename(f), "test": d.get("test"), "module": d.get("module"),
                     "env": d.get("env"), "outcome": d.get("outcome"), "saved": d.get("saved"),
@@ -64,7 +74,7 @@ def list_runs(limit=50):
     return out
 
 
-LEDGER = os.path.join(RUNS, "batteries.json")
+LEDGER = os.path.join(DATA, "batteries.json")
 
 
 def battery_ledger():
@@ -82,12 +92,34 @@ def battery_ledger_add(key, when, battery_id, fit, source):
         return False
     led = battery_ledger()
     led[key] = {"when": when, "id": battery_id, "fit": fit, "source": source}
-    os.makedirs(RUNS, exist_ok=True)
+    os.makedirs(os.path.dirname(LEDGER), exist_ok=True)
     tmp = LEDGER + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(led, fh, indent=1)
     os.replace(tmp, LEDGER)
     return True
+
+
+CONTROLLER_LOG = os.path.join(DATA, "controllers.json")
+
+
+def controller_log():
+    """Every controller check saved, oldest first."""
+    try:
+        with open(CONTROLLER_LOG, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return []
+
+
+def controller_log_add(entry):
+    log = controller_log()
+    log.append(entry)
+    os.makedirs(os.path.dirname(CONTROLLER_LOG), exist_ok=True)
+    tmp = CONTROLLER_LOG + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(log[-1000:], fh, indent=1)
+    os.replace(tmp, CONTROLLER_LOG)
 
 
 def ff_history(robot, blocks, before=None, exclude=None, limit=200, env=None):
@@ -106,6 +138,8 @@ def ff_history(robot, blocks, before=None, exclude=None, limit=200, env=None):
             with open(f, encoding="utf-8") as fh:
                 d = json.load(fh)
         except (OSError, ValueError):
+            continue
+        if not _is_run(d):
             continue
         rep = d.get("report") or {}
         if (d.get("test") != "drive_ff" or d.get("practice") or not rep.get("modules")
