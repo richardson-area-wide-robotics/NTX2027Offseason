@@ -615,8 +615,9 @@ table.t td > select { padding-block: 1px; }
   .tune-right > .panes { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
   .tune-right .pane { min-height: 0; overflow-y: auto; }
   /* The two graphs share what the screen leaves them, 3:2 (about 245 and 163 px at 1920x1080). */
-  #tab-tune canvas.plot { height: max(180px, calc((var(--work-h) - 420px) * .6)); }
-  #tab-tune canvas.plot.short { height: max(120px, calc((var(--work-h) - 420px) * .4)); }
+  #tab-tune canvas.plot { height: max(150px, calc((var(--work-h) - 420px) * .6)); }
+  #tab-tune canvas.plot.short { height: max(100px, calc((var(--work-h) - 420px) * .4)); }
+  #tab-tune #run-view { gap: 6px; }
 }
 
 /* Troubleshoot: the checks, and one drawing beside them for the check being answered. */
@@ -625,6 +626,43 @@ table.t td > select { padding-block: 1px; }
 .tr2.has-map { grid-template-columns: minmax(480px, 1fr) minmax(0, 1.25fr); }
 .tr-where { --frc-h: calc(var(--work-h) - 260px); position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); }
 @media (max-width: 900px) { .tr2.has-map { grid-template-columns: minmax(0, 1fr); } .tr-where { position: static; } }
+
+/* ---------------------------------------------------------------- laptops at 125% (about 1536 x 740)
+   The same one-screen rule with less room: a narrower rail, and long lists scroll in their own box. */
+@media (max-width: 1700px) {
+  :root { --rail-w: 300px; }
+  #tab-tune .steps button { padding: 1px 6px; font-size: 11px; }
+  #tab-tune .tune-plots > .panel { padding: 10px 12px; }
+}
+@media (min-width: 901px) {
+  /* Live: the robot drawing sized to the screen, not to its column. */
+  #tab-live .robot-svg { width: min(100%, 520px, calc(var(--work-h) - 200px)); }
+  /* Motors: the side column (recent changes, override, the guard's rules) scrolls by itself. */
+  #motors-live > .motors-side { max-height: calc(var(--work-h) - 2px); overflow-y: auto; }
+  /* Config: the robot's files in two columns; the findings and PathPlanner's lists in their own boxes. */
+  #cfg-files { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  #cfg-files > :first-child { grid-row: span 2; }
+  #cfg-findings .cfg-list { max-height: calc(var(--work-h) - 90px); overflow-y: auto; }
+  .pp-cols > * { max-height: calc(var(--work-h) - 90px); overflow-y: auto; }
+  /* Wiring: the PDH drawing sized to the section. */
+  #w-pdh-map { --frc-h: calc(var(--work-h) - 150px); }
+  /* Troubleshoot: compact cards (the full text is in each card's tip); the checks scroll in their box. */
+  .symptom { padding: 8px 12px; gap: 2px; }
+  .symptom .d { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 12px; }
+  .tr-view { max-height: var(--work-h); grid-template-rows: auto minmax(0, 1fr); }
+  .tr2 { min-height: 0; }
+  .tr2 > * { min-height: 0; max-height: calc(var(--work-h) - 150px); overflow-y: auto; }
+  .tr-where { position: static; }
+  /* Tune: two gains to a row in the narrow left column. */
+  .tune-left .gains { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* The motor inventory: the two controller pictures sit in the heading row, small. */
+  .inv-art .ctl-pics { gap: 10px; }
+  .inv-art .ctl-pics figure { grid-template-columns: auto auto; align-items: center; gap: 6px; }
+  .inv-art .ctl-pics img { width: 64px; padding: 2px; }
+  .inv-art .ctl-credit { margin: 0; }
+  #inv-body .tblwrap { max-height: calc(var(--work-h) - 150px); overflow: auto; }
+  #inv-body table.t thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+}
 
 /* ---------------------------------------------------------------- phones and touch screens
    Last in the file, so these win over the base rules above them. */

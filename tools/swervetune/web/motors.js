@@ -25,12 +25,12 @@
             </table>
           </div>
         </div>
+      </div>
+      <div class="stack motors-side">
         <div class="panel">
           <h3 data-tip="motors.events">Recent changes</h3>
           <ul id="motor-events" class="small mono" style="margin:0;padding-left:18px"></ul>
         </div>
-      </div>
-      <div class="stack">
         <div class="panel">
           <h3 data-tip="motors.override"><span class="term" tabindex="0" data-learn="thermal_override">Thermal override</span></h3>
           ${HowTo.block(`<p class="small">For the end of a match, when losing a motor costs more than the motor. A motor the guard
@@ -68,6 +68,7 @@
     <div class="panel" id="motor-inventory">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
         <h2 data-tip="motors.inventory">Motors and controllers</h2>
+        <div id="inv-art" class="frc-slot inv-art"></div>
         <button class="btn" id="inv-refresh" data-tip="motors.refresh">Check again</button>
       </div>
       ${HowTo.steps({ note: "What each controller is, three ways: what the code creates, what the controller itself reports over CAN (when connected), and what motor it drives, set here by hand or read from the code. A drive_ff run also measures the drive motors' speed per volt, which tells a NEO from a Vortex.",
@@ -76,7 +77,6 @@
           "Pick each motor's type where it says <i>not said anywhere</i>, then <b>Save the motor inventory</b>.",
           "Old firmware: update it with REV Hardware Client, robot connected by USB."],
         good: "every row the same three ways, every motor named." })}
-      <div id="inv-art" class="frc-slot"></div>
       <div id="inv-body"><p class="hint">Reading the code…</p></div>
     </div></div></div>`;
 
@@ -221,12 +221,12 @@
     const art = $("#inv-art", root);
     if (t !== "motors" || !art || art.dataset.drawn) return;
     art.dataset.drawn = "1";
-    const [mx, fx] = await Promise.all([FrcMap.thumb("sparkmax", 160), FrcMap.thumb("sparkflex", 160)]);
+    const [mx, fx] = await Promise.all([FrcMap.thumb("sparkmax", 120), FrcMap.thumb("sparkflex", 120)]);
     art.innerHTML = `<div class="ctl-pics">
         <figure>${mx ? `<img src="${mx}" alt="A SPARK MAX">` : ""}<figcaption class="small"><b>SPARK MAX</b>: NEO, NEO 2.0, NEO 550</figcaption></figure>
         <figure>${fx ? `<img src="${fx}" alt="A SPARK Flex docked on a NEO Vortex">` : ""}<figcaption class="small"><b>SPARK Flex</b>, docked on a NEO Vortex</figcaption></figure>
       </div>
-      <p class="small muted">Drawings from <a href="https://docs.wpilib.org/en/stable/docs/controls-overviews/control-system-hardware.html" target="_blank" rel="noopener">FRC Control System - REV</a>
+      <p class="small muted ctl-credit">Drawings from <a href="https://docs.wpilib.org/en/stable/docs/controls-overviews/control-system-hardware.html" target="_blank" rel="noopener">FRC Control System - REV</a>
         (Team 3161, WPILib), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p>`;
   });
 })();

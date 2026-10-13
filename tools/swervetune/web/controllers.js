@@ -60,11 +60,11 @@
         </div>
         <div id="ct-axes" class="small mono"></div>
         <div id="ct-buttons" class="ct-buttons" role="list" aria-label="Buttons"></div>
-        <p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
+        <details class="small"><summary>What the drawing shows</summary><p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
           <span class="ct-key-code">Dashed outline</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>):
           a circle where the deadband is round (distance from center), a square where each axis has its own.
           <span class="ct-key-rec">Green outline</span>: what this controller needs, once measured. A button turns green with ✓ once seen;
-          the number is the one robot code uses.</p>
+          the number is the one robot code uses.</p></details>
       </div>
       <div class="panel">
         <h3 data-tip="ct.steps">Steps</h3>
