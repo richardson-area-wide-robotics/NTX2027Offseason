@@ -643,12 +643,30 @@ SYMPTOMS = [
 BY_ID = {s["id"]: s for s in SYMPTOMS}
 
 
-def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
-    """Pre-answers the checks the tool can judge on its own.
+# Questions the configuration files fully answer: when the linter finds nothing, "fine" is offered
+# as a suggestion. Every other question a clean config can't settle - copied offsets look like real
+# ones, all four modules inverted alike look consistent, a rise time needs a run, a slip current
+# needs measuring - so nothing is suggested there, and a person answers.
+SETTLED_BY_CONFIG = {
+    ("wheel_backwards", "Do all four modules have the same drive inversion"),
+    ("pod_oscillates", "Is the steering ramp rate 0"),
+    ("pod_oscillates", "Is the drive kP gentle"),
+    ("pod_slow", "Is the steering ramp rate 0"),
+    ("robot_slow", "Is the max speed handed to YAGSL"),
+    ("brownout", "Is four times the drive current limit sensible"),
+    ("auto_inaccurate", "Does PathPlanner's robot config match YAGSL's"),
+    ("twitchy", "Is the max speed handed to YAGSL realistic"),
+    ("twitchy", "Is the drive kP gentle"),
+}
 
-    Returns the symptom with each check marked ``auto_answer``: ``"no"`` when evidence shows the
-    problem, ``"yes"`` when every piece of evidence is clean, absent when only a person can tell.
-    ``first_failing`` is the index of the first check the evidence says fails.
+
+def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
+    """Pre-answers what the evidence settles.
+
+    Each check may get ``auto_answer = "no"`` when evidence shows the problem (the linter or the
+    live monitor found it), and ``suggest = "yes"`` when the configuration fully answers the question
+    and the linter found nothing. A suggestion is never an answer: the person still presses Yes or
+    No. ``first_failing`` is the index of the first check the evidence says fails.
     """
     sym = BY_ID[symptom_id]
     lint_ids = {f["id"] for f in lint_findings}
@@ -666,8 +684,9 @@ def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
                 c["evidence"] = hits
                 if first is None:
                     first = i
-            elif "lint" in auto and "monitor" not in auto:
-                c["auto_answer"] = "yes"
+            elif "lint" in auto and "monitor" not in auto and any(
+                    symptom_id == sid and c["q"].startswith(prefix) for sid, prefix in SETTLED_BY_CONFIG):
+                c["suggest"] = "yes"
         checks.append(c)
     out["checks"] = checks
     out["first_failing"] = first

@@ -59,7 +59,7 @@ const Trouble = (() => {
           <div class="row" style="justify-content:space-between"><span class="q" id="tq-${i}">${a === "yes" ? `<span class="level ok">fine</span> ` : ""}${i + 1}. ${esc(k.q)}</span><span class="chip" data-tip="trouble.where" data-quiet>${esc(whereWord(k.where))}</span></div>
           ${a === "yes" ? "" : `<div class="hint">${Learn.link(k.how, 2)}</div>`}
           ${k.auto_answer === "no" ? `<div class="small"><span class="level error" data-tip="trouble.found" data-quiet>tool found</span> ${esc((k.evidence || []).join(", "))}</div>` : ""}
-          ${k.auto_answer === "yes" ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>tool checked</span> nothing wrong in the configuration</div>` : ""}
+          ${k.suggest === "yes" && a === null ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>config looks fine</span> the configuration check found nothing wrong here: press Yes if you agree</div>` : ""}
           ${a === "no" ? `<div class="callout safety"><b>Cause:</b> ${esc(k.if_no)}<br><b>Fix:</b> ${esc(k.fix)}</div>
              <div class="row">${actionButton(k.action)}<button class="btn small" data-redo="${i}" data-tip="trouble.redo" data-quiet>I fixed it, check again</button></div>` : ""}
           ${i === at && a === null ? `<div class="row"><button class="btn small primary" data-yes="${i}" aria-describedby="tq-${i}" data-tip="trouble.yes" data-quiet>Yes</button>
@@ -67,7 +67,7 @@ const Trouble = (() => {
         </div>`;
       }).join("")}</div>
       ${failed < 0 && firstOpen < 0 ? `<div class="panel"><b>Every usual cause checked out.</b>
-        <p>Record a capture while the problem happens (Guide, Sensor health, or the Tune tab), then bring the saved run to a mentor - the Runs tab has the data.</p></div>` : ""}
+        <p>Record a capture while the problem happens (the Guide's Sensor health step), then bring the saved run to a mentor - the Runs tab has the data.</p></div>` : ""}
     </div>`;
     $("#tr-back", root).onclick = paintList;
     $$("[data-yes]", root).forEach(b => b.onclick = () => answer(+b.dataset.yes, "yes"));

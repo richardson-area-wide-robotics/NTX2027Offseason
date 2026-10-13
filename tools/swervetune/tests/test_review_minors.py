@@ -4,7 +4,7 @@ import math
 import os
 import unittest
 
-from swervetune import advisor, battery, ppcheck, yagslcfg as Y
+from swervetune import advisor, battery, diagnose, ppcheck, yagslcfg as Y
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -19,6 +19,31 @@ def capture(seconds, drift_deg_per_min):
         ch[f"m{i}.steer_motor"] = [10.0] * n
     return {"test": "capture", "env": "BLOCKS", "outcome": "DONE", "channels": ch,
             "robot": {"modules": ["frontleft", "frontright", "backleft", "backright"]}}
+
+
+class TroubleshooterNeverAnswersForAPersonTest(unittest.TestCase):
+    """A clean config check used to lock hands-on questions as "fine" with no way to say No."""
+
+    def test_questions_a_clean_config_cant_settle_get_nothing(self):
+        sym = diagnose.evaluate("pod_wrong_direction", lint_findings=[])
+        for c in sym["checks"]:
+            self.assertNotIn("auto_answer", c, c["q"])
+            self.assertNotIn("suggest", c, c["q"])
+
+    def test_a_question_the_config_settles_gets_a_suggestion_not_an_answer(self):
+        c = diagnose.evaluate("pod_oscillates", lint_findings=[])["checks"][0]
+        self.assertEqual(c.get("suggest"), "yes")
+        self.assertNotIn("auto_answer", c)
+
+    def test_evidence_still_answers_no(self):
+        sym = diagnose.evaluate("pod_oscillates", lint_findings=[{"id": "steer_ramp"}])
+        self.assertEqual(sym["checks"][0]["auto_answer"], "no")
+        self.assertEqual(sym["first_failing"], 0)
+
+    def test_every_settled_question_exists(self):
+        for sid, prefix in diagnose.SETTLED_BY_CONFIG:
+            qs = [c["q"] for c in diagnose.BY_ID[sid]["checks"] if c["q"].startswith(prefix)]
+            self.assertEqual(len(qs), 1, (sid, prefix))
 
 
 class NextBatteryTest(unittest.TestCase):
