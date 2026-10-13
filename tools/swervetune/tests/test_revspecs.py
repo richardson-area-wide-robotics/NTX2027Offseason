@@ -95,6 +95,44 @@ class DocsTest(unittest.TestCase):
             self.assertIn(c["latest_firmware"], text)
         self.assertIn(R.MAXSWERVE["part"], text)
 
+    @staticmethod
+    def _table(text, first_header):
+        """A markdown table's rows as {first cell: [the other cells]}, from the one whose header row
+        starts with ``first_header``."""
+        lines = text.splitlines()
+        start = next(i for i, ln in enumerate(lines) if ln.startswith("|") and ln.split("|")[1].strip() == first_header)
+        rows = {}
+        for ln in lines[start + 2:]:
+            if not ln.startswith("|"):
+                break
+            cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+            rows[cells[0]] = cells[1:]
+        return rows
+
+    def test_the_motor_table_matches_the_numbers_the_tools_use(self):
+        text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
+        rows = self._table(text, "")
+        order = ["neo", "neo2", "vortex", "neo550"]
+        first = lambda cell: float(re.match(r"[\d.]+", cell.replace(",", "")).group())  # noqa: E731
+        for field, key, scale in (("Kv (rpm per volt)", "kv_rpm_per_v", 1), ("Free speed", "free_rpm", 1),
+                                  ("Free current", "free_a", 1), ("Stall current", "stall_a", 1),
+                                  ("Stall torque", "stall_nm", 1), ("Peak power", "peak_w", 1),
+                                  ("Weight", "mass_kg", 1000)):
+            for cell, k in zip(rows[field], order):
+                self.assertAlmostEqual(first(cell), R.MOTORS[k][key] * scale, places=3, msg=(field, k, cell))
+        self.assertEqual(rows["Part"], [R.MOTORS[k]["part"] for k in order])
+
+    def test_the_maxswerve_table_matches_the_ratios_and_free_speeds(self):
+        text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
+        rows = self._table(text, "REV's name")
+        self.assertEqual(len(rows), len(ratios.MAXSWERVE_DRIVE))
+        for name, ratio in ratios.MAXSWERVE_DRIVE:
+            short = name.split(":")[0].replace("MAXSwerve ", "")
+            ratio_cell, _, _, neo, vortex = rows[short]
+            self.assertAlmostEqual(float(ratio_cell.split(":")[0]), ratio, delta=0.005, msg=short)
+            self.assertAlmostEqual(float(neo.split()[0]), Y.free_speed_mps("neo", ratio, 3.0), delta=0.015, msg=short)
+            self.assertAlmostEqual(float(vortex.split()[0]), Y.free_speed_mps("vortex", ratio, 3.0), delta=0.015, msg=short)
+
 
 if __name__ == "__main__":
     unittest.main()
