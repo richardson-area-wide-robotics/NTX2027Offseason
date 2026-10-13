@@ -467,6 +467,20 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .part-job { border-left: 3px solid var(--accent); }
 .linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; text-align: left; }
 
+/* ---------------------------------------------------------------- the robot as FIRST draws it
+   The drawing is white in both themes, so its caption and labels carry their own colors. */
+.frcmap { margin: 0; background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 6px; display: grid; gap: 4px; }
+.frcmap svg { width: 100%; height: auto; max-height: 72vh; display: block; }
+.frcmap figcaption { color: #4a5663; padding: 0 4px; }
+.frcmap figcaption a { color: #0b5f69; }
+.frc-notours { fill: #fff; opacity: .84; }
+.frc-notours-t { fill: #4a5663; text-anchor: middle; dominant-baseline: middle; font-family: var(--sans); }
+.frc-dim { fill: #fff; opacity: .62; }
+.frc-ring { fill: none; }
+.frc-tag { text-anchor: middle; font-family: var(--sans); font-weight: 600; }
+.frc-can { stroke-width: 7px !important; filter: drop-shadow(0 0 5px #b8c400); }
+.frc-slot:empty { display: none; }
+
 /* ---------------------------------------------------------------- phones and touch screens
    Last in the file, so these win over the base rules above them. */
 /* Phones: the header wrapped to four rows (29% of the screen) with ABORT alone on the last one. ABORT

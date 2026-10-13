@@ -6,6 +6,7 @@ const Wiring = (() => {
   const root = $("#tab-wiring");
   const SVGNS = "http://www.w3.org/2000/svg";
   let data = null, editing = null, demo = "", timer = null, focus = null, logAt = null;
+  let mapFocus, mapFinding = null, ohmsDrawn = false;
   // Findings from this page's own tools (the wiggle test, the PDH finder), drawn on the map too.
   let extra = [];
 
@@ -33,11 +34,13 @@ const Wiring = (() => {
           <span>Click a box (or Tab to it and press Enter) to see its details below.</span>
         </div>
         <div id="w-detail" class="callout" hidden></div>
+        <div id="w-detail-map" class="frc-slot"></div>
       </div>
       <div class="grid2">
         <div class="panel">
           <h3 data-tip="wiring.findings">Where to look</h3>
           <div id="w-findings"></div>
+          <div id="w-where-map" class="frc-slot"></div>
         </div>
         <div class="stack">
           <div class="panel" id="w-ohms-panel">
@@ -45,6 +48,7 @@ const Wiring = (() => {
             ${HowTo.steps({ need: "A multimeter. The robot <b>off</b>: a powered device makes the reading meaningless.",
               steps: ["Multimeter on ohms.", "Probes on CAN-H (yellow) and CAN-L (green) at any free CAN plug.", "Type the reading and press <b>Check</b>."],
               good: "about 60 Ω: the two terminators, one at each end of the chain." })}
+            <div id="w-ohms-map" class="frc-slot"></div>
             <div class="row"><label class="row small" data-tip="wiring.ohms-in">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
           </div>
@@ -53,7 +57,8 @@ const Wiring = (() => {
       </div>
       <div class="panel">
         <h3 data-tip="wiring.pdh"><span class="term" tabindex="0" data-learn="power_path">PDH ports</span></h3>
-        <div id="w-pdh" class="pdh-grid"></div>
+        <div id="w-pdh-map" class="frc-slot"></div>
+        <details class="small"><summary data-tip="wiring.pdh-table">The ports as a table</summary><div id="w-pdh" class="pdh-grid"></div></details>
       </div>
       <div class="panel" id="w-find">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
@@ -133,7 +138,7 @@ const Wiring = (() => {
     const svg = $("#w-svg", root);
     svg.innerHTML = "";
     const details = {};
-    const W = Math.max(640, svg.clientWidth || 900), bw = 150, bh = 76, gx = 36, gy = 54, pad = 26;
+    const W = Math.max(640, svg.clientWidth || 900), bw = 196, bh = 76, gx = 36, gy = 54, pad = 26;
     const perRow = Math.max(2, Math.floor((W - 2 * pad + gx) / (bw + gx)));
     const pos = chain.map((n, i) => {
       const r = Math.floor(i / perRow), c = i % perRow;
@@ -180,6 +185,11 @@ const Wiring = (() => {
         r && Number.isFinite(r.bus_volts) ? `supply at the controller ${fmt(r.bus_volts, 2)} V` : null].filter(Boolean);
       el("rect", { x: p.x - 4, y: p.y - 4, width: bw + 8, height: bh + 8, rx: 11, class: "ring" }, g);
       el("rect", { x: p.x, y: p.y, width: bw, height: bh, rx: 8, class: "box" }, g);
+      // FIRST's drawing of the part: a cached bitmap, drawn once (the schematic repaints every second).
+      const art = name === "roboRIO" ? "rio" : name === "PDH" ? "pdh_top" : FrcMap.kind(dev.model);
+      const pic = art && FrcMap.thumbCached(art);
+      if (pic) el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
+      else if (art) FrcMap.thumb(art);
       const label = `${i}. ${name}`;
       el("text", { x: p.x + 10, y: p.y + 22, class: "nm" }, g, label.length > 19 ? label.slice(0, 18) + "…" : label);
       const sub = name === "roboRIO" ? "120 Ω built in" : name === "PDH"
@@ -188,7 +198,7 @@ const Wiring = (() => {
       el("text", { x: p.x + 10, y: p.y + 42, class: "sub" }, g, sub);
       if (word) el("text", { x: p.x + 10, y: p.y + 62, class: "state" }, g, word);
       if (name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn)) {
-        el("text", { x: p.x + bw - 22, y: p.y + 22, class: "ohm" }, g, "Ω");
+        el("text", { x: p.x + bw - 80, y: p.y + 22, class: "ohm" }, g, "Ω");
       }
       g.onclick = () => { focus = focus === name ? null : name; paint(); };
       // Enter opens it. Not Space: on the Driver Station laptop Space is the E-STOP.
@@ -201,12 +211,42 @@ const Wiring = (() => {
       det.innerHTML = `<b>${esc(focus)}</b><ul style="margin:4px 0 0;padding-left:18px">${details[focus].map(x => `<li>${esc(x)}</li>`).join("")}
         ${segs.map(s => `<li class="bad-ink">Suspect cable next to it: ${esc(s.f.title)}. ${Learn.link(s.f.why, 2)}</li>`).join("")}</ul>`;
     }
+    if (focus !== mapFocus) {
+      mapFocus = focus;
+      const slot = $("#w-detail-map", root);
+      if (!focus) { slot.innerHTML = ""; slot._frc = null; }
+      else FrcMap.render(slot, deviceView(focus));
+    }
     if (!m.pdh.terminationOn) {
       const last = pos[chain.length - 1];
       el("text", { x: last.x, y: last.y + bh + 18, class: "warn-text" }, svg, "No terminator at this end: switch the PDH's termination ON");
     }
     paintPdh(rows);
     paintFindings();
+  }
+
+  function deviceView(name) {
+    const m = data.map, dev = data.devices[name] || {};
+    if (name === "roboRIO") return { view: "rio", focus: [{ part: "rio_can", state: "here", label: "CAN: one end of the chain, 120 Ω inside" },
+      { part: "rio_power", state: "here", label: "Power, from the PDH" }], alt: "The roboRIO's CAN and power connectors" };
+    if (name === "PDH") return { view: "pdh", focus: [{ part: "pdh_can", state: "here", label: "CAN" },
+      { part: "pdh_term", state: m.pdh.terminationOn ? "ok" : "bad", label: `TERM ${m.pdh.terminationOn ? "ON" : "OFF: switch it ON at the chain's end"}` },
+      { part: "pdh_battery", state: "here", label: "Battery in" }], alt: "The PDH's CAN, termination and battery connections" };
+    const f = FrcMap.deviceFocus(name, dev.model || dev.kind, m.pdhPorts[name], "here", dev.can_id != null ? `CAN ${dev.can_id}` : "");
+    return { view: "controllers", focus: f, alt: `Where ${name} is powered from` };
+  }
+
+  // A finding on FIRST's drawing: the bus, the devices it names, their PDH ports.
+  function findingView(f) {
+    const w = f.where || {}, st = f.level === "error" ? "bad" : "warn";
+    if (w.bus) return { view: "can", wires: "can", focus: [{ part: "rio_can", state: "here", label: "roboRIO: one end, 120 Ω inside" },
+      { part: "pdh_can", state: st, label: "CAN at the PDH" }, { part: "pdh_term", state: st, label: "TERM switch" }],
+      caption: "The CAN pair is brightened." };
+    const devs = w.devices || [];
+    const focus = devs.flatMap(d => FrcMap.deviceFocus(d, (data.devices[d] || {}).model, w.pdh_port != null && devs.length === 1 ? w.pdh_port : data.map.pdhPorts[d], st));
+    if (w.segment) return { view: "can", wires: "can", focus: focus.filter(x => !x.part.startsWith("pdh_")),
+      caption: `Check the plugs on the cable between ${w.segment[0]} and ${w.segment[1]}.` };
+    return { view: "controllers", focus };
   }
 
   function paintPdh(rows) {
@@ -223,6 +263,14 @@ const Wiring = (() => {
         <div class="pdh-bar"><div style="width:${pct}%"></div></div>
         <span class="mono small">${Number.isFinite(amps) ? fmt(amps, 1) + " A" : ""}</span></div>`);
     }
+    // The same ports on FIRST's drawing of the PDH: what each one feeds, and how hard.
+    const bad = new Set((data.findings || []).filter(f => f.where && f.where.pdh_port != null).map(f => f.where.pdh_port));
+    FrcMap.render($("#w-pdh-map", root), { view: "pdh", alt: "The PDH, each mapped port labeled with its motor",
+      caption: "Unmapped ports are faded.", focus: Object.entries(byPort).map(([p, names]) => {
+        const a = cur[p];
+        return { part: "pdh_" + p, state: bad.has(+p) ? "bad" : Number.isFinite(a) && a >= 30 ? "warn" : "info",
+          label: names.join(", ") + (Number.isFinite(a) ? ` · ${fmt(a, 0)} A` : "") };
+      }) });
     $("#w-pdh", root).innerHTML = cells.join("") +
       `<p class="hint" style="grid-column:1/-1">Ports 0-19 take 40 A breakers, 20-22 are low-current, 23 is switchable. Each bar is full at 40 A. Live currents come from AdvantageKit's PDH log.</p>`;
   }
@@ -234,8 +282,16 @@ const Wiring = (() => {
     $("#w-findings", root).innerHTML = F.length ? F.map(f => `<div class="finding">
         <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
         <div class="why">${Learn.link(f.why, 3)}</div>
-        ${f.fix ? `<div class="small"><b>Do:</b> ${Learn.link(f.fix, 2)}</div>` : ""}</div>`).join("")
+        ${f.fix ? `<div class="small"><b>Do:</b> ${Learn.link(f.fix, 2)}</div>` : ""}
+        ${f.where ? `<div class="row"><button class="btn small ${mapFinding === f.title ? "primary" : ""}" data-show-map="${esc(f.title)}" data-tip="wiring.onrobot" data-quiet>${mapFinding === f.title ? "Shown below" : "Show on the robot"}</button></div>` : ""}</div>`).join("")
       : `<p class="hint">${data.snapshot && data.snapshot.motors ? "Nothing wrong with the CAN bus or the power feeds right now." : "Connect to a robot, or pick a practice fault above to see how a problem shows up."}</p>`;
+    $$("[data-show-map]", root).forEach(b => b.onclick = () => {
+      const f = F.find(x => x.title === b.dataset.showMap);
+      mapFinding = f ? f.title : null;
+      if (f) FrcMap.render($("#w-where-map", root), findingView(f));
+      paintFindings();
+    });
+    if (mapFinding && !F.some(x => x.title === mapFinding)) { mapFinding = null; $("#w-where-map", root).innerHTML = ""; $("#w-where-map", root)._frc = null; }
   }
 
   // ---------------------------------------------------------------- the map editor
@@ -525,6 +581,13 @@ const Wiring = (() => {
   App.on("tab", async t => {
     clearInterval(timer);
     if (t !== "wiring") { if (wig && !wig.done) { stopWiggle(); wig = null; paintWiggle(); } return; }
+    if (!ohmsDrawn) {
+      ohmsDrawn = true;
+      FrcMap.render($("#w-ohms-map", root), { view: "can", wires: "can", alt: "Where the CAN bus is terminated and where to measure it",
+        focus: [{ part: "rio_can", state: "here", label: "One end: the roboRIO, 120 Ω inside" },
+          { part: "pdh_can", state: "here", label: "Probe CAN-H and CAN-L at any free plug" },
+          { part: "pdh_term", state: "here", label: "The other end: TERM ON" }] });
+    }
     await refresh();
     if (data && data.demos && $("#w-demo", root).options.length === 1) {
       $("#w-demo", root).innerHTML = `<option value="">Live robot</option>` +

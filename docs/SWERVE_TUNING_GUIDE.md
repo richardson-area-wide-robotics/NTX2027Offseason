@@ -94,7 +94,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 | **Guide** | The path to a tight swerve, step by step. Start here. |
 | **Live** | Every module's angle and speed, what was asked against what happened. |
 | **Motors** | Each motor's heat, current and health. Warns before a motor overheats, and stops one that's stalled or failing. |
-| **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. |
+| **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. Every device, the PDH's ports and each finding are shown on FIRST's own control-system drawing (WPILib's REV layout, CC BY 4.0), with the part in question outlined and the parts our robots don't use, such as pneumatics, faded. Troubleshoot's power and CAN checks use the same drawing. |
 | **Tune** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, where the cameras sit, and where the field's AprilTags really are. |
 | **Controllers** | Checks the drive team's controllers, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |

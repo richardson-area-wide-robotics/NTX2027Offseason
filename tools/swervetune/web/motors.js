@@ -74,6 +74,7 @@
           "Pick each motor's type where it says <i>not said anywhere</i>, then <b>Save the motor inventory</b>.",
           "Old firmware: update it with REV Hardware Client, robot connected by USB."],
         good: "every row the same three ways, every motor named." })}
+      <div id="inv-art" class="frc-slot"></div>
       <div id="inv-body"><p class="hint">Reading the code…</p></div>
     </div>`;
 
@@ -212,5 +213,12 @@
     $("#ovr-secs", root).max = st.max_override_s || 20;
     $("#motor-kinds", root).innerHTML = Object.values(kinds).map(([label, amps, w, d, s]) =>
       `<tr><td>${esc(label)}</td><td class="num">${amps} A</td><td class="num">${w} °C</td><td class="num">${d} °C</td><td class="num">${s} °C</td></tr>`).join("");
+  });
+  // What each controller looks like, from FIRST's drawing: drawn the first time the tab opens.
+  App.on("tab", t => {
+    const art = $("#inv-art", root);
+    if (t === "motors" && art && !art._frc) FrcMap.render(art, { view: "controllers", alt: "A SPARK MAX and a SPARK Flex on a NEO Vortex",
+      focus: [{ part: "sparkmax", state: "here", label: "SPARK MAX: NEO, NEO 2.0, NEO 550" },
+        { part: "sparkflex", state: "here", label: "SPARK Flex, docked on a NEO Vortex" }] });
   });
 })();

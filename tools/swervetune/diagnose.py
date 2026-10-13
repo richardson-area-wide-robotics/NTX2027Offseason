@@ -24,13 +24,33 @@ BLOCKS = "BLOCKS"       # wheels in the air
 FIELD = "FIELD"         # on the floor, it moves
 
 
-def check(q, how, where, if_no, fix, action=None, auto=None):
+def check(q, how, where, if_no, fix, action=None, auto=None, diagram=None):
     c = {"q": q, "how": how, "where": where, "if_no": if_no, "fix": fix}
     if action:
         c["action"] = action
     if auto:
         c["auto"] = auto
+    if diagram:
+        c["diagram"] = diagram
     return c
+
+
+# Where to look, on FIRST's drawing of the control system (web/frcmap.js: a view, parts to outline).
+def _spot(part, label):
+    return {"part": part, "state": "here", "label": label}
+
+
+SEE_POWER = {"view": "power", "focus": [_spot("battery", "Battery: 12.3 V or more at rest"),
+                                        _spot("breaker", "120 A main breaker: tight lugs"),
+                                        _spot("pdh_battery", "Battery leads into the PDH: no wobble"),
+                                        _spot("pdh_display", "The PDH shows the voltage")]}
+SEE_CAN = {"view": "can", "wires": "can", "focus": [_spot("rio_can", "One end: the roboRIO, 120 ohms inside"),
+                                                    _spot("pdh_can", "CAN at the PDH"),
+                                                    _spot("pdh_term", "The other end: TERM ON")]}
+SEE_FAULT = {"view": "controllers", "focus": [_spot("sparkmax", "SPARK MAX: its light blinks on a fault"),
+                                              _spot("sparkflex", "SPARK Flex: the same light")]}
+SEE_FEED = {"view": "controllers", "focus": [_spot("sparkmax", "Its V+ and V- leads"), _spot("sparkflex", "Its V+ and V- leads"),
+                                             _spot("pdh", "Its PDH port and breaker (Wiring tab: which port)")]}
 
 
 SYMPTOMS = [
@@ -290,7 +310,7 @@ SYMPTOMS = [
                   "A CAN, sensor or motor-type fault on that controller.",
                   "Check its CAN wiring and ID with the REV Hardware Client; a motor-type fault "
                   "means it is set to brushed or the wrong motor.",
-                  None, {"monitor": ["faults"]}),
+                  None, {"monitor": ["faults"]}, diagram=SEE_FAULT),
             check("Turning it by hand, does its angle change in the Live view?",
                   "Robot disabled.", DISABLED,
                   "The absolute encoder is not reporting.",
@@ -301,7 +321,7 @@ SYMPTOMS = [
                   "Run the Steering test on blocks with only that module.", BLOCKS,
                   "No power to the motor, or the motor is not turning the gears.",
                   "Check the breaker/fuse and the pinion set screw.",
-                  {"type": "run", "test": "steer_step", "env": BLOCKS}),
+                  {"type": "run", "test": "steer_step", "env": BLOCKS}, diagram=SEE_FEED),
         ],
     },
     {
@@ -383,7 +403,7 @@ SYMPTOMS = [
                   "Spin it by hand against the others; fix the drag.",
                   {"type": "run", "test": "drive_ff", "env": BLOCKS}),
             check("Is the battery above 12.3 V at rest?", "Live view.", DISABLED,
-                  "A tired battery.", "Swap it.", None),
+                  "A tired battery.", "Swap it.", None, diagram=SEE_POWER),
         ],
     },
     {
@@ -414,10 +434,10 @@ SYMPTOMS = [
                   "Lower the drive current limit.", None,
                   {"lint": ["drive_current_over_traction"]}),
             check("Is the battery healthy?", "Live view at rest: above 12.3 V.", DISABLED,
-                  "A tired battery sags under load.", "Swap it.", None),
+                  "A tired battery sags under load.", "Swap it.", None, diagram=SEE_POWER),
             check("Are there no CAN faults in the Live view?", "Faults per module.", DISABLED,
                   "CAN errors look like stutters.", "Check CAN wiring and termination.", None,
-                  {"monitor": ["faults"]}),
+                  {"monitor": ["faults"]}, diagram=SEE_CAN),
         ],
     },
     {
@@ -588,7 +608,7 @@ SYMPTOMS = [
                   "Reseat the encoder cable and check the power leads. A gate driver fault that "
                   "comes back after clearing means replacing the motor or the controller.",
                   None,
-                  {"monitor": ["motor_failing"]}),
+                  {"monitor": ["motor_failing"]}, diagram=SEE_FAULT),
             check("When it is told to run, does current flow?",
                   "Motors tab, the Current column. Output with no current and no motion is flagged "
                   "automatically after half a second.",
@@ -598,7 +618,7 @@ SYMPTOMS = [
                   "Check all three motor phase leads and the power connector. A burnt motor often "
                   "turns lumpy by hand and smells of varnish.",
                   None,
-                  {"monitor": ["motor_failing"]}),
+                  {"monitor": ["motor_failing"]}, diagram=SEE_FEED),
             check("Unplugged, does the motor turn smoothly by hand, with no grinding or cogging?",
                   "Disconnect the phase leads first: a shorted winding makes a motor feel lumpy "
                   "even unpowered.",

@@ -58,6 +58,7 @@ const Trouble = (() => {
         return `<div class="check ${state}">
           <div class="row" style="justify-content:space-between"><span class="q" id="tq-${i}">${a === "yes" ? `<span class="level ok">fine</span> ` : ""}${i + 1}. ${esc(k.q)}</span><span class="chip" data-tip="trouble.where" data-quiet>${esc(whereWord(k.where))}</span></div>
           ${a === "yes" ? "" : `<div class="hint">${Learn.link(k.how, 2)}</div>`}
+          ${k.diagram && a !== "yes" && (i === at || a === "no") ? `<div class="frc-slot" data-diagram="${i}"></div>` : ""}
           ${k.auto_answer === "no" ? `<div class="small"><span class="level error" data-tip="trouble.found" data-quiet>tool found</span> ${esc((k.evidence || []).join(", "))}</div>` : ""}
           ${k.suggest === "yes" && a === null ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>config looks fine</span> the configuration check found nothing wrong here: press Yes if you agree</div>` : ""}
           ${a === "no" ? `<div class="callout safety"><b>Cause:</b> ${esc(k.if_no)}<br><b>Fix:</b> ${esc(k.fix)}</div>
@@ -70,6 +71,8 @@ const Trouble = (() => {
         <p>Record a capture while the problem happens (the Guide's Sensor health step), then bring the saved run to a mentor - the Runs tab has the data.</p></div>` : ""}
     </div>`;
     $("#tr-back", root).onclick = paintList;
+    // Where to look, on FIRST's drawing: only for the check being answered, or one that failed.
+    $$("[data-diagram]", root).forEach(el => FrcMap.render(el, c.checks[+el.dataset.diagram].diagram));
     $$("[data-yes]", root).forEach(b => b.onclick = () => answer(+b.dataset.yes, "yes"));
     $$("[data-no]", root).forEach(b => b.onclick = () => answer(+b.dataset.no, "no"));
     $$("[data-redo]", root).forEach(b => b.onclick = () => answer(+b.dataset.redo, null));
