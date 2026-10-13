@@ -447,6 +447,14 @@ ol.chain-edit input { width: 5em; }
     padding: 16px 24px; font-size: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
   main { padding-bottom: 96px; }  /* the last row of a page scrolls clear of ABORT */
   .toast { bottom: 88px; }
+  /* Connected, the header's chips wrapped it to a third of the screen. It scrolls away with the page
+     instead: ABORT is pinned anyway, and the test banner (with Hold to run) takes the top. The chips
+     sit in one row that scrolls sideways. */
+  .top { position: static; }
+  .banner { top: 0; }
+  .learn-drawer { top: 0; }
+  .chips { flex: 1 1 100%; order: 5; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
 }
 /* Touch screens: 44 px for anything pressed with a finger. Chips share the header, so they get 32 px. */
 @media (pointer: coarse) {
