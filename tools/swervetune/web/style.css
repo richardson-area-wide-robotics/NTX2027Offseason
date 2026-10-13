@@ -325,6 +325,13 @@ table.t tr.history > td:first-child { box-shadow: inset 4px 0 0 var(--warn); }
 .learn-tip { position: absolute; z-index: 50; max-width: 340px; background: var(--panel); color: var(--ink);
   border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, .18); font-size: 13px; line-height: 1.45; }
+/* With a mouse, a click on the card's text reaches the control beneath it; only its links take
+   clicks. A hover card often sits over the next control down, and it must never eat that click. On a
+   touch screen the card stays solid: a tap on it must not press something hidden beneath. */
+@media (hover: hover) {
+  .learn-tip { pointer-events: none; }
+  .learn-tip a, .learn-tip button, .learn-tip [data-lesson] { pointer-events: auto; }
+}
 .learn-title { font-weight: 700; margin-bottom: 2px; }
 .learn-what { font-weight: 600; }
 .learn-how { color: var(--muted); margin-top: 2px; }

@@ -348,13 +348,15 @@ const Learn = (() => {
   const TIP_SEL = "[data-learn], [data-tip]";
   const tipOf = el => (typeof TIPS !== "undefined" && el.dataset.tip && TIPS[el.dataset.tip]) || null;
 
-  function place(x, y) {
+  // Below the thing it describes, or above it when there's no room below: never over it, or the
+  // card would take the click meant for the control (it flipped above the control's bottom edge).
+  function place(x, below, above = below) {
     tip.style.left = "0px"; tip.style.top = "0px";
     const r = tip.getBoundingClientRect();
     const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
     let left = Math.min(Math.max(8, x - r.width / 2), vw - r.width - 8);
-    let top = y + 14;
-    if (top + r.height > vh - 8) top = Math.max(8, y - r.height - 14);
+    let top = below + 14;
+    if (top + r.height > vh - 8) top = Math.max(8, above - r.height - 14);
     tip.style.left = left + window.scrollX + "px";
     tip.style.top = top + window.scrollY + "px";
   }
@@ -367,7 +369,7 @@ const Learn = (() => {
     tip.innerHTML = t ? tipCard(t, el.dataset.tipNow) : card(key, el.dataset.learnText);
     tip.hidden = false;
     const r = el.getBoundingClientRect();
-    place(r.left + r.width / 2, r.bottom);
+    place(r.left + r.width / 2, r.bottom, r.top);
     el.setAttribute("aria-describedby", "learn-tip");
   }
 
@@ -391,7 +393,16 @@ const Learn = (() => {
   function hide() { clearTimeout(hideTimer); tip.hidden = true; anchor = null; }
 
   const touch = () => window.matchMedia && matchMedia("(hover: none)").matches;
+  // With a mouse, the card lets clicks through to the control beneath it (style.css), so a card that
+  // sits over the next control never takes its click. While the pointer is inside the card, though,
+  // the card stays: it doesn't switch to the control beneath, so its lesson link can be reached.
+  const inCard = (x, y) => {
+    if (tip.hidden) return false;
+    const r = tip.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  };
   document.addEventListener("mouseover", e => {
+    if (!touch() && inCard(e.clientX, e.clientY)) { clearTimeout(hideTimer); return; }
     const el = e.target.closest && e.target.closest(TIP_SEL);
     if (el) { if (el !== anchor) showFor(el); else clearTimeout(hideTimer); }
     else if (!e.target.closest || !e.target.closest(".learn-tip")) { if (anchor) hideSoon(); }
@@ -402,7 +413,11 @@ const Learn = (() => {
     const el = e.target.closest && e.target.closest(TIP_SEL);
     if (el && (e.target.matches(":focus-visible") || e.target.matches("input:not([type=checkbox]), textarea"))) showFor(el);
   });
-  document.addEventListener("mousedown", e => { if (anchor && e.target.closest && e.target.closest(TIP_SEL) === anchor) hide(); });
+  document.addEventListener("mousedown", e => {
+    if (anchor && e.target.closest && e.target.closest(TIP_SEL) === anchor) hide();
+    // A click through the card, onto the control beneath, is done with the card.
+    else if (!touch() && inCard(e.clientX, e.clientY) && !(e.target.closest && e.target.closest(".learn-tip"))) hide();
+  });
   document.addEventListener("focusout", e => { if (e.target.closest && e.target.closest(TIP_SEL)) hideSoon(); });
   tip.addEventListener("mouseenter", () => clearTimeout(hideTimer));
   tip.addEventListener("mouseleave", hideSoon);
