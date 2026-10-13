@@ -354,10 +354,21 @@ class Project:
         return ids
 
     # ------------------------------------------------------------------ editing
+    def writable(self, rel):
+        """Whether a save may write ``rel``: one of the swerve config files this project loaded, or
+        swervetune.json. Never a path that climbs out ("../"), an absolute path, or anything that
+        isn't JSON - a save must not be able to overwrite the robot's code."""
+        r = str(rel or "").replace("\\", "/")
+        if not r.endswith(".json") or r.startswith("/") or ":" in r or ".." in r.split("/"):
+            return False
+        return r in self.files or r == "swervetune.json"
+
     def preview(self, edits):
         """``edits``: list of (file, path, value). Returns {file: (old, new)} for changed files."""
         out = {}
         for rel, path, value in edits:
+            if not self.writable(rel):
+                raise ValueError(f"{rel!r} is not one of this robot's config files")
             old = out[rel][1] if rel in out else self.files.get(rel, "{}\n")
             new = json_set(old, path, value)
             out[rel] = (self.files.get(rel, "{}\n"), new)

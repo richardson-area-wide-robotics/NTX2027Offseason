@@ -13,16 +13,18 @@ yours, and nothing in the tools will stop you from breaking them:
 
 1. **A person holds the deadman for anything that moves.** Before any test that spins a wheel,
    confirm in this conversation that someone is at the robot, can see it, and is holding the
-   deadman (SPACE in the GUI, or the tester's controller bumper). The CLI keeps the laptop's
-   heartbeat alive; it never holds the deadman for anyone.
+   deadman (the tester's controller right bumper, or SPACE in the GUI; never SPACE on the Driver
+   Station laptop, where it is the E-STOP). The CLI keeps the laptop's heartbeat alive; it never
+   holds the deadman for anyone.
 2. **Only set the environment you were told.** `env --mode BLOCKS` only when a person says every
    wheel is off the ground. `env --mode FIELD --space <m> --side <m>` only with distances a
    person measured. Never guess, and never change the mode to make a refused test run.
-3. **Never write to the repository without a person's OK.** `save gains` and `offsets` show a
-   diff without `--yes`. Show that diff to a person and wait for an explicit yes before adding
+3. **Never write to the repository without a person's OK.** `save gains`, `config` and `offsets`
+   show a diff without `--yes`. Show that diff to a person and wait for an explicit yes before adding
    `--yes`. Never commit or push.
-4. **One change per run, never more than double or half.** The advisor's `next` action already
-   follows this. `--force` (a bigger step) needs a person's OK and a reason.
+4. **One change per run, never more than double or half.** Every gain change the advisor gives
+   is already held to that (`"clamped": true` when it was held, and the finding says so); a gain at
+   0 may be set to its first value. Never apply a bigger step yourself.
 5. **Stay inside the current policy.** Drive and mechanism limits: NEO Vortex 80 A, NEO 2.0 80 A,
    NEO V1.1 60 A, NEO 550 20 A. The slip test may recommend a drive limit *below* 80 A for this
    carpet; nothing may go above policy.
@@ -45,7 +47,10 @@ abort reason comes back in the command's output: read it, act on it, and tell th
 
 ## The commands
 
-Add `--json` to every command: each one then prints exactly one JSON object.
+Add `--json` to every command: each one then prints exactly one JSON object, strict JSON (no NaN:
+a number that couldn't be measured is `null`). In it, `ok` is true only when the command did what
+was asked: a test that was refused **or stopped part-way** has `"ok": false`, a `message` for the
+person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 refused or an error.
 
 | Command | What it does |
 |---|---|
@@ -55,6 +60,7 @@ Add `--json` to every command: each one then prints exactly one JSON object.
 | `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it, prints the report. |
 | `gains show` / `gains set Steer/kP=0.015` | Reads or changes live gains (lost at restart until saved). |
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
+| `config --file F --path a.b --value V` | Shows the diff of one config change (a report's `config` action); `--yes` writes. Only the robot's own config files. |
 | `analyze <run>` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. |
 | `diagnose [symptom]` | The troubleshooter. |
 | `motors` | Heat, stalls and failures for every watched motor. |
@@ -63,7 +69,8 @@ Add `--json` to every command: each one then prints exactly one JSON object.
 | `pdhports <run or .wpilog> --project P` | Which PDH port feeds each motor. |
 
 Tests for `run`: `capture` (sensors only, disabled), `steer_step`, `drive_step`, `drive_ff`,
-`spin`, `straight`, `slip`, `pdh_map`.
+`spin`, `spin_ff` (moment of inertia), `straight`, `slip`, `pdh_map`, `controller` (a Driver
+Station port as the robot sees it; disabled, moves nothing).
 
 ## The loop
 
@@ -75,24 +82,48 @@ Every report has the same shape:
 
 ```
 summary   one line for a person
-score     0-100: the share of the targets met
+score     0-100: the share of the targets met; null when the run stopped part-way
 cost      lower is better: what you are minimizing
-targets   [{name, value, target, met}]
+targets   [{name, value, target, met, lower_is_better}]
 findings  [{level, title, why, action?}], most important first
-next      the first finding's action, or null
+next      the finding to act on: {level, title, why, action}, or null
 ```
 
 People can also change gains from AdvantageScope's tuning mode while you work. Run `gains show`
 before each test, and if a gain isn't what you last set, ask before going on.
 
-Act on `next` and only on `next`:
+Act on `next.action` and only on it. Every action is one the commands above carry out as written:
 
 - `{"type": "gains", "values": {...}}`: `gains set` exactly those values, then rerun the same test.
 - `{"type": "run", "test": ..., "env": ...}`: run that test next (ask a person to change the
   environment if it differs).
-- `{"type": "config", "file", "path", "value"}`: a file change that needs a redeploy. Show it to a
-  person; don't apply it yourself.
+- `{"type": "config", "file", "path", "value"}`: a file change that needs a redeploy. Run
+  `config --file <file> --path <path joined by dots> --value <value as JSON>`, show the diff to a
+  person, and add `--yes` only with their OK.
+- `{"type": "save", "keys": [...]}`: `save gains --keys <keys>`; same rule, a person's OK first.
 - `{"type": "troubleshoot", "symptom": ...}`: run `diagnose <symptom>` and relay what it says.
+- `{"type": "stop", "reason": ...}`: the run stopped part-way. Tell the person the reason; don't
+  rerun until they say the robot is clear and the cause is fixed.
+
+## Why a test was refused or stopped
+
+`code`, with the robot's own sentence in `message`:
+
+| Code | What to do |
+|---|---|
+| `FMS_ATTACHED`, `AUTONOMOUS` | Nothing runs on a match field or in autonomous. Stop. |
+| `ENV_UNSET`, `ENV_CHANGED` | Ask a person where the robot is; never set it to make a test run. |
+| `NO_HEARTBEAT`, `NOT_CONNECTED` | The laptop lost the robot. Reconnect; tell the person. |
+| `GYRO` | The gyro isn't reporting or is calibrating. Wait, then ask a person. |
+| `NO_SPACE` | A person must measure the clear floor (`env --mode FIELD --space --side`). |
+| `DEADMAN`, `DRIVER_INPUT`, `ABORTED_BY_PERSON` | A person let go, drove, or aborted: ask why before anything else. |
+| `NOT_ON_BLOCKS`, `IMPACT`, `GEOFENCE`, `NO_WALL`, `STALL`, `OVERSPEED` | Something physical: a person looks at the robot first. |
+| `BATTERY` | Swap the battery (and pick its number). |
+| `MOTOR_GUARD` | A motor is hot or stalled: let it cool; never override. |
+| `DISABLED`, `NEEDS_DISABLED` | The Driver Station mode is wrong for this test: ask a person. |
+| `NO_CONTROLLER`, `NO_PDH` | The robot can't read what the test needs; tell the person. |
+| `BAD_ARGS` | Your command's arguments: fix the command. |
+| `TIMEOUT`, `WAITED_TOO_LONG`, `BUSY`, `ROBOT_ERROR`, `OTHER` | Read `message` to the person and wait. |
 
 Stop when the score reaches 100, or the cost hasn't improved over three runs. Then summarize for
 the person: what was measured, what changed, what is left.

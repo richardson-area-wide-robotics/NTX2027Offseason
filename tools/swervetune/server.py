@@ -15,10 +15,12 @@ Two safety details:
 
 from __future__ import annotations
 
+import hmac
 import json
 import math
 import mimetypes
 import os
+import secrets
 import threading
 import time
 import traceback
@@ -30,6 +32,8 @@ from . import (advisor, akit, battery, camcal, contract as C, controllers, diagn
                designcheck, designlinks, logsummary, monitor, motorinv, pdhports, plant, ppcheck, predict, progress,
                rehearse, revspecs, runs, wiring, yagslcfg)
 
+# A fresh secret each run: only the page this run served can change anything (see Handler).
+TOKEN = secrets.token_urlsafe(18)
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
 
@@ -388,6 +392,10 @@ def _wiring_change(body):
     return path, old, wiring.map_text(body["map"])
 
 
+def _bad_save(e):
+    return {"ok": False, "error": f"Not saved: {e}"}
+
+
 def api_save_preview(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
@@ -398,7 +406,10 @@ def api_save_preview(body):
             return {"ok": False, "error": f"Not saved: {e}"}
         rel = os.path.relpath(path, S.project.path).replace(os.sep, "/")
         return {"ok": True, "diff": yagslcfg.diff(old, new, rel) if old != new else "", "files": [rel]}
-    changes = S.project.preview(_edits_from(body))
+    try:
+        changes = S.project.preview(_edits_from(body))
+    except ValueError as e:
+        return _bad_save(e)
     return {"ok": True, "diff": "".join(yagslcfg.diff(o, n, f) for f, (o, n) in changes.items()),
             "files": list(changes)}
 
@@ -418,7 +429,10 @@ def api_save_apply(body):
         if body["kind"] == "pathplanner":
             S.reload_project()
         return {"ok": True, "diff": yagslcfg.diff(old, new, os.path.basename(path))}
-    text = S.project.apply(_edits_from(body))
+    try:
+        text = S.project.apply(_edits_from(body))
+    except ValueError as e:
+        return _bad_save(e)
     return {"ok": True, "diff": text}
 
 
@@ -1171,14 +1185,25 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _host_ok(self):
+        # Only this laptop's own address: a page from another site that points its own name at
+        # 127.0.0.1 (DNS rebinding) arrives with that name as its Host.
+        port = self.server.server_address[1]
+        return self.headers.get("Host", "") in (f"127.0.0.1:{port}", f"localhost:{port}")
+
     def _guard_origin(self):
-        # Only this page may drive the robot: refuse requests from any other site's page.
+        # Only this page may drive the robot: refuse requests from any other site's page, and any
+        # request without this run's token (another program, or a page from before a restart).
         origin = self.headers.get("Origin")
         host = self.headers.get("Host", "")
-        return origin is None or origin.endswith("//" + host)
+        if not self._host_ok() or not (origin is None or origin.endswith("//" + host)):
+            return False
+        return hmac.compare_digest(self.headers.get("X-SwerveTune-Token", ""), TOKEN)
 
     def do_GET(self):
         path = urlparse(self.path).path
+        if not self._host_ok():
+            return self._send(403, {"ok": False, "error": "wrong host"})
         try:
             if path in GET:
                 return self._send(200, GET[path](dict(parse_qsl(urlparse(self.path).query))))
@@ -1192,7 +1217,11 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(404, {"error": "not found"})
             with open(full, "rb") as fh:
                 ctype = mimetypes.guess_type(full)[0] or "application/octet-stream"
-                return self._send(200, fh.read(), ctype)
+                data = fh.read()
+            if rel == "index.html":
+                # The page carries this run's token; every change it asks for sends it back.
+                data = data.replace(b"</head>", f'<meta name="swervetune-token" content="{TOKEN}">\n</head>'.encode(), 1)
+            return self._send(200, data, ctype)
         except Exception as e:  # noqa: BLE001
             traceback.print_exc()
             return self._send(500, {"ok": False, "error": str(e)})
@@ -1200,7 +1229,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urlparse(self.path).path
         if not self._guard_origin():
-            return self._send(403, {"ok": False, "error": "cross-origin request refused"})
+            return self._send(403, {"ok": False, "error": "Refused: this page is out of date or isn't the tool's own. "
+                                    "Reload it (the tool may have restarted)."})
         try:
             n = int(self.headers.get("Content-Length") or 0)
             body = json.loads(self.rfile.read(n) or b"{}")

@@ -24,8 +24,11 @@ const App = {
   on(evt, fn) { (this.listeners[evt] = this.listeners[evt] || []).push(fn); },
   emit(evt, data) { (this.listeners[evt] || []).forEach(fn => { try { fn(data); } catch (e) { console.error(e); } }); },
 
+  // This run's token, from the page the tool served: every change sends it back (server.py).
+  token: (document.querySelector('meta[name="swervetune-token"]') || {}).content || "",
+
   async api(path, body) {
-    const opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+    const opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json", "X-SwerveTune-Token": this.token }, body: JSON.stringify(body) };
     const r = await fetch(path, opt);
     const j = await r.json().catch(() => ({ ok: false, error: "The tool's server sent something unreadable." }));
     if (!r.ok && j.ok === undefined) j.ok = false;

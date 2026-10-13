@@ -56,7 +56,8 @@ class Out:
 
     def done(self, code=0):
         if self.json:
-            print(json.dumps(self.data, default=_jsonable, indent=1))
+            # Strict JSON: NaN and infinity become null, anywhere in the output.
+            print(json.dumps(_clean(self.data), default=_jsonable, indent=1, allow_nan=False))
         return code
 
 
@@ -266,14 +267,16 @@ def cmd_run(args, out):
         doc = res.to_json()
         if not res.accepted:
             out.put(accepted=False, message=res.message)
-            return out.done(out.fail("Refused: " + res.message))
+            return out.done(out.fail("Refused: " + res.message, code=C.stop_code(res.message)))
         lim = current_limits(project)
         rep = advisor.analyze(doc, gains,
                               current_limit=lim.get("steer" if args.test == "steer_step" else "drive", 40),
                               **advisor.robot_context(project))
         path = runs.save(doc, rep, gains)
-        out.put(outcome=res.outcome, message=res.message, notes=res.notes, run_file=os.path.basename(path),
-                report=_clean(rep), samples=len(res.channels.get("t", [])))
+        # ok means the test finished: a run stopped part-way is not ok, and says why in a code.
+        out.put(ok=res.outcome == "DONE", outcome=res.outcome, message=res.message, notes=res.notes,
+                run_file=os.path.basename(path), report=_clean(rep), samples=len(res.channels.get("t", [])),
+                **({} if res.outcome == "DONE" else {"code": C.stop_code(res.message)}))
         out.say(f"{res.outcome}: {res.message}  ({len(res.channels.get('t', []))} samples, saved {os.path.basename(path)})")
         for n in res.notes:
             out.say("  note: " + n)
@@ -529,6 +532,36 @@ def cmd_save(args, out):
         return out.done()
     finally:
         lk.close()
+
+
+def cmd_config(args, out):
+    """A report's ``config`` action: shows the file change; ``--yes`` writes it."""
+    if not args.project:
+        return out.done(out.fail("Which robot? Pass --project.", code="NO_PROJECT"))
+    project = resolve_project(args.project)
+    try:
+        value = json.loads(args.value)
+    except ValueError:
+        value = args.value
+    path = [p for p in (json.loads(args.path) if args.path.startswith("[") else args.path.split("."))]
+    try:
+        changes = project.preview([(args.file, tuple(path), value)])
+    except ValueError as e:
+        return out.done(out.fail(str(e), code="NOT_A_CONFIG_FILE"))
+    text = "".join(yagslcfg.diff(o, n, f) for f, (o, n) in changes.items())
+    out.put(diff=text, files=list(changes))
+    if not changes:
+        out.say("The file already says that. Nothing to change.")
+        return out.done()
+    out.say(text)
+    if not args.yes:
+        out.say("Not written. Show this to a person; with their yes, rerun with --yes, then redeploy.")
+        out.put(written=False)
+        return out.done()
+    project.apply([(args.file, tuple(path), value)])
+    out.put(written=True)
+    out.say("Written. Redeploy for it to load at boot; review with git diff and commit.")
+    return out.done()
 
 
 def cmd_offsets(args, out):
@@ -819,6 +852,12 @@ def build_parser():
     s.add_argument("--yes", action="store_true", help="actually write")
     s.set_defaults(fn=cmd_save)
 
+    s = sub.add_parser("config", help="a report's config action: show the file change (--yes writes it)")
+    s.add_argument("--file", required=True, help="e.g. swervedrive.json or modules/physicalproperties.json")
+    s.add_argument("--path", required=True, help="dot-separated, e.g. conversionFactors.drive.diameter, or a JSON list")
+    s.add_argument("--value", required=True, help="JSON (2.95, true, \"text\") or plain text")
+    s.add_argument("--yes", action="store_true", help="write it (only with a person's OK)")
+    s.set_defaults(fn=cmd_config)
     s = sub.add_parser("offsets", help="new absolute offsets from a straight-wheels capture")
     s.add_argument("run")
     s.add_argument("--yes", action="store_true")

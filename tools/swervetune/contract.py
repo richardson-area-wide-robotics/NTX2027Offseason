@@ -226,6 +226,31 @@ MOTOR_KINDS = {
     "NEO_UNKNOWN": ("NEO (1.1 or 2.0?)", 60, 70, 80, 90),
     "VORTEX": ("NEO Vortex", 80, 85, 100, 110),
 }
+# Why the robot refused or stopped a test, as a short code an agent can act on. The robot sends
+# sentences for people; these match them, most specific first. OTHER means read the message.
+STOP_CODES = [
+    ("FMS", "FMS_ATTACHED"), ("autonomous", "AUTONOMOUS"), ("Say where the robot is", "ENV_UNSET"),
+    ("environment changed", "ENV_CHANGED"), ("heartbeat", "NO_HEARTBEAT"), ("gyro", "GYRO"),
+    ("clear floor", "NO_SPACE"), ("eadman", "DEADMAN"), ("stick", "DRIVER_INPUT"),
+    ("NOT on blocks", "NOT_ON_BLOCKS"), ("Impact", "IMPACT"), ("Left the declared space", "GEOFENCE"),
+    ("solid wall", "NO_WALL"), ("stalled", "STALL"), ("m/s cap", "OVERSPEED"), ("current limit was cut", "MOTOR_GUARD"),
+    ("attery", "BATTERY"), ("Robot disabled", "DISABLED"), ("only allowed while the robot is disabled", "NEEDS_DISABLED"),
+    ("time limit", "TIMEOUT"), ("Aborted from the laptop", "ABORTED_BY_PERSON"), ("controller", "NO_CONTROLLER"),
+    ("PDH", "NO_PDH"), ("already running", "BUSY"), ("Not connected", "NOT_CONNECTED"), ("No answer", "NOT_CONNECTED"),
+    ("error", "ROBOT_ERROR"), ("could not start", "ROBOT_ERROR"),
+    # The test's own arguments: fix the command, not the robot.
+    ("current ceiling", "BAD_ARGS"), ("At most", "BAD_ARGS"), ("Steps must stay", "BAD_ARGS"), ("Pick at least", "BAD_ARGS"),
+    # Waited a minute for a condition; the reason after the colon usually matched above.
+    ("Gave up", "WAITED_TOO_LONG"),
+]
+
+
+def stop_code(message):
+    """``"IMPACT"`` for "Impact: 14.2 m/s^2. ...": the code for a refusal or abort message."""
+    m = str(message or "")
+    return next((code for key, code in STOP_CODES if key in m), "OTHER")
+
+
 # Longest thermal override the robot grants, seconds (MotorGuard.MAX_OVERRIDE_S).
 MAX_OVERRIDE_S = 20
 

@@ -1253,7 +1253,7 @@ def robot_context(project):
         vmax = None
     return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi, "drive_gear": project.drive_gear(),
             "wheel_d_in": project.wheel_d_in(), "drive_kind": project.drive_kind(), "drive_inventory": inv,
-            "max_speed": vmax}
+            "max_speed": vmax, "inverted_imu": bool((project.data.get("swervedrive.json") or {}).get("invertedIMU", False))}
 
 
 # Free speed at 12 V, rpm (REV's spec tables). A NEO V1.1 and a NEO 2.0 spin alike, so this can't
@@ -1404,10 +1404,55 @@ def no_data_report(result):
 WHEEL_TESTS = ("drive_step", "drive_ff", "straight", "slip", "spin", "spin_ff", "pdh_map")
 
 
+MAX_STEP = 2.0
+_SAVE_KEYS = {"steer_pid": ["Steer"], "drive_pid": ["Drive"]}
+
+
+def _concrete(rep, gains, kw):
+    """Makes every action something the command line can carry out as written:
+
+    * a gain change is held to at most double or half the gain now (a gain at 0 may be set to its
+      first value), and says so when it was held;
+    * a file change carries the real value, not "toggle" or "x1.0123", when the robot's files are
+      known;
+    * a save names the gain groups ``save gains --keys`` takes.
+    """
+    gains = gains or {}
+    for f in rep.get("findings") or []:
+        a = f.get("action")
+        if not a:
+            continue
+        if a.get("type") == "gains":
+            held = []
+            for k, v in list((a.get("values") or {}).items()):
+                g = gains.get(k)
+                if isinstance(g, (int, float)) and A.finite(g) and g > 0 and A.finite(v):
+                    c = min(max(float(v), g / MAX_STEP), g * MAX_STEP)
+                    if abs(c - v) > 1e-12:
+                        a["values"][k] = float(f"{c:.6g}")
+                        held.append(k.split("/")[-1])
+            if held:
+                a["clamped"] = True
+                f["why"] = f["why"].rstrip() + (f" ({', '.join(held)} held to {MAX_STEP:g}× this run: one step of at "
+                                                "most double or half. Run again and the advice continues.)")
+        elif a.get("type") == "config":
+            v = a.get("value")
+            if v == "toggle" and kw.get("inverted_imu") is not None:
+                a["value"] = not kw["inverted_imu"]
+            elif isinstance(v, str) and v.startswith("x") and kw.get("wheel_d_in"):
+                try:
+                    a["value"] = round(kw["wheel_d_in"] * float(v[1:]), 4)
+                except ValueError:
+                    pass
+        elif a.get("type") == "save" and "keys" not in a:
+            a["keys"] = _SAVE_KEYS.get(a.get("what"), [])
+    return rep
+
+
 def analyze(result, gains=None, **kw):
     """Picks the report for a test result (a dict from TestResult.to_json or a practice run), and
     adds what the run says about the battery to any test that spun the wheels."""
-    rep = _analyze_test(result, gains, **kw)
+    rep = _concrete(_analyze_test(result, gains, **kw), gains, kw)
     outcome = result.get("outcome")
     if outcome and outcome != "DONE" and isinstance(rep.get("findings"), list):
         rep = _stopped(result, rep)
