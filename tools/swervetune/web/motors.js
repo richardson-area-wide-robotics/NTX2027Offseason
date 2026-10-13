@@ -176,8 +176,13 @@
       ${r.measured_run ? `<p class="small muted">Drive motors measured from ${esc(r.measured_run)}.</p>` : ""}
       <div class="row"><button class="btn primary" id="inv-save" disabled data-tip="motors.inv.save">Save the motor inventory…</button>
         <span class="small muted">Writes swervetune.json's "motors"; redeploy so the motor guard uses it.</span></div>
-      ${(r.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
-        <div class="why">${Learn.link(f.why, 2)}</div></div>`).join("")}`;
+      ${(r.findings || []).map((f, i) => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
+        <div class="why">${Learn.link(f.why, 2)}</div>
+        ${f.edits ? `<div class="row"><button class="btn" data-fix="${i}" data-tip="motors.fix">Fix the module files…</button></div>` : ""}</div>`).join("")}`;
+    $$("[data-fix]", box).forEach(b => b.onclick = async () => {
+      const f = r.findings[+b.dataset.fix];
+      if (await App.previewAndSave({ kind: "edits", edits: f.edits }, f.title)) paintInventory();
+    });
     $$("[data-inv]", box).forEach(sel => sel.onchange = () => {
       const row = r.rows[+sel.dataset.inv];
       pending[row.key === row.name ? row.name : row.key] = sel.value;

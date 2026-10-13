@@ -64,7 +64,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `runs [--test steer_step] [--robot Peashooter] [--show robot\|sim\|practice\|all]` | Saved runs, newest first: file, test, outcome, score and cost, gains. Real robot runs only unless `--show` says otherwise; a run that stopped part-way has no score. |
 | `analyze <run>` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. |
 | `diagnose [symptom]` | The troubleshooter. |
-| `motors` | Heat, stalls and failures for every watched motor. |
+| `motors` | Heat, stalls and failures for every watched motor. With `--project`, also what each motor and controller is, and any fix as an `edits` list: each edit is one `config --file --path --value`, shown to a person before `--yes`. |
 | `practice steer|drive ...` / `rehearse steer|drive ...` | One run, or the whole advice loop, on the simulated practice pod. Its JSON carries `"practice": true`: never save gains from it. |
 | `logsummary <file.wpilog> --project P` | What went wrong in a match log, and where to look. |
 | `pdhports <run or .wpilog> --project P` | Which PDH port feeds each motor. |

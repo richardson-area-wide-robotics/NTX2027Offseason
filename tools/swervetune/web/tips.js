@@ -30,6 +30,8 @@ const TIPS = {
     "Cameras see tags at known places and fix the drift in odometry. \"No source\" means no camera feeds the code yet.", "vision_pose"],
   "header.deadman": ["Whether someone holds the deadman: the tester's controller right bumper (port 1), or Hold to run on this screen.",
     "On blocks and on the floor, a test that moves a motor runs only while it is held; let go and it stops. No key does it: on the Driver Station laptop, SPACE is the E-STOP.", "deadman"],
+  "motors.fix": ["Shows the change to every swerve module file, then writes it when you say so.",
+    "YAGSL reads each module's motor type from its own file; all four must match what is fitted. Redeploy afterwards so the robot uses it.", "motor_inventory"],
   "banner.hold": ["Press and hold with the mouse or a finger: the running test may move the robot only while you do.",
     "Let go, or move to another window, and the test stops. The tester's controller right bumper does the same job and is better: you can stand where you see the robot.", "deadman"],
   "header.motors": ["The hottest or least healthy motor. Tap it to open the Motors tab.",

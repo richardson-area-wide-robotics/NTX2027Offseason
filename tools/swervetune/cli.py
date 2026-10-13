@@ -26,7 +26,7 @@ import re
 import sys
 import time
 
-from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor,
+from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor, motorinv,
                pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 REPO = runs.REPO
@@ -713,6 +713,12 @@ def cmd_motors(args, out):
                 out.say(f"  {'':22s} ! {r['flags']}")
         for line in m["events"][-args.events:]:
             out.say("  event: " + line)
+        if args.project:
+            # What each motor and controller is, and any fix: an "edits" list, one config change each.
+            inv = motorinv.table(resolve_project(args.project), m["motors"])
+            out.put(inventory=_clean(inv["findings"]))
+            for f in inv["findings"]:
+                out.say(f"  {f['level']}: {f['title']}")
         return out.done()
     finally:
         lk.close()

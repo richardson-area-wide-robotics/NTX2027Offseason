@@ -131,6 +131,48 @@ class PlantedTest(unittest.TestCase):
         self.assertEqual(x["frontleft steer"]["measured"], None, "drive_ff measures only the drive motors")
         self.assertIn("The drive motors measure as NEOs (446 rpm per volt)", titles(r))
 
+    def fix(self, r, label):
+        return next(f for f in r["findings"] if f["title"].startswith(f"Set the swerve {label} motors' YAGSL type"))
+
+    def test_a_measured_motor_gets_a_one_click_fix_for_every_module_file(self):
+        measured = {"label": "NEO", "kind": "neo", "rpm_per_volt": 446.0}
+        f = self.fix(M.table(Y.Project(self.dir), measured=measured), "drive")
+        self.assertEqual(f["title"], "Set the swerve drive motors' YAGSL type to sparkflex_neo")
+        self.assertEqual([(e["file"], e["path"], e["value"]) for e in f["edits"]],
+                         [(f"modules/{m}.json", ["drive", "type"], "sparkflex_neo")
+                          for m in ("frontleft", "frontright", "backleft", "backright")])
+        self.assertIn("run drive_ff on blocks again", f["why"])
+        # The edits are ones a save can write.
+        p = Y.Project(self.dir)
+        self.assertTrue(all(p.writable(e["file"]) for e in f["edits"]))
+
+    def test_the_controller_the_robot_reports_wins_over_the_code(self):
+        live = [{"name": f"{m} drive", "controller": "SPARK MAX"} for m in ("frontleft", "frontright", "backleft", "backright")]
+        f = self.fix(M.table(Y.Project(self.dir), live), "drive")
+        self.assertEqual(f["edits"][0]["value"], "sparkmax_vortex", "a Vortex on a SPARK MAX, as the robot says")
+        self.assertIn("the robot reports a SPARK MAX", f["why"])
+
+    def test_the_inventory_names_the_motor_when_nothing_measured_it(self):
+        self.edit_json("swervetune.json", lambda d: d["motors"].update(drive="NEO V1.1"))
+        f = self.fix(M.table(Y.Project(self.dir)), "drive")
+        self.assertEqual(f["edits"][0]["value"], "sparkflex_neo")
+        self.assertIn("If the inventory is what's wrong", f["why"])
+
+    def test_one_module_out_of_step_is_the_only_file_changed(self):
+        self.edit_json("modules/backleft.json", lambda d: d["angle"].update(type="sparkmax_neo"))
+        f = self.fix(M.table(Y.Project(self.dir)), "steering")
+        self.assertEqual([e["file"] for e in f["edits"]], ["modules/backleft.json"])
+        self.assertEqual(f["edits"][0]["value"], "sparkmax_neo550")
+
+    def test_a_speed_only_a_neo550_reaches_sets_the_steering_type(self):
+        for m in ("frontleft", "frontright", "backleft", "backright"):
+            self.edit_json(f"modules/{m}.json", lambda d: d["angle"].update(type="sparkmax_neo"))
+        self.edit_json("swervetune.json", lambda d: d["motors"].pop("steer"))
+        live = [{"name": "frontleft steer", "rpm": 9000}]
+        f = self.fix(M.table(Y.Project(self.dir), live), "steering")
+        self.assertEqual({e["value"] for e in f["edits"]}, {"sparkmax_neo550"})
+        self.assertEqual(len(f["edits"]), 4)
+
     def test_a_drive_ff_that_agrees(self):
         measured = {"label": "NEO Vortex", "kind": "vortex", "rpm_per_volt": 531.0}
         r = M.table(Y.Project(self.dir), measured=measured)

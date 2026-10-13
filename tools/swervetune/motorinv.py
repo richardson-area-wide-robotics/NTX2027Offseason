@@ -72,6 +72,62 @@ def _family(label):
     return "vortex" if "vortex" in l or "flex" in l else "neo550" if "550" in l else "neo" if "neo" in l else None
 
 
+_SUFFIX = {"vortex": "vortex", "neo550": "neo550", "neo": "neo"}
+
+
+def yagsl_type(controller, family):
+    """``("SPARK Flex", "vortex")`` -> ``sparkflex_vortex``: the type YAGSL's module files take."""
+    prefix, suffix = YAGSL_PREFIX.get(controller), _SUFFIX.get(family)
+    return f"{prefix}_{suffix}" if prefix and suffix else None
+
+
+def swerve_type_fixes(project, rows, inv, measured=None):
+    """The YAGSL type every module file should have for its drive and steer motors, when any differs.
+
+    The controller is the one the robot reports, else the one the code creates; the motor is what a
+    drive_ff measured, then what only a NEO 550 can do (turn past 7200 rpm), then the motor
+    inventory, else what the files already say. Each finding carries ``edits`` for every module file
+    that differs, so one save fixes all four.
+    """
+    F = []
+    for key, part, label in (("drive", "drive", "drive"), ("steer", "angle", "steering")):
+        mine = [r for r in rows if r["key"] == key]
+        if not mine:
+            continue
+        ctl = next((r["controller"] for r in mine if r["controller"]), None) or mine[0]["code_controller"]
+        reported = any(r["controller"] for r in mine)
+        current = [yagsl_motor(r.get("model") or "") for r in mine]
+        if key == "drive" and measured and _family(measured["label"]):
+            fam, because = _family(measured["label"]), f"the latest drive_ff measured {measured['label']}s"
+            caveat = " If you doubt the measurement, run drive_ff on blocks again first."
+        elif any(r["measured"] == "NEO 550" for r in mine):
+            fam, because, caveat = "neo550", "a motor turned faster than only a NEO 550 can", ""
+        elif inv.get(key):
+            fam, because = _family(inv[key]), f"the motor inventory says {inv[key]}"
+            caveat = " If the inventory is what's wrong, change it below instead."
+        else:
+            fam = next((_family(c) for c in current if c), None)
+            because, caveat = "the motor stays the one the files name", ""
+        want = yagsl_type(ctl, fam)
+        if not want:
+            continue
+        edits = []
+        for n in project.module_names():
+            cur = ((project.module(n) or {}).get(part) or {}).get("type")
+            if cur != want:
+                edits.append({"file": f"modules/{n}.json", "path": [part, "type"], "value": want})
+        if not edits:
+            continue
+        olds = sorted({str(((project.module(n) or {}).get(part) or {}).get("type")) for n in project.module_names()} - {want})
+        F.append({"level": "warn", "title": f"Set the swerve {label} motors' YAGSL type to {want}",
+                  "why": (f"The files say {', '.join(olds)}; {'the robot reports' if reported else 'the code creates'} "
+                          f"a {ctl}, and {because}. YAGSL works out free speed, the feedforward and the "
+                          f"simulation from this type. Fixing it changes {len(edits)} module file"
+                          f"{'' if len(edits) == 1 else 's'}; redeploy afterwards.{caveat}"),
+                  "edits": edits, "learn": "motor_inventory"})
+    return F
+
+
 def table(project, live_rows=None, measured=None):
     """One row per controller the code creates: ``{"rows", "findings"}``.
 
@@ -103,7 +159,7 @@ def table(project, live_rows=None, measured=None):
             motor, source = "NEO Vortex", "assumed from the SPARK Flex"
         else:
             motor, source = "", "not said anywhere"
-        row = {"name": name, "can_id": d["can_id"], "code_controller": code, "controller": says,
+        row = {"name": name, "can_id": d["can_id"], "code_controller": code, "controller": says, "model": d["model"],
                "firmware": (live.get(name) or {}).get("firmware") or "", "motor": motor, "motor_source": source,
                "key": key, "file": d["source"], "status": "ok", "measured": None}
         if says and code and says != code:
@@ -149,6 +205,7 @@ def table(project, live_rows=None, measured=None):
                   "title": f"The drive motors measure as {measured['label']}s ({measured['rpm_per_volt']:.0f} rpm per volt)",
                   "why": "The latest drive_ff disagrees with the configured drive motor; set the inventory "
                          "and the YAGSL type to what is really fitted."})
+    F.extend(swerve_type_fixes(project, rows, inv, measured))
     for (level, title, why), names in old_firmware.items():
         who = ", ".join(names) if len(names) <= 3 else f"{len(names)} controllers"
         F.append({"level": level, "title": f"{who}: {title}", "why": why})
