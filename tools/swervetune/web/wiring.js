@@ -11,6 +11,7 @@ const Wiring = (() => {
 
   root.innerHTML = `
     <div class="stack">
+      ${HowTo.slot("wiring")}
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="wiring.title">Wiring</h2>
@@ -39,9 +40,11 @@ const Wiring = (() => {
           <div id="w-findings"></div>
         </div>
         <div class="stack">
-          <div class="panel">
+          <div class="panel" id="w-ohms-panel">
             <h3 data-tip="wiring.ohms"><span class="term" tabindex="0" data-learn="can_termination">Termination check</span></h3>
-            <p class="small">Robot <b>off</b>. Multimeter on ohms, probes on CAN-H (yellow) and CAN-L (green) at any free CAN plug.</p>
+            ${HowTo.steps({ need: "A multimeter. The robot <b>off</b>: a powered device makes the reading meaningless.",
+              steps: ["Multimeter on ohms.", "Probes on CAN-H (yellow) and CAN-L (green) at any free CAN plug.", "Type the reading and press <b>Check</b>."],
+              good: "about 60 Ω: the two terminators, one at each end of the chain." })}
             <div class="row"><label class="row small" data-tip="wiring.ohms-in">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
           </div>
@@ -61,7 +64,9 @@ const Wiring = (() => {
             <button class="btn" id="wf-practice" data-tip="wiring.practice">Practice</button>
           </div>
         </div>
-        <p class="small">Fills in the port numbers from the robot instead of from labels. <b>On blocks</b>, the robot turns each swerve motor in turn (about 12 s, deadman held) and the port whose current rises is that motor's. <b>From a practice log</b>, each motor's current is matched to the PDH channel that rises and falls with it: no test needed, so it works for mechanisms too, as long as they ran on their own. The PDH measures the <span class="term" data-learn="battery_current">battery side</span>, so expect smaller numbers than the motor's own current.</p>
+        ${HowTo.block(`<p class="small">Fills in the port numbers from the robot instead of from labels. <b>On blocks</b>, the robot turns each swerve motor in turn (about 12 s, deadman held) and the port whose current rises is that motor's. <b>From a practice log</b>, each motor's current is matched to the PDH channel that rises and falls with it: no test needed, so it works for mechanisms too, as long as they ran on their own. The PDH measures the <span class="term" data-learn="battery_current">battery side</span>, so expect smaller numbers than the motor's own current.</p>
+        <ol class="small"><li>Robot on blocks, connected; the tool set to On blocks.</li><li><b>Swerve motors: pulse on blocks</b>, deadman held, about 12 s.</li>
+          <li>For mechanisms, <b>Every motor: from a practice log</b>, picking a log where they ran one at a time.</li><li>Use the ports found, then save the map and redeploy.</li></ol>`)}
         <div id="wf-logs"></div>
         <div id="wf-out"></div>
       </div>
@@ -73,7 +78,7 @@ const Wiring = (() => {
             <button class="btn" id="ww-practice" data-tip="wiring.practice">Practice</button>
           </div>
         </div>
-        <p class="small">Finds a loose plug or a cracked wire that only fails when it moves. Robot <b>on and disabled</b>: hands in the robot only while it is disabled. Go through the steps, gently wiggling each cable and plug for a few seconds; the tool watches the CAN bus and every controller, and says which step made something happen.</p>
+        ${HowTo.block(`<p class="small">Finds a loose plug or a cracked wire that only fails when it moves. Robot <b>on and disabled</b>: hands in the robot only while it is disabled. Go through the steps, gently wiggling each cable and plug for a few seconds; the tool watches the CAN bus and every controller, and says which step made something happen.</p>`)}
         <div id="ww-body"></div>
       </div>
     </div>`;
@@ -495,6 +500,10 @@ const Wiring = (() => {
     stopWiggle();
     wig.done = true;
     extra = wiggleFindings();
+    if (!wig.practice) {
+      const bad = extra.find(f => f.level === "error" || f.level === "warn");
+      HowTo.mark("wiring", "wire_wiggle", !bad, bad ? bad.title : "Nothing dropped when a plug moved.");
+    }
     paintWiggle();
     paint();
   }
@@ -510,6 +519,7 @@ const Wiring = (() => {
   $("#w-ohms-go", root).onclick = async () => {
     const v = await App.api("/api/wiring/termination", { ohms: $("#w-ohms", root).value });
     $("#w-ohms-out", root).innerHTML = `<div class="finding"><div class="head"><span class="level ${v.level}">${v.level}</span><span class="title">${esc(v.title)}</span></div><div class="why">${Learn.link(v.why, 3)}</div></div>`;
+    if (v.level !== "info") HowTo.mark("wiring", "wire_ohms", v.level === "ok", v.title);
   };
 
   App.on("tab", async t => {

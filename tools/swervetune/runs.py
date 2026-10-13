@@ -54,24 +54,40 @@ def load(path_or_name):
     return doc
 
 
+# A run's summary, by file and its modification time: a run's file carries every sample, and the
+# checklists and the Runs tab list hundreds of them on every request.
+_SUMMARIES = {}
+
+
+def _summary(f):
+    try:
+        st = os.stat(f)
+    except OSError:
+        return None
+    key = (st.st_mtime_ns, st.st_size)
+    hit = _SUMMARIES.get(f)
+    if hit and hit[0] == key:
+        return hit[1]
+    try:
+        with open(f, encoding="utf-8") as fh:
+            d = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    s = None
+    if _is_run(d):
+        rep = d.get("report") or {}
+        s = {"file": os.path.basename(f), "test": d.get("test"), "module": d.get("module"),
+             "env": d.get("env"), "outcome": d.get("outcome"), "saved": d.get("saved"),
+             "practice": d.get("practice", False), "score": rep.get("score"),
+             "cost": rep.get("cost"), "summary": rep.get("summary"),
+             "robot": (d.get("robot") or {}).get("name"), "gains": d.get("gains") or {}}
+    _SUMMARIES[f] = (key, s)
+    return s
+
+
 def list_runs(limit=50):
     files = sorted(glob.glob(os.path.join(RUNS, "*.json")), reverse=True)[:limit]
-    out = []
-    for f in files:
-        try:
-            with open(f, encoding="utf-8") as fh:
-                d = json.load(fh)
-        except (OSError, ValueError):
-            continue
-        if not _is_run(d):
-            continue
-        rep = d.get("report") or {}
-        out.append({"file": os.path.basename(f), "test": d.get("test"), "module": d.get("module"),
-                    "env": d.get("env"), "outcome": d.get("outcome"), "saved": d.get("saved"),
-                    "practice": d.get("practice", False), "score": rep.get("score"),
-                    "cost": rep.get("cost"), "summary": rep.get("summary"),
-                    "robot": (d.get("robot") or {}).get("name"), "gains": d.get("gains") or {}})
-    return out
+    return [dict(s) for s in map(_summary, files) if s]
 
 
 LEDGER = os.path.join(DATA, "batteries.json")

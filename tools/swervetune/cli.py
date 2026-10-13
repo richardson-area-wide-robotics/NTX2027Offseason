@@ -854,6 +854,58 @@ def cmd_sim(args, out):
         lk.close()
 
 
+def _say_plan(out, plan):
+    mark = {"done": "x", "attention": "!", "todo": " ", "later": "~", "optional": "o", "skip": "-"}
+    out.say(f"{plan['title']}  ({plan['done']} of {plan['of']} done)")
+    for j in plan["jobs"]:
+        out.say(f"  [{mark.get(j['status'], ' ')}] {j['title']}: {j.get('detail', '')}")
+    if plan.get("next"):
+        out.say(f"  next: {plan['next']['title']}")
+    elif plan.get("after"):
+        out.say(f"  then: {plan['after']['label']}")
+
+
+def cmd_setup(args, out):
+    """Where to start and what to do next: a tool's checklist, or one part's."""
+    from . import progress, setup as SP
+    project = resolve_project(args.project)
+    if not project:
+        return out.done(out.fail("Which robot? Pass --project.", code="NO_PROJECT"))
+    lk = open_link(args, out) if args.live else None
+    if args.live and not lk:
+        return out.done(2)
+    try:
+        ctx = SP.gather(project, link=lk)
+        if args.part:
+            kind, _, which = args.part.partition(":")
+            if kind not in SP.PARTS:
+                return out.done(out.fail(f"No part {kind!r}. Parts: " + ", ".join(SP.PARTS), code="BAD_ARGS"))
+            key = SP.part_key(kind, which)
+            parts = progress.load(project.name).get("parts") or {}
+            if args.start or key not in parts:
+                if not args.start:
+                    return out.done(out.fail(f"{key} isn't started. Add --start: only what is done from then on "
+                                             "counts for it.", code="NOT_FOUND"))
+                parts[key] = {"started": SP.stamp(), "marks": {}}
+                progress.update(project.name, {"parts": parts})
+                ctx["prog"] = progress.load(project.name)
+            plan = SP.part_plan(kind, which, ctx, parts[key]["started"])
+            out.put(part=key, started=parts[key]["started"], plan=plan)
+            _say_plan(out, plan)
+            return out.done()
+        tabs = [args.tab] if args.tab else list(SP.TOOLS)
+        if args.tab and args.tab not in SP.TOOLS:
+            return out.done(out.fail(f"No tool {args.tab!r}. Tools: " + ", ".join(SP.TOOLS), code="BAD_ARGS"))
+        plans = {t: SP.TOOLS[t](ctx) for t in tabs}
+        out.put(tools=plans)
+        for t in tabs:
+            _say_plan(out, plans[t])
+        return out.done()
+    finally:
+        if lk:
+            lk.close()
+
+
 def cmd_netcheck(args, out):
     from . import link as L
 
@@ -1070,6 +1122,13 @@ def build_parser():
     s = sub.add_parser("netcheck", help="the robot and the internet (Claude, over a VPN) at the same time")
     s.add_argument("--adapter", help="the network adapter on the robot's Wi-Fi, if it can't be found")
     s.set_defaults(fn=cmd_netcheck)
+    s = sub.add_parser("setup", help="where to start and what to do next: each tool's checklist, or one part's")
+    s.add_argument("--tab", help="one tool: calibrate, config, motors, wiring or controllers")
+    s.add_argument("--part", help="one part that changed, e.g. module:frontleft, camera:front, field, gyro, wheels, "
+                   "motor:'frontleft drive'")
+    s.add_argument("--start", action="store_true", help="start (or start over) that part's checklist")
+    s.add_argument("--live", action="store_true", help="also ask the robot (connects)")
+    s.set_defaults(fn=cmd_setup)
     sub.add_parser("brief", help="the rules an AI agent follows").set_defaults(fn=cmd_brief)
 
     s = sub.add_parser("gui", help="open the GUI in a browser")

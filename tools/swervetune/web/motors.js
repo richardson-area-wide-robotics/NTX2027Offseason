@@ -9,7 +9,8 @@
   const STAGE_CLASS = { OK: "", WARN: "warn", DERATE: "derate", SHUTOFF: "shutoff" };
   const STAGE_DO = { WARN: "getting hot: ease off", DERATE: "at half power to cool", SHUTOFF: "cut to 2 A until it cools" };
   root.innerHTML = `
-    <div class="grid2">
+    ${HowTo.slot("motors")}
+    <div class="grid2" style="margin-top:12px">
       <div class="stack">
         <div class="panel">
           <h2 data-tip="motors.title">Motors</h2>
@@ -30,10 +31,10 @@
       <div class="stack">
         <div class="panel">
           <h3 data-tip="motors.override"><span class="term" tabindex="0" data-learn="thermal_override">Thermal override</span></h3>
-          <p class="small">For the end of a match, when losing a motor costs more than the motor. A motor the guard
+          ${HowTo.block(`<p class="small">For the end of a match, when losing a motor costs more than the motor. A motor the guard
             cut off for heat runs at half power instead, for up to <span id="ovr-max">20</span> s. Never lifts a stall cut, and never
             holds off a motor already 10 °C past its shutoff or at 95% heat: past those it is being destroyed.
-            The driver's Back button does the same for every motor: a short buzz when it took, a long one when a motor stays off.</p>
+            The driver's Back button does the same for every motor: a short buzz when it took, a long one when a motor stays off.</p>`, "How it works")}
           <div id="ovr-now" class="callout warn" hidden></div>
           <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
             <label class="row small" data-tip="motors.ovr-name">Motor <select id="ovr-name"><option value="ALL">Every motor</option></select></label>
@@ -62,12 +63,17 @@
         </div>
       </div>
     </div>
-    <div class="panel" style="margin-top:12px">
+    <div class="panel" id="motor-inventory" style="margin-top:12px">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
         <h2 data-tip="motors.inventory">Motors and controllers</h2>
         <button class="btn" id="inv-refresh" data-tip="motors.refresh">Check again</button>
       </div>
-      <p class="small">What each controller is, three ways: what the code creates, what the controller itself reports over CAN (when connected), and what motor it drives, set here by hand or read from the code. A drive_ff run also measures the drive motors' speed per volt, which tells a NEO from a Vortex.</p>
+      ${HowTo.steps({ note: "What each controller is, three ways: what the code creates, what the controller itself reports over CAN (when connected), and what motor it drives, set here by hand or read from the code. A drive_ff run also measures the drive motors' speed per volt, which tells a NEO from a Vortex.",
+        steps: ["Connect to the robot, so each controller says what it is and which firmware it runs.",
+          "For any row marked red, fix what it says: usually the code creates the wrong controller, or YAGSL names the wrong motor (<b>Fix</b> writes all four module files).",
+          "Pick each motor's type where it says <i>not said anywhere</i>, then <b>Save the motor inventory</b>.",
+          "Old firmware: update it with REV Hardware Client, robot connected by USB."],
+        good: "every row the same three ways, every motor named." })}
       <div id="inv-body"><p class="hint">Reading the code…</p></div>
     </div>`;
 

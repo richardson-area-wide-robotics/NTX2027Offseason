@@ -443,6 +443,30 @@ ol.chain-edit { margin: 8px 0; padding: 0; list-style: none; display: grid; gap:
 ol.chain-edit li { display: grid; grid-template-columns: 2em 1fr 5em auto; gap: 6px; align-items: center; }
 ol.chain-edit input { width: 5em; }
 
+/* ---------------------------------------------------------------- how-to, where to start, one part
+   Each tool's card lists its jobs in order and highlights the next; a panel's instructions fold
+   away under one switch; a panel whose job is done says what comes next. */
+.plan { border-left: 4px solid var(--accent); }
+.plan h2 { margin: 0; }
+.plan-jobs { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.plan-jobs li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; }
+.plan-jobs li .chip { justify-content: center; }
+.plan-jobs li.now { background: var(--info-bg); box-shadow: inset 0 0 0 1px var(--info); }
+.plan-t { min-width: 0; }
+details.howto { border: 1px dashed var(--rule); border-radius: 6px; padding: 2px 10px; }
+details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); padding: 6px 0; }
+.howto-body { display: grid; gap: 6px; padding-bottom: 6px; }
+.howto-next { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; background: var(--ok-bg); }
+.howto-next[hidden] { display: none; }
+.howto-switch input { width: 18px; height: 18px; }
+@keyframes plan-flash { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+.flash { animation: plan-flash 1.6s ease-out; }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent); } }
+.part-kind { display: grid; gap: 6px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; }
+.part-kind.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.part-job { border-left: 3px solid var(--accent); }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; text-align: left; }
+
 /* ---------------------------------------------------------------- phones and touch screens
    Last in the file, so these win over the base rules above them. */
 /* Phones: the header wrapped to four rows (29% of the screen) with ABORT alone on the last one. ABORT
@@ -450,6 +474,7 @@ ol.chain-edit input { width: 5em; }
    every drawer, dialog and toast, and the title goes so the header stays short. */
 .abort.pin { display: none; }
 @media (max-width: 600px) {
+  .plan-jobs li { grid-template-columns: 5.5em minmax(0, 1fr) auto; gap: 6px; padding: 5px 4px; }
   .brand, #abort { display: none; }
   .top { gap: 6px 10px; padding: 8px 12px; }
   .abort.pin { display: block; position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 70;

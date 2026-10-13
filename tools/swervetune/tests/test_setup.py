@@ -1,0 +1,207 @@
+"""Where to start and what to do next (the tools' cards), and redoing one part (setup.py)."""
+
+import io
+import json
+import os
+import tempfile
+import unittest
+from contextlib import redirect_stdout
+from unittest import mock
+
+from swervetune import cli, progress, server, setup as SP, yagslcfg as Y
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+EARLY, START, LATE = "20261013-080000", "20261013-100000", "20261013-110000"
+
+
+class Robot:
+    name = "Robot"
+
+    def __init__(self, tune=None):
+        self.data = {"swervetune.json": tune or {}}
+
+
+def ctx(**kw):
+    c = {"project": Robot(kw.pop("tune", None)), "robot": "Robot", "prog": {}, "runs": [], "connected": False,
+         "live_motors": [], "lint": [], "pp": None, "inventory": {"rows": [], "findings": []}}
+    c.update(kw)
+    return c
+
+
+def run(test, env, saved, module="ALL", score=100):
+    return {"test": test, "env": env, "saved": saved, "module": module, "outcome": "DONE", "practice": False,
+            "score": score, "robot": "Robot"}
+
+
+def mark(result="pass", when=LATE, detail=""):
+    return {"result": result, "when": when, "detail": detail}
+
+
+def jobs(plan):
+    return {j["id"]: j["status"] for j in plan["jobs"]}
+
+
+class CalibrateTest(unittest.TestCase):
+    def test_a_new_robot_starts_at_the_module_positions(self):
+        p = SP.calibrate(ctx())
+        self.assertEqual(p["next"]["id"], "positions")
+        self.assertEqual(p["done"], 0)
+        self.assertEqual(jobs(p)["camera"], "skip", "no camera listed")
+        self.assertEqual(jobs(p)["field"], "optional")
+
+    def test_each_job_waits_for_what_it_needs(self):
+        st = jobs(SP.calibrate(ctx()))
+        self.assertEqual(st["wheels"], "later", "a crooked wheel measures short: offsets first")
+        self.assertEqual(st["spin"], "later", "no floor spin yet")
+        self.assertEqual(st["moi"], "todo", "weighing needs nothing")
+        st = jobs(SP.calibrate(ctx(prog={"offsets": "verified"}, tune={"robotMassKg": 52.0})))
+        self.assertEqual(st["wheels"], "todo")
+        self.assertEqual(st["moi"], "later", "the spin compares against the floor feedforward")
+        st = jobs(SP.calibrate(ctx(tune={"robotMassKg": 52.0}, runs=[run("drive_ff", "FIELD", LATE), run("spin", "FIELD", LATE)])))
+        self.assertEqual((st["moi"], st["spin"]), ("todo", "todo"))
+
+    def test_the_tools_results_tick_the_jobs(self):
+        p = SP.calibrate(ctx(prog={"offsets": "verified", "cal_positions": mark(), "cal_wheels": mark("fail", detail="one wheel 6% off"),
+                                   "cal_gyro_still": mark(), "cal_gyro_turns": mark("fail", detail="reads 2% short")},
+                             tune={"robotMassKg": 52, "robotMoiKgM2": 5.1, "vision": {"cameras": ["front"]}}))
+        st = jobs(p)
+        self.assertEqual((st["positions"], st["wheels"], st["gyro"], st["moi"], st["camera"]),
+                         ("done", "attention", "attention", "done", "todo"))
+        self.assertEqual(p["next"]["id"], "wheels", "the first job needing work, in order")
+
+    def test_everything_done_points_back_to_the_guide(self):
+        p = SP.calibrate(ctx(prog={"cal_positions": mark(), "cal_wheels": mark(), "cal_spin": mark(), "cal_gyro_still": mark(),
+                                   "cal_gyro_turns": mark()}, tune={"robotMassKg": 52, "robotMoiKgM2": 5.1}))
+        self.assertIsNone(p["next"])
+        self.assertEqual(p["after"]["label"], "Back to the Guide")
+        self.assertEqual((p["done"], p["of"]), (5, 5), "the skipped camera and optional field don't count")
+
+
+class OtherToolsTest(unittest.TestCase):
+    def test_config_errors_then_pathplanner_then_batteries(self):
+        c = ctx(lint=[{"id": "x", "level": "error"}, {"id": "y", "level": "warn"}, {"id": "pathplanner_names", "level": "error"}],
+                pp={"used": True, "rows": [{"key": "robotMass", "status": "unknown"}], "findings": []})
+        st = jobs(SP.config(c))
+        self.assertEqual((st["errors"], st["warnings"], st["pathplanner"], st["batteries"]), ("attention", "optional", "later", "todo"))
+        c = ctx(tune={"batteries": [1, 2]}, battery_grades_stale=True,
+                pp={"used": True, "rows": [{"key": "maxDriveSpeed", "status": "differs"}], "findings": []})
+        st = jobs(SP.config(c))
+        self.assertEqual((st["errors"], st["pathplanner"], st["batteries"]), ("done", "attention", "attention"))
+
+    def test_motors_needs_the_robot(self):
+        st = jobs(SP.motors(ctx()))
+        self.assertEqual((st["connect"], st["live"]), ("todo", "later"))
+        st = jobs(SP.motors(ctx(connected=True, live_motors=[{"name": "Shooter leader", "present": 0}])))
+        self.assertEqual((st["connect"], st["live"]), ("done", "attention"))
+
+    def test_wiring_counts_the_ports_and_the_order(self):
+        c = ctx(controllers=["a", "b"], wiring_map={"pdhPorts": {"a": 3}, "buses": [{"orderConfirmed": True}]},
+                prog={"wire_ohms": mark()}, wiring_saved=True)
+        p = SP.wiring(c)
+        st = jobs(p)
+        self.assertEqual((st["ohms"], st["pdh"], st["order"], st["saved"]), ("done", "todo", "done", "done"))
+        self.assertIn("1 of 2", [j for j in p["jobs"] if j["id"] == "pdh"][0]["detail"])
+
+    def test_controllers_by_their_names_and_the_deadband(self):
+        hist = [{"label": "Driver", "when": LATE, "verdict": "good", "recommended_deadband": 0.12, "problems": []},
+                {"label": "Operator", "when": LATE, "verdict": "error", "problems": ["button 3 bounces"]}]
+        st = jobs(SP.controllers_plan(ctx(controller_history=hist, code_deadband=0.1)))
+        self.assertEqual((st["driver"], st["tester"], st["deadband"]), ("done", "attention", "attention"))
+
+
+class PartTest(unittest.TestCase):
+    def test_only_work_since_the_start_counts(self):
+        prog = {"parts": {"module:frontleft": {"started": START, "marks": {
+            "hand_wheel": mark(when=EARLY), "offset": mark(when=LATE)}}}}
+        c = ctx(prog=prog, runs=[run("capture", "DISABLED", EARLY), run("steer_step", "BLOCKS", LATE, module="FL", score=85)])
+        st = jobs(SP.part_plan("module", "frontleft", c, START))
+        self.assertEqual(st["health"], "todo", "the capture was before the module changed")
+        self.assertEqual(st["hand_wheel"], "todo", "so was that hand check")
+        self.assertEqual(st["offset"], "done")
+        self.assertEqual(st["steer"], "done", "FL is frontleft's short name")
+
+    def test_another_modules_run_does_not_count(self):
+        c = ctx(runs=[run("steer_step", "BLOCKS", LATE, module="BR", score=100)])
+        self.assertEqual(jobs(SP.part_plan("module", "frontleft", c, START))["steer"], "todo")
+        c = ctx(runs=[run("steer_step", "BLOCKS", LATE, module="ALL", score=100)])
+        self.assertEqual(jobs(SP.part_plan("module", "frontleft", c, START))["steer"], "done", "a run on all four counts")
+
+    def test_a_new_field(self):
+        prog = {"parts": {"field": {"started": START, "marks": {"field_type": mark(detail="AndyMark")}}}}
+        c = ctx(prog=prog, layout_saved=True, layout_mtime=LATE)
+        st = jobs(SP.part_plan("field", "", c, START))
+        self.assertEqual((st["type"], st["survey"], st["upload"]), ("done", "done", "todo"))
+        c["layout_mtime"] = EARLY
+        self.assertEqual(jobs(SP.part_plan("field", "", c, START))["survey"], "todo", "last event's survey")
+
+    def test_a_camera_and_a_motor(self):
+        c = ctx(tune={"vision": {"cameras": ["front"]}}, prog={"cal_camera_front": mark()})
+        self.assertEqual(jobs(SP.part_plan("camera", "front", c, START)), {"listed": "done", "position": "done", "field": "optional"})
+        self.assertEqual(jobs(SP.part_plan("camera", "back", c, START))["listed"], "todo")
+        c = ctx(inventory={"rows": [{"name": "frontleft drive", "motor": "NEO Vortex", "status": "ok", "can_id": 3}]})
+        p = SP.part_plan("motor", "frontleft drive", c, START)
+        self.assertEqual(jobs(p)["type"], "done")
+        self.assertEqual([j["go"] for j in p["jobs"] if j["id"] == "module"], [{"part": "module", "which": "frontleft"}])
+
+    def test_the_real_robots_have_every_plan(self):
+        for robot in ("Peashooter", "Black team"):
+            p = Y.Project(os.path.join(REPO, robot))
+            c = SP.gather(p)
+            for fn in SP.TOOLS.values():
+                plan = fn(c)
+                self.assertTrue(plan["jobs"], robot)
+            for kind in SP.PARTS:
+                which = {"module": p.module_names()[0], "motor": p.module_names()[0] + " drive", "camera": "front"}.get(kind, "")
+                self.assertTrue(SP.part_plan(kind, which, c, START)["jobs"], (robot, kind))
+
+
+class ServerTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.patch = mock.patch.object(progress, "PATH", os.path.join(self.tmp, "progress.json"))
+        self.patch.start()
+        self.addCleanup(self.patch.stop)
+        self.proj = mock.patch.object(server.S, "project", Y.Project(os.path.join(REPO, "Peashooter")))
+        self.proj.start()
+        self.addCleanup(self.proj.stop)
+
+    def test_start_mark_and_stop_a_part(self):
+        self.assertIsNone(server.api_part_plan({"kind": "module", "which": "frontleft"})["started"])
+        self.assertFalse(server.api_part_start({"kind": "module"})["ok"], "which module?")
+        p = server.api_part_start({"kind": "module", "which": "frontleft"})
+        self.assertTrue(p["started"])
+        self.assertEqual(jobs(p)["offset"], "todo")
+        p = server.api_part_mark({"kind": "module", "which": "frontleft", "step": "offset", "result": "pass", "detail": "Offset 12.3"})
+        self.assertEqual(jobs(p)["offset"], "done")
+        self.assertEqual(server.api_parts()["active"][0]["which"], "frontleft")
+        server.api_part_stop({"kind": "module", "which": "frontleft"})
+        self.assertEqual(server.api_parts()["active"], [])
+
+    def test_a_tools_mark_and_its_card(self):
+        self.assertFalse(server.api_mark({"key": "geometry", "result": "pass"})["ok"], "only the tools' own keys")
+        server.api_mark({"key": "cal_positions", "result": "pass", "detail": "Matches the files."})
+        p = server.api_setup({"tab": "calibrate"})
+        self.assertEqual(jobs(p)["positions"], "done")
+        self.assertEqual(p["next"]["id"], "gyro", "wheels and spin wait; the gyro is next")
+
+    def test_a_parts_offset_writes_only_its_module(self):
+        res = {"frontleft": {"new": 12.0}, "frontright": {"new": 99.0}}
+        with mock.patch.object(server.runs, "load", return_value={}), \
+                mock.patch.object(server.advisor, "offsets_from_capture", return_value=res):
+            every = server._edits_from({"kind": "offsets", "file": "x"})
+            one = server._edits_from({"kind": "offsets", "file": "x", "module": "frontleft"})
+        self.assertEqual(len(every), 2)
+        self.assertEqual(one, [("modules/frontleft.json", ("absoluteEncoderOffset",), 12.0)])
+
+    def test_the_cli_starts_a_part_and_says_whats_next(self):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cli.main(["setup", "--project", "Peashooter", "--part", "gyro", "--start", "--json"])
+        d = json.loads(buf.getvalue())
+        self.assertEqual((d["ok"], d["part"]), (True, "gyro"))
+        self.assertEqual(d["plan"]["next"]["id"], "health")
+
+
+if __name__ == "__main__":
+    unittest.main()

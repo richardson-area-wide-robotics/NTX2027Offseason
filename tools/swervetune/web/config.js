@@ -16,7 +16,7 @@
     const pp = F.filter(f => String(f.id || "").startsWith("pathplanner"));
     const tip = (key, text) => `<span class="term" tabindex="0" data-tip="${key}" data-quiet>${esc(text)}</span>`;
     const yes = v => v === true ? "<b>yes</b>" : v === false ? "no" : esc(String(v));
-    root.innerHTML = `<div class="grid2">
+    root.innerHTML = `${HowTo.slot("config")}<div class="grid2" style="margin-top:12px">
       <div class="stack">
         <div class="panel"><h2 data-tip="config.summary">${esc(L.project)} <span class="muted small">team ${esc(s.team)}</span></h2>
           <table class="t"><tbody>
@@ -43,7 +43,12 @@
             <td class="num">${p.p}</td><td class="num">${p.i}</td><td class="num">${p.d}</td><td class="num">${p.iz}</td><td class="num">${p.f}</td></tr>`; }).join("")}
         </table><p class="hint">Units are the SPARK's: output (duty cycle) per degree for steering, per m/s for drive; kD is per 1 ms controller step. YAGSL never sends FF to a SPARK: the real feedforward is measured per module on the Tune tab.</p></div>
       </div>
-      <div class="panel"><h2 data-tip="config.findings">What does not add up</h2>
+      <div class="panel" id="cfg-findings"><h2 data-tip="config.findings">What does not add up</h2>
+        ${HowTo.steps({ steps: ["<b>Errors</b> first: each says what is wrong, why it matters, and how to fix it.",
+          "<b>Preview the fix</b> shows the exact line that changes; <b>Write files</b> writes it. Redeploy, then this list checks again.",
+          "<b>Warnings</b> next: read them. Most are settled by the Guide's tests, which measure what the files can only guess.",
+          "<b>Open the Guide</b> or <b>Open the tuner</b> takes you to the step that settles a finding."],
+          good: "no errors. Warnings may stay until the Guide's tests have run." })}
         <div>${own.length ? own.map(([f, i]) => `<div class="finding">
           <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
           <div class="why">${Learn.link(f.why, 3)}</div>
@@ -57,10 +62,11 @@
     </div>
     <div class="panel" id="pp-panel" style="margin-top:12px"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>
     <div class="panel" id="dl-panel" style="margin-top:12px"><h2 data-tip="config.designs">Mechanism designs</h2>
-      <p class="small">Designed a mechanism in <a href="https://www.reca.lc/" target="_blank" rel="noopener">ReCalc</a> or
-        <a href="https://ambcalc.com/" target="_blank" rel="noopener">AMBcalc</a>? Paste its share link (Copy Link, or the
-        address bar). The link holds the whole design: the tool reads it, attaches it to the motors it is for, checks it
-        against the code and the robot, and fills in the numbers a design should decide.</p>
+      ${HowTo.steps({ note: `Designed a mechanism in <a href="https://www.reca.lc/" target="_blank" rel="noopener">ReCalc</a> or
+        <a href="https://ambcalc.com/" target="_blank" rel="noopener">AMBcalc</a>? The link holds the whole design: the tool reads it, attaches it to the motors it is for, and checks it against the code and the robot.`,
+        steps: ["In the calculator, press Copy Link (or copy the address bar).", "Paste it below and press <b>Read it</b>.",
+          "Name the mechanism and tick its motors if the tool guessed wrong.", "<b>Save the design</b>; tick a number only if you want it written too."],
+        good: "no errors under <b>Checked against the robot</b>. After a practice match, check the saved designs against its log." })}
       <div class="row"><label class="row small" data-tip="config.dl-url" style="flex:1">Design link
         <input id="dl-url" style="flex:1;min-width:16em" placeholder="https://www.reca.lc/arm?…  or  https://ambcalc.com/mechanism?…"></label>
         <button class="btn primary" id="dl-read" data-tip="config.dl-read">Read it</button></div>
@@ -72,6 +78,7 @@
     $$("[data-pp]", root).forEach(b => b.onclick = () => $("#pp-panel", root).scrollIntoView({ behavior: "smooth" }));
     paintPathPlanner();
     Designs.mount();
+    HowTo.paint("config");
     $$("[data-fix]", root).forEach(b => b.onclick = () => {
       const f = F[+b.dataset.fix].fix;
       App.previewAndSave({ kind: "edit", file: f.file, path: f.path, value: f.value }, "Fix: " + F[+b.dataset.fix].title);
@@ -91,7 +98,10 @@
     if (!r.used) { box.innerHTML = `<p class="hint">This robot doesn't use PathPlanner.</p>`; return; }
     const F = r.findings || [], cap = r.capabilities || {};
     box.innerHTML = `
-      <p class="small">PathPlanner keeps its own copy of the robot (<span class="mono">deploy/pathplanner/settings.json</span>), which the robot loads at boot to plan every auto. Each row is a setting PathPlanner plans with, against where the truth lives.</p>
+      ${HowTo.steps({ note: "PathPlanner keeps its own copy of the robot (<span class=\"mono\">deploy/pathplanner/settings.json</span>), which the robot loads at boot to plan every auto. Each row is a setting PathPlanner plans with, against where the truth lives.",
+        steps: ["Close the PathPlanner app first: it writes its own values back when it closes.",
+          "Press <b>Make PathPlanner match the code</b> and check the diff.", "Rows marked <b>measure it</b> (mass, moment of inertia) come from Calibrate: measure them there, then come back."],
+        good: "every row the same; the named commands each registered (\"Shoot B\" is kept on purpose)." })}
       <div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
         ${(r.rows || []).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${esc(String(x.pathplanner ?? "–"))}</td>
           <td class="num mono">${esc(String(x.code ?? "–"))}</td><td class="small">${esc(x.source)}</td>

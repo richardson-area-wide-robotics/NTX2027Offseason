@@ -717,6 +717,12 @@ const Tune = (() => {
   return {
     open(l, opts = {}) {
       if (opts.target) target = opts.target;
+      if (opts.module) {
+        // One part: the tuner on that module only (a replaced or misbehaving one).
+        module = abbr(opts.module);
+        const m = $("#module", root);
+        if (m) m.value = module;
+      }
       if (opts.fresh) {
         // From the Guide: every module, the standard steps. A one-corner run (the troubleshooter's
         // "pick FL only") never stands in for all four.

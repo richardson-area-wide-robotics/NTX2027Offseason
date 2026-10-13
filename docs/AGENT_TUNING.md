@@ -56,6 +56,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | Command | What it does |
 |---|---|
 | `lint --project Peashooter` | Checks the YAGSL config files; no robot needed. Start here. Each finding's `fix` says what carries it out: `edit` is one `config` change (a person's OK first), `tune` is the test for that loop (`steer` is `steer_step`, `drive` is `drive_step`, `slip` is `slip`), `pathplanner` is `ppcheck`, and `guide` (with a `symptom`, `diagnose <symptom>`) is a step a person does in the GUI's Guide tab: tell them which. |
+| `setup --project P [--tab calibrate] [--part module:frontleft --start] [--live]` | Where to start and what to do next: each tool's jobs in order with their status (`done`, `attention`, `todo`, `later` with what it waits for, `optional`, `skip`), and `next`. `--part` is one part that changed (a replaced module, a moved camera, a new field): only work done since it was started counts. Tell the person the next job; the hands-on ones are theirs. |
 | `ppcheck --project Peashooter` | Whether PathPlanner's settings describe the same robot as the code. Exits 1 on an error; report it, never edit PathPlanner's files. |
 | `status` | Robot, environment, live modules, problems. |
 | `netcheck` | Whether this laptop reaches the robot and the internet at the same time (two networks, a VPN). Run it when `status` can't reach the robot, and tell the person what it says; never change a network setting yourself. |

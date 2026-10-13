@@ -161,7 +161,7 @@ const Guide = (() => {
       mount: box => {
         $("#g-geo-done", box).onclick = async () => { if (await mark({ geometry: progress.geometry === "done" ? "" : "done" })) paint(); };
       },
-      status: () => progress.geometry === "done" ? "done" : "todo" },
+      status: () => progress.geometry === "done" || ["cal_positions", "cal_wheels"].every(k => (progress[k] || {}).result === "pass") ? "done" : "todo" },
 
     { id: "steer-floor", env: "FIELD", learn: ["carpet_scrub", "steady_state_error", "kI", "iZone", "what_if"], title: "Steering, on the floor", where: "On the floor (the robot does not drive)",
       why: "Carpet holds a wheel still until the loop pushes hard enough. Gains that look perfect on blocks usually leave each wheel a few degrees short on carpet - and that is sideways drift.",
@@ -309,12 +309,15 @@ const Guide = (() => {
   }
 
   function paint(focus = false) {
+    // Redoing one part takes the tab over until the person goes back to the whole path.
+    if (Parts.on) { Parts.paint(); return; }
     const idx = Math.max(0, STEPS.findIndex(s => s.id === active));
     const step = STEPS[idx];
     const st = step.status(), next = STEPS[idx + 1];
     root.innerHTML = `<div class="split">
       <div class="panel"><h3 data-tip="guide.rail">The path to a tight swerve</h3>
         <p class="small muted">✓ Done means every target was met on the real robot.</p>
+        <div class="row"><button class="btn small" id="g-parts" data-tip="guide.parts">Already set up? Redo one part</button></div>
         <ol class="guide-steps">${STEPS.map((s, i) => {
           const ss = s.status();
           return `<li><button class="gstep ${s.id === step.id ? "on" : ""} ${ss}" data-s="${s.id}" data-tip="guide.step.${s.id}" data-quiet ${s.id === step.id ? `aria-current="step"` : ""}>
@@ -340,6 +343,7 @@ const Guide = (() => {
     lastWhere = null;
     paintWhere();
     $$(".gstep", root).forEach(b => b.onclick = () => go(b.dataset.s));
+    $("#g-parts", root).onclick = () => Parts.open();
     $$("[data-step]", root).forEach(b => b.onclick = () => go(b.dataset.step));
     $$("[data-go]", root).forEach(b => b.onclick = () => App.show(b.dataset.go));
     if (step.mount) step.mount($("#gbody", root));

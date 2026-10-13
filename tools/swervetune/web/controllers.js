@@ -25,13 +25,18 @@
   let recording = null, seen = new Set(), lastTs = -1, poller = null, trails = { left: [], right: [] };
 
   root.innerHTML = `
-    <div class="panel">
+    ${HowTo.slot("controllers")}
+    <div class="panel" style="margin-top:12px">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
         <h2 data-tip="ct.title">Check a controller</h2>
         <span id="ct-rate" class="small muted"></span>
       </div>
-      <p class="small">Plug the controller into this laptop with USB and press any button on it. No robot needed: the
-        Driver Station reads the same controller the same way. Do this for every controller at the start of an event.</p>
+      ${HowTo.steps({ note: "No robot needed: the Driver Station reads the same controller the same way. Do this for every controller at the start of an event.",
+        steps: ["Plug the controller into this laptop with USB and press any button on it.",
+          "Say which one it is (Driver, Operator, Spare 1): its saved checks are kept under that name.",
+          "Run the steps on the right in order: rest, sticks, return to center, triggers, buttons.",
+          "Read the report, then <b>Save the check</b>."],
+        good: "drift inside the code's deadband, full reach every way, and no stuck or bouncing button." })}
       <div class="row" style="flex-wrap:wrap;gap:12px">
         <label class="gain" data-tip="ct.src">Read from<select id="ct-src">
           <option value="laptop">This laptop (USB)</option>
@@ -294,6 +299,7 @@
     if (!r.ok) { App.toast(r.error); return; }
     App.toast(`Saved: ${r.entry.label}.`);
     history();
+    HowTo.paint("controllers");
   }
 
   async function history() {

@@ -129,6 +129,38 @@ Each step says where the robot must be (and checks it), why it matters, what you
 to do. A step ticks itself off when a test on the real robot passes; simulator and practice runs
 never tick a step.
 
+## Where to start, and what to do next, in each tool
+
+Calibrate, Config, Motors, Wiring and Controllers each open with a card: what the tool is for,
+what to bring, and its jobs in order, each marked **done**, **needs a fix**, **to do**,
+**later** (with a button to what it waits for), **optional** or **not needed**. The highlighted
+job is the one to do next; **Start here** or **Next** goes to it. The marks come from evidence:
+the robot's files, the runs saved on this laptop, what each tool measured, and the live robot.
+When a panel's job checks out, the panel says so and offers the next one; when a tool is done, its
+card points to the next tool or back to the Guide.
+
+Every panel's instructions sit in a **How to do it** block. The **How-to instructions** switch on
+any card shows or folds all of them; leave it on while learning. The `setup` command gives an AI
+agent the same cards (`swervetune setup --project Peashooter`).
+
+## Redo one part
+
+Already set up, and one thing changed? The Guide's **Already set up? Redo one part** checks only
+that part, and leaves the rest of the robot's settings and results alone:
+
+| Part | Its checklist |
+|---|---|
+| A swerve module (replaced, rebuilt, acting up) | Both controllers heard, sensor health, hand check of that module, its offset only, its direction on blocks, steering on blocks on that module, feedforward against the other three |
+| A motor or controller | Heard with its CAN ID, its type, its PDH port; then its module, if it's a swerve motor |
+| The gyro | Health, a minute standing still, full turns, a spin check |
+| A camera (moved, bumped, replaced) | Listed for the robot, its position measured again |
+| A new field or event | Welded or AndyMark, the tag survey, the survey uploaded to each camera |
+| Wheels or tread | Wheel sizes, then a straight line on a tape |
+
+Starting a part stamps the time: only what is done from then on counts for it, because the part
+changed. Its steps run on that part alone (the tuner opens on that module; its offset is the only
+one written).
+
 ## Tuning from AdvantageScope
 
 The same live gains are in AdvantageScope too. Connect it with the **NetworkTables 4

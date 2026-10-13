@@ -9,10 +9,8 @@
 
   root.innerHTML = `
     <div class="stack">
-      <div class="panel">
-        <p class="small">Measure the robot in this order: each one uses the ones before it. Every panel has <b>Practice</b>, which runs it on made-up data with a known answer, so you can see what a good result looks like before measuring for real.</p>
-      </div>
-      <div class="panel">
+      ${HowTo.slot("calibrate")}
+      <div class="panel" id="cal-positions">
         <h2 data-tip="cal.positions">1. Module positions</h2>
         <div class="grid2">
           <div>
@@ -27,55 +25,63 @@
             </svg>
           </div>
           <div>
-            <p class="small">Measure between the <b>centers of the wheels</b>, not the frame: the wheels sit inside it. Wheelbase is front axle to back axle; track width is the middle of a left wheel to the middle of the right one. Inches, to the nearest 1/8.</p>
+            ${HowTo.steps({ need: "A tape measure. The robot anywhere, disabled.",
+              steps: ["Measure between the <b>centers of the wheels</b>, not the frame: the wheels sit inside it.",
+                "Wheelbase is front axle to back axle; track width is the middle of a left wheel to the middle of the right one. Inches, to the nearest 1/8.",
+                "Type both and press <b>Compare with the files</b>. If a module moves, <b>Save to the robot files</b>, then redeploy."],
+              good: "every module within about 1/8 in of the files. A bigger difference means the code has a wrong number." })}
             <div class="row" style="flex-wrap:wrap">
               <label class="small" data-tip="cal.wb">Wheelbase (in) <input type="number" id="cg-wb" step="0.125" min="6" max="40" style="width:7em"></label>
               <label class="small" data-tip="cal.tw">Track width (in) <input type="number" id="cg-tw" step="0.125" min="6" max="40" style="width:7em"></label>
               <button class="btn" id="cg-tape" data-tip="cal.compare">Compare with the files</button>
             </div>
-            <p class="small good-result"><b>A good result:</b> every module within about 1/8 in of the files. A bigger difference means the code has a wrong number.</p>
             <div id="cg-tape-out"></div>
+            ${HowTo.nextLine("positions")}
           </div>
         </div>
       </div>
-      <div class="panel">
+      <div class="panel" id="cal-wheels">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="cal.wheels">2. Wheel sizes</h2>
           <button class="btn" id="cg-wheel-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        <p class="small">Tread wears and compresses, and every distance odometry reports is wheel turns times the wheel size. With the motors coasting, a push makes each wheel roll freely over the same ground, so each one's count against a tape measure is its real size. Driving can't measure this: the speed loop makes every wheel report the speed it was asked for.</p>
+        ${HowTo.block(`<p class="small">Tread wears and compresses, and every distance odometry reports is wheel turns times the wheel size. With the motors coasting, a push makes each wheel roll freely over the same ground, so each one's count against a tape measure is its real size. Driving can't measure this: the speed loop makes every wheel report the speed it was asked for.</p>
         <ol class="small">
           <li>Robot <b>on the floor and disabled</b>. Mark a start and an end <b>3 m</b> apart along a straight line.</li>
           <li>Point every wheel straight ahead.</li>
           <li>Press <b>Record the push</b> (20 s, motors coast), then push the robot slowly and straight from mark to mark. Push on the frame, near the middle, so it doesn't twist.</li>
           <li>Type how far one point of the robot really moved, then <b>Measure</b>.</li>
         </ol>
+        <p class="small good-result"><b>A good result:</b> all four wheels within about 1% of each other, and close to the 3 in on the drawing. One wheel far off the others is worn tread, or it slipped during the push.</p>`)}
         <div class="row" style="flex-wrap:wrap">
           <button class="btn primary" id="cg-push" data-tip="cal.push">Record the push</button>
           <label class="small" data-tip="cal.distance">Distance moved (m) <input type="number" id="cg-tape-m" step="0.005" min="0.5" placeholder="tape it" style="width:7em"></label>
           <button class="btn" id="cg-measure" disabled data-tip="cal.measure">Measure</button>
           <span class="small muted" id="cg-push-state"></span>
         </div>
-        <p class="small good-result"><b>A good result:</b> all four wheels within about 1% of each other, and close to the 3 in on the drawing. One wheel far off the others is worn tread, or it slipped during the push.</p>
         <div id="cg-wheel-out"></div>
+        ${HowTo.nextLine("wheels")}
       </div>
-      <div class="panel">
+      <div class="panel" id="cal-spin">
         <h2 data-tip="cal.spin">3. Check with a spin</h2>
-        <p class="small">After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune tab). Turning on the spot, the gyro's turn rate against the wheels' speeds says whether the two agree as a whole.</p>
+        ${HowTo.steps({ steps: ["After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune tab, or the Guide's Spin check).",
+          "Press <b>Check the newest floor spin</b>: turning on the spot, the gyro's turn rate against the wheels' speeds says whether the two agree as a whole."],
+          good: "the gyro and the wheels agree within a few percent. If they don't, recheck the module positions and wheel sizes before blaming the gyro." })}
         <div class="row"><button class="btn" id="cg-spin" data-tip="cal.spin-check">Check the newest floor spin</button></div>
-        <p class="small good-result"><b>A good result:</b> the gyro and the wheels agree within a few percent. If they don't, recheck the module positions and wheel sizes before blaming the gyro.</p>
         <div id="cg-spin-out"></div>
+        ${HowTo.nextLine("spin")}
       </div>
-      <div class="panel">
+      <div class="panel" id="cal-gyro">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="cal.gyro">4. Gyro</h2>
           <button class="btn" id="gy-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        <p class="small">Where the gyro sits on the robot doesn't matter for localization: odometry uses only the heading, and every part of the robot turns by the same angle. What matters is how well it reads: does the heading creep while nothing moves, does a full turn read 360 degrees, and is it mounted level.</p>
+        ${HowTo.block(`<p class="small">Where the gyro sits on the robot doesn't matter for localization: odometry uses only the heading, and every part of the robot turns by the same angle. What matters is how well it reads: does the heading creep while nothing moves, does a full turn read 360 degrees, and is it mounted level.</p>
         <ol class="small">
           <li><b>Standing still:</b> after the gyro has finished calibrating (the top bar), record a minute with nobody touching the robot.</li>
           <li><b>Full turns:</b> line a bumper edge up with a tape line on the floor. Start recording, then turn the robot counter-clockwise (seen from above) exactly that many full turns, with the sticks or by hand, and stop with the same edge back on the line. Press <b>Back on the line</b> (it appears once the recording starts).</li>
         </ol>
+        <p class="small good-result"><b>A good result:</b> under 0.5° a minute of drift standing still, and full turns that read within 1% of 360° each. The team corrects the scale only when it is more than 1% off.</p>`)}
         <div class="row" style="flex-wrap:wrap">
           <button class="btn" id="gy-still" data-tip="cal.still">Record a minute still</button>
           <label class="small" data-tip="cal.turns">Full turns <input type="number" id="gy-turns" value="5" min="1" max="20" style="width:5em"></label>
@@ -83,41 +89,42 @@
           <button class="btn primary" id="gy-done" hidden data-tip="cal.done">Back on the line</button>
           <span class="small muted" id="gy-state"></span>
         </div>
-        <p class="small good-result"><b>A good result:</b> under 0.5° a minute of drift standing still, and full turns that read within 1% of 360° each. The team corrects the scale only when it is more than 1% off.</p>
         <div id="gy-out"></div>
+        ${HowTo.nextLine("gyro")}
       </div>
-      <div class="panel">
+      <div class="panel" id="cal-moi">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="cal.moi">5. Mass and moment of inertia</h2>
           <button class="btn" id="mi-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        <p class="small">PathPlanner plans every auto from the robot's mass and its moment of inertia (how hard it is to start and stop turning). Weigh the robot with bumpers and battery. The moment of inertia can't be weighed: spinning the robot in place, with every wheel pushing along its circle, measures it against how hard the robot is to push in a straight line.</p>
+        ${HowTo.block(`<p class="small">PathPlanner plans every auto from the robot's mass and its moment of inertia (how hard it is to start and stop turning). Weigh the robot with bumpers and battery. The moment of inertia can't be weighed: spinning the robot in place, with every wheel pushing along its circle, measures it against how hard the robot is to push in a straight line.</p>`, "What it's for")}
         <div class="row" style="flex-wrap:wrap">
           <label class="small" data-tip="cal.mass">Mass with bumpers and battery (kg) <input type="number" id="mi-mass" step="0.1" min="10" max="80" style="width:7em"></label>
           <button class="btn" id="mi-mass-save" data-tip="cal.mass-save">Save the mass…</button>
           <span class="small" id="mi-now"></span>
         </div>
         <div id="mi-assumed" class="callout warn" hidden></div>
-        <ol class="small">
-          <li>Measure the feedforward on the floor first (Guide step 10, <b>Measure the feedforward</b>): this compares against it.</li>
-          <li>Robot on the floor, at least a meter clear all round. Hold the deadman for about 20 seconds while it spins each way, slowly, then briskly.</li>
-        </ol>
+        ${HowTo.steps({ steps: ["Weigh the robot with bumpers and battery; type it and <b>Save the mass</b>.",
+          "Measure the feedforward on the floor first (Guide step 10, <b>Measure the feedforward</b>): this compares against it.",
+          "Robot on the floor, at least a meter clear all round. Press <b>Spin and measure</b> and hold the deadman for about 20 seconds while it spins each way, slowly, then briskly."],
+          good: "a fit the tool calls plausible: for a robot this size, a few kg·m². It saves the number for PathPlanner." })}
         <div class="row"><button class="btn primary" id="mi-run" data-tip="cal.moi-run">Spin and measure</button></div>
-        <p class="small good-result"><b>A good result:</b> a fit the tool calls plausible: for a robot this size, a few kg·m². It saves the number for PathPlanner.</p>
         <div id="mi-out"></div>
+        ${HowTo.nextLine("moi")}
       </div>
-      <div class="panel">
+      <div class="panel" id="cal-camera">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="cal.camera">6. Camera positions</h2>
           <button class="btn" id="cc-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        <p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses 3.5 cm at 2 m. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
+        ${HowTo.block(`<p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses 3.5 cm at 2 m. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
         <ol class="small">
           <li>Tape one AprilTag <b>flat on a wall</b>, its center at a measured height. FRC tags are 6.5 in across the black square; PhotonVision's tag size must match.</li>
           <li>Put the robot with the camera's side facing the wall, <b>square to it</b>: both bumper corners the same distance from the wall.</li>
           <li>Measure the wall to the robot's <b>center</b> (to the bumper, plus half the robot's length with bumpers), and how far the tag is left (+) or right (-) of the robot's center line, looking from the robot.</li>
           <li><b>Take a sighting</b> (2 s, robot still). Then move: closer, further, to each side. Three spots or more, then <b>Work it out</b>.</li>
         </ol>
+        <p class="small good-result"><b>A good result:</b> three or more spots that agree with each other; the tool says how well. A spot that disagrees with the rest was probably measured wrong: remove it and take it again.</p>`)}
         <div class="row" style="flex-wrap:wrap;gap:10px">
           <label class="small" data-tip="cal.cam">Camera <input id="cc-cam" value="front" style="width:8em"></label>
           <label class="small" data-tip="cal.tag">Tag ID <input type="number" id="cc-tag" value="1" min="0" style="width:5em"></label>
@@ -129,20 +136,22 @@
         </div>
         <div id="cc-spots"></div>
         <div class="row"><button class="btn" id="cc-solve" disabled data-tip="cal.solve">Work it out</button><button class="btn" id="cc-clear" data-tip="cal.clear">Clear the spots</button></div>
-        <p class="small good-result"><b>A good result:</b> three or more spots that agree with each other; the tool says how well. A spot that disagrees with the rest was probably measured wrong: remove it and take it again.</p>
         <div id="cc-out"></div>
+        ${HowTo.nextLine("camera")}
       </div>
-      <div class="panel">
+      <div class="panel" id="cal-field">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="cal.field">7. Field tags</h2>
           <button class="btn" id="fs-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        <p class="small">Tags on a real field are hung by people: a few centimeters off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
+        ${HowTo.block(`<p class="small">Tags on a real field are hung by people: a few centimeters off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
         <ol class="small">
           <li>On the field, robot disabled. Drive slowly (or push the robot) so the camera sees <b>two or more tags at once</b>, within about 4 m: in front of each hub face, the trenches, the outposts, the towers.</li>
           <li><b>Start recording</b>, cover every group of tags for a minute or two, then <b>Stop</b>.</li>
           <li><b>Work it out</b>. Only tags measured to have really moved are changed; the rest keep their official place.</li>
+          <li><b>Save the surveyed layout</b>, redeploy, and upload <span class="mono">surveyed.json</span> to each camera in PhotonVision: the camera solves its multi-tag poses itself.</li>
         </ol>
+        <p class="small good-result"><b>A good result:</b> most tags where the field drawing puts them. Only tags measured to have moved by more than the noise change; a move over 30 cm is refused as a misread.</p>`)}
         <div class="row" style="flex-wrap:wrap">
           <button class="btn primary" id="fs-start" data-tip="cal.fs-start">Start recording</button>
           <button class="btn" id="fs-stop" disabled data-tip="cal.fs-stop">Stop</button>
@@ -150,8 +159,8 @@
           <button class="btn" id="fs-solve" data-tip="cal.fs-solve">Work it out</button>
           <span class="small muted" id="fs-state"></span>
         </div>
-        <p class="small good-result"><b>A good result:</b> most tags where the field drawing puts them. Only tags measured to have moved by more than the noise change; a move over 30 cm is refused as a misread.</p>
         <div id="fs-out"></div>
+        ${HowTo.nextLine("field")}
       </div>
     </div>`;
 
@@ -175,7 +184,10 @@
           <td>${x.change ? `<span class="chip warn">moves ${fmt(x.moved_in, 2)} in</span>` : `<span class="chip good">matches</span>`}</td></tr>`).join("")}
       </tbody></table></div>` : "") + findings(r.findings) + saveButton("cg-tape-save", r.edits);
     const b = $("#cg-tape-save", out);
-    if (b) b.onclick = () => App.previewAndSave({ kind: "edits", edits: r.edits }, "Module positions from the tape");
+    if (b) b.onclick = async () => {
+      if (await App.previewAndSave({ kind: "edits", edits: r.edits }, "Module positions from the tape")) HowTo.mark("calibrate", "cal_positions", true, "Saved: redeploy.");
+    };
+    if (r.rows.length && r.rows.every(x => !x.change)) HowTo.mark("calibrate", "cal_positions", true, "Matches the files.");
     try { localStorage.setItem("swervetune.tape", JSON.stringify({ wb: $("#cg-wb", root).value, tw: $("#cg-tw", root).value })); } catch (e) { /* storage blocked */ }
   };
   try {
@@ -197,7 +209,14 @@
       <p class="small muted">Average ${fmt(r.average_in, 3)} in; configured ${fmt(r.configured_in, 3)} in.</p>` : ""}
       ${findings(r.findings)}${r.practice ? "" : saveButton("cg-wheel-save", r.edits)}`;
     const b = $("#cg-wheel-save", out);
-    if (b) b.onclick = () => App.previewAndSave({ kind: "edits", edits: r.edits }, "Wheel diameter from the push");
+    if (b) b.onclick = async () => {
+      if (await App.previewAndSave({ kind: "edits", edits: r.edits }, "Wheel diameter from the push")) HowTo.mark("calibrate", "cal_wheels", true, `${fmt(r.average_in, 3)} in, saved: redeploy.`);
+    };
+    if (!r.practice) {
+      const bad = (r.findings || []).find(f => f.level === "error");
+      if (bad) HowTo.mark("calibrate", "cal_wheels", false, bad.title);
+      else if (!(r.edits || []).length) HowTo.mark("calibrate", "cal_wheels", true, `${fmt(r.average_in, 3)} in: matches the files.`);
+    }
   }
 
   $("#cg-push", root).onclick = async () => {
@@ -229,6 +248,10 @@
     const html = `${r.practice && !append ? `<div class="callout info">Practice: a made-up gyro that drifts a little, reads turns 1.5% short, and sits slightly off level.</div>` : ""}
       ${head ? `<p><b>${esc(head)}</b></p>` : ""}${findings(r.findings)}`;
     out.innerHTML = append ? out.innerHTML + html : html;
+    if (!r.practice && (r.kind === "still" || r.kind === "turns")) {
+      const bad = (r.findings || []).find(f => f.level === "error" || f.level === "warn");
+      HowTo.mark("calibrate", r.kind === "still" ? "cal_gyro_still" : "cal_gyro_turns", !bad, bad ? bad.title : head);
+    }
   }
 
   $("#gy-still", root).onclick = async () => {
@@ -318,7 +341,9 @@
       <p class="small muted">From ${r.spread.spots} spot${r.spread.spots === 1 ? "" : "s"}; they agree within ${fmt(r.spread.cm, 1)} cm and ${fmt(r.spread.deg, 1)}°. Pitch is negative when the camera looks up.</p>` : ""}
       ${findings(r.findings)}${r.edits && !r.practice ? saveButton("cc-save", r.edits) : ""}`;
     const b = $("#cc-save", out);
-    if (b) b.onclick = () => App.previewAndSave({ kind: "edits", edits: r.edits }, "Camera position for " + r.camera);
+    if (b) b.onclick = async () => {
+      if (await App.previewAndSave({ kind: "edits", edits: r.edits }, "Camera position for " + r.camera)) HowTo.mark("calibrate", "cal_camera_" + r.camera, true, "Measured and saved: redeploy.");
+    };
   }
 
   $("#cc-take", root).onclick = async () => {
@@ -427,5 +452,9 @@
     const real = wheels && !wheels.practice && wheels.average_in ? wheels.configured_in / wheels.average_in : 1;
     const r = await App.api("/api/geometry/spin?configured_over_real=" + real);
     $("#cg-spin-out", root).innerHTML = (r.run ? `<p class="small muted">From ${esc(r.run)}${real !== 1 ? `, with the wheel sizes just measured taken out` : ""}.</p>` : "") + findings(r.findings);
+    if (r.run) {
+      const bad = (r.findings || []).find(f => f.level === "error" || f.level === "warn");
+      HowTo.mark("calibrate", "cal_spin", !bad, bad ? bad.title : "The gyro and the wheels agree.");
+    }
   };
 })();

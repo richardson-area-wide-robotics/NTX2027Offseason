@@ -29,6 +29,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
+from . import setup as setup_plans
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
                designcheck, designlinks, logsummary, monitor, motorinv, netcheck, pdhports, plant, ppcheck, predict, progress,
                rehearse, revspecs, runs, wiring, yagslcfg)
@@ -334,7 +335,9 @@ def _edits_from(body):
     if kind == "offsets":
         doc = runs.load(body["file"])
         res = advisor.offsets_from_capture(doc, S.project.offsets())
-        return [(f"modules/{n}.json", ("absoluteEncoderOffset",), r["new"]) for n, r in res.items()]
+        only = body.get("module")
+        return [(f"modules/{n}.json", ("absoluteEncoderOffset",), r["new"]) for n, r in res.items()
+                if not only or n == only]
     if kind == "edit":
         return [(body["file"], tuple(body["path"]), body["value"])]
     if kind == "edits":
@@ -605,9 +608,8 @@ def _battery_entries():
     return out
 
 
-def api_battery(_query=None):
-    """Which battery is in, the choices, and every battery's measured sag over time."""
-    live = S.link.live() if S.link and S.link.is_connected() else {}
+def _battery_rows(live):
+    """Every battery on the list (and any measured since it left), with its latest grade."""
     options = live.get("battery_options") or []
     if not options and S.project:
         options = [str(b) for b in (S.project.data.get("swervetune.json") or {}).get("batteries") or []]
@@ -622,16 +624,142 @@ def api_battery(_query=None):
         rows.append({"id": bid, "listed": bid in options, "status": last.get("status"), "mohm": last.get("mohm"),
                      "v_rest": last.get("v_rest"), "when": last.get("when"), "source": last.get("source"),
                      "n": len(h), "trend": [x["mohm"] for x in h[-12:]]})
-    current = live.get("battery_id") or ""
+    return rows, hist
+
+
+def _grades_stale(rows):
     grades = battery.grades_for_robot(rows)
     saved = (S.project.data.get("swervetune.json") or {}).get("batteryGrades") if S.project else None
+    return grades, bool(S.project) and bool(grades) and grades != (saved or {})
+
+
+def api_battery(_query=None):
+    """Which battery is in, the choices, and every battery's measured sag over time."""
+    live = S.link.live() if S.link and S.link.is_connected() else {}
+    rows, hist = _battery_rows(live)
+    current = live.get("battery_id") or ""
+    grades, stale = _grades_stale(rows)
     return {"ok": True, "connected": bool(live), "id": current,
             # What the robot shows on Elastic comes from swervetune.json: offer to send newer grades.
-            "robot_grades": grades, "robot_grades_stale": bool(S.project) and bool(grades) and grades != (saved or {}),
+            "robot_grades": grades, "robot_grades_stale": stale,
             "rest_v": live.get("battery_rest"), "batteries": rows, "robot_path": battery.robot_path_suspect(hist),
             "next": battery.suggest_next(rows, current),
             "good_max_mohm": battery.GOOD_MAX_OHM * 1000, "practice_max_mohm": battery.PRACTICE_MAX_OHM * 1000,
             "datasheet": battery.ES17_12}
+
+
+# ---------------------------------------------------------------- where to start, what next
+
+def _setup_ctx():
+    if S.project:
+        S.reload_project()
+    try:
+        stale = _grades_stale(_battery_rows({})[0])[1]
+    except Exception:  # noqa: BLE001 - no battery data is not a reason to fail the plan
+        stale = False
+    return setup_plans.gather(S.project, link=S.link, battery_grades_stale=stale)
+
+
+def api_setup(query=None):
+    """A tool's checklist: ``?tab=calibrate`` (config, motors, wiring, controllers), or every tool."""
+    tab = (query or {}).get("tab") or ""
+    ctx = _setup_ctx()
+    if tab:
+        if tab not in setup_plans.TOOLS:
+            return {"ok": False, "error": f"No checklist for {tab}."}
+        return dict(setup_plans.TOOLS[tab](ctx), ok=True, tab=tab)
+    return {"ok": True, "tools": {t: fn(ctx) for t, fn in setup_plans.TOOLS.items()}}
+
+
+def _parts():
+    return (progress.load(S.project.name) if S.project else {}).get("parts") or {}
+
+
+def _save_parts(parts):
+    progress.update(S.project.name, {"parts": parts})
+
+
+def api_parts(_query=None):
+    """What can be redone on its own, the choices for each, and the ones already started."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    tune = S.project.data.get("swervetune.json") or {}
+    picks = {"module": S.project.module_names(),
+             "motor": [d["name"] for d in wiring.discover(S.project) if d["kind"] == "controller"],
+             "camera": [str(c) for c in (tune.get("vision") or {}).get("cameras") or []] or ["front"]}
+    kinds = [{"kind": k, "title": v["title"], "when": v["when"], "choices": picks.get(v["pick"]) if v["pick"] else None}
+             for k, v in setup_plans.PARTS.items()]
+    active = []
+    ctx = None
+    for key, p in sorted(_parts().items(), key=lambda kv: kv[1].get("started", ""), reverse=True):
+        kind, _, which = key.partition(":")
+        if kind not in setup_plans.PARTS:
+            continue
+        ctx = ctx or _setup_ctx()
+        plan = setup_plans.part_plan(kind, which, ctx, p.get("started", ""))
+        active.append({"kind": kind, "which": which, "started": p.get("started"), "done": plan["done"], "of": plan["of"],
+                       "title": plan["title"]})
+    return {"ok": True, "kinds": kinds, "active": active}
+
+
+def api_part_plan(query=None):
+    q = query or {}
+    kind, which = q.get("kind") or "", q.get("which") or ""
+    if kind not in setup_plans.PARTS:
+        return {"ok": False, "error": "Which part?"}
+    p = _parts().get(setup_plans.part_key(kind, which))
+    if not p:
+        return {"ok": True, "started": None, "kind": kind, "which": which}
+    plan = setup_plans.part_plan(kind, which, _setup_ctx(), p["started"])
+    return dict(plan, ok=True, kind=kind, which=which, started=p["started"], marks=p.get("marks") or {})
+
+
+def api_part_start(body):
+    b = body or {}
+    kind, which = b.get("kind") or "", str(b.get("which") or "")
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    if kind not in setup_plans.PARTS:
+        return {"ok": False, "error": "Which part?"}
+    if setup_plans.PARTS[kind]["pick"] and not which:
+        return {"ok": False, "error": f"Which {setup_plans.PARTS[kind]['pick']}?"}
+    parts = _parts()
+    # Starting again starts over: only what is done from now on counts.
+    parts[setup_plans.part_key(kind, which)] = {"started": setup_plans.stamp(), "marks": {}}
+    _save_parts(parts)
+    return api_part_plan({"kind": kind, "which": which})
+
+
+def api_part_mark(body):
+    b = body or {}
+    key = setup_plans.part_key(b.get("kind") or "", str(b.get("which") or ""))
+    parts = _parts()
+    if key not in parts:
+        return {"ok": False, "error": "Start that part first."}
+    parts[key].setdefault("marks", {})[str(b.get("step"))] = {
+        "result": "pass" if b.get("result") == "pass" else "fail", "when": setup_plans.stamp(),
+        "detail": str(b.get("detail") or "")[:300]}
+    _save_parts(parts)
+    return api_part_plan({"kind": b.get("kind"), "which": b.get("which")})
+
+
+def api_part_stop(body):
+    b = body or {}
+    parts = _parts()
+    parts.pop(setup_plans.part_key(b.get("kind") or "", str(b.get("which") or "")), None)
+    _save_parts(parts)
+    return {"ok": True}
+
+
+def api_mark(body):
+    """A tool's result for its checklist: ``{"key": "cal_positions", "result": "pass", "detail"}``."""
+    b = body or {}
+    key = str(b.get("key") or "")
+    if not S.project or not (key.startswith("cal_") or key.startswith("wire_")):
+        return {"ok": False, "error": "Nothing to mark."}
+    progress.update(S.project.name, {key: {"result": "pass" if b.get("result") == "pass" else "fail",
+                                           "when": setup_plans.stamp(), "detail": str(b.get("detail") or "")[:300]}})
+    return {"ok": True}
 
 
 def api_battery_pick(body):
@@ -1184,7 +1312,8 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
        "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
        "/api/motors/inventory": api_motor_inventory, "/api/battery": api_battery,
-       "/api/controllers/code": api_controllers_code, "/api/controllers/history": api_controllers_history}
+       "/api/controllers/code": api_controllers_code, "/api/controllers/history": api_controllers_history,
+       "/api/setup": api_setup, "/api/parts": api_parts, "/api/parts/plan": api_part_plan}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netcheck": api_netcheck,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -1201,7 +1330,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro, "/api/battery/pick": api_battery_pick,
         "/api/controllers/step": api_controllers_step, "/api/controllers/report": api_controllers_report,
         "/api/controllers/robot": api_controllers_robot,
-        "/api/controllers/save": api_controllers_save}
+        "/api/controllers/save": api_controllers_save, "/api/mark": api_mark,
+        "/api/parts/start": api_part_start, "/api/parts/mark": api_part_mark, "/api/parts/stop": api_part_stop}
 
 
 class Handler(BaseHTTPRequestHandler):
