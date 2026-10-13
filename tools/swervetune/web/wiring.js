@@ -139,8 +139,6 @@ const Wiring = (() => {
     if (back) back.onclick = () => { logAt = null; refresh(); };
 
     const svg = $("#w-svg", root);
-    svg.innerHTML = "";
-    const details = {};
     const W = Math.max(640, svg.clientWidth || 900), bw = 196, bh = 76, gx = 36, gy = 54, pad = 26;
     const perRow = Math.max(2, Math.floor((W - 2 * pad + gx) / (bw + gx)));
     const pos = chain.map((n, i) => {
@@ -149,68 +147,91 @@ const Wiring = (() => {
       return { x: pad + col * (bw + gx), y: pad + r * (bh + gy) };
     });
     const H = pad * 2 + Math.ceil(chain.length / perRow) * (bh + gy) - gy;
-    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-    svg.style.height = H + "px";
     const center = i => ({ x: pos[i].x + bw / 2, y: pos[i].y + bh / 2 });
     const idx = Object.fromEntries(chain.map((n, i) => [n, i]));
 
-    // the cable: CAN-H and CAN-L side by side
-    for (let i = 0; i + 1 < chain.length; i++) {
-      const a = center(i), b = center(i + 1);
-      for (const [off, cls] of [[-3, "can-h"], [3, "can-l"]]) {
-        const vertical = Math.abs(a.y - b.y) > 1;
-        el("line", { x1: a.x + (vertical ? off : 0), y1: a.y + (vertical ? 0 : off), x2: b.x + (vertical ? off : 0),
-          y2: b.y + (vertical ? 0 : off), class: "wire " + cls }, svg);
-      }
-    }
-    for (const s of hl.segs) {
-      if (!(s.a in idx) || !(s.b in idx)) continue;
-      const a = center(idx[s.a]), b = center(idx[s.b]);
-      const g = el("g", { class: "suspect", "aria-label": "Suspect cable: " + s.f.title }, svg);
-      el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "suspect-line" }, g);
-      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
-      el("circle", { cx: mx, cy: my, r: 11, class: "suspect-dot" }, g);
-      el("text", { x: mx, y: my + 4, "text-anchor": "middle", class: "suspect-mark" }, g, "!");
-    }
-
-    chain.forEach((name, i) => {
-      const p = pos[i], dev = data.devices[name] || {}, r = rows[name];
+    // What each box shows, worked out first: the drawing is rebuilt only when that changes.
+    const details = {};
+    const nodes = chain.map((name, i) => {
+      const dev = data.devices[name] || {}, r = rows[name];
       let state = "unknown";
       if (r) state = r.present === 0 ? "bad" : (r.dropouts || r.resets || r.brownouts) ? "warn" : "ok";
       if (hl.devs.has(name)) state = hl.devs.get(name);
       const word = { bad: "MISSING NOW", warn: "had trouble", ok: "heard", unknown: "" }[state] || "";
-      const g = el("g", { class: "node " + state + (focus === name ? " focus" : ""), tabindex: 0, role: "button",
-        "aria-pressed": String(focus === name), "aria-label": `${i}. ${name}${word ? ", " + word : ""}` }, svg);
       const port = m.pdhPorts[name];
       details[name] = [dev.model, dev.can_id != null ? "CAN ID " + dev.can_id : null,
         port != null ? "PDH port " + port : (dev.kind === "controller" ? "PDH port not set" : null), dev.source,
         r ? `heard on the bus: ${r.present ? "yes" : "NO"}; dropped out ${r.dropouts || 0}×; rebooted ${r.resets || 0}×; low supply ${r.brownouts || 0}×` : null,
         r && Number.isFinite(r.bus_volts) ? `supply at the controller ${fmt(r.bus_volts, 2)} V` : null].filter(Boolean);
-      el("rect", { x: p.x - 4, y: p.y - 4, width: bw + 8, height: bh + 8, rx: 11, class: "ring" }, g);
-      el("rect", { x: p.x, y: p.y, width: bw, height: bh, rx: 8, class: "box" }, g);
       // FIRST's drawing of the part: a cached bitmap, drawn once (the schematic repaints every second).
       const art = name === "roboRIO" ? "rio" : name === "PDH" ? "pdh_top" : FrcMap.kind(dev.model);
       const pic = art && FrcMap.thumbCached(art);
-      if (pic) {
-        // On a white tile, as FIRST draws it: a black SPARK Flex vanished on a dark box, a white MAX on a light one.
-        el("rect", { x: p.x + bw - 64, y: p.y + 6, width: 58, height: bh - 12, rx: 4, class: "art-tile" }, g);
-        el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
-      }
-      else if (art) FrcMap.thumb(art);
-      const label = `${i}. ${name}`;
-      el("text", { x: p.x + 10, y: p.y + 22, class: "nm" }, g, label.length > 19 ? label.slice(0, 18) + "…" : label);
+      if (art && !pic) FrcMap.thumb(art);
       const sub = name === "roboRIO" ? "120 Ω built in" : name === "PDH"
         ? `CAN ${dev.can_id} · term ${m.pdh.terminationOn ? "ON" : "OFF"}`
         : `CAN ${dev.can_id ?? "?"} · PDH ${port ?? "?"}`;
-      el("text", { x: p.x + 10, y: p.y + 42, class: "sub" }, g, sub);
-      if (word) el("text", { x: p.x + 10, y: p.y + 62, class: "state" }, g, word);
-      if (name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn)) {
-        el("text", { x: p.x + bw - 80, y: p.y + 22, class: "ohm" }, g, "Ω");
-      }
-      g.onclick = () => { focus = focus === name ? null : name; paint(); };
-      // Enter opens it. Not Space: on the Driver Station laptop Space is the E-STOP.
-      g.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); g.onclick(); } };
+      return { name, i, state, word, pic, sub, ohm: name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn) };
     });
+    // The schematic repaints every second with the live data. Rebuilding it when nothing had changed
+    // destroyed the box a person had tabbed to, and pressing Enter destroyed the box pressed.
+    const key = JSON.stringify([W, focus, m.pdh.terminationOn, hl.segs.map(x => [x.a, x.b, x.f.title]),
+      nodes.map(n => [n.name, n.state, n.word, n.sub, !!n.pic, n.ohm])]);
+    if (key !== svg._key) {
+      svg._key = key;
+      const had = svg.contains(document.activeElement) ? document.activeElement.getAttribute("data-name") : null;
+      svg.innerHTML = "";
+      svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+      svg.style.height = H + "px";
+
+      // the cable: CAN-H and CAN-L side by side
+      for (let i = 0; i + 1 < chain.length; i++) {
+        const a = center(i), b = center(i + 1);
+        for (const [off, cls] of [[-3, "can-h"], [3, "can-l"]]) {
+          const vertical = Math.abs(a.y - b.y) > 1;
+          el("line", { x1: a.x + (vertical ? off : 0), y1: a.y + (vertical ? 0 : off), x2: b.x + (vertical ? off : 0),
+            y2: b.y + (vertical ? 0 : off), class: "wire " + cls }, svg);
+        }
+      }
+      for (const sg of hl.segs) {
+        if (!(sg.a in idx) || !(sg.b in idx)) continue;
+        const a = center(idx[sg.a]), b = center(idx[sg.b]);
+        const g = el("g", { class: "suspect", "aria-label": "Suspect cable: " + sg.f.title }, svg);
+        el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "suspect-line" }, g);
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        el("circle", { cx: mx, cy: my, r: 11, class: "suspect-dot" }, g);
+        el("text", { x: mx, y: my + 4, "text-anchor": "middle", class: "suspect-mark" }, g, "!");
+      }
+
+      nodes.forEach(({ name, i, state, word, pic, sub, ohm }) => {
+        const p = pos[i];
+        const g = el("g", { class: "node " + state + (focus === name ? " focus" : ""), tabindex: 0, role: "button",
+          "data-name": name, "aria-pressed": String(focus === name), "aria-label": `${i}. ${name}${word ? ", " + word : ""}` }, svg);
+        el("rect", { x: p.x - 4, y: p.y - 4, width: bw + 8, height: bh + 8, rx: 11, class: "ring" }, g);
+        el("rect", { x: p.x, y: p.y, width: bw, height: bh, rx: 8, class: "box" }, g);
+        if (pic) {
+          // On a white tile, as FIRST draws it: a black SPARK Flex vanished on a dark box, a white MAX on a light one.
+          el("rect", { x: p.x + bw - 64, y: p.y + 6, width: 58, height: bh - 12, rx: 4, class: "art-tile" }, g);
+          el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
+        }
+        const label = `${i}. ${name}`;
+        el("text", { x: p.x + 10, y: p.y + 22, class: "nm" }, g, label.length > 19 ? label.slice(0, 18) + "…" : label);
+        el("text", { x: p.x + 10, y: p.y + 42, class: "sub" }, g, sub);
+        if (word) el("text", { x: p.x + 10, y: p.y + 62, class: "state" }, g, word);
+        if (ohm) el("text", { x: p.x + bw - 80, y: p.y + 22, class: "ohm" }, g, "Ω");
+        g.onclick = () => { focus = focus === name ? null : name; paint(); };
+        // Enter opens it. Not Space: on the Driver Station laptop Space is the E-STOP.
+        g.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); g.onclick(); } };
+      });
+      if (!m.pdh.terminationOn) {
+        const last = pos[chain.length - 1];
+        el("text", { x: last.x, y: last.y + bh + 18, class: "warn-text" }, svg, "No terminator at this end: switch the PDH's termination ON");
+      }
+      // The same box keeps focus across a rebuild (a click, or its state changing).
+      if (had) {
+        const back = [...svg.querySelectorAll("[data-name]")].find(x => x.getAttribute("data-name") === had);
+        if (back) back.focus({ preventScroll: true });
+      }
+    }
     const det = $("#w-detail", root);
     det.hidden = !focus || !details[focus];
     if (focus && details[focus]) {
@@ -223,10 +244,6 @@ const Wiring = (() => {
       const slot = $("#w-detail-map", root);
       if (!focus) { slot.innerHTML = ""; slot._frc = null; }
       else FrcMap.render(slot, deviceView(focus));
-    }
-    if (!m.pdh.terminationOn) {
-      const last = pos[chain.length - 1];
-      el("text", { x: last.x, y: last.y + bh + 18, class: "warn-text" }, svg, "No terminator at this end: switch the PDH's termination ON");
     }
     paintPdh(rows);
     paintFindings();
@@ -285,21 +302,29 @@ const Wiring = (() => {
 
   function paintFindings() {
     const F = [...extra, ...(data.findings || [])];
+    if (mapFinding && !F.some(x => x.title === mapFinding)) { mapFinding = null; $("#w-where-map", root).innerHTML = ""; $("#w-where-map", root)._frc = null; }
     $("#w-banner", root).innerHTML = F.some(f => f.where && f.where.bus)
       ? `<div class="callout bad">${F.filter(f => f.where && f.where.bus).map(f => esc(f.title)).join(" · ")}</div>` : "";
-    $("#w-findings", root).innerHTML = F.length ? F.map(f => `<div class="finding">
+    const html = F.length ? F.map(f => `<div class="finding">
         <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
         <div class="why">${Learn.link(f.why, 3)}</div>
         ${f.fix ? `<div class="small"><b>Do:</b> ${Learn.link(f.fix, 2)}</div>` : ""}
         ${f.where ? `<div class="row"><button class="btn small ${mapFinding === f.title ? "primary" : ""}" data-show-map="${esc(f.title)}" data-tip="wiring.onrobot" data-quiet>${mapFinding === f.title ? "Shown below" : "Show on the drawing"}</button></div>` : ""}</div>`).join("")
       : `<p class="hint">${data.snapshot && data.snapshot.motors ? "Nothing wrong with the CAN bus or the power feeds right now." : "Connect to a robot, or pick a practice fault above to see how a problem shows up."}</p>`;
-    $$("[data-show-map]", root).forEach(b => b.onclick = () => {
+    // Every second with the live data: rewritten only when it reads differently, so a button keeps
+    // its focus and its tip.
+    const box = $("#w-findings", root);
+    if (box._html === html) return;
+    const had = box.contains(document.activeElement) ? document.activeElement.getAttribute("data-show-map") : null;
+    box._html = html;
+    box.innerHTML = html;
+    if (had) { const back = $$("[data-show-map]", box).find(x => x.dataset.showMap === had); if (back) back.focus({ preventScroll: true }); }
+    $$("[data-show-map]", box).forEach(b => b.onclick = () => {
       const f = F.find(x => x.title === b.dataset.showMap);
       mapFinding = f ? f.title : null;
       if (f) FrcMap.render($("#w-where-map", root), findingView(f));
       paintFindings();
     });
-    if (mapFinding && !F.some(x => x.title === mapFinding)) { mapFinding = null; $("#w-where-map", root).innerHTML = ""; $("#w-where-map", root)._frc = null; }
   }
 
   // ---------------------------------------------------------------- the map editor
@@ -526,39 +551,51 @@ const Wiring = (() => {
 
   function paintWiggle() {
     const box = $("#ww-body", root);
-    if (!wig) { box.innerHTML = ""; return; }
+    if (!wig) { box.innerHTML = ""; box._ww = null; return; }
+    // Built once per test; four times a second only the parts that read differently are rewritten.
+    // Rebuilding it all lost focus on Next, snapped All steps shut and replaced the live region.
+    if (!box._ww || box._ww.wig !== wig) {
+      box.innerHTML = `<div data-ww="head"></div>
+        <div class="wiggle-step" data-ww="card" aria-live="polite"></div>
+        <div class="row" data-ww="buttons"><button class="btn" id="ww-back" data-tip="wiring.wiggle-back">◂ Back</button>
+          <button class="btn primary" id="ww-next" data-tip="wiring.wiggle-next"></button>
+          <button class="btn" id="ww-stop" data-tip="wiring.wiggle-stop">Stop</button></div>
+        <details data-ww="all"><summary class="small">All steps</summary><ol class="small wiggle-list" data-ww="list"></ol></details>`;
+      box._ww = { wig, html: {} };
+      const q = id => $(id, box);
+      q("#ww-back").onclick = () => { if (wig.i > 0) { wig.i--; paintWiggle(); } };
+      q("#ww-next").onclick = () => {
+        if (wig.i + 1 < wig.steps.length) { wig.i++; wig.last = null; paintWiggle(); return; }
+        finishWiggle(true);
+      };
+      q("#ww-stop").onclick = () => finishWiggle(false);
+    }
+    const part = k => $(`[data-ww="${k}"]`, box);
+    const set = (k, html) => { if (box._ww.html[k] !== html) { box._ww.html[k] = html; part(k).innerHTML = html; } };
     const s = wig.steps[wig.i], ev = wig.events[wig.i] || [];
-    const hot = Date.now() - wig.flash < 1500;
     const done = wig.done;
-    box.innerHTML = done ? "" : `
-      ${wig.practice ? `<div class="callout info">Practice: a made-up robot with one loose CAN plug and one loose power lead. Find them.</div>` : ""}
-      ${data.map.buses[0].orderConfirmed ? "" : `<div class="callout warn">The CAN order in the map has not been checked on the robot, and these steps follow it. Check it first (Edit the map), so each step names the cable you are holding.</div>`}
-      <div class="wiggle-step ${hot ? "hot" : ""}" aria-live="polite">
-        <div class="small muted">Step ${wig.i + 1} of ${wig.steps.length}</div>
-        <div class="wiggle-text">${s.text}</div>
-        <div class="small">${ev.length ? `<b>Seen during this step:</b> ${esc(summarize(ev).join("; "))}` : "Nothing seen yet. Keep wiggling for a few seconds."}</div>
-        ${wig.note ? `<div class="small warn-text">${esc(wig.note)}</div>` : ""}
-      </div>
-      <div class="row"><button class="btn" id="ww-back" ${wig.i === 0 ? "disabled" : ""}>◂ Back</button>
-        <button class="btn primary" id="ww-next">${wig.i + 1 < wig.steps.length ? "Next ▸" : "Finish"}</button>
-        <button class="btn" id="ww-stop">Stop</button></div>`;
-    const steps = wig.steps.map((x, i) => {
-      const e = wig.events[i] || [];
-      return `<li class="${i === wig.i && !done ? "current" : ""}"><span class="chip ${e.length ? "warn" : i < wig.i || done ? "good" : ""}">${e.length ? "trouble" : i < wig.i || done ? "quiet" : "to do"}</span> ${x.text}</li>`;
-    });
-    box.innerHTML += `<details ${done ? "open" : ""}><summary class="small">All steps</summary><ol class="small wiggle-list">${steps.join("")}</ol></details>`;
     if (done) {
       const F = wiggleFindings();
-      box.innerHTML = (F.length ? `<p><b>${F.length} place${F.length > 1 ? "s" : ""} to fix</b>, marked on the map above.</p>`
-        : `<p><b>Nothing moved anything.</b> If the fault still happens on the field, it may need the robot moving: try a practice match and the Match logs summary.</p>`) + box.innerHTML;
+      set("head", F.length ? `<p><b>${F.length} place${F.length > 1 ? "s" : ""} to fix</b>, marked on the map above.</p>`
+        : `<p><b>Nothing moved anything.</b> If the fault still happens on the field, it may need the robot moving: try a practice match and the Match logs summary.</p>`);
+    } else {
+      set("head", `${wig.practice ? `<div class="callout info">Practice: a made-up robot with one loose CAN plug and one loose power lead. Find them.</div>` : ""}
+        ${data.map.buses[0].orderConfirmed ? "" : `<div class="callout warn">The CAN order in the map has not been checked on the robot, and these steps follow it. Check it first (Edit the map), so each step names the cable you are holding.</div>`}`);
+      set("card", `<div class="small muted">Step ${wig.i + 1} of ${wig.steps.length}</div>
+        <div class="wiggle-text">${s.text}</div>
+        <div class="small">${ev.length ? `<b>Seen during this step:</b> ${esc(summarize(ev).join("; "))}` : "Nothing seen yet. Keep wiggling for a few seconds."}</div>
+        ${wig.note ? `<div class="small warn-text">${esc(wig.note)}</div>` : ""}`);
+      part("card").classList.toggle("hot", Date.now() - wig.flash < 1500);
+      $("#ww-back", box).disabled = wig.i === 0;
+      $("#ww-next", box).textContent = wig.i + 1 < wig.steps.length ? "Next ▸" : "Finish";
     }
-    const q = id => $(id, box);
-    if (q("#ww-back")) q("#ww-back").onclick = () => { wig.i--; paintWiggle(); };
-    if (q("#ww-next")) q("#ww-next").onclick = () => {
-      if (wig.i + 1 < wig.steps.length) { wig.i++; wig.last = null; paintWiggle(); return; }
-      finishWiggle(true);
-    };
-    if (q("#ww-stop")) q("#ww-stop").onclick = () => finishWiggle(false);
+    part("card").hidden = done;
+    part("buttons").hidden = done;
+    if (done && !box._ww.opened) { box._ww.opened = true; part("all").open = true; }
+    set("list", wig.steps.map((x, i) => {
+      const e = wig.events[i] || [];
+      return `<li class="${i === wig.i && !done ? "current" : ""}"><span class="chip ${e.length ? "warn" : i < wig.i || done ? "good" : ""}">${e.length ? "trouble" : i < wig.i || done ? "quiet" : "to do"}</span> ${x.text}</li>`;
+    }).join(""));
   }
 
   function finishWiggle(completed) {
