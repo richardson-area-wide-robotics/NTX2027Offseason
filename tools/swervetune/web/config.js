@@ -55,9 +55,23 @@
         ${pp.length ? `<div class="finding"><div class="head"><span class="level ${pp.some(f => f.level === "error") ? "error" : "warn"}">auto</span><span class="title">${pp.length} PathPlanner item${pp.length === 1 ? "" : "s"} for whoever writes the autos</span></div>
           <div class="row"><button class="btn small" data-pp="1">See the PathPlanner check</button></div></div>` : ""}</div></div>
     </div>
-    <div class="panel" id="pp-panel" style="margin-top:12px"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>`;
+    <div class="panel" id="pp-panel" style="margin-top:12px"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>
+    <div class="panel" id="dl-panel" style="margin-top:12px"><h2 data-tip="config.designs">Mechanism designs</h2>
+      <p class="small">Designed a mechanism in <a href="https://www.reca.lc/" target="_blank" rel="noopener">ReCalc</a> or
+        <a href="https://ambcalc.com/" target="_blank" rel="noopener">AMBcalc</a>? Paste its share link (Copy Link, or the
+        address bar). The link holds the whole design: the tool reads it, attaches it to the motors it is for, checks it
+        against the code and the robot, and fills in the numbers a design should decide.</p>
+      <div class="row"><label class="row small" data-tip="config.dl-url" style="flex:1">Design link
+        <input id="dl-url" style="flex:1;min-width:16em" placeholder="https://www.reca.lc/arm?…  or  https://ambcalc.com/mechanism?…"></label>
+        <button class="btn primary" id="dl-read" data-tip="config.dl-read">Read it</button></div>
+      <div id="dl-out"></div>
+      <h3 data-tip="config.dl-saved">Saved designs</h3>
+      <div class="row small" id="dl-log-row"></div>
+      <div id="dl-saved"><p class="hint">Checking…</p></div>
+    </div>`;
     $$("[data-pp]", root).forEach(b => b.onclick = () => $("#pp-panel", root).scrollIntoView({ behavior: "smooth" }));
     paintPathPlanner();
+    Designs.mount();
     $$("[data-fix]", root).forEach(b => b.onclick = () => {
       const f = F[+b.dataset.fix].fix;
       App.previewAndSave({ kind: "edit", file: f.file, path: f.path, value: f.value }, "Fix: " + F[+b.dataset.fix].title);
@@ -93,6 +107,97 @@
       if (await App.previewAndSave({ kind: "pathplanner" }, "Make PathPlanner match the code")) paintPathPlanner();
     };
   }
+
+  // ---------------------------------------------------------------- mechanism designs
+  const Designs = (() => {
+    let read = null, log = "";
+    const LEVEL = { error: "error", warn: "warn", info: "info", ok: "ok" };
+    const findingsHtml = F => (F || []).map(f => `<div class="finding"><div class="head"><span class="level ${LEVEL[f.level] || "info"}">${esc(f.level)}</span>
+      <span class="title">${esc(f.title)}</span></div><div class="why">${Learn.link(f.why, 2)}</div></div>`).join("");
+    const saysHtml = rows => `<table class="t"><tbody>${(rows || []).map(([k, v]) => `<tr><th scope="row">${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</tbody></table>`;
+
+    async function mount() {
+      const box = $("#dl-panel", root);
+      if (!box) return;
+      $("#dl-read", box).onclick = () => readLink();
+      $("#dl-url", box).onkeydown = e => { if (e.key === "Enter") readLink(); };
+      let folder = "";
+      try { folder = localStorage.getItem("swervetune.logfolder") || ""; } catch (e) { /* storage blocked */ }
+      $("#dl-log-row", box).innerHTML = folder
+        ? `<button class="btn small" id="dl-log" data-tip="config.dl-log">Check against the newest match log</button> <span class="muted">from ${esc(folder)}</span>`
+        : `<span class="muted">To check against what a match measured, pick a log folder on the Runs tab first.</span>`;
+      const b = $("#dl-log", box);
+      if (b) b.onclick = async () => {
+        const r = await App.api("/api/logs?folder=" + encodeURIComponent(folder));
+        if (!r.ok || !r.files.length) { App.toast(r.error || "No match logs in that folder."); return; }
+        log = r.files[0].path;
+        paintSaved();
+      };
+      paintSaved();
+    }
+
+    async function readLink(motors) {
+      const box = $("#dl-out", root);
+      const body = { url: $("#dl-url", root).value, mechanism: read ? $("#dl-mech", root).value : "" };
+      if (motors) body.motors = motors;
+      if (log) body.log = log;
+      const r = await App.api("/api/designs/read", body);
+      if (!r.ok) { box.innerHTML = `<div class="callout warn">${esc(r.error)}</div>`; read = null; return; }
+      read = r;
+      const d = r.design, mech = r.mechanism || "";
+      const choices = (await App.api("/api/designs")).motors || [];
+      box.innerHTML = `<div class="grid2" style="margin-top:8px">
+        <div><h3>What the link says <span class="muted small">${esc(d.source)} · ${esc(d.calculator)}${d.legacy ? " · an older link" : ""}</span></h3>
+          ${saysHtml(r.describe)}${(d.notes || []).map(n => `<p class="small warn-ink">${esc(n)}</p>`).join("")}</div>
+        <div class="stack">
+          <label class="gain" data-tip="config.dl-mech">Mechanism name<input id="dl-mech" value="${esc(mech)}" placeholder="Shooter, Arm, Elevator"></label>
+          ${d.kind === "drivetrain" || d.kind === "gearing" ? "" : `<div><b>Its motors</b> <span class="small muted">(the tool picked these from the name; change them if it guessed wrong)</span>
+            ${r.motors.length ? "" : `<p class="small warn-ink">No motor's name starts with "${esc(mech)}": tick the ones this design is for.</p>`}
+            <div class="row" id="dl-motors">${choices.map(c => `<label class="row small"><input type="checkbox" value="${esc(c.name)}" ${r.motors.includes(c.name) ? "checked" : ""}>
+              ${esc(c.name)} <span class="muted">${esc(c.motor || "?")}</span></label>`).join("")}</div></div>`}
+          <div><b>Checked against the robot</b>${findingsHtml(r.findings)}</div>
+          ${r.edits.length ? `<div><b>Numbers it can fill in</b>${r.edits.map((e, i) => `<label class="row small"><input type="checkbox" class="dl-edit" data-i="${i}" checked> ${esc(e.label)}</label>`).join("")}</div>` : ""}
+          <div class="row"><button class="btn primary" id="dl-save" data-tip="config.dl-save">Save the design${r.edits.length ? " and the ticked numbers" : ""}…</button></div>
+        </div></div>`;
+      $$("#dl-motors input", box).forEach(c => c.onchange = () => readLink($$("#dl-motors input:checked", box).map(x => x.value)));
+      // A new name picks the motors again, by that name.
+      $("#dl-mech", box).onchange = () => readLink();
+      $("#dl-save", box).onclick = save;
+    }
+
+    async function save() {
+      const name = $("#dl-mech", root).value.trim();
+      if (!name) { App.toast("Name the mechanism first (Shooter, Arm, Elevator)."); return; }
+      const edits = [{ file: "swervetune.json", path: ["designs", name], value: { url: read.url, motors: read.motors } }];
+      $$(".dl-edit:checked", root).forEach(c => edits.push(read.edits[+c.dataset.i]));
+      if (await App.previewAndSave({ kind: "edits", edits: edits.map(e => ({ file: e.file, path: e.path, value: e.value })) }, "Mechanism design: " + name)) {
+        $("#dl-out", root).innerHTML = "";
+        $("#dl-url", root).value = "";
+        read = null;
+        paintSaved();
+      }
+    }
+
+    async function paintSaved() {
+      const box = $("#dl-saved", root);
+      if (!box) return;
+      const r = await App.api("/api/designs" + (log ? "?log=" + encodeURIComponent(log) : ""));
+      if (!r.ok) { box.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+      const note = log ? `<p class="small muted">Checked against ${esc(log.split(/[\\/]/).pop())}${r.log_motors.length ? "" : ": it has no motor speeds (robot code older than October 2026 doesn't log them)"}.</p>` : "";
+      box.innerHTML = note + (r.designs.length ? r.designs.map(d => `<details class="design" ${d.findings && d.findings.some(f => f.level === "error") ? "open" : ""}>
+        <summary><b>${esc(d.mechanism)}</b> <span class="muted small">${d.design ? `${esc(d.design.source)} ${esc(d.design.calculator)} · ${esc((d.motors || []).join(", ") || "drivetrain")}` : esc(d.error || "")}</span>
+          ${d.findings ? ["error", "warn"].map(l => { const n = d.findings.filter(f => f.level === l).length; return n ? ` <span class="level ${l}">${n} ${l}</span>` : ""; }).join("") : ""}</summary>
+        ${d.design ? `<div class="grid2"><div>${saysHtml(d.describe)}<p class="small"><a href="${esc(d.url)}" target="_blank" rel="noopener">Open it in ${esc(d.design.source)}</a></p></div>
+          <div>${findingsHtml(d.findings)}</div></div>` : ""}
+        <div class="row"><button class="btn small" data-forget="${esc(d.mechanism)}">Forget this design…</button></div></details>`).join("")
+        : `<p class="hint">None saved yet.</p>`);
+      $$("[data-forget]", box).forEach(b => b.onclick = async () => {
+        if (await App.previewAndSave({ kind: "edit", file: "swervetune.json", path: ["designs", b.dataset.forget], value: null }, "Forget a design")) paintSaved();
+      });
+    }
+
+    return { mount };
+  })();
 
   App.on("lint", paint);
   App.on("saved", async () => { App.lint = await App.api("/api/lint"); App.emit("lint", App.lint); });

@@ -319,4 +319,13 @@ const TIPS = {
   "ct.report": ["This controller's verdict: good, check the notes, or don't use in a match.", "It compares the drift on each stick axis the code reads with the deadband the code uses.", "deadband"],
   "ct.save": ["Saves this check under the controller's name.", "Checks over a season show which controllers are wearing out.", "stick_drift"],
   "ct.history": ["Every saved check, newest first.", "Drift that grows from check to check means that controller is wearing out.", "stick_drift"],
+
+  // ---------------------------------------------------------------- designs
+  "config.designs": ["Mechanism designs from ReCalc or AMBcalc, checked against the robot.", "A calculator predicts; the robot is the truth. This shows where they disagree.", null],
+  "config.dl-url": ["A share link from ReCalc (reca.lc) or AMBcalc (ambcalc.com).", "The link holds every number of the design; nothing is fetched from the site.", null],
+  "config.dl-read": ["Reads the design out of the link and checks it.", "Nothing is saved until you press Save.", null],
+  "config.dl-mech": ["The mechanism's name, like Shooter or Arm.", "Motors whose names start with it are picked for you.", null],
+  "config.dl-save": ["Shows the file change, then saves the design and the ticked numbers.", "Only the link is kept, in swervetune.json, so the design can be checked again any time.", "redeploy"],
+  "config.dl-saved": ["Every design saved for this robot, with its checks.", "An error means the design and the robot disagree about something that matters.", null],
+  "config.dl-log": ["Checks the saved designs against the newest match log.", "A log measures the motors themselves: their speed per volt, top speed and time at the current limit.", "motor_inventory"],
 };

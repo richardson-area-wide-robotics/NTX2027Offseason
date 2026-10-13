@@ -100,6 +100,27 @@ what the robot can do, and checks every named command an auto uses is registered
 app first, or it writes its old values back. The same check runs as `py -3.12 tools/swervetune
 ppcheck`, and on every pull request as the suggested "PathPlanner matches the code" check.
 
+## Mechanism designs from ReCalc and AMBcalc
+
+If a mechanism was designed in [ReCalc](https://www.reca.lc/) or [AMBcalc](https://ambcalc.com/),
+paste its share link into the Config tab's **Mechanism designs** panel. The link holds the whole
+design (motor, count, gearing, arm or spool or wheel, load, current limit), so nothing is fetched.
+The tool names the mechanism from the calculator (a flywheel is "Shooter" until you rename it),
+attaches the motors whose names start with that name, and checks the design against the robot:
+
+- the motor really fitted and how many, and the team's current policy for it;
+- velocity setpoints in that subsystem's code that the motor can never reach (Peashooter's
+  `shootX()` asks its Vortexes for 9999 rpm; their free speed is 6784);
+- for an arm, whether the motors can hold the load out level at the design's current limit;
+- for a drivetrain link, the YAGSL gearing, wheel and mass, and PathPlanner's wheel grip;
+- with **Check against the newest match log**, what the robot measured: each motor's speed per volt
+  (which tells a NEO from a Vortex whatever the files say) and how long it sat at its current limit.
+
+It fills in only what a design should decide: a drivetrain's gearing when it is one REV sells, the
+robot's mass until it is weighed, and the motor type of a mechanism motor nobody has named yet.
+Never the drive current limit: the slip test measures that. Saved designs keep only the link, in
+`swervetune.json` under `"designs"`.
+
 ## Saving what you find
 
 Gains changed live (in the app or in AdvantageScope) are lost when the robot code restarts. **Save to the robot files** shows

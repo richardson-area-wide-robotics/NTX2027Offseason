@@ -139,6 +139,7 @@ public final class MotorGuard {
     double noCurrentS;
     double lastRotations = Double.NaN;
     double rpm;
+    double duty = Double.NaN;
     Stage stage = Stage.OK;
     String cause = "";
     String flags = "";
@@ -211,6 +212,16 @@ public final class MotorGuard {
 
     public double amps() {
       return amps;
+    }
+
+    /** Motor speed, rpm, from its encoder (NaN until two readings). */
+    public double rpm() {
+      return rpm;
+    }
+
+    /** Volts the controller is applying to the motor now: its output times its supply. */
+    public double appliedVolts() {
+      return duty * busVolts;
     }
 
     /** Whether it is heard on the CAN bus now. */
@@ -482,6 +493,7 @@ public final class MotorGuard {
     double duty = m.channel.appliedDuty();
     double rot = m.channel.motorRotations();
     m.amps = amps;
+    m.duty = duty;
     m.tempC = temp;
     m.busVolts = m.channel.busVolts();
     if (Double.isFinite(rot) && Double.isFinite(m.lastRotations) && dt > 0) {

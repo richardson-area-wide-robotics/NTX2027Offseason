@@ -27,8 +27,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
-               logsummary, monitor, motorinv, pdhports, plant, ppcheck, predict, progress, rehearse, revspecs, runs,
-               wiring, yagslcfg)
+               designcheck, designlinks, logsummary, monitor, motorinv, pdhports, plant, ppcheck, predict, progress,
+               rehearse, revspecs, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
@@ -478,6 +478,55 @@ def _log_series(path):
         _LOG_CACHE.clear()
         _LOG_CACHE[key] = logsummary.read(path)
     return _LOG_CACHE[key]
+
+
+def _design_inventory():
+    live = S.link.motors()["motors"] if S.link and S.link.is_connected() else []
+    return motorinv.table(S.project, live)
+
+
+def _design_out(url, mechanism, motors, inv, stats):
+    try:
+        out = designcheck.evaluate(url, S.project, motors, inv, stats)
+    except ValueError as e:
+        return {"mechanism": mechanism, "url": url, "motors": motors or [], "error": str(e)}
+    out.update(mechanism=mechanism, url=url, motors=motors or [])
+    return out
+
+
+def api_designs(query=None):
+    """The designs saved for this robot, each checked; ``log`` adds a match log's measurements."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    S.reload_project()
+    log = (query or {}).get("log") or ""
+    stats = designcheck.from_log(log) if log else {}
+    inv = _design_inventory()
+    designs = [_design_out(v.get("url", ""), name, v.get("motors") or [], inv, stats)
+               for name, v in designcheck.saved(S.project).items() if v and v.get("url")]
+    return {"ok": True, "designs": designs, "log": log, "log_motors": sorted(stats),
+            "motors": [{"name": r["name"], "motor": r.get("motor") or ""} for r in inv["rows"]
+                       if r.get("key") not in ("drive", "steer")]}
+
+
+def api_design_read(body):
+    """A pasted link: what it says, the motors it is probably for, and its checks."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    b = body or {}
+    url, mech = str(b.get("url") or "").strip(), str(b.get("mechanism") or "").strip()
+    try:
+        d = designlinks.parse(url)
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+    inv = _design_inventory()
+    motors = b.get("motors")
+    mech = mech or designcheck.default_name(d)
+    if motors is None and d["kind"] not in ("drivetrain", "gearing"):
+        motors = designcheck.suggest_motors(d, inv, mech)
+    out = _design_out(url, mech, motors, inv, designcheck.from_log(b.get("log")) if b.get("log") else {})
+    out["ok"] = "error" not in out
+    return out
 
 
 def api_logs(query=None):
@@ -1084,6 +1133,7 @@ def api_sim(body):
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
+       "/api/designs": api_designs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
        "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
@@ -1095,7 +1145,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,
-        "/api/practice": api_practice, "/api/progress": api_progress_put, "/api/sim": api_sim,
+        "/api/practice": api_practice, "/api/progress": api_progress_put,
+        "/api/designs/read": api_design_read, "/api/sim": api_sim,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
         "/api/export": api_export, "/api/wiring/termination": api_wiring_termination,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,

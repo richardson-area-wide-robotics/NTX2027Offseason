@@ -123,6 +123,41 @@ def motors_in(series):
     return sorted(names)
 
 
+def motor_stats(series):
+    """Per motor, from the motor guard's logged rows (robot code from October 2026 on logs ``Rpm``
+    and ``AppliedVolts``): ``{"peak_rpm", "rpm_per_volt", "at_limit_frac", "samples"}``.
+
+    ``rpm_per_volt`` is taken only while the motor runs free - plenty of volts, a few amps - where
+    speed is the motor's own constant times the volts: 473 for a NEO, 565 for a Vortex, 917 for a
+    NEO 550. That tells the motors apart whatever the code says. ``at_limit_frac`` is the share of
+    the time it was driven that it sat at its current limit. Either is None with too little data.
+    """
+    out = {}
+    for m in motors_in(series):
+        b = f"/RealOutputs/Motors/{m}/"
+        rpm = series.get(b + "Rpm") or []
+        if not rpm:
+            continue
+        volts, amps, lim = (dict(series.get(b + k) or []) for k in ("AppliedVolts", "Amps", "LimitA"))
+        kvs, driven, at, peak = [], 0, 0, 0.0
+        for t, r in rpm:
+            if r is None or r != r:
+                continue
+            peak = max(peak, abs(r))
+            v, a, L = volts.get(t), amps.get(t), lim.get(t)
+            if v is None or v != v or abs(v) < 1.0:
+                continue
+            driven += 1
+            if a is not None and L and a >= 0.9 * L:
+                at += 1
+            if abs(v) > 3 and a is not None and a < 8 and abs(r) > 300 and r * v > 0:
+                kvs.append(abs(r) / abs(v))
+        kvs.sort()
+        out[m] = {"peak_rpm": peak, "rpm_per_volt": kvs[len(kvs) // 2] if len(kvs) >= 25 else None,
+                  "at_limit_frac": at / driven if driven >= 50 else None, "samples": len(rpm)}
+    return out
+
+
 def snapshot_at(series, t):
     """The robot's motor rows as the Wiring tab would have seen them at time ``t``."""
     rows = []

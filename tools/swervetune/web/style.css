@@ -393,6 +393,8 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .geo-diagram .lbl { font: 600 12px var(--sans); fill: var(--ink); }
 .warn-ink { color: var(--warn); font-weight: 600; }
 .good-result { border-left: 3px solid var(--ok); padding-left: 8px; }
+details.design { border-top: 1px solid var(--rule); padding: 8px 0; }
+details.design > summary { cursor: pointer; }
 .fs-map { width: 100%; height: auto; display: block; margin: 8px 0 2px; }
 .fs-map .fs-field { fill: var(--bg); stroke: var(--muted); stroke-width: 1.5; }
 .fs-tag circle { stroke: var(--panel); stroke-width: 1.5; }
