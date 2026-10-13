@@ -250,5 +250,11 @@ const Guide = (() => {
   App.on("tab", t => { if (t === "guide") refresh(); });
   App.on("lint", () => { if (root.classList.contains("on")) paint(); });
   App.on("run", () => { if (root.classList.contains("on")) refresh(); });
-  return { refresh, firstOrderDone };
+  // Opens one step from anywhere (Troubleshoot, Config): the Guide stays on it until the student picks another.
+  function go(id) {
+    if (STEPS.some(s => s.id === id)) active = id;
+    if (root.classList.contains("on")) paint(); else App.show("guide");
+  }
+
+  return { refresh, firstOrderDone, go };
 })();

@@ -8,6 +8,15 @@ const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&a
 const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? "–" : Number(v).toFixed(d);
 const ABBR = { frontleft: "FL", frontright: "FR", backleft: "BL", backright: "BR" };
 const abbr = n => ABBR[n] || n;
+// One word for each place the robot can be, used by every screen (the robot's own names are
+// UNSET, BLOCKS, FIELD and SIM; "FIELD" means the shop floor, not the competition field).
+const WHERE = { UNSET: "Where: not set", BLOCKS: "On blocks", FIELD: "On the floor", SIM: "Simulator",
+  DISABLED: "Robot disabled", ANY: "Anywhere", PRACTICE: "Practice pod" };
+const whereWord = k => WHERE[k] || k;
+const TEST_NAME = { steer_step: "Steering", drive_step: "Drive speed", drive_ff: "Feedforward", slip: "Slip current",
+  spin: "Spin", straight: "Straight line", capture: "Sensor capture", pdh_map: "PDH port finder",
+  moi: "Moment of inertia", controller: "Controller check", spin_ff: "Spin feedforward" };
+const testName = k => TEST_NAME[k] || k;
 
 const App = {
   state: {}, live: null, lint: null, listeners: {},

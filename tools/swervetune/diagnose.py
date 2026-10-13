@@ -41,7 +41,7 @@ SYMPTOMS = [
                       "others, sideways, or backwards.",
         "checks": [
             check("Were the absolute encoder offsets captured on this robot?",
-                  "Setup tab, Offsets step. Copied, duplicated or round-number offsets are the "
+                  "Guide, Set the wheel offsets. Copied, duplicated or round-number offsets are the "
                   "most common cause of a misaimed wheel.",
                   DISABLED,
                   "The offsets do not describe these modules.",
@@ -60,12 +60,12 @@ SYMPTOMS = [
                   {"type": "guide", "step": "offsets"}),
             check("Turning a module counter-clockwise by hand (seen from above), does its angle "
                   "go UP?",
-                  "Setup tab, Hand check: the tool records it with the motors in coast.",
+                  "Guide, Hand check: the tool records it with the motors in coast.",
                   DISABLED,
                   "The absolute encoder counts backwards for that module.",
                   "Flip absoluteEncoderInverted in that module's JSON. On MAXSwerve every module "
                   "should have the same value.",
-                  {"type": "guide", "step": "hand_check"},
+                  {"type": "guide", "step": "hand"},
                   {"lint": ["abs_inversion_mixed"]}),
             check("In the hand check, did the steering motor's encoder move about the same number "
                   "of degrees as the absolute encoder?",
@@ -75,7 +75,7 @@ SYMPTOMS = [
                   "positive number, the steering gear ratio in the config is wrong.",
                   "MAXSwerve steering is 46.42:1 (angle gearRatio in physicalproperties.json). "
                   "Fix the ratio or the angle inversion, redeploy, repeat the hand check.",
-                  {"type": "guide", "step": "hand_check"},
+                  {"type": "guide", "step": "hand"},
                   {"lint": ["angle_inversion_mixed"]}),
             check("Does steer_step on blocks move the RIGHT module, and does it reach each target?",
                   "Tune tab, Steering, pick FL only, run on blocks. Watch which physical module "
@@ -114,7 +114,7 @@ SYMPTOMS = [
                   {"lint": ["drive_inversion_mixed"]}),
             check("On blocks, with all wheels pointed forward and driving slowly forward, does the "
                   "TOP of every tire roll toward the front of the robot?",
-                  "Tune tab, Drive, run drive_step on blocks and watch the tops of the tyres. That "
+                  "Tune tab, Drive, run drive_step on blocks and watch the tops of the tires. That "
                   "is the direction the robot would go.",
                   BLOCKS,
                   "That wheel would push the robot backwards.",
@@ -273,13 +273,11 @@ SYMPTOMS = [
                   "wire dragging.",
                   "Turn the module by hand in coast, both ways, and compare with the others.",
                   {"type": "run", "test": "steer_step", "env": BLOCKS}),
-            check("Is it only at a crawl that the wheels don't turn?",
-                  "YAGSL deliberately holds the last angle below 1% of top speed (anti-jitter).",
-                  FIELD,
-                  "That is intended behavior, not a fault.",
-                  "Nothing to fix. If it bothers drivers, the stick deadband is the place to "
-                  "look.", None),
         ],
+        # Not a check: its yes would have to mean "a fault", so it is said up front instead.
+        "note": "Only at a crawl? Below about 1% of top speed YAGSL deliberately holds each wheel's "
+                "last angle so the wheels don't jitter around a stick at rest. That is intended, "
+                "not a fault; if it bothers the drivers, the stick deadband is the place to look.",
     },
     {
         "id": "pod_not_moving",
@@ -297,7 +295,7 @@ SYMPTOMS = [
                   "Robot disabled.", DISABLED,
                   "The absolute encoder is not reporting.",
                   "Reseat the encoder cable at the SPARK's data port.",
-                  {"type": "guide", "step": "hand_check"}, {"monitor": ["absolute_read_issue"]}),
+                  {"type": "guide", "step": "hand"}, {"monitor": ["absolute_read_issue"]}),
             check("Is the steering motor's breaker or PDH channel fine, and does the motor make a "
                   "sound when steer_step runs?",
                   "Run steer_step on blocks with only that module.", BLOCKS,
@@ -502,7 +500,7 @@ SYMPTOMS = [
                   "one module has a different gearbox.",
                   "MAXSwerve steering is 46.42:1. If every module is off by the same factor, fix the "
                   "config; if one module is, inspect that module.",
-                  {"type": "guide", "step": "hand_check"}),
+                  {"type": "guide", "step": "hand"}),
             check("Driving straight on the floor, do all four modules report the same distance "
                   "(within 3%)?",
                   "Live view while driving straight for a few meters, or the module comparison in "
@@ -565,7 +563,7 @@ SYMPTOMS = [
                   "at the target instead of pushing on.",
                   None,
                   {"monitor": ["motor_hot"]}),
-            check("Does it only get hot after long, hard, honest use?",
+            check("Does it stay cool through a full, hard practice match?",
                   "Watch the heat estimate across a practice match. A NEO 550 has very little "
                   "metal to soak up heat; its windings heat in seconds and its sensor lags by tens "
                   "of seconds, which is why the guard trusts its heat estimate first.",
