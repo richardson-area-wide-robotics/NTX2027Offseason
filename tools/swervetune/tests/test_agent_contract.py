@@ -92,6 +92,14 @@ class ActionsTest(unittest.TestCase):
         r = advisor._concrete(self.rep({"type": "save", "what": "steer_pid"}), {}, {})
         self.assertEqual(r["findings"][0]["action"]["keys"], ["Steer"])
 
+    def test_rehearse_output_says_it_is_the_practice_pod(self):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cli.main(["rehearse", "steer", "--rounds", "1", "--json"])
+        doc = json.loads(buf.getvalue())
+        self.assertIs(doc["practice"], True)
+        self.assertIn("not your robot", doc["note"])
+
     def test_json_output_is_strict(self):
         out = cli.Out(True)
         out.put(x=float("nan"), y=[float("inf")])

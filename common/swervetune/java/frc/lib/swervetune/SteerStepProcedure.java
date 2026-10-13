@@ -19,7 +19,7 @@ package frc.lib.swervetune;
  * loads the steering far more than air does, and gains tuned on blocks are usually too soft on
  * the floor.
  *
- * <p>Commands bypass YAGSL's optimisation and anti-jitter on purpose — this measures the loop
+ * <p>Commands bypass YAGSL's optimization and anti-jitter on purpose — this measures the loop
  * itself, not the logic in front of it.
  */
 final class SteerStepProcedure implements Procedure {

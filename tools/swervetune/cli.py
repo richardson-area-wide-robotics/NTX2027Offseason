@@ -685,6 +685,9 @@ def cmd_motors(args, out):
         lk.close()
 
 
+PRACTICE_NOTE = "PRACTICE POD - a model, not your robot. Its numbers never set a robot's gains."
+
+
 def cmd_practice(args, out):
     surface = args.surface
     if args.loop == "steer":
@@ -708,13 +711,14 @@ def cmd_practice(args, out):
                robot={"name": "practice pod", "modules": rehearse.MODULES})
     rep = advisor.analyze(doc, gains)
     path = runs.save(doc, rep, gains, practice=True)
-    out.put(report=_clean(rep), run_file=os.path.basename(path))
-    out.say("PRACTICE POD - a model, not your robot.")
+    out.put(practice=True, note=PRACTICE_NOTE, report=_clean(rep), run_file=os.path.basename(path))
+    out.say(PRACTICE_NOTE)
     print_report(out, rep)
     return out.done()
 
 
 def cmd_rehearse(args, out):
+    out.say(PRACTICE_NOTE)
     if args.loop == "steer":
         start = {"Steer/kP": args.kp, "Steer/kI": 0.0, "Steer/kD": args.kd, "Steer/IZone": 0.0,
                  "Steer/RampS": args.ramp}
@@ -724,7 +728,7 @@ def cmd_rehearse(args, out):
     hist = rehearse.rehearse(args.loop, start, surface=args.surface, rounds=args.rounds, motor=_pod_motor(args),
                              log=lambda e: out.say(f"  round {e['round']}: score {e['score']} cost"
                                                    f" {e['cost']} -> {e['advice']}"))
-    out.put(history=_clean(hist), final=_clean(hist[-1] if hist else None))
+    out.put(practice=True, note=PRACTICE_NOTE, history=_clean(hist), final=_clean(hist[-1] if hist else None))
     return out.done()
 
 

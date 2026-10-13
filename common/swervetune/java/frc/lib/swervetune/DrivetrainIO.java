@@ -143,14 +143,14 @@ public interface DrivetrainIO {
   }
 
   // ------------------------------------------------------------------ actuation, for tests only
-  /** Drives one module's steering to an angle, directly, with no optimisation or anti-jitter. */
+  /** Drives one module's steering to an angle, directly, with no optimization or anti-jitter. */
   void setSteerDeg(int module, double degrees);
 
   /** Open-loop drive voltage for one module. */
   void setDriveVolts(int module, double volts);
 
   /**
-   * One module through the same path teleop uses: optimisation, cosine compensation and the
+   * One module through the same path teleop uses: optimization, cosine compensation and the
    * module's drive feedforward. This is what a velocity step should exercise.
    */
   void setModuleState(int module, double speedMps, double angleDeg);

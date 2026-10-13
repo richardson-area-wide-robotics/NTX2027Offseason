@@ -49,7 +49,7 @@ class AdvisorConvergesTest(unittest.TestCase):
             self.assertIsNone(r["score"], test)
             self.assertEqual(r["findings"][0]["level"], "error", test)
 
-    def test_practice_runs_are_labelled(self):
+    def test_practice_runs_are_labeled(self):
         h = rehearse._steer_once({"Steer/kP": 0.02}, "floor")
         r = advisor.analyze(h, {"Steer/kP": 0.02})
         self.assertIn("Practice pod", r["findings"][0]["title"])

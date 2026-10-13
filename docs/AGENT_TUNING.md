@@ -64,7 +64,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `analyze <run>` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. |
 | `diagnose [symptom]` | The troubleshooter. |
 | `motors` | Heat, stalls and failures for every watched motor. |
-| `practice steer|drive ...` / `rehearse steer|drive ...` | One run, or the whole advice loop, on the simulated practice pod. |
+| `practice steer|drive ...` / `rehearse steer|drive ...` | One run, or the whole advice loop, on the simulated practice pod. Its JSON carries `"practice": true`: never save gains from it. |
 | `logsummary <file.wpilog> --project P` | What went wrong in a match log, and where to look. |
 | `pdhports <run or .wpilog> --project P` | Which PDH port feeds each motor. |
 
