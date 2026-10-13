@@ -36,8 +36,11 @@ To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) 
 
 ## Staying safe
 
-- **The deadman.** Nothing that spins a wheel runs unless someone holds SPACE in the app (or the
-  tester's controller bumper) for the whole test. Let go and it stops.
+- **The deadman.** On the floor, nothing that moves the robot runs unless someone holds the
+  deadman for the whole test: the tester's controller right bumper (Driver Station port 1), or
+  SPACE in the app. Let go and it stops. Don't use SPACE on the Driver Station laptop: there it is
+  the E-STOP. On blocks the deadman isn't required today (decision 20 asks whether it should be),
+  so stand clear of the wheels and keep ABORT or Esc in reach.
 - **Tell it where the robot is.** "On blocks" means every wheel is off the ground. "On the
   floor" needs the clear distance ahead and to each side, measured. If the robot is turning while
   it's supposed to be on blocks, it stops: it knows it's on the floor.
@@ -63,21 +66,29 @@ To use the simulator, start it first from VS Code (WPILib: Simulate Robot Code) 
 
 ## The path (the Guide tab)
 
+The same 15 steps, with the same numbers, as the Guide tab:
+
 1. Connect and check the configuration.
 2. Sensor health (robot disabled).
-3. Hand check: turn each wheel and module by hand; the app checks every sensor counts the right way.
-4. Set the absolute encoder offsets (wheels straight, bevel gears to one side).
-5. On blocks: every wheel drives the right way.
-6. Measure the robot: module positions with a tape measure, wheel sizes with a push.
-7. Steering on blocks, then on the floor.
-8. Find where the wheels slip, so the drive current limit sits just under it.
-9. Measure the feedforward, then tune drive speed.
-10. Spin and straight-line checks.
-11. Advanced: motion profiles. This step stays locked until steering and drive pass on the floor.
-12. Save, redeploy, and commit.
+3. Hand check: every module straight with its bevel gear to the robot's left, then turn each wheel
+   and module by hand; the app checks every sensor counts the right way.
+4. Set the wheel offsets (wheels straight, bevel gears to the left, a straight-edge squared to the
+   frame).
+5. On blocks: every wheel drives the right way. The first step with the robot enabled.
+6. Steering, on blocks.
+7. Measure the robot: module positions with a tape measure, wheel sizes with a push (Calibrate).
+8. Steering, on the floor.
+9. Find where the wheels slip, so the drive current limit sits just under it.
+10. Measure the feedforward.
+11. Drive speed.
+12. Spin check.
+13. Straight line.
+14. Advanced: motion profiles. This step stays locked until steering and drive pass on the floor.
+15. Save and commit.
 
-Each step says why it matters, what you need, and what to do. Steps tick themselves off when a
-test passes.
+Each step says where the robot must be (and checks it), why it matters, what you need, and what
+to do. A step ticks itself off when a test on the real robot passes; simulator and practice runs
+never tick a step.
 
 ## Tuning from AdvantageScope
 

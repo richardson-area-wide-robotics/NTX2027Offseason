@@ -4,7 +4,7 @@ package frc.lib.swervetune;
  * Step response of the drive velocity loop, all four modules together.
  *
  * <p>Modules are pointed one way and held there, then commanded through a list of speeds
- * through the same path teleop uses — YAGSL's optimisation, cosine compensation and the module
+ * through the same path teleop uses — YAGSL's optimization, cosine compensation and the module
  * drive feedforward — so what is measured is what the driver gets.
  *
  * <p><b>Where you run it changes what it means.</b> On {@link TestEnvironment#BLOCKS} a wheel spins

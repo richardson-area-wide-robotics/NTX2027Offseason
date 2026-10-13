@@ -77,7 +77,7 @@ class FromRunsTest(unittest.TestCase):
         self.assertAlmostEqual(b["fit"]["r_ohm"], 0.024, delta=0.001)
         self.assertEqual(b["status"], "practice")
         titles = " | ".join(f["title"] for f in rep["findings"])
-        self.assertIn("Battery 7 sags 24 mΩ per amp drawn", titles)
+        self.assertIn("Battery 7 sags 24 mV for every amp drawn (24 mΩ)", titles)
         self.assertIn("Full stick (3.9 m/s) needs", titles)
         self.assertGreater(b["full_stick_v"], 9.0, "a NEO at 3.9 m/s needs most of the battery")
 
@@ -114,7 +114,7 @@ class FromMatchLogsTest(unittest.TestCase):
         self.assertEqual(rep["battery"]["id"], "3")
         self.assertAlmostEqual(rep["battery"]["fit"]["r_ohm"], 0.025, delta=0.001)
         f = [x for x in rep["findings"] if "sags" in x["title"]]
-        self.assertEqual(f[0]["title"], "Battery 3 sags 25 mΩ per amp drawn")
+        self.assertEqual(f[0]["title"], "Battery 3 sags 25 mV for every amp drawn (25 mΩ)")
         self.assertEqual(f[0]["level"], "warn")
 
     def test_a_match_with_no_battery_picked_says_so(self):

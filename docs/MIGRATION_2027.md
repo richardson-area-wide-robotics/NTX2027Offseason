@@ -7,22 +7,27 @@ then, and for keeping new code from making it harder.
 
 ## How the code is already set up for it
 
-Each thing 2027 changes is kept behind one small piece, so porting means changing that piece and
-nothing else:
+Each thing 2027 changes sits behind a small piece where it could be kept there, but not every one
+is in a single file. These are the files that change, counted from what each one imports (October
+2026); the robot projects' own code is listed separately, because it is most of the work:
 
-| What changes in 2027 | Where it is confined |
-|---|---|
-| `DriverStation` splits into `MatchState` and `RobotState` | `RobotSignals.Wpilib` |
-| Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2` |
-| WPILib's JSON library (Jackson to Avaje Jsonb) | `MiniJson` reads `swervetune.json` with neither |
-| YAGSL, the motor vendor, the module hardware | `DrivetrainIO` / `YagslDrivetrainIO` |
-| Camera libraries (PhotonLib's estimator API) | `VisionSource`; `PhotonVisionSource` is the only file importing PhotonLib |
-| AdvantageKit | `AkLogging` is the only file importing it (plus `extends LoggedRobot` in each `Robot`) |
-| pyntcore's method names (camelCase to snake_case) | `link.py`'s `_call` tries both |
-| SystemCore's addresses (hostname `robot`, USB and Wi-Fi addresses) | `link.py`'s `candidate_hosts` already tries them |
-| No SPI on SystemCore | The config lint flags an SPI gyro (both robots have a navX on SPI today; the Redux Canandgyro, on CAN, is the planned replacement) |
+| What changes in 2027 | Library files that change | Robot code that changes |
+|---|---|---|
+| `DriverStation` splits into `MatchState` and `RobotState` | `RobotSignals.Wpilib` for every read; `reportWarning`/`reportError` calls in `SwerveTune`, `AkLogging`, `FieldLayouts` and `PhotonVisionSetup` if those move | Any subsystem reading the match state |
+| Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2`, and `SwerveTune.install`, which builds it | All of it: both `Robot.java`, every subsystem, the controller bindings, PathPlanner's `NamedCommands` |
+| REVLib's 2027 API | `SparkChannel`, `YagslDrivetrainIO`, `MotorWatcher`, and `SwerveTune`'s `watchMotor` overloads | Every subsystem that builds a `SparkMax` or `SparkFlex` (Peashooter's Shooter, Intake and Feeder; Black team's Shooter and Intake) |
+| YAGSL, the module hardware | `DrivetrainIO` / `YagslDrivetrainIO`, and `SwerveTune.install`, which takes a `SwerveDrive` | Each `Drive.java`, and the JSON files (see YAGSL below) |
+| Gyros: no SPI on SystemCore | `YagslDrivetrainIO` (it reads the navX and the Canandgyro directly) | `swervedrive.json`'s IMU; the navX comes off |
+| Alerts | `DashboardAlerts` | None |
+| WPILib's JSON library (Jackson to Avaje Jsonb) | None: `MiniJson` reads `swervetune.json` with neither | None |
+| Camera libraries (PhotonLib's estimator API) | `PhotonVisionSource` and `PhotonVisionSetup` only; `VisionSource` keeps PhotonLib out of the rest | `vendordeps/photonlib.json` in each robot |
+| AdvantageKit | `AkLogging` only | `extends LoggedRobot` in each `Robot` |
+| pyntcore's method names (camelCase to snake_case) | `link.py`'s `_call` tries both | None |
+| SystemCore's addresses (hostname `robot`, USB and Wi-Fi addresses) | `link.py`'s `candidate_hosts` already tries them | None |
 
-`Sampler`, `SafetySupervisor`, `MotorGuard`'s logic and `VisionGate` touch no WPILib API at all.
+`Sampler`, `SafetySupervisor`, `MotorGuard`'s logic, `VisionGate` and `VisionTrust` touch no WPILib
+API at all. In the library that is about a dozen files of 38; in the robot projects, nearly
+every file.
 
 ## The porting checklist
 

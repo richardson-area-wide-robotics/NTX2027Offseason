@@ -177,7 +177,7 @@ def report(doc, kv=None, ks=None, max_speed=None, pairs=None, source=None):
         status, words = grade(f["r_ohm"])
         out.update(status=status, brownout_a=brownout_amps(f), volts_at_150a=volts_at(f, 150))
         level = {"good": "info", "practice": "warn", "retire": "error"}[status]
-        F.append({"level": level, "title": f"{who} sags {f['r_ohm'] * 1000:.0f} mΩ per amp drawn",
+        F.append({"level": level, "title": f"{who} sags {f['r_ohm'] * 1000:.0f} mV for every amp drawn ({f['r_ohm'] * 1000:.0f} mΩ)",
                   "why": (f"{words} Measured from {source}, {f['spread_a']:.0f} A of range. The datasheet's "
                           f"12 mΩ is the battery alone; the robot also measures its leads, connector and "
                           f"breaker. At 150 A this one would read {volts_at(f, 150):.1f} V; it would brown "

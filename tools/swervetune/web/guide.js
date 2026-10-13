@@ -85,7 +85,7 @@ const Guide = (() => {
       why: "The offset tells the code where 'straight ahead' is for each module. One degree off is about 1.7 cm of sideways drift for every meter driven. Copied or rounded offsets are the most common swerve fault.",
       need: ["A straight-edge (a long level or a piece of aluminum extrusion)"],
       todo: ["Turn every module so its wheel points straight ahead with its bevel gear facing the robot's LEFT side. All four the same way.",
-             "Hold a straight-edge against the front pair of wheels, then the back pair, so each pair lines up.",
+             "Hold a straight-edge against the front pair of wheels, then the back pair, so each pair lines up. Square the edge to the frame first: the same distance from the frame rail at both ends.",
              "Press Capture offsets and keep the wheels still for 4 seconds.",
              "Review the change, Write files, redeploy, then press Verify: every module must read within 2° of zero."],
       status: () => progress.offsets === "verified" ? "done" : progress.offsets === "written" ? "attention" : "todo",
@@ -114,8 +114,9 @@ const Guide = (() => {
 
     { id: "directions", env: "BLOCKS", learn: ["inversion", "environment"], title: "On blocks: every wheel drives the right way", where: "On blocks",
       why: "With the robot in the air you can watch each tire. A wheel that rolls backwards fights the other three and drags the robot sideways.",
-      need: ["Blocks under the frame, all four wheels clear", "The tool set to On blocks"],
-      todo: ["Press Run directions and watch the TOP of each tire while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did, then Confirm."],
+      need: ["Blocks under the frame, all four wheels clear", "The tool set to On blocks", "The robot enabled in the Driver Station (Teleop or Test): the first step that turns a motor"],
+      todo: ["Enable the robot in the Driver Station (Teleop or Test mode). The wheels stay still until you press Run.",
+             "Press Run directions and watch the TOP of each tire while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did, then Confirm."],
       run: { label: "Run directions", test: "drive_step", args: { s0: 0.4, s1: 0, s2: -0.4, s3: 0, hold_s: 1.5 } },
       status: () => progress.directions === "pass" ? "done" : progress.directions === "fail" ? "attention" : "todo",
       body: () => `<div class="row">${App.modules().map(m => `<label class="row" data-tip="guide.dir"><input type="checkbox" class="g-dir" value="${esc(m)}" ${((progress.dirs || {})[m]) ? "checked" : ""}> ${abbr(m)} rolled forward</label>`).join("")}</div>
@@ -151,14 +152,14 @@ const Guide = (() => {
 
     { id: "steer-floor", env: "FIELD", learn: ["carpet_scrub", "steady_state_error", "kI", "iZone", "what_if"], title: "Steering, on the floor", where: "On the floor (the robot does not drive)",
       why: "Carpet holds a wheel still until the loop pushes hard enough. Gains that look perfect on blocks usually leave each wheel a few degrees short on carpet - and that is sideways drift.",
-      need: ["Robot on carpet", "Someone holding the deadman"],
+      need: ["Robot on carpet, enabled", "The tester's controller in Driver Station port 1: its right bumper is the deadman, held for the whole run"],
       todo: ["Open the tuner (Steering, Robot). The wheels turn in place; the robot stays put.", "Follow the advice until every target is met.", "Save to files."],
       tune: "steer",
       status: () => graded("steer_step", "FIELD") },
 
     { id: "slip", env: "FIELD", learn: ["traction", "slip_current", "current_limit"], title: "Find where the wheels slip", where: "On the floor, front bumper against a solid wall",
       why: "The drive current limit decides how hard the robot can accelerate. Above the current where a wheel breaks loose, more current only spins the wheel: it wastes battery, wears the tread, and makes odometry count distance the robot never traveled. This measures that current on your carpet, for each corner, so the limit sits just below it instead of at a datasheet number.",
-      need: ["A solid wall: the field wall or a shop wall, not a table or a door", "Carpet like the competition's", "A fresh battery", "Someone holding the deadman"],
+      need: ["A solid wall: the field wall or a shop wall, not a table or a door", "Carpet like the competition's", "A fresh battery", "The tester's controller in port 1, right bumper held as the deadman"],
       todo: ["Put the front bumper flat against the wall, every wheel pointing straight at it. Nobody between the robot and the wall.",
              "Open the tuner (Slip current, Robot) and Run. The push builds over a few seconds; each wheel chirps once as it slips and is cut at once.",
              "Press Try this on the recommended limit and Write the file. Change PathPlanner's drive current limit to match, redeploy, then measure the feedforward."],
@@ -167,7 +168,7 @@ const Guide = (() => {
 
     { id: "ff", env: "FIELD", learn: ["feedforward", "kS", "kV", "kA"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
-      need: ["3 m or more of clear carpet ahead", "A fresh battery", "Deadman held"],
+      need: ["3 m or more of clear carpet ahead", "A fresh battery", "The tester's controller in port 1, right bumper held as the deadman"],
       todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "If every module fitted, press Try this to apply, then Save to files.",
              "Then, in the Calibrate tab, weigh the robot and measure its moment of inertia: PathPlanner needs both."],
       tune: "ff",

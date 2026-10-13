@@ -96,7 +96,7 @@ const App = {
       this.modal(`<h2>${esc(title || "Save to the robot's files")}</h2>
         <p>These lines change in the robot project. Nothing is written until you press Write. After
         writing, redeploy the robot code so it loads them at startup, then commit the change.</p>
-        <pre class="diff">${colourDiff(p.diff)}</pre>
+        <pre class="diff">${colorDiff(p.diff)}</pre>
         <div class="row"><button class="btn primary" id="m-write">Write files</button>
         <button class="btn" id="m-cancel">Cancel</button></div>`, root => {
         $("#m-cancel", root).onclick = () => { this.closeModal(); resolve(false); };
@@ -112,7 +112,7 @@ const App = {
   },
 };
 
-function colourDiff(text) {
+function colorDiff(text) {
   return text.split("\n").map(l => {
     const cls = l.startsWith("+++") || l.startsWith("---") || l.startsWith("@@") ? "hdr" : l.startsWith("+") ? "add" : l.startsWith("-") ? "del" : "";
     return cls ? `<span class="${cls}">${esc(l)}</span>` : esc(l);
