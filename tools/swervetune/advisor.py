@@ -985,7 +985,11 @@ def health_report(result):
                     {"type": "troubleshoot", "symptom": "pod_drifts"}))
     heading = A.unwrap_deg(ch.get("heading", []))
     drift = 0.0
-    if len(t) > 10 and t[-1] > t[0]:
+    # Over a few seconds the gyro's noise is as big as its drift: a 3-second capture failed good
+    # gyros 10-40% of the time. Drift is judged from 20 seconds or more (Calibrate's "Record a
+    # minute still").
+    long_enough = len(t) > 10 and t[-1] - t[0] >= GYRO_DRIFT_MIN_S
+    if long_enough:
         drift = (heading[-1] - heading[0]) / (t[-1] - t[0]) * 60
         if abs(drift) > 0.5:
             F.append(finding(
@@ -997,8 +1001,13 @@ def health_report(result):
         F.append(finding("info", f"Battery at rest {bus:.1f} V",
                          "Below about 12.3 V at rest a battery is tired; tuning numbers move with it."))
     report["targets"] = [_grade("encoder noise at rest (deg)", worst_noise, 0.3),
-                         _grade("motor vs absolute (deg)", worst_gap, 2.0),
-                         _grade("gyro drift (deg/min)", abs(drift), 0.5)]
+                         _grade("motor vs absolute (deg)", worst_gap, 2.0)]
+    if long_enough:
+        report["targets"].append(_grade("gyro drift (deg/min)", abs(drift), 0.5))
+    elif len(t) > 10:
+        F.append(finding("info", "Gyro drift not judged from a short capture",
+                         f"A capture under {GYRO_DRIFT_MIN_S:.0f} s can't tell drift from noise. The Calibrate "
+                         "tab's Gyro panel records a minute standing still for that."))
     if not F:
         F.append(finding("ok", "Sensors healthy", "Quiet encoders, encoders agree, gyro steady."))
     report["summary"] = (f"Health: noise {worst_noise:.2f}°, motor/absolute gap {worst_gap:.1f}°, "
@@ -1414,14 +1423,24 @@ def spin_ff_report(result, history=None, mass_kg=None, mass_source="", moi_estim
                          f"FRC robots come out between {MOI_PLAUSIBLE[0]} and {MOI_PLAUSIBLE[1]}. Check the "
                          "linear kA came from a floor drive_ff run on this robot, and the mass."))
         return _finish(report)
+    if assumed:
+        # The moment of inertia scales with the mass it was worked out from: a guessed mass gives a
+        # guessed MOI, and saving it would put a guess into every auto PathPlanner plans.
+        F.append(finding("warn", f"Moment of inertia: {moi:.2f} kg·m²{est}, from an assumed {mass_kg:.0f} kg",
+                         "It scales with the mass, and nobody has weighed the robot yet. Weigh it with "
+                         "bumpers and battery (Calibrate tab), save the mass, then re-open this run to "
+                         "save the moment of inertia."))
+        return _finish(report)
     F.append(finding("warn",
                      f"Moment of inertia: {moi:.2f} kg·m²{est}",
                      "PathPlanner uses it for how hard the robot can start and stop turning. Save it to "
-                     "swervetune.json, then copy it into PathPlanner (Settings, Robot Config, MOI)."
-                     + (" It used an assumed 55 kg: weigh the robot and re-open this run." if assumed else ""),
+                     "swervetune.json, then copy it into PathPlanner (Settings, Robot Config, MOI).",
                      {"type": "config", "file": "swervetune.json", "path": ["robotMoiKgM2"],
                       "value": round(moi, 2)}))
     return _finish(report)
+
+
+GYRO_DRIFT_MIN_S = 20.0
 
 
 def no_data_report(result):

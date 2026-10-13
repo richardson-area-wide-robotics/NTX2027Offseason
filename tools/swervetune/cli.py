@@ -123,6 +123,12 @@ def open_link(args, out):
     team = args.team
     if not team and args.project:
         team = L.team_from_project(resolve_project(args.project).path)
+    if not team:
+        # No --project: every robot in this repo is the same team, so try its address first.
+        for path in yagslcfg.find_projects(REPO):
+            team = L.team_from_project(path)
+            if team:
+                break
     hosts = L.candidate_hosts(team=team, host=args.host, sim=args.sim)
     lk = L.RobotLink(hosts, client_name="swervetune-cli")
     if not lk.wait_connected(args.connect_timeout):
@@ -918,7 +924,20 @@ def main(argv=None):
             stream.reconfigure(encoding="utf-8")
         except (AttributeError, ValueError):
             pass
-    args = build_parser().parse_args(argv)
+    raw = list(sys.argv[1:] if argv is None else argv)
+    parser = build_parser()
+    if "--json" in raw:
+        # Bad input still answers with one JSON object, as --json promises.
+        def json_error(message):
+            print(json.dumps({"ok": False, "error": message, "code": "BAD_ARGS"}))
+            raise SystemExit(2)
+        parser.error = json_error
+        for action in parser._actions:
+            sub = getattr(action, "choices", None)
+            if isinstance(sub, dict):
+                for p in sub.values():
+                    p.error = json_error
+    args = parser.parse_args(argv)
     out = Out(args.json)
     try:
         return args.fn(args, out)

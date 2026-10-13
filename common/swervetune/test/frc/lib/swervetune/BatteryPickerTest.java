@@ -40,8 +40,9 @@ class BatteryPickerTest {
     assertEquals("", p.update(0, 0, 12.7, true));
     assertEquals("String Chooser", str(SwerveTuneTopics.BATTERY_CHOOSER + ".type"));
     String[] options = nt.getStringArrayTopic(SwerveTuneTopics.BATTERY_OPTIONS).subscribe(new String[0]).get();
-    assertEquals(12, options.length);
+    assertEquals(13, options.length, "1 to 12, then Borrowed");
     assertEquals("1", options[0]);
+    assertEquals("Borrowed", options[12]);
     assertEquals("", str(SwerveTuneTopics.BATTERY_ID));
   }
 

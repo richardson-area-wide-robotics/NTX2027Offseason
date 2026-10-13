@@ -223,7 +223,7 @@ function typing() {
   return a && (a.tagName === "INPUT" || a.tagName === "TEXTAREA" || a.tagName === "SELECT");
 }
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") { abortNow(); return; }
+  if (e.key === "Escape") { abortNow(); if (!$("#modal").hidden) App.closeModal(); return; }
   if (e.code === "Space" && !typing()) {
     e.preventDefault();
     if (!deadmanTimer) {

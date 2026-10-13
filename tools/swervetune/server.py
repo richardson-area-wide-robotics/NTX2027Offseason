@@ -603,6 +603,8 @@ def api_battery(_query=None):
         options = [str(b) for b in (S.project.data.get("swervetune.json") or {}).get("batteries") or []]
     options = options or [str(i) for i in range(1, 13)]
     hist = battery.history(_battery_entries())
+    if battery.BORROWED not in options:
+        options = list(options) + [battery.BORROWED]
     rows = []
     for bid in list(options) + [b for b in hist if b not in options]:
         h = hist.get(bid) or []
@@ -611,7 +613,7 @@ def api_battery(_query=None):
                      "v_rest": last.get("v_rest"), "when": last.get("when"), "source": last.get("source"),
                      "n": len(h), "trend": [x["mohm"] for x in h[-12:]]})
     return {"ok": True, "connected": bool(live), "id": live.get("battery_id") or "",
-            "rest_v": live.get("battery_rest"), "batteries": rows,
+            "rest_v": live.get("battery_rest"), "batteries": rows, "robot_path": battery.robot_path_suspect(hist),
             "good_max_mohm": battery.GOOD_MAX_OHM * 1000, "practice_max_mohm": battery.PRACTICE_MAX_OHM * 1000,
             "datasheet": battery.ES17_12}
 
@@ -1043,7 +1045,12 @@ def api_predict(body):
     new.update({k: float(v) for k, v in (body.get("gains") or {}).items()})
     lim = S.limits() if not doc.get("practice") else {"steer": 20.0, "drive": 40.0}
     loop = "steer" if doc.get("test") == "steer_step" else "drive"
-    kind = None if loop == "steer" or doc.get("practice") or not S.project else S.project.drive_kind()
+    if loop == "steer":
+        kind = None
+    elif doc.get("practice"):
+        kind = (doc.get("meta") or {}).get("pod_motor")  # the pod drives with the robot's motor (a Vortex)
+    else:
+        kind = S.project.drive_kind() if S.project else None
     return predict.predict(doc, now, new, int(body.get("module", 0)), current_limit=lim.get(loop),
                            motor_kind=kind)
 

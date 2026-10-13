@@ -204,13 +204,45 @@ def report(doc, kv=None, ks=None, max_speed=None, pairs=None, source=None):
     return {"battery": out, "findings": F}
 
 
+BORROWED = "Borrowed"
+# A robot whose own power path is high makes every battery measure high.
+PATH_RECENT_DAYS = 14
+
+
+def robot_path_suspect(hist, today=None):
+    """``{"title", "why"}`` when nearly every battery measured lately grades practice or retire: the
+    likelier cause is the robot's own power path (main breaker bolts, the Anderson connector, the PDH
+    lugs), which every measurement includes, not every battery at once. None otherwise."""
+    import time
+    stamp = today or time.strftime("%Y%m%d")
+    recent = []
+    for bid, h in hist.items():
+        if bid == BORROWED or not h:
+            continue
+        last = h[-1]
+        try:
+            age = (time.mktime(time.strptime(stamp[:8], "%Y%m%d")) -
+                   time.mktime(time.strptime(str(last["when"])[:8], "%Y%m%d"))) / 86400
+        except (ValueError, TypeError):
+            continue
+        if age <= PATH_RECENT_DAYS and last.get("status"):
+            recent.append(last["status"])
+    if len(recent) >= 3 and sum(1 for s in recent if s != "good") >= 0.75 * len(recent):
+        return {"title": f"{sum(1 for s in recent if s != 'good')} of {len(recent)} batteries measured lately are tired",
+                "why": "Every sag measurement includes the robot's own power path, so a loose main breaker "
+                       "bolt, a worn Anderson connector or a PDH lug makes every battery look tired at once. "
+                       "Tighten and check those before retiring batteries."}
+    return None
+
+
 def history(entries):
     """Per battery id, its measurements oldest first. ``entries`` are ``(when, id, fit, source)``."""
     out = {}
     for when, bid, f, source in sorted(entries, key=lambda e: e[0] or ""):
         if not bid or not f:
             continue
-        status, _ = grade(f["r_ohm"])
+        # "Borrowed" is many batteries under one name: its measurements are kept but never graded.
+        status, _ = grade(f["r_ohm"]) if bid != BORROWED else (None, "")
         out.setdefault(bid, []).append({"when": when, "mohm": round(f["r_ohm"] * 1000, 1),
                                         "v_rest": round(f["v_rest"], 2), "status": status, "source": source})
     return out

@@ -34,9 +34,11 @@ const Battery = (() => {
 
   async function open() {
     const r = await load();
-    const shown = r.batteries.filter(b => b.listed || b.n);
+    // Only the team's list (and "Borrowed"); a battery taken off the list keeps its history below.
+    const shown = r.batteries.filter(b => b.listed);
     App.modal(`<h2>Which battery is in?</h2>
-      <p>Tap the number written on the battery.${r.connected ? "" : " <b>Connect to the robot to pick.</b>"}</p>
+      <p>Tap the number on the battery; <b>Borrowed</b> for one without a team number.${r.connected ? "" : " <b>Connect to the robot to pick.</b>"}</p>
+      ${r.robot_path ? `<div class="callout warn"><b>${esc(r.robot_path.title)}.</b> ${esc(r.robot_path.why)}</div>` : ""}
       <div class="batt-grid" ${shown.some(b => b.id === r.id) ? "" : "data-nofocus"}>${shown.map(b => `<button class="batt ${b.status || ""} ${b.id === r.id ? "on" : ""}" data-id="${esc(b.id)}" ${b.id === r.id ? "autofocus" : ""}
           ${r.connected ? "" : "disabled"} aria-label="Battery ${esc(b.id)}${b.status ? ", " + WORDS[b.status] : ""}">
           <span class="batt-n">${esc(b.id)}</span>
@@ -45,7 +47,7 @@ const Battery = (() => {
         (${r.rest_v >= 12.3 ? charge(r.rest_v) : `<b>${charge(r.rest_v)}</b>`}).</p>` : ""}
       <details class="batt-details"><summary>How each battery is doing</summary>
         <div class="tblwrap"><table class="t"><thead><tr><th>Battery</th><th></th><th>Sag</th><th>At rest</th><th>Measured</th><th>Trend</th><th>From</th></tr></thead><tbody>
-        ${shown.map(b => `<tr><td><b>${esc(b.id)}</b></td>
+        ${r.batteries.filter(b => b.n).map(b => `<tr><td><b>${esc(b.id)}</b>${b.listed ? "" : ` <span class="muted small">off the list</span>`}</td>
           <td>${b.status ? `<span class="chip ${b.status === "good" ? "good" : b.status === "practice" ? "warn" : "bad"}">${WORDS[b.status]}</span>` : ""}</td>
           <td class="num">${b.mohm != null ? b.mohm + " mΩ" : "–"}</td><td class="num">${b.v_rest != null ? fmt(b.v_rest, 2) + " V" : "–"}</td>
           <td class="small">${b.n ? `${b.n}×, last ${esc(when(b.when))}` : ""}</td><td>${spark(b.trend, r)}</td>

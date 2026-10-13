@@ -35,9 +35,12 @@ class SpinFfTest(unittest.TestCase):
         self.assertIn("Weigh the robot", r["findings"][0]["title"])
         self.assertNotIn("moi_kg_m2", r["measured"])
 
-    def test_an_assumed_mass_is_called_out(self):
+    def test_an_assumed_mass_is_called_out_and_never_saved(self):
         r = report(source="assumed (set robotMassKg in swervetune.json)")
-        self.assertIn("assumed 55 kg", r["next"]["why"])
+        moi = next(f for f in r["findings"] if f["title"].startswith("Moment of inertia"))
+        self.assertIn("from an assumed 55 kg", moi["title"])
+        self.assertNotIn("action", moi, "a guessed mass gives a guessed MOI: weigh first")
+        self.assertFalse(any((f.get("action") or {}).get("path") == ["robotMoiKgM2"] for f in r["findings"]))
 
     def test_scrubbing_wheels_are_flagged(self):
         # Wheels that need 30% more voltage per speed turning than driving straight: they scrub.

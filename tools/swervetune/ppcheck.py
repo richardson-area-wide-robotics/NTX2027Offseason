@@ -69,9 +69,13 @@ def capabilities(project):
     a = min(mu * G, force / mass)
     r = max(math.hypot(project.module(n)["location"]["front"], project.module(n)["location"]["left"]) * 0.0254
             for n in project.module_names())
+    # Turning: the wheels' force at radius r against the robot's moment of inertia. a / r would treat
+    # the whole mass as sitting at the wheels, and understate it about 1.5x for a real robot.
+    moi, _ = project.moi()
+    alpha = mass * a * r / moi if moi and moi > 0 else a / r
     return {"max_speed": v, "max_speed_source": f"{src.replace(os.sep, '/')} MAX_SPEED" if vmax else "the drive's free speed",
             "max_accel": a, "accel_limited_by": "grip" if mu * G <= force / mass else f"the {lim:.0f} A current limit",
-            "max_ang_vel_deg": math.degrees(v / r), "max_ang_accel_deg": math.degrees(a / r), "radius_m": r}
+            "max_ang_vel_deg": math.degrees(v / r), "max_ang_accel_deg": math.degrees(alpha), "radius_m": r}
 
 
 def _row(rows, key, pp_value, want, source, tol=None, fix=True, note=""):

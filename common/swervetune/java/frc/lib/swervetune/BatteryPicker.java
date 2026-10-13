@@ -31,6 +31,7 @@ final class BatteryPicker {
   /** Robot code starting this soon after the roboRIO powered up counts as a fresh power-on. */
   static final double FRESH_POWER_ON_S = 120.0;
   static final List<String> DEFAULT_ROSTER = numbers(12);
+  static final String BORROWED = "Borrowed";
   /** Resting voltage of a charged ES17-12, and the line below which it needs charging (battery.py). */
   static final double CHARGED_V = 12.7;
   static final double CHARGE_IT_V = 12.3;
@@ -71,7 +72,12 @@ final class BatteryPicker {
     instance = nt.getIntegerTopic(t + ".instance").publish();
     instance.set(0);
     options = nt.getStringArrayTopic(SwerveTuneTopics.BATTERY_OPTIONS).publish();
-    options.set(this.roster.toArray(new String[0]));
+    // "Borrowed" for a battery without a team number, so the drive team never has to guess one.
+    List<String> choices = new ArrayList<>(this.roster);
+    if (!choices.contains(BORROWED)) {
+      choices.add(BORROWED);
+    }
+    options.set(choices.toArray(new String[0]));
     defaultPick = nt.getStringTopic(t + "default").publish();
     defaultPick.set("");
     active = nt.getStringTopic(SwerveTuneTopics.BATTERY_ACTIVE).publish();
