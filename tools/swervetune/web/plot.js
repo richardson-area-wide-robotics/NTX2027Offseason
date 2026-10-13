@@ -90,6 +90,9 @@ const Plot = (() => {
       g.fillStyle = col;
       if (a.type === "vspan") {
         g.fillRect(xa, T, xb - xa, ph);
+        // The tint alone is 1.25:1; a full-color rail along the top gives every span a 3:1 mark.
+        g.globalAlpha = 1;
+        g.fillRect(xa, T, xb - xa, 3);
         hits.push({ a, rank: 3, x: xa, y: T, w: xb - xa, h: ph });
       } else {
         const ya = Y(a.y1), yb = Y(a.y0);
@@ -169,7 +172,7 @@ const Plot = (() => {
       } else if (a.type === "bracket" && isFinite(a.y0) && isFinite(a.y1)) {
         const px = X(a.t) - 6, ya = Y(a.y0), yb = Y(a.y1);
         g.beginPath(); g.moveTo(px - 4, ya); g.lineTo(px, ya); g.lineTo(px, yb); g.lineTo(px - 4, yb); g.stroke();
-        g.fillText(a.label || "left", px - 4 - g.measureText(a.label || "left").width, (ya + yb) / 2 + 4);
+        if (a.label) g.fillText(a.label, px - 4 - g.measureText(a.label).width, (ya + yb) / 2 + 4);
         hits.push({ a, rank: 0, x: px - 40, y: Math.min(ya, yb) - 6, w: 46, h: Math.abs(yb - ya) + 12 });
       }
     }
@@ -178,19 +181,28 @@ const Plot = (() => {
     canvas._opts = opts;
     wire(canvas);
 
-    // legend
-    let lx = L + 8;
-    const ly = T + 14;
-    for (const s of series) {
-      if (!s.label) continue;
-      const color = s.color && s.color.startsWith("--") ? css(s.color) : (s.color || ink);
-      g.fillStyle = color;
-      g.fillRect(lx, ly - 7, 12, 3);
-      g.fillStyle = ink;
-      g.fillText(s.label, lx + 16, ly - 2);
-      lx += 26 + g.measureText(s.label).width;
-      if (lx > L + pw - 60) break;
-    }
+    legend(canvas, series, notes);
+  }
+
+  // The legend is HTML under the graph, not paint on it: it wraps instead of dropping lines, shows
+  // each line's dash, never covers the axis label, and each name opens its lesson.
+  function legend(canvas, series, notes) {
+    const wrap = canvas.parentElement;
+    if (!wrap) return;
+    let lg = wrap.querySelector(":scope > .legend");
+    if (!lg) { lg = document.createElement("ul"); lg.className = "legend"; canvas.after(lg); }
+    const name = (text, learn) => learn ? `<span class="term" tabindex="0" data-learn="${learn}">${esc(text)}</span>` : esc(text);
+    const lines = series.filter(s => s.label).map(s => {
+      const c = s.color && s.color.startsWith("--") ? `var(${s.color})` : (s.color || "var(--ink)");
+      const mark = s.points
+        ? `<svg viewBox="0 0 24 10" aria-hidden="true"><circle cx="6" cy="5" r="2" fill="${c}"/><circle cx="18" cy="5" r="2" fill="${c}"/></svg>`
+        : `<svg viewBox="0 0 24 10" aria-hidden="true"><line x1="0" y1="5" x2="24" y2="5" style="stroke:${c};stroke-width:${Math.max(2, s.width || 1.6)};stroke-dasharray:${(s.dash || []).join(" ") || "none"}"/></svg>`;
+      return `<li>${mark}${name(s.label, s.learn)}</li>`;
+    });
+    const kinds = [...new Set(notes.filter(a => a.type === "vspan" || a.type === "band").map(a => a.learn))];
+    const shades = kinds.map(k => `<li><span class="shade" style="background:var(${TONE[k] || "--info"})" aria-hidden="true"></span>${name(((typeof Learn !== "undefined" && (Learn.L[k] || {}).title) || k).toLowerCase() + " (shaded)", k)}</li>`);
+    lg.innerHTML = lines.concat(shades).join("");
+    lg.hidden = !lines.length && !shades.length;
   }
 
   // Lesson colors: red for flat out, amber for limits and ringing, green for good, blue otherwise.

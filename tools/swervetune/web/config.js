@@ -11,55 +11,63 @@
     }
     const s = L.summary, F = L.findings || [];
     const mods = Object.entries(L.modules || {});
+    // PathPlanner's findings are listed in full in their own panel below, so here they get one line.
+    const own = F.map((f, i) => [f, i]).filter(([f]) => !String(f.id || "").startsWith("pathplanner"));
+    const pp = F.filter(f => String(f.id || "").startsWith("pathplanner"));
+    const tip = (key, text) => `<span class="term" tabindex="0" data-tip="${key}" data-quiet>${esc(text)}</span>`;
+    const yes = v => v === true ? "<b>yes</b>" : v === false ? "no" : esc(String(v));
     root.innerHTML = `<div class="grid2">
       <div class="stack">
-        <div class="panel"><h2>${esc(L.project)} <span class="muted small">team ${esc(s.team)}</span></h2>
+        <div class="panel"><h2 data-tip="config.summary">${esc(L.project)} <span class="muted small">team ${esc(s.team)}</span></h2>
           <table class="t"><tbody>
-            <tr><td>Drive</td><td>${esc(s.drive_motor)} at ${s.drive_gear}:1 on ${s.wheel_diameter_in} in wheels</td></tr>
-            <tr><td>Steering</td><td>${esc(s.steer_motor)} at ${s.steer_gear}:1</td></tr>
-            <tr><td>Module top speed</td><td class="mono">${fmt(s.max_module_speed_mps, 2)} m/s (from motor free speed)</td></tr>
-            <tr><td>Speed given to YAGSL</td><td class="mono">${s.create_swerve_max_speed.value == null ? "?" : s.create_swerve_max_speed.value} m/s <span class="muted">(${esc(s.create_swerve_max_speed.literal || "")})</span></td></tr>
-            <tr><td>Nominal kV</td><td class="mono">${fmt(s.kv_nominal, 3)} V per m/s</td></tr>
-            <tr><td>Wheels slip at</td><td class="mono">${fmt(s.traction_current_a, 0)} A per motor <span class="muted">(${fmt(s.mass_kg, 0)} kg, ${esc(s.mass_source)})</span></td></tr>
-            <tr><td>Current limits</td><td class="mono">drive ${esc((s.current_limit || {}).drive)} A · steer ${esc((s.current_limit || {}).angle)} A</td></tr>
-            <tr><td>Ramp rates</td><td class="mono">drive ${esc((s.ramp || {}).drive)} s · steer ${esc((s.ramp || {}).angle)} s</td></tr>
-            <tr><td>Libraries</td><td class="small">${Object.entries(s.vendordeps || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}</td></tr>
+            <tr><th scope="row">Drive</th><td>${esc(s.drive_motor)} at ${s.drive_gear}:1 on ${s.wheel_diameter_in} in wheels</td></tr>
+            <tr><th scope="row">Steering</th><td>${esc(s.steer_motor)} at ${s.steer_gear}:1</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.topspeed">Module top speed</span></th><td class="mono">${fmt(s.max_module_speed_mps, 2)} m/s (from motor free speed)</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.maxspeed">Speed given to YAGSL</span></th><td class="mono">${s.create_swerve_max_speed.value == null ? "?" : s.create_swerve_max_speed.value} m/s <span class="muted">(${esc(s.create_swerve_max_speed.literal || "")})</span></td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.kv">Nominal kV</span></th><td class="mono">${fmt(s.kv_nominal, 3)} V per m/s</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.slip">Wheels slip at</span></th><td class="mono">${fmt(s.traction_current_a, 0)} A per motor <span class="muted">(${fmt(s.mass_kg, 0)} kg, ${esc(s.mass_source)})</span></td></tr>
+            <tr><th scope="row">Current limits</th><td class="mono">drive ${esc((s.current_limit || {}).drive)} A · steer ${esc((s.current_limit || {}).angle)} A</td></tr>
+            <tr><th scope="row">Ramp rates</th><td class="mono">drive ${esc((s.ramp || {}).drive)} s · steer ${esc((s.ramp || {}).angle)} s</td></tr>
+            <tr><th scope="row">Libraries</th><td class="small">${Object.entries(s.vendordeps || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}</td></tr>
           </tbody></table></div>
-        <div class="panel"><h3>Modules</h3><div class="tblwrap"><table class="t">
-          <tr><th>Module</th><th>Drive ID</th><th>Steer ID</th><th>Offset</th><th>Drive inv.</th><th>Steer inv.</th><th>Abs. inv.</th><th>Front, left (in)</th></tr>
-          ${mods.map(([n, m]) => `<tr><td>${abbr(n)}</td><td class="num">${m.drive.id}</td><td class="num">${m.angle.id}</td>
-            <td class="num">${m.absoluteEncoderOffset}</td><td>${m.inverted.drive}</td><td>${m.inverted.angle}</td><td>${m.absoluteEncoderInverted}</td>
+        <div class="panel"><h3 data-tip="config.modules">Modules</h3><div class="tblwrap"><table class="t">
+          <tr><th>Module</th><th class="num">${tip("config.driveid", "Drive ID")}</th><th class="num">${tip("config.steerid", "Steer ID")}</th><th class="num">${tip("config.offset", "Offset")}</th>
+            <th>${tip("config.driveinv", "Drive flipped")}</th><th>${tip("config.steerinv", "Steer flipped")}</th><th>${tip("config.absinv", "Abs. flipped")}</th><th class="num">${tip("config.location", "Front, left (in)")}</th></tr>
+          ${mods.map(([n, m]) => `<tr><th scope="row">${abbr(n)}</th><td class="num">${m.drive.id}</td><td class="num">${m.angle.id}</td>
+            <td class="num">${m.absoluteEncoderOffset}°</td><td>${yes(m.inverted.drive)}</td><td>${yes(m.inverted.angle)}</td><td>${yes(m.absoluteEncoderInverted)}</td>
             <td class="num">${m.location.front}, ${m.location.left}</td></tr>`).join("")}
         </table></div></div>
-        <div class="panel"><h3>Gains in the files</h3><table class="t">
-          <tr><th></th><th>p</th><th>i</th><th>d</th><th>iz</th><th>f</th></tr>
-          ${["angle", "drive"].map(k => { const p = (L.pidf || {})[k] || {}; return `<tr><td>${k === "angle" ? "Steering" : "Drive"}</td>
+        <div class="panel"><h3 data-tip="config.gains">Gains in the files</h3><table class="t">
+          <tr><th></th><th class="num">${Learn.term("kP", "kP")}</th><th class="num">${Learn.term("kI", "kI")}</th><th class="num">${Learn.term("kD", "kD")}</th><th class="num">${Learn.term("iZone", "IZone")}</th><th class="num">${Learn.term("feedforward", "FF")}</th></tr>
+          ${["angle", "drive"].map(k => { const p = (L.pidf || {})[k] || {}; return `<tr><th scope="row">${k === "angle" ? "Steering" : "Drive"}</th>
             <td class="num">${p.p}</td><td class="num">${p.i}</td><td class="num">${p.d}</td><td class="num">${p.iz}</td><td class="num">${p.f}</td></tr>`; }).join("")}
-        </table><p class="hint">Units are the SPARK's: output (duty cycle) per degree for steering, per m/s for drive; d is per 1 ms controller step. YAGSL never sends f to a SPARK.</p></div>
+        </table><p class="hint">Units are the SPARK's: output (duty cycle) per degree for steering, per m/s for drive; kD is per 1 ms controller step. YAGSL never sends FF to a SPARK: the real feedforward is measured per module on the Tune tab.</p></div>
       </div>
-      <div class="panel"><h2>What does not add up</h2>
-        <div>${F.length ? F.map((f, i) => `<div class="finding">
+      <div class="panel"><h2 data-tip="config.findings">What does not add up</h2>
+        <div>${own.length ? own.map(([f, i]) => `<div class="finding">
           <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
-          <div class="why">${esc(f.why)}</div>
-          ${f.fix && f.fix.kind === "edit" ? `<div class="row"><button class="btn small" data-fix="${i}">Preview the fix</button><span class="small muted">${esc(f.fix.file)}: ${esc(f.fix.path.join("."))} = ${esc(JSON.stringify(f.fix.value))}</span></div>` : ""}
+          <div class="why">${Learn.link(f.why, 3)}</div>
+          ${f.fix && f.fix.kind === "edit" ? `<div class="row"><button class="btn small" data-fix="${i}" data-tip="config.fix" data-quiet>Preview the fix</button><span class="small muted">${esc(f.fix.file)}: ${esc(f.fix.path.join("."))} = ${esc(JSON.stringify(f.fix.value))}</span></div>` : ""}
           ${f.fix && f.fix.kind === "manual" && f.fix.instruction ? `<div class="small mono">${esc(f.fix.file)}: ${esc(f.fix.instruction)}</div>` : ""}
-          ${f.fix && f.fix.kind === "guide" ? `<div class="row"><button class="btn small" data-guide="1">Open the guide</button></div>` : ""}
-          ${f.fix && f.fix.kind === "tune" ? `<div class="row"><button class="btn small" data-tune="${esc(f.fix.loop)}">Open the tuner</button></div>` : ""}
-          ${f.fix && f.fix.kind === "pathplanner" ? `<div class="row"><button class="btn small" data-pp="1">See the PathPlanner check</button></div>` : ""}
-        </div>`).join("") : `<span class="level ok">ok</span> Nothing found.`}</div></div>
+          ${f.fix && f.fix.kind === "guide" ? `<div class="row"><button class="btn small" data-guide="${esc(f.fix.step || "")}">Open the Guide</button></div>` : ""}
+          ${f.fix && f.fix.kind === "tune" ? `<div class="row"><button class="btn small" data-tune="${esc(f.fix.loop)}">Open the ${esc(({ steer: "Steering", drive: "Drive speed", ff: "Feedforward", slip: "Slip current", spin: "Spin", straight: "Straight line" })[f.fix.loop] || "")} tuner</button></div>` : ""}
+        </div>`).join("") : `<span class="level ok">ok</span> Nothing found in the swerve files.`}
+        ${pp.length ? `<div class="finding"><div class="head"><span class="level ${pp.some(f => f.level === "error") ? "error" : "warn"}">auto</span><span class="title">${pp.length} PathPlanner item${pp.length === 1 ? "" : "s"} for whoever writes the autos</span></div>
+          <div class="row"><button class="btn small" data-pp="1">See the PathPlanner check</button></div></div>` : ""}</div></div>
     </div>
-    <div class="panel" id="pp-panel" style="margin-top:12px"><h2><span class="term" data-learn="pathplanner_model">PathPlanner against the code</span></h2><div id="pp-body"><p class="hint">Checking…</p></div></div>`;
+    <div class="panel" id="pp-panel" style="margin-top:12px"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>`;
     $$("[data-pp]", root).forEach(b => b.onclick = () => $("#pp-panel", root).scrollIntoView({ behavior: "smooth" }));
     paintPathPlanner();
     $$("[data-fix]", root).forEach(b => b.onclick = () => {
       const f = F[+b.dataset.fix].fix;
       App.previewAndSave({ kind: "edit", file: f.file, path: f.path, value: f.value }, "Fix: " + F[+b.dataset.fix].title);
     });
-    $$("[data-guide]", root).forEach(b => b.onclick = () => App.show("guide"));
+    $$("[data-guide]", root).forEach(b => b.onclick = () => b.dataset.guide ? Guide.go(b.dataset.guide) : App.show("guide"));
     $$("[data-tune]", root).forEach(b => b.onclick = () => Tune.open(b.dataset.tune, { target: "robot" }));
   }
 
-  const STATUS = { ok: "good", differs: "bad", missing: "bad", unknown: "" };
+  // Anything fine is quiet so the rows that need work stand out.
+  const STATUS = { differs: "bad", missing: "bad", unknown: "warn" };
 
   async function paintPathPlanner() {
     const box = $("#pp-body", root);
@@ -70,12 +78,12 @@
     const F = r.findings || [], cap = r.capabilities || {};
     box.innerHTML = `
       <p class="small">PathPlanner keeps its own copy of the robot (<span class="mono">deploy/pathplanner/settings.json</span>), which the robot loads at boot to plan every auto. Each row is a setting PathPlanner plans with, against where the truth lives.</p>
-      <div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th>PathPlanner</th><th>The code</th><th>From</th><th></th></tr></thead><tbody>
+      <div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
         ${(r.rows || []).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${esc(String(x.pathplanner ?? "–"))}</td>
           <td class="num mono">${esc(String(x.code ?? "–"))}</td><td class="small">${esc(x.source)}</td>
-          <td><span class="chip ${STATUS[x.status] || ""}">${esc(x.status === "unknown" ? "measure it" : x.status)}</span></td></tr>`).join("")}
+          <td>${x.status === "ok" ? `<span class="muted small">✓ same</span>` : `<span class="chip ${STATUS[x.status] || ""}" ${x.status === "unknown" ? `data-tip="config.measure" data-quiet` : ""}>${esc(x.status === "unknown" ? "measure it" : x.status)}</span>`}</td></tr>`).join("")}
       </tbody></table></div>
-      ${(r.fixes || []).length ? `<div class="row"><button class="btn primary" id="pp-fix">Make PathPlanner match the code…</button>
+      ${(r.fixes || []).length ? `<div class="row"><button class="btn primary" id="pp-fix" data-tip="config.ppfix">Make PathPlanner match the code…</button>
         <span class="small muted">Writes ${r.fixes.length} setting${r.fixes.length === 1 ? "" : "s"} in settings.json. Close the PathPlanner app first, or it writes its old values back.</span></div>` : ""}
       <p class="small muted">What this robot can do, for the path limits: ${fmt(cap.max_speed, 2)} m/s, ${fmt(cap.max_accel, 1)} m/s² (limited by ${esc(cap.accel_limited_by || "")}), turning ${fmt(cap.max_ang_vel_deg, 0)} deg/s.</p>
       ${F.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>

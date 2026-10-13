@@ -34,13 +34,19 @@ USED, PATTERNS = {}, []
 for name, src in SOURCES.items():
     for m in re.finditer(r'data-tip(?:="|": ")([^"]+)"', src):
         key = m.group(1)
+        if re.fullmatch(r"\$\{[^}]*\}", key):
+            continue  # a helper's own template, data-tip="${key}": its callers pass the keys (below)
         if "${" in key:
             PATTERNS.append((re.compile("^" + re.sub(r"\\\$\\\{[^}]*\\}", r"[\\w-]+", re.escape(key)) + "$"), name))
         else:
             USED.setdefault(key, name)
 
+    # Keys passed to a helper that writes the attribute, e.g. tip("config.offset", "Offset").
+    for m in re.finditer(r'\btip\("([\w.-]+)"', src):
+        USED.setdefault(m.group(1), name)
+
 # Files whose hover-only title="" attributes haven't been replaced by tips yet. It only shrinks.
-TITLES_PENDING = {"calibrate.js", "config.js", "controllers.js", "motors.js", "runs.js", "tune.js", "wiring.js"}
+TITLES_PENDING = {"calibrate.js", "controllers.js", "motors.js", "wiring.js"}
 
 
 class TipsTest(unittest.TestCase):

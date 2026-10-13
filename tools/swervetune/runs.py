@@ -70,7 +70,7 @@ def list_runs(limit=50):
                     "env": d.get("env"), "outcome": d.get("outcome"), "saved": d.get("saved"),
                     "practice": d.get("practice", False), "score": rep.get("score"),
                     "cost": rep.get("cost"), "summary": rep.get("summary"),
-                    "robot": (d.get("robot") or {}).get("name")})
+                    "robot": (d.get("robot") or {}).get("name"), "gains": d.get("gains") or {}})
     return out
 
 

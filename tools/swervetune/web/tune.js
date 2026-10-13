@@ -6,12 +6,12 @@ const Tune = (() => {
   const LOOPS = {
     steer: { label: "Steering", test: "steer_step", practice: true,
       blurb: "How fast and how precisely each wheel turns to the angle it is told. Run it on blocks first, then on the floor: the robot does not drive, the wheels only turn in place, and carpet is where the real numbers come from." },
-    drive: { label: "Drive speed", test: "drive_step", practice: true,
-      blurb: "How well each wheel holds the speed it is told. On blocks it only checks direction and delay; tune it on the floor, where the wheel carries the robot." },
-    ff: { label: "Feedforward", test: "drive_ff", practice: true,
-      blurb: "Measures, per module, the voltage it takes to start moving (kS), to hold each speed (kV) and to accelerate (kA). The biggest single step to a tight drivetrain. Floor for real numbers; blocks finds a binding module." },
     slip: { label: "Slip current", test: "slip", practice: true,
       blurb: "Finds the drive current where each wheel starts to slip on this carpet, so the current limit can sit just below it instead of at a datasheet number. Front bumper flat against a solid wall, every wheel pointing into it. The push ramps up until each wheel breaks loose; each is cut the moment it slips, and the tool recommends a limit." },
+    ff: { label: "Feedforward", test: "drive_ff", practice: true,
+      blurb: "Measures, per module, the voltage it takes to start moving (kS), to hold each speed (kV) and to accelerate (kA). The biggest single step to a tight drivetrain. Floor for real numbers; blocks finds a binding module." },
+    drive: { label: "Drive speed", test: "drive_step", practice: true,
+      blurb: "How well each wheel holds the speed it is told, once the feedforward is measured. On blocks it only checks direction and delay; tune it on the floor, where the wheel carries the robot." },
     spin: { label: "Spin", test: "spin", practice: false,
       blurb: "Spins in place both ways and compares command, gyro and wheels. Finds an inverted gyro and wrong module positions." },
     straight: { label: "Straight line", test: "straight", practice: false,
@@ -47,65 +47,95 @@ const Tune = (() => {
   const learnKey = key => /kP$/.test(key) ? "kP" : /kI$/.test(key) ? "kI" : /kD$/.test(key) ? "kD" : /IZone$/.test(key) ? "iZone"
     : /RampS$/.test(key) ? "ramp_rate" : /VelPeriodMs|VelDepth/.test(key) ? "velocity_filter" : /kS$/.test(key) ? "kS"
     : /kV$/.test(key) ? "kV" : /kA$/.test(key) ? "kA" : /EncoderSync/.test(key) ? "encoder_sync" : null;
+  // The tip for each gain box.
+  const gainTip = key => /kP$/.test(key) ? "kP" : /kI$/.test(key) ? "kI" : /kD$/.test(key) ? "kD" : /IZone$/.test(key) ? "iZone"
+    : /RampS$/.test(key) ? "ramp" : /VelPeriodMs/.test(key) ? "velwindow" : /VelDepth/.test(key) ? "veldepth"
+    : /kS$/.test(key) ? "kS" : /kV$/.test(key) ? "kV" : /kA$/.test(key) ? "kA" : /AngVelCoeff/.test(key) ? "skew"
+    : /EncoderSync\/Enabled/.test(key) ? "sync" : "syncdb";
+  // A gain by the name its box shows: "Ramp", "FL kV".
+  const GAIN_LABEL = Object.fromEntries(Object.values(GAINS).flat().map(([k, l]) => [k, l]));
+  const gainName = k => GAIN_LABEL[k] || k.replace(/^FF\/(\w+)\/(k[SVA])$/, (_, m, g) => `${abbr(m)} ${g}`);
+  const num = v => v == null || !isFinite(v) ? "–" : String(+(+v).toPrecision(4));
+  // The gains a test uses: a steering run's "what changed" is about steering gains only.
+  const USES = { steer_step: ["Steer/"], drive_step: ["Drive/", "FF/"], drive_ff: ["FF/", "Drive/"], slip: ["Drive/"],
+                 spin: ["Chassis/", "EncoderSync/", "Steer/"], straight: ["Chassis/", "EncoderSync/", "Steer/", "Drive/", "FF/"] };
+  const uses = (test, k) => (USES[test] || [""]).some(p => k.startsWith(p));
+  const gainDiff = (test, a, b) => [...new Set([...Object.keys(a), ...Object.keys(b)])]
+    .filter(k => uses(test, k) && num(a[k] || 0) !== num(b[k] || 0));
+  // 12-hour time from a run's stamp, "20261012-211051" -> "9:10 PM".
+  function clock(stamp) {
+    const m = /(\d{4})(\d\d)(\d\d)-(\d\d)(\d\d)/.exec(stamp || "");
+    if (!m) return "";
+    const h = +m[4];
+    return `${h % 12 || 12}:${m[5]} ${h < 12 ? "AM" : "PM"}`;
+  }
 
   root.innerHTML = `
     <div class="split">
       <div class="stack">
         <div class="panel">
-          <div class="seg" id="loopseg">${Object.entries(LOOPS).map(([k, v]) => `<button data-loop="${k}">${v.label}</button>`).join("")}</div>
+          <div class="seg" id="loopseg" role="group" aria-label="Test">${Object.entries(LOOPS).map(([k, v]) => `<button data-loop="${k}" data-tip="tune.loop.${k}">${v.label}</button>`).join("")}</div>
           <p class="hint" id="blurb"></p>
-          <div class="row"><span class="small muted">Run on</span>
-            <div class="seg" id="targetseg"><button data-t="robot">Robot</button><button data-t="practice">Practice pod</button></div></div>
-          <div class="row" id="surfacerow"><span class="small muted">Practice surface</span>
-            <div class="seg" id="surfseg"><button data-s="floor">Floor</button><button data-s="blocks">Blocks</button></div></div>
-          <div class="row" id="modrow"><span class="small muted">Module</span>
-            <select id="module"><option>ALL</option><option>FL</option><option>FR</option><option>BL</option><option>BR</option></select>
-            <select id="pattern"><option value="0">Standard steps</option><option value="1">Small steps (friction)</option><option value="2">Large steps (saturation)</option></select></div>
-          <div id="needs" class="hint"></div>
-          <button class="btn primary" id="run">Run</button>
+          <div class="row"><span class="small muted" id="lbl-target">Run on</span>
+            <div class="seg" id="targetseg" role="group" aria-labelledby="lbl-target"><button data-t="robot" data-tip="tune.target.robot">Robot</button><button data-t="practice" data-tip="tune.target.practice">Practice pod</button></div></div>
+          <div class="row" id="surfacerow"><span class="small muted" id="lbl-surf">Practice surface</span>
+            <div class="seg" id="surfseg" role="group" aria-labelledby="lbl-surf"><button data-s="floor" data-tip="tune.surface.floor">Floor</button><button data-s="blocks" data-tip="tune.surface.blocks">Blocks</button></div></div>
+          <div class="row" id="modrow">
+            <label class="row small" data-tip="tune.module">Module <select id="module"><option>ALL</option><option>FL</option><option>FR</option><option>BL</option><option>BR</option></select></label>
+            <label class="row small" data-tip="tune.pattern">Steps <select id="pattern"><option value="0">Standard</option><option value="1">Small (friction)</option><option value="2">Large (flat out)</option></select></label></div>
+          <div id="needs"></div>
+          <button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
         </div>
         <div class="panel">
-          <div class="row" style="justify-content:space-between"><h3>Gains</h3><span class="hint" id="gainsrc"></span></div>
+          <div class="row" style="justify-content:space-between"><h3 data-tip="tune.gains">Gains</h3><span class="hint" id="gainsrc"></span></div>
           <div class="gains" id="gains"></div>
           <div class="row">
-            <button class="btn" id="apply">Apply live</button>
-            <button class="btn" id="revert">Revert edits</button>
-            <button class="btn" id="save">Save to files…</button>
+            <button class="btn" id="apply" data-tip="tune.apply">Apply live</button>
+            <button class="btn" id="revert" data-tip="tune.revert">Revert edits</button>
+            <button class="btn" id="save" data-tip="tune.save">Save to files…</button>
           </div>
           <p class="hint">Apply live changes the running robot only (never its flash); a restart puts back the files. Save writes the files.</p>
         </div>
-        <div class="panel">
-          <h3>Earlier runs</h3>
+        <details class="panel" id="history-panel" open>
+          <summary><h3 data-tip="tune.history">Earlier runs</h3></summary>
           <div id="history" class="small"></div>
-        </div>
+        </details>
       </div>
       <div class="stack">
         <div class="panel">
-          <div class="row" style="justify-content:space-between">
-            <h2 id="res-title">No run yet</h2>
-            <label class="row small"><input type="checkbox" id="cmp"> overlay the run before</label>
+          <div class="row" style="justify-content:space-between;align-items:flex-start">
+            <div><h2 id="res-title" data-tip="tune.title" data-quiet>No run yet</h2><div class="small muted mono" id="res-file"></div></div>
+            <div class="row">
+              <label class="row small" id="cmp-wrap" data-tip="tune.cmp" data-quiet hidden><input type="checkbox" id="cmp" checked> overlay the run before</label>
+              <button class="btn small" id="export" data-tip="tune.export" data-quiet hidden>Export</button>
+            </div>
           </div>
           <div id="practice-flag" class="practice-flag" hidden>Practice pod: a model of a MAXSwerve module, not your robot.</div>
-          <div class="plotwrap"><canvas class="plot" id="plot" aria-label="The setpoint and what the mechanism did"></canvas></div>
-          <div class="steps" id="steps"></div>
-          <div id="explain-head" class="row" style="justify-content:space-between" hidden>
-            <h3>What the controller <span class="term" data-learn="error">saw</span> and <span class="term" data-learn="control_effort">did</span></h3>
-            <label class="row small">Explain <select id="xmod"></select></label>
+          <div id="empty-run" class="callout"><b>Start here.</b> No run yet. The practice pod is a model of one MAXSwerve module: nothing moves, so it's the place to learn what each gain does before touching the robot.
+            <div class="row" style="margin-top:8px"><button class="btn primary" id="try-practice">Try the practice pod</button></div></div>
+          <div id="next-step" class="next-step" hidden></div>
+          <div id="run-view" class="stack" hidden>
+            <div class="plotwrap"><canvas class="plot" id="plot" aria-label="The setpoint and what the mechanism did" aria-describedby="story"></canvas></div>
+            <div class="steps" id="steps" role="group" aria-label="Zoom to a step"></div>
+            <div id="explain-head" class="row" style="justify-content:space-between" hidden>
+              <h3>What the controller <span class="term" tabindex="0" data-learn="error">saw</span> and <span class="term" tabindex="0" data-learn="control_effort">did</span></h3>
+              <label class="row small" data-tip="tune.xmod">Module <select id="xmod"></select></label>
+            </div>
+            <div class="plotwrap" id="plot2wrap" hidden><canvas class="plot short" id="plot2" aria-label="The controller's output, split into its parts, in volts"></canvas></div>
+            <p class="hint" id="explain-hint" hidden>Volts, so the parts add up. Hover the graph to read every part at that moment; hover a shaded area or a marker to learn what is happening there.</p>
+            <details id="metrics-wrap" hidden><summary data-tip="tune.metrics" data-quiet>Every step, in numbers</summary><div class="tblwrap" id="metrics"></div></details>
           </div>
-          <div class="plotwrap" id="plot2wrap" hidden><canvas class="plot short" id="plot2" aria-label="The controller's output, split into its parts, in volts"></canvas></div>
-          <p class="hint" id="explain-hint" hidden>Volts, so the parts add up. Hover the graph to read every part at that moment; hover a shaded area or a marker to learn what is happening there.</p>
-          <div class="tblwrap" id="metrics"></div>
         </div>
-        <div class="panel" id="report"><span class="hint">Run a test and the analysis and advice appear here.</span></div>
+        <div class="panel" id="report" hidden></div>
         <div class="panel" id="whatif" hidden>
-          <div class="row" style="justify-content:space-between"><h3><span class="term" data-learn="what_if">What if…</span></h3><span class="small" id="wi-quality"></span></div>
-          <p class="hint">Drag a gain: the dashed line on the top graph becomes the prediction for this same run with the new value. Then run it for real - the robot has the final word.</p>
+          <div class="row" style="justify-content:space-between"><h3 data-tip="tune.whatif"><span class="term" tabindex="0" data-learn="what_if">What if…</span></h3><span class="small" id="wi-quality"></span></div>
+          <p class="hint">Drag a gain: the "what if" line on the top graph becomes the prediction for this same run with the new value. Then run it for real - the robot has the final word.</p>
           <div id="wi-sliders" class="wi-sliders"></div>
           <div id="wi-table" class="tblwrap"></div>
-          <div class="row"><button class="btn" id="wi-use">Put these in the gains box</button><button class="btn" id="wi-reset">Back to the run's gains</button></div>
+          <div class="row"><button class="btn" id="wi-use" data-tip="tune.wi-use">Put these in the gains box</button><button class="btn" id="wi-reset" data-tip="tune.wi-reset">Back to the run's gains</button></div>
         </div>
         <div class="panel" id="story-panel" hidden>
-          <h3 id="story-head">What this run shows</h3>
+          <h3 id="story-head" data-tip="tune.story" data-quiet>What this run shows</h3>
           <ol id="story" class="story small"></ol>
         </div>
       </div>
@@ -150,7 +180,7 @@ const Tune = (() => {
 
   function paintGains() {
     const g = liveGains();
-    $("#gainsrc", root).textContent = target === "practice" ? "practice copy" : (App.connected() ? "running on the robot" : "connect to see the robot's");
+    $("#gainsrc", root).textContent = target === "practice" ? "the practice pod's own copy" : (App.connected() ? "running on the robot" : "connect to see the robot's");
     if (!fields().length) {
       $("#gains", root).innerHTML = `<p class="hint">Nothing to set by hand here: the test measures the drive ${Learn.term("current_limit", "current limit")} and offers to write it to the files.</p>`;
       return;
@@ -158,7 +188,8 @@ const Tune = (() => {
     $("#gains", root).innerHTML = fields().map(([key, label, unit]) => {
       const v = key in edits ? edits[key] : g[key];
       const lk = learnKey(key);
-      return `<label class="gain">${lk ? `<span class="term" data-learn="${lk}">${esc(label)}</span>` : esc(label)}<input type="number" step="any" data-key="${esc(key)}" value="${v == null || !isFinite(v) ? "" : +(+v).toPrecision(6)}" class="${key in edits ? "changed" : ""}"><span class="unit">${esc(unit)}</span></label>`;
+      // A feedforward has a box per module: the same tip four times would bury the screen, so it shows on hover only.
+      return `<label class="gain" data-tip="tune.gain.${gainTip(key)}" ${key.startsWith("FF/") ? "data-quiet" : ""}>${esc(label)}<input type="number" step="any" data-key="${esc(key)}" value="${v == null || !isFinite(v) ? "" : +(+v).toPrecision(6)}" class="${key in edits ? "changed" : ""}"><span class="unit">${esc(unit)}</span></label>`;
     }).join("");
     $$("#gains input", root).forEach(inp => inp.oninput = () => {
       const k = inp.dataset.key;
@@ -187,17 +218,20 @@ const Tune = (() => {
   }
 
   // ---------------------------------------------------------------- run
+  // What stands between the student and a run: a blocker disables Run and says how to clear it;
+  // an instruction is what to do while it runs.
   function needs() {
     const L = LOOPS[loop];
-    if (target === "practice") return L.practice ? "" : "Spin and straight line need a real robot.";
-    if (!App.connected()) return "Connect to a robot or the simulator.";
+    const block = text => ({ block: true, text }), say = text => ({ block: false, text });
+    if (target === "practice") return L.practice ? say("") : block("Spin and Straight line need a whole robot; the practice pod is one module.");
+    if (!App.connected()) return block("Connect to a robot or the simulator first (top of the page), or run it on the practice pod.");
     const env = App.env();
-    if (env === "UNSET") return "Say where the robot is first (Environment, at the top).";
-    if ((loop === "straight") && env === "BLOCKS") return "The straight-line test needs the robot on the floor.";
-    if (loop === "slip" && env === "BLOCKS") return "The slip test needs the robot on carpet with a bumper against a wall: set On the floor.";
-    if (loop === "slip" && env === "FIELD") return "Front bumper flat against a solid wall, every wheel pointing into it. Hold SPACE (or the tester's controller bumper) for the whole run.";
-    if (env === "FIELD") return "On the floor: hold SPACE (or the tester's controller bumper) for the whole run.";
-    return "";
+    if (env === "UNSET") return block("Say where the robot is first: press \"Where: not set\" at the top.");
+    if (loop === "straight" && env === "BLOCKS") return block("The Straight line test needs the robot on the floor.");
+    if (loop === "slip" && env === "BLOCKS") return block("The Slip current test needs the robot on carpet with a bumper against a wall: set On the floor.");
+    if (loop === "slip" && env === "FIELD") return say("Front bumper flat against a solid wall, every wheel pointing into it. Hold the tester's controller right bumper (or SPACE here) for the whole run.");
+    if (env === "FIELD") return say("On the floor: hold the tester's controller right bumper (or SPACE here) for the whole run.");
+    return say("");
   }
 
   async function run() {
@@ -227,18 +261,26 @@ const Tune = (() => {
     return Object.keys(ch).filter(k => /^m\d+\./.test(k) && k.endsWith("." + suffix)).map(k => +k.slice(1, k.indexOf("."))).sort();
   }
 
+  // The run before is drawn in full color but dotted, labeled once: faint lines were 1.7:1 and unnamed.
   function seriesFor(doc, faded) {
     const ch = doc.channels || {}, t = ch.t || [], names = (doc.robot && doc.robot.modules) || [];
-    const a = faded ? 0.35 : 1, out = [];
-    const label = i => faded ? null : abbr(names[i] || "m" + i);
+    const a = faded && !["steer_step", "drive_step"].includes(doc.test) ? 0.35 : 1, out = [];
+    let first = true;
+    const label = i => {
+      if (!faded) return abbr(names[i] || "m" + i);
+      const l = first ? "before" : null;
+      first = false;
+      return l;
+    };
+    const style = (o, i) => faded ? Object.assign(o, { dash: [1, 3], width: 1.4 }) : Object.assign(o, { learn: "measurement" });
     if (doc.test === "steer_step") {
-      for (const i of modIdx(ch, "sp")) {
-        out.push({ x: t, y: ch[`m${i}.sp`], color: COLORS[i % 4], dash: [5, 4], width: 1.2, alpha: a });
-        out.push({ x: t, y: ch[`m${i}.steer`], color: COLORS[i % 4], alpha: a, label: label(i) });
-      }
+      const sp = modIdx(ch, "sp");
+      // Every module is told the same angles, so one "told" line says it for all of them.
+      if (!faded && sp.length) out.push({ x: t, y: ch[`m${sp[0]}.sp`], color: "--sp", dash: [5, 4], width: 1.4, label: "told", learn: "setpoint" });
+      for (const i of sp) out.push(style({ x: t, y: ch[`m${i}.steer`], color: COLORS[i % 4], alpha: a, label: label(i) }, i));
     } else if (doc.test === "drive_step") {
-      out.push({ x: t, y: ch.sp, color: "--sp", dash: [5, 4], width: 1.4, alpha: a, label: faded ? null : "told" });
-      for (const i of modIdx(ch, "v")) out.push({ x: t, y: ch[`m${i}.v`], color: COLORS[i % 4], alpha: a, label: label(i) });
+      if (!faded) out.push({ x: t, y: ch.sp, color: "--sp", dash: [5, 4], width: 1.4, label: "told", learn: "setpoint" });
+      for (const i of modIdx(ch, "v")) out.push(style({ x: t, y: ch[`m${i}.v`], color: COLORS[i % 4], alpha: a, label: label(i) }, i));
     } else if (doc.test === "drive_ff") {
       for (const i of modIdx(ch, "volts")) out.push({ x: ch[`m${i}.v`], y: ch[`m${i}.volts`], color: COLORS[i % 4], points: true, alpha: a, label: label(i) });
     } else if (doc.test === "spin") {
@@ -296,9 +338,10 @@ const Tune = (() => {
     const ex = explained();
     const p = whatIf.pred;
     if (ex && p && p.ok && whatIf.file === current._file && whatIf.index === ex.index) {
-      s.push({ x: p.t, y: p.predicted, color: "--accent", dash: [2, 3], width: 2.2, label: "what if" });
+      s.push({ x: p.t, y: p.predicted, color: "--accent", dash: [8, 3, 2, 3], width: 2.4, label: "what if", learn: "what_if" });
     }
     const [xl, yl] = axes(current);
+    $("#cmp-wrap", root).hidden = !(compare && compare.test === current.test);
     Plot.draw($("#plot", root), { series: s, xrange: zoom, xlabel: xl, ylabel: yl,
       annotations: ex ? notes(ex.response) : ((current.report || {}).annotations || []), readout: ex ? x => readout(ex, x) : null });
     $("#explain-head", root).hidden = !ex;
@@ -307,14 +350,14 @@ const Tune = (() => {
     if (!ex) return;
     const t = ex.t, neg = ex.battery.map(b => -b);
     const c = [
-      { x: t, y: ex.battery, color: "--bad", dash: [6, 4], width: 1, label: "battery" },
+      { x: t, y: ex.battery, color: "--bad", dash: [6, 4], width: 1, label: "battery", learn: "voltage_sag" },
       { x: t, y: neg, color: "--bad", dash: [6, 4], width: 1 },
-      ...(ex.loop === "drive" ? [{ x: t, y: ex.ff, color: "--sp", width: 1.6, label: "FF" }] : []),
-      { x: t, y: ex.p, color: "--s0", width: 1.4, label: "P" },
-      ...(ex.gains.kI ? [{ x: t, y: ex.i, color: "--s3", width: 1.4, label: "I" }] : []),
-      ...(ex.gains.kD ? [{ x: t, y: ex.d, color: "--s2", width: 1.4, label: "D" }] : []),
-      { x: t, y: ex.asked, color: "--ink", dash: [4, 3], width: 1.2, label: "asked" },
-      { x: t, y: ex.applied, color: "--ink", width: 1.8, label: "applied" },
+      ...(ex.loop === "drive" ? [{ x: t, y: ex.ff, color: "--sp", width: 1.6, label: "FF", learn: "feedforward" }] : []),
+      { x: t, y: ex.p, color: "--s0", width: 1.4, label: "P", learn: "kP" },
+      ...(ex.gains.kI ? [{ x: t, y: ex.i, color: "--s3", width: 1.4, label: "I", learn: "kI" }] : []),
+      ...(ex.gains.kD ? [{ x: t, y: ex.d, color: "--s2", width: 1.4, label: "D", learn: "kD" }] : []),
+      { x: t, y: ex.asked, color: "--ink", dash: [4, 3], width: 1.2, label: "asked", learn: "control_effort" },
+      { x: t, y: ex.applied, color: "--ink", width: 1.8, label: "applied", learn: "saturation" },
     ];
     const lim = Math.max(...ex.battery.filter(isFinite), 12) * 1.15;
     Plot.draw($("#plot2", root), { series: c, xrange: zoom, xlabel: "s", ylabel: "volts", yrange: [-lim, lim],
@@ -326,7 +369,7 @@ const Tune = (() => {
     const ex = explained();
     $("#story-panel", root).hidden = !ex || !ex.story.length;
     if (!ex) return;
-    const chip = n => `<span class="chip learn-chip" data-learn="${esc(n.learn)}">${esc((Learn.L[n.learn] || {}).title || n.learn)}</span>`;
+    const chip = n => `<button class="chip learn-chip" data-lesson="${esc(n.learn)}" data-learn="${esc(n.learn)}">${esc((Learn.L[n.learn] || {}).title || n.learn)}</button>`;
     let items;
     if (stepSel != null) {
       // One step, in time order: what happened, moment by moment.
@@ -343,8 +386,8 @@ const Tune = (() => {
       }
       const order = ["dead_time", "kP", "rise_time", "saturation", "current_limit", "ramp_rate", "kD", "overshoot", "oscillation", "settling_time", "steady_state_error", "feedforward"];
       items = Object.values(by).sort((a, b) => order.indexOf(a.n.learn) - order.indexOf(b.n.learn)).map(b =>
-        `<li>${chip(b.n)} <span class="muted small">in ${b.steps.size} of ${steps} steps · biggest:</span>
-          <button class="btn small" data-step="${b.n.step}">step ${b.n.step}</button> ${Learn.link(b.n.text, 3)}</li>`);
+        `<li>${chip(b.n)} <span class="muted small">in ${b.steps.size} of ${steps} steps.</span> ${Learn.link(b.n.text, 3)}
+          <button class="btn small" data-step="${b.n.step}">Zoom to step ${b.n.step}</button></li>`);
       $("#story-head", root).textContent = "What this run shows";
     }
     $("#story", root).innerHTML = items.join("") + (stepSel == null ? `<li class="muted" style="list-style:none">Pick a step above the graphs to read it moment by moment.</li>` : "");
@@ -366,7 +409,7 @@ const Tune = (() => {
       const max = Math.max(top, base * 4);
       return `<label class="wi"><span class="term" data-learn="${lk}">${esc(lk === "iZone" ? "IZone" : lk)}</span>
         <input type="range" min="0" max="${max}" step="${max / 400}" value="${val}" data-key="${esc(key)}" aria-label="${esc(lk)}">
-        <span class="mono" data-v="${esc(key)}">${+(+val).toPrecision(3)}</span><span class="muted small">ran ${+(+base).toPrecision(3)}</span></label>`;
+        <span class="mono" data-v="${esc(key)}">${+(+val).toPrecision(3)}</span><span class="muted small">this run: ${+(+base).toPrecision(3)}</span></label>`;
     }).join("");
     $$("#wi-sliders input", root).forEach(inp => inp.oninput = () => {
       whatIf.values[inp.dataset.key] = +inp.value;
@@ -422,15 +465,15 @@ const Tune = (() => {
     const sp = current.test === "steer_step" ? ch[`m${modIdx(ch, "sp")[0]}.sp`] : ch.sp;
     const t = ch.t || [];
     if (!sp) { box.innerHTML = ""; return; }
-    const segs = [];
+    const segs = [], unit = current.test === "steer_step" ? "°" : " m/s";
     let start = 0;
     for (let i = 1; i <= sp.length; i++) {
       if (i === sp.length || Math.abs(sp[i] - sp[i - 1]) > 1e-6) { segs.push([start, i - 1]); start = i; }
     }
-    box.innerHTML = `<button class="btn small ${stepSel == null ? "on" : ""}" data-z="all">Whole run</button>` +
+    box.innerHTML = `<button class="btn small ${stepSel == null ? "on" : ""}" data-z="all" data-tip="tune.steps">Whole run</button>` +
       segs.slice(1).map(([a, b], k) => {
         const d = sp[a] - sp[a - 1];
-        return `<button class="btn small ${stepSel === k + 1 ? "on" : ""}" data-k="${k + 1}" data-a="${t[a]}" data-b="${t[b]}">Step ${k + 1}: ${d > 0 ? "+" : ""}${+d.toFixed(2)}</button>`;
+        return `<button class="btn small ${stepSel === k + 1 ? "on" : ""}" data-k="${k + 1}" data-a="${t[a]}" data-b="${t[b]}" data-tip="tune.steps" data-quiet>Step ${k + 1}: ${d > 0 ? "+" : ""}${+d.toFixed(2)}${unit}</button>`;
       }).join("");
     $$("button", box).forEach(b => b.onclick = () => selectStep(b.dataset.z ? null : +b.dataset.k));
   }
@@ -460,18 +503,20 @@ const Tune = (() => {
         rows.push(`<tr><td>${abbr(name)}</td><td colspan="8" class="mono">kS ${fmt(m.kS, 3)} V · kV ${fmt(m.kV, 3)} V/(m/s) · kA ${fmt(m.kA, 3)} V/(m/s²) · R² ${fmt(m.r2, 4)} · ${m.samples || 0} samples ${m.ok === false ? "· " + esc(m.reason) : ""}</td></tr>`);
       }
     }
-    const th = (label, lk) => `<th><span class="term" data-learn="${lk}">${label}</span></th>`;
-    $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th>Step</th>${th("Delay ms", "dead_time")}
-      ${th("Rise ms", "rise_time")}${th("Overshoot %", "overshoot")}${th("Settle ms", "settling_time")}${th("Left over", "steady_state_error")}${th("Swings", "oscillation")}${th("Flat out %", "saturation")}</tr></thead>
+    const th = (label, lk) => `<th class="num"><span class="term" tabindex="0" data-learn="${lk}">${label}</span></th>`;
+    const u = current && current.test === "steer_step" ? "°" : "m/s";
+    $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th class="num">Step (${u})</th>${th("Delay ms", "dead_time")}
+      ${th("Rise ms", "rise_time")}${th("Overshoot %", "overshoot")}${th("Settle ms", "settling_time")}${th(`Left over (${u})`, "steady_state_error")}${th("Swings", "oscillation")}${th("Flat out %", "saturation")}</tr></thead>
       <tbody>${rows.join("")}</tbody></table>` : "";
+    $("#metrics-wrap", root).hidden = !rows.length;
   }
 
   function describeAction(a) {
     if (a.type === "gains") {
       const g = liveGains();
-      return Object.entries(a.values).map(([k, v]) => `${k.replace(/^.*?\//, "").replace("FF/", "")} ${fmt(g[k], 4)} → ${+(+v).toPrecision(4)}`).join(", ");
+      return Object.entries(a.values).map(([k, v]) => `${gainName(k)} ${num(g[k])} → ${num(v)}`).join(", ");
     }
-    if (a.type === "run") return `run ${a.test}${a.env ? " (" + a.env.toLowerCase() + ")" : ""}`;
+    if (a.type === "run") return `run ${testName(a.test)}${a.env && a.env !== "ANY" ? " (" + whereWord(a.env).toLowerCase() + ")" : ""}`;
     if (a.type === "config") return `edit ${a.file}: ${a.path.join(".")} = ${a.value}`;
     if (a.type === "troubleshoot") return "open the troubleshooter";
     if (a.type === "save") return "save gains to the files";
@@ -502,27 +547,47 @@ const Tune = (() => {
     }
   }
 
+  // What changed since the run before: the gains that differ and the goals that moved.
+  function whatChanged() {
+    if (!compare || compare.test !== current.test) return "";
+    const a = compare.gains || {}, b = current.gains || {};
+    const g = gainDiff(current.test, a, b).map(k => `${gainName(k)} ${num(a[k] || 0)} → ${num(b[k] || 0)}`);
+    const was = Object.fromEntries(((compare.report || {}).targets || []).map(t => [t.name, t.value]));
+    const t = ((current.report || {}).targets || []).filter(x => x.name in was && num(was[x.name]) !== num(x.value))
+      .map(x => `${x.name} ${num(was[x.name])} → ${num(x.value)}`);
+    return `<p class="small"><b>Since the run before:</b> ${g.length ? esc(g.join(", ")) : "no gain changed"}${t.length ? " · " + esc(t.join(" · ")) : " · no goal moved"}.</p>`;
+  }
+
   function paintReport() {
     const rep = current && current.report;
-    const box = $("#report", root);
-    if (!rep) { box.innerHTML = `<span class="hint">No analysis for this run.</span>`; return; }
-    const targets = (rep.targets || []).map(t => `<div class="target"><span>${t.met ? "✓" : "✗"}</span>
-      <span>${esc(t.name)}</span><span class="v">${typeof t.value === "number" ? fmt(t.value, 3) : esc(t.value)} / ${esc(t.target)}</span></div>`).join("");
+    const box = $("#report", root), card = $("#next-step", root);
+    box.hidden = false;
+    if (!rep) { box.innerHTML = `<span class="hint">No analysis for this run.</span>`; card.hidden = true; return; }
+    const T = rep.targets || [];
+    const goal = t => `${t.lower_is_better === false ? "at least" : "under"} ${num(t.target)}`;
+    const targets = T.map(t => `<div class="target ${t.met ? "met" : "miss"}"><span aria-hidden="true">${t.met ? "✓" : "✗"}</span>
+      <span><span class="sr">${t.met ? "met:" : "missed:"}</span> ${esc(t.name)}</span><span class="v">${typeof t.value === "number" ? num(t.value) : t.value == null ? (t.lower_is_better === false ? "–" : "never") : esc(t.value)}, goal ${goal(t)}</span></div>`).join("");
     // rep.next is a copy of one finding after JSON parsing, so find it by content, not identity.
     const nextIdx = rep.next ? (rep.findings || []).findIndex(f => f.title === rep.next.title
       && JSON.stringify(f.action || null) === JSON.stringify(rep.next.action || null)) : -1;
-    const findings = (rep.findings || []).map((f, i) => `<div class="finding">
-      <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
+    const next = nextIdx >= 0 ? rep.findings[nextIdx] : null;
+    const where = target === "practice" ? ", then runs again on the practice pod" : next && next.action.type === "gains" ? ", live on the robot" : "";
+    card.innerHTML = `<p><b>${esc(rep.summary || "")}</b></p>
+      ${T.length ? `<p class="small">${T.filter(t => t.met).length} of ${T.length} goals met.</p>` : ""}
+      ${next && next.action.type !== "stop" ? `<div class="row"><button class="btn primary" data-i="${nextIdx}" data-tip="tune.next" data-quiet>Try this</button>
+        <span><b>${esc(next.title)}</b> <span class="small muted">${esc(describeAction(next.action))}${where}</span></span></div>` : ""}
+      ${whatChanged()}`;
+    card.hidden = false;
+    // The banner already says "practice pod", so its finding would only repeat it.
+    const findings = (rep.findings || []).map((f, i) => f.kind === "practice" ? "" : `<div class="finding">
+      <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span>${i === nextIdx ? `<span class="small muted">· the next step, above</span>` : ""}</div>
       <div class="why">${Learn.link(f.why, 3)}</div>
-      ${f.action ? `<div class="row"><button class="btn small ${i === nextIdx ? "primary" : ""}" data-i="${i}">${i === nextIdx ? "Try this" : "Do this"}</button>
+      ${f.action && i !== nextIdx && f.action.type !== "stop" ? `<div class="row"><button class="btn small" data-i="${i}" data-tip="tune.do" data-quiet>Do this</button>
         <span class="small muted">${esc(describeAction(f.action))}</span></div>` : ""}</div>`).join("");
     box.innerHTML = `<div class="stack">
-      <p><b>${esc(rep.summary || "")}</b></p>
-      ${rep.score != null ? `<div class="score"><span class="mono">${rep.score}/100</span><div class="meter"><div style="width:${rep.score}%"></div></div>
-        <span class="small muted">cost ${fmt(rep.cost, 2)} (lower is tighter)</span></div>` : ""}
-      ${targets ? `<div class="targets">${targets}</div>` : ""}
+      ${targets ? `<div><h3>Goals</h3><div class="targets">${targets}</div></div>` : ""}
       <div>${findings}</div></div>`;
-    $$("[data-i]", box).forEach(b => b.onclick = () => doAction(rep.findings[+b.dataset.i].action));
+    $$("[data-i]", box).concat($$("[data-i]", card)).forEach(b => b.onclick = () => doAction(rep.findings[+b.dataset.i].action));
   }
 
   function show(doc) {
@@ -532,33 +597,50 @@ const Tune = (() => {
     stepSel = null;
     xmod = 0;
     whatIf = { values: {}, pred: null, seq: whatIf.seq };
-    $("#res-title", root).textContent = `${doc.test} · ${doc.env || ""} · ${doc.outcome || ""}${doc._file ? " · " + doc._file : ""}`;
+    const where = doc.practice ? "practice pod" : whereWord(doc.env || "").toLowerCase();
+    $("#res-title", root).textContent = [testName(doc.test), where, clock(doc.saved || (doc._file || "").slice(0, 15))]
+      .filter(Boolean).join(" · ") + (doc.outcome && doc.outcome !== "DONE" ? ` · ${doc.outcome.toLowerCase()}` : "");
+    $("#res-file", root).textContent = doc._file || "";
+    $("#export", root).hidden = !doc._file || !!doc.practice;
+    $("#cmp-wrap", root).hidden = !(compare && compare.test === doc.test);
+    $("#empty-run", root).hidden = true;
+    $("#run-view", root).hidden = false;
     $("#practice-flag", root).hidden = !doc.practice;
     paintExplain();
     redraw();
     paintSteps();
     paintMetrics();
     paintReport();
+    $$("#history tr", root).forEach(tr => tr.toggleAttribute("aria-current", tr.dataset.f === doc._file));
   }
 
   async function loadHistory() {
     const r = await App.api("/api/runs");
     const test = LOOPS[loop].test;
     const list = (r.runs || []).filter(x => x.test === test).slice(0, 12);
-    $("#history", root).innerHTML = list.length ? `<table class="t"><tbody>${list.map(x => `<tr data-f="${esc(x.file)}" style="cursor:pointer">
-      <td class="mono">${esc((x.saved || "").slice(9, 15).replace(/(..)(..)(..)/, "$1:$2:$3"))}</td><td>${x.practice ? "practice" : esc(x.env || "")}</td>
-      <td class="num">${x.score == null ? "–" : x.score}</td><td class="num">${fmt(x.cost, 2)}</td></tr>`).join("")}</tbody></table>`
+    // What each run changed from the one before it (the list is newest first).
+    const changed = (x, prev) => {
+      if (!prev) return "";
+      const a = prev.gains || {}, b = x.gains || {};
+      const d = gainDiff(x.test, a, b);
+      return d.length ? d.slice(0, 2).map(k => `${gainName(k)} → ${num(b[k] || 0)}`).join(", ") + (d.length > 2 ? ` +${d.length - 2}` : "") : "same gains";
+    };
+    $("#history", root).innerHTML = list.length ? `<table class="t"><caption class="sr">Earlier runs of this test</caption>
+      <thead><tr><th>When</th><th>Where</th><th class="num">Score</th><th>Changed</th></tr></thead><tbody>${list.map((x, i) => `<tr data-f="${esc(x.file)}">
+      <td class="nowrap"><button class="linkbtn" data-open="${esc(x.file)}">${esc(clock(x.saved))}</button></td><td>${x.practice ? "practice" : esc(whereWord(x.env || "").toLowerCase())}</td>
+      <td class="num">${x.score == null || (x.outcome && x.outcome !== "DONE") ? "–" : x.score}</td><td class="small">${esc(changed(x, list[i + 1]))}</td></tr>`).join("")}</tbody></table>`
       : `<span class="hint">None yet for this test.</span>`;
-    $$("#history tr", root).forEach(tr => tr.onclick = async () => {
-      const d = await App.api("/api/runs/" + encodeURIComponent(tr.dataset.f));
-      d._file = tr.dataset.f;
+    $$("#history [data-open]", root).forEach(b => b.onclick = async () => {
+      const d = await App.api("/api/runs/" + encodeURIComponent(b.dataset.open));
+      d._file = b.dataset.open;
       show(d);
     });
+    if (current) $$("#history tr", root).forEach(tr => tr.toggleAttribute("aria-current", tr.dataset.f === current._file));
   }
 
   async function saveGains() {
     if (target === "practice") { App.toast("Practice gains are not the robot's. Try them on the robot, then save."); return; }
-    if (loop === "slip") { App.toast("Use 'Do this' on the recommended limit to write it to the files."); return; }
+    if (loop === "slip") { App.toast("Use Try this on the recommended limit to write it to the files."); return; }
     const prefix = { steer: ["Steer"], drive: ["Drive"], ff: ["FF"], spin: ["Chassis", "EncoderSync"], straight: ["Chassis", "EncoderSync"] }[loop];
     await App.previewAndSave({ kind: "gains", keys: prefix }, "Save the gains the robot is running");
   }
@@ -583,7 +665,8 @@ const Tune = (() => {
     $$("#surfseg button", root).forEach(b => b.classList.toggle("on", b.dataset.s === surface));
     $("#surfacerow", root).hidden = target !== "practice";
     const why = needs();
-    $("#needs", root).textContent = why;
+    $("#needs", root).innerHTML = why.text ? `<div class="callout ${why.block ? "warn" : ""}">${esc(why.text)}</div>` : "";
+    $("#run", root).disabled = why.block;
     $("#run", root).textContent = target === "practice" ? "Run on the practice pod" : "Run on the robot";
     $("#apply", root).textContent = target === "practice" ? "Use these" : "Apply live";
     paintGains();
@@ -595,6 +678,12 @@ const Tune = (() => {
   $("#module", root).onchange = e => { module = e.target.value; };
   $("#pattern", root).onchange = e => { pattern = +e.target.value; };
   $("#run", root).onclick = run;
+  $("#try-practice", root).onclick = () => { target = "practice"; edits = {}; sync(); run(); };
+  $("#export", root).onclick = async () => {
+    if (!current || !current._file) return;
+    const r = await App.api("/api/export", { file: current._file });
+    App.toast(r.ok ? `Wrote ${r.path}. Open it in AdvantageScope${r.sysid ? " or SysId" : ""}.` : (r.error || "Export failed."), 8000);
+  };
   $("#apply", root).onclick = () => applyEdits();
   $("#revert", root).onclick = () => { edits = {}; paintGains(); };
   $("#save", root).onclick = saveGains;
@@ -614,6 +703,8 @@ const Tune = (() => {
   App.on("tab", t => { if (t === "tune") { sync(); redraw(); } });
   App.on("run", doc => { if (root.classList.contains("on")) return; if (Object.values(LOOPS).some(v => v.test === doc.test)) show(doc); });
 
+  // On a phone the earlier-runs list starts closed, so the result isn't pushed below it.
+  if (window.matchMedia && matchMedia("(max-width: 900px)").matches) $("#history-panel", root).open = false;
   setLoop("steer");
   return {
     open(l, opts = {}) {

@@ -126,7 +126,7 @@ def _worse(cur, value):
 
 def _grade(name, value, target, lower_is_better=True):
     met = A.finite(value) and (value <= target if lower_is_better else value >= target)
-    return {"name": name, "value": value, "target": target, "met": bool(met)}
+    return {"name": name, "value": value, "target": target, "met": bool(met), "lower_is_better": lower_is_better}
 
 
 def _finish(report):
@@ -138,10 +138,12 @@ def _finish(report):
 
 def _practice_note(result, report):
     if result.get("practice"):
-        report["findings"].insert(0, finding(
+        note = finding(
             "info", "Practice pod, not the robot",
             "These numbers come from a physics model of a MAXSwerve module. Use it to learn what "
-            "each gain does. Keep only gains measured on the robot."))
+            "each gain does. Keep only gains measured on the robot.")
+        note["kind"] = "practice"  # the GUI already says this in a banner, so it can skip this one
+        report["findings"].insert(0, note)
 
 
 # ============================================================================ steering
