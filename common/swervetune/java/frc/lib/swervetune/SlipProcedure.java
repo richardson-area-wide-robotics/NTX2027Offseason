@@ -217,7 +217,7 @@ final class SlipProcedure implements Procedure {
       ctx.note("Could not put the drive current limit back to " + Math.round(restoreA) + " A ("
           + r.message() + "). Restart the robot code before driving.");
     }
-    io.applyFastTelemetry(false);
+    // SwerveTune.finish puts the status frames back, and says if it couldn't.
     for (int m = 0; m < (slipA == null ? 0 : slipA.length); m++) {
       ctx.meta("slip_a_m" + m, slipA[m]);
       ctx.meta("peak_a_m" + m, peakA[m]);

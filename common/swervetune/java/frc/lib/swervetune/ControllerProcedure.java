@@ -66,7 +66,9 @@ final class ControllerProcedure implements Procedure {
 
   @Override
   public double sampleRateHz(TestContext ctx) {
-    return 50;
+    // Four samples per Driver Station packet: sampling at the packet rate (50 Hz), out of step with
+    // it, missed 2-8% of presses that lasted one packet.
+    return 200;
   }
 
   @Override

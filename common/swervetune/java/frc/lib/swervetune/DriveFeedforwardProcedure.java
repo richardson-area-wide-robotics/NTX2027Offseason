@@ -222,7 +222,7 @@ final class DriveFeedforwardProcedure implements Procedure {
   public void end(TestContext ctx, boolean aborted) {
     state.set(1, 0);
     ctx.io.stop();
-    ctx.io.applyFastTelemetry(false);
+    // SwerveTune.finish puts the status frames back, and says if it couldn't.
     ctx.meta("cut_short", cutShort ? 1 : 0);
   }
 

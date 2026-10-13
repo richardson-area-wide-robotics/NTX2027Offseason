@@ -549,7 +549,18 @@ public final class MotorGuard {
       held = true;
     }
 
+    // A module whose steering motor is cut off can't aim: its wheel would push wherever it last
+    // pointed. Its drive motor goes to half power until the steering motor is back.
+    Motor steer = m.name.endsWith(" drive") ? motors.get(m.name.substring(0, m.name.length() - 6) + " steer") : null;
+    boolean steerCut = steer != null && steer.stage == Stage.SHUTOFF;
+    if (steerCut && target.ordinal() < Stage.DERATE.ordinal()) {
+      target = Stage.DERATE;
+    }
+
     String cause = describe(m, target, sensor, model, temp, heat);
+    if (steerCut) {
+      cause = (cause.isEmpty() ? "" : cause + "; ") + "its steering motor is cut off, so the module can't aim";
+    }
     if (held) {
       cause += String.format(" - override holding it on for %.0f s more", m.overrideUntilS - nowS);
     }

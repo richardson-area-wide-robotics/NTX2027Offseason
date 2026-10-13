@@ -162,7 +162,7 @@ final class SteerStepProcedure implements Procedure {
     for (int m = 0; m < ctx.io.moduleCount(); m++) {
       ctx.io.setDriveVolts(m, 0);
     }
-    ctx.io.applyFastTelemetry(false);
+    // SwerveTune.finish puts the status frames back, and says if it couldn't.
   }
 
   @Override

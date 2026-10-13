@@ -123,6 +123,11 @@ class SwerveTuneHarnessTest {
       released++;
       held = false;
     }
+
+    @Override
+    public boolean isHeld() {
+      return held;
+    }
   }
 
   @BeforeEach
@@ -190,6 +195,19 @@ class SwerveTuneHarnessTest {
 
   private double[] data(String channel) {
     return nt.getDoubleArrayTopic(SwerveTuneTopics.RESULT_DATA + channel).subscribe(new double[0]).get();
+  }
+
+  @Test
+  void aCommandTakingTheDrivetrainMidTestStopsIt() {
+    envMode.set("BLOCKS");
+    loop(2);
+    send("steer_step", "FL", "hold_s", "0.3", "settle_s", "0.2");
+    loop(10);
+    assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
+    owner.held = false; // a button bound to the drive subsystem took it
+    loop(2);
+    assertEquals(SwerveTune.State.ABORTED, tune.state());
+    assertTrue(tune.message().contains("Another command took the drivetrain"), tune.message());
   }
 
   @Test

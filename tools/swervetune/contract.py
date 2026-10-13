@@ -115,6 +115,7 @@ MOTORS_OVERRIDE_S = MOTORS + "OverrideS"
 MOTORS_CAUSE = MOTORS + "Cause"
 MOTORS_FLAGS = MOTORS + "Flags"
 MOTORS_HISTORY = MOTORS + "History"
+MOTORS_RPM = MOTORS + "Rpm"
 MOTORS_EVENTS = MOTORS + "Events"
 MOTORS_REPORT = MOTORS + "Report"
 MOTORS_GUARD_ON = MOTORS + "GuardOn"
@@ -202,6 +203,7 @@ MOTOR_STRINGS = {
 }
 MOTOR_NUMBERS = {
     "heat_pct": MOTORS_HEAT_PCT,
+    "rpm": MOTORS_RPM,
     "temp": MOTORS_TEMP_C,
     "amps": MOTORS_AMPS,
     "limit": MOTORS_LIMIT_A,
@@ -229,7 +231,7 @@ MOTOR_KINDS = {
 # Why the robot refused or stopped a test, as a short code an agent can act on. The robot sends
 # sentences for people; these match them, most specific first. OTHER means read the message.
 STOP_CODES = [
-    ("FMS", "FMS_ATTACHED"), ("autonomous", "AUTONOMOUS"), ("Say where the robot is", "ENV_UNSET"),
+    ("took the drivetrain", "DRIVETRAIN_TAKEN"), ("FMS", "FMS_ATTACHED"), ("autonomous", "AUTONOMOUS"), ("Say where the robot is", "ENV_UNSET"),
     ("environment changed", "ENV_CHANGED"), ("heartbeat", "NO_HEARTBEAT"), ("gyro", "GYRO"),
     ("clear floor", "NO_SPACE"), ("eadman", "DEADMAN"), ("stick", "DRIVER_INPUT"),
     ("NOT on blocks", "NOT_ON_BLOCKS"), ("Impact", "IMPACT"), ("Left the declared space", "GEOFENCE"),

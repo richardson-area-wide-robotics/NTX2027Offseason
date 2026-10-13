@@ -198,8 +198,9 @@ public final class SwerveTune {
   private VisionSource visionSource;
   private long visionFed;
   private final VisionGate visionGate = new VisionGate();
-  private double[] lastVisionPose;
-  private double lastVisionTimeS = Double.NEGATIVE_INFINITY;
+  // Read by the sampler thread (the straight-line test's vision channels).
+  private volatile double[] lastVisionPose;
+  private volatile double lastVisionTimeS = Double.NEGATIVE_INFINITY;
   private final DoubleArrayPublisher liveVisionCounts;
   private final StringPublisher liveVisionReject;
 
@@ -488,6 +489,7 @@ public final class SwerveTune {
     String[] causes = new String[n];
     String[] flags = new String[n];
     String[] history = new String[n];
+    double[] rpm = new double[n];
     double[] heat = new double[n];
     double[] temp = new double[n];
     double[] amps = new double[n];
@@ -513,6 +515,7 @@ public final class SwerveTune {
       causes[i] = m.cause();
       flags[i] = m.flags();
       history[i] = m.history();
+      rpm[i] = m.rpm();
       heat[i] = 100 * m.heatFraction();
       temp[i] = m.tempC();
       amps[i] = m.amps();
@@ -565,6 +568,7 @@ public final class SwerveTune {
     liveStrings(SwerveTuneTopics.MOTORS_CAUSE).set(causes);
     liveStrings(SwerveTuneTopics.MOTORS_FLAGS).set(flags);
     liveStrings(SwerveTuneTopics.MOTORS_HISTORY).set(history);
+    liveArray(SwerveTuneTopics.MOTORS_RPM).set(rpm);
     liveArray(SwerveTuneTopics.MOTORS_HEAT_PCT).set(heat);
     liveArray(SwerveTuneTopics.MOTORS_TEMP_C).set(temp);
     liveArray(SwerveTuneTopics.MOTORS_AMPS).set(amps);
@@ -1072,6 +1076,11 @@ public final class SwerveTune {
       finish(State.ABORTED, String.format("Ran past its %.0f s time limit.", timeoutS));
       return;
     }
+    if (proc.spinsWheels() && !ownership.isHeld()) {
+      finish(State.ABORTED, "Another command took the drivetrain during the test, so nothing it"
+          + " measured from there is the test's. Keep drive buttons alone while a test runs.");
+      return;
+    }
     boolean done = proc.execute(ctx, t);
     progress = proc.progress(ctx, t);
     String live = proc.liveMessage(ctx, t);
@@ -1134,6 +1143,29 @@ public final class SwerveTune {
     message = "Running.";
   }
 
+  /**
+   * Puts every swerve SPARK's status frames back to YAGSL's periods after a wheel test sped them up.
+   * Left fast, they keep the CAN bus about 60% busier until the robot restarts, so a refusal is
+   * tried once more and then reported.
+   */
+  private void restoreStatusFrames() {
+    DrivetrainIO.ApplyResult r;
+    try {
+      r = io.applyFastTelemetry(false);
+      if (!r.ok()) {
+        r = io.applyFastTelemetry(false);
+      }
+    } catch (RuntimeException e) {
+      r = DrivetrainIO.ApplyResult.failed(e.toString());
+    }
+    if (!r.ok()) {
+      String why = "Couldn't put the status frames back to normal (" + r.message() + "): the CAN bus"
+          + " stays busier until the robot restarts.";
+      ctx.note(why);
+      DriverStation.reportWarning("[swervetune] " + why, false);
+    }
+  }
+
   private void finish(State outcome, String reason) {
     boolean started = state == State.RUNNING;
     try {
@@ -1149,6 +1181,7 @@ public final class SwerveTune {
       } catch (RuntimeException e) {
         DriverStation.reportError("[swervetune] could not stop motors: " + e, false);
       }
+      restoreStatusFrames();
     }
     if (notifier != null) {
       notifier.stop();

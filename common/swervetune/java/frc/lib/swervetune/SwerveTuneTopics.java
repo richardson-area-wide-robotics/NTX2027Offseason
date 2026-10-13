@@ -180,6 +180,8 @@ public final class SwerveTuneTopics {
   public static final String MOTORS_FLAGS = MOTORS + "Flags";
   /** Faults latched earlier and no longer active ("faults since last cleared: ..."). Empty when none. */
   public static final String MOTORS_HISTORY = MOTORS + "History";
+  /** Each motor's speed now, rpm. */
+  public static final String MOTORS_RPM = MOTORS + "Rpm";
   /** Stage changes, newest last. */
   public static final String MOTORS_EVENTS = MOTORS + "Events";
   /** What registration found: limits over policy, unknown motor types. */

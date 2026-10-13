@@ -263,6 +263,24 @@ class MotorGuardTest {
   }
 
   @Test
+  void aModuleWhoseSteeringIsCutDrivesAtHalfPower() {
+    FakeMotorChannel drive = new FakeMotorChannel(60);
+    FakeMotorChannel steer = new FakeMotorChannel(20);
+    steer.ignoresLimit = true;
+    steer.demandA = 40;
+    Motor d = add("frontleft drive", drive, MotorKind.VORTEX, false);
+    Motor s = add("frontleft steer", steer, MotorKind.NEO_550, false);
+    assertTrue(timeTo(s, Stage.SHUTOFF, 60) < 60);
+    run(0.1);
+    assertEquals(Stage.DERATE, d.stage());
+    assertTrue(d.cause().contains("steering motor is cut off"), d.cause());
+    steer.demandA = 0;
+    assertTrue(timeTo(s, Stage.OK, 600) < 600);
+    run(0.1);
+    assertEquals(Stage.OK, d.stage(), "back to full power once the steering motor is");
+  }
+
+  @Test
   void heatCutsAreCountedSoTheyOutliveTheCooling() {
     FakeMotorChannel c = new FakeMotorChannel(20);
     c.ignoresLimit = true;

@@ -174,7 +174,7 @@ final class DriveStepProcedure implements Procedure {
   public void end(TestContext ctx, boolean aborted) {
     commanded.set(0, 0);
     ctx.io.stop();
-    ctx.io.applyFastTelemetry(false);
+    // SwerveTune.finish puts the status frames back, and says if it couldn't.
   }
 
   @Override

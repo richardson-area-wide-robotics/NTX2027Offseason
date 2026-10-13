@@ -21,6 +21,11 @@ public interface DriveOwnership {
 
   void release();
 
+  /** Whether the test still holds the drivetrain. */
+  default boolean isHeld() {
+    return true;
+  }
+
   /** Does nothing. For robots that drive without the command framework, and for tests. */
   DriveOwnership NONE =
       new DriveOwnership() {
@@ -36,7 +41,15 @@ public interface DriveOwnership {
     private final Command hold;
 
     public CommandsV2(Subsystem drive) {
-      hold = Commands.run(() -> {}, drive).withName("SwerveTune test");
+      // kCancelIncoming: a button bound to the drive subsystem (Y toggling field-relative) can't take
+      // the drivetrain away mid-test; the scheduler refuses that command instead.
+      hold = Commands.run(() -> {}, drive).withName("SwerveTune test")
+          .withInterruptBehavior(Command.InterruptionBehavior.kCancelIncoming);
+    }
+
+    @Override
+    public boolean isHeld() {
+      return hold.isScheduled();
     }
 
     @Override

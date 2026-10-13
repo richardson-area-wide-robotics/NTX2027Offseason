@@ -117,6 +117,7 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `GYRO` | The gyro isn't reporting or is calibrating. Wait, then ask a person. |
 | `NO_SPACE` | A person must measure the clear floor (`env --mode FIELD --space --side`). |
 | `DEADMAN`, `DRIVER_INPUT`, `ABORTED_BY_PERSON` | A person let go, drove, or aborted: ask why before anything else. |
+| `DRIVETRAIN_TAKEN` | Another command (a drive button) took the drivetrain mid-test: ask the people to keep drive buttons alone, then rerun. |
 | `NOT_ON_BLOCKS`, `IMPACT`, `GEOFENCE`, `NO_WALL`, `STALL`, `OVERSPEED` | Something physical: a person looks at the robot first. |
 | `BATTERY` | Swap the battery (and pick its number). |
 | `MOTOR_GUARD` | A motor is hot or stalled: let it cool; never override. |

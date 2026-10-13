@@ -42,6 +42,9 @@ def yagsl_motor(model):
     return YAGSL_MOTOR.get(m.split("_", 1)[1]) if "_" in m else None
 
 
+NEO550_ONLY_RPM = 7200
+
+
 def inventory_key(name):
     """Which inventory entry names this motor: ``drive``/``steer`` for swerve motors, else itself."""
     if name.endswith(" drive"):
@@ -128,6 +131,16 @@ def table(project, live_rows=None, measured=None):
             row["status"] = "bad"
         elif key == "drive" and measured:
             row["measured"] = measured["label"]
+        # Only a NEO 550 turns faster than about 7000 rpm (NEO 5676, Vortex 6784 free): a reading
+        # above that proves one, whatever the code says.
+        rpm = abs((live.get(name) or {}).get("rpm") or 0)
+        if rpm > NEO550_ONLY_RPM and fam and fam != "neo550":
+            row["status"] = "bad"
+            row["measured"] = "NEO 550"
+            F.append({"level": "error", "title": f"{name} turns at {rpm:.0f} rpm: it must be a NEO 550, not a {motor}",
+                      "why": "A NEO tops out at 5676 rpm and a Vortex at 6784; only a NEO 550 goes faster. Set it "
+                             "in the inventory (and the code's watch(..., MotorKind.NEO_550)), so the motor guard "
+                             "uses the right heat model and limits."})
         if not motor:
             row["status"] = "unknown"
         rows.append(row)
