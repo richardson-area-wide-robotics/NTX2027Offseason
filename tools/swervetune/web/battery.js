@@ -1,0 +1,122 @@
+// Which battery is in: the header's Battery chip, and the picker the drive team taps after a swap.
+// The robot asks again after every boot (a swap means the robot was off); the Driver Station
+// dashboard's "Battery" drop-down does the same job when this laptop isn't there.
+"use strict";
+
+const Battery = (() => {
+  let cache = null, loadedAt = 0, askedBoot = null;
+  const WORDS = { good: "good", practice: "practice", retire: "retire" };
+
+  async function load() {
+    cache = await App.api("/api/battery");
+    loadedAt = Date.now();
+    return cache;
+  }
+
+  function row(id) {
+    return ((cache && cache.batteries) || []).find(b => b.id === id) || {};
+  }
+
+  function spark(trend, r) {
+    if (!trend || trend.length < 2) return "";
+    const lo = Math.min(10, ...trend), hi = Math.max(r.practice_max_mohm + 4, ...trend);
+    const pts = trend.map((v, i) => `${(i / (trend.length - 1) * 70).toFixed(1)},${(20 - (v - lo) / (hi - lo) * 18).toFixed(1)}`);
+    const y = v => (20 - (v - lo) / (hi - lo) * 18).toFixed(1);
+    return `<svg class="batt-spark" viewBox="0 0 70 22" aria-hidden="true">
+      <line x1="0" x2="70" y1="${y(r.good_max_mohm)}" y2="${y(r.good_max_mohm)}" class="lim"/>
+      <polyline points="${pts.join(" ")}"/></svg>`;
+  }
+
+  function when(stamp) {
+    const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(stamp || "");
+    return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : "";
+  }
+
+  async function open() {
+    const r = await load();
+    const shown = r.batteries.filter(b => b.listed || b.n);
+    App.modal(`<h2>Which battery is in?</h2>
+      <p>Tap the number written on the battery.${r.connected ? "" : " <b>Connect to the robot to pick.</b>"}</p>
+      <div class="batt-grid" ${shown.some(b => b.id === r.id) ? "" : "data-nofocus"}>${shown.map(b => `<button class="batt ${b.status || ""} ${b.id === r.id ? "on" : ""}" data-id="${esc(b.id)}" ${b.id === r.id ? "autofocus" : ""}
+          ${r.connected ? "" : "disabled"} aria-label="Battery ${esc(b.id)}${b.status ? ", " + WORDS[b.status] : ""}">
+          <span class="batt-n">${esc(b.id)}</span>
+          <span class="batt-s">${b.status ? `${WORDS[b.status]} · ${b.mohm} mΩ` : "not measured"}</span></button>`).join("")}</div>
+      ${r.id && r.rest_v > 1 ? `<p class="small">Battery ${esc(r.id)} read ${fmt(r.rest_v, 2)} V at rest when it was picked
+        ${r.rest_v >= 12.7 ? "(charged)" : r.rest_v >= 12.3 ? "(partly charged)" : "<b>(charge it)</b>"}.</p>` : ""}
+      <details class="batt-details"><summary>How each battery is doing</summary>
+        <div class="tblwrap"><table class="t"><thead><tr><th>Battery</th><th></th><th>Sag</th><th>At rest</th><th>Measured</th><th>Trend</th><th>From</th></tr></thead><tbody>
+        ${shown.map(b => `<tr><td><b>${esc(b.id)}</b></td>
+          <td>${b.status ? `<span class="chip ${b.status === "good" ? "good" : b.status === "practice" ? "warn" : "bad"}">${WORDS[b.status]}</span>` : ""}</td>
+          <td class="num">${b.mohm != null ? b.mohm + " mΩ" : "–"}</td><td class="num">${b.v_rest != null ? fmt(b.v_rest, 2) + " V" : "–"}</td>
+          <td class="small">${b.n ? `${b.n}×, last ${esc(when(b.when))}` : ""}</td><td>${spark(b.trend, r)}</td>
+          <td class="small muted">${esc(b.source || "")}</td></tr>`).join("")}
+        </tbody></table></div>
+        <p class="hint"><span class="term" data-learn="battery">Sag</span> is how far the voltage drops per amp, battery and connections together, in milliohms: lower is better.
+        Good up to ${r.good_max_mohm}, practice up to ${r.practice_max_mohm}, retire above. A new ${esc(r.datasheet.name)} alone is about
+        ${r.datasheet.r_ohm * 1000} mΩ (its datasheet). Every wheel test and every match log you open measures the battery that was picked.</p>
+      </details>
+      <div class="row"><button class="btn" id="batt-edit">Edit the battery list…</button><button class="btn" id="batt-close">Close</button></div>`,
+    root => {
+      $$("[data-id]", root).forEach(b => b.onclick = () => pick(b.dataset.id));
+      $("#batt-close", root).onclick = () => App.closeModal();
+      $("#batt-edit", root).onclick = () => edit(shown.filter(b => b.listed).map(b => b.id));
+    });
+  }
+
+  async function pick(id) {
+    const r = await App.api("/api/battery/pick", { id });
+    if (!r.ok) { App.toast(r.error); return; }
+    App.closeModal();
+    const b = row(id);
+    App.toast(`Battery ${id} is in${b.status ? ` (${WORDS[b.status]}, ${b.mohm} mΩ last time)` : ""}.`, 4000);
+    if (b.status === "retire") App.toast(`Battery ${id} sagged hard last time: use another for matches.`, 6000);
+  }
+
+  function edit(ids) {
+    App.modal(`<h2>The team's batteries</h2>
+      <p>The numbers written on your batteries, separated by commas. They become the choices here and in
+      the dashboard's Battery drop-down after the next deploy. Retire one by leaving it out; its history is kept.</p>
+      <label class="gain">Battery numbers<input id="batt-list" value="${esc(ids.join(", "))}"></label>
+      <div class="row"><button class="btn primary" id="batt-save">Save…</button><button class="btn" id="batt-cancel">Cancel</button></div>`,
+    root => {
+      $("#batt-cancel", root).onclick = () => App.closeModal();
+      $("#batt-save", root).onclick = async () => {
+        const list = [...new Set($("#batt-list", root).value.split(",").map(s => s.trim()).filter(Boolean))];
+        if (!list.length) { App.toast("List at least one battery."); return; }
+        await App.previewAndSave({ kind: "edits", edits: [{ file: "swervetune.json", path: ["batteries"], value: list }] },
+          "Battery list");
+      };
+    });
+  }
+
+  // Called by the header on every live poll.
+  function paintChip(live, robot) {
+    const chip = $("#battery-chip");
+    if (!chip) return;
+    if (!live) { chip.textContent = "Battery –"; chip.className = "chip"; return; }
+    const id = live.battery_id || "";
+    if ((!cache || Date.now() - loadedAt > 30000) && !paintChip.loading) {
+      paintChip.loading = true;
+      load().finally(() => { paintChip.loading = false; });
+    }
+    if (!id) {
+      chip.textContent = "Battery ?";
+      chip.className = "chip warn";
+      chip.title = "Which battery is in? Tap to pick.";
+      // Once per robot boot, ask straight away - unless something else is on screen or running.
+      const boot = robot && robot.boot_id;
+      if (boot && askedBoot !== boot && $("#modal").hidden && !(App.state.test || {}).running) {
+        askedBoot = boot;
+        open();
+      }
+      return;
+    }
+    const b = row(id);
+    chip.textContent = "Battery " + id;
+    chip.className = "chip " + (b.status === "retire" ? "bad" : b.status === "practice" ? "warn" : b.status === "good" ? "good" : "");
+    chip.title = b.status ? `${WORDS[b.status]}: ${b.mohm} mΩ last measured` : "Not measured yet";
+  }
+
+  $("#battery-chip").onclick = () => open();
+  return { open, paintChip, load };
+})();

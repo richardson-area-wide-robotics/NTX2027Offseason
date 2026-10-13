@@ -203,6 +203,24 @@ public final class SwerveTuneTopics {
   /** Each controller's firmware version. */
   public static final String MOTORS_FIRMWARE = MOTORS + "Firmware";
 
+  // ---------------------------------------------------------------- battery
+
+  /**
+   * Which battery is in, as a "String Chooser": the topics WPILib's SendableChooser publishes, which
+   * Elastic and Shuffleboard show as a drop-down named Battery. A dashboard writes {@code selected}.
+   */
+  public static final String BATTERY_CHOOSER = "/SmartDashboard/Battery/";
+
+  public static final String BATTERY_SELECTED = BATTERY_CHOOSER + "selected";
+  public static final String BATTERY_OPTIONS = BATTERY_CHOOSER + "options";
+  public static final String BATTERY_ACTIVE = BATTERY_CHOOSER + "active";
+
+  /** The battery picked since this boot; empty until someone picks. */
+  public static final String BATTERY_ID = ROOT + "/Battery/Id";
+
+  /** The battery voltage when it was picked with the robot disabled: its resting voltage. */
+  public static final String BATTERY_REST_VOLTS = ROOT + "/Battery/RestVolts";
+
   /**
    * The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors,
    * and how many robot loops have seen any receive or transmit error since the code started.

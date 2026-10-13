@@ -45,7 +45,10 @@ nothing else:
    (`FieldLayouts`, `PhotonVisionSource`).
 7. **SmartDashboard is gone** (it used NetworkTables 3). Peashooter's `Drive.java` puts two numbers
    there; move them to the Telemetry API or to AdvantageKit's `Logger.recordOutput`. The tools
-   already use NetworkTables 4 only.
+   already use NetworkTables 4 only. The dashboard's **Battery** drop-down (`BatteryPicker`) is
+   published as raw NT4 topics in the "String Chooser" shape under `/SmartDashboard/Battery`,
+   without the SmartDashboard class, so it keeps working; check the 2027 dashboards still show
+   that shape as a drop-down.
 8. **`Command.schedule()` is deprecated** (Peashooter's `Robot.java` uses it for autonomous).
 9. **Raw integer timestamps become nanoseconds** (`RobotController.getTime`, `getFPGATime`,
    `nt::Now`). DataLog files and NetworkTables still use microseconds, so the log tools

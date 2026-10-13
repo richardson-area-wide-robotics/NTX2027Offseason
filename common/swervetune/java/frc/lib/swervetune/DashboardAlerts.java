@@ -32,6 +32,12 @@ final class DashboardAlerts {
     a.set(on);
   }
 
+  /** Asks which battery is in until someone picks one (each boot may be a new battery). */
+  void battery(String id) {
+    set("battery", AlertType.kWarning, id == null || id.isEmpty(),
+        "Which battery is in? Pick its number under Battery on the dashboard.");
+  }
+
   /**
    * @param can {@code {utilization 0-1, busOffCount, txFullCount, receiveErrors, transmitErrors}},
    *     or empty if unknown

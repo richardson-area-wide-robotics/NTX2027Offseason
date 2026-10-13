@@ -126,6 +126,14 @@ MOTORS_CAN_IDS = MOTORS + "CanIds"
 MOTORS_CONTROLLERS = MOTORS + "Controllers"            # what each controller says it is
 MOTORS_CODE_CONTROLLERS = MOTORS + "CodeControllers"   # what the code created it as
 MOTORS_FIRMWARE = MOTORS + "Firmware"
+
+# Which battery is in: a "String Chooser" a dashboard shows as a drop-down; a client writes "selected".
+BATTERY_CHOOSER = "/SmartDashboard/Battery/"
+BATTERY_SELECTED = BATTERY_CHOOSER + "selected"
+BATTERY_OPTIONS = BATTERY_CHOOSER + "options"
+BATTERY_ACTIVE = BATTERY_CHOOSER + "active"
+BATTERY_ID = ROOT + "/Battery/Id"
+BATTERY_REST_VOLTS = ROOT + "/Battery/RestVolts"
 # Utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors, and the running
 # count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"

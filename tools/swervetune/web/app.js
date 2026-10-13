@@ -34,8 +34,9 @@ const App = {
     $("#modal-body").innerHTML = html;
     $("#modal").hidden = false;
     if (mount) mount($("#modal-body"));
-    const first = $("#modal-body button, #modal-body input");
-    if (first) first.focus();
+    // [autofocus] picks what gets focus; [data-nofocus] means nothing should look chosen yet.
+    const first = $("#modal-body [autofocus]") || $("#modal-body button, #modal-body input");
+    if (first && !$("#modal-body [data-nofocus]")) first.focus();
   },
   closeModal() { $("#modal").hidden = true; $("#modal-body").innerHTML = ""; },
 
@@ -241,6 +242,7 @@ function paintHeader() {
     setChip($("#mode-chip"), "no robot");
     setChip($("#bus-chip"), "– V");
   }
+  if (typeof Battery !== "undefined") Battery.paintChip(on && live, st.robot);
   const env = App.env();
   setChip($("#env-chip"), "Environment: " + env, env === "FIELD" ? "warn" : env === "BLOCKS" ? "info" : env === "SIM" ? "good" : "");
   const tags = st.environment && st.environment.apriltags;

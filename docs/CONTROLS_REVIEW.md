@@ -110,6 +110,14 @@ battery, but full stick is slower than the robot can go, and PathPlanner plans w
 **Do:** once the straight-line test has measured the real top speed on carpet, set `MAX_SPEED` to
 about 90% of it on both robots; the PathPlanner check then asks to update PathPlanner too.
 
+What full stick needs from the battery: YAGSL turns on the SPARKs' voltage compensation at 12 V
+(`optimalVoltage`), so a command means the same volts on any battery until the battery can't
+supply them. At these speeds the Vortexes need about kS + kV x MAX_SPEED: roughly 9.7 V on
+Peashooter and 10.2 V on Black team (estimates until drive_ff measures kV). The ES17-12 is 12 V
+nominal, about 12.7 to 13 V charged and at rest, and sags by its resistance times the current
+(datasheet: about 12 mOhm for the battery alone). A drive_ff on the floor reports both numbers for
+the battery that was in, and the current at which full stick starts to slow.
+
 ### 9. Turning while driving drifts sideways
 
 When the robot translates and rotates at once, the module states computed at the start of a loop

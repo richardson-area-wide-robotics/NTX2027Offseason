@@ -32,6 +32,7 @@ from __future__ import annotations
 import math
 
 from . import analysis as A
+from . import battery
 from . import ratios as R
 
 # What "tight" means, per loop. Steering numbers are for a MAXSwerve-class module (NEO 550 at
@@ -1174,8 +1175,13 @@ def robot_context(project):
     mass, source = project.mass()
     moi, _ = project.moi()
     inv = ((project.data.get("swervetune.json") or {}).get("motors") or {}).get("drive")
+    try:
+        vmax = project.create_swerve_max_speed()[0] or project.max_module_speed()
+    except (OSError, ValueError, KeyError, TypeError):
+        vmax = None
     return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi, "drive_gear": project.drive_gear(),
-            "wheel_d_in": project.wheel_d_in(), "drive_kind": project.drive_kind(), "drive_inventory": inv}
+            "wheel_d_in": project.wheel_d_in(), "drive_kind": project.drive_kind(), "drive_inventory": inv,
+            "max_speed": vmax}
 
 
 # Free speed at 12 V, rpm. A NEO V1.1 and a NEO 2.0 spin alike, so this can't tell them apart.
@@ -1322,8 +1328,26 @@ def no_data_report(result):
             "targets": [], "score": None, "cost": None, "next": None, "modules": {}}
 
 
+WHEEL_TESTS = ("drive_step", "drive_ff", "straight", "slip", "spin", "spin_ff", "pdh_map")
+
+
 def analyze(result, gains=None, **kw):
-    """Picks the report for a test result (a dict from TestResult.to_json or a practice run)."""
+    """Picks the report for a test result (a dict from TestResult.to_json or a practice run), and
+    adds what the run says about the battery to any test that spun the wheels."""
+    rep = _analyze_test(result, gains, **kw)
+    if result.get("test") in WHEEL_TESTS and isinstance(rep.get("findings"), list)             and len((result.get("channels") or {}).get("t", [])) >= 5:
+        kv = ks = None
+        if result.get("test") == "drive_ff" and rep.get("env") != "BLOCKS":
+            good = [f for f in (rep.get("modules") or {}).values() if f.get("ok")]
+            if good:
+                kv, ks = A.median([f["kV"] for f in good]), A.median([f["kS"] for f in good])
+        b = battery.report(result, kv, ks, kw.get("max_speed"))
+        rep["battery"] = b["battery"]
+        rep["findings"].extend(b["findings"])
+    return rep
+
+
+def _analyze_test(result, gains=None, **kw):
     test = result.get("test")
     if len((result.get("channels") or {}).get("t", [])) < 5:
         return no_data_report(result)

@@ -24,6 +24,7 @@ from __future__ import annotations
 import math
 
 from . import analysis as A
+from . import explain
 from .plant import Motor, SparkPid
 
 DT = 0.0005  # physics step, s
@@ -119,12 +120,14 @@ def identify(t, sp, y, volts, loop, motor_kind, gear, current_limit, units_per_m
 
 
 def simulate(model, t_out, sp_out, gains, vbus=12.0, feedforward=None, vel_period_ms=32,
-             vel_depth=8, absolute=False, delay_s=0.0):
+             vel_depth=8, absolute=False, delay_s=0.0, comp_v=None):
     """Runs the setpoints through the model under a REV-style controller.
 
     Returns the loop's measurement at each ``t_out`` (seconds), seen ``delay_s`` late the way the
-    robot's recording sees it.
+    robot's recording sees it. ``comp_v`` is the voltage the SPARK compensates to (YAGSL: 12 V): a
+    duty of 1 means that many volts, capped at the battery's ``vbus``. None means no compensation.
     """
+    per_duty = comp_v or vbus
     loop = model["loop"]
     pre = "Steer/" if loop == "steer" else "Drive/"
     pid = SparkPid(gains.get(pre + "kP", 0.0), gains.get(pre + "kI", 0.0), gains.get(pre + "kD", 0.0),
@@ -171,10 +174,10 @@ def simulate(model, t_out, sp_out, gains, vbus=12.0, feedforward=None, vel_perio
                     if len(raw_hist) > depth:
                         raw_hist.pop(0)
                     meas_v = sum(raw_hist) / len(raw_hist)
-                arb = (ff[0] * _sgn(sp_now) + ff[1] * sp_now) / vbus
+                arb = (ff[0] * _sgn(sp_now) + ff[1] * sp_now) / per_duty
                 duty = pid.step(sp_now, meas_v, arb)
             next_ctrl += 0.001
-        v = duty * vbus
+        v = max(-vbus, min(vbus, duty * per_duty))  # compensated, but never more than the battery has
         bemf = k_bemf * w
         v = max(bemf - R * ilim, min(bemf + R * ilim, v))
         if abs(w) < 1e-9:
@@ -236,6 +239,7 @@ def predict(result, gains_now, gains_new, module=0, current_limit=None, motor_ki
     name = names[m] if m < len(names) else f"m{m}"
     vbus_s = [v for v in ch.get("vbus") or [] if A.finite(v)]
     vbus = A.median(vbus_s) if vbus_s else 12.0
+    comp = explain.compensation_volts(meta)
     volts = ch.get(f"m{m}.volts")
     if loop == "steer":
         absolute = meta.get("steer_feedback_absolute") == 1
@@ -279,13 +283,14 @@ def predict(result, gains_now, gains_new, module=0, current_limit=None, motor_ki
     # lining the replay up with what was recorded.
     best = None
     for delay_ms in range(0, 65, 5):
-        rep = simulate(model, t, sp, gains_now, vbus, ff, period, depth, absolute, delay_ms / 1000.0)
+        rep = simulate(model, t, sp, gains_now, vbus, ff, period, depth, absolute, delay_ms / 1000.0,
+                       comp_v=comp)
         err = _rms(rep, y, wrap=loop == "steer")
         if best is None or err < best[0]:
             best = (err, delay_ms, rep)
     rms, delay_ms, replay = best
     predicted = simulate(model, t, sp, gains_new, vbus, ff_new, period_new, depth_new, absolute,
-                         delay_ms / 1000.0)
+                         delay_ms / 1000.0, comp_v=comp)
 
     sizes = [abs(A.wrap180(b2 - a2) if loop == "steer" else b2 - a2)
              for (_, _, a2), (_, _, b2) in zip(A.segments(t, sp), A.segments(t, sp)[1:])]

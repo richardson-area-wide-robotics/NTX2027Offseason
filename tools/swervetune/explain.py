@@ -14,9 +14,11 @@ computed it:
 * **asked** - their sum, as volts; **applied** - what the controller really put out, which is less
   when the battery, the current limit or the ramp rate held it back.
 
-Everything is in volts so the parts add up. REV's units are kept: kP is duty cycle (fraction of
-the battery) per unit of error, and kD and kI act per one-millisecond controller step, so a
-change in error is per millisecond, not per second.
+Everything is in volts so the parts add up. REV's units are kept: kP is duty cycle per unit of
+error, and kD and kI act per one-millisecond controller step, so a change in error is per
+millisecond, not per second. YAGSL turns on the SPARK's voltage compensation at 12 V
+(``optimalVoltage``; each run records it as ``comp_volts``), so a duty of 1 means 12 V on any
+battery - as long as the battery has 12 V to give. The battery line on the graph is what it had.
 
 Then it finds the moments worth a student's attention - dead time, flat-out saturation, the P
 term's strongest push, D braking, overshoot, the error left at the end - and writes a sentence
@@ -60,7 +62,8 @@ def _spans(mask, t, min_len=2):
 
 
 def _terms(t, sp, meas, vbus, kP, kI, kD, i_zone, wrap):
-    """Rebuilds the PID terms in volts at the recorded samples."""
+    """Rebuilds the PID terms in volts at the recorded samples. ``vbus`` is what a duty of 1 means
+    in volts at each sample: the compensation voltage when the SPARK compensates."""
     n = len(t)
     err, p, i_t, d = [], [], [], []
     acc, prev_e, prev_t = 0.0, None, None
@@ -88,6 +91,12 @@ def _terms(t, sp, meas, vbus, kP, kI, kD, i_zone, wrap):
     return err, p, i_t, d
 
 
+def compensation_volts(meta):
+    """The voltage the SPARKs compensate to: the run's ``comp_volts``, else YAGSL's default 12 V."""
+    v = (meta or {}).get("comp_volts")
+    return float(v) if isinstance(v, (int, float)) and A.finite(v) and v > 0 else 12.0
+
+
 def explain_module(result, gains, m, loop, current_limit=None):
     """One module of a steer_step or drive_step run. Returns None if the channels are missing."""
     ch = result.get("channels") or {}
@@ -97,6 +106,7 @@ def explain_module(result, gains, m, loop, current_limit=None):
     if n < 10:
         return None
     vbus = _channel(ch, "vbus", n, 12.0)
+    per_duty = [compensation_volts(meta)] * n  # what a duty of 1 means, in volts
     volts = _channel(ch, f"m{m}.volts", n)
     amps = _channel(ch, f"m{m}.amps", n)
     names = (result.get("robot") or {}).get("modules") or []
@@ -114,7 +124,7 @@ def explain_module(result, gains, m, loop, current_limit=None):
         i_zone = _gain(gains, "Steer/IZone")
         ramp = _gain(gains, "Steer/RampS")
         limit = current_limit or 20.0
-        err, p, i_t, d = _terms(t, sp, meas, vbus, kP, kI, kD, i_zone, wrap=True)
+        err, p, i_t, d = _terms(t, sp, meas, per_duty, kP, kI, kD, i_zone, wrap=True)
         ff = [0.0] * n
         units = STEER_ERROR_UNITS
         sensor = "the absolute encoder" if absolute else "the steering motor's own encoder"
@@ -128,7 +138,7 @@ def explain_module(result, gains, m, loop, current_limit=None):
         i_zone = _gain(gains, "Drive/IZone")
         ramp = _gain(gains, "Drive/RampS")
         limit = current_limit or 40.0
-        err, p, i_t, d = _terms(t, sp, meas, vbus, kP, kI, kD, i_zone, wrap=False)
+        err, p, i_t, d = _terms(t, sp, meas, per_duty, kP, kI, kD, i_zone, wrap=False)
         kS = _gain(gains, f"FF/{name}/kS")
         kV = _gain(gains, f"FF/{name}/kV", 0.0)
         ff = [kS * _sgn(s) + kV * s if A.finite(s) else float("nan") for s in sp]

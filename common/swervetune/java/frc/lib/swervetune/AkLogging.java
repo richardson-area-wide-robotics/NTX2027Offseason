@@ -216,6 +216,13 @@ public final class AkLogging {
    * Every live gain, whenever one changes (and once at the start), so a match log says what the
    * robot was running. Under {@code RealOutputs/SwerveTune/Gains/}.
    */
+  /** Which battery is in ("" until picked), every loop, for the post-match summary. */
+  static void recordBattery(String id) {
+    if (started) {
+      Logger.recordOutput("SwerveTune/Battery", id);
+    }
+  }
+
   static void recordGains(Map<String, Double> gains) {
     if (!started) {
       return;

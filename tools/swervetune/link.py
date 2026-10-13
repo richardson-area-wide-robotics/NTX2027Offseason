@@ -86,6 +86,7 @@ class TestResult:
     robot: dict = field(default_factory=dict)
     env: str = ""
     started: float = field(default_factory=time.time)
+    battery: str = ""
 
     @property
     def ok(self):
@@ -97,6 +98,7 @@ class TestResult:
             "accepted": self.accepted, "message": self.message, "outcome": self.outcome,
             "seq": self.seq, "meta": self.meta, "notes": self.notes, "robot": self.robot,
             "env": self.env, "started": self.started, "channels": self.channels,
+            "battery": self.battery,
         }
 
     @staticmethod
@@ -106,7 +108,7 @@ class TestResult:
             accepted=d.get("accepted", True), message=d.get("message", ""),
             outcome=d.get("outcome", ""), seq=d.get("seq", 0), channels=d.get("channels", {}),
             meta=d.get("meta", {}), notes=d.get("notes", []), robot=d.get("robot", {}),
-            env=d.get("env", ""), started=d.get("started", 0.0))
+            env=d.get("env", ""), started=d.get("started", 0.0), battery=d.get("battery", ""))
 
 
 class RobotLink:
@@ -298,8 +300,35 @@ class RobotLink:
             "pdh": {"currents": list(self.get("double[]", C.AK_PDH_CURRENTS)),
                     "voltage": self.get("double", C.AK_PDH_VOLTAGE)},
             "battery": self.get("double", C.AK_BATTERY),
+            "battery_id": self.get("str", C.BATTERY_ID),
+            "battery_rest": self.get("double", C.BATTERY_REST_VOLTS),
+            "battery_options": list(self.get("str[]", C.BATTERY_OPTIONS)),
         })
         return out
+
+    def set_battery(self, battery_id, timeout=5.0):
+        """Picks which battery is in, as the dashboard's drop-down does, and waits for the robot to
+        take it. The robot clears a pick that arrives in the first seconds after a client connects
+        (it may be a dashboard putting back the battery from before a swap), so a pick made right
+        after connecting is sent again once that window has passed. True if the robot took it."""
+        bid = str(battery_id)
+        start = time.time()
+        resent = False
+        self.put("str", C.BATTERY_SELECTED, bid)
+        self.flush()
+        while time.time() - start < timeout:
+            if self.get("str", C.BATTERY_ID) == bid:
+                return True
+            if not resent and time.time() - start > 3.3:
+                # Our last value is still this id; go through "" so the robot sees a change.
+                self.put("str", C.BATTERY_SELECTED, "")
+                self.flush()
+                time.sleep(0.05)
+                self.put("str", C.BATTERY_SELECTED, bid)
+                self.flush()
+                resent = True
+            time.sleep(0.05)
+        return False
 
     def sightings(self):
         """The tags in each camera's newest frame, as dicts (see ``camcal``)."""
@@ -361,7 +390,7 @@ class RobotLink:
         accepted, msg = self._wait_ack(seq)
         result = TestResult(test=test, module=module or "ALL", args=dict(args or {}),
                             accepted=accepted, message=msg, seq=seq, robot=self.robot_info(),
-                            env=env)
+                            env=env, battery=self.get("str", C.BATTERY_ID))
         if not accepted:
             return result
         deadline = time.time() + (timeout or 180)

@@ -87,6 +87,7 @@ public final class SwerveTune {
   private final SwerveTuneConfig config;
   private final SafetySupervisor supervisor;
   private final LiveGains gains;
+  private final BatteryPicker battery;
   private final long bootId;
   private final boolean manualSampling;
   private final Map<String, Supplier<Procedure>> procedures = new LinkedHashMap<>();
@@ -341,6 +342,7 @@ public final class SwerveTune {
     nt.getStringArrayTopic(SwerveTuneTopics.STARTUP_REPORT).publish().set(startup.toArray(new String[0]));
 
     gains = new LiveGains(nt, io, config, bootId);
+    battery = new BatteryPicker(nt, config.batteries);
     lastCmdSeq = cmdSeq.get();
     lastAbortSeq = abortSeq.get();
     lastOverrideSeq = overrideSeq.get();
@@ -705,6 +707,11 @@ public final class SwerveTune {
       trackChassis(now);
       guard.update(now);
       readPdhPower();
+      String batteryId = battery.update(now, nt.getConnections().length, io.busVolts(), !signals.enabled());
+      if (dashboard != null) {
+        dashboard.battery(batteryId);
+      }
+      AkLogging.recordBattery(batteryId);
       pollVision(now);
       publishLive(now);
       publishMotors();
@@ -1060,6 +1067,7 @@ public final class SwerveTune {
     ctx.meta("steer_gear_ratio", io.steerGearRatio());
     ctx.meta("steer_feedback_absolute", "absolute".equals(io.steerFeedback()) ? 1 : 0);
     ctx.note("Environment: " + ctx.env + (ctx.visionInUse ? ", AprilTags in use" : ", no AprilTags"));
+    ctx.note("Battery: " + (battery.current().isEmpty() ? "not picked" : battery.current()));
     ctx.sampler.start(clock);
     if (!manualSampling) {
       notifier = new Notifier(ctx.sampler::sampleNow);
@@ -1272,6 +1280,11 @@ public final class SwerveTune {
   /** Where tests read the PDH's channel currents from, in place of AdvantageKit. */
   void setPdhSource(Supplier<double[]> source) {
     pdhSource = source;
+  }
+
+  /** The battery picked since boot, or "". */
+  String batteryId() {
+    return battery.current();
   }
 
   /** Where the PDH's {@code {volts, total amps}} are read from, in place of AdvantageKit. */

@@ -92,6 +92,12 @@ public final class SwerveTuneConfig {
    */
   public final Map<String, double[]> cameras = new LinkedHashMap<>();
 
+  /**
+   * The team's batteries, by the number written on each: the choices in the dashboard's Battery
+   * drop-down. Empty means 1 to 12.
+   */
+  public final List<String> batteries = new ArrayList<>();
+
   /** Problems found while reading, shown on the laptop at connect. */
   public final List<String> warnings = new ArrayList<>();
 
@@ -194,6 +200,16 @@ public final class SwerveTuneConfig {
         continue;
       }
       c.motorKinds.put(e.getKey(), MotorKind.parse(kind));
+    }
+
+    if (m.get("batteries") instanceof List<?> list) {
+      for (Object b : list) {
+        String id = b instanceof Number n && n.doubleValue() == Math.rint(n.doubleValue())
+            ? Long.toString(n.longValue()) : str(b, "").trim();
+        if (!id.isEmpty() && !c.batteries.contains(id)) {
+          c.batteries.add(id);
+        }
+      }
     }
 
     for (Map.Entry<String, Object> e : map(m.get("cameras")).entrySet()) {

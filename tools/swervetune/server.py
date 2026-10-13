@@ -26,7 +26,7 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
-from . import (advisor, akit, camcal, contract as C, diagnose, explain, fieldsurvey, geometry, logsummary,
+from . import (advisor, akit, battery, camcal, contract as C, diagnose, explain, fieldsurvey, geometry, logsummary,
                monitor, motorinv, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
@@ -498,7 +498,68 @@ def api_logsummary(query=None):
     rep = logsummary.summarize(_log_series(path), S.wiring_map())
     rep["ok"] = True
     rep["file"] = path
+    b = rep.get("battery") or {}
+    if b.get("id") and b.get("fit"):
+        mtime = os.path.getmtime(path)
+        runs.battery_ledger_add(f"{os.path.basename(path)}:{int(mtime)}", time.strftime("%Y%m%d-%H%M%S",
+                                time.localtime(mtime)), b["id"], b["fit"], "match log " + os.path.basename(path))
     return rep
+
+
+_BATTERY_RUNS = {}
+
+
+def _battery_entries():
+    """Every battery measurement: saved runs that knew their battery, then match logs."""
+    out = []
+    for r in runs.list_runs(400):
+        if r["practice"]:
+            continue
+        key = r["file"]
+        if key not in _BATTERY_RUNS:
+            try:
+                doc = runs.load(key)
+            except (OSError, ValueError):
+                continue
+            b = (doc.get("report") or {}).get("battery") or {}
+            _BATTERY_RUNS[key] = (doc.get("saved"), doc.get("battery") or b.get("id"), b.get("fit"),
+                                  f"{doc.get('test')} run")
+        out.append(_BATTERY_RUNS[key])
+    for e in runs.battery_ledger().values():
+        out.append((e.get("when"), e.get("id"), e.get("fit"), e.get("source")))
+    return out
+
+
+def api_battery(_query=None):
+    """Which battery is in, the choices, and every battery's measured sag over time."""
+    live = S.link.live() if S.link and S.link.is_connected() else {}
+    options = live.get("battery_options") or []
+    if not options and S.project:
+        options = [str(b) for b in (S.project.data.get("swervetune.json") or {}).get("batteries") or []]
+    options = options or [str(i) for i in range(1, 13)]
+    hist = battery.history(_battery_entries())
+    rows = []
+    for bid in list(options) + [b for b in hist if b not in options]:
+        h = hist.get(bid) or []
+        last = h[-1] if h else {}
+        rows.append({"id": bid, "listed": bid in options, "status": last.get("status"), "mohm": last.get("mohm"),
+                     "v_rest": last.get("v_rest"), "when": last.get("when"), "source": last.get("source"),
+                     "n": len(h), "trend": [x["mohm"] for x in h[-12:]]})
+    return {"ok": True, "connected": bool(live), "id": live.get("battery_id") or "",
+            "rest_v": live.get("battery_rest"), "batteries": rows,
+            "good_max_mohm": battery.GOOD_MAX_OHM * 1000, "practice_max_mohm": battery.PRACTICE_MAX_OHM * 1000,
+            "datasheet": battery.ES17_12}
+
+
+def api_battery_pick(body):
+    bid = str((body or {}).get("id") or "").strip()
+    if not bid:
+        return {"ok": False, "error": "Which battery?"}
+    if not (S.link and S.link.is_connected()):
+        return {"ok": False, "error": "Connect to the robot first."}
+    if not S.link.set_battery(bid):
+        return {"ok": False, "error": "The robot did not take it. Try again, or pick it on the dashboard."}
+    return {"ok": True, "id": bid}
 
 
 def api_wiring(query=None):
@@ -955,7 +1016,7 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
        "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
-       "/api/motors/inventory": api_motor_inventory}
+       "/api/motors/inventory": api_motor_inventory, "/api/battery": api_battery}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -968,7 +1029,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
         "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve,
         "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,
-        "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro}
+        "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro, "/api/battery/pick": api_battery_pick}
 
 
 class Handler(BaseHTTPRequestHandler):

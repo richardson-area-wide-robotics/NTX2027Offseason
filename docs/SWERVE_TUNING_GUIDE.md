@@ -107,6 +107,28 @@ exactly which lines change (a diff) before it writes anything. Then:
 1. Redeploy, reconnect, and check the startup list on the Live tab shows your new values.
 2. Commit on your own branch and open a pull request (see `CONTRIBUTING.md`).
 
+## Batteries
+
+The team's batteries are MK ES17-12s: "12 V" on the label, about 12.7 to 13 V charged and at rest,
+and less under load. How far a battery's voltage drops per amp (its **sag**, in milliohms) is what
+tells a good one from a tired one. A tired battery makes the robot slow at full stick, and if it
+drops below about 6.8 V the roboRIO browns out and cuts the motors.
+
+**Number every battery** (a big number in paint marker on the case). Then, after every swap:
+
+1. Turn the robot on and connect. The dashboard shows a yellow alert, *Which battery is in?*,
+   and this app opens the battery picker by itself.
+2. Tap the number on the battery: the **Battery** drop-down on the Driver Station dashboard, or the
+   big buttons here (the **Battery** chip in the top bar opens them any time).
+3. Each button shows how that battery did last time: **good**, **practice** (fine for practice,
+   keep it out of matches if better ones are charged) or **retire**.
+
+Picking takes two seconds and is the whole job. Every wheel test and every match log you open
+then measures that battery, and **How each battery is doing** in the picker shows each one over
+the season. A loose Anderson connector or main-breaker bolt looks exactly like a tired battery, so
+check those before retiring one. The list of numbers lives in `swervetune.json` (`"batteries"`);
+**Edit the battery list** changes it.
+
 ## After a match
 
 AdvantageKit logs every match: to the USB stick in the roboRIO, or on a roboRIO 2 without a stick,
@@ -114,6 +136,7 @@ to its SD card (`/home/lvuser/logs`). A roboRIO 1 without a stick keeps no logs,
 stick in it. Download them with AdvantageScope, then open **Runs, Match logs** and point it at
 the folder. It lists brownouts, CAN dropouts, controllers that rebooted, breakers that tripped and
 motors that overheated, each with the time in the match, and the place on the wiring map to check.
+It also measures the battery that was picked, so a match counts toward that battery's history.
 
 AdvantageScope layouts for both robots are in `tools/swervetune/advantagescope/`.
 

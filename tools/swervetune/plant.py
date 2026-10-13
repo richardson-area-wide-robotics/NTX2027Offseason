@@ -309,8 +309,13 @@ def drive_step(speeds, hold_s=0.8, align_s=0.6, kP=0.002, kI=0.0, kD=0.0, ramp_s
 
 def drive_ff(ramp_vps=1.0, max_v=6.0, step_v=4.0, quasi_s=None, dyn_s=1.0, rest_s=1.0,
              surface="floor", meas_period_ms=16, meas_depth=2, rate_hz=100, bus=12.0, modules=4,
-             seed=1):
-    """Same shape as the robot's drive_ff: open-loop voltage ramps and steps."""
+             seed=1, battery_r=0.0, other_a=3.0):
+    """Same shape as the robot's drive_ff: open-loop voltage ramps and steps.
+
+    With ``battery_r`` (ohms) the battery sags: ``bus`` is its resting voltage, each motor draws
+    ``volts x amps / bus`` from it on top of ``other_a`` for everything else, and the run records
+    the PDH's voltage and total current (``pdh_v``, ``ibatt``) as a robot with a PDH does.
+    """
     rng = random.Random(seed)
     mods = [DriveModule(surface=surface, meas_period_ms=meas_period_ms, meas_depth=meas_depth,
                         kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i)
@@ -320,16 +325,22 @@ def drive_ff(ramp_vps=1.0, max_v=6.0, step_v=4.0, quasi_s=None, dyn_s=1.0, rest_
             (4, dyn_s), (5, rest_s)]
     dt = 0.0002
     keys = ["t", "phase", "cmd"] + [f"m{i}.{k}" for i in range(modules) for k in ("volts", "v", "pos", "amps")]
-    out = {k: [] for k in keys + ["heading", "x", "y", "vbus"]}
+    extra = ["pdh_v", "ibatt"] if battery_r > 0 else []
+    out = {k: [] for k in keys + ["heading", "x", "y", "vbus"] + extra}
     t, next_sample, next_tick = 0.0, 0.0, 0.0
     pos = [0.0] * modules
+    v_bus, i_batt = bus, other_a
     for phase, dur in plan:
         start = t
         while t < start + dur:
             into = t - start
             cmd = {1: min(ramp_vps * into, max_v), 2: -min(ramp_vps * into, max_v),
                    3: step_v, 4: -step_v}.get(phase, 0.0)
-            app = [m.physics(cmd, dt) for m in mods]
+            # Compensated to 12 V, so the command is volts - until the battery has fewer to give.
+            app = [m.physics(max(-v_bus, min(v_bus, cmd)), dt) for m in mods]
+            if battery_r > 0:
+                i_batt = other_a + sum(abs(va * ia) for va, ia in app) / max(v_bus, 1.0)
+                v_bus = bus - battery_r * i_batt
             if t >= next_tick:
                 for m in mods:
                     m.measure_tick()
@@ -348,7 +359,10 @@ def drive_ff(ramp_vps=1.0, max_v=6.0, step_v=4.0, quasi_s=None, dyn_s=1.0, rest_
                 out["heading"].append(0.0)
                 out["x"].append(mean_pos(pos))
                 out["y"].append(0.0)
-                out["vbus"].append(bus)
+                out["vbus"].append(v_bus - 0.05 if battery_r > 0 else bus)  # the roboRIO, past the PDH
+                if extra:
+                    out["pdh_v"].append(v_bus)
+                    out["ibatt"].append(i_batt)
                 next_sample += 1.0 / rate_hz
             t += dt
     return out

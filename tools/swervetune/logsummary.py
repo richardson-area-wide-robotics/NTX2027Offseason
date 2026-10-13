@@ -10,10 +10,12 @@ judges them live: a run of them to the end of the chain is the cable at its star
 
 from __future__ import annotations
 
+from . import battery
 from . import wiring
 
 PREFIXES = ("/DriverStation/", "/SystemStats/", "/PowerDistribution/", "/RealOutputs/Motors/",
             "/RealOutputs/LoggedRobot/FullCycleMS", "/RealOutputs/SwerveTune/Test",
+            "/RealOutputs/SwerveTune/Battery",
             "/RealOutputs/SwerveTune/Gains/", "/RealMetadata/")
 GAINS = "/RealOutputs/SwerveTune/Gains/"
 PDH_FAULT_BITS = {24: "brownout", 25: "CAN warning", 26: "hardware fault"}
@@ -269,8 +271,17 @@ def summarize(series, wiring_map=None):
     summary = ("Clean: nothing went wrong." if not events else
                f"{errors} errors and {warns} warnings in {end:.0f} s"
                + (f"; battery low {min(batt):.1f} V" if batt else ""))
+    ids = [v for _, v in series.get("/RealOutputs/SwerveTune/Battery", []) if v]
+    bat = battery.report({"battery": ids[-1] if ids else None}, pairs=battery.pairs_from_log(series),
+                         source="the PDH's voltage and total current over the whole log")
+    findings.extend(bat["findings"])
+    if not ids and series.get("/RealOutputs/SwerveTune/Battery") is not None:
+        findings.append({"level": "info", "title": "Nobody picked which battery was in",
+                         "why": "Pick it on the dashboard (Battery) after each swap, so this log counts "
+                                "toward that battery's history.", "learn": "battery"})
     return {"info": info, "duration_s": end, "phases": ph, "battery_min": min(batt) if batt else None,
-            "loop_overruns": len(over), "events": events, "findings": findings, "summary": summary}
+            "loop_overruns": len(over), "events": events, "findings": findings, "summary": summary,
+            "battery": bat["battery"]}
 
 
 def summarize_file(path, wiring_map=None):

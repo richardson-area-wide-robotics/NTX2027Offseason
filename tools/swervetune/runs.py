@@ -64,6 +64,32 @@ def list_runs(limit=50):
     return out
 
 
+LEDGER = os.path.join(RUNS, "batteries.json")
+
+
+def battery_ledger():
+    """Battery measurements from match logs: ``{key: {"when", "id", "fit", "source"}}``."""
+    try:
+        with open(LEDGER, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+def battery_ledger_add(key, when, battery_id, fit, source):
+    """Keeps one match log's battery measurement, once per log (``key`` names the log)."""
+    if not battery_id or not fit:
+        return False
+    led = battery_ledger()
+    led[key] = {"when": when, "id": battery_id, "fit": fit, "source": source}
+    os.makedirs(RUNS, exist_ok=True)
+    tmp = LEDGER + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(led, fh, indent=1)
+    os.replace(tmp, LEDGER)
+    return True
+
+
 def ff_history(robot, blocks, before=None, exclude=None, limit=200, env=None):
     """Earlier drive_ff fits for one robot, oldest first: ``[{"saved", "modules"}]``.
 
