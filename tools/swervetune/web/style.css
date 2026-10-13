@@ -185,10 +185,11 @@ ol.do { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 .check .q { font-weight: 600; }
 
 /* ---------------------------------------------------------------- modal, toast */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 50; padding: 16px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 50; padding: 16px;
+  grid-template-columns: minmax(0, 1fr); }  /* a long diff line must scroll inside the box, not widen it past the screen */
 .modal[hidden] { display: none; }
-.modal-box { background: var(--panel); border-radius: 10px; max-width: 760px; width: 100%; max-height: 90vh; overflow: auto;
-  padding: 18px 20px; display: grid; gap: 12px; }
+.modal-box { background: var(--panel); border-radius: 10px; max-width: 760px; width: 100%; min-width: 0; max-height: 90vh; overflow: auto;
+  padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 pre.diff { background: var(--bg); border-radius: 6px; padding: 10px; overflow-x: auto; font: 12px/1.45 var(--mono); margin: 0; }
 pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.diff .hdr { color: var(--muted); }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);

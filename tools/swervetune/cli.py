@@ -302,6 +302,17 @@ def _run_limits(args, doc):
         return {"steer": 20.0, "drive": 40.0}
 
 
+def _pod_motor(args):
+    """The practice pod's drive motor: --motor, else the --project robot's, else a NEO."""
+    if getattr(args, "motor", None):
+        return args.motor
+    try:
+        kind = resolve_project(args.project).drive_kind() if getattr(args, "project", None) else None
+    except Exception:  # noqa: BLE001 - the pod still runs, as a NEO
+        kind = None
+    return kind if kind in plant.MOTORS and kind != "neo550" else "neo"
+
+
 def _drive_kind(args, doc):
     """The drive motor of the robot a run came from: its project, or the one named on the command line."""
     if doc.get("practice"):
@@ -644,14 +655,16 @@ def cmd_practice(args, out):
         gains = {"Steer/kP": args.kp, "Steer/kI": args.ki, "Steer/kD": args.kd,
                  "Steer/IZone": args.izone, "Steer/RampS": args.ramp}
     else:
+        motor = _pod_motor(args)
+        kv = args.kv if args.kv is not None else plant.nominal_kv(motor)
         ch = plant.drive_step(rehearse.DRIVE_PATTERN, kP=args.kp, kI=args.ki, kD=args.kd,
-                              ramp_s=args.ramp, surface=surface, ff=(args.ks, args.kv, args.ka),
-                              meas_period_ms=args.vel_period or 32, meas_depth=args.vel_depth or 8)
-        doc = {"test": "drive_step", "channels": ch}
+                              ramp_s=args.ramp, surface=surface, ff=(args.ks, kv, args.ka), motor=motor,
+                              meas_period_ms=args.vel_period or None, meas_depth=args.vel_depth or None)
+        doc = {"test": "drive_step", "channels": ch, "meta": {"pod_motor": motor}}
         gains = {"Drive/kP": args.kp, "Drive/kI": args.ki, "Drive/kD": args.kd,
                  "Drive/RampS": args.ramp, "Drive/VelPeriodMs": args.vel_period,
                  "Drive/VelDepth": args.vel_depth}
-        gains.update({f"FF/frontleft/{k}": v for k, v in (("kS", args.ks), ("kV", args.kv), ("kA", args.ka))})
+        gains.update({f"FF/frontleft/{k}": v for k, v in (("kS", args.ks), ("kV", kv), ("kA", args.ka))})
     doc.update(practice=True, env="FIELD" if surface == "floor" else "BLOCKS",
                robot={"name": "practice pod", "modules": rehearse.MODULES})
     rep = advisor.analyze(doc, gains)
@@ -669,7 +682,7 @@ def cmd_rehearse(args, out):
     else:
         start = {"Drive/kP": args.kp, "Drive/kI": 0.0, "Drive/kD": args.kd, "Drive/RampS": args.ramp,
                  "Drive/VelPeriodMs": 0, "Drive/VelDepth": 0}
-    hist = rehearse.rehearse(args.loop, start, surface=args.surface, rounds=args.rounds,
+    hist = rehearse.rehearse(args.loop, start, surface=args.surface, rounds=args.rounds, motor=_pod_motor(args),
                              log=lambda e: out.say(f"  round {e['round']}: score {e['score']} cost"
                                                    f" {e['cost']} -> {e['advice']}"))
     out.put(history=_clean(hist), final=_clean(hist[-1] if hist else None))
@@ -838,7 +851,9 @@ def build_parser():
         s.add_argument("--izone", type=float, default=0.0)
         s.add_argument("--ramp", type=float, default=0.0)
         s.add_argument("--ks", type=float, default=0.0)
-        s.add_argument("--kv", type=float, default=2.915)
+        s.add_argument("--kv", type=float, default=None, help="default: YAGSL's, 12 V over the free speed")
+        s.add_argument("--motor", choices=["neo", "vortex"], default=None,
+                       help="the pod's drive motor; default: the --project robot's, else neo")
         s.add_argument("--ka", type=float, default=0.0)
         s.add_argument("--vel-period", type=int, default=0)
         s.add_argument("--vel-depth", type=int, default=0)

@@ -28,7 +28,7 @@ from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
                logsummary,
-               monitor, motorinv, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
+               monitor, motorinv, pdhports, plant, ppcheck, predict, rehearse, revspecs, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -992,6 +992,11 @@ def api_practice(body):
     loop = body.get("loop", "steer")
     surface = body.get("surface", "floor")
     g = {k: float(v) for k, v in (body.get("gains") or {}).items()}
+    # The pod drives with the robot's own drive motor (a Vortex on both robots), so practice
+    # teaches that motor's speeds and sensor.
+    kind = S.project.drive_kind() if S.project else None
+    motor = kind if kind in plant.MOTORS and kind != "neo550" else "neo"
+    pod = {"pod_motor": motor}
     if loop == "steer":
         ch = plant.steer_step(rehearse.STEER_PATTERN, kP=g.get("Steer/kP", 0.01),
                               kI=g.get("Steer/kI", 0), kD=g.get("Steer/kD", 0),
@@ -1002,12 +1007,12 @@ def api_practice(body):
         m = rehearse.MODULES[0]
         ch = plant.drive_step(rehearse.DRIVE_PATTERN, kP=g.get("Drive/kP", 0.002),
                               kI=g.get("Drive/kI", 0), kD=g.get("Drive/kD", 0),
-                              ramp_s=g.get("Drive/RampS", 0), surface=surface,
-                              meas_period_ms=int(g.get("Drive/VelPeriodMs") or 32),
-                              meas_depth=int(g.get("Drive/VelDepth") or 8),
-                              ff=(g.get(f"FF/{m}/kS", 0), g.get(f"FF/{m}/kV", 2.915),
+                              ramp_s=g.get("Drive/RampS", 0), surface=surface, motor=motor,
+                              meas_period_ms=int(g.get("Drive/VelPeriodMs") or 0) or None,
+                              meas_depth=int(g.get("Drive/VelDepth") or 0) or None,
+                              ff=(g.get(f"FF/{m}/kS", 0), g.get(f"FF/{m}/kV", plant.nominal_kv(motor)),
                                   g.get(f"FF/{m}/kA", 0)))
-        doc = {"test": "drive_step", "module": "ALL"}
+        doc = {"test": "drive_step", "module": "ALL", "meta": pod}
     elif loop == "spin_ff":
         ch, meta = plant.spin_ff(moi=6.0, mass=55.0)
         doc = {"test": "spin_ff", "module": "ALL", "meta": meta, "channels": ch, "practice": True,
@@ -1018,16 +1023,18 @@ def api_practice(body):
         return doc
     elif loop == "slip":
         ch, meta = plant.wall_push(mu_static=float(body.get("mu", 1.1)),
-                                   limit_before_a=g.get("Limit/Drive", 40.0))
-        doc = {"test": "slip", "module": "ALL", "meta": meta}
+                                   limit_before_a=g.get("Limit/Drive", 40.0), motor=motor)
+        doc = {"test": "slip", "module": "ALL", "meta": dict(meta, **pod)}
     else:
-        ch = plant.drive_ff(surface=surface, quasi_s=6, max_v=6,
+        ch = plant.drive_ff(surface=surface, quasi_s=6, max_v=6, motor=motor,
                             meas_period_ms=int(g.get("Drive/VelPeriodMs") or 16),
                             meas_depth=int(g.get("Drive/VelDepth") or 2))
-        doc = {"test": "drive_ff", "module": "ALL", "meta": {"kv_nominal": 2.915}}
+        doc = {"test": "drive_ff", "module": "ALL", "meta": {"kv_nominal": plant.nominal_kv(motor), **pod}}
     doc.update(channels=ch, practice=True, env="FIELD" if surface == "floor" else "BLOCKS",
-               robot={"name": "practice pod", "modules": rehearse.MODULES}, outcome="DONE")
-    rep = advisor.analyze(doc, g)
+               robot={"name": f"practice pod ({revspecs.MOTORS[motor]['label']} drive)", "modules": rehearse.MODULES},
+               outcome="DONE")
+    # The pod is a MAXSwerve on 5.50:1 and 3 inch wheels, so the report can judge its motor too.
+    rep = advisor.analyze(doc, g, drive_gear=5.5, wheel_d_in=3.0, drive_kind=motor)
     path = runs.save(doc, rep, g, practice=True)
     doc["report"] = rep
     doc["explain"] = explain.explain(doc, g, {"steer": 20.0, "drive": 40.0})

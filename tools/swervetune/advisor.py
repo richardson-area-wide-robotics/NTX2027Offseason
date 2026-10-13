@@ -46,6 +46,9 @@ STEER_TARGETS = {
     "small_sse_deg": 0.75,     # what friction leaves behind on a small correction
     "noise_deg": 0.25,         # jitter once settled
 }
+# With a measured feedforward, a steady speed error bigger than this means the feedforward
+# doesn't fit (measured on blocks or other carpet, another motor), not that kP is low.
+FF_MISFIT_FRAC = 0.08
 DRIVE_TARGETS = {
     # Includes up to one 20 ms robot loop before the setpoint even reaches the controller.
     "dead_time_s": 0.05,
@@ -339,8 +342,8 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
 
 def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, drive_kind=None):
     ch = result["channels"]
-    # The practice pod models a NEO; a robot run uses the robot's drive motor.
-    kind = "neo" if result.get("practice") else (drive_kind or "neo")
+    # A practice run says which motor the pod modeled; a robot run uses the robot's drive motor.
+    kind = ((result.get("meta") or {}).get("pod_motor") or "neo") if result.get("practice") else (drive_kind or "neo")
     sensor_period, _, sensor_counts, sensor_words = revspecs.drive_speed_sensor(kind)
     env = result.get("env", "")
     gains = gains or result.get("gains") or {}
@@ -488,6 +491,14 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
                 "(drive_ff, on the floor), then come back here."
                 + (" The error is worst at low speed, which is the missing kS." if
                    A.finite(lo) and A.finite(hi) and lo > 1.5 * hi else ""),
+                {"type": "run", "test": "drive_ff", "env": "FIELD", "args": {}}))
+        elif sse_frac > FF_MISFIT_FRAC:
+            F.append(finding(
+                "warn", f"Holds speed {sse_frac * 100:.0f}% off target: the feedforward doesn't fit this robot",
+                "A measured feedforward on its own gets within a few percent; kP only cleans up the rest. "
+                "Off by this much, it was measured somewhere else (on blocks, on other carpet), with "
+                "another motor, or the robot has changed since. Raising kP to cover it makes the loop "
+                "ring before it fixes the error. Measure drive_ff again, on this floor.",
                 {"type": "run", "test": "drive_ff", "env": "FIELD", "args": {}}))
         elif have:
             new_kp = 0.04 if kP < 0.01 else _clamp_ratio(kP * 1.5, kP)

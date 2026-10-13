@@ -26,6 +26,8 @@ from __future__ import annotations
 import math
 import random
 
+from . import revspecs
+
 MOTORS = {
     # name: (stall torque N*m, stall current A, free current A, free speed rpm)
     "neo": (2.6, 105.0, 1.8, 5676.0),
@@ -177,15 +179,27 @@ def steer_step(targets, hold_s=0.6, settle_s=0.5, kP=0.01, kI=0.0, kD=0.0, i_zon
 # ---------------------------------------------------------------------------- drive
 
 
-class DriveModule:
-    """A NEO on 5.50:1 to a 3 inch wheel, carrying a quarter of the robot or nothing."""
+def nominal_kv(motor="neo", gear=5.5, wheel_d_in=3.0):
+    """YAGSL's default drive kV for a motor: 12 V over the free speed, volts per m/s."""
+    return 12.0 / (MOTORS[motor][3] / 60.0 / gear * math.pi * wheel_d_in * 0.0254)
 
-    COUNTS_PER_REV = 42
+
+class DriveModule:
+    """A NEO (or a Vortex) on 5.50:1 to a 3 inch wheel, carrying a quarter of the robot or nothing.
+
+    The speed reading is the SPARK's: counts of the motor's own encoder (a NEO's 42-count hall
+    sensor; a Vortex's 7168-count encoder on a SPARK Flex) over a window, averaged. Without a
+    window given, the one these robots really use for that motor.
+    """
 
     def __init__(self, surface="floor", robot_mass_kg=55.0, gear=5.5, wheel_d_in=3.0,
-                 current_limit=40.0, kS_volts=0.15, meas_period_ms=32, meas_depth=8, mu=1.1,
-                 seed=1):
-        self.motor = Motor("neo")
+                 current_limit=40.0, kS_volts=0.15, meas_period_ms=None, meas_depth=None, mu=1.1,
+                 seed=1, motor="neo"):
+        period, depth, counts, _ = revspecs.drive_speed_sensor(motor)
+        meas_period_ms = period if meas_period_ms is None else meas_period_ms
+        meas_depth = depth if meas_depth is None else meas_depth
+        self.COUNTS_PER_REV = counts
+        self.motor = Motor(motor)
         self.gear = gear
         self.r = wheel_d_in * 0.0254 / 2
         self.surface = surface
@@ -257,12 +271,16 @@ def _ff_volts(v_sp, v_prev_sp, ff):
 
 
 def drive_step(speeds, hold_s=0.8, align_s=0.6, kP=0.002, kI=0.0, kD=0.0, ramp_s=0.0,
-               ff=(0.0, 2.915, 0.0), surface="floor", meas_period_ms=32, meas_depth=8,
-               rate_hz=100, bus=12.0, modules=4, seed=1):
-    """Same shape of result as the robot's drive_step, with module-to-module variation."""
+               ff=None, surface="floor", meas_period_ms=None, meas_depth=None,
+               rate_hz=100, bus=12.0, modules=4, seed=1, motor="neo"):
+    """Same shape of result as the robot's drive_step, with module-to-module variation.
+
+    ``ff`` defaults to YAGSL's own (no kS, kV of 12 V over the free speed).
+    """
+    ff = ff or (0.0, nominal_kv(motor), 0.0)
     rng = random.Random(seed)
     mods = [DriveModule(surface=surface, meas_period_ms=meas_period_ms, meas_depth=meas_depth,
-                        kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i)
+                        kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i, motor=motor)
             for i in range(modules)]
     pids = [SparkPid(kP, kI, kD, 0.0, ramp_s) for _ in mods]
     dt = 0.0002
@@ -309,7 +327,7 @@ def drive_step(speeds, hold_s=0.8, align_s=0.6, kP=0.002, kI=0.0, kD=0.0, ramp_s
 
 def drive_ff(ramp_vps=1.0, max_v=6.0, step_v=4.0, quasi_s=None, dyn_s=1.0, rest_s=1.0,
              surface="floor", meas_period_ms=16, meas_depth=2, rate_hz=100, bus=12.0, modules=4,
-             seed=1, battery_r=0.0, other_a=3.0):
+             seed=1, battery_r=0.0, other_a=3.0, motor="neo"):
     """Same shape as the robot's drive_ff: open-loop voltage ramps and steps.
 
     With ``battery_r`` (ohms) the battery sags: ``bus`` is its resting voltage, each motor draws
@@ -318,7 +336,7 @@ def drive_ff(ramp_vps=1.0, max_v=6.0, step_v=4.0, quasi_s=None, dyn_s=1.0, rest_
     """
     rng = random.Random(seed)
     mods = [DriveModule(surface=surface, meas_period_ms=meas_period_ms, meas_depth=meas_depth,
-                        kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i)
+                        kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i, motor=motor)
             for i in range(modules)]
     quasi_s = quasi_s or max_v / ramp_vps
     plan = [(0, 0.6), (1, quasi_s), (5, rest_s), (2, quasi_s), (5, rest_s), (3, dyn_s), (5, rest_s),
@@ -372,9 +390,9 @@ def mean_pos(p):
     return sum(p) / len(p)
 
 
-def true_drive_feedforward(surface="floor", robot_mass_kg=55.0, kS_volts=0.15):
+def true_drive_feedforward(surface="floor", robot_mass_kg=55.0, kS_volts=0.15, motor="neo"):
     """What kS, kV and kA really are for the model, to check a fit against."""
-    m = DriveModule(surface=surface, robot_mass_kg=robot_mass_kg, kS_volts=kS_volts)
+    m = DriveModule(surface=surface, robot_mass_kg=robot_mass_kg, kS_volts=kS_volts, motor=motor)
     kV = m.gear / m.r / m.motor.Kv  # back-EMF volts per (m/s)
     # torque per volt at stall-free current: Kt / R; force per volt = Kt/R * G / r
     force_per_volt = m.motor.Kt / m.motor.R * m.gear / m.r
@@ -395,9 +413,9 @@ def wall_loads(robot_mass_kg=55.0, front_share=0.46, seed=1):
 
 
 def true_slip_currents(robot_mass_kg=55.0, mu_static=1.1, front_share=0.46, gear=5.5,
-                       wheel_d_in=3.0, seed=1):
+                       wheel_d_in=3.0, seed=1, motor="neo"):
     """The current at which each modeled wheel breaks loose, to check an analysis against."""
-    motor = Motor("neo")
+    motor = Motor(motor)
     r = wheel_d_in * 0.0254 / 2
     return [mu_static * n * r / (gear * motor.Kt) + motor.free_i
             for n in wall_loads(robot_mass_kg, front_share, seed)]
@@ -405,14 +423,14 @@ def true_slip_currents(robot_mass_kg=55.0, mu_static=1.1, front_share=0.46, gear
 
 def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.46, gear=5.5,
               wheel_d_in=3.0, ceiling_a=60.0, ramp_vps=1.0, slip_mps=0.15, limit_before_a=40.0,
-              rate_hz=200, bus=12.0, seed=1):
+              rate_hz=200, bus=12.0, seed=1, motor="neo"):
     """Same shape as the robot's slip test: four modules, a bumper against a wall.
 
     Returns ``(channels, meta)``. Each wheel is stalled until its push beats static friction, then
     spins against kinetic friction; it is cut, as on the robot, once its speed stays above
     ``slip_mps`` for two 20 ms loops.
     """
-    motor = Motor("neo")
+    motor = Motor(motor)
     r = wheel_d_in * 0.0254 / 2
     loads = wall_loads(robot_mass_kg, front_share, seed)
     J = 3.0e-5 + 1.1e-4 / gear ** 2

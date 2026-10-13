@@ -131,7 +131,8 @@ const Tune = (() => {
     };
     for (const m of ["frontleft", "frontright", "backleft", "backright"]) {
       const f = (tune.driveFeedforward || {})[m] || {};
-      g[`FF/${m}/kS`] = f.kS || 0; g[`FF/${m}/kV`] = f.kV || 2.915; g[`FF/${m}/kA`] = f.kA || 0;
+      // An unmeasured kV is left out: the practice pod then uses YAGSL's default for its motor.
+      g[`FF/${m}/kS`] = f.kS || 0; if (f.kV) g[`FF/${m}/kV`] = f.kV; g[`FF/${m}/kA`] = f.kA || 0;
     }
     return g;
   }

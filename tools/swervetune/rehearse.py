@@ -29,40 +29,44 @@ def _steer_once(g, surface):
             "robot": {"modules": MODULES[:1]}}
 
 
-def _drive_once(g, surface):
-    per = g.get("Drive/VelPeriodMs") or 32
-    dep = g.get("Drive/VelDepth") or 8
+def _drive_once(g, surface, motor="neo"):
+    # 0 or missing means "as YAGSL leaves it": the pod picks that motor's real window.
+    per = g.get("Drive/VelPeriodMs") or None
+    dep = g.get("Drive/VelDepth") or None
     m0 = MODULES[0]
     ch = plant.drive_step(DRIVE_PATTERN, kP=g["Drive/kP"], kI=g.get("Drive/kI", 0),
                           kD=g.get("Drive/kD", 0), ramp_s=g.get("Drive/RampS", 0),
-                          meas_period_ms=per, meas_depth=dep, surface=surface,
-                          ff=(g.get(f"FF/{m0}/kS", 0.0), g.get(f"FF/{m0}/kV", 2.915),
+                          meas_period_ms=per, meas_depth=dep, surface=surface, motor=motor,
+                          ff=(g.get(f"FF/{m0}/kS", 0.0), g.get(f"FF/{m0}/kV", plant.nominal_kv(motor)),
                               g.get(f"FF/{m0}/kA", 0.0)))
-    return {"test": "drive_step", "channels": ch, "practice": True,
+    return {"test": "drive_step", "channels": ch, "practice": True, "meta": {"pod_motor": motor},
             "env": "FIELD" if surface == "floor" else "BLOCKS", "robot": {"modules": MODULES}}
 
 
-def _ff_once(g, surface):
+def _ff_once(g, surface, motor="neo"):
     per = g.get("Drive/VelPeriodMs") or 32
     dep = g.get("Drive/VelDepth") or 8
-    ch = plant.drive_ff(surface=surface, quasi_s=6, max_v=6, meas_period_ms=per, meas_depth=dep)
+    ch = plant.drive_ff(surface=surface, quasi_s=6, max_v=6, meas_period_ms=per, meas_depth=dep, motor=motor)
     return {"test": "drive_ff", "channels": ch, "practice": True,
             "env": "FIELD" if surface == "floor" else "BLOCKS",
-            "meta": {"kv_nominal": 2.915}, "robot": {"modules": MODULES}}
+            "meta": {"kv_nominal": plant.nominal_kv(motor), "pod_motor": motor}, "robot": {"modules": MODULES}}
 
 
-def rehearse(loop, gains, surface="floor", rounds=12, log=None):
-    """Runs the advice loop. Returns a list of rounds: gains, score, cost, advice title."""
+def rehearse(loop, gains, surface="floor", rounds=12, log=None, motor="neo"):
+    """Runs the advice loop. Returns a list of rounds: gains, score, cost, advice title.
+
+    ``motor`` is the pod's drive motor: "neo", or "vortex" like both robots.
+    """
     g = dict(gains)
     if loop == "drive":
         for m in MODULES:
             g.setdefault(f"FF/{m}/kS", 0.0)
-            g.setdefault(f"FF/{m}/kV", 2.915)
+            g.setdefault(f"FF/{m}/kV", plant.nominal_kv(motor))
             g.setdefault(f"FF/{m}/kA", 0.0)
     history = []
     seen = set()
     for i in range(rounds):
-        run = _steer_once(g, surface) if loop == "steer" else _drive_once(g, surface)
+        run = _steer_once(g, surface) if loop == "steer" else _drive_once(g, surface, motor)
         rep = advisor.analyze(run, gains=g)
         nxt = rep.get("next")
         entry = {"round": i, "gains": {k: v for k, v in g.items() if not k.startswith("FF/")},
@@ -82,7 +86,7 @@ def rehearse(loop, gains, surface="floor", rounds=12, log=None):
             seen.add(key)
             g.update(action["values"])
         elif action["type"] == "run" and action["test"] == "drive_ff":
-            ff = advisor.analyze(_ff_once(g, surface))
+            ff = advisor.analyze(_ff_once(g, surface, motor))
             if ff.get("next") and ff["next"]["action"]["type"] == "gains":
                 g.update(ff["next"]["action"]["values"])
             else:
