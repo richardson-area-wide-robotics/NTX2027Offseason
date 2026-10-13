@@ -363,9 +363,20 @@ class Project:
             enc = m.get("encoder", {})
             if enc.get("type") not in (None, "attached", "none") and "id" in enc:
                 ids.setdefault(int(enc["id"]), []).append(f"{n} encoder")
+        # A constant (Black team's Intake: new SparkMax(CAN_ID, ...)) is looked up in its own file
+        # first, then in any file that defines that name only once.
+        per_file = {rel: dict(re.findall(r"\b([A-Z_][A-Z0-9_]*)\s*=\s*(\d+)\s*;", src)) for rel, src in self.java.items()}
+        seen = {}
+        for consts in per_file.values():
+            for k, v in consts.items():
+                seen.setdefault(k, set()).add(v)
+        anywhere = {k: next(iter(v)) for k, v in seen.items() if len(v) == 1}
         for rel, src in self.java.items():
-            for mm in re.finditer(r"new\s+(SparkMax|SparkFlex|TalonFX|TalonFXS|CANcoder)\s*\(\s*(\d+)", src):
-                ids.setdefault(int(mm.group(2)), []).append(f"{os.path.basename(rel)} {mm.group(1)}")
+            for mm in re.finditer(r"new\s+(SparkMax|SparkFlex|TalonFX|TalonFXS|CANcoder)\s*\(\s*([\w.]+)", src):
+                arg = mm.group(2).split(".")[-1]
+                cid = arg if arg.isdigit() else per_file[rel].get(arg) or anywhere.get(arg)
+                if cid is not None:
+                    ids.setdefault(int(cid), []).append(f"{os.path.basename(rel)} {mm.group(1)}")
         return ids
 
     # ------------------------------------------------------------------ editing

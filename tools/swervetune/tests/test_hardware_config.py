@@ -90,5 +90,20 @@ class KnownUnregisteredTest(unittest.TestCase):
         self.assertTrue(F and all(f["level"] == "error" for f in F))
 
 
+class CanIdTest(unittest.TestCase):
+    def test_a_constant_can_id_is_resolved(self):
+        p = Y.Project(os.path.join(REPO, "Black team"))
+        users = [u for us in p.can_ids().values() for u in us]
+        self.assertTrue(any(u.startswith("Intake.java") for u in users), users)
+
+    def test_a_duplicate_through_a_constant_is_an_error(self):
+        p = pea()
+        p.java = dict(p.java)
+        p.java["src/main/java/frc/robot/Extra.java"] = (
+            "class Extra { static final int ROLLER_ID = %d; SparkMax m = new SparkMax(ROLLER_ID, MotorType.kBrushless); }"
+            % int(p.module(p.module_names()[0])["drive"]["id"]))
+        self.assertIn("can_duplicate", ids(Y.lint(p)))
+
+
 if __name__ == "__main__":
     unittest.main()

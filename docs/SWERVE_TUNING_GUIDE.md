@@ -208,7 +208,10 @@ check those before retiring one. The list of numbers lives in `swervetune.json` 
 
 ## At the cart: the drive team's checklist
 
-Everything the drive team needs is on the one Elastic tab, and none of it needs this laptop.
+Everything the drive team does at the cart is on the one Elastic tab, and none of it needs this
+laptop. One thing isn't there yet: each battery's grade (*retire*, *practice only*) and which one
+to use next are worked out on the laptop's Battery tab, from earlier sag. Elastic's Battery check
+line is today's resting voltage only, so check the Battery tab before an event day.
 
 1. **Pick the battery** after every swap, then read the **Battery check** line. *Charged* is ready;
    *partly charged* is fine for practice; *CHARGE IT before a match* means swap it. "Resting
