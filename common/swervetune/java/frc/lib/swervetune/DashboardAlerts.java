@@ -28,6 +28,8 @@ final class DashboardAlerts {
   private final boolean live;
   /** What is showing now, key to "kError: text", for tests and the log. */
   final Map<String, String> showing = new TreeMap<>();
+  /** Where each motor is wired, so a line can say where to look. */
+  private WiringMap wiring = WiringMap.NONE;
 
   DashboardAlerts() {
     this(true);
@@ -59,6 +61,10 @@ final class DashboardAlerts {
     a.set(on);
   }
 
+  void setWiring(WiringMap wiring) {
+    this.wiring = wiring == null ? WiringMap.NONE : wiring;
+  }
+
   /** Asks which battery is in until someone picks one (each boot may be a new battery). */
   void battery(String id) {
     set("battery", AlertType.kWarning, id == null || id.isEmpty(),
@@ -82,14 +88,16 @@ final class DashboardAlerts {
         + " CAN chain itself. Check the termination and the plugs nearest the roboRIO.");
     for (MotorGuard.Motor m : motors) {
       String who = m.name + (m.canId() >= 0 ? " (CAN " + m.canId() + ")" : "");
+      String power = wiring.power(m.name);
+      String cable = wiring.can(m.name);
       set(m.name + "/gone", AlertType.kError, !m.present(),
-          who + " is off the CAN bus now: check its power and CAN plugs");
+          who + " is off the CAN bus now: check its power" + power + " and CAN plugs" + cable);
       set(m.name + "/drops", AlertType.kWarning, m.present() && m.dropouts() > 0 && !dropFlood,
-          who + " dropped off the CAN bus " + times(m.dropouts()) + ": wiggle-test its CAN plugs");
+          who + " dropped off the CAN bus " + times(m.dropouts()) + ": wiggle-test its CAN plugs" + cable);
       set(m.name + "/resets", AlertType.kWarning, m.resets() > 0,
-          who + " lost power and rebooted " + times(m.resets()) + ": check its power leads and breaker");
+          who + " lost power and rebooted " + times(m.resets()) + ": check its power leads and breaker" + power);
       set(m.name + "/brownouts", AlertType.kWarning, m.brownouts() > 0 && !brownFlood,
-          who + " got low voltage " + times(m.brownouts()) + ": check its power leads");
+          who + " got low voltage " + times(m.brownouts()) + ": check its power leads" + power);
       MotorGuard.Stage s = m.stage();
       set(m.name + "/shutoff", AlertType.kError, s == MotorGuard.Stage.SHUTOFF,
           who + " is cut to " + MotorGuard.SHUTOFF_LIMIT_A + " A until it cools (" + m.cause() + ")");

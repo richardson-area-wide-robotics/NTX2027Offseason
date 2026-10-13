@@ -226,6 +226,9 @@ public final class SwerveTune {
         new DriveOwnership.CommandsV2(driveSubsystem),
         false);
     tune.dashboard = new DashboardAlerts();
+    // The Wiring tab's map, if one has been saved and deployed: alerts then name PDH ports and CAN
+    // neighbors.
+    tune.dashboard.setWiring(WiringMap.load(Filesystem.getDeployDirectory().toPath().resolve("wiring.json")));
     tune.guard.setAlertSink(text -> {
       System.out.println("[swervetune] motors: " + text);
       DriverStation.reportWarning("[motors] " + text, false);

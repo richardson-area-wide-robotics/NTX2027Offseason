@@ -185,6 +185,9 @@ Everything the drive team needs is on the one Elastic tab, and none of it needs 
 
    When most motors report the same thing at once (low voltage, CAN dropouts) it shows as one line
    naming the shared cause, the battery or the CAN chain, not a line per motor.
+   Once the Wiring tab's map is saved and deployed, each line also says where to look: a power
+   fault names the motor's PDH port, a CAN fault the devices either side of it on the cable (only
+   after the cable order has been checked on the robot).
 3. **The heat override.** In the last seconds of a match, when losing a motor costs more than the
    motor, the driver presses **Back**: the controller buzzes, and Robot Health shows **Heat override
    ON** with the seconds left. Motors cut off for heat run at half power for 20 seconds; stalls

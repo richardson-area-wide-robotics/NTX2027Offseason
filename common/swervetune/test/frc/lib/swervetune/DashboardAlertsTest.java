@@ -11,6 +11,44 @@ import org.junit.jupiter.api.Test;
 
 /** Red means broken now; yellow is history with its count; a shared cause is one line. */
 class DashboardAlertsTest {
+  static final String WIRING = "{\"pdhPorts\": {\"frontleft drive\": 7}, \"buses\": [{\"name\": \"roboRIO CAN\","
+      + " \"orderConfirmed\": true, \"chain\": [\"roboRIO\", \"frontleft steer\", \"frontleft drive\","
+      + " \"frontright drive\", \"PDH\"]}]}";
+
+  @Test
+  void aMappedRobotSaysWhereToLook() {
+    WiringMap w = WiringMap.parse(WIRING);
+    assertEquals(" (PDH port 7)", w.power("frontleft drive"));
+    assertEquals(" (on the CAN cable between frontleft steer and frontright drive)", w.can("frontleft drive"));
+    assertEquals("", w.power("frontright drive"), "a port nobody mapped says nothing");
+    assertEquals(" (first on the CAN cable, before frontleft steer)", w.can("roboRIO"));
+  }
+
+  @Test
+  void aChainNobodyConfirmedNamesNoNeighbors() {
+    WiringMap w = WiringMap.parse(WIRING.replace("\"orderConfirmed\": true", "\"orderConfirmed\": false"));
+    assertEquals("", w.can("frontleft drive"), "the code's guess at the order would send people to the wrong plug");
+    assertEquals(" (PDH port 7)", w.power("frontleft drive"));
+  }
+
+  @Test
+  void aMotorOffTheBusSaysWhichPortAndWhichPlugs() {
+    alerts.setWiring(WiringMap.parse(WIRING));
+    FakeMotorChannel c = add("frontleft drive");
+    c.present = false;
+    run(1.0);
+    String gone = shown("frontleft drive/gone");
+    assertTrue(gone.startsWith("kError"), gone);
+    assertTrue(gone.contains("check its power (PDH port 7) and CAN plugs (on the CAN cable between frontleft steer"
+        + " and frontright drive)"), gone);
+  }
+
+  @Test
+  void aBrokenMapIsNoMap() {
+    assertEquals("", WiringMap.parse("not json").power("frontleft drive"));
+    assertEquals("", WiringMap.load(java.nio.file.Path.of("no", "such", "wiring.json")).can("x"));
+  }
+
   private final MotorGuard guard = new MotorGuard();
   private final List<FakeMotorChannel> channels = new ArrayList<>();
   private final List<Motor> motors = new ArrayList<>();
