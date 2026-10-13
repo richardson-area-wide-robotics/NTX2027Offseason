@@ -8,7 +8,7 @@
         "layouts": [],
         "containers": [
           {
-            "title": "Battery",
+            "title": "Battery: pick its number",
             "x": 0.0,
             "y": 0.0,
             "width": 256.0,
@@ -21,37 +21,20 @@
             }
           },
           {
-            "title": "Battery at rest (V)",
+            "title": "Battery check",
             "x": 256.0,
             "y": 0.0,
-            "width": 128.0,
+            "width": 384.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
-              "topic": "/SwerveTune/Battery/RestVolts",
+              "topic": "/SwerveTune/Battery/Check",
               "show_submit_button": false,
               "period": 0.06
             }
           },
           {
-            "title": "Battery now (V)",
-            "x": 384.0,
-            "y": 0.0,
-            "width": 256.0,
-            "height": 128.0,
-            "type": "Voltage View",
-            "properties": {
-              "topic": "/SwerveTune/Live/BusVolts",
-              "min_value": 6.0,
-              "max_value": 13.0,
-              "divisions": 7,
-              "inverted": false,
-              "orientation": "horizontal",
-              "period": 0.06
-            }
-          },
-          {
-            "title": "Robot Health",
+            "title": "Robot Health: red = fix before queuing",
             "x": 0.0,
             "y": 128.0,
             "width": 640.0,

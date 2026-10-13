@@ -18,13 +18,19 @@ class ElasticLayoutTest(unittest.TestCase):
             self.assertEqual(fh.read(), elastic.text(), "run: py -3.12 -c \"from swervetune import elastic; elastic.write()\"")
 
     def test_widgets_read_the_robots_topics(self):
-        c = {w["title"]: w for w in elastic.layout()["tabs"][0]["grid_layout"]["containers"]}
-        self.assertEqual(c["Battery"]["properties"]["topic"] + "/selected", C.BATTERY_SELECTED)
-        self.assertEqual(c["Battery"]["type"], "ComboBox Chooser")
-        self.assertEqual(c["Battery now (V)"]["properties"]["topic"], C.LIVE_BUS_VOLTS)
+        ws = elastic.layout()["tabs"][0]["grid_layout"]["containers"]
+        by_type = {w["type"]: w for w in ws}
+        self.assertEqual(by_type["ComboBox Chooser"]["properties"]["topic"] + "/selected", C.BATTERY_SELECTED)
+        self.assertEqual(by_type["Text Display"]["properties"]["topic"], C.BATTERY_CHECK)
         src = open(os.path.join(JAVA, "DashboardAlerts.java"), encoding="utf-8").read()
         group = re.search(r'GROUP\s*=\s*"([^"]+)"', src).group(1)
-        self.assertEqual(c[group]["properties"]["topic"], "/SmartDashboard/" + group)
+        self.assertEqual(by_type["Alerts"]["properties"]["topic"], "/SmartDashboard/" + group)
+
+    def test_no_bare_numbers_for_the_drive_team(self):
+        # A verdict in words beats a voltage to interpret, and NaN at boot reads as broken.
+        topics = {w["properties"]["topic"] for w in elastic.layout()["tabs"][0]["grid_layout"]["containers"]}
+        self.assertNotIn(C.BATTERY_REST_VOLTS, topics)
+        self.assertNotIn(C.LIVE_BUS_VOLTS, topics)
 
     def test_widgets_fit_the_grid(self):
         d = elastic.layout()

@@ -486,6 +486,7 @@ public final class SwerveTune {
     String[] stages = new String[n];
     String[] causes = new String[n];
     String[] flags = new String[n];
+    String[] history = new String[n];
     double[] heat = new double[n];
     double[] temp = new double[n];
     double[] amps = new double[n];
@@ -510,6 +511,7 @@ public final class SwerveTune {
       stages[i] = m.stage().name();
       causes[i] = m.cause();
       flags[i] = m.flags();
+      history[i] = m.history();
       heat[i] = 100 * m.heatFraction();
       temp[i] = m.tempC();
       amps[i] = m.amps();
@@ -550,13 +552,18 @@ public final class SwerveTune {
       liveArray(SwerveTuneTopics.WIRING_CAN).set(lastCan);
     }
     if (dashboard != null) {
-      dashboard.update(list, lastCan);
+      double[] can = lastCan.length >= 5 ? java.util.Arrays.copyOf(lastCan, 6) : lastCan;
+      if (can.length >= 6) {
+        can[5] = canErrorLoops;
+      }
+      dashboard.update(list, can, guard.overrideRemainingS(now));
     }
     liveStrings(SwerveTuneTopics.MOTORS_NAMES).set(names);
     liveStrings(SwerveTuneTopics.MOTORS_KINDS).set(kinds);
     liveStrings(SwerveTuneTopics.MOTORS_STAGE).set(stages);
     liveStrings(SwerveTuneTopics.MOTORS_CAUSE).set(causes);
     liveStrings(SwerveTuneTopics.MOTORS_FLAGS).set(flags);
+    liveStrings(SwerveTuneTopics.MOTORS_HISTORY).set(history);
     liveArray(SwerveTuneTopics.MOTORS_HEAT_PCT).set(heat);
     liveArray(SwerveTuneTopics.MOTORS_TEMP_C).set(temp);
     liveArray(SwerveTuneTopics.MOTORS_AMPS).set(amps);

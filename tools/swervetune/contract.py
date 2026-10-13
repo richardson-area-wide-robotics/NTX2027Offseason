@@ -114,6 +114,7 @@ MOTORS_STALL_S = MOTORS + "StallS"
 MOTORS_OVERRIDE_S = MOTORS + "OverrideS"
 MOTORS_CAUSE = MOTORS + "Cause"
 MOTORS_FLAGS = MOTORS + "Flags"
+MOTORS_HISTORY = MOTORS + "History"
 MOTORS_EVENTS = MOTORS + "Events"
 MOTORS_REPORT = MOTORS + "Report"
 MOTORS_GUARD_ON = MOTORS + "GuardOn"
@@ -134,6 +135,7 @@ BATTERY_OPTIONS = BATTERY_CHOOSER + "options"
 BATTERY_ACTIVE = BATTERY_CHOOSER + "active"
 BATTERY_ID = ROOT + "/Battery/Id"
 BATTERY_REST_VOLTS = ROOT + "/Battery/RestVolts"
+BATTERY_CHECK = ROOT + "/Battery/Check"
 # Utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors, and the running
 # count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"
@@ -193,6 +195,7 @@ MOTOR_STRINGS = {
     "stage": MOTORS_STAGE,
     "cause": MOTORS_CAUSE,
     "flags": MOTORS_FLAGS,
+    "history": MOTORS_HISTORY,
     "controller": MOTORS_CONTROLLERS,
     "code_controller": MOTORS_CODE_CONTROLLERS,
     "firmware": MOTORS_FIRMWARE,

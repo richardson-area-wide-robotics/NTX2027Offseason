@@ -258,7 +258,34 @@ class MotorGuardTest {
     run(0.1);
     assertTrue(m.flags().contains("temperature sensor reads 0"), m.flags());
     assertTrue(m.flags().contains("faults: gate driver"), m.flags());
-    assertTrue(m.flags().contains("since last cleared: sensor"), m.flags());
+    assertFalse(m.flags().contains("since last cleared"), "a fault that already cleared is history, not a failure now");
+    assertEquals("faults since last cleared: sensor", m.history());
+  }
+
+  @Test
+  void heatCutsAreCountedSoTheyOutliveTheCooling() {
+    FakeMotorChannel c = new FakeMotorChannel(20);
+    c.ignoresLimit = true;
+    c.demandA = 40;
+    Motor m = add("Arm", c, MotorKind.NEO_550, false);
+    assertTrue(timeTo(m, Stage.SHUTOFF, 60) < 60);
+    c.demandA = 0;
+    assertTrue(timeTo(m, Stage.OK, 600) < 600, "it cools");
+    assertEquals(1, m.shutoffs());
+    assertEquals(1, m.derates());
+  }
+
+  @Test
+  void theLongestOverrideIsWhatTheDashboardShows() {
+    FakeMotorChannel a = new FakeMotorChannel(20);
+    FakeMotorChannel b = new FakeMotorChannel(20);
+    add("Arm", a, MotorKind.NEO_550, false);
+    add("Wrist", b, MotorKind.NEO_550, false);
+    run(0.1);
+    assertEquals(0, guard.overrideRemainingS(t), 1e-9);
+    guard.override("Arm", 20, t);
+    run(5);
+    assertEquals(15, guard.overrideRemainingS(t), 0.05);
   }
 
   // ------------------------------------------------------------------ wiring

@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -26,7 +27,10 @@ public class Robot extends LoggedRobot {
     shooter.watchMotors(tune::watchMotor);
     intake.watchMotors(tune::watchMotor);
     // Back button: hold off heat shutoffs for 20 s in a match (stalls still cut out).
-    controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20)));
+    controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20))
+        // A short buzz says it took; the dashboard shows "Heat override ON" with the time left.
+        .andThen(Commands.startEnd(() -> controller.setRumble(RumbleType.kBothRumble, 0.6),
+            () -> controller.setRumble(RumbleType.kBothRumble, 0)).withTimeout(0.3)));
 
     drive.setDefaultCommand(drive.drive(
         () -> controller.getLeftX(),

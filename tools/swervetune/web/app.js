@@ -260,7 +260,12 @@ function paintHeader() {
     const m = live.mode;
     setChip($("#mode-chip"), (st.robot && st.robot.name ? st.robot.name + " · " : "") + (MODE_WORD[m] || m),
       m === "DISABLED" ? "" : m === "ESTOP" ? "bad" : "warn");
-    setChip($("#bus-chip"), "Voltage " + fmt(live.bus, 1) + " V", live.bus < 11.5 ? "bad" : live.bus < 12.2 ? "warn" : "good");
+    // Disabled, the battery is at rest: grade it like the charge check (12.7 charged, under 12.3
+    // charge it). Enabled, it sags with load: amber under 12.2, red under 11.5.
+    const rest = m === "DISABLED";
+    setChip($("#bus-chip"), "Voltage " + fmt(live.bus, 1) + " V" + (rest ? " at rest" : ""),
+      rest ? (live.bus >= 12.7 ? "good" : live.bus >= 12.3 ? "warn" : "bad")
+        : (live.bus < 11.5 ? "bad" : live.bus < 12.2 ? "warn" : "good"));
   } else {
     setChip($("#mode-chip"), on ? "Connected · waiting for data" : "Not connected");
     setChip($("#bus-chip"), "Voltage –");

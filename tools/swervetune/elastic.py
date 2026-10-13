@@ -4,9 +4,10 @@ Elastic is the dashboard the Driver Station laptop runs. This layout puts the th
 team needs at the cart on one tab:
 
 * **Battery** - the drop-down the robot asks them to pick after every swap (``BatteryPicker``);
-* the battery's voltage at rest when it was picked, and the battery voltage now;
-* **Robot Health** - the robot's alerts (``DashboardAlerts``): a motor off the CAN bus, a
-  controller that rebooted, a hot motor, CAN errors, and "Which battery is in?".
+* **Battery check** - one line with the verdict: "Battery 7: 12.84 V at rest, charged". (The
+  Driver Station already shows the voltage now, so there is no second voltage widget.)
+* **Robot Health** - the robot's alerts (``DashboardAlerts``). Red means broken now: fix it before
+  queuing. Yellow happened or needs watching, and stays with its count until the code restarts.
 
 Load it in Elastic with File > Open Layout, picking ``tools/swervetune/elastic/drive-team-layout.json``.
 Widget types and properties are Elastic 2026's (checked against its v2026.1.2 source): a
@@ -34,12 +35,11 @@ def _w(title, x, y, w, h, kind, **props):
 
 def layout():
     return {"version": 1.0, "grid_size": 128, "tabs": [{"name": "Drive team", "grid_layout": {"layouts": [], "containers": [
-        _w("Battery", 0, 0, 256, 128, "ComboBox Chooser", topic=C.BATTERY_CHOOSER.rstrip("/"), sort_options=False),
-        _w("Battery at rest (V)", 256, 0, 128, 128, "Text Display", topic=C.BATTERY_REST_VOLTS,
-           show_submit_button=False),
-        _w("Battery now (V)", 384, 0, 256, 128, "Voltage View", topic=C.LIVE_BUS_VOLTS, min_value=6.0,
-           max_value=13.0, divisions=7, inverted=False, orientation="horizontal"),
-        _w(HEALTH_GROUP, 0, 128, 640, 384, "Alerts", topic="/SmartDashboard/" + HEALTH_GROUP),
+        _w("Battery: pick its number", 0, 0, 256, 128, "ComboBox Chooser", topic=C.BATTERY_CHOOSER.rstrip("/"),
+           sort_options=False),
+        _w("Battery check", 256, 0, 384, 128, "Text Display", topic=C.BATTERY_CHECK, show_submit_button=False),
+        _w("Robot Health: red = fix before queuing", 0, 128, 640, 384, "Alerts",
+           topic="/SmartDashboard/" + HEALTH_GROUP),
     ]}}]}
 
 

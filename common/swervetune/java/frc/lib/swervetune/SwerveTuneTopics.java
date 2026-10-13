@@ -178,6 +178,8 @@ public final class SwerveTuneTopics {
   public static final String MOTORS_CAUSE = MOTORS + "Cause";
   /** Failures the guard cannot fix: unplugged, open phase, faults. Empty when none. */
   public static final String MOTORS_FLAGS = MOTORS + "Flags";
+  /** Faults latched earlier and no longer active ("faults since last cleared: ..."). Empty when none. */
+  public static final String MOTORS_HISTORY = MOTORS + "History";
   /** Stage changes, newest last. */
   public static final String MOTORS_EVENTS = MOTORS + "Events";
   /** What registration found: limits over policy, unknown motor types. */
@@ -220,6 +222,8 @@ public final class SwerveTuneTopics {
 
   /** The battery voltage when it was picked with the robot disabled: its resting voltage. */
   public static final String BATTERY_REST_VOLTS = ROOT + "/Battery/RestVolts";
+  /** One line for the drive team: "Battery 7: 12.84 V at rest, charged". */
+  public static final String BATTERY_CHECK = ROOT + "/Battery/Check";
 
   /**
    * The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors,

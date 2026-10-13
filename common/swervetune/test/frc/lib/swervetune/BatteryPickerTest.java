@@ -54,6 +54,15 @@ class BatteryPickerTest {
     assertEquals("2025-3", str(SwerveTuneTopics.BATTERY_ID));
     assertEquals("2025-3", str(SwerveTuneTopics.BATTERY_ACTIVE));
     assertEquals(12.81, num(SwerveTuneTopics.BATTERY_REST_VOLTS), 1e-9);
+    assertEquals("Battery 2025-3: 12.81 V at rest, charged", str(SwerveTuneTopics.BATTERY_CHECK));
+  }
+
+  @Test
+  void theCheckLineSaysWhatToDo() {
+    assertEquals("Pick the battery number", BatteryPicker.checkText("", Double.NaN));
+    assertEquals("Battery 4: 12.45 V at rest, partly charged", BatteryPicker.checkText("4", 12.45));
+    assertEquals("Battery 4: 12.10 V at rest, CHARGE IT before a match", BatteryPicker.checkText("4", 12.1));
+    assertTrue(BatteryPicker.checkText("4", Double.NaN).contains("Disable, then pick it again"));
   }
 
   @Test

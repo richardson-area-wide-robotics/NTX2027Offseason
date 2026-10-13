@@ -31,6 +31,9 @@ final class BatteryPicker {
   /** Robot code starting this soon after the roboRIO powered up counts as a fresh power-on. */
   static final double FRESH_POWER_ON_S = 120.0;
   static final List<String> DEFAULT_ROSTER = numbers(12);
+  /** Resting voltage of a charged ES17-12, and the line below which it needs charging (battery.py). */
+  static final double CHARGED_V = 12.7;
+  static final double CHARGE_IT_V = 12.3;
 
   private final List<String> roster;
   private final StringSubscriber selected;
@@ -38,6 +41,7 @@ final class BatteryPicker {
   private final StringPublisher active;
   private final StringPublisher id;
   private final DoublePublisher restVolts;
+  private final StringPublisher check;
   // Held so they stay published for the life of the robot program.
   private final StringPublisher type;
   private final IntegerPublisher instance;
@@ -78,6 +82,20 @@ final class BatteryPicker {
     id.set("");
     restVolts = nt.getDoubleTopic(SwerveTuneTopics.BATTERY_REST_VOLTS).publish();
     restVolts.set(Double.NaN);
+    check = nt.getStringTopic(SwerveTuneTopics.BATTERY_CHECK).publish();
+    check.set(checkText("", Double.NaN));
+  }
+
+  /** The drive team's one line: which battery, its resting voltage, and what to do. */
+  static String checkText(String battery, double rest) {
+    if (battery.isEmpty()) {
+      return "Pick the battery number";
+    }
+    if (!Double.isFinite(rest)) {
+      return "Battery " + battery + ": picked while enabled. Disable, then pick it again to read it";
+    }
+    return String.format("Battery %s: %.2f V at rest, %s", battery, rest,
+        rest >= CHARGED_V ? "charged" : rest >= CHARGE_IT_V ? "partly charged" : "CHARGE IT before a match");
   }
 
   /**
@@ -112,7 +130,9 @@ final class BatteryPicker {
     current = s;
     id.set(s);
     active.set(s);
-    restVolts.set(disabled && Double.isFinite(busVolts) && busVolts > 1 ? busVolts : Double.NaN);
+    double rest = disabled && Double.isFinite(busVolts) && busVolts > 1 ? busVolts : Double.NaN;
+    restVolts.set(rest);
+    check.set(checkText(s, rest));
     return current;
   }
 

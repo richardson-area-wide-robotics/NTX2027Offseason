@@ -41,12 +41,12 @@ for name, src in SOURCES.items():
         else:
             USED.setdefault(key, name)
 
-    # Keys passed to a helper that writes the attribute, e.g. tip("config.offset", "Offset").
-    for m in re.finditer(r'\btip\("([\w.-]+)"', src):
+    # Keys passed to a helper that writes the attribute, e.g. tip("config.offset", "Offset") or t("motors.heat", "Heat").
+    for m in re.finditer(r'\b(?:tip|t)\("([\w.-]+)"', src):
         USED.setdefault(m.group(1), name)
 
 # Files whose hover-only title="" attributes haven't been replaced by tips yet. It only shrinks.
-TITLES_PENDING = {"calibrate.js", "controllers.js", "motors.js", "wiring.js"}
+TITLES_PENDING = {"wiring.js"}
 
 
 class TipsTest(unittest.TestCase):

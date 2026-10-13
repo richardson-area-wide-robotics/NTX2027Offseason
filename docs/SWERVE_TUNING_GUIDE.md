@@ -126,13 +126,36 @@ drops below about 6.8 V the roboRIO browns out and cuts the motors.
 
 **On the Driver Station laptop**, load the drive team's Elastic layout once (Elastic: File >
 Open Layout, `tools/swervetune/elastic/drive-team-layout.json`). One tab with the Battery drop-down,
-the battery's voltage when it was picked and right now, and the robot's health alerts.
+a **Battery check** line ("Battery 7: 12.84 V at rest, charged") and the robot's health alerts. See
+[At the cart](#at-the-cart-the-drive-teams-checklist) below.
 
 Picking takes two seconds and is the whole job. Every wheel test and every match log you open
 then measures that battery, and **How each battery is doing** in the picker shows each one over
 the season. A loose Anderson connector or main-breaker bolt looks exactly like a tired battery, so
 check those before retiring one. The list of numbers lives in `swervetune.json` (`"batteries"`);
 **Edit the battery list** changes it.
+
+## At the cart: the drive team's checklist
+
+Everything the drive team needs is on the one Elastic tab, and none of it needs this laptop.
+
+1. **Pick the battery** after every swap, then read the **Battery check** line. *Charged* is ready;
+   *partly charged* is fine for practice; *CHARGE IT before a match* means swap it. "Picked while
+   enabled" means the robot couldn't read it at rest: disable, then pick it again.
+2. **Read Robot Health.** The colors mean one thing each:
+   - **Red: broken now.** A motor off the CAN bus, a motor cut off for heat, an active controller
+     fault. Fix it before queuing.
+   - **Yellow: it happened, or watch it.** A dropout, a reboot, low voltage, a motor that got hot
+     and cooled, a fault that has already cleared. Each keeps its count until the robot code
+     restarts, so after a match the list says what went wrong during it. Check it in the pit.
+   - **Info: tell a programmer.** Nothing the drive team can fix at the cart.
+
+   When most motors report the same thing at once (low voltage, CAN dropouts) it shows as one line
+   naming the shared cause, the battery or the CAN chain, not a line per motor.
+3. **The heat override.** In the last seconds of a match, when losing a motor costs more than the
+   motor, the driver presses **Back**: the controller buzzes, and Robot Health shows **Heat override
+   ON** with the seconds left. Motors cut off for heat run at half power for 20 seconds; stalls
+   still cut out, and a motor already past saving stays off. Each press restarts the 20 seconds.
 
 ## The drive team's controllers
 
@@ -176,8 +199,9 @@ The robot code already has everything the tools need:
 - `AkLogging.start(...)` first in `Robot`'s constructor (AdvantageKit logging).
 - Each subsystem registers its motors with the motor guard, which enforces the current policy:
   NEO Vortex 80 A, NEO 2.0 80 A, NEO V1.1 60 A, NEO 550 20 A.
-- The driver controller's **Back** button holds thermal shutoffs off for 20 seconds, for when
-  losing a motor costs more than the motor. It never lifts a stall cutout.
+- The driver controller's **Back** button lets motors cut off for heat run at half power for 20
+  seconds, with a short buzz and a "Heat override ON" alert, for when losing a motor costs more
+  than the motor. It never lifts a stall cutout.
 
 ## Going deeper: every SPARK's CAN traffic (optional)
 

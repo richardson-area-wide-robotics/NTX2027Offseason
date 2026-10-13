@@ -142,6 +142,9 @@ public final class MotorGuard {
     Stage stage = Stage.OK;
     String cause = "";
     String flags = "";
+    String history = "";
+    int derates;
+    int shutoffs;
     double overrideUntilS = Double.NEGATIVE_INFINITY;
     double lastLimitSendS = Double.NEGATIVE_INFINITY;
     double tempC = Double.NaN;
@@ -176,9 +179,30 @@ public final class MotorGuard {
       return cause;
     }
 
-    /** Failures the guard cannot fix, e.g. an unplugged motor; empty when none. */
+    /**
+     * Failures happening now that the guard cannot fix, e.g. an unplugged motor; empty when none.
+     * These are red on every screen: red means broken now.
+     */
     public String flags() {
       return flags;
+    }
+
+    /**
+     * Faults the controller latched earlier that are no longer active, e.g. {@code "faults since
+     * last cleared: sensor"}; empty when none. Amber: worth a look after the match, not a failure.
+     */
+    public String history() {
+      return history;
+    }
+
+    /** Times it was halved for heat since the robot code started. */
+    public int derates() {
+      return derates;
+    }
+
+    /** Times it was cut off for heat (or a stall) since the robot code started. */
+    public int shutoffs() {
+      return shutoffs;
     }
 
     public double tempC() {
@@ -392,6 +416,15 @@ public final class MotorGuard {
     return text;
   }
 
+  /** Seconds left on the longest running thermal override, 0 when none is on. */
+  public double overrideRemainingS(double nowS) {
+    double s = 0;
+    for (Motor m : motors.values()) {
+      s = Math.max(s, m.overrideRemainingS(nowS));
+    }
+    return s;
+  }
+
   /** Call every robot loop. */
   public void update(double nowS) {
     double dt = Double.isNaN(lastNowS) ? 0.02 : Math.max(0, Math.min(0.2, nowS - lastNowS));
@@ -527,6 +560,12 @@ public final class MotorGuard {
     }
     if (target != m.stage) {
       String verb = target.ordinal() > m.stage.ordinal() ? "up" : "down";
+      // Counted on the way up, so the drive team still sees it after the motor has cooled.
+      if (target.ordinal() > m.stage.ordinal() && target == Stage.SHUTOFF) {
+        m.shutoffs++;
+      } else if (target.ordinal() > m.stage.ordinal() && target == Stage.DERATE) {
+        m.derates++;
+      }
       event(nowS, String.format("%s %s %s -> %s: %s; limit %d A", m.name, verb, m.stage, target,
           cause.isEmpty() ? "cooled" : cause, m.activeLimitA));
       m.stage = target;
@@ -547,10 +586,10 @@ public final class MotorGuard {
     if (active != null && !active.isEmpty()) {
       flags.add("faults: " + active);
     }
+    // A fault latched earlier and no longer active is history, not a failure: kept apart so a
+    // healthy motor never shows red for something that cleared long ago.
     String sticky = m.channel.stickyFaults();
-    if (sticky != null && !sticky.isEmpty()) {
-      flags.add("since last cleared: " + sticky);
-    }
+    m.history = sticky != null && !sticky.isEmpty() ? "faults since last cleared: " + sticky : "";
     String isA = m.channel.controllerModel();
     String cls = m.channel.controllerClass();
     if (isA != null && cls != null && !isA.isEmpty() && !cls.isEmpty() && !isA.equals(cls)) {

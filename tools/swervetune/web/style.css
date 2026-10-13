@@ -262,12 +262,14 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 .batt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin: 6px 0 12px; }
 .batt { display: grid; place-items: center; gap: 4px; min-height: 88px; padding: 10px 6px; border-radius: 10px;
   border: 2px solid var(--rule); border-left-width: 8px; background: var(--panel); color: var(--ink); cursor: pointer; font: inherit; }
-.batt:hover:not(:disabled) { border-color: var(--accent); }
+/* The left edge is the battery's state: hover and "in now" never repaint it. */
+.batt:hover:not(:disabled) { border-top-color: var(--accent); border-right-color: var(--accent); border-bottom-color: var(--accent); }
 .batt:disabled { opacity: .55; cursor: not-allowed; }
 .batt.good { border-left-color: var(--ok); }
 .batt.practice { border-left-color: var(--warn); }
 .batt.retire { border-left-color: var(--bad); }
-.batt.on { outline: 3px solid var(--accent); outline-offset: 2px; }
+.batt.on { box-shadow: inset 0 0 0 3px var(--accent); }
+.batt-in { font-size: 12px; font-weight: 700; color: var(--accent); }
 .batt-n { font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
 .batt-s { font-size: 12px; color: var(--muted); }
 .batt-details { margin: 4px 0 12px; }
@@ -278,19 +280,25 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
 /* ---------------------------------------------------------------- motors */
-.table-wrap { overflow-x: auto; }
-table.motors { width: 100%; border-collapse: collapse; }
-table.motors th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 4px 8px;
-  border-bottom: 1px solid var(--rule); }
-table.motors td { padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
-table.motors tr.flagged td { background: var(--bad-bg); }
-.heat { position: relative; width: 110px; height: 18px; background: var(--grid); border-radius: 4px; overflow: hidden; }
-.heat > div { height: 100%; }
+/* Motor rows: red rail = broken now; amber rail = happened earlier or heating. */
+table.t tr.flagged > td { background: var(--bad-bg); }
+table.t tr.flagged > td:first-child { box-shadow: inset 4px 0 0 var(--bad); }
+table.t tr.history > td:first-child { box-shadow: inset 4px 0 0 var(--warn); }
+.bad-ink { color: var(--bad); }
+/* Stage ladder: DERATE and SHUTOFF are solid, so they read apart from a WARN tint. */
+.chip.derate { background: var(--warn); color: var(--on-state); border-color: var(--warn); }
+.chip.shutoff { background: var(--bad); color: var(--on-state); border-color: var(--bad); }
+/* Heat bar: the % beside it; ticks under it at 50, 70 and 85%. */
+.heatcell { display: flex; align-items: center; gap: 8px; }
+.heat { position: relative; width: 110px; height: 12px; margin-bottom: 5px; background: var(--grid); border-radius: 3px; }
+.heat > div { height: 100%; border-radius: 3px; }
 .heat > div.good { background: var(--ok); }
 .heat > div.warn { background: var(--warn); }
 .heat > div.bad { background: var(--bad); }
-.heat > span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: var(--ink); text-shadow: 0 0 3px var(--panel); }
+.heat::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 5px; pointer-events: none;
+  background: linear-gradient(to right, transparent 49.5%, var(--muted) 49.5% 50.5%, transparent 50.5% 69.5%,
+    var(--muted) 69.5% 70.5%, transparent 70.5% 84.5%, var(--muted) 84.5% 85.5%, transparent 85.5%); }
+.heat-pct { font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; }
 .callout.bad { background: var(--bad-bg); color: var(--bad); border-left-color: var(--bad); }
 .callout.warn { background: var(--warn-bg); border-left-color: var(--warn); }
 .callout.info { background: var(--info-bg); border-left-color: var(--info); }

@@ -40,9 +40,9 @@ const Battery = (() => {
       <div class="batt-grid" ${shown.some(b => b.id === r.id) ? "" : "data-nofocus"}>${shown.map(b => `<button class="batt ${b.status || ""} ${b.id === r.id ? "on" : ""}" data-id="${esc(b.id)}" ${b.id === r.id ? "autofocus" : ""}
           ${r.connected ? "" : "disabled"} aria-label="Battery ${esc(b.id)}${b.status ? ", " + WORDS[b.status] : ""}">
           <span class="batt-n">${esc(b.id)}</span>
-          <span class="batt-s">${b.status ? `${WORDS[b.status]} · ${b.mohm} mΩ` : "not measured"}</span></button>`).join("")}</div>
+          <span class="batt-s">${b.status ? `${WORDS[b.status]} · ${b.mohm} mΩ` : "not measured"}</span>${b.id === r.id ? `<span class="batt-in">in now</span>` : ""}</button>`).join("")}</div>
       ${r.id && r.rest_v > 1 ? `<p class="small">Battery ${esc(r.id)} read ${fmt(r.rest_v, 2)} V at rest when it was picked
-        ${r.rest_v >= 12.7 ? "(charged)" : r.rest_v >= 12.3 ? "(partly charged)" : "<b>(charge it)</b>"}.</p>` : ""}
+        (${r.rest_v >= 12.3 ? charge(r.rest_v) : `<b>${charge(r.rest_v)}</b>`}).</p>` : ""}
       <details class="batt-details"><summary>How each battery is doing</summary>
         <div class="tblwrap"><table class="t"><thead><tr><th>Battery</th><th></th><th>Sag</th><th>At rest</th><th>Measured</th><th>Trend</th><th>From</th></tr></thead><tbody>
         ${shown.map(b => `<tr><td><b>${esc(b.id)}</b></td>
@@ -63,13 +63,20 @@ const Battery = (() => {
     });
   }
 
+  // The charge check on a resting voltage: the same words the robot puts on the dashboard.
+  const charge = v => !(v > 1) ? "" : v >= 12.7 ? "charged" : v >= 12.3 ? "partly charged" : "CHARGE IT before a match";
+
   async function pick(id) {
     const r = await App.api("/api/battery/pick", { id });
     if (!r.ok) { App.toast(r.error); return; }
     App.closeModal();
     const b = row(id);
-    App.toast(`Battery ${id} is in${b.status ? ` (${WORDS[b.status]}, ${b.mohm} mΩ last time)` : ""}.`, 4000);
-    if (b.status === "retire") App.toast(`Battery ${id} sagged hard last time: use another for matches.`, 6000);
+    // The robot reads the battery the moment it is picked; give it a moment, then say what it read.
+    await new Promise(res => setTimeout(res, 600));
+    const now = await load();
+    const read = now.id === id && now.rest_v > 1 ? `: ${fmt(now.rest_v, 2)} V at rest, ${charge(now.rest_v)}` : "";
+    App.toast(`Battery ${id} is in${read}${b.status ? `. Sag last time: ${WORDS[b.status]}, ${b.mohm} mΩ` : ""}.`, 6000);
+    if (b.status === "retire") setTimeout(() => App.toast(`Battery ${id} sagged hard last time: use another for matches.`, 6000), 6200);
   }
 
   function edit(ids) {
