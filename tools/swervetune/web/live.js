@@ -132,7 +132,8 @@
 
   App.on("live", L => {
     if (!L || !L.connected || !L.live || !root.classList.contains("on")) return;
-    svg.hidden = false;
+    // An <svg> has no hidden property (only HTML elements do): the attribute itself.
+    svg.toggleAttribute("hidden", false);
     $("#live-empty", root).hidden = true;
     paint(L);
   });
@@ -144,7 +145,7 @@
       // Nothing is measured, so nothing may look fine: no drawing, no modules, no "nothing wrong".
       built = false;
       svg.innerHTML = "";
-      svg.hidden = true;
+      svg.toggleAttribute("hidden", true);
       $("#live-empty", root).hidden = false;
       $("#mods", root).innerHTML = "";
       $("#live-pose", root).textContent = "";
