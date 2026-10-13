@@ -47,8 +47,10 @@ nothing else:
    there; move them to the Telemetry API or to AdvantageKit's `Logger.recordOutput`. The tools
    already use NetworkTables 4 only. The dashboard's **Battery** drop-down (`BatteryPicker`) is
    published as raw NT4 topics in the "String Chooser" shape under `/SmartDashboard/Battery`,
-   without the SmartDashboard class, so it keeps working; check the 2027 dashboards still show
-   that shape as a drop-down.
+   without the SmartDashboard class, so it keeps working. Elastic's 2027 alphas read a chooser
+   from `selected/tune` and `selected/value` instead of `selected` and `active` (2026); move
+   `BatteryPicker` to whatever WPILib 2027's chooser publishes, and regenerate the drive team's
+   layout (`tools/swervetune/elastic.py`).
 8. **`Command.schedule()` is deprecated** (Peashooter's `Robot.java` uses it for autonomous).
 9. **Raw integer timestamps become nanoseconds** (`RobotController.getTime`, `getFPGATime`,
    `nt::Now`). DataLog files and NetworkTables still use microseconds, so the log tools

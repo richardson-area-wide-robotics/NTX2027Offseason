@@ -124,6 +124,10 @@ drops below about 6.8 V the roboRIO browns out and cuts the motors.
 3. Each button shows how that battery did last time: **good**, **practice** (fine for practice,
    keep it out of matches if better ones are charged) or **retire**.
 
+**On the Driver Station laptop**, load the drive team's Elastic layout once (Elastic: File >
+Open Layout, `tools/swervetune/elastic/drive-team-layout.json`). One tab with the Battery drop-down,
+the battery's voltage when it was picked and right now, and the robot's health alerts.
+
 Picking takes two seconds and is the whole job. Every wheel test and every match log you open
 then measures that battery, and **How each battery is doing** in the picker shows each one over
 the season. A loose Anderson connector or main-breaker bolt looks exactly like a tired battery, so

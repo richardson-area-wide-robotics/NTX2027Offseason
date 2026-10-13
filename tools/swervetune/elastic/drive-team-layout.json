@@ -1,0 +1,69 @@
+{
+  "version": 1.0,
+  "grid_size": 128,
+  "tabs": [
+    {
+      "name": "Drive team",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "Battery",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "ComboBox Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/Battery",
+              "sort_options": false,
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Battery at rest (V)",
+            "x": 256.0,
+            "y": 0.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SwerveTune/Battery/RestVolts",
+              "show_submit_button": false,
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Battery now (V)",
+            "x": 384.0,
+            "y": 0.0,
+            "width": 256.0,
+            "height": 128.0,
+            "type": "Voltage View",
+            "properties": {
+              "topic": "/SwerveTune/Live/BusVolts",
+              "min_value": 6.0,
+              "max_value": 13.0,
+              "divisions": 7,
+              "inverted": false,
+              "orientation": "horizontal",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Robot Health",
+            "x": 0.0,
+            "y": 128.0,
+            "width": 640.0,
+            "height": 384.0,
+            "type": "Alerts",
+            "properties": {
+              "topic": "/SmartDashboard/Robot Health",
+              "period": 0.06
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
