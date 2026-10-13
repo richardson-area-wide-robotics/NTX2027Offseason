@@ -39,10 +39,11 @@ const Battery = (() => {
     App.modal(`<h2>Which battery is in?</h2>
       <p>Tap the number on the battery; <b>Borrowed</b> for one without a team number.${r.connected ? "" : " <b>Connect to the robot to pick.</b>"}</p>
       ${r.robot_path ? `<div class="callout warn"><b>${esc(r.robot_path.title)}.</b> ${esc(r.robot_path.why)}</div>` : ""}
+      ${r.next ? `<p class="batt-next" data-tip="battery.next"><b>Next to use: Battery ${esc(r.next.id)}</b>, ${esc(r.next.why)}</p>` : ""}
       <div class="batt-grid" ${shown.some(b => b.id === r.id) ? "" : "data-nofocus"}>${shown.map(b => `<button class="batt ${b.status || ""} ${b.id === r.id ? "on" : ""}" data-id="${esc(b.id)}" ${b.id === r.id ? "autofocus" : ""}
           ${r.connected ? "" : "disabled"} aria-label="Battery ${esc(b.id)}${b.status ? ", " + WORDS[b.status] : ""}">
-          <span class="batt-n">${esc(b.id)}</span>
-          <span class="batt-s">${b.status ? `${WORDS[b.status]} · ${b.mohm} mΩ` : "not measured"}</span>${b.id === r.id ? `<span class="batt-in">in now</span>` : ""}</button>`).join("")}</div>
+          <span class="batt-n${b.id.length > 3 ? " long" : ""}">${esc(b.id)}</span>
+          <span class="batt-s">${b.status ? `${WORDS[b.status]} · ${b.mohm} mΩ` : "not measured"}</span>${b.id === r.id ? `<span class="batt-in">in now</span>` : ""}${r.next && b.id === r.next.id ? `<span class="batt-in">next</span>` : ""}</button>`).join("")}</div>
       ${r.id && r.rest_v > 1 ? `<p class="small">Battery ${esc(r.id)} read ${fmt(r.rest_v, 2)} V at rest when it was picked
         (${r.rest_v >= 12.3 ? charge(r.rest_v) : `<b>${charge(r.rest_v)}</b>`}).</p>` : ""}
       <details class="batt-details"><summary>How each battery is doing</summary>

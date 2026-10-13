@@ -613,8 +613,10 @@ def api_battery(_query=None):
         rows.append({"id": bid, "listed": bid in options, "status": last.get("status"), "mohm": last.get("mohm"),
                      "v_rest": last.get("v_rest"), "when": last.get("when"), "source": last.get("source"),
                      "n": len(h), "trend": [x["mohm"] for x in h[-12:]]})
-    return {"ok": True, "connected": bool(live), "id": live.get("battery_id") or "",
+    current = live.get("battery_id") or ""
+    return {"ok": True, "connected": bool(live), "id": current,
             "rest_v": live.get("battery_rest"), "batteries": rows, "robot_path": battery.robot_path_suspect(hist),
+            "next": battery.suggest_next(rows, current),
             "good_max_mohm": battery.GOOD_MAX_OHM * 1000, "practice_max_mohm": battery.PRACTICE_MAX_OHM * 1000,
             "datasheet": battery.ES17_12}
 

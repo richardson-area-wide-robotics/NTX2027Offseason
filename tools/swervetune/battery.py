@@ -235,6 +235,59 @@ def robot_path_suspect(hist, today=None):
     return None
 
 
+RESTED_MIN = 60  # a battery measured on the robot more recently than this is probably still flat
+
+
+def _minutes_since(when, now):
+    import time
+    for fmt, n in (("%Y%m%d-%H%M%S", 15), ("%Y%m%d", 8)):
+        try:
+            return (now - time.mktime(time.strptime(str(when)[:n], fmt))) / 60
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+def _ago(minutes):
+    if minutes < 90:
+        return f"{minutes:.0f} min ago"
+    if minutes < 36 * 60:
+        return f"{minutes / 60:.0f} h ago"
+    return f"{minutes / 1440:.0f} days ago"
+
+
+def suggest_next(rows, current=None, now=None):
+    """Which battery to put in next: ``{"id", "why"}``, or None.
+
+    Never the one in now, a borrowed one, or one graded retire. Good before practice before not yet
+    measured; among those, the one on the robot longest ago, the likeliest to be charged and cool.
+    One measured on the robot in the last hour is a last resort: it is probably still flat. "On the
+    robot" means in a test or a match log; a battery used without either leaves no record.
+    """
+    import time
+    now = time.time() if now is None else now
+    rank = {"good": 0, "practice": 1, None: 2}
+    cands = []
+    for b in rows:
+        if not b.get("listed") or b["id"] in (current, BORROWED) or b.get("status") == "retire":
+            continue
+        mins = _minutes_since(b.get("when"), now) if b.get("when") else None
+        fresh = mins is not None and mins < RESTED_MIN
+        # Not yet measured: no record of when it was last on the robot, so as rested as any.
+        cands.append((fresh, rank.get(b.get("status"), 2), -(mins if mins is not None else 1e9), b, mins))
+    if not cands:
+        return None
+    fresh, _, _, b, mins = min(cands, key=lambda c: c[:3])
+    graded = f"graded {b['status']} ({b['mohm']:g} mΩ)" if b.get("status") else "not measured yet"
+    seen = f"last on the robot {_ago(mins)}" if mins is not None else "no record of its last use"
+    why = f"{graded}, {seen}"
+    if fresh:
+        why += ". Every other battery is retired or was on the robot in the last hour: check this one's charge"
+    else:
+        why += ": the likeliest to be charged and cool"
+    return {"id": b["id"], "why": why + "."}
+
+
 def history(entries):
     """Per battery id, its measurements oldest first. ``entries`` are ``(when, id, fit, source)``."""
     out = {}

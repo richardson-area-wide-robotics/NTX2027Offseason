@@ -21,6 +21,42 @@ def capture(seconds, drift_deg_per_min):
             "robot": {"modules": ["frontleft", "frontright", "backleft", "backright"]}}
 
 
+class NextBatteryTest(unittest.TestCase):
+    NOW = 1_800_000_000  # a fixed clock
+    import time as _t
+    STAMP = _t.strftime("%Y%m%d-%H%M%S", _t.localtime(1_800_000_000 - 3 * 3600))   # 3 h earlier
+    RECENT = _t.strftime("%Y%m%d-%H%M%S", _t.localtime(1_800_000_000 - 20 * 60))   # 20 min earlier
+    OLDER = _t.strftime("%Y%m%d-%H%M%S", _t.localtime(1_800_000_000 - 26 * 3600))  # a day earlier
+
+    def row(self, bid, status, when, mohm=15.0, listed=True):
+        return {"id": bid, "status": status, "when": when, "mohm": mohm, "listed": listed}
+
+    def test_the_healthy_battery_off_the_robot_longest(self):
+        rows = [self.row("1", "good", self.STAMP), self.row("2", "good", self.OLDER),
+                self.row("3", "practice", self.OLDER, 24), self.row("4", "retire", self.OLDER, 35),
+                self.row(battery.BORROWED, None, self.OLDER, listed=True)]
+        n = battery.suggest_next(rows, current="1", now=self.NOW)
+        self.assertEqual(n["id"], "2")
+        self.assertIn("graded good (15 mΩ), last on the robot 26 h ago", n["why"])
+
+    def test_one_on_the_robot_in_the_last_hour_is_a_last_resort(self):
+        rows = [self.row("1", "good", self.RECENT), self.row("2", "practice", self.STAMP, 24)]
+        self.assertEqual(battery.suggest_next(rows, now=self.NOW)["id"], "2", "rested beats a better grade")
+        n = battery.suggest_next([self.row("1", "good", self.RECENT)], now=self.NOW)
+        self.assertEqual(n["id"], "1")
+        self.assertIn("check this one's charge", n["why"])
+
+    def test_never_the_one_in_now_or_a_retired_one(self):
+        rows = [self.row("1", "good", self.OLDER), self.row("2", "retire", self.OLDER, 40)]
+        self.assertIsNone(battery.suggest_next(rows, current="1", now=self.NOW))
+
+    def test_an_unmeasured_battery_comes_after_measured_healthy_ones(self):
+        rows = [self.row("5", None, None), self.row("2", "good", self.STAMP)]
+        self.assertEqual(battery.suggest_next(rows, now=self.NOW)["id"], "2")
+        n = battery.suggest_next([self.row("5", None, None)], now=self.NOW)
+        self.assertIn("not measured yet, no record of its last use", n["why"])
+
+
 class GyroDriftTest(unittest.TestCase):
     def test_three_seconds_never_judges_drift(self):
         rep = advisor.analyze(capture(3, 2.0))
