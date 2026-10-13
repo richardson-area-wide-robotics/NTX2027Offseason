@@ -1457,7 +1457,10 @@ public final class SwerveTune {
       }
       watch = new ModuleWatch(mods);
     }
-    watch.update(now, signals.enabled(), steer, steerSp, steerMotor, driveV, driveSp);
+    // A tuning test makes big steering errors on purpose: it isn't a module going wrong.
+    if (state != State.RUNNING && state != State.WAITING) {
+      watch.update(now, signals.enabled(), steer, steerSp, steerMotor, driveV, driveSp);
+    }
     if (dashboard != null) {
       dashboard.modules(watch.flags());
     }
