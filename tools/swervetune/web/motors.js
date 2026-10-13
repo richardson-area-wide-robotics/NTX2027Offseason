@@ -119,9 +119,8 @@
     const worst = rows.reduce((w, m) => order.indexOf(m.stage) > order.indexOf(w.stage) ? m : w, { stage: "OK" });
     const failing = rows.filter(m => m.flags).length;
     chip.hidden = !rows.length;
-    chip.className = "chip " + (failing ? "bad" : STAGE_CLASS[worst.stage] || "");
-    chip.textContent = failing ? `Motors: ${failing} failing` : worst.stage === "OK" ? "Motors OK"
-      : `${worst.name}: ${worst.stage}`;
+    setChip(chip, failing ? `Motors: ${failing} failing` : worst.stage === "OK" ? "Motors OK"
+      : `${worst.name}: ${worst.stage}`, failing ? "bad" : STAGE_CLASS[worst.stage] || "");
   }
 
   async function override(seconds) {

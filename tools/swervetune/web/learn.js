@@ -29,8 +29,8 @@ const Learn = (() => {
     { id: "read", title: "4. Reading a step response", lessons: ["step_response", "dead_time", "rise_time", "overshoot", "settling_time", "steady_state_error", "oscillation"] },
     { id: "limits", title: "5. When the motor can't do what it's told", lessons: ["saturation", "current_limit", "traction", "voltage_sag", "ramp_rate"] },
     { id: "sensors", title: "6. Sensors: what the controller can see", lessons: ["quantization", "velocity_filter", "motor_encoder", "absolute_encoder", "offset", "inversion", "gear_ratio", "encoder_sync"] },
-    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "slip_current", "motor_inventory", "battery", "gyro", "moment_of_inertia", "pathplanner_model", "camera_mount", "field_survey"] },
-    { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "environment", "deadman", "what_if"] },
+    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "wheel_size", "slip_current", "motor_inventory", "battery", "gyro", "moment_of_inertia", "pathplanner_model", "camera_mount", "field_survey"] },
+    { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "odometry", "field_relative", "vision_pose", "robot_mode", "environment", "deadman", "simulator", "what_if"] },
     { id: "motors", title: "9. Keeping motors alive", lessons: ["heat_estimate", "derate", "stall", "thermal_override"] },
     { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["can_bus", "can_termination", "power_path", "battery_current", "wiggle_test"] },
     { id: "controllers", title: "11. The drive team's controllers", lessons: ["deadband", "stick_drift", "button_bounce"] },
@@ -201,10 +201,29 @@ const Learn = (() => {
       body: ["Turning a wheel in place twists its tread against the carpet. That friction is much larger than in the air, so gains tuned on blocks usually stop a few degrees short on the floor. Always finish steering on the floor."] },
     module_flip: { title: "Module optimization", short: "A wheel never turns more than 90°; past that it turns the short way and drives backwards instead.",
       body: ["Pointing 170° the other way is the same as pointing 10° and driving in reverse. YAGSL does this automatically, so steering never needs to move far."] },
-    environment: { title: "Where the robot is", short: "Blocks: wheels spin, robot stays put. Field: it really drives. Sim: the computer. The tool's safety rules change with it.",
+    environment: { title: "Where the robot is", short: "On blocks: the wheels spin and the robot stays put. On the floor: it really drives. Simulator: the computer. The tool's safety rules change with it.",
       body: ["On blocks the gyro and cameras must NOT see motion - if they do, the robot is not on blocks and the test stops. On the field, a deadman must be held, a space budget is enforced, and an impact stops everything."] },
     deadman: { title: "Deadman", short: "Hold it and the robot may move; let go and it stops. Held by whoever is watching the robot, never the laptop typist.",
-      body: ["On the field every moving test needs it held: SPACE on the laptop, or the tester's controller bumper."] },
+      body: ["On the floor every moving test needs it held: the tester's controller right bumper, or SPACE on the laptop.",
+        "If the Driver Station runs on the same laptop, use the bumper: in the Driver Station the space bar is E-STOP, even when its window isn't in front."] },
+    robot_mode: { title: "Robot modes", short: "Disabled: nothing can move. Enabled: motors follow the code. E-stopped: off until the robot restarts. Only the Driver Station changes the mode.",
+      body: ["The Driver Station decides the mode, never this tool. Disabled is the safe state: the roboRIO sends no motor commands, which is why the hand check and the offsets are done disabled. Enabled lets the code drive the motors, which every tuning test needs.",
+        "E-stop is final: the robot stays off until it is rebooted. In the Driver Station, Enter disables and the space bar e-stops. This tool's ABORT button and Esc stop a test without e-stopping the robot."] },
+    odometry: { title: "Odometry", short: "Where the robot thinks it is, worked out from how far each wheel rolled and which way the gyro says it faces.",
+      body: ["Every 20 ms the code adds up each module's wheel turns (times the wheel size) and angle, plus the gyro's heading, and moves its estimate of the robot's position. WPILib's directions: x is forward, y is left, and counter-clockwise turns are positive.",
+        "Errors add up. A wheel 2% smaller than the code thinks makes every distance 2% short, and a slipping wheel counts ground it never covered. AprilTags can correct the estimate whenever a camera sees one."] },
+    field_relative: { title: "Field-relative driving", short: "Push the stick away from you and the robot goes away from you, whichever way it faces.",
+      body: ["The code turns the stick's direction, as the driver sees it, into the robot's own directions using the gyro heading. That only works if the heading is right: a gyro that counts backwards, or a heading zeroed while the robot faced sideways, sends every push the wrong way.",
+        "Robot-relative driving skips the gyro: forward is wherever the robot's front points. Trying both is a quick way to tell a gyro problem from a module problem."] },
+    vision_pose: { title: "Vision pose", short: "A camera that sees an AprilTag works out where the robot is, and the code blends that into odometry.",
+      body: ["Every tag's place on the field is known, so seeing one tells the camera where it is and, from the camera's mount, where the robot is. The code accepts a sighting only when it is believable: close enough, clear enough, and not far from where odometry already puts the robot. The Live tab counts the ones it rejects.",
+        "A camera mount measured wrong moves every sighting by the same mistake, which is why the Calibrate tab measures it."] },
+    simulator: { title: "The simulator", short: "Your robot code running on this laptop with pretend physics. Safe for learning the tool; its numbers are never the real robot's.",
+      body: ["The simulator runs the same robot code against a physics model of the drivetrain. Nothing real moves, so it is a good place to learn what each test does and to check code changes.",
+        "Its sensors are perfect: no noise, no backlash, no carpet, no battery sag. Gains that pass in the simulator still have to be tuned on the robot, so simulator runs never tick a Guide step."] },
+    wheel_size: { title: "Wheel size", short: "The code turns wheel turns into meters with the wheel's diameter, and worn tread is smaller than the 3 inches on the drawing.",
+      body: ["One wheel turn moves the robot π times the diameter, so a wheel 2% smaller than the code thinks makes every distance, speed and auto 2% off. Tread wears through a season, so the real diameter shrinks.",
+        "The Calibrate tab measures it with a push over a taped distance, and the Straight line test checks it: if the tape says 2.94 m where odometry says 3.00 m, the wheels are 2% smaller than the code thinks."] },
     what_if: { title: "The 'what if' prediction", short: "A small model learned from your own run, re-run with new gains. Good for direction and rough size; the robot has the final word.",
       body: ["The tool fits kS, kV and kA to the step you ran, then replays that run on the model with the same gains. How closely the replay matches tells you how far to trust the prediction.",
         "Then it runs the same setpoints with your new gains, using the SPARK's own controller rules. It leaves out backlash, battery sag and grip changes, so treat a big change as a hint and run it for real."] },
@@ -317,6 +336,17 @@ const Learn = (() => {
       <button class="learn-more" data-lesson="${esc(key)}">Lesson →</button>`;
   }
 
+  // A control's tip: what it does, how it works, and its lesson when there is one. "now" is a
+  // live line some controls add (data-tip-now), such as the battery's last measurement.
+  function tipCard(t, now) {
+    const [what, how, key] = t;
+    return `${now ? `<div class="learn-extra">${esc(now)}</div>` : ""}<div class="learn-what">${esc(what)}</div>
+      ${how ? `<div class="learn-how">${esc(how)}</div>` : ""}
+      ${key && L[key] ? `<button class="learn-more" data-lesson="${esc(key)}">Lesson: ${esc(L[key].title)} →</button>` : ""}`;
+  }
+  const TIP_SEL = "[data-learn], [data-tip]";
+  const tipOf = el => (typeof TIPS !== "undefined" && el.dataset.tip && TIPS[el.dataset.tip]) || null;
+
   function place(x, y) {
     tip.style.left = "0px"; tip.style.top = "0px";
     const r = tip.getBoundingClientRect();
@@ -329,11 +359,11 @@ const Learn = (() => {
   }
 
   function showFor(el) {
-    const key = el.dataset.learn;
-    if (!L[key]) return;
+    const t = tipOf(el), key = el.dataset.learn;
+    if (!t && !L[key]) return;
     clearTimeout(hideTimer);
     anchor = el;
-    tip.innerHTML = card(key, el.dataset.learnText);
+    tip.innerHTML = t ? tipCard(t, el.dataset.tipNow) : card(key, el.dataset.learnText);
     tip.hidden = false;
     const r = el.getBoundingClientRect();
     place(r.left + r.width / 2, r.bottom);
@@ -359,23 +389,34 @@ const Learn = (() => {
   }
   function hide() { clearTimeout(hideTimer); tip.hidden = true; anchor = null; }
 
+  const touch = () => window.matchMedia && matchMedia("(hover: none)").matches;
   document.addEventListener("mouseover", e => {
-    const el = e.target.closest && e.target.closest("[data-learn]");
-    if (el) showFor(el);
+    const el = e.target.closest && e.target.closest(TIP_SEL);
+    if (el) { if (el !== anchor) showFor(el); else clearTimeout(hideTimer); }
     else if (!e.target.closest || !e.target.closest(".learn-tip")) { if (anchor) hideSoon(); }
   });
-  document.addEventListener("focusin", e => { const el = e.target.closest && e.target.closest("[data-learn]"); if (el) showFor(el); });
-  document.addEventListener("focusout", e => { if (e.target.closest && e.target.closest("[data-learn]")) hideSoon(); });
+  // Keyboard focus shows the card; a mouse click on a button or tab does not (it would sit over
+  // the page until something else took focus). Text fields always count: you are about to type.
+  document.addEventListener("focusin", e => {
+    const el = e.target.closest && e.target.closest(TIP_SEL);
+    if (el && (e.target.matches(":focus-visible") || e.target.matches("input:not([type=checkbox]), textarea"))) showFor(el);
+  });
+  document.addEventListener("mousedown", e => { if (anchor && e.target.closest && e.target.closest(TIP_SEL) === anchor) hide(); });
+  document.addEventListener("focusout", e => { if (e.target.closest && e.target.closest(TIP_SEL)) hideSoon(); });
   tip.addEventListener("mouseenter", () => clearTimeout(hideTimer));
   tip.addEventListener("mouseleave", hideSoon);
+  // Esc also aborts any running test (app.js); that is deliberate, since stopping is always safe.
   document.addEventListener("keydown", e => { if (e.key === "Escape") { hide(); closeDrawer(); } });
   document.addEventListener("click", e => {
     const more = e.target.closest && e.target.closest("[data-lesson]");
     if (more) { e.preventDefault(); hide(); open(more.dataset.lesson); return; }
-    const el = e.target.closest && e.target.closest("[data-learn]");
-    // A tap (no hover) on a term opens its lesson; on inputs and buttons, clicks keep their job.
-    if (el && !el.matches("input, select, button, textarea") && L[el.dataset.learn]
-        && !el.closest("button")) { hide(); open(el.dataset.learn); }
+    const el = e.target.closest && e.target.closest(TIP_SEL);
+    if (!el) { if (!e.target.closest || !e.target.closest(".learn-tip")) hide(); return; }
+    // Inputs and buttons keep their job; their tip shows on hover, on focus, and in Explain mode.
+    if (el.matches("input, select, button, textarea") || el.closest("button, label")) return;
+    // A tap on a touch screen shows the card (it has the lesson link); a click on a term opens the lesson.
+    if (touch() || !L[el.dataset.learn]) { showFor(el); return; }
+    hide(); open(el.dataset.learn);
   });
 
   // ---------------------------------------------------------------- the lesson drawer
@@ -400,7 +441,8 @@ const Learn = (() => {
       ${l.see ? `<div class="callout"><b>On the graphs:</b> ${esc(l.see)}</div>` : ""}
       ${l.try ? `<div class="callout"><b>Try it:</b> ${esc(l.try)}</div>` : ""}
       ${(l.links || []).length ? `<div class="small"><b>Read more</b><ul>${l.links.map(k => `<li><a href="${LINK[k][0]}" target="_blank" rel="noopener">${esc(LINK[k][1])}</a></li>`).join("")}</ul></div>` : ""}
-      ${next ? `<button class="btn" data-lesson="${esc(next)}">Next: ${esc(L[next].title)} →</button>` : ""}`;
+      ${next ? `<button class="btn" data-lesson="${esc(next)}">Next: ${esc(L[next].title)} →</button>` : ""}
+      <p class="small muted">Esc closes this, and also stops any running test.</p>`;
   }
 
   function indexHtml() {
@@ -414,14 +456,21 @@ const Learn = (() => {
 
   function secondOrderReady() { return typeof Guide !== "undefined" && !!Guide.firstOrderDone && Guide.firstOrderDone(); }
 
+  let opener = null;
   function open(key) {
+    if (drawer.hidden) opener = document.activeElement;
     drawer.innerHTML = key && L[key] ? lessonHtml(key) : indexHtml();
     drawer.hidden = false;
     drawer.scrollTop = 0;
     const first = drawer.querySelector("h2");
     if (first) { first.tabIndex = -1; first.focus(); }
   }
-  function closeDrawer() { drawer.hidden = true; }
+  function closeDrawer() {
+    if (drawer.hidden) return;
+    drawer.hidden = true;
+    if (opener && document.contains(opener)) opener.focus();
+    opener = null;
+  }
   drawer.addEventListener("click", e => {
     if (e.target.closest("[data-lclose]")) closeDrawer();
     else if (e.target.closest("[data-lindex]")) open(null);
@@ -442,13 +491,69 @@ const Learn = (() => {
       const before = html.slice(0, m.index);
       if ((before.match(/<span/g) || []).length !== (before.match(/<\/span>/g) || []).length) continue;
       const at = m.index + m[1].length;
-      html = html.slice(0, at) + `<span class="term" data-learn="${key}">${m[2]}</span>` + html.slice(at + m[2].length);
+      html = html.slice(0, at) + `<span class="term" tabindex="0" data-learn="${key}">${m[2]}</span>` + html.slice(at + m[2].length);
       used.add(key); count++;
     }
     return html;
   }
-  const term = (key, text) => `<span class="term" data-learn="${key}">${esc(text || (L[key] && L[key].title) || key)}</span>`;
-  const chips = keys => keys.filter(k => L[k]).map(k => `<button class="chip learn-chip" data-lesson="${k}">${esc(L[k].title)}</button>`).join("");
+  const term = (key, text) => `<span class="term" tabindex="0" data-learn="${key}">${esc(text || (L[key] && L[key].title) || key)}</span>`;
+  // A lesson chip shows the lesson's one-line answer on hover and opens the lesson on a click.
+  const chips = keys => keys.filter(k => L[k]).map(k => `<button class="chip learn-chip" data-lesson="${k}" data-learn="${k}">${esc(L[k].title)}</button>`).join("");
 
-  return { L, UNITS, open, showAt, hide, link, term, chips };
+  // ---------------------------------------------------------------- Explain mode
+  // Prints the first sentence of each control's tip under it, so a new student can read the whole
+  // screen without hovering. On by default: this tool is for learning. The header stays compact;
+  // its tips show on hover, focus and tap.
+  const main = document.querySelector("main");
+  const OBS = { childList: true, subtree: true };
+  const INSIDE = new Set(["TH", "H2", "H3", "LABEL", "SUMMARY", "LEGEND"]);
+  let explainOn = true, seq = 0;
+  try { explainOn = localStorage.getItem("swervetune.explain") !== "off"; } catch (e) { /* storage blocked */ }
+
+  function line(text) {
+    const s = document.createElement("small");
+    s.className = "tipline";
+    s.id = "tl-" + (++seq);
+    s.innerHTML = text;
+    return s;
+  }
+  const isLine = n => !!(n && n.classList && n.classList.contains("tipline"));
+  function annotate() {
+    for (const el of main.querySelectorAll("[data-tip]")) {
+      // Drawings, segmented pickers and hover-only tips (data-quiet) get no printed line.
+      if (el.hasAttribute("data-quiet") || el.closest("svg, .seg, .tipline")) continue;
+      const t = tipOf(el);
+      if (!t) continue;
+      const inside = INSIDE.has(el.tagName) || (el.parentElement && el.parentElement.classList.contains("kv"));
+      if (inside ? isLine(el.lastElementChild) : isLine(el.nextElementSibling)) continue;
+      const s = line(esc(t[0]));
+      if (inside) el.appendChild(s); else el.after(s);
+      el.setAttribute("aria-describedby", s.id);
+    }
+    // A segmented picker gets one line listing every choice.
+    for (const seg of main.querySelectorAll(".seg")) {
+      if (isLine(seg.nextElementSibling)) continue;
+      const items = $$("[data-tip]", seg).map(b => [b.textContent.trim(), tipOf(b)]).filter(([, t]) => t);
+      if (items.length) seg.after(line(items.map(([n, t]) => `<b>${esc(n)}:</b> ${esc(t[0])}`).join("<br>")));
+    }
+  }
+  const mo = new MutationObserver(() => { mo.disconnect(); annotate(); mo.observe(main, OBS); });
+  function setExplain(on) {
+    explainOn = on;
+    try { localStorage.setItem("swervetune.explain", on ? "on" : "off"); } catch (e) { /* storage blocked */ }
+    document.body.classList.toggle("explain", on);
+    const b = document.getElementById("explain");
+    if (b) { b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "Explain: on" : "Explain: off"; }
+    mo.disconnect();
+    if (on) { annotate(); mo.observe(main, OBS); }
+    else {
+      $$(".tipline", main).forEach(s => s.remove());
+      $$("[aria-describedby^='tl-']", main).forEach(e => e.removeAttribute("aria-describedby"));
+    }
+  }
+  const explainBtn = document.getElementById("explain");
+  if (explainBtn) explainBtn.onclick = () => setExplain(!explainOn);
+  setExplain(explainOn);
+
+  return { L, UNITS, open, showAt, hide, link, term, chips, setExplain };
 })();

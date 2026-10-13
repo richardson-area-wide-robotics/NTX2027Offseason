@@ -27,11 +27,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
-               logsummary,
-               monitor, motorinv, pdhports, plant, ppcheck, predict, rehearse, revspecs, runs, wiring, yagslcfg)
+               logsummary, monitor, motorinv, pdhports, plant, ppcheck, predict, progress, rehearse, revspecs, runs,
+               wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
-PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
 
 
 def clean(o):
@@ -181,6 +180,8 @@ class Session:
                                       **advisor.robot_context(self.project))
                 path = runs.save(doc, rep, gains)
                 self.last_run = os.path.basename(path)
+                # A real run of a Guide test ticks (or un-ticks) its step for this robot.
+                progress.record_run(self.project.name if self.project else None, doc, rep, self.last_run)
                 self.test_state.update(running=False, state=res.outcome, message=res.message,
                                        run=self.last_run, progress=1.0)
             except Exception as e:  # noqa: BLE001 - the GUI must hear about any failure
@@ -1065,20 +1066,11 @@ def api_practice(body):
 
 
 def api_progress_get(_):
-    try:
-        with open(PROGRESS, encoding="utf-8") as fh:
-            return json.load(fh)
-    except (OSError, ValueError):
-        return {}
+    return progress.load(S.project.name if S.project else None)
 
 
 def api_progress_put(body):
-    os.makedirs(runs.RUNS, exist_ok=True)
-    data = api_progress_get(None)
-    data.update(body or {})
-    with open(PROGRESS, "w", encoding="utf-8") as fh:
-        json.dump(data, fh, indent=1)
-    return data
+    return progress.update(S.project.name if S.project else None, body)
 
 
 def api_sim(body):

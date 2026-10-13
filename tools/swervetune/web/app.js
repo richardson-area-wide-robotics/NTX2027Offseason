@@ -50,7 +50,10 @@ const App = {
   closeModal() { $("#modal").hidden = true; $("#modal-body").innerHTML = ""; },
 
   show(tab) {
-    $$(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+    $$(".tabs button").forEach(b => {
+      b.classList.toggle("on", b.dataset.tab === tab);
+      if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
     $$(".tab").forEach(s => s.classList.toggle("on", s.id === "tab-" + tab));
     try { localStorage.setItem("swervetune.tab", tab); } catch (e) { /* storage blocked */ }
     this.emit("tab", tab);
@@ -137,7 +140,7 @@ $("#connect").onclick = async () => {
     return;
   }
   $("#connect").disabled = true;
-  $("#connect").textContent = "Connecting…";
+  $("#connect").textContent = "Connecting…";  // paintHeader leaves the label alone while disabled
   const r = await App.api("/api/connect", { target: $("#target").value, host: $("#host").value });
   $("#connect").disabled = false;
   if (!r.ok) App.modal(`<h2>Could not connect</h2><p>${esc(r.error)}</p>
@@ -148,12 +151,16 @@ $("#connect").onclick = async () => {
 };
 
 $("#abort").onclick = () => abortNow();
+// Esc always sends ABORT, whatever else it closes. The toast says whether anything was running,
+// so "stopped" never becomes a message students learn to ignore.
 async function abortNow() {
+  const running = !!((((App.live || {}).test) || {}).running || (App.state.test || {}).running);
   await App.api("/api/abort", {});
-  App.toast("Abort sent.");
+  App.toast(running ? "Stopped. ABORT sent to the robot." : "Esc always sends ABORT. Nothing was running.");
 }
 
 $("#env-chip").onclick = () => openEnvironment();
+$("#tags-chip").onclick = () => openEnvironment();
 
 function openEnvironment(preset) {
   if (!App.connected()) { App.toast("Connect first."); return; }
@@ -230,34 +237,40 @@ document.addEventListener("keyup", e => { if (e.code === "Space") releaseDeadman
 window.addEventListener("blur", releaseDeadman);
 
 // ------------------------------------------------------------------ polling
+// A chip's classes: "chip", its own (data-chip), and its state. Rewritten on every repaint, so
+// nothing else may add classes to a chip.
 function setChip(el, text, cls) {
-  el.textContent = text;
-  el.className = "chip " + (cls || "") + (el.id === "env-chip" ? " env" : "");
+  if (el.textContent !== text) el.textContent = text;
+  const want = ["chip", el.dataset.chip, cls].filter(Boolean).join(" ");
+  if (el.className !== want) el.className = want;
 }
+const MODE_WORD = { DISABLED: "Disabled", ESTOP: "E-STOPPED", TELEOP: "Enabled (teleop)", AUTO: "Enabled (auto)", TEST: "Enabled (test)" };
 
 function paintHeader() {
   const st = App.state, live = App.live && App.live.live;
   const on = App.connected();
-  $("#conn-dot").classList.toggle("on", on);
-  $("#conn-dot").title = on ? "Connected to " + ((st.robot && st.robot.address) || "") : "Not connected";
-  $("#connect").textContent = on ? "Disconnect" : "Connect";
+  const btn = $("#connect");
+  if (!btn.disabled) btn.textContent = on ? "Disconnect" : "Connect";
+  btn.classList.toggle("primary", !on);  // when nothing is connected, Connect is the one thing to do
   if (on && st.target && document.activeElement !== $("#target")) $("#target").value = st.target;
+  const env = App.env();
+  ["env-chip", "bus-chip", "battery-chip", "tags-chip"].forEach(id => { $("#" + id).hidden = !on; });
+  $("#deadman-chip").hidden = !(on && env === "FIELD");
   if (on && live) {
     const m = live.mode;
-    setChip($("#mode-chip"), (st.robot && st.robot.name ? st.robot.name + " · " : "") + m,
+    setChip($("#mode-chip"), (st.robot && st.robot.name ? st.robot.name + " · " : "") + (MODE_WORD[m] || m),
       m === "DISABLED" ? "" : m === "ESTOP" ? "bad" : "warn");
-    setChip($("#bus-chip"), fmt(live.bus, 1) + " V", live.bus < 11.5 ? "bad" : live.bus < 12.2 ? "warn" : "good");
+    setChip($("#bus-chip"), "Voltage " + fmt(live.bus, 1) + " V", live.bus < 11.5 ? "bad" : live.bus < 12.2 ? "warn" : "good");
   } else {
-    setChip($("#mode-chip"), "no robot");
-    setChip($("#bus-chip"), "– V");
+    setChip($("#mode-chip"), on ? "Connected · waiting for data" : "Not connected");
+    setChip($("#bus-chip"), "Voltage –");
   }
   if (typeof Battery !== "undefined") Battery.paintChip(on && live, st.robot);
-  const env = App.env();
-  setChip($("#env-chip"), "Environment: " + env, env === "FIELD" ? "warn" : env === "BLOCKS" ? "info" : env === "SIM" ? "good" : "");
+  setChip($("#env-chip"), whereWord(env), env === "UNSET" || env === "FIELD" ? "warn" : env === "BLOCKS" ? "info" : env === "SIM" ? "good" : "");
   const tags = st.environment && st.environment.apriltags;
   setChip($("#tags-chip"), "AprilTags " + (tags ? (st.environment.vision_in_use ? "on" : "on, no source") : "off"), tags ? "info" : "");
   const held = App.live && App.live.deadman;
-  setChip($("#deadman-chip"), held ? "Deadman HELD" : "Deadman", held ? "good" : "");
+  setChip($("#deadman-chip"), held ? "Deadman: HELD" : "Deadman: not held", held ? "good" : "");
 
   const t = (App.live && App.live.test) || st.test || {};
   const status = (App.live && App.live.status) || st.status || {};
@@ -267,7 +280,7 @@ function paintHeader() {
   if (running) {
     const waiting = status.state === "WAITING" || t.state === "WAITING";
     banner.className = "banner" + (waiting ? " waiting" : "");
-    $("#banner-state").textContent = (status.test || t.test || "test") + " · " + (status.state || t.state || "");
+    $("#banner-state").textContent = testName(status.test || t.test || "test") + " · " + (status.state || t.state || "");
     $("#banner-msg").textContent = status.message || t.message || "";
     $("#banner-bar").style.width = Math.round(100 * (status.progress || t.progress || 0)) + "%";
     $("#banner-hint").hidden = !(env === "FIELD");
@@ -293,6 +306,12 @@ async function pollState() {
 }
 
 $$(".tabs button").forEach(b => b.onclick = () => App.show(b.dataset.tab));
+// The header wraps on a narrow screen, so its height is measured: the test banner and the
+// Lessons drawer sit just under it, and ABORT is never covered.
+if (window.ResizeObserver) {
+  new ResizeObserver(([e]) => document.documentElement.style.setProperty("--top-h", Math.ceil(e.target.getBoundingClientRect().height) + "px"))
+    .observe($(".top"));
+}
 $("#lessons").onclick = () => Learn.open(null);
 $("#modal").addEventListener("click", e => { if (e.target.id === "modal") App.closeModal(); });
 

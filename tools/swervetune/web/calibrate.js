@@ -91,7 +91,7 @@
           <span class="small muted" id="mi-now"></span>
         </div>
         <ol class="small">
-          <li>Measure the feedforward on the floor first (Guide step 9, <b>drive_ff</b>): this compares against it.</li>
+          <li>Measure the feedforward on the floor first (Guide step 10, <b>Measure the feedforward</b>): this compares against it.</li>
           <li>Robot on the floor, at least a meter clear all round. Hold the deadman for about 20 seconds while it spins each way, slowly, then briskly.</li>
         </ol>
         <div class="row"><button class="btn primary" id="mi-run">Spin and measure</button></div>

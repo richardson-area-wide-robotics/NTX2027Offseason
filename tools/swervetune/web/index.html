@@ -5,53 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Swerve Tools</title>
 <link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230b6e7a'/%3E%3Crect x='6' y='3' width='4' height='10' rx='1' fill='%23fff'/%3E%3C/svg%3E">
 </head>
 <body>
 <header class="top">
   <div class="brand">Swerve Tools</div>
-  <label class="field">Robot code
+  <label class="field" data-tip="header.project">Robot code
     <select id="project"></select>
   </label>
   <div class="conn">
-    <select id="target" aria-label="Connect to">
+    <select id="target" aria-label="Connect to" data-tip="header.target">
       <option value="robot">Robot (team number)</option>
       <option value="sim">Simulator on this laptop</option>
       <option value="host">Address…</option>
     </select>
-    <input id="host" placeholder="10.17.45.2" hidden>
-    <button id="connect" class="btn">Connect</button>
-    <span id="conn-dot" class="dot" title="Not connected"></span>
+    <input id="host" placeholder="10.17.45.2" aria-label="Robot address" hidden>
+    <button id="connect" class="btn primary" data-tip="header.connect">Connect</button>
   </div>
+  <!-- The two chips every test depends on lead; the rest show only once a robot is connected.
+       data-chip holds a chip's own classes, which the 10-per-second repaint keeps. -->
   <div class="chips">
-    <span id="mode-chip" class="chip">no robot</span>
-    <span id="bus-chip" class="chip mono">– V</span>
-    <button id="battery-chip" class="chip" title="Which battery is in">Battery –</button>
-    <button id="env-chip" class="chip env" title="Where is the robot?">Environment: UNSET</button>
-    <span id="tags-chip" class="chip">AprilTags off</span>
-    <span id="deadman-chip" class="chip" title="Hold SPACE, or the tester's controller right bumper">Deadman</span>
-    <button id="motors-chip" class="chip" title="Motor heat and health" hidden>Motors OK</button>
+    <span id="mode-chip" class="chip lead" data-chip="lead" data-tip="header.mode">Not connected</span>
+    <button id="env-chip" class="chip lead" data-chip="lead" data-tip="header.env" hidden>Where: not set</button>
+    <span id="bus-chip" class="chip mono" data-chip="mono" data-tip="header.bus" hidden>Voltage –</span>
+    <button id="battery-chip" class="chip" data-tip="header.battery" hidden>Battery –</button>
+    <button id="tags-chip" class="chip" data-tip="header.tags" hidden>AprilTags off</button>
+    <span id="deadman-chip" class="chip" data-tip="header.deadman" hidden>Deadman: not held</span>
+    <button id="motors-chip" class="chip" data-tip="header.motors" hidden>Motors OK</button>
   </div>
-  <button id="lessons" class="btn" title="Control theory lessons">Lessons</button>
-  <button id="abort" class="abort" title="Stop the test now (Esc)">ABORT</button>
+  <button id="explain" class="btn" aria-pressed="true" data-tip="header.explain">Explain: on</button>
+  <button id="lessons" class="btn" data-tip="header.lessons">Lessons</button>
+  <button id="abort" class="abort" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
 </header>
 
 <div id="banner" class="banner" hidden>
   <div class="banner-text"><b id="banner-state"></b> <span id="banner-msg"></span></div>
   <div class="bar"><div id="banner-bar"></div></div>
-  <div id="banner-hint" class="banner-hint" hidden>Hold <kbd>SPACE</kbd> (or the tester's controller right bumper) to run. Let go to stop.</div>
+  <div id="banner-hint" class="banner-hint" hidden>Hold the tester's controller right bumper (or <kbd>SPACE</kbd> here) to run. Let go to stop.</div>
 </div>
 
-<nav class="tabs" role="tablist">
-  <button role="tab" data-tab="guide" class="on">Guide</button>
-  <button role="tab" data-tab="live">Live</button>
-  <button role="tab" data-tab="motors">Motors</button>
-  <button role="tab" data-tab="wiring">Wiring</button>
-  <button role="tab" data-tab="tune">Tune</button>
-  <button role="tab" data-tab="calibrate">Calibrate</button>
-  <button role="tab" data-tab="controllers">Controllers</button>
-  <button role="tab" data-tab="trouble">Troubleshoot</button>
-  <button role="tab" data-tab="config">Config</button>
-  <button role="tab" data-tab="runs">Runs</button>
+<nav class="tabs" aria-label="Screens">
+  <button data-tab="guide" class="on" aria-current="page" data-tip="tab.guide">Guide</button>
+  <button data-tab="live" data-tip="tab.live">Live</button>
+  <button data-tab="motors" data-tip="tab.motors">Motors</button>
+  <button data-tab="wiring" data-tip="tab.wiring">Wiring</button>
+  <button data-tab="tune" data-tip="tab.tune">Tune</button>
+  <button data-tab="calibrate" data-tip="tab.calibrate">Calibrate</button>
+  <button data-tab="controllers" data-tip="tab.controllers">Controllers</button>
+  <button data-tab="trouble" data-tip="tab.trouble">Troubleshoot</button>
+  <button data-tab="config" data-tip="tab.config">Config</button>
+  <button data-tab="runs" data-tip="tab.runs">Runs</button>
 </nav>
 
 <main>
@@ -72,10 +75,11 @@
     <div id="modal-body"></div>
   </div>
 </div>
-<div id="toast" class="toast" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
 
 <script src="plot.js"></script>
 <script src="app.js"></script>
+<script src="tips.js"></script>
 <script src="learn.js"></script>
 <script src="battery.js"></script>
 <script src="live.js"></script>

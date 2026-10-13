@@ -50,12 +50,12 @@ SYMPTOMS = [
                   "numbers.",
                   {"type": "guide", "step": "offsets"},
                   {"lint": ["offsets_duplicate", "offsets_round"]}),
-            check("With every wheel set straight by hand, does each pod read close to 0° in the "
+            check("With every wheel set straight by hand, does each module read close to 0° in the "
                   "Live view?",
                   "Disable the robot, square each wheel to the frame, look at the four pods.",
                   DISABLED,
-                  "A pod reading far from 0° (often 90° or 180°) has a wrong offset.",
-                  "Recapture offsets for that module. A pod near 180° with its drive motor "
+                  "A module reading far from 0° (often 90° or 180°) has a wrong offset.",
+                  "Recapture offsets for that module. A module near 180° with its drive motor "
                   "inverted is the same mistake in disguise - see 'One wheel drives backwards'.",
                   {"type": "guide", "step": "offsets"}),
             check("Turning a module counter-clockwise by hand (seen from above), does its angle "
@@ -77,7 +77,7 @@ SYMPTOMS = [
                   "Fix the ratio or the angle inversion, redeploy, repeat the hand check.",
                   {"type": "guide", "step": "hand"},
                   {"lint": ["angle_inversion_mixed"]}),
-            check("Does steer_step on blocks move the RIGHT module, and does it reach each target?",
+            check("Does the Steering test on blocks move the RIGHT module, and does it reach each target?",
                   "Tune tab, Steering, pick FL only, run on blocks. Watch which physical module "
                   "turns.",
                   BLOCKS,
@@ -88,7 +88,7 @@ SYMPTOMS = [
                   {"type": "run", "test": "steer_step", "env": BLOCKS}),
             check("After a few minutes of driving, does the motor encoder still agree with the "
                   "absolute encoder within 2°?",
-                  "Live view: each pod shows both. Or run a Health capture after driving.",
+                  "Live view: each module shows both. Or run the Guide's Sensor health step after driving.",
                   DISABLED,
                   "The steering motor encoder has drifted from the truth since boot (a gear skip, "
                   "a bad boot read).",
@@ -114,11 +114,11 @@ SYMPTOMS = [
                   {"lint": ["drive_inversion_mixed"]}),
             check("On blocks, with all wheels pointed forward and driving slowly forward, does the "
                   "TOP of every tire roll toward the front of the robot?",
-                  "Tune tab, Drive, run drive_step on blocks and watch the tops of the tires. That "
+                  "Tune tab, Drive speed, run it on blocks and watch the tops of the tires. That "
                   "is the direction the robot would go.",
                   BLOCKS,
                   "That wheel would push the robot backwards.",
-                  "Look at its pod in the Live view: if it shows about 180° while the others show "
+                  "Look at its module in the Live view: if it shows about 180° while the others show "
                   "0°, its offset is 180° out (recapture it). If it shows 0° like the others, its "
                   "drive motor inversion is wrong: flip inverted.drive in that module's JSON.",
                   {"type": "run", "test": "drive_step", "env": BLOCKS}),
@@ -191,7 +191,7 @@ SYMPTOMS = [
                   "Face the robot away from the driver station and press the zero-gyro button "
                   "(Peashooter: Y).", None),
             check("Sitting still for a minute, does the heading stay within 0.5°?",
-                  "Health capture, or watch the heading in the Live view.",
+                  "The Guide's Sensor health step, or watch the heading in the Live view.",
                   DISABLED,
                   "The gyro is drifting.",
                   "Keep the robot completely still for the first few seconds after power-on while "
@@ -217,10 +217,10 @@ SYMPTOMS = [
                   "starts.",
                   DISABLED,
                   "The steering loop is slew-limited.",
-                  "Set Steer RampS to 0 live, run steer_step, compare.",
+                  "Set the steering Ramp to 0 live, run the Steering test, compare.",
                   {"type": "tune", "loop": "steer"},
                   {"lint": ["steer_ramp"]}),
-            check("Does steer_step show under 10% overshoot and no ringing?",
+            check("Does the Steering test show under 10% overshoot and no ringing?",
                   "Tune tab, Steering, on blocks then on the floor.",
                   BLOCKS,
                   "Steering gains are too aggressive for this module.",
@@ -243,7 +243,7 @@ SYMPTOMS = [
                   "Fix the mechanism; then retune, since the gains were fighting the slop.",
                   None),
             check("Is the absolute encoder quiet at rest (no read issues, under 0.3° noise)?",
-                  "Health capture.",
+                  "The Guide's Sensor health step.",
                   DISABLED,
                   "A noisy or flickering sensor feeds noise straight into the loop.",
                   "Reseat the encoder cable and check the magnet.",
@@ -260,14 +260,14 @@ SYMPTOMS = [
             check("Is the steering ramp rate 0?", "Config tab.", DISABLED,
                   "Every steering correction is slew-limited.", "Set it to 0.",
                   {"type": "tune", "loop": "steer"}, {"lint": ["steer_ramp"]}),
-            check("Does steer_step ON THE FLOOR meet the rise-time target?",
+            check("Does the Steering test ON THE FLOOR meet the rise-time target?",
                   "Tune tab, Steering, floor (the robot does not drive; wheels turn in place).",
                   FIELD,
                   "Steering kP is soft for carpet, or the current limit is the ceiling.",
                   "Follow the tuner: it says whether kP or the current limit is the lever.",
                   {"type": "run", "test": "steer_step", "env": FIELD},
                   {"lint": ["steer_p_soft"]}),
-            check("Does steer_step show both directions equally fast?",
+            check("Does the Steering test show both directions equally fast?",
                   "The tuner reports direction asymmetry.", BLOCKS,
                   "Gains are symmetric, so asymmetry is mechanical: rubbing, a tight bearing, a "
                   "wire dragging.",
@@ -297,8 +297,8 @@ SYMPTOMS = [
                   "Reseat the encoder cable at the SPARK's data port.",
                   {"type": "guide", "step": "hand"}, {"monitor": ["absolute_read_issue"]}),
             check("Is the steering motor's breaker or PDH channel fine, and does the motor make a "
-                  "sound when steer_step runs?",
-                  "Run steer_step on blocks with only that module.", BLOCKS,
+                  "sound when the Steering test runs?",
+                  "Run the Steering test on blocks with only that module.", BLOCKS,
                   "No power to the motor, or the motor is not turning the gears.",
                   "Check the breaker/fuse and the pinion set screw.",
                   {"type": "run", "test": "steer_step", "env": BLOCKS}),
@@ -322,15 +322,15 @@ SYMPTOMS = [
             check("Are the offsets right (wheels straight read 0° within a degree)?",
                   "A degree of offset is about 1.7 cm of sideways drift per meter.", DISABLED,
                   "An offset is out.", "Recapture offsets.", {"type": "guide", "step": "offsets"}),
-            check("Does steer_step on the floor show small-step error under 0.75°?",
+            check("Does the Steering test on the floor show small-step error under 0.75°?",
                   "Carpet holds a soft steering loop a few degrees short.", FIELD,
                   "Wheels settle a little off their target angle.",
                   "Raise steering kP following the tuner.",
                   {"type": "run", "test": "steer_step", "env": FIELD}),
-            check("Do all four modules hold the same speed in drive_step (spread under 5%)?",
+            check("Do all four modules hold the same speed in the Drive speed test (spread under 5%)?",
                   "One weak corner pulls the robot round.", FIELD,
                   "A corner is weaker or slower.",
-                  "Measure the per-module feedforward (drive_ff); a big difference is mechanical.",
+                  "Measure the per-module feedforward (the Feedforward test); a big difference is mechanical.",
                   {"type": "run", "test": "drive_step", "env": FIELD}),
             check("Does the straight-line test hold heading within 1° with no correction?",
                   "Tune tab, Straight; tape-measure where it stops if there are no AprilTags.",
@@ -347,7 +347,7 @@ SYMPTOMS = [
         "looks_like": "Driving one way while spinning, the robot's path curves instead of going "
                       "straight.",
         "checks": [
-            check("Is steering fast (steer_step rise under 120 ms)?",
+            check("Is steering fast (Steering test rise under 120 ms)?",
                   "Slow steering lags the rotating wheel directions.", FIELD,
                   "Steering lag skews the path.", "Tune steering first.",
                   {"type": "run", "test": "steer_step", "env": FIELD}),
@@ -371,14 +371,14 @@ SYMPTOMS = [
                   "Fix the createSwerveDrive max speed.", None,
                   {"lint": ["max_speed_unreal", "max_speed_low"]}),
             check("Does the measured kV match the motor physics (within 15%)?",
-                  "Run drive_ff on the floor; the report compares kV with the theoretical value.",
+                  "Run the Feedforward test on the floor; the report compares kV with the theoretical value.",
                   FIELD,
                   "The configured gear ratio or wheel size is not what is on the robot.",
                   "Count the pinion teeth (MAXSwerve: 12T = 5.50, 13T = 5.08, 14T = 4.71) and "
                   "measure the wheel.",
                   {"type": "run", "test": "drive_ff", "env": FIELD}),
             check("On blocks, does every module need about the same voltage to start turning?",
-                  "drive_ff on blocks compares kS per module.", BLOCKS,
+                  "The Feedforward test on blocks compares kS per module.", BLOCKS,
                   "One module is binding.",
                   "Spin it by hand against the others; fix the drag.",
                   {"type": "run", "test": "drive_ff", "env": BLOCKS}),
@@ -438,7 +438,7 @@ SYMPTOMS = [
                   "Straight test, then enter the tape distance.", FIELD,
                   "The wheel diameter in the config is not the real one.",
                   "Apply the measured wheel scale.", {"type": "run", "test": "straight", "env": FIELD}),
-            check("Is the drive feedforward measured?", "drive_ff on the floor.", FIELD,
+            check("Is the drive feedforward measured?", "The Feedforward test, on the floor.", FIELD,
                   "PathPlanner's velocity requests are reached late or not at all.",
                   "Measure and save the feedforward.", {"type": "run", "test": "drive_ff", "env": FIELD}),
             check("Is the drive current limit below the traction limit?", "Config tab.", DISABLED,
@@ -475,13 +475,13 @@ SYMPTOMS = [
                   "Stick drift below the deadband should command nothing.", BLOCKS,
                   "The sticks are drifting through the deadband.",
                   "Raise the deadband (0.08-0.1) or replace the controller.", None),
-            check("Is the absolute encoder quiet at rest?", "Health capture.", DISABLED,
+            check("Is the absolute encoder quiet at rest?", "The Guide's Sensor health step.", DISABLED,
                   "Sensor noise is driving the loop.", "Reseat cable, check magnet.",
                   {"type": "run", "test": "capture", "env": "ANY", "args": {"duration_s": 3}},
                   {"monitor": ["absolute_read_issue"]}),
             check("Is steering kD modest (not more than about kP x 10)?", "Config tab.", DISABLED,
                   "Too much kD amplifies encoder noise into motion.",
-                  "Halve steering kD and rerun steer_step.", {"type": "tune", "loop": "steer"}),
+                  "Halve steering kD and rerun the Steering test.", {"type": "tune", "loop": "steer"}),
         ],
     },
     {
@@ -504,7 +504,7 @@ SYMPTOMS = [
             check("Driving straight on the floor, do all four modules report the same distance "
                   "(within 3%)?",
                   "Live view while driving straight for a few meters, or the module comparison in "
-                  "a floor drive_ff or spin run. On blocks this cannot be seen: the motor encoder "
+                  "a Feedforward or Spin run on the floor. On blocks this cannot be seen: the motor encoder "
                   "cannot see the gearbox, only the floor couples the wheels.",
                   FIELD,
                   "A module reporting more or less distance than the others has a different "
@@ -605,9 +605,9 @@ SYMPTOMS = [
                   DISABLED,
                   "Damaged bearings or windings.",
                   "Replace the motor."),
-            check("For a drive motor: does drive_ff measure the same kV as on the other modules "
+            check("For a drive motor: does the Feedforward test measure the same kV as on the other modules "
                   "and in its own earlier runs?",
-                  "Run drive_ff on blocks; the report compares each module's kV and kS with the "
+                  "Run the Feedforward test on blocks; the report compares each module's kV and kS with the "
                   "others and with earlier saved runs.",
                   BLOCKS,
                   "kV falling over weeks means magnets weakened by heat; kS rising means growing "
@@ -624,7 +624,7 @@ SYMPTOMS = [
         "checks": [
             check("Does the steering motor encoder stay within 2° of the absolute encoder while "
                   "driving?",
-                  "Live view: each pod shows both.", FIELD,
+                  "Live view: each module shows both.", FIELD,
                   "The loop runs on the motor encoder, which has drifted from the truth.",
                   "Turn on encoderAutoSync in swervetune.json (resyncs whenever the modules are "
                   "still), or steer on the absolute encoder (factor 360 + steerFeedback "

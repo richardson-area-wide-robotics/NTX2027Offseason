@@ -93,16 +93,15 @@ const Battery = (() => {
   function paintChip(live, robot) {
     const chip = $("#battery-chip");
     if (!chip) return;
-    if (!live) { chip.textContent = "Battery –"; chip.className = "chip"; return; }
+    if (!live) { setChip(chip, "Battery –"); delete chip.dataset.tipNow; return; }
     const id = live.battery_id || "";
     if ((!cache || Date.now() - loadedAt > 30000) && !paintChip.loading) {
       paintChip.loading = true;
       load().finally(() => { paintChip.loading = false; });
     }
     if (!id) {
-      chip.textContent = "Battery ?";
-      chip.className = "chip warn";
-      chip.title = "Which battery is in? Tap to pick.";
+      setChip(chip, "Battery ?", "warn");
+      chip.dataset.tipNow = "Nobody has said which battery is in. Tap to pick its number.";
       // Once per robot boot, ask straight away - unless something else is on screen or running.
       const boot = robot && robot.boot_id;
       if (boot && askedBoot !== boot && $("#modal").hidden && !(App.state.test || {}).running) {
@@ -112,9 +111,8 @@ const Battery = (() => {
       return;
     }
     const b = row(id);
-    chip.textContent = "Battery " + id;
-    chip.className = "chip " + (b.status === "retire" ? "bad" : b.status === "practice" ? "warn" : b.status === "good" ? "good" : "");
-    chip.title = b.status ? `${WORDS[b.status]}: ${b.mohm} mΩ last measured` : "Not measured yet";
+    setChip(chip, "Battery " + id, b.status === "retire" ? "bad" : b.status === "practice" ? "warn" : b.status === "good" ? "good" : "");
+    chip.dataset.tipNow = b.status ? `Battery ${id}: ${WORDS[b.status]}, ${b.mohm} mΩ when last measured.` : `Battery ${id} has not been measured yet.`;
   }
 
   $("#battery-chip").onclick = () => open();

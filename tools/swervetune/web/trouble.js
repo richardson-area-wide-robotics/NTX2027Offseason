@@ -14,9 +14,9 @@ const Trouble = (() => {
 
   function paintList() {
     root.innerHTML = `<div class="stack">
-      <div class="panel"><h2>What is the robot doing?</h2>
+      <div class="panel"><h2 data-tip="trouble.list">What is the robot doing?</h2>
         <p class="hint">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p></div>
-      <div class="symptoms">${symptoms.map(s => `<button class="symptom" data-id="${esc(s.id)}"><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div></div>`;
+      <div class="symptoms">${symptoms.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div></div>`;
     $$(".symptom", root).forEach(b => b.onclick = () => open(b.dataset.id));
   }
 
@@ -39,7 +39,7 @@ const Trouble = (() => {
       const where = a.env && a.env !== "ANY" ? ` (${whereWord(a.env).toLowerCase()})` : "";
       label = a.test === "capture" ? "Open Sensor health in the Guide" : `Open the ${LOOP_NAME[loopOf(a)]} tuner${where}`;
     }
-    return `<button class="btn small primary" data-act='${esc(JSON.stringify(a))}'>${esc(label)}</button>`;
+    return `<button class="btn small primary" data-act='${esc(JSON.stringify(a))}' data-tip="trouble.action" data-quiet>${esc(label)}</button>`;
   }
 
   function paint() {
@@ -49,21 +49,21 @@ const Trouble = (() => {
     const at = failed >= 0 ? failed : firstOpen;
     root.innerHTML = `<div class="stack">
       <div class="panel"><div class="row" style="justify-content:space-between"><h2>${esc(c.title)}</h2>
-        <button class="btn" id="tr-back">All symptoms</button></div><p class="hint">${esc(c.looks_like)}</p>
+        <button class="btn" id="tr-back" data-tip="trouble.back" data-quiet>All symptoms</button></div><p class="hint">${esc(c.looks_like)}</p>
         ${c.note ? `<div class="callout info">${Learn.link(c.note, 2)}</div>` : ""}
         <p class="small"><b>Yes</b> means that part is fine. The first <b>No</b> is usually the cause.</p></div>
       <div class="checks">${c.checks.map((k, i) => {
         const a = answers[i];
         const state = a === "yes" ? "passed" : a === "no" ? "failed" : i === at ? "current" : "";
         return `<div class="check ${state}">
-          <div class="row" style="justify-content:space-between"><span class="q" id="tq-${i}">${a === "yes" ? `<span class="level ok">fine</span> ` : ""}${i + 1}. ${esc(k.q)}</span><span class="chip">${esc(whereWord(k.where))}</span></div>
+          <div class="row" style="justify-content:space-between"><span class="q" id="tq-${i}">${a === "yes" ? `<span class="level ok">fine</span> ` : ""}${i + 1}. ${esc(k.q)}</span><span class="chip" data-tip="trouble.where" data-quiet>${esc(whereWord(k.where))}</span></div>
           ${a === "yes" ? "" : `<div class="hint">${Learn.link(k.how, 2)}</div>`}
-          ${k.auto_answer === "no" ? `<div class="small"><span class="level error">tool found</span> ${esc((k.evidence || []).join(", "))}</div>` : ""}
-          ${k.auto_answer === "yes" ? `<div class="small"><span class="level ok">tool checked</span> nothing wrong in the configuration</div>` : ""}
+          ${k.auto_answer === "no" ? `<div class="small"><span class="level error" data-tip="trouble.found" data-quiet>tool found</span> ${esc((k.evidence || []).join(", "))}</div>` : ""}
+          ${k.auto_answer === "yes" ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>tool checked</span> nothing wrong in the configuration</div>` : ""}
           ${a === "no" ? `<div class="callout safety"><b>Cause:</b> ${esc(k.if_no)}<br><b>Fix:</b> ${esc(k.fix)}</div>
-             <div class="row">${actionButton(k.action)}<button class="btn small" data-redo="${i}">I fixed it, check again</button></div>` : ""}
-          ${i === at && a === null ? `<div class="row"><button class="btn small primary" data-yes="${i}" aria-describedby="tq-${i}">Yes</button>
-             <button class="btn small" data-no="${i}" aria-describedby="tq-${i}">No</button>${actionButton(k.action)}</div>` : ""}
+             <div class="row">${actionButton(k.action)}<button class="btn small" data-redo="${i}" data-tip="trouble.redo" data-quiet>I fixed it, check again</button></div>` : ""}
+          ${i === at && a === null ? `<div class="row"><button class="btn small primary" data-yes="${i}" aria-describedby="tq-${i}" data-tip="trouble.yes" data-quiet>Yes</button>
+             <button class="btn small" data-no="${i}" aria-describedby="tq-${i}" data-tip="trouble.no" data-quiet>No</button>${actionButton(k.action)}</div>` : ""}
         </div>`;
       }).join("")}</div>
       ${failed < 0 && firstOpen < 0 ? `<div class="panel"><b>Every usual cause checked out.</b>
