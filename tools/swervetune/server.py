@@ -310,7 +310,7 @@ def api_gains(body):
     if not S.link:
         return {"ok": False, "error": "Not connected."}
     values = {k: float(v) for k, v in (body.get("values") or {}).items()}
-    status, gains = S.link.set_gains(values)
+    status, gains = S.link.set_gains(values, reason=str(body.get("reason") or "from the GUI")[:200])
     return {"ok": "REFUSED" not in status, "status": status, "gains": gains}
 
 

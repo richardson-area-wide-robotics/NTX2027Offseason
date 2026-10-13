@@ -728,6 +728,11 @@ public final class SwerveTune {
     return state == State.RUNNING && proc != null && proc.spinsWheels();
   }
 
+  /** Why the live gains last changed, as the match log records it. */
+  String gainsReason() {
+    return gains.reason();
+  }
+
   /** The environment the robot believes it is in. Simulation always reports SIM. */
   public TestEnvironment environment() {
     if (simulation) {
@@ -763,7 +768,7 @@ public final class SwerveTune {
       gains.pollTuning(gainsBlocked);
       Map<String, Double> gainsNow = gains.takeChanged();
       if (gainsNow != null) {
-        AkLogging.recordGains(gainsNow);
+        AkLogging.recordGains(gainsNow, gains.reason());
       }
       handleAbort();
       handleCommand(now);

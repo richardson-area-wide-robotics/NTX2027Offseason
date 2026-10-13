@@ -198,7 +198,7 @@ const Tune = (() => {
     });
   }
 
-  async function applyEdits(values) {
+  async function applyEdits(values, reason) {
     const vals = values || edits;
     if (!Object.keys(vals).length) { App.toast("Nothing changed."); return true; }
     if (target === "practice") {
@@ -209,7 +209,8 @@ const Tune = (() => {
       return true;
     }
     if (!App.connected()) { App.toast("Connect first."); return false; }
-    const r = await App.api("/api/gains", { values: vals });
+    // The reason goes into the robot's match log with the change.
+    const r = await App.api("/api/gains", { values: vals, reason: reason || "Tune tab: typed by hand" });
     App.toast(r.status || r.error, 6000);
     if (r.gains) App.state.gains = r.gains;
     edits = {};
@@ -524,9 +525,10 @@ const Tune = (() => {
     return "";
   }
 
-  async function doAction(a) {
+  async function doAction(a, why) {
     if (a.type === "gains") {
-      await applyEdits(Object.fromEntries(Object.entries(a.values).map(([k, v]) => [k, +v])));
+      await applyEdits(Object.fromEntries(Object.entries(a.values).map(([k, v]) => [k, +v])),
+        why ? "Tune tab, advice: " + why : "Tune tab, advice");
       if (target === "practice") run();
     } else if (a.type === "run") {
       const to = Object.entries(LOOPS).find(([, v]) => v.test === a.test);
@@ -588,7 +590,7 @@ const Tune = (() => {
     box.innerHTML = `<div class="stack">
       ${targets ? `<div><h3>Goals</h3><div class="targets">${targets}</div></div>` : ""}
       <div>${findings}</div></div>`;
-    $$("[data-i]", box).concat($$("[data-i]", card)).forEach(b => b.onclick = () => doAction(rep.findings[+b.dataset.i].action));
+    $$("[data-i]", box).concat($$("[data-i]", card)).forEach(b => b.onclick = () => doAction(rep.findings[+b.dataset.i].action, rep.findings[+b.dataset.i].title));
   }
 
   function show(doc) {

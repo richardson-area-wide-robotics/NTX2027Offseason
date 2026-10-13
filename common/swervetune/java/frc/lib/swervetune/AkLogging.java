@@ -212,10 +212,6 @@ public final class AkLogging {
     return deleted;
   }
 
-  /**
-   * Every live gain, whenever one changes (and once at the start), so a match log says what the
-   * robot was running. Under {@code RealOutputs/SwerveTune/Gains/}.
-   */
   /** Which battery is in ("" until picked), every loop, for the post-match summary. */
   static void recordBattery(String id) {
     if (started) {
@@ -223,13 +219,20 @@ public final class AkLogging {
     }
   }
 
-  static void recordGains(Map<String, Double> gains) {
+  /**
+   * Every live gain, whenever one changes (and once at the start), so a match log says what the
+   * robot was running, and why it changed: {@code SwerveTune/Gains/Reason} is the person's or the
+   * agent's reason ("Tune tab, advice: ...", "edited in AdvantageScope: Steer/kP"). Under
+   * {@code RealOutputs/SwerveTune/Gains/}.
+   */
+  static void recordGains(Map<String, Double> gains, String reason) {
     if (!started) {
       return;
     }
     for (Map.Entry<String, Double> e : gains.entrySet()) {
       Logger.recordOutput("SwerveTune/Gains/" + e.getKey(), e.getValue());
     }
+    Logger.recordOutput("SwerveTune/Gains/Reason", reason == null ? "" : reason);
   }
 
   /** Warns once if the disk being logged to runs low during a long session. */

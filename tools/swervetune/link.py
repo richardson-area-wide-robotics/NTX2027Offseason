@@ -452,8 +452,10 @@ class RobotLink:
     def _ff_keys(self):
         return [f"FF/{m}/{k}" for m in self.get("str[]", C.MODULE_NAMES) for k in C.FF_SPECS]
 
-    def set_gains(self, values, timeout=3.0):
-        """Applies several gains together. Returns (status text, gains now running)."""
+    def set_gains(self, values, timeout=3.0, reason=""):
+        """Applies several gains together. Returns (status text, gains now running). ``reason`` (a
+        short sentence) goes into the robot's match log with the change."""
+        self.put("str", C.GAINS_REASON, str(reason or "")[:200])
         for key, value in values.items():
             self.put("double", C.GAINS + key, float(value))
         self.put("int", C.GAINS_BOOT_ID, self.get("int", C.BOOT_ID))

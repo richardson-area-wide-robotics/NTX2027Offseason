@@ -58,7 +58,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `status` | Robot, environment, live modules, problems. |
 | `env --mode BLOCKS` / `env --mode FIELD --space 3 --side 1.5` | Tells the robot where it is. |
 | `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it, prints the report. |
-| `gains show` / `gains set Steer/kP=0.015` | Reads or changes live gains (lost at restart until saved). |
+| `gains show` / `gains set Steer/kP=0.015 --why "<finding title>"` | Reads or changes live gains (lost at restart until saved). Always give `--why`: it goes into the robot's match log with the change. |
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
 | `config --file F --path a.b --value V` | Shows the diff of one config change (a report's `config` action); `--yes` writes. Only the robot's own config files. |
 | `runs [--test steer_step] [--robot Peashooter] [--show robot\|sim\|practice\|all]` | Saved runs, newest first: file, test, outcome, score and cost, gains. Real robot runs only unless `--show` says otherwise; a run that stopped part-way has no score. |
@@ -95,7 +95,8 @@ before each test, and if a gain isn't what you last set, ask before going on.
 
 Act on `next.action` and only on it. Every action is one the commands above carry out as written:
 
-- `{"type": "gains", "values": {...}}`: `gains set` exactly those values, then rerun the same test.
+- `{"type": "gains", "values": {...}}`: `gains set` exactly those values with `--why` the finding's
+  title, then rerun the same test.
 - `{"type": "run", "test": ..., "env": ...}`: run that test next (ask a person to change the
   environment if it differs).
 - `{"type": "config", "file", "path", "value"}`: a file change that needs a redeploy. Run

@@ -120,6 +120,8 @@ public final class SwerveTuneTopics {
   public static final String GAINS_APPLY_SEQ = ROOT + "/Gains/ApplySeq";
   /** Must equal {@link #BOOT_ID} or the gain change is ignored. */
   public static final String GAINS_BOOT_ID = ROOT + "/Gains/BootId";
+  /** Why the laptop asked for this change, a short sentence; logged with the gains. */
+  public static final String GAINS_REASON = ROOT + "/Gains/Reason";
   /** Robot's echo of every gain it is actually running, {@code GAINS_APPLIED + key}. */
   public static final String GAINS_APPLIED = ROOT + "/Gains/Applied/";
   public static final String GAINS_APPLIED_SEQ = ROOT + "/Gains/AppliedSeq";

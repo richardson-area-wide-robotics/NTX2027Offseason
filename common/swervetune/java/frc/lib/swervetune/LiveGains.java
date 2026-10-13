@@ -6,6 +6,7 @@ import edu.wpi.first.networktables.IntegerPublisher;
 import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringPublisher;
+import edu.wpi.first.networktables.StringSubscriber;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -83,6 +84,9 @@ final class LiveGains {
   private final Map<String, Double> current = new LinkedHashMap<>();
   private final IntegerSubscriber applySeq;
   private final IntegerSubscriber applyBootId;
+  private final StringSubscriber reasonSub;
+  /** Why the gains last changed, for the match log: the laptop's reason, AdvantageScope, or the start. */
+  private String reason = "the values in the files, at startup";
   private final IntegerPublisher appliedSeq;
   private final StringPublisher status;
   private long lastSeq;
@@ -142,6 +146,7 @@ final class LiveGains {
     }
     applySeq = nt.getIntegerTopic(SwerveTuneTopics.GAINS_APPLY_SEQ).subscribe(0);
     applyBootId = nt.getIntegerTopic(SwerveTuneTopics.GAINS_BOOT_ID).subscribe(0);
+    reasonSub = nt.getStringTopic(SwerveTuneTopics.GAINS_REASON).subscribe("");
     appliedSeq = nt.getIntegerTopic(SwerveTuneTopics.GAINS_APPLIED_SEQ).publish();
     status = nt.getStringTopic(SwerveTuneTopics.GAINS_APPLY_STATUS).publish();
     lastSeq = applySeq.get();
@@ -171,6 +176,11 @@ final class LiveGains {
     }
     changed = false;
     return Map.copyOf(current);
+  }
+
+  /** Why the gains last changed, a sentence for the match log. */
+  String reason() {
+    return reason;
   }
 
   /** Current value of a gain the robot is running. */
@@ -207,6 +217,9 @@ final class LiveGains {
     for (Map.Entry<String, DoubleEntry> e : requested.entrySet()) {
       wanted.put(e.getKey(), e.getValue().get());
     }
+    String why = reasonSub.get().trim();
+    reason = why.isEmpty() ? "from the laptop, no reason given"
+        : why.length() > 200 ? why.substring(0, 200) : why;
     String msg = apply(wanted);
     appliedSeq.set(seq);
     status.set(msg);
@@ -239,6 +252,7 @@ final class LiveGains {
       msg = "Not applied (" + String.join(", ", edited) + "): " + blockedReason + ".";
       sync();
     } else {
+      reason = "edited in AdvantageScope: " + String.join(", ", edited);
       msg = apply(wanted);
     }
     tuningStatus.set(msg);

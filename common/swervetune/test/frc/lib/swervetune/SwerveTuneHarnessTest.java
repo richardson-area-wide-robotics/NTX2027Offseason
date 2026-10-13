@@ -580,6 +580,28 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
+  void aGainChangeCarriesItsReasonIntoTheLog() {
+    loop(1);
+    assertEquals("the values in the files, at startup", tune.gainsReason());
+    DoublePublisher kp = nt.getDoubleTopic(SwerveTuneTopics.GAINS + "Steer/kP").publish();
+    StringPublisher why = nt.getStringTopic(SwerveTuneTopics.GAINS_REASON).publish();
+    IntegerPublisher apply = nt.getIntegerTopic(SwerveTuneTopics.GAINS_APPLY_SEQ).publish();
+    IntegerPublisher boot = nt.getIntegerTopic(SwerveTuneTopics.GAINS_BOOT_ID).publish();
+    boot.set(tune.bootId());
+    kp.set(0.015);
+    why.set("Tune tab, advice: Steering overshoots 18%");
+    apply.set(1);
+    loop(2);
+    assertEquals(0.015, io.steerPid[0], 1e-12);
+    assertEquals("Tune tab, advice: Steering overshoots 18%", tune.gainsReason());
+    kp.set(0.012);
+    why.set("");
+    apply.set(2);
+    loop(2);
+    assertEquals("from the laptop, no reason given", tune.gainsReason());
+  }
+
+  @Test
   void changingTheEnvironmentMidTestStopsIt() {
     onBlocks();
     loop(2);

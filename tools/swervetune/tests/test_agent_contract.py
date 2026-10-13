@@ -135,6 +135,33 @@ class ActionsTest(unittest.TestCase):
                 kinds = [r["kind"] for r in json.loads(buf.getvalue())["runs"]]
                 self.assertEqual(kinds, ["sim", "practice", "robot"])
 
+    def test_a_gain_change_carries_its_reason(self):
+        from unittest import mock
+
+        class FakeLink:
+            def __init__(self):
+                self.calls = []
+
+            def gains(self):
+                return {"Steer/kP": 0.01}
+
+            def set_gains(self, values, timeout=3.0, reason=""):
+                self.calls.append((values, reason))
+                return "Applied Steer/kP.", {"Steer/kP": values["Steer/kP"]}
+
+            def close(self):
+                pass
+
+        lk = FakeLink()
+        with mock.patch.object(cli, "open_link", return_value=lk), redirect_stdout(io.StringIO()):
+            cli.main(["gains", "set", "Steer/kP=0.015", "--why", "Steering overshoots 18%", "--json"])
+            cli.main(["gains", "set", "Steer/kP=0.012", "--json"])
+        self.assertEqual(lk.calls[0], ({"Steer/kP": 0.015}, "Steering overshoots 18%"))
+        self.assertEqual(lk.calls[1][1], "from the command line, no reason given")
+        with mock.patch.object(server.S, "link", lk):
+            server.api_gains({"values": {"Steer/kP": 0.011}, "reason": "Tune tab, advice: overshoot"})
+        self.assertEqual(lk.calls[2][1], "Tune tab, advice: overshoot")
+
     def test_json_output_is_strict(self):
         out = cli.Out(True)
         out.put(x=float("nan"), y=[float("inf")])

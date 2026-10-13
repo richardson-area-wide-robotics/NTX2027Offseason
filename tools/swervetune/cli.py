@@ -534,7 +534,7 @@ def cmd_gains(args, out):
                                 " one thing a little at a time (or --force)")
         if problems:
             return out.done(out.fail("; ".join(problems)))
-        status, after = lk.set_gains(want)
+        status, after = lk.set_gains(want, reason=args.why or "from the command line, no reason given")
         out.put(status=status, gains=_clean(after))
         out.say(status)
         return out.done(0 if "REFUSED" not in status else 1)
@@ -901,6 +901,7 @@ def build_parser():
     s.add_argument("action", nargs="?", default="show", choices=["show", "set"])
     s.add_argument("values", nargs="*", help="Name=value, e.g. Steer/kP=0.015")
     s.add_argument("--force", action="store_true", help="allow more than a 2x step")
+    s.add_argument("--why", help="why this change, logged with it on the robot: e.g. the finding's title")
     s.set_defaults(fn=cmd_gains)
 
     s = sub.add_parser("save", help="write the robot's live gains into the JSON files")
