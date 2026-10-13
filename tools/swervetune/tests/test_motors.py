@@ -1,6 +1,7 @@
 """The laptop side of the motor guard: the contract mirror, the monitor's motor rules, the current
 policy lint, and the kV/kS wear trend across saved runs."""
 
+import glob
 import json
 import os
 import re
@@ -94,11 +95,18 @@ class MonitorMotorTest(unittest.TestCase):
 
 
 class PolicyLintTest(unittest.TestCase):
-    def black_team_with(self, motors):
+    def black_team_with(self, motors, drive_type=None):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         dst = os.path.join(tmp.name, "robot")
         shutil.copytree(BLACK, dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
+        if drive_type:
+            for f in glob.glob(os.path.join(dst, "src", "main", "deploy", "swerve", "modules", "*.json")):
+                d = json.loads(read(f))
+                if "drive" in d:
+                    d["drive"]["type"] = drive_type
+                    with open(f, "w", encoding="utf-8") as fh:
+                        json.dump(d, fh)
         tune = os.path.join(dst, "src", "main", "deploy", "swerve", "swervetune.json")
         data = json.loads(read(tune))
         data["motors"] = motors
@@ -109,10 +117,11 @@ class PolicyLintTest(unittest.TestCase):
     def test_black_team_as_built_is_within_policy(self):
         ids = {f["id"] for f in yagslcfg.lint(yagslcfg.Project(BLACK))}
         self.assertFalse({"drive_current_over_policy", "steer_current_over_policy"} & ids,
-                         "NEO 2.0 drives allow 80 A")
+                         "Vortex drives allow 80 A")
 
     def test_black_team_drive_limit_is_over_the_unknown_neo_policy(self):
-        found = self.black_team_with({"guard": True})
+        # As a NEO on a SPARK MAX that the inventory doesn't name, 80 A is over the 60 A policy.
+        found = self.black_team_with({"guard": True}, drive_type="sparkmax_neo")
         f = found["drive_current_over_policy"]
         self.assertIn("80 A is over the 60 A policy", f["title"])
         self.assertEqual(f["fix"]["value"], 60)

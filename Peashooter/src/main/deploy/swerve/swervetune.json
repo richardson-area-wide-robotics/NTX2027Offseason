@@ -6,7 +6,7 @@
   "driveFeedforward": {},
   "angularVelocityCompensation": { "teleop": false, "auto": false, "coefficient": 0.0 },
   "operator": { "driverPort": 0, "overrideAxes": [0, 1, 4], "deadmanPort": 1, "deadmanButton": 6 },
-  "motors": { "guard": true, "enforcePolicy": true, "drive": "NEO 2.0", "steer": "NEO 550" },
+  "motors": { "guard": true, "enforcePolicy": true, "drive": "NEO Vortex", "steer": "NEO 550" },
   "robotMassKg": null,
   "robotMoiKgM2": null,
   "testLimits": {

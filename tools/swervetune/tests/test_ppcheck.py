@@ -20,13 +20,14 @@ def titles(r):
 
 class RealRobotsTest(unittest.TestCase):
     def test_peashooter_today(self):
+        # Made to match on this branch (decision 15); mass and MOI wait for measurement.
         r = P.check(Y.Project(PEA))
         rows = {x["key"]: x for x in r["rows"]}
-        self.assertEqual(rows["driveGearing"]["status"], "differs")
-        self.assertEqual(rows["driveMotorType"]["code"], "NEO")
+        self.assertEqual({k for k, x in rows.items() if x["status"] != "ok"}, {"robotMass", "robotMOI"})
+        self.assertEqual(rows["driveMotorType"]["code"], "vortex", "Vortex on SPARK Flex")
         self.assertEqual(rows["maxDriveSpeed"]["code"], 3.9, "the code's MAX_SPEED")
         self.assertEqual(rows["wheelCOF"]["status"], "ok", "1.2 against 1.19 is within tolerance")
-        self.assertEqual(rows["robotMass"]["status"], "unknown", "not weighed yet")
+        self.assertEqual(r["fixes"], [])
         self.assertIn("Named command 'Shoot B' is used by auto 'Kishores Auto' but the code never registers it",
                       titles(r))
         self.assertNotIn("loads auto 'W auto'", titles(r), "Robot.java's auto exists")

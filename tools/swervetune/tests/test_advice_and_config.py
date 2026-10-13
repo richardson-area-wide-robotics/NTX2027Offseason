@@ -67,7 +67,8 @@ class LintRealRobotsTest(unittest.TestCase):
 
     def test_peashooter(self):
         ids = self.ids(PEA)
-        for expected in ("pathplanner_mismatch", "pathplanner_defaults", "drive_p_hot", "steer_ramp"):
+        # PathPlanner's robot model was made to match on this branch; "Shoot B" stays unregistered.
+        for expected in ("pathplanner_names", "pathplanner_defaults", "drive_p_hot", "steer_ramp"):
             self.assertIn(expected, ids)
         self.assertNotIn("drive_inversion_mixed", ids)
         self.assertNotIn("max_speed_unreal", ids, "fixed: createSwerveDrive(MAX_SPEED = 3.9)")
@@ -85,8 +86,9 @@ class LintRealRobotsTest(unittest.TestCase):
 
     def test_physics(self):
         p = yagslcfg.Project(PEA)
-        self.assertAlmostEqual(p.max_module_speed(), 4.117, delta=0.01)
+        self.assertAlmostEqual(p.max_module_speed(), 4.921, delta=0.01, msg="Vortex at 5.5:1, 3 in")
         self.assertAlmostEqual(yagslcfg.traction_current("neo", 5.5, 3.0, 55, 1.19), 47, delta=2)
+        self.assertAlmostEqual(yagslcfg.traction_current("vortex", 5.5, 3.0, 55, 1.19), 69, delta=2)
 
 
 class JsonEditTest(unittest.TestCase):

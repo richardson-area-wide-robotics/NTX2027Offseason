@@ -1,8 +1,9 @@
 # Controls review: Peashooter and Black team swerve
 
 A review of both robots' swerve control as configured on the `StuartTesting` branch (October
-2026), before any of it has been measured on carpet. Both are MAXSwerve-style: NEO drive at
-5.50:1 on 3 in wheels (about 4.1 m/s free), NEO 550 steering at 46.42:1, navX on SPI, YAGSL
+2026), before any of it has been measured on carpet. Both are MAXSwerve-style: NEO Vortex drive on
+SPARK Flex at 5.50:1 on 3 in wheels (about 4.9 m/s free), NEO 550 steering at 46.42:1, navX on SPI,
+YAGSL
 2026.4.1. Findings are ordered by how much they cost on the field. Each says what the swerve
 tools do about it; most are measured, not guessed, by a step in the Guide tab.
 
@@ -42,13 +43,16 @@ comment. The Troubleshoot tab's "The robot goes the wrong way" walks through it.
 
 ### 3. No feedforward is measured, and the drive gains are at the extremes
 
-YAGSL's default drive feedforward is kV = 12 V / 4.1 m/s, about 2.9 V per m/s, with no kS. On
-carpet, kS (the voltage to start the wheel moving) is typically 0.1 to 0.25 V; without it, slow
-moves undershoot. Feedback has to make up the rest, but:
+YAGSL's default drive feedforward is kV = 12 V divided by the top speed the code gives it (3.9 m/s
+on Peashooter, 4.1 on Black team): about 3 V per m/s, with no kS. A Vortex at this gearing needs
+nearer 2.4 V per m/s (12 V over its 4.9 m/s free speed), so the default asks for about 25% too much
+voltage at speed, and feedback has to pull it back. On carpet, kS (the voltage to start the wheel
+moving) is typically 0.1 to 0.25 V; without it, slow moves undershoot. Feedback has to make up all
+of this, but:
 
-- **Peashooter: drive kP 1, kD 0.4.** kP 1 is four times the feedforward's own slope. The NEO's
-  velocity measurement is coarse and lagged, so this buzzes and overshoots, and kD on a velocity
-  loop mostly amplifies the measurement steps. Expect hot, noisy drive motors.
+- **Peashooter: drive kP 1, kD 0.4.** kP 1 is several times the feedforward's own slope. The
+  measured velocity is filtered and lags, so a gain this big buzzes and overshoots, and kD on a
+  velocity loop mostly amplifies measurement noise. Expect hot, noisy drive motors.
 - **Black team: drive kP 0.002.** At 1 m/s of error it adds 0.2% output: the drive is effectively
   open loop on an unmeasured feedforward.
 
@@ -71,9 +75,11 @@ ramp 0.05 s or less.
 ### 5. The drive current limit isn't set from grip
 
 Black team runs 80 A per drive motor, Peashooter 40 A. At an assumed 55 kg and a carpet grip of
-1.19, a wheel breaks loose at about 47 A. Above that, hard acceleration spins wheels (odometry
-counts distance the robot never covered) and four motors at 80 A ask 320 A of a 120 A main
-breaker. Policy caps NEO 2.0 drive at 80 A; the right number for this carpet is lower.
+1.19, a Vortex at this gearing breaks its wheel loose at about 69 A (it makes less torque per amp
+than a NEO). Above that, hard acceleration spins wheels (odometry counts distance the robot never
+covered) and four motors at 80 A ask 320 A of a 120 A main breaker. Peashooter's 40 A grips but
+gives away acceleration. Policy caps the Vortex at 80 A; the right number for this carpet is a
+little under where it slips.
 
 **Do:** Guide step 8: the slip test pushes against a wall, finds where each wheel lets go, and
 recommends a limit just under it.
@@ -95,13 +101,14 @@ drives, but its angle reads backwards). Peashooter: three offsets are exact mult
 **Do:** Guide steps 3 and 4: the hand check, then capture offsets with every bevel gear facing the
 same way.
 
-### 8. Top speed has no headroom on Black team
+### 8. Top speed is set well under what the Vortexes can do
 
-Black team sets the maximum speed to 4.1 m/s, the free speed. At full stick the velocity loop has
-nothing left to correct with, and as the battery sags it can't reach the setpoint at all.
-Peashooter uses 3.9 m/s (95%).
+The Vortexes' free speed at this gearing is about 4.9 m/s. The code tells YAGSL 3.9 m/s
+(Peashooter, 79%) and 4.1 m/s (Black team, 83%): safe headroom for the velocity loop and a sagging
+battery, but full stick is slower than the robot can go, and PathPlanner plans with the same number.
 
-**Do:** 3.9 m/s on Black team too, until the straight-line test shows the real top speed.
+**Do:** once the straight-line test has measured the real top speed on carpet, set `MAX_SPEED` to
+about 90% of it on both robots; the PathPlanner check then asks to update PathPlanner too.
 
 ### 9. Turning while driving drifts sideways
 
