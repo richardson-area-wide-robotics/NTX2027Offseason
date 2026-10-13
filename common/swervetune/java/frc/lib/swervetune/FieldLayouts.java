@@ -64,7 +64,7 @@ public final class FieldLayouts {
         || Math.abs(official.getFieldWidth() - surveyed.getFieldWidth()) > SAME_FIELD_M) {
       return new Loaded(official, "AprilTags: the official layout; the surveyed one was made for the"
           + " other field variant (welded or AndyMark), so it is not used. Survey again, or load the"
-          + " matching official layout.");
+          + " matching official layout: set \"vision\": {\"field\": \"welded\" or \"andymark\"} in swervetune.json.");
     }
     List<AprilTag> tags = new ArrayList<>();
     int moved = 0;

@@ -15,5 +15,9 @@
     "minStartVoltsField": 11.8,
     "minStartVoltsBlocks": 11.0
   },
-  "advantageScopeTuning": true
+  "advantageScopeTuning": true,
+  "pathplanner": {
+    "_readme": "Named commands an auto uses that the code doesn't register, kept on purpose: the PathPlanner check lists them as warnings, not errors.",
+    "knownUnregistered": ["Shoot B"]
+  }
 }

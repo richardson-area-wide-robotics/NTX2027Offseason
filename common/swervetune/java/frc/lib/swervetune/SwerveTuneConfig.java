@@ -108,6 +108,13 @@ public final class SwerveTuneConfig {
   public boolean feedPoseEstimator = false;
 
   /**
+   * Which official AprilTag layout the cameras start from: {@code "welded"} (default) or
+   * {@code "andymark"}, as the event's field is built ({@code "vision": {"field": ...}}). The field
+   * survey says which fits; a surveyed layout for the other one is set aside.
+   */
+  public String visionField = "welded";
+
+  /**
    * The team's batteries, by the number written on each: the choices in the dashboard's Battery
    * drop-down. Empty means 1 to 12.
    */
@@ -252,6 +259,12 @@ public final class SwerveTuneConfig {
       }
     }
     c.feedPoseEstimator = Boolean.TRUE.equals(vision.get("feedPoseEstimator"));
+    String field = str(vision.get("field"), "welded").trim().toLowerCase(java.util.Locale.ROOT);
+    if (field.equals("welded") || field.equals("andymark")) {
+      c.visionField = field;
+    } else {
+      c.warnings.add("vision: field must be \"welded\" or \"andymark\"; got \"" + field + "\". Using welded.");
+    }
     if (c.feedPoseEstimator) {
       for (String n : c.visionCameras) {
         if (!c.cameras.containsKey(n)) {

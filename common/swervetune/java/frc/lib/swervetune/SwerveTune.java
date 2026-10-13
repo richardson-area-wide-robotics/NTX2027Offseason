@@ -706,6 +706,11 @@ public final class SwerveTune {
     return List.copyOf(config.visionCameras);
   }
 
+  /** Which official AprilTag layout the cameras start from: "welded" or "andymark". */
+  public String visionField() {
+    return config.visionField;
+  }
+
   /** Camera poses handed to the drivetrain's pose estimator since boot. */
   public long visionPosesFed() {
     return visionFed;

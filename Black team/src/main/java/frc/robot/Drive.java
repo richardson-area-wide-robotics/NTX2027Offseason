@@ -21,7 +21,7 @@ import swervelib.telemetry.SwerveDriveTelemetry;
 
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
-    // NEO, 5.50 gear ratio, 3in wheel: ~4.1 m/s free speed
+    // NEO Vortex, 5.50:1, 3 in wheel: about 4.9 m/s free; 4.1 leaves headroom for a sagging battery
     private static final double MAX_SPEED = 4.1;
     private static final double MAX_ROTATION = 2 * Math.PI;
     private boolean fieldR = true;

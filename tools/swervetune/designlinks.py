@@ -243,6 +243,7 @@ _AMB_SPECS = {k: (m["free_rpm"], m["stall_nm"]) for k, m in revspecs.MOTORS.item
 
 def _amb_state(page, query):
     st = dict(_AMB_DEFAULTS.get(page, {}))
+    given = set()
     title = ""
     for k, v in parse_qsl(query, keep_blank_values=True):
         if k == "":
@@ -250,6 +251,7 @@ def _amb_state(page, query):
             continue
         if v == "":
             continue
+        given.add(k)
         if v == "^":
             if k in _DRIVING:
                 for r in _DRIVING:
@@ -259,6 +261,8 @@ def _amb_state(page, query):
             st[k] = False
         else:
             st[k] = v
+    # Which fields the link itself set: everything else is the page's default, never the robot's.
+    st["__given"] = given
     return st, title.strip()
 
 
@@ -351,7 +355,8 @@ def _amb(page, query, url):
                        ratio=_num(st.get("sim-ratio")), efficiency=(_num(st.get("gbx_eff")) or 100) / 100,
                        voltage=_num(st.get("volt")) or 12.0, current_limit_a=lim if lim is not None else 60.0,
                        radius_m=_si(st, "radius", 0.0254), mass_kg=_si(st, "mass", 0.4535),
-                       load_n=_si(st, "load", 4.448))
+                       load_n=_si(st, "load", 4.448),
+                       assumed=[f for f, k in (("mass_kg", "mass"),) if k not in st["__given"]])
     # drivetrain
     ratio = 1.0
     for a, b in (("g1a", "g1b"), ("g2a", "g2b"), ("g3a", "g3b")):
@@ -360,7 +365,10 @@ def _amb(page, query, url):
     return _design("AMBcalc", "drivetrain", "drivetrain", url, title=title, motor=motor, ratio=ratio,
                    efficiency=(_num(st.get("eff")) or 100) / 100, voltage=_num(st.get("vrest")) or 12.7,
                    current_limit_a=_num(st.get("ilim")), mass_kg=_si(st, "weight", 0.453592),
-                   wheel_diameter_m=_si(st, "wheel_diam", 0.0254), cof=_num(st.get("cofs")), swerve=None)
+                   wheel_diameter_m=_si(st, "wheel_diam", 0.0254), cof=_num(st.get("cofs")), swerve=None,
+                   # AMBcalc fills in 154 lb, 4 in wheels and a grip of 1.1 when a link doesn't change them.
+                   assumed=[f for f, k in (("mass_kg", "weight"), ("wheel_diameter_m", "wheel_diam"), ("cof", "cofs"))
+                            if k not in st["__given"]])
 
 
 # ---------------------------------------------------------------------------- what a design predicts

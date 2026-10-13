@@ -239,14 +239,21 @@ def check(project):
             F.append({"level": "error", "kind": "names", "title": f"Auto '{name}' uses path '{x}', which doesn't exist",
                       "why": "The auto fails to load. Renamed or deleted in the PathPlanner app?"})
     registered = set(re.findall(r'NamedCommands\.registerCommand\(\s*"([^"]+)"', code))
+    # Names the team keeps unregistered on purpose ("Shoot B", decision 16) stay listed, as warnings,
+    # so CI's PathPlanner check isn't red on every run and then ignored.
+    known = set(((project.data.get("swervetune.json") or {}).get("pathplanner") or {}).get("knownUnregistered") or [])
     for x in sorted(set(named_used) - registered):
         # Never suggest renaming it: only the auto's author knows which command it means (the team
         # keeps "Shoot B" by name for exactly that reason).
-        F.append({"level": "error", "kind": "names",
-                  "title": f"Named command '{x}' is used by {', '.join(sorted(named_used[x]))} but the code never registers it",
+        F.append({"level": "warn" if x in known else "error", "kind": "names",
+                  "title": f"Named command '{x}' is used by {', '.join(sorted(named_used[x]))} but the code never registers it"
+                           + (" (kept on purpose: swervetune.json knownUnregistered)" if x in known else ""),
                   "why": "PathPlanner skips it with only a console warning, so that step of the auto silently "
-                         "does nothing. Ask whoever wrote the auto which command it means, then register it in "
-                         "the robot code with NamedCommands.registerCommand. This doesn't affect swerve tuning."})
+                         + ("does nothing. The team keeps it that way on purpose (pathplanner.knownUnregistered "
+                            "in swervetune.json); take it off that list once the command is registered."
+                            if x in known else
+                            "does nothing. Ask whoever wrote the auto which command it means, then register it in "
+                            "the robot code with NamedCommands.registerCommand. This doesn't affect swerve tuning.")})
     for x in sorted(registered - set(named_used)):
         F.append({"level": "info", "kind": "names", "title": f"Named command '{x}' is registered but no auto uses it",
                   "why": "Harmless; listed so a typo on either side is easy to spot."})

@@ -35,7 +35,10 @@ public final class PhotonVisionSetup {
     if (names.isEmpty()) {
       return List.of();
     }
-    FieldLayouts.Loaded field = FieldLayouts.load(AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField));
+    // The event's field: welded or AndyMark ("vision": {"field": ...}); kDefaultField is always welded.
+    AprilTagFields official = "andymark".equals(tune.visionField())
+        ? AprilTagFields.k2026RebuiltAndymark : AprilTagFields.k2026RebuiltWelded;
+    FieldLayouts.Loaded field = FieldLayouts.load(AprilTagFieldLayout.loadField(official));
     if (!field.summary().isEmpty()) {
       DriverStation.reportWarning("[swervetune] AprilTags: " + field.summary(), false);
     }

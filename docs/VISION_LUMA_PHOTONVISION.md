@@ -64,3 +64,18 @@ their official place. Save, redeploy. The Driver Station prints which tags were 
 - The top bar's AprilTags chip says "on" once a source is set and the environment has tags.
 - The Live tab shows vision poses next to odometry, with accepted and rejected counts.
 - The straight-line test uses vision as ground truth when AprilTags are on.
+
+## The field survey and PhotonVision
+
+Two things use a field's tag layout, and the survey has to reach both:
+
+- **The robot** (the single-tag poses, and the gates): it loads the official layout named by
+  `"vision": {"field": "welded"}` or `"andymark"` in `swervetune.json`, then moves each tag the survey
+  measured. Saving the survey in the Calibrate tab writes both.
+- **Each camera** (the multi-tag poses, solved on the camera itself): PhotonVision uses the layout
+  loaded in its own web page, not the robot's. Upload `src/main/deploy/apriltags/surveyed.json` to every
+  camera (PhotonVision, Settings, AprilTag field layout), or the multi-tag poses keep the official tag
+  positions and the survey only corrects the single-tag ones.
+
+At an event, set `"field"` to how that field is built (the event's documentation says welded or
+AndyMark) and redeploy; a survey made on the other kind is set aside, with a warning.

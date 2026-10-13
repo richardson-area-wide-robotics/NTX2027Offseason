@@ -26,8 +26,19 @@ is in a single file. These are the files that change, counted from what each one
 | SystemCore's addresses (hostname `robot`, USB and Wi-Fi addresses) | `link.py`'s `candidate_hosts` already tries them | None |
 
 `Sampler`, `SafetySupervisor`, `MotorGuard`'s logic, `VisionGate` and `VisionTrust` touch no WPILib
-API at all. In the library that is about a dozen files of 40 (38 in `swervetune`, 2 in its
+API at all. In the library that is about a dozen files of 41 (39 in `swervetune`, 2 in its
 PhotonVision adapter); in the robot projects, nearly every file.
+
+Three more, outside that table:
+
+- **Vendordeps the library always needs.** `YagslDrivetrainIO` imports the navX (Studica) and
+  Canandgyro (ReduxLib) libraries directly, so every robot keeps both vendordeps until it is split,
+  even after the navX comes off.
+- **PathPlannerLib 2027**, and the `settings.json` fields `ppcheck` reads (`robotMass`,
+  `robotMOI`, `wheelCOF`, `driveCurrentLimit`, `maxDriveSpeed`, the module offsets): check them
+  against the 2027 file before trusting the PathPlanner check.
+- **REVLib deprecations already in the code**: Black team's `Intake.java` uses
+  `SparkBase.PersistMode` and `ResetMode`, which REVLib 2026 marks for removal.
 
 ## The porting checklist
 
@@ -47,7 +58,8 @@ PhotonVision adapter); in the robot projects, nearly every file.
      buses, but `wiring.diagnose`, the schematic and the post-match summary only read the first.
 5. **`Alert` moved to wpiutil** (`DashboardAlerts`).
 6. **The AprilTag library is now a vendordep**, and `AprilTagFields` became part of `Fields`
-   (`FieldLayouts`, `PhotonVisionSource`).
+   (`PhotonVisionSetup`, which picks the welded or AndyMark layout; `FieldLayouts` and
+   `PhotonVisionSource` take a layout object and don't name the enum).
 7. **SmartDashboard is gone** (it used NetworkTables 3). Peashooter's `Drive.java` puts two numbers
    there; move them to the Telemetry API or to AdvantageKit's `Logger.recordOutput`. The tools
    already use NetworkTables 4 only. The dashboard's **Battery** drop-down (`BatteryPicker`) is

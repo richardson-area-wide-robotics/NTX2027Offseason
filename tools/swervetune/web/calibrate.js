@@ -397,7 +397,12 @@
       ${findings(r.findings)}
       ${r.layout_text && !r.practice && moved.some(x => x.trusted) ? `<button class="btn primary" id="fs-save">Save the surveyed layout (${esc(r.path || "")})…</button>` : ""}`;
     const b = $("#fs-save", out);
-    if (b) b.onclick = () => App.previewAndSave({ kind: "layout", text: r.layout_text }, "Surveyed AprilTag layout");
+    if (b) b.onclick = async () => {
+      if (!(await App.previewAndSave({ kind: "layout", text: r.layout_text }, "Surveyed AprilTag layout"))) return;
+      // The robot starts from the official layout this field is built like; the survey moves tags on it.
+      if (r.variant) await App.previewAndSave({ kind: "edit", file: "swervetune.json", path: ["vision", "field"], value: r.variant },
+        `This field is the ${r.variant === "andymark" ? "AndyMark" : "welded"} one`);
+    };
   }
 
   $("#fs-start", root).onclick = async () => {

@@ -156,7 +156,7 @@
             <div class="row" id="dl-motors">${choices.map(c => `<label class="row small"><input type="checkbox" value="${esc(c.name)}" ${r.motors.includes(c.name) ? "checked" : ""}>
               ${esc(c.name)} <span class="muted">${esc(c.motor || "?")}</span></label>`).join("")}</div></div>`}
           <div><b>Checked against the robot</b>${findingsHtml(r.findings)}</div>
-          ${r.edits.length ? `<div><b>Numbers it can fill in</b>${r.edits.map((e, i) => `<label class="row small"><input type="checkbox" class="dl-edit" data-i="${i}" checked> ${esc(e.label)}</label>`).join("")}</div>` : ""}
+          ${r.edits.length ? `<div><b>Numbers it can fill in</b>${r.edits.map((e, i) => `<label class="row small"><input type="checkbox" class="dl-edit" data-i="${i}"> ${esc(e.label)}</label>`).join("")}</div>` : ""}
           <div class="row"><button class="btn primary" id="dl-save" data-tip="config.dl-save">Save the design${r.edits.length ? " and the ticked numbers" : ""}…</button></div>
         </div></div>`;
       $$("#dl-motors input", box).forEach(c => c.onchange = () => readLink($$("#dl-motors input:checked", box).map(x => x.value)));

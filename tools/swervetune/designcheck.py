@@ -202,11 +202,17 @@ def check_drivetrain(d, project, summary=None):
                     "carpet, and the limit belongs just below that.", learn="slip_current"))
     mass, src = project.mass()
     if d.get("mass_kg"):
-        if "assumed" in src:
-            edits.append({"file": "swervetune.json", "path": ["robotMassKg"], "value": round(d["mass_kg"], 1),
-                          "label": f"Robot mass {mass:g} kg (assumed) → {d['mass_kg']:.1f} kg (the design's, until it is weighed)"})
+        # A design never writes the robot's mass: only a scale does. A saved drivetrain design's mass
+        # stands in until then, marked assumed (yagslcfg.Project.mass).
+        if "mass_kg" in (d.get("assumed") or []):
+            F.append(_f("info", "The link doesn't set the robot's weight",
+                        f"The calculator fills in its own default ({d['mass_kg']:.0f} kg) when the weight isn't "
+                        "changed, so the tool doesn't use it. Weigh the robot (Calibrate tab), and put the weight "
+                        "in the calculator too."))
+        elif "assumed" in src:
             F.append(_f("info", f"The design weighs {d['mass_kg']:.1f} kg; the robot hasn't been weighed",
-                        "The tool can use the design's mass until someone weighs the robot (Calibrate tab)."))
+                        "Saved, the tool uses the design's mass until someone weighs the robot (Calibrate tab), "
+                        "marked as assumed everywhere it shows."))
         elif abs(d["mass_kg"] - mass) / mass > 0.1:
             F.append(_f("info", f"The design weighs {d['mass_kg']:.1f} kg; the robot weighs {mass:g} kg ({src})",
                         "The design predicts more acceleration than the robot has, or less. Update the calculator."))

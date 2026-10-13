@@ -300,7 +300,22 @@ class Project:
         pp = self.pathplanner or {}
         if pp.get("robotMass") and abs(pp["robotMass"] - PP_DEFAULT_MASS) > 0.5:
             return float(pp["robotMass"]), "PathPlanner settings"
+        dm = self._design_mass()
+        if dm:
+            return dm, "assumed: the drivetrain design's, until the robot is weighed"
         return 55.0, "assumed (set robotMassKg in swervetune.json)"
+
+    def _design_mass(self):
+        """A saved drivetrain design's mass, when its link set it (not the calculator's default)."""
+        from . import designlinks
+        for v in ((self.data.get("swervetune.json") or {}).get("designs") or {}).values():
+            try:
+                d = designlinks.parse((v or {}).get("url", ""))
+            except Exception:  # noqa: BLE001 - a link that no longer reads gives no mass
+                continue
+            if d.get("kind") == "drivetrain" and d.get("mass_kg") and "mass_kg" not in (d.get("assumed") or []):
+                return round(d["mass_kg"], 1)
+        return None
 
     def moi(self):
         """Robot moment of inertia about its center, kg m^2, and where it came from.
@@ -494,7 +509,10 @@ def lint(project):
                     "Usually one was copied from the other. Capture fresh offsets with the tool.",
                     {"kind": "guide", "step": "offsets"}, offsets=offs))
     round_ones = [n for n, o in offs.items() if abs(o % 90) < 1e-9]
-    if round_ones and len(round_ones) >= 2:
+    steer_ratio = ((p.phys.get("conversionFactors") or {}).get("angle") or {}).get("gearRatio")
+    from . import ratios as _R
+    if round_ones and len(round_ones) >= 2 and _R.family(steer_ratio) != "maxswerve":
+        # (MAXSwerve modules zeroed with REV's Hardware Client sit at whole quarter turns by design.)
         F.append(_f("info", "offsets_round",
                     f"Offsets that are exact multiples of 90: {', '.join(round_ones)}",
                     "Real measured offsets are rarely whole quarter turns. These may be template or "
@@ -607,6 +625,47 @@ def lint(project):
             F.append(_f("info", "drive_current_low",
                         f"Drive current limit {d_lim:.0f} A leaves acceleration on the table",
                         f"Wheels would grip up to about {slip:.0f} A. Fine if brownouts are the worry."))
+    # ---- every module the same motors, offsets in a turn, a ratio REV sells
+    for part in ("drive", "angle"):
+        types = {n: (m.get(part) or {}).get("type") for n, m in mods.items()}
+        if len(set(types.values())) > 1:
+            F.append(_f("error", f"modules_mixed_{part}_types",
+                        f"The modules' {'drive' if part == 'drive' else 'steering'} motor types differ: "
+                        + ", ".join(f"{n} {t}" for n, t in types.items()),
+                        "YAGSL builds each module from its own file; a module with another type gets another "
+                        "controller and another free speed. Make them match what is fitted (Motors tab)."))
+    for n, o in offs.items():
+        if not (0 <= o < 360):
+            F.append(_f("warn", "offset_out_of_range", f"{n}'s offset is {o:g}°",
+                        "An offset is an angle within one turn, 0 to 360. YAGSL wraps it, but a number outside "
+                        "that range is usually a typo or a copy from another robot: capture it again.",
+                        {"kind": "guide", "step": "offsets"}))
+    drive_ratio = ((p.phys.get("conversionFactors") or {}).get("drive") or {}).get("gearRatio")
+    if _R.family(steer_ratio) == "maxswerve" and drive_ratio and not _R.candidates(float(drive_ratio), "maxswerve", 0.005):
+        F.append(_f("warn", "drive_ratio_not_sold", f"Drive gear ratio {drive_ratio}:1 isn't one REV sells for MAXSwerve",
+                    "REV sells " + ", ".join(f"{r:.2f}" for _, r in _R.MAXSWERVE_DRIVE) + ". Count the pinion's "
+                    "teeth and set the matching ratio: every distance and speed scales with it."))
+
+    # ---- a velocity setpoint the motor can never reach (Peashooter's shootX asked a Vortex for 9999 rpm)
+    from . import designcheck as _DC, revspecs as _RS
+    kinds = {"VORTEX": "vortex", "NEO_550": "neo550", "NEO_V1_1": "neo", "NEO_2_0": "neo", "NEO_UNKNOWN": "neo"}
+    for fname, src in (p.java or {}).items():
+        if "velocityConversionFactor" in src:
+            continue  # setpoints in its own units, not motor rpm
+        ks = [kinds[k] for k in re.findall(r"MotorKind\.(\w+)", src) if k in kinds]
+        if not ks:
+            continue
+        free = max(_RS.MOTORS[k]["free_rpm"] for k in ks)
+        label = _RS.MOTORS[max(ks, key=lambda k: _RS.MOTORS[k]["free_rpm"])]["label"]
+        for sp in _DC.velocity_setpoints(src):
+            if sp > free:
+                F.append(_f("error", "setpoint_unreachable",
+                            f"{os.path.basename(fname)} asks for {sp:g} rpm; a {label} tops out at {free} rpm",
+                            "The loop runs the motor flat out and never gets there, so it never settles and every "
+                            "shot is different. Pick a speed the motor can hold with margin (about 80% of free "
+                            "speed), or gear it differently: a ReCalc or AMBcalc link in Config shows what the "
+                            "mechanism can reach."))
+
     # ---- the team's current policy (Stuart, 2026-10): Vortex 80, NEO 1.1 60, NEO 2.0 80, NEO 550 20
     inventory = p.tune.get("motors", {}) if isinstance(p.tune.get("motors"), dict) else {}
     for key, what in (("guard", "the motor guard (heat, stall and failure protection)"),
