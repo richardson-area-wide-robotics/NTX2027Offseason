@@ -753,14 +753,18 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
                                  "a slipping wheel. Repeat it on clear carpet."))
         if kv_spread > 8 and len(kvs) > 1:
             odd = max(good, key=lambda n: abs(good[n]["kV"] / A.median(kvs) - 1))
+            # Up to 15% the per-module feedforward below still applies, so this is a note to follow
+            # up, not the next step: as the next step it sent people to blocks, where no gains come out,
+            # and the floor feedforward never came up.
+            mild = kv_spread <= 15
             F.append(finding(
-                "warn", f"kV differs {kv_spread:.0f}% between modules; {odd} is the odd one out",
+                "info" if mild else "warn", f"kV differs {kv_spread:.0f}% between modules; {odd} is the odd one out",
                 "Up to about 8% is normal motor-to-motor variation and a per-module feedforward "
                 "absorbs it. On carpet the chassis drives every wheel at the robot's speed, so a worn "
                 "or smaller wheel, a slipping wheel and a different pinion all show up here the same "
                 "way a weak motor would. Check that corner's wheel size first (Calibrate tab, Wheel "
                 "sizes); to judge the motor itself, run the feedforward on blocks, where each wheel "
-                "spins free.", {"type": "run", "test": "drive_ff", "env": "BLOCKS", "args": {}}))
+                "spins free.", None if mild else {"type": "run", "test": "drive_ff", "env": "BLOCKS", "args": {}}))
         ident_findings, ident = motor_identity_findings(kvs, ctx or {})
         F.extend(ident_findings)
         if ident:
@@ -773,9 +777,11 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
                 values[f"FF/{n}/kA"] = max(0.0, f.get("kA", 0.0))
             F.append(finding(
                 "ok", "Per-module feedforward measured",
-                "Apply these live, then rerun drive_step: the speed error should collapse and the "
-                "drive kP can come down to a gentle correction. Save writes them to swervetune.json.",
-                {"type": "gains", "values": {k: round(v, 4) for k, v in values.items()}}))
+                "Apply these live, then run drive_step on the floor (not this test again): the speed "
+                "error should collapse and the drive kP can come down to a gentle correction. Saving "
+                "the drive gains writes them to swervetune.json.",
+                {"type": "gains", "values": {k: round(v, 4) for k, v in values.items()},
+                 "then": {"test": "drive_step", "env": "FIELD"}}))
     # A motor's health is judged on blocks only: on carpet the chassis couples the wheels, so a
     # module drifting from its siblings could be its wheel, its grip or its gearing.
     if history and blocks:
@@ -1099,14 +1105,23 @@ def drive_ratio_findings(result, mask=None, radius=None):
         return []  # not enough travel to judge
     out = []
     for f in R.module_ratio_findings(travel, cfg or 1.0, fam):
-        text = R.describe(f) if cfg else (f"{f['module']} reports {abs(1 - f['travel_ratio']) * 100:.1f}% "
-                                          "different travel from the other modules over the same floor.")
-        out.append(finding(
-            "warn", f"{f['module']}: drive gear ratio looks different from the other modules",
-            text + " On the floor every wheel covers the same ground, so a different reported distance "
-            "means a different reduction - the motor encoder cannot see the gearbox. Count that "
-            "module's pinion teeth.", {"type": "troubleshoot", "symptom": "gear_ratio"},
-            ratio=f))
+        if cfg and f["candidates"]:
+            # A ratio REV sells fits: one pinion tooth different.
+            out.append(finding(
+                "warn", f"{f['module']}: drive gear ratio looks different from the other modules",
+                R.describe(f) + " On the floor every wheel covers the same ground, so a different reported "
+                "distance means a different reduction - the motor encoder cannot see the gearbox. Count "
+                "that module's pinion teeth.", {"type": "troubleshoot", "symptom": "gear_ratio"},
+                ratio=f))
+        else:
+            # No sold ratio fits: a worn or different wheel (MAXSwerve tread wears up to about 4%
+            # smaller), or one that slipped. Not a reason to open the gearbox.
+            more = "less" if f["travel_ratio"] < 1 else "more"
+            out.append(finding(
+                "info", f"{f['module']} reports {abs(1 - f['travel_ratio']) * 100:.1f}% {more} travel than the others",
+                "On the floor every wheel covers the same ground. No gear ratio REV sells explains this, so "
+                "it is that wheel: worn or different tread, or it slipped. Check its size (Calibrate tab, "
+                "Wheel sizes) and its tread.", ratio=f))
     return out
 
 
@@ -1459,7 +1474,8 @@ WHEEL_TESTS = ("drive_step", "drive_ff", "straight", "slip", "spin", "spin_ff", 
 
 
 MAX_STEP = 2.0
-_SAVE_KEYS = {"steer_pid": ["Steer"], "drive_pid": ["Drive"]}
+# A drive save keeps the measured feedforward too: it was applied live, and a reboot would lose it.
+_SAVE_KEYS = {"steer_pid": ["Steer"], "drive_pid": ["Drive", "FF"]}
 
 
 def _concrete(rep, gains, kw):
@@ -1498,6 +1514,11 @@ def _concrete(rep, gains, kw):
                     a["value"] = round(kw["wheel_d_in"] * float(v[1:]), 4)
                 except ValueError:
                     pass
+            if a["value"] == "toggle" or (isinstance(a["value"], str) and a["value"].startswith("x")):
+                # Without the robot's files the real value can't be worked out, and "x1.0163"
+                # written as-is would be a string where YAGSL needs a number.
+                f.pop("action", None)
+                f["why"] = f["why"].rstrip() + " (Name the robot, --project, to get the exact value to write.)"
         elif a.get("type") == "save" and "keys" not in a:
             a["keys"] = _SAVE_KEYS.get(a.get("what"), [])
     return rep

@@ -113,6 +113,7 @@ class Session:
             self.connect_error = (f"Robot speaks protocol {proto}, this tool {C.PROTOCOL_VERSION}. "
                                   "Deploy the code from this branch.")
             return False
+        lk.set_gui_deadman(False)  # this client owns the deadman topic
         lk.start_heartbeat(gate=self.browser_alive)
         self.link, self.target, self.connect_error = lk, target, ""
         name = lk.robot_info().get("name")

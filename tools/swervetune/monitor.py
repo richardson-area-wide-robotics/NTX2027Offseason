@@ -30,7 +30,8 @@ RULES = {
     "low_battery": ("brownout", "battery voltage is sagging below 8 V"),
     "gyro_problem": ("field_relative_wrong", "gyro is not connected, still calibrating, or faulted"),
     "drive_ratio_mismatch": ("gear_ratio", "reports a different distance from the other modules"
-                                           " while driving straight - its gear ratio may differ"),
+                                           " while driving straight: more than worn tread explains, so"
+                                           " its gear ratio may differ"),
     "motor_hot": ("motor_hot", "is hot: the motor guard has stepped in"),
     "motor_failing": ("motor_dead", "shows signs of failing: unplugged, an open phase, or a fault"),
     "motor_hotter_than_siblings": ("motor_hot", "runs much hotter than the matching motors on the"
@@ -43,6 +44,9 @@ SIBLING_HOT_C = 15.0
 
 # Passive drive-ratio check: how much straight-line driving to collect before judging, meters.
 RATIO_MIN_TRAVEL_M = 3.0
+# Worn MAXSwerve tread is up to 1/8 in, about 4% of a 3 in wheel; one pinion tooth is about 8%.
+# Between them is a wheel to measure, not a gearbox to open.
+RATIO_FLAG = 0.05
 
 
 class Monitor:
@@ -171,7 +175,7 @@ class Monitor:
         travel = self._ratio_travel
         if len(travel) >= 3 and min(travel.values()) >= RATIO_MIN_TRAVEL_M:
             from . import ratios as R
-            odd = {f["module"]: f for f in R.module_ratio_findings(travel, 1.0)}
+            odd = {f["module"]: f for f in R.module_ratio_findings(travel, 1.0, threshold=RATIO_FLAG)}
             for name in travel:
                 f = odd.get(name)
                 self._raise("drive_ratio_mismatch", name, now, 0.0,

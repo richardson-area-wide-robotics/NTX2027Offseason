@@ -98,7 +98,8 @@ before each test, and if a gain isn't what you last set, ask before going on.
 Act on `next.action` and only on it. Every action is one the commands above carry out as written:
 
 - `{"type": "gains", "values": {...}}`: `gains set` exactly those values with `--why` the finding's
-  title, then rerun the same test.
+  title, then rerun the same test, or the test in `then` when the action has one (`{"test":
+  "drive_step", "env": "FIELD"}` after a measured feedforward).
 - `{"type": "run", "test": ..., "env": ...}`: run that test next (ask a person to change the
   environment if it differs).
 - `{"type": "config", "file", "path", "value"}`: a file change that needs a redeploy. Run
@@ -128,10 +129,15 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `DISABLED`, `NEEDS_DISABLED` | The Driver Station mode is wrong for this test: ask a person. |
 | `NO_CONTROLLER`, `NO_PDH` | The robot can't read what the test needs; tell the person. |
 | `BAD_ARGS` | Your command's arguments: fix the command. |
+| `NO_PROJECT`, `NOT_FOUND` | A robot project or saved run that doesn't exist: `runs` lists runs; the projects are Peashooter and Black team. |
+| `WRONG_PLACE` | The test can't run where the robot is (a floor test on blocks, the PDH map on the floor): ask a person to move it and set the environment. |
+| `GAINS_REFUSED` | The robot refused a gain change (a test running, the FMS attached): nothing changed; wait, then `gains show`. |
+| `TOOL_ERROR` | The tool itself failed: report the message to a person; don't retry blindly. |
 | `TIMEOUT`, `WAITED_TOO_LONG`, `BUSY`, `ROBOT_ERROR`, `OTHER` | Read `message` to the person and wait. |
 
-Stop when the score reaches 100, or the cost hasn't improved over three runs (`runs --test <test>`
-lists them with their costs). Then summarize for the person: what was measured, what changed,
+Stop when `next` is null or a save (show the save's diff to a person), or when the cost hasn't
+improved over three runs that each changed something; a step held to 2x is still progress
+(`runs --test <test>` lists them with their costs). Then summarize for the person: what was measured, what changed,
 what is left.
 
 Before spending battery and floor time on a strategy, `rehearse` it against the practice pod. The

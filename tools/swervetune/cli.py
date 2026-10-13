@@ -102,6 +102,14 @@ def project_dirs():
     return yagslcfg.find_projects(REPO)
 
 
+class CliError(Exception):
+    """A command that can't go on: becomes one JSON object with a code under --json."""
+
+    def __init__(self, message, code="BAD_ARGS"):
+        super().__init__(message)
+        self.code = code
+
+
 def resolve_project(name):
     if not name:
         return None
@@ -110,8 +118,8 @@ def resolve_project(name):
             return yagslcfg.Project(d)
     if os.path.isdir(name):
         return yagslcfg.Project(name)
-    raise SystemExit(f"No robot project called {name!r}. Known: "
-                     + ", ".join(os.path.basename(d) for d in project_dirs()))
+    raise CliError(f"No robot project called {name!r}. Known: "
+                   + ", ".join(os.path.basename(d) for d in project_dirs()), code="NO_PROJECT")
 
 
 def open_link(args, out):
@@ -134,7 +142,7 @@ def open_link(args, out):
     if not lk.wait_connected(args.connect_timeout):
         lk.close()
         out.fail("Could not reach the robot at " + ", ".join(hosts) + ". Is robot code running? "
-                 "With two networks or a VPN on this laptop, run: swervetune netcheck.", tried=hosts)
+                 "With two networks or a VPN on this laptop, run: swervetune netcheck.", tried=hosts, code="NOT_CONNECTED")
         return None
     if not lk.has_harness():
         lk.close()
@@ -247,15 +255,18 @@ def _parse_kv(items):
     out = {}
     for it in items or []:
         if "=" not in it:
-            raise SystemExit(f"expected key=value, got {it!r}")
+            raise CliError(f"expected key=value, got {it!r}")
         k, v = it.split("=", 1)
-        out[k.strip()] = float(v)
+        try:
+            out[k.strip()] = float(v)
+        except ValueError:
+            raise CliError(f"{k.strip()}: {v!r} is not a number") from None
     return out
 
 
 def cmd_run(args, out):
     if args.test not in C.TESTS:
-        return out.done(out.fail(f"unknown test {args.test!r}; known: {', '.join(C.TESTS)}"))
+        return out.done(out.fail(f"unknown test {args.test!r}; known: {', '.join(C.TESTS)}", code="BAD_ARGS"))
     lk = open_link(args, out)
     if not lk:
         return out.done(2)
@@ -326,8 +337,17 @@ def cmd_runs(args, out):
 
 
 def cmd_analyze(args, out):
-    doc = runs.load(args.run)
+    try:
+        doc = runs.load(args.run)
+    except OSError:
+        raise CliError(f"No saved run called {args.run!r}: `runs` lists them.", code="NOT_FOUND") from None
     project = resolve_project(args.project) if args.project else None
+    if project is None:
+        # The run says which robot it came from: its files give exact values to write.
+        try:
+            project = resolve_project((doc.get("robot") or {}).get("name"))
+        except CliError:
+            project = None
     rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=args.tape_forward,
                           measured_lateral_m=args.tape_lateral, **advisor.robot_context(project))
     out.put(report=_clean(rep), run_file=doc["_file"])
@@ -537,7 +557,11 @@ def cmd_gains(args, out):
         status, after = lk.set_gains(want, reason=args.why or "from the command line, no reason given")
         out.put(status=status, gains=_clean(after))
         out.say(status)
-        return out.done(0 if "REFUSED" not in status else 1)
+        if status.startswith("No answer"):
+            return out.done(out.fail(status, code="NOT_CONNECTED"))
+        if "REFUSED" in status:
+            return out.done(out.fail(status, code="GAINS_REFUSED"))
+        return out.done()
     finally:
         lk.close()
 
@@ -583,6 +607,15 @@ def cmd_config(args, out):
     except ValueError:
         value = args.value
     path = [p for p in (json.loads(args.path) if args.path.startswith("[") else args.path.split("."))]
+    # A value of the wrong kind (text where the file has a number or true/false) would break the
+    # robot's config: refuse it.
+    cur = (project.data or {}).get(args.file)
+    for k in path:
+        cur = cur.get(k) if isinstance(cur, dict) else None
+    if isinstance(cur, bool) and not isinstance(value, bool):
+        return out.done(out.fail(f"{args.path} is true or false in {args.file}; {args.value!r} isn't.", code="BAD_ARGS"))
+    if isinstance(cur, (int, float)) and not isinstance(cur, bool) and (isinstance(value, bool) or not isinstance(value, (int, float))):
+        return out.done(out.fail(f"{args.path} is a number in {args.file}; {args.value!r} isn't.", code="BAD_ARGS"))
     try:
         changes = project.preview([(args.file, tuple(path), value)])
     except ValueError as e:
@@ -1034,3 +1067,9 @@ def main(argv=None):
         return args.fn(args, out)
     except KeyboardInterrupt:
         return out.done(130)
+    except CliError as e:
+        return out.done(out.fail(str(e), code=e.code))
+    except Exception as e:  # noqa: BLE001 - --json promises one JSON object, whatever happened
+        if not args.json:
+            raise
+        return out.done(out.fail(f"{type(e).__name__}: {e}", code="TOOL_ERROR"))

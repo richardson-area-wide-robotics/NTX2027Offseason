@@ -529,6 +529,11 @@ const Tune = (() => {
     if (a.type === "gains") {
       await applyEdits(Object.fromEntries(Object.entries(a.values).map(([k, v]) => [k, +v])),
         why ? "Tune tab, advice: " + why : "Tune tab, advice");
+      if (a.then) {
+        // Gains measured by one test are checked by another (the feedforward, by Drive speed).
+        const to = Object.entries(LOOPS).find(([, v]) => v.test === a.then.test);
+        if (to) { setLoop(to[0]); App.toast(`Applied. Now run ${testName(a.then.test)}.`); return; }
+      }
       if (target === "practice") run();
     } else if (a.type === "run") {
       const to = Object.entries(LOOPS).find(([, v]) => v.test === a.test);

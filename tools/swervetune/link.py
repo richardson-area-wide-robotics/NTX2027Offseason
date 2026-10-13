@@ -132,6 +132,7 @@ class RobotLink:
         self._hb_stop = threading.Event()
         self._hb_thread = None
         self._deadman = False
+        self._gui_deadman = False
         self._lock = threading.Lock()
 
     # ------------------------------------------------------------------ plumbing
@@ -229,7 +230,10 @@ class RobotLink:
                 if alive:
                     self._hb_value += 1
                     self.put("double", C.CLIENT_HEARTBEAT, self._hb_value)
-                self.put("bool", C.CLIENT_DEADMAN, self._deadman and alive)
+                # Only the GUI publishes the deadman: a command-line client publishing "not held"
+                # on the same topic made the robot read the GUI's Hold to run as released.
+                if self._gui_deadman:
+                    self.put("bool", C.CLIENT_DEADMAN, self._deadman and alive)
                 self.flush()
 
         self._hb_stop.clear()
@@ -247,7 +251,8 @@ class RobotLink:
         self._deadman = False
 
     def set_gui_deadman(self, held):
-        """Only the GUI calls this, and only while a key is physically held down."""
+        """Only the GUI calls this, while its Hold to run button is held."""
+        self._gui_deadman = True
         self._deadman = bool(held)
 
     # ------------------------------------------------------------------ environment
