@@ -1073,8 +1073,12 @@ def offsets_from_capture(result, current_offsets):
 
 
 def hand_check(result, kind, expected_sign=1):
-    """One hand-motion step: ``kind`` is ``wheel`` (drive encoder) or ``steer`` (both steering sensors)."""
+    """One hand-motion step: ``kind`` is ``wheel`` (drive encoder), ``steer`` (both steering sensors)
+    or ``gyro`` (the whole robot turned counter-clockwise by hand: the heading must go up)."""
     ch = result["channels"]
+    if kind == "gyro":
+        # WPILib and YAGSL: counter-clockwise positive, seen from above. A quarter turn is plenty.
+        return {"gyro": {"heading": A.hand_motion(A.unwrap_deg(ch.get("heading") or []), expected_sign, min_travel=20)}}
     mods = _modules_in(ch, "steer")
     names = _module_names(result, max(mods) + 1 if mods else 0)
     out = {}

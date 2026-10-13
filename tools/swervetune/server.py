@@ -1219,7 +1219,13 @@ def api_offsets(body):
 
 def api_handcheck(body):
     doc = runs.load(body["file"])
-    return advisor.hand_check(doc, body.get("kind", "wheel"), int(body.get("sign", 1)))
+    out = advisor.hand_check(doc, body.get("kind", "wheel"), int(body.get("sign", 1)))
+    g = (out.get("gyro") or {}).get("heading") if body.get("kind") == "gyro" else None
+    if g and g["verdict"] == "INVERTED" and S.project:
+        # The one setting that flips it: offered as a change to review, never written here.
+        now = bool((S.project.data.get("swervedrive.json") or {}).get("invertedIMU"))
+        out["gyro"]["fix"] = {"file": "swervedrive.json", "path": ["invertedIMU"], "value": not now}
+    return out
 
 
 def api_symptoms(_):

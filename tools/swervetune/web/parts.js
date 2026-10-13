@@ -102,6 +102,8 @@ const Parts = (() => {
       <button class="btn primary" data-act="offset" data-tip="parts.offset">Capture its offset (4 s)</button>`;
     if (kind === "module" && job.id === "direction") return `<p class="small">On blocks, robot enabled, deadman held. Only <b>${esc(sel.which)}</b> drives: forward, stop, backward. Watch the TOP of its tire while the speed is positive.</p>
       <button class="btn primary" data-act="direction" data-tip="parts.direction">Run it</button>`;
+    if (kind === "gyro" && job.id === "hand_gyro") return `<p class="small">Robot disabled, on the floor. Press Record, then turn the whole robot counter-clockwise, seen from above, about a quarter turn.</p>
+      <button class="btn primary" data-act="hand_gyro" data-tip="parts.record-gyro">Record (20 s)</button>`;
     if (kind === "field" && job.id === "type") return `<div class="row"><label class="small" data-tip="parts.field">This field is <select id="p-field"><option value="welded">Welded</option><option value="andymark">AndyMark</option></select></label>
       <button class="btn primary" data-act="type" data-tip="parts.field-save">Save it</button></div>`;
     if (kind === "field" && job.id === "upload") return `<button class="btn primary" data-act="upload" data-tip="parts.upload">Done: uploaded to every camera</button>`;
@@ -162,6 +164,18 @@ const Parts = (() => {
         result[what] = `<p><span class="level ${ok ? "ok" : "error"}">${esc(word)}</span> ${ok ? "Every sensor agrees." :
           "INVERTED: flip that setting for this module. NO_MOTION: it didn't move far enough, or that sensor isn't reporting. AMBIGUOUS: move it one way only."}</p>`;
         await markStep(what, ok, ok ? "Every sensor agrees." : word);
+      } else if (what === "hand_gyro") {
+        App.toast("Recording: turn the whole robot counter-clockwise now.", 6000);
+        const doc = await App.runTest("capture", "ALL", { duration_s: 20, coast: 1 });
+        const g = (await App.api("/api/handcheck", { file: doc._file, kind: "gyro", sign: 1 })).gyro || {};
+        const h = g.heading || {}, ok = h.verdict === "AGREES";
+        result.hand_gyro = `<p><span class="level ${ok ? "ok" : "error"}">${esc(h.verdict || "NO_DATA")}</span> turned ${fmt(h.net || 0, 1)}°.
+          ${h.verdict === "INVERTED" ? `Counter-clockwise reads negative. <button class="btn small" data-imu-fix data-tip="guide.imufix">Flip invertedIMU…</button>` : ""}</p>`;
+        await markStep("hand_gyro", ok, ok ? "Counter-clockwise reads positive." : `${h.verdict}: ${fmt(h.net || 0, 1)}°`);
+        await paint();
+        const fx = $("[data-imu-fix]", root);
+        if (fx && g.fix) fx.onclick = () => App.previewAndSave({ kind: "edit", file: g.fix.file, path: g.fix.path, value: g.fix.value }, "Flip the gyro's direction");
+        return;
       } else if (what === "offset") {
         const doc = await App.runTest("capture", "ALL", { duration_s: 4, coast: 1 });
         const r = (await App.api("/api/offsets", { file: doc._file }))[m];

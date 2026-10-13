@@ -409,7 +409,11 @@ def part_plan(kind, which, ctx, started):
     if kind == "motor":
         return _motor_plan(which, ctx, since, pmark)
     if kind == "gyro":
+        st = _mark_status(pmark("hand_gyro"), "it reads counter-clockwise as negative: flip invertedIMU")
         jobs = [_health_job(ctx, since, "gyro"),
+                _job("hand_gyro", "Turn it by hand: counter-clockwise reads positive",
+                     *(st or ("todo", "Robot disabled, on the floor: turn the whole robot a quarter turn.")),
+                     go={"part_action": "hand_gyro"}),
                 _from_mark(_mark(prog, "cal_gyro_still", since), "still", "The gyro standing still",
                            "Record a minute with nobody touching the robot.", {"tab": "calibrate", "panel": "cal-gyro"}),
                 _from_mark(_mark(prog, "cal_gyro_turns", since), "turns", "Full turns read 360° each",

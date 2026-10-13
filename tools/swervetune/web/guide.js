@@ -57,16 +57,34 @@ const Guide = (() => {
       todo: ["First turn every module so its wheel points straight ahead with the bevel gear (the gear on the side of the wheel) facing the robot's LEFT side. A module turned the other way reads backwards, and flipping its setting would hide the real mistake.",
              "Press Record wheels (20 s). Roll each wheel so its TOP moves toward the front of the robot, about one turn. Do all four, one direction only.",
              "Press Record steering (20 s). Turn each module counter-clockwise, seen from above, about a quarter turn. All four, one direction only.",
+             "Press Record the gyro (20 s). Robot on the floor: turn the whole robot counter-clockwise, seen from above, about a quarter turn, by hand. Its heading must go up: counter-clockwise is positive.",
              "Every row must say AGREES, and 'motor per module' must be 1.00 ± 0.03."],
       status: () => progress.hand === "pass" ? "done" : progress.hand === "fail" ? "attention" : "todo",
-      body: () => `<div class="row"><button class="btn primary" id="g-hw" data-tip="guide.hw">Record wheels</button><button class="btn primary" id="g-hs" data-tip="guide.hs">Record steering</button></div>
+      body: () => `<div class="row"><button class="btn primary" id="g-hw" data-tip="guide.hw">Record wheels</button><button class="btn primary" id="g-hs" data-tip="guide.hs">Record steering</button><button class="btn primary" id="g-hg" data-tip="guide.hg">Record the gyro</button></div>
         <div id="g-hand" class="verdicts">${handView}</div>`,
       mount: box => {
         const go = async (kind) => {
           try {
-            App.toast(kind === "wheel" ? "Recording: roll each wheel forward now." : "Recording: turn each module counter-clockwise now.", 6000);
+            App.toast(kind === "wheel" ? "Recording: roll each wheel forward now." : kind === "gyro" ? "Recording: turn the whole robot counter-clockwise now."
+              : "Recording: turn each module counter-clockwise now.", 6000);
             const doc = await App.runTest("capture", "ALL", { duration_s: 20, coast: 1 });
             const v = await App.api("/api/handcheck", { file: doc._file, kind, sign: 1 });
+            if (kind === "gyro") {
+              const g = v.gyro || {}, h = g.heading || {}, ok = h.verdict === "AGREES";
+              handView = handView.replace(/<h3 data-k="gyro">[\s\S]*?(?=<h3 data-k=|$)/, "")
+                + `<h3 data-k="gyro">Gyro</h3><div class="verdict"><span class="level ${ok ? "ok" : "error"}" data-tip="guide.verdict">${esc(h.verdict || "NO_DATA")}</span>
+                  turned ${fmt(h.net || 0, 1)}° (counter-clockwise reads positive when it AGREES)</div>`
+                + (h.verdict === "INVERTED" ? `<p class="hint">The gyro reads counter-clockwise as negative: field-relative driving would turn the wrong way. <button class="btn small" id="g-imu-fix" data-tip="guide.imufix">Flip invertedIMU…</button></p>`
+                  : ok ? "" : `<p class="hint">NO_MOTION: turn it further (a quarter turn), or the gyro isn't reporting (the top bar). AMBIGUOUS: turn one way only.</p>`);
+              const next = { ...progress, handGyro: ok ? "pass" : "fail" };
+              next.hand = ["handWheel", "handSteer", "handGyro"].every(k => next[k] === "pass") ? "pass"
+                : ["handWheel", "handSteer", "handGyro"].some(k => next[k] === "fail") ? "fail" : "partial";
+              await mark({ handGyro: next.handGyro, hand: next.hand });
+              paint();
+              const fix = $("#g-imu-fix", root);
+              if (fix && g.fix) fix.onclick = () => App.previewAndSave({ kind: "edit", file: g.fix.file, path: g.fix.path, value: g.fix.value }, "Flip the gyro's direction");
+              return;
+            }
             const steerOk = r => r.absolute.verdict === "AGREES" && r.motor.verdict === "AGREES" && Math.abs(r.motor_per_module_deg - 1) < 0.03;
             // The badge shows what is wrong, worst first: AGREES only when the row is right.
             const steerWord = r => r.absolute.verdict !== "AGREES" ? r.absolute.verdict : r.motor.verdict !== "AGREES" ? "MOTOR " + r.motor.verdict
@@ -81,8 +99,8 @@ const Guide = (() => {
               (ok ? "" : `<p class="hint">INVERTED: flip that setting for that module. NO_MOTION: it did not move far enough, or that sensor is not reporting. AMBIGUOUS: it was rocked; move it one way only and record again. RATIO: the steering motor turned a different number of degrees than the module, so the gear ratio in the files is wrong. <button class="btn small" data-trouble="${kind === "wheel" ? "wheel_backwards" : "gear_ratio"}">Open Troubleshoot</button></p>`);
             const k = kind === "wheel" ? "handWheel" : "handSteer";
             const next = { ...progress, [k]: ok ? "pass" : "fail" };
-            next.hand = next.handWheel === "pass" && next.handSteer === "pass" ? "pass"
-              : (next.handWheel === "fail" || next.handSteer === "fail") ? "fail" : "partial";
+            next.hand = ["handWheel", "handSteer", "handGyro"].every(k => next[k] === "pass") ? "pass"
+              : ["handWheel", "handSteer", "handGyro"].some(k => next[k] === "fail") ? "fail" : "partial";
             await mark({ [k]: next[k], hand: next.hand });
             paint();
           } catch (e) { App.toast(e.message, 6000); }
@@ -90,6 +108,7 @@ const Guide = (() => {
         box.addEventListener("click", e => { const b = e.target.closest("[data-trouble]"); if (b) Trouble.open(b.dataset.trouble); });
         $("#g-hw", box).onclick = () => go("wheel");
         $("#g-hs", box).onclick = () => go("steer");
+        $("#g-hg", box).onclick = () => go("gyro");
       } },
 
     { id: "offsets", env: "DISABLED", learn: ["offset", "absolute_encoder", "bevel_gear", "straight_edge", "hold_still", "coast_mode", "redeploy"], title: "Set the wheel offsets", where: "Robot disabled, motors coasting",

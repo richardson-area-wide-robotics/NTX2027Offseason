@@ -105,5 +105,29 @@ class CanIdTest(unittest.TestCase):
         self.assertIn("can_duplicate", ids(Y.lint(p)))
 
 
+
+class GyroSignTest(unittest.TestCase):
+    """The 2026 runbook's hand-turned gyro check: counter-clockwise by hand must read positive."""
+
+    def _cap(self, heading):
+        return {"channels": {"t": [i * 0.02 for i in range(len(heading))], "heading": heading}}
+
+    def test_counter_clockwise_reads_positive(self):
+        from swervetune import advisor
+        up = [i * 1.0 for i in range(100)]
+        self.assertEqual(advisor.hand_check(self._cap(up), "gyro")["gyro"]["heading"]["verdict"], "AGREES")
+        down = [-i * 1.0 for i in range(100)]
+        self.assertEqual(advisor.hand_check(self._cap(down), "gyro")["gyro"]["heading"]["verdict"], "INVERTED")
+        self.assertEqual(advisor.hand_check(self._cap([0.0] * 100), "gyro")["gyro"]["heading"]["verdict"], "NO_MOTION")
+
+    def test_an_inverted_gyro_gets_the_one_setting_that_flips_it(self):
+        from unittest import mock
+        from swervetune import server
+        with mock.patch.object(server.S, "project", pea()), \
+                mock.patch.object(server.runs, "load", return_value=self._cap([-i * 1.0 for i in range(100)])):
+            out = server.api_handcheck({"file": "x", "kind": "gyro"})
+        self.assertEqual(out["gyro"]["fix"], {"file": "swervedrive.json", "path": ["invertedIMU"], "value": True})
+
+
 if __name__ == "__main__":
     unittest.main()

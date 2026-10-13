@@ -109,7 +109,8 @@ The same 16 steps, with the same numbers, as the Guide tab:
 1. Connect and check the configuration.
 2. Sensor health (robot disabled).
 3. Hand check: every module straight with its bevel gear to the robot's left, then turn each wheel
-   and module by hand; the app checks every sensor counts the right way.
+   and module by hand, then the whole robot counter-clockwise; the app checks every sensor, the gyro
+   included, counts the right way.
 4. Set the wheel offsets (wheels straight, bevel gears to the left, a straight-edge squared to the
    frame).
 5. On blocks: every wheel drives the right way. The first step with the robot enabled.
@@ -152,7 +153,7 @@ that part, and leaves the rest of the robot's settings and results alone:
 |---|---|
 | A swerve module (replaced, rebuilt, acting up) | Both controllers heard, sensor health, hand check of that module, its offset only, its direction on blocks, steering on blocks on that module, feedforward against the other three |
 | A motor or controller | Heard with its CAN ID, its type, its PDH port; then its module, if it's a swerve motor |
-| The gyro | Health, a minute standing still, full turns, a spin check |
+| The gyro | Health, turned by hand (counter-clockwise reads positive), a minute standing still, full turns, a spin check |
 | A camera (moved, bumped, replaced) | Listed for the robot, its position measured again |
 | A new field or event | Welded or AndyMark, the tag survey, the survey uploaded to each camera |
 | Wheels or tread | Wheel sizes, then a straight line on a tape |
