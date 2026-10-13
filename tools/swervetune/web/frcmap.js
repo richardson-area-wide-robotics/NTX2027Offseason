@@ -35,19 +35,21 @@ const FrcMap = (() => {
     { r: [851, 981, 566, 458], label: "Pneumatics: not on our robots" }, { r: [1417, 1111, 715, 328] },
     { r: [1186, 326, 296, 178], label: "Talon SRX: not ours" }, { r: [1186, 542, 330, 212], label: "Koors 40: not ours" },
     { r: [2195, 366, 304, 194], label: "Kraken: not ours" }, { r: [2195, 606, 304, 240], label: "Kraken: not ours" },
-    { r: [782, 632, 309, 271], label: "Servo" },
+    { r: [782, 632, 309, 271], label: "Servo: not ours" },
   ];
 
   const VIEWS = {
     all: [0, 0, 2592, 1728], pdh: [1580, 80, 530, 980], controllers: [1170, 70, 1360, 990],
     can: [60, 60, 2490, 1000], power: [1560, 60, 990, 1300], rio: [200, 440, 580, 560], radio: [80, 80, 940, 300],
   };
-  const COLOR = { bad: "#c62828", warn: "#b26a00", ok: "#2e7d32", info: "#0b6e7a", here: "#0b6e7a" };
+  // White text on each passes 4.5:1 (the amber is the app's own --warn).
+  const COLOR = { bad: "#c62828", warn: "#8a5a00", ok: "#2e7d32", info: "#0b6e7a", here: "#0b6e7a" };
 
-  async function load() {
+  // One request however many views ask at once; a failed one is forgotten so the next can retry.
+  function load() {
     if (!art) {
-      const t = await (await fetch(SRC)).text();
-      art = t.slice(t.indexOf(">", t.indexOf("<svg")) + 1, t.lastIndexOf("</svg>"));
+      art = fetch(SRC).then(r => r.text()).then(t => t.slice(t.indexOf(">", t.indexOf("<svg")) + 1, t.lastIndexOf("</svg>")));
+      art.catch(() => { art = null; });
     }
     return art;
   }
@@ -69,12 +71,24 @@ const FrcMap = (() => {
       const k = ++n;
       const inner = src.replace(/id="([^"]+)"/g, `id="$1-f${k}"`).replace(/url\(#([^)]+)\)/g, `url(#$1-f${k})`);
       const vb = VIEWS[view];
-      el.innerHTML = `<figure class="frcmap"><svg viewBox="${vb.join(" ")}" role="img" aria-label="${esc(opts.alt || "The robot's control system, as FIRST draws it")}">
+      // Sized to the view's own shape: a tall view in a wide box left the drawing a third of the width.
+      el.innerHTML = `<figure class="frcmap"><svg viewBox="${vb.join(" ")}" role="img" aria-label="${esc(opts.alt || "The robot's control system, as FIRST draws it")}"
+        style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%, calc(72vh * ${(vb[2] / vb[3]).toFixed(3)}))">
         <g class="frc-art">${inner}</g><g class="frc-over"></g></svg>
         <figcaption class="small muted">From <a href="https://docs.wpilib.org/en/stable/docs/controls-overviews/control-system-hardware.html" target="_blank" rel="noopener">FRC Control System - REV</a>
           by Team 3161 for WPILib, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>: cropped, dimmed and labeled by this tool.${opts.caption ? " " + esc(opts.caption) : ""}</figcaption></figure>`;
       el._frc = { view, k };
+      // Labels are sized for the screen: draw them again when the drawing's size changes (a tab
+      // shown, a window resized).
+      if (window.ResizeObserver && !el._ro) {
+        let w = 0;
+        el._ro = new ResizeObserver(() => {
+          const now = el.querySelector("svg") ? el.querySelector("svg").clientWidth : 0;
+          if (now && Math.abs(now - w) > 4 && el._frc.opts) { w = now; overlay(el, el._frc.opts); }
+        }).observe(el);
+      }
     }
+    el._frc.opts = opts;
     overlay(el, opts);
   }
 
@@ -82,6 +96,8 @@ const FrcMap = (() => {
     const svg = el.querySelector("svg"), g = el.querySelector(".frc-over");
     if (!svg || !g) return;
     const vb = VIEWS[el._frc.view], unit = vb[2] / 100, k = el._frc.k;
+    // Drawing units per screen pixel: labels at least 13 px on screen, whatever the view's size.
+    const px = svg.clientWidth || 600, per = vb[2] / px;
     // Several devices of one kind share one drawing: one outline, the worst state, and their names
     // as "SPARK Flex: a, b, c +2 more" (a part with a group says which kind it is).
     const rank = { bad: 3, warn: 2, here: 1, info: 1, ok: 0 }, merged = {};
@@ -94,8 +110,9 @@ const FrcMap = (() => {
     const focus = Object.values(merged).map(m => m.all.length > 1
       ? Object.assign(m, { label: `${m.group ? m.group + ": " : ""}${m.all.slice(0, 3).join(", ")}${m.all.length > 3 ? ` +${m.all.length - 3} more` : ""}` })
       : m);
+    // The faded parts say so only when nothing else is being pointed at.
     let h = NOT_OURS.map(d => `<rect x="${d.r[0]}" y="${d.r[1]}" width="${d.r[2]}" height="${d.r[3]}" class="frc-notours"/>`
-      + (d.label ? `<text x="${d.r[0] + d.r[2] / 2}" y="${d.r[1] + d.r[3] / 2}" class="frc-notours-t" style="font-size:${Math.max(16, unit * 1.6)}px">${esc(d.label)}</text>` : "")).join("");
+      + (d.label && !focus.length ? `<text x="${d.r[0] + d.r[2] / 2}" y="${d.r[1] + d.r[3] / 2}" class="frc-notours-t" style="font-size:${Math.max(12 * per, unit * 1.6)}px">${esc(d.label)}</text>` : "")).join("");
     if (focus.length) {
       // Everything but the parts in question fades back.
       h += `<mask id="frcm-${k}"><rect x="0" y="0" width="2592" height="1728" fill="#fff"/>${focus.map(f => {
@@ -111,14 +128,23 @@ const FrcMap = (() => {
         g.appendChild(c);
       });
     }
-    const sw = Math.max(3, unit * 0.45), fs = Math.max(14, unit * 2.1), placed = [];
-    for (const f of focus) {
-      const r = f.rect || P[f.part], col = COLOR[f.state] || COLOR.here;
-      const box = document.createElementNS(NS, "rect");
-      [["x", r[0] - 4], ["y", r[1] - 4], ["width", r[2] + 8], ["height", r[3] + 8], ["rx", 8]].forEach(([a, v]) => box.setAttribute(a, v));
+    const sw = Math.max(2.5 * per, unit * 0.45), fs = Math.max(13 * per, unit * 2.1);
+    // Two passes: every outline first, then every label, so no outline is drawn over a label. A
+    // label keeps clear of the other labels and of every outline but its own.
+    const rings = focus.map(f => { const r = f.rect || P[f.part]; return { x: r[0] - 4, y: r[1] - 4, w: r[2] + 8, h: r[3] + 8 }; });
+    focus.forEach((f, i) => {
+      const r = rings[i], box = document.createElementNS(NS, "rect");
+      [["x", r.x], ["y", r.y], ["width", r.w], ["height", r.h], ["rx", 8]].forEach(([a, v]) => box.setAttribute(a, v));
       box.setAttribute("class", "frc-ring");
-      box.setAttribute("style", `stroke:${col};stroke-width:${sw}px`);
+      box.setAttribute("style", `stroke:${COLOR[f.state] || COLOR.here};stroke-width:${sw}px`);
       g.appendChild(box);
+    });
+    const hit = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    const labels = [];
+    if (opts.title) focus.unshift({ title: true, label: opts.title, state: "here" });
+    for (const f of focus) {
+      const r = f.title ? [vb[0] + vb[2] / 2, vb[1] + fs * 1.6, 0, 0] : f.rect || P[f.part], col = COLOR[f.state] || COLOR.here;
+      const mine = f.title ? null : rings[focus.filter(x => !x.title).indexOf(f)];
       if (f.label) {
         const t = document.createElementNS(NS, "text");
         t.setAttribute("class", "frc-tag");
@@ -130,13 +156,14 @@ const FrcMap = (() => {
         const tw = t.getBBox().width || f.label.length * fs * 0.56, pad = fs * 0.3, lh = fs * 1.5;
         // Centered on the part, kept inside the view.
         const cx = Math.min(Math.max(r[0] + r[2] / 2, vb[0] + tw / 2 + pad * 2), vb[0] + vb[2] - tw / 2 - pad * 2);
-        // Above the part (below it near the top), stepped away from any tag already placed.
+        // Above the part (below it near the top), stepped away from labels and other outlines.
+        const boxAt = y => ({ x: cx - tw / 2 - pad, y: y - fs * 0.95, w: tw + 2 * pad, h: fs * 1.3 });
         const ok = y => y - fs > vb[1] && y + fs * 0.4 < vb[1] + vb[3]
-          && !placed.some(q => Math.abs(q.y - y) < lh && Math.abs(q.x - cx) < (q.w + tw) / 2 + pad * 2);
-        const tries = [];
-        for (let i = 0; i < 6; i++) tries.push(r[1] - fs * 0.55 - i * lh, r[1] + r[3] + fs * 1.15 + i * lh);
+          && !labels.some(q => hit(q, boxAt(y))) && !rings.some(q => q !== mine && hit(q, boxAt(y)));
+        const tries = f.title ? [r[1]] : [];
+        for (let i = 0; i < 8; i++) tries.push(r[1] - fs * 0.55 - i * lh, r[1] + r[3] + fs * 1.15 + i * lh);
         const y = tries.find(ok) ?? tries[0];
-        placed.push({ x: cx, y, w: tw });
+        labels.push(boxAt(y));
         t.setAttribute("x", cx); t.setAttribute("y", y);
         const bg = document.createElementNS(NS, "rect");
         [["x", cx - tw / 2 - pad], ["y", y - fs * 0.95], ["width", tw + 2 * pad], ["height", fs * 1.3], ["rx", fs * 0.3]].forEach(([a, v]) => bg.setAttribute(a, v));
@@ -168,6 +195,7 @@ const FrcMap = (() => {
         c.getContext("2d").drawImage(img, 0, 0, 2592, 1728);
         return c;
       })();
+      sheet.catch(() => { sheet = null; });
     }
     return sheet;
   }
@@ -181,7 +209,7 @@ const FrcMap = (() => {
       c.getContext("2d").drawImage(big, x, y, w, h, 0, 0, c.width, c.height);
       thumbs[part] = c.toDataURL("image/png");
       return thumbs[part];
-    })().catch(() => null);
+    })().catch(() => { delete pending[part]; return null; });
     return pending[part];
   }
 

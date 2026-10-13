@@ -51,6 +51,7 @@ const Wiring = (() => {
             <div id="w-ohms-map" class="frc-slot"></div>
             <div class="row"><label class="row small" data-tip="wiring.ohms-in">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
+            ${HowTo.nextLine("ohms")}
           </div>
           <div class="panel" id="w-editor" hidden></div>
         </div>
@@ -58,7 +59,7 @@ const Wiring = (() => {
       <div class="panel">
         <h3 data-tip="wiring.pdh"><span class="term" tabindex="0" data-learn="power_path">PDH ports</span></h3>
         <div id="w-pdh-map" class="frc-slot"></div>
-        <details class="small"><summary data-tip="wiring.pdh-table">The ports as a table</summary><div id="w-pdh" class="pdh-grid"></div></details>
+        <details class="small" ${matchMedia("(max-width: 600px)").matches ? "open" : ""}><summary data-tip="wiring.pdh-table">The ports as a table</summary><div id="w-pdh" class="pdh-grid"></div></details>
       </div>
       <div class="panel" id="w-find">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
@@ -74,6 +75,7 @@ const Wiring = (() => {
           <li>For mechanisms, <b>Every motor: from a practice log</b>, picking a log where they ran one at a time.</li><li>Use the ports found, then save the map and redeploy.</li></ol>`)}
         <div id="wf-logs"></div>
         <div id="wf-out"></div>
+        ${HowTo.nextLine("pdh")}
       </div>
       <div class="panel" id="w-wiggle">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
@@ -85,6 +87,7 @@ const Wiring = (() => {
         </div>
         ${HowTo.block(`<p class="small">Finds a loose plug or a cracked wire that only fails when it moves. Robot <b>on and disabled</b>: hands in the robot only while it is disabled. Go through the steps, gently wiggling each cable and plug for a few seconds; the tool watches the CAN bus and every controller, and says which step made something happen.</p>`)}
         <div id="ww-body"></div>
+        ${HowTo.nextLine("wiggle")}
       </div>
     </div>`;
 
@@ -188,7 +191,11 @@ const Wiring = (() => {
       // FIRST's drawing of the part: a cached bitmap, drawn once (the schematic repaints every second).
       const art = name === "roboRIO" ? "rio" : name === "PDH" ? "pdh_top" : FrcMap.kind(dev.model);
       const pic = art && FrcMap.thumbCached(art);
-      if (pic) el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
+      if (pic) {
+        // On a white tile, as FIRST draws it: a black SPARK Flex vanished on a dark box, a white MAX on a light one.
+        el("rect", { x: p.x + bw - 64, y: p.y + 6, width: 58, height: bh - 12, rx: 4, class: "art-tile" }, g);
+        el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
+      }
       else if (art) FrcMap.thumb(art);
       const label = `${i}. ${name}`;
       el("text", { x: p.x + 10, y: p.y + 22, class: "nm" }, g, label.length > 19 ? label.slice(0, 18) + "…" : label);
@@ -245,7 +252,7 @@ const Wiring = (() => {
     const devs = w.devices || [];
     const focus = devs.flatMap(d => FrcMap.deviceFocus(d, (data.devices[d] || {}).model, w.pdh_port != null && devs.length === 1 ? w.pdh_port : data.map.pdhPorts[d], st));
     if (w.segment) return { view: "can", wires: "can", focus: focus.filter(x => !x.part.startsWith("pdh_")),
-      caption: `Check the plugs on the cable between ${w.segment[0]} and ${w.segment[1]}.` };
+      title: `Check the CAN plugs between ${w.segment[0]} and ${w.segment[1]}`, caption: "The CAN pair is brightened." };
     return { view: "controllers", focus };
   }
 
@@ -266,7 +273,8 @@ const Wiring = (() => {
     // The same ports on FIRST's drawing of the PDH: what each one feeds, and how hard.
     const bad = new Set((data.findings || []).filter(f => f.where && f.where.pdh_port != null).map(f => f.where.pdh_port));
     FrcMap.render($("#w-pdh-map", root), { view: "pdh", alt: "The PDH, each mapped port labeled with its motor",
-      caption: "Unmapped ports are faded.", focus: Object.entries(byPort).map(([p, names]) => {
+      caption: Object.keys(byPort).length ? "Unmapped ports are faded." : "No ports mapped yet: Find the PDH ports, below, fills them in.",
+      focus: Object.entries(byPort).map(([p, names]) => {
         const a = cur[p];
         return { part: "pdh_" + p, state: bad.has(+p) ? "bad" : Number.isFinite(a) && a >= 30 ? "warn" : "info",
           label: names.join(", ") + (Number.isFinite(a) ? ` · ${fmt(a, 0)} A` : "") };
@@ -283,7 +291,7 @@ const Wiring = (() => {
         <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
         <div class="why">${Learn.link(f.why, 3)}</div>
         ${f.fix ? `<div class="small"><b>Do:</b> ${Learn.link(f.fix, 2)}</div>` : ""}
-        ${f.where ? `<div class="row"><button class="btn small ${mapFinding === f.title ? "primary" : ""}" data-show-map="${esc(f.title)}" data-tip="wiring.onrobot" data-quiet>${mapFinding === f.title ? "Shown below" : "Show on the robot"}</button></div>` : ""}</div>`).join("")
+        ${f.where ? `<div class="row"><button class="btn small ${mapFinding === f.title ? "primary" : ""}" data-show-map="${esc(f.title)}" data-tip="wiring.onrobot" data-quiet>${mapFinding === f.title ? "Shown below" : "Show on the drawing"}</button></div>` : ""}</div>`).join("")
       : `<p class="hint">${data.snapshot && data.snapshot.motors ? "Nothing wrong with the CAN bus or the power feeds right now." : "Connect to a robot, or pick a practice fault above to see how a problem shows up."}</p>`;
     $$("[data-show-map]", root).forEach(b => b.onclick = () => {
       const f = F.find(x => x.title === b.dataset.showMap);
@@ -477,6 +485,7 @@ const Wiring = (() => {
         }
       }
       wig.last = snap;
+      wig.live = true;
       wig.note = "";
     } finally {
       if (wig) { wig.busy = false; paintWiggle(); }
@@ -547,16 +556,17 @@ const Wiring = (() => {
     if (q("#ww-back")) q("#ww-back").onclick = () => { wig.i--; paintWiggle(); };
     if (q("#ww-next")) q("#ww-next").onclick = () => {
       if (wig.i + 1 < wig.steps.length) { wig.i++; wig.last = null; paintWiggle(); return; }
-      finishWiggle();
+      finishWiggle(true);
     };
-    if (q("#ww-stop")) q("#ww-stop").onclick = finishWiggle;
+    if (q("#ww-stop")) q("#ww-stop").onclick = () => finishWiggle(false);
   }
 
-  function finishWiggle() {
+  function finishWiggle(completed) {
     stopWiggle();
     wig.done = true;
     extra = wiggleFindings();
-    if (!wig.practice) {
+    // Only a test that went through every step, watching a live robot, counts; Stop counts nothing.
+    if (!wig.practice && completed && wig.live) {
       const bad = extra.find(f => f.level === "error" || f.level === "warn");
       HowTo.mark("wiring", "wire_wiggle", !bad, bad ? bad.title : "Nothing dropped when a plug moved.");
     }

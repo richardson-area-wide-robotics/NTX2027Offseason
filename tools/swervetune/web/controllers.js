@@ -73,6 +73,7 @@
     <div class="panel" style="margin-top:12px">
       <h3 data-tip="ct.report">Report</h3>
       <div id="ct-report"><p class="hint">Run the steps above; the report appears here.</p></div>
+      ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
     </div>
     <div class="panel" style="margin-top:12px">
       <h3 data-tip="ct.history">Every controller checked</h3>

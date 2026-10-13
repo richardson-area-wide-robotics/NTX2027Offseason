@@ -80,10 +80,10 @@ def _when(s):
 
 
 def _runs(ctx, test=None, env=None, module=None, since=None):
-    """This robot's real runs, newest first, that finished."""
+    """This robot's real runs, newest first, that finished. The simulator's never count."""
     out = []
     for r in ctx.get("runs") or []:
-        if r.get("practice") or r.get("outcome") != "DONE":
+        if r.get("practice") or r.get("outcome") != "DONE" or r.get("env") == "SIM":
             continue
         if ctx.get("robot") and r.get("robot") not in (None, ctx["robot"]):
             continue
@@ -195,7 +195,7 @@ def calibrate(ctx):
                  "Measure in this order: each uses the ones before it. Every panel's Practice runs it on made-up "
                  "data with a known answer, to see what a good result looks like first.",
                  ["A tape measure", "3 m of straight floor", "A scale", "A tag on a wall (for a camera)"],
-                 jobs, {"guide": "", "label": "Back to the Guide"})
+                 jobs, {"tab": "controllers", "label": "Next: Controllers"})
 
 
 def config(ctx):
@@ -369,6 +369,24 @@ def controllers_plan(ctx):
 
 TOOLS = {"calibrate": calibrate, "config": config, "motors": motors, "wiring": wiring,
          "controllers": controllers_plan}
+# The order a new robot goes through them (each one's "after" points at the next).
+CHAIN = ["config", "motors", "wiring", "calibrate", "controllers"]
+
+
+def with_order(tab, ctx, plans=None):
+    """A tool's plan, with where it sits in the order and the first earlier tool still to finish."""
+    plans = plans if plans is not None else {}
+    plan = plans.get(tab) or TOOLS[tab](ctx)
+    i = CHAIN.index(tab) if tab in CHAIN else -1
+    earlier = None
+    for t in CHAIN[:max(i, 0)]:
+        p = plans.get(t) or TOOLS[t](ctx)
+        n = sum(1 for j in p["jobs"] if j["status"] in WORK)
+        if n:
+            earlier = {"tab": t, "count": n}
+            break
+    plan["order"] = {"chain": CHAIN, "index": i, "earlier": earlier}
+    return plan
 
 
 # ---------------------------------------------------------------------------- one part
@@ -469,9 +487,9 @@ def _from_mark(m, jid, title, todo, go):
 
 
 def _health_job(ctx, since, part):
-    caps = _runs(ctx, "capture", since=since)
-    return _job("health", "Sensor health capture", "done" if caps else "todo",
-                f"Captured {_when(caps[0]['saved'])}." if caps else "Robot disabled, three seconds still.",
+    # The Guide's health run marks it (cal_health): a hand-check or offset capture isn't a health check.
+    st = _mark_status(_mark(ctx.get("prog") or {}, "cal_health", since), "the health check found a problem")
+    return _job("health", "Sensor health capture", *(st or ("todo", "Robot disabled, three seconds still.")),
                 go={"guide": "health"})
 
 
@@ -484,10 +502,16 @@ def _spin_job(ctx, since, optional=False):
 
 
 def _straight_job(ctx, since):
-    runs = _runs(ctx, "straight", "FIELD", since=since)
-    return _job("straight", "Straight line, measured with a tape", "done" if runs and (runs[0].get("score") or 0) >= 100
-                else ("attention" if runs else "optional"),
-                "Confirms the new size on the floor.", go={"tune": "straight"}, optional=not runs)
+    # Graded on a tape or AprilTags (the Guide's record of it); heading alone proves no size.
+    r = ((ctx.get("prog") or {}).get("runs") or {}).get("straight/FIELD") or {}
+    if not r or str(r.get("saved") or "") < str(since):
+        return _job("straight", "Straight line, measured with a tape", "optional", "Confirms the new size on the floor.",
+                    go={"tune": "straight"}, optional=True)
+    if r.get("needs_truth"):
+        return _job("straight", "Straight line, measured with a tape", "todo",
+                    "Run, but nothing measured it: enter the tape in Runs.", go={"tune": "straight"})
+    return _job("straight", "Straight line, measured with a tape", "done" if (r.get("score") or 0) >= 100 else "attention",
+                f"Scored {r.get('score')}.", go={"tune": "straight"})
 
 
 def _module_plan(module, ctx, since, pmark):
@@ -520,7 +544,7 @@ def _module_plan(module, ctx, since, pmark):
                      else ("attention" if steer else "todo"),
                      (f"Scored {steer[0].get('score')}." if steer else "Same gains as the others: it should score as they do."),
                      go={"tune": "steer", "module": module}))
-    ff = _runs(ctx, "drive_ff", since=since)
+    ff = _runs(ctx, "drive_ff", module=module, since=since)
     jobs.append(_job("ff", "Feedforward against the other three", "done" if ff else "todo",
                      "Its kV within a few percent of the others: a big gap is friction or a wrong ratio."
                      if not ff else f"Measured {_when(ff[0]['saved'])}: compare its row in the result.",
@@ -565,7 +589,7 @@ def _motor_plan(name, ctx, since, pmark):
 # ---------------------------------------------------------------------------- the server's evidence
 
 
-def gather(project, *, link=None, battery_grades_stale=False):
+def gather(project, *, link=None, battery_grades_stale=False, measured=None):
     """Everything the plans read, from the project, this laptop and the robot. Whether the battery
     grades the robot has are older than the laptop's comes from the server, which keeps them."""
     from . import motorinv, ppcheck, progress, runs, wiring, yagslcfg
@@ -588,7 +612,8 @@ def gather(project, *, link=None, battery_grades_stale=False):
         ctx["pp"] = ppcheck.check(project)
     except Exception:  # noqa: BLE001 - no PathPlanner folder
         ctx["pp"] = None
-    ctx["inventory"] = motorinv.table(project, live)
+    # The drive motors as the latest drive_ff measured them, as the Motors table shows.
+    ctx["inventory"] = motorinv.table(project, live, measured)
     m = wiring.load_map(project)
     ctx["wiring_map"] = m
     ctx["wiring_saved"] = os.path.exists(wiring.map_path(project))

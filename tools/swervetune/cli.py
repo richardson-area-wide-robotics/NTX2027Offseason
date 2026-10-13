@@ -865,6 +865,11 @@ def _say_plan(out, plan):
         out.say(f"  then: {plan['after']['label']}")
 
 
+def SP_wiring():
+    from . import wiring
+    return wiring
+
+
 def cmd_setup(args, out):
     """Where to start and what to do next: a tool's checklist, or one part's."""
     from . import progress, setup as SP
@@ -878,6 +883,18 @@ def cmd_setup(args, out):
         ctx = SP.gather(project, link=lk)
         if args.part:
             kind, _, which = args.part.partition(":")
+            # The robot's own names: FL is frontleft, as the tuner and the robot accept.
+            short = {v.lower(): k for k, v in SP.ABBR.items()}
+            which = short.get(which.strip().lower(), which.strip())
+            names = {"module": project.module_names(),
+                     "motor": [d["name"] for d in SP_wiring().discover(project) if d["kind"] == "controller"],
+                     "camera": None}.get(SP.PARTS.get(kind, {}).get("pick") or "", None)
+            if kind in SP.PARTS and SP.PARTS[kind]["pick"] and not which:
+                return out.done(out.fail(f"Which {SP.PARTS[kind]['pick']}? e.g. --part {kind}:"
+                                         + (names[0] if names else "front"), code="BAD_ARGS"))
+            if names is not None and which and which not in names:
+                return out.done(out.fail(f"No {SP.PARTS[kind]['pick']} called {which!r}. This robot's: "
+                                         + ", ".join(names), code="BAD_ARGS"))
             if kind not in SP.PARTS:
                 return out.done(out.fail(f"No part {kind!r}. Parts: " + ", ".join(SP.PARTS), code="BAD_ARGS"))
             key = SP.part_key(kind, which)
@@ -896,7 +913,7 @@ def cmd_setup(args, out):
         tabs = [args.tab] if args.tab else list(SP.TOOLS)
         if args.tab and args.tab not in SP.TOOLS:
             return out.done(out.fail(f"No tool {args.tab!r}. Tools: " + ", ".join(SP.TOOLS), code="BAD_ARGS"))
-        plans = {t: SP.TOOLS[t](ctx) for t in tabs}
+        plans = {t: SP.with_order(t, ctx) for t in tabs}
         out.put(tools=plans)
         for t in tabs:
             _say_plan(out, plans[t])

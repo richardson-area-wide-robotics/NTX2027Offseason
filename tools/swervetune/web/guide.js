@@ -375,7 +375,11 @@ const Guide = (() => {
         const rep = doc.report || {};
         shown[step.id] = `<div class="panel"><b>${esc(rep.summary || doc.outcome)}</b>${(rep.findings || []).map(f =>
           `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${Learn.link(f.why, 2)}</div></div>`).join("")}</div>`;
-        if (step.run.record && doc.outcome === "DONE" && !doc.practice && doc.env !== "SIM") await mark({ [step.run.record]: rep.score === 100 ? "pass" : "fail" });
+        if (step.run.record && doc.outcome === "DONE" && !doc.practice && doc.env !== "SIM") {
+          await mark({ [step.run.record]: rep.score === 100 ? "pass" : "fail" });
+          // With the time it happened, for a part's checklist ("only since it changed").
+          if (step.run.record === "health") await App.api("/api/mark", { key: "cal_health", result: rep.score === 100 ? "pass" : "fail", detail: rep.summary || "" });
+        }
         if (step.id === "directions") {
           const e = (rep.findings || []).find(f => f.level === "error");
           dirErr = doc.outcome === "DONE" && e ? e.title : null;

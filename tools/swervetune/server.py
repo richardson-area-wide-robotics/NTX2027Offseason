@@ -84,8 +84,14 @@ class Session:
         return False
 
     def reload_project(self):
+        """Re-reads the robot's files (a save may have changed them). The live monitor keeps what it
+        has seen: rebuilding it on every card refresh cleared its timers and the drive-ratio check."""
         if self.project:
+            keep = self.monitor
             self.set_project(self.project.name)
+            if keep is not None:
+                keep.limit = float(self.project.phys.get("currentLimit", {}).get("drive", 40))
+                self.monitor = keep
 
     # ------------------------------------------------------------------ robot
     def connect(self, target, host=None):
@@ -376,18 +382,22 @@ def api_motor_inventory(_query=None):
         return {"ok": False, "error": "Pick a robot project first."}
     S.reload_project()
     live = S.link.motors()["motors"] if S.link and S.link.is_connected() else []
-    measured, run = None, None
+    measured, run = _measured_motor()
+    out = motorinv.table(S.project, live, measured)
+    out.update(ok=True, connected=bool(live), measured_run=run)
+    return out
+
+
+def _measured_motor():
+    """The drive motor as this robot's latest real drive_ff measured it: (identity, run file)."""
     robot = S.project.name.lower()
     for r in runs.list_runs(300):
         if (r["test"] == "drive_ff" and not r["practice"] and r["env"] in ("FIELD", "BLOCKS")
                 and (r.get("robot") or "").lower() == robot):
             doc = runs.load(r["file"])
             rep = advisor.analyze(doc, doc.get("gains"), **advisor.robot_context(S.project))
-            measured, run = rep.get("motor"), r["file"]
-            break
-    out = motorinv.table(S.project, live, measured)
-    out.update(ok=True, connected=bool(live), measured_run=run)
-    return out
+            return rep.get("motor"), r["file"]
+    return None, None
 
 
 def api_ppcheck(_query=None):
@@ -657,7 +667,11 @@ def _setup_ctx():
         stale = _grades_stale(_battery_rows({})[0])[1]
     except Exception:  # noqa: BLE001 - no battery data is not a reason to fail the plan
         stale = False
-    return setup_plans.gather(S.project, link=S.link, battery_grades_stale=stale)
+    try:
+        measured = _measured_motor()[0] if S.project else None
+    except Exception:  # noqa: BLE001 - a run that won't analyze leaves the inventory as coded
+        measured = None
+    return setup_plans.gather(S.project, link=S.link, battery_grades_stale=stale, measured=measured)
 
 
 def api_setup(query=None):
@@ -667,8 +681,9 @@ def api_setup(query=None):
     if tab:
         if tab not in setup_plans.TOOLS:
             return {"ok": False, "error": f"No checklist for {tab}."}
-        return dict(setup_plans.TOOLS[tab](ctx), ok=True, tab=tab)
-    return {"ok": True, "tools": {t: fn(ctx) for t, fn in setup_plans.TOOLS.items()}}
+        return dict(setup_plans.with_order(tab, ctx), ok=True, tab=tab)
+    plans = {t: fn(ctx) for t, fn in setup_plans.TOOLS.items()}
+    return {"ok": True, "tools": {t: setup_plans.with_order(t, ctx, plans) for t in plans}}
 
 
 def _parts():
@@ -709,7 +724,9 @@ def api_part_plan(query=None):
         return {"ok": False, "error": "Which part?"}
     p = _parts().get(setup_plans.part_key(kind, which))
     if not p:
-        return {"ok": True, "started": None, "kind": kind, "which": which}
+        # Not started: the checklist as it would be, with nothing counted (a start far in the future).
+        plan = setup_plans.part_plan(kind, which, _setup_ctx(), "99999999-999999")
+        return dict(plan, ok=True, kind=kind, which=which, started=None, preview=True)
     plan = setup_plans.part_plan(kind, which, _setup_ctx(), p["started"])
     return dict(plan, ok=True, kind=kind, which=which, started=p["started"], marks=p.get("marks") or {})
 
@@ -723,31 +740,39 @@ def api_part_start(body):
         return {"ok": False, "error": "Which part?"}
     if setup_plans.PARTS[kind]["pick"] and not which:
         return {"ok": False, "error": f"Which {setup_plans.PARTS[kind]['pick']}?"}
-    parts = _parts()
     # Starting again starts over: only what is done from now on counts.
-    parts[setup_plans.part_key(kind, which)] = {"started": setup_plans.stamp(), "marks": {}}
-    _save_parts(parts)
+    key = setup_plans.part_key(kind, which)
+    progress.change(S.project.name, lambda p: p.setdefault("parts", {}).__setitem__(
+        key, {"started": setup_plans.stamp(), "marks": {}}))
     return api_part_plan({"kind": kind, "which": which})
+
+
+def _in_sim():
+    """Whether the connected robot is the simulator: its results never count for a real part."""
+    try:
+        return bool(S.link and S.link.is_connected() and S.link.environment().get("active") == "SIM")
+    except Exception:  # noqa: BLE001 - no answer: not the simulator as far as we know
+        return False
 
 
 def api_part_mark(body):
     b = body or {}
     key = setup_plans.part_key(b.get("kind") or "", str(b.get("which") or ""))
-    parts = _parts()
-    if key not in parts:
+    if key not in _parts():
         return {"ok": False, "error": "Start that part first."}
-    parts[key].setdefault("marks", {})[str(b.get("step"))] = {
-        "result": "pass" if b.get("result") == "pass" else "fail", "when": setup_plans.stamp(),
-        "detail": str(b.get("detail") or "")[:300]}
-    _save_parts(parts)
+    if _in_sim():
+        return {"ok": False, "error": "The simulator's results never count for a real part: nothing was recorded."}
+    mark = {"result": "pass" if b.get("result") == "pass" else "fail", "when": setup_plans.stamp(),
+            "detail": str(b.get("detail") or "")[:300]}
+    progress.change(S.project.name, lambda p: p.setdefault("parts", {}).setdefault(key, {})
+                    .setdefault("marks", {}).__setitem__(str(b.get("step")), mark))
     return api_part_plan({"kind": b.get("kind"), "which": b.get("which")})
 
 
 def api_part_stop(body):
     b = body or {}
-    parts = _parts()
-    parts.pop(setup_plans.part_key(b.get("kind") or "", str(b.get("which") or "")), None)
-    _save_parts(parts)
+    key = setup_plans.part_key(b.get("kind") or "", str(b.get("which") or ""))
+    progress.change(S.project.name if S.project else None, lambda p: p.setdefault("parts", {}).pop(key, None))
     return {"ok": True}
 
 
@@ -757,6 +782,8 @@ def api_mark(body):
     key = str(b.get("key") or "")
     if not S.project or not (key.startswith("cal_") or key.startswith("wire_")):
         return {"ok": False, "error": "Nothing to mark."}
+    if _in_sim():
+        return {"ok": False, "error": "The simulator's results never count: nothing was recorded."}
     progress.update(S.project.name, {key: {"result": "pass" if b.get("result") == "pass" else "fail",
                                            "when": setup_plans.stamp(), "detail": str(b.get("detail") or "")[:300]}})
     return {"ok": True}
@@ -942,14 +969,16 @@ def api_geometry_spin(query=None):
     robot = S.project.name.lower() if S.project else ""
     spins = [r for r in runs.list_runs(300) if r["test"] == "spin" and r["env"] == "FIELD"
              and not r["practice"] and r["outcome"] == "DONE"]
-    mine = [r for r in spins if (r.get("robot") or "").lower() == robot] or spins
-    if not mine:
+    mine = [r for r in spins if (r.get("robot") or "").lower() == robot]
+    use = mine or spins
+    if not use:
         out = geometry.spin_check({})
         out.update(ok=True, run=None)
         return out
-    doc = runs.load(mine[0]["file"])
+    doc = runs.load(use[0]["file"])
     out = geometry.spin_check(advisor.spin_report(doc).get("measured"), ratio)
-    out.update(ok=True, run=mine[0]["file"], saved=mine[0].get("saved"))
+    # Another robot's spin is shown, never counted for this one.
+    out.update(ok=True, run=use[0]["file"], saved=use[0].get("saved"), robot_match=bool(mine))
     return out
 
 

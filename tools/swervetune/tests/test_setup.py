@@ -70,12 +70,22 @@ class CalibrateTest(unittest.TestCase):
                          ("done", "attention", "attention", "done", "todo"))
         self.assertEqual(p["next"]["id"], "wheels", "the first job needing work, in order")
 
-    def test_everything_done_points_back_to_the_guide(self):
+    def test_everything_done_points_on_to_the_controllers(self):
         p = SP.calibrate(ctx(prog={"cal_positions": mark(), "cal_wheels": mark(), "cal_spin": mark(), "cal_gyro_still": mark(),
                                    "cal_gyro_turns": mark()}, tune={"robotMassKg": 52, "robotMoiKgM2": 5.1}))
         self.assertIsNone(p["next"])
-        self.assertEqual(p["after"]["label"], "Back to the Guide")
+        self.assertEqual(p["after"], {"tab": "controllers", "label": "Next: Controllers"}, "the tools run in order")
         self.assertEqual((p["done"], p["of"]), (5, 5), "the skipped camera and optional field don't count")
+
+    def test_the_order_names_an_earlier_tool_with_jobs_left(self):
+        c = ctx(tune={"robotMassKg": 52, "robotMoiKgM2": 5.1})
+        o = SP.with_order("calibrate", c)["order"]
+        self.assertEqual(o["chain"], SP.CHAIN)
+        self.assertEqual(o["index"], SP.CHAIN.index("calibrate"))
+        if o["earlier"]:
+            self.assertIn(o["earlier"]["tab"], SP.CHAIN[:o["index"]])
+            self.assertGreater(o["earlier"]["count"], 0)
+        self.assertIsNone(SP.with_order("config", c)["order"]["earlier"], "nothing comes before Config")
 
 
 class OtherToolsTest(unittest.TestCase):

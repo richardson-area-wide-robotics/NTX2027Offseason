@@ -214,11 +214,17 @@
     $("#motor-kinds", root).innerHTML = Object.values(kinds).map(([label, amps, w, d, s]) =>
       `<tr><td>${esc(label)}</td><td class="num">${amps} A</td><td class="num">${w} °C</td><td class="num">${d} °C</td><td class="num">${s} °C</td></tr>`).join("");
   });
-  // What each controller looks like, from FIRST's drawing: drawn the first time the tab opens.
-  App.on("tab", t => {
+  // What each controller looks like: two small pictures from FIRST's drawing, side by side.
+  App.on("tab", async t => {
     const art = $("#inv-art", root);
-    if (t === "motors" && art && !art._frc) FrcMap.render(art, { view: "controllers", alt: "A SPARK MAX and a SPARK Flex on a NEO Vortex",
-      focus: [{ part: "sparkmax", state: "here", label: "SPARK MAX: NEO, NEO 2.0, NEO 550" },
-        { part: "sparkflex", state: "here", label: "SPARK Flex, docked on a NEO Vortex" }] });
+    if (t !== "motors" || !art || art.dataset.drawn) return;
+    art.dataset.drawn = "1";
+    const [mx, fx] = await Promise.all([FrcMap.thumb("sparkmax", 160), FrcMap.thumb("sparkflex", 160)]);
+    art.innerHTML = `<div class="ctl-pics">
+        <figure>${mx ? `<img src="${mx}" alt="A SPARK MAX">` : ""}<figcaption class="small"><b>SPARK MAX</b>: NEO, NEO 2.0, NEO 550</figcaption></figure>
+        <figure>${fx ? `<img src="${fx}" alt="A SPARK Flex docked on a NEO Vortex">` : ""}<figcaption class="small"><b>SPARK Flex</b>, docked on a NEO Vortex</figcaption></figure>
+      </div>
+      <p class="small muted">Drawings from <a href="https://docs.wpilib.org/en/stable/docs/controls-overviews/control-system-hardware.html" target="_blank" rel="noopener">FRC Control System - REV</a>
+        (Team 3161, WPILib), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p>`;
   });
 })();

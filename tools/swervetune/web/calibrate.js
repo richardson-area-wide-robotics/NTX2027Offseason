@@ -452,7 +452,8 @@
     const real = wheels && !wheels.practice && wheels.average_in ? wheels.configured_in / wheels.average_in : 1;
     const r = await App.api("/api/geometry/spin?configured_over_real=" + real);
     $("#cg-spin-out", root).innerHTML = (r.run ? `<p class="small muted">From ${esc(r.run)}${real !== 1 ? `, with the wheel sizes just measured taken out` : ""}.</p>` : "") + findings(r.findings);
-    if (r.run) {
+    // Another robot's spin is shown, never counted for this one.
+    if (r.run && r.robot_match) {
       const bad = (r.findings || []).find(f => f.level === "error" || f.level === "warn");
       HowTo.mark("calibrate", "cal_spin", !bad, bad ? bad.title : "The gyro and the wheels agree.");
     }
