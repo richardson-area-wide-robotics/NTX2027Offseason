@@ -44,6 +44,14 @@ class DashboardAlertsTest {
   }
 
   @Test
+  void protectionSwitchedOffIsRed() {
+    alerts.protectionOff(true, false);
+    assertTrue(shown("protection").startsWith("kError"), shown("protection"));
+    alerts.protectionOff(false, false);
+    assertEquals("", shown("protection"));
+  }
+
+  @Test
   void aBrokenMapIsNoMap() {
     assertEquals("", WiringMap.parse("not json").power("frontleft drive"));
     assertEquals("", WiringMap.load(java.nio.file.Path.of("no", "such", "wiring.json")).can("x"));

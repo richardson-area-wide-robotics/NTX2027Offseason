@@ -29,7 +29,9 @@ class PodMotorTest(unittest.TestCase):
         self.assertEqual(rep["motor"]["kind"], "vortex")
 
     def test_a_vortex_slips_at_more_amps_than_a_neo(self):
-        self.assertGreater(min(plant.true_slip_currents(motor="vortex")), max(plant.true_slip_currents(motor="neo")) * 1.2)
+        # Corner by corner: the wall tips weight onto the rear wheels, so fronts and rears differ.
+        for v, n in zip(plant.true_slip_currents(motor="vortex"), plant.true_slip_currents(motor="neo")):
+            self.assertGreater(v, n * 1.2)
 
 
 class AdviceOnAVortexTest(unittest.TestCase):

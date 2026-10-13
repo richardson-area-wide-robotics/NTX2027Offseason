@@ -183,7 +183,8 @@ const Guide = (() => {
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
       need: ["3 m or more of clear carpet ahead", "A fresh battery", "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
       todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "Press Try this when it offers the measured feedforward (if it asks for something else first, do that): it applies them and opens Drive speed, the next step.",
-             "Then, in the Calibrate tab, weigh the robot and measure its moment of inertia: PathPlanner needs both."],
+             "Then, in the Calibrate tab, weigh the robot and measure its moment of inertia: PathPlanner needs both.",
+             "Once a season, and after any drive motor is swapped, run Feedforward on blocks too: each wheel spins free there, so the tool compares those runs to spot a motor getting weaker."],
       tune: "ff",
       status: () => graded("drive_ff", "FIELD") },
 

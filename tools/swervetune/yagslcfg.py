@@ -609,6 +609,13 @@ def lint(project):
                         f"Wheels would grip up to about {slip:.0f} A. Fine if brownouts are the worry."))
     # ---- the team's current policy (Stuart, 2026-10): Vortex 80, NEO 1.1 60, NEO 2.0 80, NEO 550 20
     inventory = p.tune.get("motors", {}) if isinstance(p.tune.get("motors"), dict) else {}
+    for key, what in (("guard", "the motor guard (heat, stall and failure protection)"),
+                      ("enforcePolicy", "the team's current-limit policy")):
+        if inventory.get(key) is False:
+            F.append(_f("error", f"swervetune_{key}_off", f"swervetune.json turns off {what}",
+                        f'"motors": {{"{key}": false}} switches it off on every motor, and nothing on the robot '
+                        "says so. Remove it before the robot drives in a match.",
+                        {"kind": "edit", "file": "swervetune.json", "path": ["motors", key], "value": True}))
     for part, kind, limit, key in (("drive", dk, d_lim, "drive"), ("steer", p.steer_kind(), a_lim, "angle")):
         mk = C.motor_kind_from_text(inventory.get(part) or {"neo550": "neo550", "vortex": "vortex",
                                                             "neo": "neo"}.get(kind or "", ""))

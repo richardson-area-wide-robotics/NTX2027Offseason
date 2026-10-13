@@ -65,6 +65,13 @@ final class DashboardAlerts {
     this.wiring = wiring == null ? WiringMap.NONE : wiring;
   }
 
+  /** Red while swervetune.json switches protection off: nothing else on the robot would say so. */
+  void protectionOff(boolean guardOff, boolean policyOff) {
+    set("protection", AlertType.kError, guardOff || policyOff,
+        (guardOff ? "Motor heat and stall protection is OFF" : "The team's current limits are NOT enforced")
+            + " (swervetune.json): turn it back on before a match");
+  }
+
   /** Asks which battery is in until someone picks one (each boot may be a new battery). */
   void battery(String id) {
     set("battery", AlertType.kWarning, id == null || id.isEmpty(),

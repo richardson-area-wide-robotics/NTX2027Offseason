@@ -414,26 +414,45 @@ def true_drive_feedforward(surface="floor", robot_mass_kg=55.0, kS_volts=0.15, m
 # ---------------------------------------------------------------------------- wall push
 
 
-def wall_loads(robot_mass_kg=55.0, front_share=0.46, seed=1):
-    """Normal force on each wheel, newtons: front pair, then back pair, a little uneven."""
+# Pushing a wall: the wheels push at the floor and the wall pushes back at bumper height. That
+# couple tips weight off the front wheels onto the rear ones, by push x bumper height / wheelbase,
+# whatever the robot's balance. So in this test the front pair always slips first.
+BUMPER_H_M = 0.10
+WHEELBASE_M = 0.61
+
+
+def wall_loads(robot_mass_kg=55.0, front_share=0.5, seed=1, left_share=0.5):
+    """Normal force on each wheel standing still, newtons: frontleft, frontright, backleft, backright."""
     rng = random.Random(seed)
     g = 9.81
-    shares = [front_share / 2, front_share / 2, (1 - front_share) / 2, (1 - front_share) / 2]
+    shares = [front_share * left_share, front_share * (1 - left_share),
+              (1 - front_share) * left_share, (1 - front_share) * (1 - left_share)]
     return [robot_mass_kg * g * s * (1 + 0.04 * (rng.random() - 0.5)) for s in shares]
 
 
-def true_slip_currents(robot_mass_kg=55.0, mu_static=1.1, front_share=0.46, gear=5.5,
+def _tipped(loads, push_n, bumper_h=BUMPER_H_M, wheelbase=WHEELBASE_M):
+    """Loads with the wall's tipping: each front wheel loses push x h / (2 L), each rear one gains it."""
+    d = push_n * bumper_h / (2 * wheelbase)
+    return [max(0.0, loads[0] - d), max(0.0, loads[1] - d), loads[2] + d, loads[3] + d]
+
+
+def true_slip_currents(robot_mass_kg=55.0, mu_static=1.1, front_share=0.5, gear=5.5,
                        wheel_d_in=3.0, seed=1, motor="neo"):
-    """The current at which each modeled wheel breaks loose, to check an analysis against."""
+    """About where each modeled wheel breaks loose, with the wall's tipping: the fronts while all four
+    push alike, the rears once the fronts are cut. (The pod's own ``slip_a_m*`` is exact.)"""
     motor = Motor(motor)
     r = wheel_d_in * 0.0254 / 2
-    return [mu_static * n * r / (gear * motor.Kt) + motor.free_i
-            for n in wall_loads(robot_mass_kg, front_share, seed)]
+    loads = wall_loads(robot_mass_kg, front_share, seed)
+    k = BUMPER_H_M / WHEELBASE_M
+    # Front: f = mu (N - 4f h/2L)  ->  f = mu N / (1 + 2 mu h/L). Rear, two pushing: f = mu N / (1 - mu h/L).
+    forces = [mu_static * loads[0] / (1 + 2 * mu_static * k), mu_static * loads[1] / (1 + 2 * mu_static * k),
+              mu_static * loads[2] / (1 - mu_static * k), mu_static * loads[3] / (1 - mu_static * k)]
+    return [f * r / (gear * motor.Kt) + motor.free_i for f in forces]
 
 
-def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.46, gear=5.5,
+def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.5, gear=5.5,
               wheel_d_in=3.0, ceiling_a=60.0, ramp_vps=1.0, slip_mps=0.15, limit_before_a=40.0,
-              rate_hz=200, bus=12.0, seed=1, motor="neo"):
+              rate_hz=200, bus=12.0, seed=1, motor="neo", left_share=0.5, bumper_h=BUMPER_H_M):
     """Same shape as the robot's slip test: four modules, a bumper against a wall.
 
     Returns ``(channels, meta)``. Each wheel is stalled until its push beats static friction, then
@@ -442,7 +461,9 @@ def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.
     """
     motor = Motor(motor)
     r = wheel_d_in * 0.0254 / 2
-    loads = wall_loads(robot_mass_kg, front_share, seed)
+    base = wall_loads(robot_mass_kg, front_share, seed, left_share)
+    loads = list(base)
+    push = [0.0, 0.0, 0.0, 0.0]  # each wheel's push on the floor last step, newtons
     J = 3.0e-5 + 1.1e-4 / gear ** 2
     fric = motor.Kt * motor.free_i  # internal friction torque at the motor
     n = len(loads)
@@ -464,17 +485,20 @@ def wall_push(robot_mass_kg=55.0, mu_static=1.1, mu_kinetic=0.85, front_share=0.
     done_at = None
     while t <= total and (done_at is None or t < done_at + 0.3):
         cmd = 0.0 if t < align else min(12.0, ramp_vps * (t - align))
+        loads = _tipped(base, sum(push), bumper_h)
         for i in range(n):
             v_cmd = 0.0 if cut[i] else cmd
             vlt = motor.limit_volts(v_cmd, w[i], ceiling_a)
             cur = motor.current(vlt, w[i])
             torque = motor.Kt * cur
+            push[i] = max(0.0, (torque - fric) * gear / r)
             if not slipping[i]:
-                if (torque - fric) * gear / r >= mu_static * loads[i]:
+                if push[i] >= mu_static * loads[i]:
                     slipping[i] = True
                 else:
                     w[i] = 0.0
             if slipping[i]:
+                push[i] = mu_kinetic * loads[i]
                 load = mu_kinetic * loads[i] * r / gear + fric
                 w[i] += (torque - load) / J * dt
                 if w[i] < 0:

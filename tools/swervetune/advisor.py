@@ -769,6 +769,14 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
                 "way a weak motor would. Check that corner's wheel size first (Calibrate tab, Wheel "
                 "sizes); to judge the motor itself, run the feedforward on blocks, where each wheel "
                 "spins free.", None if mild else {"type": "run", "test": "drive_ff", "env": "BLOCKS", "args": {}}))
+        top = (ctx or {}).get("max_speed")
+        reached = max((abs(x) for i in mods for x in ch.get(f"m{i}.v", []) if A.finite(x)), default=0.0)
+        if not blocks and top and reached < 0.4 * top:
+            F.append(finding(
+                "info", f"kV was measured over 0 to {reached:.1f} m/s; full speed is about {top:.1f}",
+                "The ramp stops at the speed cap, so kV is a straight line stretched far past what was "
+                "measured. It is usually close, but for a kV that holds at full speed, set a higher speed "
+                "cap (2.5 m/s or more) with the space to match, and run this again.", learn="kV"))
         ident_findings, ident = motor_identity_findings(kvs, ctx or {})
         F.extend(ident_findings)
         if ident:
@@ -1265,7 +1273,14 @@ def slip_report(result):
     if policy:
         rec = min(rec, int(policy))
     report["recommended_a"] = rec
-    report["targets"].append(_grade("slip spread between corners (%)", spread, 25.0))
+    # Front against rear is the test itself (the wall tips weight onto the rear wheels); the robot's
+    # balance shows only left against right on the same axle.
+    axles = []
+    for a, b in (("frontleft", "frontright"), ("backleft", "backright")):
+        if a in found and b in found:
+            axles.append((a, b, abs(found[a] - found[b]) / min(found[a], found[b]) * 100))
+    lr = max((x[2] for x in axles), default=0.0)
+    report["targets"].append(_grade("left/right difference on an axle (%)", lr, 20.0))
     listing = ", ".join(f"{n2} {a:.1f} A" for n2, a in sorted(found.items(), key=lambda kv: kv[1]))
     F.append(finding(
         "ok", f"Drive current limit: {rec} A",
@@ -1282,12 +1297,23 @@ def slip_report(result):
             "warn", f"The limit in use, {before:.0f} A, is above where {weakest} slips",
             "Hard acceleration spins that wheel today. The robot loses push it could have had, the "
             "tread wears, and the odometry drifts."))
-    if spread > 25:
+    fronts = [found[n2] for n2 in ("frontleft", "frontright") if n2 in found]
+    rears = [found[n2] for n2 in ("backleft", "backright") if n2 in found]
+    if fronts and (not rears or A.mean(rears) > 1.1 * A.mean(fronts)):
         F.append(finding(
-            "warn", f"Corners slip at very different currents ({low:.0f} to {high:.0f} A)",
-            "The robot's weight is not shared evenly: the corner that slips first carries the least. "
-            "A battery or a heavy mechanism far from the center does this. The lightest corner sets "
-            "the limit for all four, so evening out the weight raises it."))
+            "info", "The front wheels slipped first, as a wall push makes them",
+            "The wheels push at the floor and the wall pushes back at bumper height, which tips weight "
+            "off the front wheels onto the rear ones: the fronts break loose at a lower current, the "
+            "rears at a higher one" + ("" if rears else ", above this run's ceiling") + ". That is the test, "
+            "not the robot's balance. Accelerating hard tips weight the same way, so the front pair's "
+            "number is the right one for the limit.", learn="traction"))
+    if lr > 20:
+        a, b, _ = max(axles, key=lambda x: x[2])
+        F.append(finding(
+            "warn", f"{a} and {b} slip at different currents ({found[a]:.0f} and {found[b]:.0f} A)",
+            "Two wheels on the same axle feel the wall's tipping alike, so a difference between them is "
+            "the robot's weight sitting to one side (a battery or a heavy mechanism off center), or one "
+            "wheel's tread. The lighter side sets the limit for all four; evening it out raises it."))
     never = [names[i] for i in mods if not report["modules"][names[i]]["slipped"]]
     if never:
         F.append(finding("info", f"{', '.join(never)} never slipped up to {ceiling:.0f} A",
@@ -1479,7 +1505,7 @@ def spin_ff_report(result, history=None, mass_kg=None, mass_source="", moi_estim
     return _finish(report)
 
 
-GYRO_DRIFT_MIN_S = 20.0
+GYRO_DRIFT_MIN_S = 30.0  # one threshold everywhere: the health capture and Calibrate's minute
 
 
 def no_data_report(result):

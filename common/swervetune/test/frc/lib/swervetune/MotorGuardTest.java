@@ -281,6 +281,20 @@ class MotorGuardTest {
   }
 
   @Test
+  void aModuleWhoseSteeringMotorIsOffTheBusDrivesAtHalfPower() {
+    FakeMotorChannel drive = new FakeMotorChannel(60);
+    FakeMotorChannel steer = new FakeMotorChannel(20);
+    Motor d = add("backleft drive", drive, MotorKind.VORTEX, false);
+    add("backleft steer", steer, MotorKind.NEO_550, false);
+    run(0.2);
+    assertEquals(Stage.OK, d.stage());
+    steer.present = false;
+    run(0.2);
+    assertEquals(Stage.DERATE, d.stage());
+    assertTrue(d.cause().contains("off the CAN bus"), d.cause());
+  }
+
+  @Test
   void heatCutsAreCountedSoTheyOutliveTheCooling() {
     FakeMotorChannel c = new FakeMotorChannel(20);
     c.ignoresLimit = true;

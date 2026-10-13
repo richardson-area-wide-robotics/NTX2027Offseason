@@ -131,7 +131,14 @@ def ff_history(robot, blocks, before=None, exclude=None, limit=200, env=None):
     it with its own future.
     """
     out = []
-    for f in sorted(glob.glob(os.path.join(RUNS, "*.json")))[-limit:]:
+    # The newest `limit` matching runs, not the newest `limit` files of any kind: practice runs and
+    # other tests used to push a robot's baseline out of the window.
+    named = re.compile(r"^\d{8}-\d{6}_")  # how save() names a run: the test is in the name
+    files = [f for f in sorted(glob.glob(os.path.join(RUNS, "*.json")))
+             if "_drive_ff_" in os.path.basename(f) or not named.match(os.path.basename(f))]
+    for f in reversed(files):
+        if len(out) >= limit:
+            break
         if exclude and os.path.basename(f) == exclude:
             continue
         try:
@@ -149,4 +156,4 @@ def ff_history(robot, blocks, before=None, exclude=None, limit=200, env=None):
                 or (before and str(d.get("saved", "")) >= str(before))):
             continue
         out.append({"saved": d.get("saved"), "modules": rep["modules"]})
-    return out
+    return out[::-1]

@@ -256,8 +256,11 @@ def gyro_still(capture):
     ch = capture.get("channels") or {}
     t, h = ch.get("t") or [], A.unwrap_deg(ch.get("heading") or [])
     F = []
-    if len(t) < 20 or t[-1] - t[0] < 10:
-        return {"findings": [_f("error", "Too short to judge drift", "Record at least 30 s with the robot still.")]}
+    from .advisor import GYRO_DRIFT_MIN_S
+    if len(t) < 20 or t[-1] - t[0] < GYRO_DRIFT_MIN_S:
+        return {"findings": [_f("error", "Too short to judge drift",
+                                f"Record at least {GYRO_DRIFT_MIN_S:.0f} s with the robot still: shorter, the "
+                                "gyro's noise is as big as its drift.")]}
     # Least-squares slope, so one noisy sample at either end doesn't decide it.
     tm, hm = A.mean(t), A.mean(h)
     slope = sum((a - tm) * (b - hm) for a, b in zip(t, h)) / sum((a - tm) ** 2 for a in t)

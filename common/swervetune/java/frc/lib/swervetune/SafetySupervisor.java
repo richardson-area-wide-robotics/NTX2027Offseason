@@ -264,7 +264,8 @@ public final class SafetySupervisor {
       return started
           ? Verdict.abort(in.hotMotor + " Its current limit was cut, so nothing measured from here"
               + " on would be true. Let it cool.")
-          : Verdict.waitFor(in.hotMotor + " Waiting for it to cool.");
+          : Verdict.waitFor(in.hotMotor + (in.hotMotor.contains("stall") ? " Clear what it is stuck on."
+              : in.hotMotor.contains("can't aim") ? " Fix the steering motor first." : " Waiting for it to cool."));
     }
     if (in.driverStickMax > limits.driverOverride) {
       return Verdict.abort("Driver moved a stick. Control handed back.");

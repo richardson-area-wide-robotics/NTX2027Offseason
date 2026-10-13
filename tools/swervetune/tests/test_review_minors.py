@@ -21,6 +21,24 @@ def capture(seconds, drift_deg_per_min):
             "robot": {"modules": ["frontleft", "frontright", "backleft", "backright"]}}
 
 
+class ProtectionOffTest(unittest.TestCase):
+    def test_a_guard_switched_off_is_a_lint_error(self):
+        import json
+        import shutil
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            dst = os.path.join(d, "robot")
+            shutil.copytree(os.path.join(REPO, "Peashooter"), dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
+            p = os.path.join(dst, "src", "main", "deploy", "swerve", "swervetune.json")
+            with open(p, encoding="utf-8") as fh:
+                data = json.load(fh)
+            data.setdefault("motors", {})["guard"] = False
+            with open(p, "w", encoding="utf-8") as fh:
+                json.dump(data, fh)
+            ids = {f["id"]: f for f in Y.lint(Y.Project(dst))}
+            self.assertEqual(ids["swervetune_guard_off"]["level"], "error")
+
+
 class TroubleshooterNeverAnswersForAPersonTest(unittest.TestCase):
     """A clean config check used to lock hands-on questions as "fine" with no way to say No."""
 
