@@ -37,6 +37,9 @@
   <button id="lessons" class="btn" data-tip="header.lessons">Lessons</button>
   <button id="abort" class="abort" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
 </header>
+<!-- Phones only: the same ABORT, pinned under the thumb. It sits outside the header because the
+     sticky header is its own stacking context, which the drawer and dialogs would cover. -->
+<button id="abort-pin" class="abort pin" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
 
 <div id="banner" class="banner" hidden>
   <div class="banner-text"><b id="banner-state"></b> <span id="banner-msg"></span></div>

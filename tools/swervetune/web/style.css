@@ -426,3 +426,25 @@ details.design > summary { cursor: pointer; }
 ol.chain-edit { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 ol.chain-edit li { display: grid; grid-template-columns: 2em 1fr 5em auto; gap: 6px; align-items: center; }
 ol.chain-edit input { width: 5em; }
+
+/* ---------------------------------------------------------------- phones and touch screens
+   Last in the file, so these win over the base rules above them. */
+/* Phones: the header wrapped to four rows (29% of the screen) with ABORT alone on the last one. ABORT
+   is pinned to the bottom corner instead (#abort-pin, outside the header), under the thumb and above
+   every drawer, dialog and toast, and the title goes so the header stays short. */
+.abort.pin { display: none; }
+@media (max-width: 600px) {
+  .brand, #abort { display: none; }
+  .top { gap: 6px 10px; padding: 8px 12px; }
+  .abort.pin { display: block; position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 70;
+    padding: 16px 24px; font-size: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+  main { padding-bottom: 96px; }  /* the last row of a page scrolls clear of ABORT */
+  .toast { bottom: 88px; }
+}
+/* Touch screens: 44 px for anything pressed with a finger. Chips share the header, so they get 32 px. */
+@media (pointer: coarse) {
+  .btn, .abort, .tabs button, .seg button, select, input[type=text], input[type=number], input:not([type]) { min-height: 44px; }
+  .btn.small { min-height: 36px; }
+  button.chip { min-height: 32px; }
+  input[type=checkbox], input[type=radio] { width: 22px; height: 22px; }
+}

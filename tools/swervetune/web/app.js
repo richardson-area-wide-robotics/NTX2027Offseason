@@ -153,7 +153,7 @@ $("#connect").onclick = async () => {
   else { App.toast("Connected."); await refreshLint(); }
 };
 
-$("#abort").onclick = () => abortNow();
+for (const b of ["#abort", "#abort-pin"]) $(b).onclick = () => abortNow();
 // Esc always sends ABORT, whatever else it closes. The toast says whether anything was running,
 // so "stopped" never becomes a message students learn to ignore.
 async function abortNow() {
