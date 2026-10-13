@@ -242,11 +242,18 @@ def summarize(series, wiring_map=None):
 
     # Gains changed while the robot code ran (from the laptop or AdvantageScope): a robot that
     # drove differently halfway through has its reason here.
-    for key in sorted(k for k in series if k.startswith(GAINS)):
-        pts = series[key]
+    # The robot logs why with every change (SwerveTune/Gains/Reason, a string): say it.
+    reasons = series.get(GAINS + "Reason") or []
+
+    def why(ts):
+        r = [v for t, v in reasons if t <= ts + 1e-6]
+        return f": {r[-1]}" if r and r[-1] else ""
+
+    for key in sorted(k for k in series if k.startswith(GAINS) and k != GAINS + "Reason"):
+        pts = [(t, v) for t, v in series[key] if isinstance(v, (int, float))]
         for (_, a), (ts, b) in zip(pts, pts[1:]):
             if a != b:
-                ev(ts, "info", f"Gain {key[len(GAINS):]} changed from {a:g} to {b:g} (live, not saved).")
+                ev(ts, "info", f"Gain {key[len(GAINS):]} changed from {a:g} to {b:g} (live, not saved){why(ts)}.")
 
     # Group dropouts that happened together, and judge each group with the wiring rules.
     drops.sort()

@@ -24,6 +24,11 @@ from . import analysis as A
 IN = 0.0254
 WHEEL_SPREAD_WARN = 0.010     # one wheel this much off the others: worn or different tread
 DIAMETER_EDIT = 0.004         # the average this far from the configured size is worth a change
+# More than this is a measuring mistake (the distance typed isn't how far the robot moved), never
+# tread: worn MAXSwerve tread is at most 1/8 in, about 4% of a 3 in wheel. The straight-line test
+# refuses the same way. A saved wrong diameter scales odometry, and the geofence and the speed cap
+# with it.
+DIAMETER_REFUSE = 0.10
 LOCATION_EDIT_IN = 0.25       # tape this far from the config is worth a change
 MISALIGNED_DEG = 8.0
 CURVED_DEG = 3.0
@@ -158,7 +163,13 @@ def wheel_sizes(capture, tape_m, configured_in, names=None):
                     "drags while driving straight.", where={"devices": [worst["name"] + " drive"]}))
     edits = []
     change = avg / configured_in - 1
-    if abs(change) > DIAMETER_EDIT:
+    if abs(change) > DIAMETER_REFUSE:
+        F.append(_f("error", f"The push says the wheels are {abs(change) * 100:.0f}% "
+                             f"{'smaller' if change < 0 else 'bigger'} than configured: that is a measuring mistake",
+                    f"Worn tread is at most about 4% smaller. Check that {tape:.2f} m is how far the robot really "
+                    "moved (measure from the same point on the frame at the start and the end), and push "
+                    "again. Nothing will be saved from this push."))
+    elif abs(change) > DIAMETER_EDIT:
         edits.append(("modules/physicalproperties.json", ("conversionFactors", "drive", "diameter"),
                       round(avg, 4)))
         F.append(_f("warn", f"The wheels are {abs(change) * 100:.1f}% {'smaller' if change < 0 else 'bigger'} "

@@ -43,6 +43,11 @@ def write_log(path):
     kp = Entry(log, "/RealOutputs/SwerveTune/Gains/Steer/kP", "double")
     kp.append(0.01, us(0.5))
     kp.append(0.02, us(30.0))
+    # The reason the robot logs with every change: a string under the gains, which the summary must
+    # read as a reason, not a gain (it crashed formatting it as a number).
+    why = Entry(log, "/RealOutputs/SwerveTune/Gains/Reason", "string")
+    why.append("the values in the files, at startup", us(0.5))
+    why.append("Tune tab, advice: Steering overshoots 18%", us(30.0))
     motors = {}
     for m in "ABCD":
         b = f"/RealOutputs/Motors/{m}/"
@@ -89,7 +94,8 @@ class LogSummaryTest(unittest.TestCase):
         for expected in ("teleop +24.0 s | Off the CAN bus for up to 0.4", "The CAN bus shut itself down",
                          "teleop +44.0 s | Brownout for 0.2", "teleop +59.0 s | B lost power and rebooted",
                          "A saw low supply voltage", "PDH port 3's breaker tripped (B)", "A: motor guard WARN",
-                         "teleop +14.0 s | Gain Steer/kP changed from 0.01 to 0.02"):
+                         "teleop +14.0 s | Gain Steer/kP changed from 0.01 to 0.02 (live, not saved): Tune tab, advice:"
+                         " Steering overshoots 18%"):
             self.assertIn(expected, self.text)
 
     def test_a_dropout_run_points_at_the_cable_at_its_start(self):

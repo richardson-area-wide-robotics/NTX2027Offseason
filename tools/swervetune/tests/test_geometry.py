@@ -71,6 +71,13 @@ class WheelTest(unittest.TestCase):
         self.assertEqual(r["edits"], [])
         self.assertEqual([f["level"] for f in r["findings"]], ["ok"])
 
+    def test_a_distance_typed_wrong_is_never_saved_as_a_wheel_size(self):
+        # Pushed 6 m, the box said 3 m: the wheels "measure" half size. Before, that was a one-click save.
+        r = G.wheel_sizes(push(tape_m=6.0), 3.0, 4.0, NAMES)
+        self.assertEqual(r["edits"], [])
+        self.assertEqual(r["findings"][-1]["level"], "error")
+        self.assertIn("measuring mistake", r["findings"][-1]["title"])
+
     def test_no_push_recorded(self):
         r = G.wheel_sizes(push(tape_m=0.0), 3.0, 4.0, NAMES)
         self.assertIn("No wheel turned", r["findings"][0]["title"])

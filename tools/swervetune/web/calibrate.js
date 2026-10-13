@@ -52,7 +52,7 @@
         </ol>
         <div class="row" style="flex-wrap:wrap">
           <button class="btn primary" id="cg-push" data-tip="cal.push">Record the push</button>
-          <label class="small" data-tip="cal.distance">Distance moved (m) <input type="number" id="cg-tape-m" step="0.005" min="0.5" value="3.0" style="width:7em"></label>
+          <label class="small" data-tip="cal.distance">Distance moved (m) <input type="number" id="cg-tape-m" step="0.005" min="0.5" placeholder="tape it" style="width:7em"></label>
           <button class="btn" id="cg-measure" disabled data-tip="cal.measure">Measure</button>
           <span class="small muted" id="cg-push-state"></span>
         </div>
@@ -213,6 +213,8 @@
   };
   $("#cg-measure", root).onclick = async () => {
     if (!pushRun) return;
+    // No default: a distance nobody measured would become the wheel size.
+    if (!(+$("#cg-tape-m", root).value > 0)) { App.toast("Type how far the robot moved, measured with the tape."); $("#cg-tape-m", root).focus(); return; }
     showWheels(await App.api("/api/geometry/wheels", { file: pushRun, tape_m: $("#cg-tape-m", root).value }));
   };
   $("#cg-wheel-practice", root).onclick = async () => showWheels(await App.api("/api/geometry/wheels", { practice: true }));

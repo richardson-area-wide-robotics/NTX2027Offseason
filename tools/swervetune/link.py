@@ -251,20 +251,30 @@ class RobotLink:
         self._deadman = bool(held)
 
     # ------------------------------------------------------------------ environment
+    def put_retained(self, kind, name, value):
+        """Publishes a value the robot must keep after this program exits. NT4 drops a topic when its
+        last publisher goes away, so a one-shot command line (``env --mode BLOCKS``) would set the
+        environment and lose it the moment it closed; a retained topic keeps its last value until
+        the robot restarts."""
+        with self._lock:
+            _call(self._pub(kind, name), "set", value)
+            # After publishing: the server ignores the property on a topic nobody has published.
+            _call(self._topic(kind, name), "setRetained", True)
+
     def set_environment(self, mode=None, apriltags=None, space_forward=None, space_side=None,
                         speed_cap=None):
         if mode is not None:
             if mode.upper() not in C.ENVIRONMENTS:
                 raise ValueError(f"environment must be one of {', '.join(C.ENVIRONMENTS)}")
-            self.put("str", C.ENV_MODE, mode.upper())
+            self.put_retained("str", C.ENV_MODE, mode.upper())
         if apriltags is not None:
-            self.put("bool", C.ENV_APRILTAGS, bool(apriltags))
+            self.put_retained("bool", C.ENV_APRILTAGS, bool(apriltags))
         if space_forward is not None:
-            self.put("double", C.ENV_SPACE_FORWARD, float(space_forward))
+            self.put_retained("double", C.ENV_SPACE_FORWARD, float(space_forward))
         if space_side is not None:
-            self.put("double", C.ENV_SPACE_SIDE, float(space_side))
+            self.put_retained("double", C.ENV_SPACE_SIDE, float(space_side))
         if speed_cap is not None:
-            self.put("double", C.ENV_SPEED_CAP, float(speed_cap))
+            self.put_retained("double", C.ENV_SPEED_CAP, float(speed_cap))
         self.flush()
 
     def environment(self):
