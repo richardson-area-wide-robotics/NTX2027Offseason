@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 
-from . import wiring
+from . import revspecs, wiring
 
 CHOICES = ("NEO V1.1", "NEO 2.0", "NEO Vortex", "NEO 550")
 JAVA_CLASS = {"SPARK MAX": "SparkMax", "SPARK Flex": "SparkFlex"}
@@ -79,6 +79,7 @@ def table(project, live_rows=None, measured=None):
     coded = code_kinds(project)
     live = {r.get("name"): r for r in (live_rows or [])}
     rows, F = [], []
+    old_firmware = {}
     for d in wiring.discover(project):
         if d["kind"] != "controller":
             continue
@@ -114,6 +115,9 @@ def table(project, live_rows=None, measured=None):
             F.append({"level": "warn", "title": f"{name}: YAGSL models a {yag}, the motor inventory says {manual}",
                       "why": f"YAGSL computes free speed and simulation from its type; the motor guard uses the "
                              f"inventory. Make {d['source']} and swervetune.json agree."})
+        fw = revspecs.firmware_finding(says or code, row["firmware"])
+        if fw:
+            old_firmware.setdefault(fw, []).append(name)
         fam = _family(motor)
         ctl = says or code
         if fam == "vortex" and ctl == "SPARK MAX":
@@ -132,6 +136,9 @@ def table(project, live_rows=None, measured=None):
                   "title": f"The drive motors measure as {measured['label']}s ({measured['rpm_per_volt']:.0f} rpm per volt)",
                   "why": "The latest drive_ff disagrees with the configured drive motor; set the inventory "
                          "and the YAGSL type to what is really fitted."})
+    for (level, title, why), names in old_firmware.items():
+        who = ", ".join(names) if len(names) <= 3 else f"{len(names)} controllers"
+        F.append({"level": level, "title": f"{who}: {title}", "why": why})
     unknown = [r["name"] for r in rows if r["status"] == "unknown"]
     if unknown:
         F.append({"level": "info", "title": f"Motor not named: {', '.join(unknown)}",

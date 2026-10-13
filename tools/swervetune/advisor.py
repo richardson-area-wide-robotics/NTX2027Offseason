@@ -33,6 +33,7 @@ import math
 
 from . import analysis as A
 from . import battery
+from . import revspecs
 from . import ratios as R
 
 # What "tight" means, per loop. Steering numbers are for a MAXSwerve-class module (NEO 550 at
@@ -336,8 +337,11 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
 # ============================================================================ drive velocity
 
 
-def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT):
+def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, drive_kind=None):
     ch = result["channels"]
+    # The practice pod models a NEO; a robot run uses the robot's drive motor.
+    kind = "neo" if result.get("practice") else (drive_kind or "neo")
+    sensor_period, _, sensor_counts, sensor_words = revspecs.drive_speed_sensor(kind)
     env = result.get("env", "")
     gains = gains or result.get("gains") or {}
     t, sp = ch.get("t", []), ch.get("sp", [])
@@ -441,14 +445,14 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT):
                 f"A {ramp:.2f} s ramp lets the output climb only {12 / ramp:.0f} V per second, so the "
                 "first volts of every correction arrive late. The current limit is what protects the "
                 "wheels and gearbox; 0.05 s is plenty of ramp.", gains_action(Drive__RampS=0.05)))
-        elif period == 0 or period > 16:
+        elif (period or sensor_period) > 16:
             F.append(finding(
                 "warn", f"Speed is measured {dead_t * 1000:.0f} ms late",
-                "Before the controller can correct an error it has to see it. A NEO's built-in "
-                "velocity on a SPARK MAX is averaged over a window that YAGSL does not shorten (it "
-                "sets a different, quadrature, filter). Delay caps how hard the velocity loop can "
-                "push before it oscillates. Try a 16 ms x 2 window and run this again: less delay, "
-                "a little more noise.", gains_action(Drive__VelPeriodMs=16, Drive__VelDepth=2)))
+                f"Before the controller can correct an error it has to see it. The speed comes from "
+                f"{sensor_words}, and YAGSL doesn't shorten that window for a NEO (it sets a different, "
+                "quadrature, filter). Delay caps how hard the velocity loop can push before it "
+                "oscillates. Try a 16 ms x 2 window and run this again: less delay, a little more noise.",
+                gains_action(Drive__VelPeriodMs=16, Drive__VelDepth=2)))
         else:
             F.append(finding(
                 "info", f"{dead_t * 1000:.0f} ms of delay remains",
@@ -457,10 +461,14 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT):
     if jitter > DRIVE_TARGETS["jitter_mps"] and have and (kP > 0.15 or kD > 0):
         F.append(finding(
             "warn", f"Speed buzzes ±{jitter:.2f} m/s while holding a constant command",
-            "A NEO's built-in sensor counts 42 steps a turn, so the measured speed moves in coarse "
-            "jumps. A large kP turns every jump into a voltage kick, and kD on a velocity loop "
-            "multiplies them again - you hear it as a buzz and see it as heat. Set kD to 0 and "
-            "halve kP; a measured feedforward does the real work.",
+            ("A NEO's built-in sensor counts 42 steps a turn, so the measured speed moves in coarse "
+             "jumps. A large kP turns every jump into a voltage kick, and kD on a velocity loop "
+             "multiplies them again - you hear it as a buzz and see it as heat. Set kD to 0 and "
+             "halve kP; a measured feedforward does the real work.") if sensor_counts < 100 else
+            (f"The Vortex's encoder counts {sensor_counts} steps a turn, so this isn't a coarse sensor: a "
+             "large kP turns every bump in the carpet and every flicker of the short speed window into "
+             "a voltage kick, and kD on a velocity loop multiplies them again - you hear it as a buzz and "
+             "see it as heat. Set kD to 0 and halve kP; a measured feedforward does the real work."),
             gains_action(Drive__kP=_clamp_ratio(kP * 0.5, kP), Drive__kD=0.0)))
     elif (osc >= 2 or os_ > 20) and not (ka_measured and A.finite(kP) and kP <= 0.06):
         if have:
@@ -1184,8 +1192,9 @@ def robot_context(project):
             "max_speed": vmax}
 
 
-# Free speed at 12 V, rpm. A NEO V1.1 and a NEO 2.0 spin alike, so this can't tell them apart.
-MOTOR_FREE_RPM = {"neo": 5676, "vortex": 6784, "neo550": 11000}
+# Free speed at 12 V, rpm (REV's spec tables). A NEO V1.1 and a NEO 2.0 spin alike, so this can't
+# tell them apart.
+MOTOR_FREE_RPM = {k: revspecs.MOTORS[k]["free_rpm"] for k in ("neo", "vortex", "neo550")}
 MOTOR_LABEL = {"neo": "NEO", "vortex": "NEO Vortex", "neo550": "NEO 550"}
 # A measured kV includes friction and a loaded wheel, so motors read a little under the datasheet.
 MEASURED_SHARE = 0.94
@@ -1354,7 +1363,7 @@ def _analyze_test(result, gains=None, **kw):
     if test == "steer_step":
         return steer_report(result, gains, **{k: v for k, v in kw.items() if k == "current_limit"})
     if test == "drive_step":
-        return drive_report(result, gains, **{k: v for k, v in kw.items() if k == "current_limit"})
+        return drive_report(result, gains, **{k: v for k, v in kw.items() if k in ("current_limit", "drive_kind")})
     if test == "drive_ff":
         history = kw.get("history")
         if history is None and not result.get("practice"):

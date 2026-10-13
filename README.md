@@ -85,7 +85,8 @@ The robot starts at pose (2 m, 2 m) facing 0°.
 motors, and finding wiring faults: `py -3.12 tools/swervetune gui`. Start with
 [`docs/SWERVE_TUNING_GUIDE.md`](docs/SWERVE_TUNING_GUIDE.md). Also in `docs/`: the
 [controls review](docs/CONTROLS_REVIEW.md), [vision setup](docs/VISION_LUMA_PHOTONVISION.md),
-the [brief for AI agents](docs/AGENT_TUNING.md) and [notes for 2027](docs/MIGRATION_2027.md).
+the [brief for AI agents](docs/AGENT_TUNING.md), [notes for 2027](docs/MIGRATION_2027.md) and
+[REV's numbers for our motors, controllers, swerve modules and battery](docs/REV_HARDWARE.md).
 
 ## CI
 

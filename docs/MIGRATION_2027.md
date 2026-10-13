@@ -67,6 +67,18 @@ nothing else:
   locked "second-order" Guide step assumes trapezoids.
 - `SparkChannel` reads `getPeriodicStatus0()` for CAN presence and the sticky `hasReset` warning
   for reboots: check both still exist.
+- From REV's 2027 alpha release notes (checked 2026-10-12, latest 2027.0.0-alpha-8):
+  - alpha-2 wraps every reading in a `Signal`: call `.get()`, and `.isValid()` says whether it is
+    fresh. Every `SparkChannel` and `YagslDrivetrainIO` read changes.
+  - alpha-7 constructors take a `CANPort`, and `getBusId()` became `getCanPort()`.
+  - alpha-7 removes the hall-sensor velocity averaging settings for a new firmware filter
+    (defaults: depth 8, sample delta 20). `applyDriveVelocityFilter` and the `Drive/VelPeriodMs`,
+    `Drive/VelDepth` live gains need redoing; so does `revspecs.drive_speed_sensor`.
+  - The 2027 API keeps the SPARK model enum `protected` with no public getter. `SparkChannel`
+    reaches it by reflection, and `MotorGuardTest` fails the build the day that method is gone,
+    rather than letting model detection go quiet.
+- Firmware: REV Hardware Client 2 is the only updater for 2026 and later firmware; it also
+  supports SystemCore.
 
 ### YAGSL
 

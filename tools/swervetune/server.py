@@ -909,7 +909,9 @@ def api_predict(body):
     new.update({k: float(v) for k, v in (body.get("gains") or {}).items()})
     lim = S.limits() if not doc.get("practice") else {"steer": 20.0, "drive": 40.0}
     loop = "steer" if doc.get("test") == "steer_step" else "drive"
-    return predict.predict(doc, now, new, int(body.get("module", 0)), current_limit=lim.get(loop))
+    kind = None if loop == "steer" or doc.get("practice") or not S.project else S.project.drive_kind()
+    return predict.predict(doc, now, new, int(body.get("module", 0)), current_limit=lim.get(loop),
+                           motor_kind=kind)
 
 
 def api_analyze(body):

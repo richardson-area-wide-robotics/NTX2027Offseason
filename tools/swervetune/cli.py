@@ -302,6 +302,17 @@ def _run_limits(args, doc):
         return {"steer": 20.0, "drive": 40.0}
 
 
+def _drive_kind(args, doc):
+    """The drive motor of the robot a run came from: its project, or the one named on the command line."""
+    if doc.get("practice"):
+        return None
+    try:
+        name = args.project or (doc.get("robot") or {}).get("name")
+        return resolve_project(name).drive_kind() if name else None
+    except Exception:  # noqa: BLE001 - without it the prediction assumes a NEO
+        return None
+
+
 def cmd_explain(args, out):
     doc = runs.load(args.run)
     e = explain.explain(doc, doc.get("gains"), _run_limits(args, doc))
@@ -326,8 +337,9 @@ def cmd_predict(args, out):
         k, _, v = kv.partition("=")
         new[k.strip()] = float(v)
     loop = "steer" if doc.get("test") == "steer_step" else "drive"
+    kind = _drive_kind(args, doc) if loop == "drive" else None
     p = predict.predict(doc, doc.get("gains") or {}, new, args.module,
-                        current_limit=_run_limits(args, doc).get(loop))
+                        current_limit=_run_limits(args, doc).get(loop), motor_kind=kind)
     if not p.get("ok"):
         out.put(prediction=_clean(p))
         out.say(p.get("reason", "No prediction."))

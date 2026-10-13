@@ -25,6 +25,7 @@ import math
 
 from . import analysis as A
 from . import explain
+from . import revspecs
 from .plant import Motor, SparkPid
 
 DT = 0.0005  # physics step, s
@@ -259,8 +260,10 @@ def predict(result, gains_now, gains_new, module=0, current_limit=None, motor_ki
         kind = motor_kind or "neo"
         units = wheel_d_in * 0.0254 / 2 / gear  # wheel meters per motor radian
         limit = current_limit or 40.0
-        period = int(gains_now.get("Drive/VelPeriodMs") or 32)
-        depth = int(gains_now.get("Drive/VelDepth") or 8)
+        # 0 means "as YAGSL left it": a Vortex's 10 ms x 2, a NEO's 32 ms x 8.
+        default_period, default_depth, _, _ = revspecs.drive_speed_sensor(kind)
+        period = int(gains_now.get("Drive/VelPeriodMs") or default_period)
+        depth = int(gains_now.get("Drive/VelDepth") or default_depth)
         window = period / 2 + depth / 2
         ff = (gains_now.get(f"FF/{name}/kS", 0.0), gains_now.get(f"FF/{name}/kV", 0.0))
     if not (t and sp and y and volts):

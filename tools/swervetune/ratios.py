@@ -18,9 +18,13 @@ On blocks nothing couples the wheels, so blocks runs cannot detect a drive ratio
 
 from __future__ import annotations
 
-# Every MAXSwerve drive ratio is 3:1 (15T bevel pinion to 45T bevel) times spur over pinion.
-MAXSWERVE_DRIVE = [(f"MAXSwerve {p}T pinion, {s}T spur", 3.0 * s / p)
-                   for p in (12, 13, 14, 15, 16) for s in (22, 21, 20, 19)]
+from . import revspecs
+
+# The pinion and spur pairs REV sells (base kit, Gear Ratio Upgrade Kit), by REV's names. Every
+# MAXSwerve drive ratio is 3:1 at the bevel times spur over pinion; other pairs don't mesh, since
+# each gear is cut for one center distance.
+MAXSWERVE_DRIVE = [(f"MAXSwerve {name}: {p} pinion, {s} spur", 3.0 * int(s[:-1]) / int(p[:-1]))
+                   for name, _, p, s in revspecs.MAXSWERVE["drive_ratios"]]
 SDS_DRIVE = [("SDS MK4/MK4i L1", 8.14), ("SDS MK4/MK4i L2", 6.75), ("SDS MK4/MK4i L3", 6.12),
              ("SDS MK4n L1+", 7.13), ("SDS MK4n L2+", 5.90), ("SDS MK4n L3+", 5.36)]
 STEER = [("MAXSwerve", 9424 / 203), ("SDS MK4i", 150 / 7), ("SDS MK4", 12.8), ("SDS MK4n", 18.75)]

@@ -21,7 +21,7 @@ def floor_ff_run(scale_by_module, env="FIELD", steps=600, dt=0.01):
 class RatioMathTest(unittest.TestCase):
     def test_maxswerve_family_names_a_13_tooth_pinion(self):
         c = ratios.candidates(5.5 * 0.923, "maxswerve")
-        self.assertEqual(c[0]["name"], "MAXSwerve 13T pinion, 22T spur")
+        self.assertEqual(c[0]["name"], "MAXSwerve Medium: 13T pinion, 22T spur")
 
     def test_module_unlike_the_others(self):
         out = ratios.module_ratio_findings({"fl": 3.0, "fr": 3.0 * 0.923, "bl": 3.0, "br": 3.0}, 5.5, "maxswerve")
