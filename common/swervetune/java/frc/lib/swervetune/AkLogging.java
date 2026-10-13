@@ -154,6 +154,22 @@ public final class AkLogging {
     return out;
   }
 
+  /**
+   * The PDH's input voltage and total current this loop, {@code {volts, amps}}: the battery as the
+   * robot sees it, read the same way as {@link #pdhCurrents}. Empty before {@link #start} or with
+   * no PDH on the bus.
+   */
+  public static double[] pdhPower() {
+    if (!started) {
+      return new double[0];
+    }
+    ConduitApi c = ConduitApi.getInstance();
+    if (c.getPDPChannelCount() <= 0) {
+      return new double[0];
+    }
+    return new double[] {c.getPDPVoltage(), c.getPDPTotalCurrent()};
+  }
+
   /** The folder match logs are written to, or null when none are kept. */
   public static String logFolder() {
     return logFolder;

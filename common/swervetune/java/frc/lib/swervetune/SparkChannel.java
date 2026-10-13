@@ -32,6 +32,8 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   private final int limitRpm;
   private final double positionFactor;
   private final String bootReport;
+  private final String model;
+  private final String firmware;
 
   public SparkChannel(SparkBase spark, boolean simulation) {
     this.spark = spark;
@@ -69,6 +71,48 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
       spark.clearFaults();
     }
     this.bootReport = report;
+    this.model = simulation ? "" : detectModel(spark);
+    String fw = "";
+    if (!simulation) {
+      try {
+        fw = spark.getFirmwareString();
+      } catch (RuntimeException e) {
+        fw = "";
+      }
+    }
+    this.firmware = fw == null ? "" : fw;
+  }
+
+  /**
+   * What the controller says it is, asked over CAN. REVLib knows (it queries the device) but keeps
+   * the method package-private, so it is reached by reflection; if that ever fails, the answer is
+   * just "unknown".
+   */
+  static String detectModel(SparkBase spark) {
+    try {
+      java.lang.reflect.Method m = SparkBase.class.getDeclaredMethod("getSparkModel");
+      m.setAccessible(true);
+      Object v = m.invoke(spark);
+      String s = String.valueOf(v);
+      return s.equals("SparkMax") ? "SPARK MAX" : s.equals("SparkFlex") ? "SPARK Flex" : "";
+    } catch (ReflectiveOperationException | RuntimeException e) {
+      return "";
+    }
+  }
+
+  @Override
+  public String controllerModel() {
+    return model;
+  }
+
+  @Override
+  public String controllerClass() {
+    return spark instanceof com.revrobotics.spark.SparkFlex ? "SPARK Flex" : "SPARK MAX";
+  }
+
+  @Override
+  public String firmware() {
+    return firmware;
   }
 
   /** Sticky faults it carried when the robot code started, before they were cleared. */

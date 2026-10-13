@@ -91,6 +91,11 @@ public final class SwerveTune {
   private final boolean manualSampling;
   private final Map<String, Supplier<Procedure>> procedures = new LinkedHashMap<>();
   private Supplier<double[]> pdhSource = AkLogging::pdhCurrents;
+  private Supplier<double[]> pdhPowerSource = AkLogging::pdhPower;
+  // The PDH's voltage and total current, read once per robot loop: the sampler runs on its own
+  // thread and must not reach into AdvantageKit's snapshot while the loop is updating it.
+  private volatile double pdhVolts = Double.NaN;
+  private volatile double pdhAmps = Double.NaN;
 
   // laptop -> robot
   private final StringSubscriber envMode;
@@ -489,6 +494,9 @@ public final class SwerveTune {
     double[] brownouts = new double[n];
     double[] busVolts = new double[n];
     double[] canIds = new double[n];
+    String[] models = new String[n];
+    String[] classes = new String[n];
+    String[] firmware = new String[n];
     double now = clock.getAsDouble();
     for (int i = 0; i < n; i++) {
       MotorGuard.Motor m = list.get(i);
@@ -510,7 +518,13 @@ public final class SwerveTune {
       brownouts[i] = m.brownouts();
       busVolts[i] = m.busVolts();
       canIds[i] = m.canId();
+      models[i] = m.controllerModel();
+      classes[i] = m.controllerClass();
+      firmware[i] = m.firmware();
     }
+    liveStrings(SwerveTuneTopics.MOTORS_CONTROLLERS).set(models);
+    liveStrings(SwerveTuneTopics.MOTORS_CODE_CONTROLLERS).set(classes);
+    liveStrings(SwerveTuneTopics.MOTORS_FIRMWARE).set(firmware);
     liveArray(SwerveTuneTopics.MOTORS_PRESENT).set(present);
     liveArray(SwerveTuneTopics.MOTORS_DROPOUTS).set(drops);
     liveArray(SwerveTuneTopics.MOTORS_RESETS).set(resets);
@@ -690,6 +704,7 @@ public final class SwerveTune {
       trackClient(now);
       trackChassis(now);
       guard.update(now);
+      readPdhPower();
       pollVision(now);
       publishLive(now);
       publishMotors();
@@ -713,6 +728,13 @@ public final class SwerveTune {
       }
     }
     publishStatus(isDeadmanHeld(now));
+  }
+
+  private void readPdhPower() {
+    double[] p = pdhPowerSource.get();
+    boolean ok = p != null && p.length >= 2 && Double.isFinite(p[0]) && p[0] > 1;
+    pdhVolts = ok ? p[0] : Double.NaN;
+    pdhAmps = ok ? p[1] : Double.NaN;
   }
 
   // ------------------------------------------------------------------ client and chassis tracking
@@ -1016,6 +1038,15 @@ public final class SwerveTune {
       finish(State.ABORTED, "The test could not start: " + e);
       return;
     }
+    if (proc.spinsWheels() && ctx.env != TestEnvironment.SIM && Double.isFinite(pdhVolts)) {
+      // The battery as the PDH sees it: with the motors' current, the laptop measures how far
+      // this battery sags per amp, which is what decides brownouts and top speed.
+      ctx.sampler.channel("pdh_v", () -> pdhVolts).channel("ibatt", () -> pdhAmps);
+    }
+    double comp = io.compensationVolts();
+    if (Double.isFinite(comp) && comp > 0) {
+      ctx.meta("comp_volts", comp);
+    }
     double rate = proc.sampleRateHz(ctx);
     ctx.meta("sample_rate_hz", rate);
     ctx.meta("env_code", ctx.env.ordinal());
@@ -1241,5 +1272,10 @@ public final class SwerveTune {
   /** Where tests read the PDH's channel currents from, in place of AdvantageKit. */
   void setPdhSource(Supplier<double[]> source) {
     pdhSource = source;
+  }
+
+  /** Where the PDH's {@code {volts, total amps}} are read from, in place of AdvantageKit. */
+  void setPdhPowerSource(Supplier<double[]> source) {
+    pdhPowerSource = source;
   }
 }

@@ -123,6 +123,9 @@ MOTORS_RESETS = MOTORS + "Resets"
 MOTORS_BROWNOUTS = MOTORS + "Brownouts"
 MOTORS_BUS_VOLTS = MOTORS + "BusVolts"
 MOTORS_CAN_IDS = MOTORS + "CanIds"
+MOTORS_CONTROLLERS = MOTORS + "Controllers"            # what each controller says it is
+MOTORS_CODE_CONTROLLERS = MOTORS + "CodeControllers"   # what the code created it as
+MOTORS_FIRMWARE = MOTORS + "Firmware"
 # Utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors, and the running
 # count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"
@@ -182,6 +185,9 @@ MOTOR_STRINGS = {
     "stage": MOTORS_STAGE,
     "cause": MOTORS_CAUSE,
     "flags": MOTORS_FLAGS,
+    "controller": MOTORS_CONTROLLERS,
+    "code_controller": MOTORS_CODE_CONTROLLERS,
+    "firmware": MOTORS_FIRMWARE,
 }
 MOTOR_NUMBERS = {
     "heat_pct": MOTORS_HEAT_PCT,

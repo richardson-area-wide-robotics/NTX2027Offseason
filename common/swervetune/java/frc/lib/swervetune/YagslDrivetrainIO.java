@@ -322,6 +322,15 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
     return RobotController.getBatteryVoltage();
   }
 
+  @Override
+  public double compensationVolts() {
+    try {
+      return drive.getModules()[0].getConfiguration().physicalCharacteristics.optimalVoltage;
+    } catch (RuntimeException e) {
+      return Double.NaN;
+    }
+  }
+
   // ------------------------------------------------------------------ actuation
 
   @Override

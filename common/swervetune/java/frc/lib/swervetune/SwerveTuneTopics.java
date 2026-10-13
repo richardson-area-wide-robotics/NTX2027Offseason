@@ -194,6 +194,15 @@ public final class SwerveTuneTopics {
   public static final String MOTORS_BUS_VOLTS = MOTORS + "BusVolts";
   public static final String MOTORS_CAN_IDS = MOTORS + "CanIds";
 
+  /** What each controller says it is ("SPARK MAX", "SPARK Flex"), empty if it can't say. */
+  public static final String MOTORS_CONTROLLERS = MOTORS + "Controllers";
+
+  /** What the code created each controller as. */
+  public static final String MOTORS_CODE_CONTROLLERS = MOTORS + "CodeControllers";
+
+  /** Each controller's firmware version. */
+  public static final String MOTORS_FIRMWARE = MOTORS + "Firmware";
+
   /**
    * The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors,
    * and how many robot loops have seen any receive or transmit error since the code started.

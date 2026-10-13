@@ -541,6 +541,37 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
+  void wheelTestsRecordTheBatteryAsThePdhSeesIt() {
+    // A 12.6 V battery that sags 20 milliohms per amp; the drive motors draw 3 A per volt.
+    double[] amps = {0};
+    tune.setPdhSource(() -> new double[24]);
+    tune.setPdhPowerSource(() -> new double[] {12.6 - 0.020 * amps[0], amps[0]});
+    io.chassisMoves = false;
+    envMode.set("BLOCKS");
+    loop(2);
+    send("pdh_map", "ALL");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    for (int i = 0; i < 900 && tune.state() != SwerveTune.State.DONE; i++) {
+      double sum = 0;
+      for (int m = 0; m < 4; m++) {
+        sum += Math.abs(io.driveVolts(m)) * 3;
+      }
+      amps[0] = sum;
+      loop(1);
+    }
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message());
+    double[] v = data("pdh_v");
+    double[] a = data("ibatt");
+    assertTrue(v.length > 10 && v.length == a.length);
+    assertTrue(Arrays.stream(a).max().orElse(0) > 5, "it saw the motors draw");
+    for (int i = 0; i < v.length; i++) {
+      assertEquals(12.6 - 0.020 * a[i], v[i], 1e-9, "volts and amps are from the same loop");
+    }
+    assertTrue(Double.isNaN(meta("comp_volts")), "the fake drivetrain does not compensate");
+  }
+
+  @Test
   void thePdhMapRefusesWithoutAPdhToRead() {
     envMode.set("BLOCKS");
     loop(2);

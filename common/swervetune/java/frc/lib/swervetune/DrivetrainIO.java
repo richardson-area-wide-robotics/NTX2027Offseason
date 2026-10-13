@@ -126,6 +126,15 @@ public interface DrivetrainIO {
 
   double busVolts();
 
+  /**
+   * The voltage the motor controllers compensate to, or NaN if they don't. YAGSL turns voltage
+   * compensation on for every module at {@code optimalVoltage} (12 V): a closed-loop output of 0.5
+   * then means 6 V whatever the battery reads, until the battery sags below what is asked.
+   */
+  default double compensationVolts() {
+    return Double.NaN;
+  }
+
   // ------------------------------------------------------------------ actuation, for tests only
   /** Drives one module's steering to an angle, directly, with no optimisation or anti-jitter. */
   void setSteerDeg(int module, double degrees);

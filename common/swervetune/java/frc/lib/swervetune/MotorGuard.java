@@ -104,6 +104,21 @@ public final class MotorGuard {
       return -1;
     }
 
+    /** What the controller itself says it is ("SPARK MAX", "SPARK Flex"); empty if it can't say. */
+    default String controllerModel() {
+      return "";
+    }
+
+    /** What the code created it as ("SPARK MAX", "SPARK Flex"); empty if unknown. */
+    default String controllerClass() {
+      return "";
+    }
+
+    /** The controller's firmware version; empty if unknown. */
+    default String firmware() {
+      return "";
+    }
+
     /** True in simulation, where a controller has no real current or temperature to report. */
     default boolean simulated() {
       return false;
@@ -204,6 +219,20 @@ public final class MotorGuard {
 
     public int canId() {
       return channel.canId();
+    }
+
+    /** What the controller says it is; empty if it can't say. */
+    public String controllerModel() {
+      return channel.controllerModel();
+    }
+
+    /** What the code created it as. */
+    public String controllerClass() {
+      return channel.controllerClass();
+    }
+
+    public String firmware() {
+      return channel.firmware();
     }
 
     /** Supply voltage at the controller, volts; NaN if unknown. */
@@ -508,6 +537,12 @@ public final class MotorGuard {
     if (sticky != null && !sticky.isEmpty()) {
       flags.add("since last cleared: " + sticky);
     }
+    String isA = m.channel.controllerModel();
+    String cls = m.channel.controllerClass();
+    if (isA != null && cls != null && !isA.isEmpty() && !cls.isEmpty() && !isA.equals(cls)) {
+      flags.add("is a " + isA + " but the code created a " + cls
+          + ": create it as new " + javaClass(isA) + "(...), or for a swerve motor fix the YAGSL type");
+    }
     m.flags = String.join("; ", flags);
   }
 
@@ -559,5 +594,10 @@ public final class MotorGuard {
 
   private static Stage max(Stage a, Stage b) {
     return a.ordinal() >= b.ordinal() ? a : b;
+  }
+
+  /** The REVLib class for a controller model: "SPARK Flex" is {@code SparkFlex}, else {@code SparkMax}. */
+  static String javaClass(String model) {
+    return "SPARK Flex".equals(model) ? "SparkFlex" : "SparkMax";
   }
 }

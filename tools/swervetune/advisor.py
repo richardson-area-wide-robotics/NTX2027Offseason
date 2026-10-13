@@ -595,7 +595,7 @@ def _day(stamp):
     return f"{s[0:4]}-{s[4:6]}-{s[6:8]}" if len(s) >= 8 and s[:8].isdigit() else "earlier runs"
 
 
-def feedforward_report(result, gains=None, history=None):
+def feedforward_report(result, gains=None, history=None, ctx=None):
     ch = result["channels"]
     env = result.get("env", "")
     meta = result.get("meta", {})
@@ -625,7 +625,6 @@ def feedforward_report(result, gains=None, history=None):
     good = {n: f for n, f in fits.items() if f.get("ok")}
     kvs = [f["kV"] for f in good.values()]
     kss = [f["kS"] for f in good.values()]
-    nominal = meta.get("kv_nominal")
     kv_spread = A.spread_percent(kvs)
     r2_min = min((f.get("r2", 0) for f in good.values()), default=0)
     report["targets"] = [
@@ -669,17 +668,10 @@ def feedforward_report(result, gains=None, history=None):
                 "Up to about 8% is normal motor-to-motor variation and a per-module feedforward "
                 "absorbs it. More means that corner is mechanically different: check its gears, "
                 "tread and bearings before trusting its numbers."))
-        if nominal and kvs:
-            ratio = A.mean(kvs) / nominal
-            if ratio > 1.15 or ratio < 0.85:
-                F.append(finding(
-                    "warn", f"Measured kV is {ratio * 100:.0f}% of what the motor physics predicts",
-                    "kV is measured against the speed the motor's own encoder reports, so a wrong "
-                    "gear ratio or wheel size cancels out of it - it cannot be the cause. What moves "
-                    "kV is the motor: the config names one motor (NEO, Vortex, NEO 550) and another is "
-                    "fitted. A NEO configured where a Vortex is fitted reads about 84%. Heavy drag "
-                    "(a binding module, a dragging bumper) raises it instead.",
-                    {"type": "troubleshoot", "symptom": "robot_slow"}))
+        ident_findings, ident = motor_identity_findings(kvs, ctx or {})
+        F.extend(ident_findings)
+        if ident:
+            report["motor"] = ident
         if len(good) == len(mods) and r2_min >= 0.95 and kv_spread <= 15:
             values = {}
             for n, f in good.items():
@@ -1175,12 +1167,59 @@ SCRUB_TOLERANCE = 0.15
 
 
 def robot_context(project):
-    """What only the laptop knows about the robot, for the reports that need it (spin_ff)."""
+    """What only the laptop knows about the robot, for the reports that need it (spin_ff, and
+    drive_ff's motor check)."""
     if project is None:
         return {}
     mass, source = project.mass()
     moi, _ = project.moi()
-    return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi}
+    inv = ((project.data.get("swervetune.json") or {}).get("motors") or {}).get("drive")
+    return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi, "drive_gear": project.drive_gear(),
+            "wheel_d_in": project.wheel_d_in(), "drive_kind": project.drive_kind(), "drive_inventory": inv}
+
+
+# Free speed at 12 V, rpm. A NEO V1.1 and a NEO 2.0 spin alike, so this can't tell them apart.
+MOTOR_FREE_RPM = {"neo": 5676, "vortex": 6784, "neo550": 11000}
+MOTOR_LABEL = {"neo": "NEO", "vortex": "NEO Vortex", "neo550": "NEO 550"}
+# A measured kV includes friction and a loaded wheel, so motors read a little under the datasheet.
+MEASURED_SHARE = 0.94
+
+
+def motor_from_kv(kv, gear, wheel_d_in):
+    """Which motor a drive feedforward's kV (volts per m/s) belongs to.
+
+    The speed in kV came from the motor's own encoder through the configured gear ratio and wheel
+    size, so undoing those with the same numbers gives the motor's own rpm per volt, whatever the
+    real gearing is. Returns ``(rpm_per_volt, best_kind, {kind: share_of_datasheet})``.
+    """
+    rpm_per_v = 60.0 * gear / (kv * math.pi * wheel_d_in * 0.0254)
+    shares = {k: rpm_per_v / (rpm / 12.0) for k, rpm in MOTOR_FREE_RPM.items()}
+    best = min(shares, key=lambda k: abs(math.log(shares[k] / MEASURED_SHARE)))
+    return rpm_per_v, best, shares
+
+
+def motor_identity_findings(kvs, ctx):
+    """The drive motors as measured, against the configuration."""
+    gear, wheel, kind = ctx.get("drive_gear"), ctx.get("wheel_d_in"), ctx.get("drive_kind")
+    if not (kvs and gear and wheel):
+        return [], None
+    rpm_per_v, best, shares = motor_from_kv(A.median(kvs), gear, wheel)
+    ident = {"rpm_per_volt": rpm_per_v, "kind": best, "label": MOTOR_LABEL[best]}
+    fit = abs(math.log(shares[best] / MEASURED_SHARE))
+    if fit > 0.12:
+        return [finding("warn", f"The drive motors spin at {rpm_per_v:.0f} rpm per volt, like no REV motor",
+                        "A NEO is about 473, a Vortex 565, a NEO 550 917. Heavy drag (a binding module, a "
+                        "dragging bumper) lowers it; check the modules spin freely by hand.")], ident
+    if kind in MOTOR_FREE_RPM and kind != best:
+        return [finding("error", f"The config says {MOTOR_LABEL[kind]}, but the drive motors spin like "
+                                 f"{MOTOR_LABEL[best]}s ({rpm_per_v:.0f} rpm per volt)",
+                        f"A NEO is about 473 rpm per volt, a Vortex 565, a NEO 550 917. Set the YAGSL drive "
+                        f"type (modules/*.json) and swervetune.json's motor inventory to {MOTOR_LABEL[best]}, "
+                        "and check the controller type matches (the Motors tab shows what each controller "
+                        "says it is).", {"type": "troubleshoot", "symptom": "gear_ratio"})], ident
+    return [finding("info", f"The drive motors spin like {MOTOR_LABEL[best]}s, as configured "
+                            f"({rpm_per_v:.0f} rpm per volt)",
+                    "Measured from the feedforward: the motor's own speed per volt, whatever the gearing.")], ident
 
 
 def spin_ff_report(result, history=None, mass_kg=None, mass_source="", moi_estimate=None):
@@ -1299,7 +1338,7 @@ def analyze(result, gains=None, **kw):
             history = runs.ff_history((result.get("robot") or {}).get("name"),
                                       result.get("env") == "BLOCKS", before=result.get("saved"),
                                       exclude=result.get("_file"), env=result.get("env") or None)
-        return feedforward_report(result, gains, history)
+        return feedforward_report(result, gains, history, ctx=kw)
     if test == "spin":
         return spin_report(result)
     if test == "straight":

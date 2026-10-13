@@ -376,4 +376,28 @@ class MotorGuardTest {
     assertEquals(SafetySupervisor.Action.ABORT, v.action());
     assertTrue(v.reason().contains("frontleft steer") && v.reason().contains("cool"), v.reason());
   }
+
+  @Test
+  void aControllerThatIsNotWhatTheCodeMadeIsFlagged() {
+    FakeMotorChannel c = new FakeMotorChannel(80);
+    c.model = "SPARK Flex";
+    c.codeClass = "SPARK MAX";
+    Motor m = guard.register("frontleft drive", c, MotorKind.VORTEX, false, false);
+    guard.update(0.02);
+    assertTrue(m.flags().contains("is a SPARK Flex but the code created a SPARK MAX"), m.flags());
+    assertTrue(m.flags().contains("create it as new SparkFlex(...)"), "the class REVLib really has: " + m.flags());
+    c.codeClass = "SPARK Flex";
+    guard.update(0.04);
+    assertFalse(m.flags().contains("is a SPARK"), "agreeing is fine");
+    c.model = "";
+    guard.update(0.06);
+    assertFalse(m.flags().contains("is a SPARK"), "a controller that can't say isn't accused");
+  }
+
+  @Test
+  void revlibStillHasTheMethodTheModelDetectionReaches() throws NoSuchMethodException {
+    // SparkChannel.detectModel reaches this package-private method by reflection; if a REVLib
+    // update renames it, this fails here instead of detection going quiet on the robot.
+    assertTrue(com.revrobotics.spark.SparkBase.class.getDeclaredMethod("getSparkModel") != null);
+  }
 }

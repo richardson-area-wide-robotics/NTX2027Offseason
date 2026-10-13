@@ -23,6 +23,8 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
   boolean resetFlag;
   boolean brownout;
   int canId = 7;
+  String model = "";
+  String codeClass = "";
 
   FakeMotorChannel(int configuredLimitA) {
     this.configured = configuredLimitA;
@@ -31,6 +33,16 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
 
   void advance(double dt) {
     rotations += rpm / 60 * dt;
+  }
+
+  @Override
+  public String controllerModel() {
+    return model;
+  }
+
+  @Override
+  public String controllerClass() {
+    return codeClass;
   }
 
   @Override

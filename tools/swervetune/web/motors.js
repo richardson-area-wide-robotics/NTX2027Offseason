@@ -57,6 +57,14 @@
           <ul id="motor-report" class="small" style="margin:0;padding-left:18px"></ul>
         </div>
       </div>
+    </div>
+    <div class="panel" style="margin-top:12px">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <h2><span class="term" data-learn="motor_inventory">Motors and controllers</span></h2>
+        <button class="btn" id="inv-refresh">Check again</button>
+      </div>
+      <p class="small">What each controller is, three ways: what the code creates, what the controller itself reports over CAN (when connected), and what motor it drives, set here by hand or read from the code. A drive_ff run also measures the drive motors' speed per volt, which tells a NEO from a Vortex.</p>
+      <div id="inv-body"><p class="hint">Reading the code…</p></div>
     </div>`;
 
   const heatBar = pct => {
@@ -130,6 +138,50 @@
     if (!L || !L.connected || !root.classList.contains("on")) return;
     paint(L);
   });
+  // ---------------------------------------------------------------- motors and controllers
+  let inv = null, pending = {};
+
+  async function paintInventory() {
+    const box = $("#inv-body", root);
+    const r = await App.api("/api/motors/inventory");
+    if (r.ok === false) { box.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
+    inv = r;
+    pending = {};
+    const chip = s => s === "bad" ? `<span class="chip bad">check</span>` : s === "unknown" ? `<span class="chip warn">name it</span>` : `<span class="chip good">ok</span>`;
+    box.innerHTML = `
+      ${r.connected ? "" : `<p class="hint">Not connected: "Robot says" fills in when the robot is.</p>`}
+      <div class="tblwrap"><table class="t"><thead><tr><th>Motor</th><th>CAN</th><th>Code creates</th><th>Robot says</th><th>Firmware</th><th>Motor</th><th>From</th><th>Set it</th><th></th></tr></thead><tbody>
+        ${r.rows.map((x, i) => `<tr><td>${esc(x.name)}</td><td class="num">${x.can_id ?? "?"}</td>
+          <td>${esc(x.code_controller)}</td><td>${x.controller ? esc(x.controller) : `<span class="muted">–</span>`}</td>
+          <td class="mono small">${esc(x.firmware || "")}</td>
+          <td>${esc(x.motor || "?")}${x.measured ? ` <span class="small muted">(measures as ${esc(x.measured)})</span>` : ""}</td>
+          <td class="small muted">${esc(x.motor_source)}</td>
+          <td><select data-inv="${i}" aria-label="What ${esc(x.name)} drives"><option value="">${x.key === x.name ? "leave" : `leave (all ${esc(x.key)})`}</option>
+            ${r.choices.map(c => `<option ${c === (r.inventory[x.name] || (x.key !== x.name ? r.inventory[x.key] : "")) ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></td>
+          <td>${chip(x.status)}</td></tr>`).join("")}
+      </tbody></table></div>
+      ${r.measured_run ? `<p class="small muted">Drive motors measured from ${esc(r.measured_run)}.</p>` : ""}
+      <div class="row"><button class="btn primary" id="inv-save" disabled>Save the motor inventory…</button>
+        <span class="small muted">Writes swervetune.json's "motors"; redeploy so the motor guard uses it.</span></div>
+      ${(r.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
+        <div class="why">${Learn.link(f.why, 2)}</div></div>`).join("")}`;
+    $$("[data-inv]", box).forEach(sel => sel.onchange = () => {
+      const row = r.rows[+sel.dataset.inv];
+      pending[row.key === row.name ? row.name : row.key] = sel.value;
+      if (row.key !== row.name) {   // one choice for every swerve drive (or steer) motor
+        $$("[data-inv]", box).forEach(o => { if (r.rows[+o.dataset.inv].key === row.key) o.value = sel.value; });
+      }
+      $("#inv-save", box).disabled = false;
+    });
+    $("#inv-save", box).onclick = async () => {
+      const edits = Object.entries(pending).filter(([, v]) => v).map(([k, v]) => ({ file: "swervetune.json", path: ["motors", k], value: v }));
+      if (!edits.length) return;
+      if (await App.previewAndSave({ kind: "edits", edits }, "Motor inventory")) paintInventory();
+    };
+  }
+  $("#inv-refresh", root).onclick = paintInventory;
+  App.on("tab", t => { if (t === "motors") paintInventory(); });
+
   App.on("state", st => {
     const kinds = st.motor_kinds || {};
     $("#ovr-max", root).textContent = st.max_override_s || 20;

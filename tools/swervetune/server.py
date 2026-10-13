@@ -27,7 +27,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qsl, unquote, urlparse
 
 from . import (advisor, akit, camcal, contract as C, diagnose, explain, fieldsurvey, geometry, logsummary,
-               monitor, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
+               monitor, motorinv, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
 
 WEB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 PROGRESS = os.path.join(runs.RUNS, "setup_progress.json")
@@ -348,6 +348,27 @@ def _pathplanner_change(_body):
     old = open(path, encoding="utf-8").read()
     _, new = ppcheck.fixed_text(S.project, ppcheck.check(S.project)["fixes"])
     return path, old, new
+
+
+def api_motor_inventory(_query=None):
+    """Every controller the code creates: as coded, as the robot reports, and the drive motors as
+    the latest real drive_ff measured them."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    S.reload_project()
+    live = S.link.motors()["motors"] if S.link and S.link.is_connected() else []
+    measured, run = None, None
+    robot = S.project.name.lower()
+    for r in runs.list_runs(300):
+        if (r["test"] == "drive_ff" and not r["practice"] and r["env"] in ("FIELD", "BLOCKS")
+                and (r.get("robot") or "").lower() == robot):
+            doc = runs.load(r["file"])
+            rep = advisor.analyze(doc, doc.get("gains"), **advisor.robot_context(S.project))
+            measured, run = rep.get("motor"), r["file"]
+            break
+    out = motorinv.table(S.project, live, measured)
+    out.update(ok=True, connected=bool(live), measured_run=run)
+    return out
 
 
 def api_ppcheck(_query=None):
@@ -933,7 +954,8 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
-       "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck}
+       "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
+       "/api/motors/inventory": api_motor_inventory}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
