@@ -1,12 +1,17 @@
-/* Swerve Tools: a pit-side instrument panel. One accent (signal teal), semantic colors for state. */
+/* Swerve Tools, in AdvantageScope's design language (the app that reads AdvantageKit logs): neutral
+   grays, a gray sidebar beside a white viewer, joined pill segments for tabs and pickers, and its blue
+   (#446ce3) for focus, links and the main action. Semantic colors for state. */
 :root {
-  --bg: #eef1f4; --panel: #ffffff; --ink: #17202a; --muted: #5b6977; --rule: #d3dae1;
-  --accent: #0b6e7a; --accent-ink: #ffffff;
+  --bg: #e9e9e9; --panel: #ffffff; --ink: #222222; --muted: #5c5c5c; --rule: #dddddd;
+  --accent: #446ce3; --accent-ink: #ffffff;
   --ok: #1f7a45; --ok-bg: #e0f1e7; --warn: #8a5a00; --warn-bg: #fbefd6;
   --bad: #b0342b; --bad-bg: #f9e2df; --info: #3e5b8a; --info-bg: #e3eaf6;
-  --sp: #7a8794; --grid: #e3e8ec;
-  /* --rule is the hairline for dividers (1.41:1); a control's edge needs 3:1, so it uses --edge (3.57:1). */
-  --edge: #7d8995;
+  --sp: #7a7a7a; --grid: #eeeeee;
+  /* --rule is the hairline for dividers; a control's edge needs 3:1, so it uses --edge (4.3:1 on the
+     panel, 3.5:1 on the sidebar gray). */
+  --edge: #7a7a7a;
+  /* AdvantageScope's segments: #eee, #ddd on hover; chosen #aaa with a #222 edge. */
+  --seg: #eeeeee; --seg-hover: #dddddd; --seg-on: #aaaaaa; --seg-on-edge: #222222; --seg-on-ink: #222222; --sel: #d4d4d4;
   /* Text on a solid state fill (ABORT, a done step): 5.35-6.84:1 on --ok/--warn/--bad/--info/--accent. */
   --on-state: #ffffff;
   /* AdvantageScope's GraphColors, so a module is the same color here and there. FR is darkened in
@@ -22,12 +27,13 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #10161c; --panel: #172028; --ink: #e3e9ee; --muted: #9aa8b5; --rule: #2a3641;
-    --accent: #4fc0cc; --accent-ink: #062a2e;
+    --bg: #292929; --panel: #222222; --ink: #eeeeee; --muted: #ababab; --rule: #3a3a3a;
+    --accent: #58a7ff; --accent-ink: #0d1b2a;
     --ok: #6fd39a; --ok-bg: #173323; --warn: #f0bf5a; --warn-bg: #392d13;
     --bad: #f2918a; --bad-bg: #431f1c; --info: #9db8ea; --info-bg: #1d2a42;
-    --sp: #8796a3; --grid: #22303b;
-    --edge: #66788a;      /* 3.63:1 on --panel */
+    --sp: #8f8f8f; --grid: #333333;
+    --edge: #7d7d7d;      /* 3.9:1 on --panel */
+    --seg: #444444; --seg-hover: #555555; --seg-on: #888888; --seg-on-edge: #eeeeee; --seg-on-ink: #111111; --sel: #3d3d3d;
     --on-state: #10161c;  /* 7.97-10.67:1 on the dark state fills (white was 1.7-2.3:1) */
     --s0: #5b93d1; --s1: #e5b31b; --s2: #e0505f; --s3: #b48cc4;
     color-scheme: dark;
@@ -35,7 +41,7 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--sans); }
+html, body { margin: 0; background: var(--panel); color: var(--ink); font: 14px/1.5 var(--sans); }
 button, input, select, textarea { font: inherit; color: inherit; }
 .mono, code, kbd { font-family: var(--mono); }
 kbd { border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
@@ -44,7 +50,7 @@ h2 { font-size: 18px; line-height: 1.35; margin: 0; }
 h3 { font-size: 15px; line-height: 1.35; margin: 0; }
 p { margin: 0; max-width: 78ch; }
 a { color: var(--accent); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
 
 /* ---------------------------------------------------------------- header */
 .top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
@@ -59,7 +65,7 @@ a { color: var(--accent); }
 .field { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 .conn { display: flex; align-items: center; gap: 6px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
-.chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--rule); background: var(--bg);
+.chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--rule); background: var(--seg);
   border-radius: 999px; padding: 2px 10px; font-size: 12px; white-space: nowrap; }
 button.chip { cursor: pointer; font: inherit; font-size: 12px; }
 /* A tint alone is 1.10-1.24:1 against the header, so a state chip also gets an edge in its own color. */
@@ -71,14 +77,15 @@ button.chip { cursor: pointer; font: inherit; font-size: 12px; }
 .chip.mono { font-variant-numeric: tabular-nums; }
 /* A chip that opens something says so. */
 button.chip:not(.learn-chip)::after { content: "\25BE" / ""; margin-left: 2px; }
-.btn { border: 1px solid var(--edge); background: var(--panel); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
-.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn { border: 1px solid var(--edge); background: var(--seg); color: var(--ink); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.btn:hover:not(:disabled) { background: var(--seg-hover); }
+.btn:active:not(:disabled) { background: var(--seg-on); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .btn.small { padding: 2px 8px; font-size: 12px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .abort { background: var(--bad); color: var(--on-state); border: 0; border-radius: 6px; padding: 7px 18px; font-weight: 800;
   letter-spacing: .06em; cursor: pointer; }
-.btn[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
+.btn[aria-pressed="true"] { background: var(--seg-on); border-color: var(--seg-on-edge); color: var(--seg-on-ink); }
 select, input[type=text], input[type=number], input:not([type]) { border: 1px solid var(--edge); background: var(--panel);
   border-radius: 6px; padding: 4px 8px; }
 input[type=number] { width: 7.5em; font-family: var(--mono); }
@@ -96,10 +103,13 @@ input[type=number] { width: 7.5em; font-family: var(--mono); }
   color: var(--ink); font-weight: 800; letter-spacing: .02em; cursor: pointer; }
 .hold.held { background: var(--ok); color: var(--on-state); }
 
-.tabs { display: flex; gap: 2px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); overflow-x: auto; }
-.tabs button { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--muted);
-  border-bottom: 2px solid transparent; font-weight: 600; }
-.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs { display: flex; align-items: center; gap: 0; padding: 5px 16px; background: var(--panel); border-bottom: 1px solid var(--rule); overflow-x: auto; }
+.tabs button { height: 30px; margin-left: -1px; padding: 0 12px; border: 1px solid var(--edge); background: var(--seg);
+  color: var(--ink); cursor: pointer; white-space: nowrap; font-weight: 500; }
+.tabs button:first-child { margin-left: 0; border-radius: 10px 0 0 10px; }
+.tabs button:last-child { border-radius: 0 10px 10px 0; }
+.tabs button:not(.on):hover { background: var(--seg-hover); }
+.tabs button.on { position: relative; z-index: 1; background: var(--seg-on); border-color: var(--seg-on-edge); color: var(--seg-on-ink); font-weight: 600; }
 /* The tabs and a running test's status, one bar that never changes height. */
 .bar2 { position: sticky; top: var(--top-h); z-index: 9; display: flex; flex-wrap: wrap; align-items: center;
   gap: 0 16px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); }
@@ -126,7 +136,7 @@ main { padding: var(--gap) 16px; max-width: 1920px; margin: 0 auto; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 900px) { .grid2, .split { grid-template-columns: minmax(0, 1fr); } }
-.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; align-content: start; }
 .stack { display: grid; gap: 12px; min-width: 0; align-content: start; }
 /* Grid children default to min-width: auto and grow to fit a wide table; let them shrink so .tblwrap scrolls. */
 .panel > *, .stack > * { min-width: 0; }
@@ -138,6 +148,7 @@ main { padding: var(--gap) 16px; max-width: 1920px; margin: 0 auto; }
 table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.t th, table.t td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
 table.t th { color: var(--muted); font-weight: 600; font-size: 12px; }
+table.t thead th { border-bottom-color: var(--ink); }
 table.t td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
 table.t th.num { text-align: right; }
 table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
@@ -191,7 +202,7 @@ table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
 canvas.plot { width: 100%; height: 320px; display: block; background: var(--panel); border-radius: 6px; }
 .steps { display: flex; flex-wrap: wrap; gap: 6px; }
 .steps button { font-family: var(--mono); font-size: 12px; }
-.steps button.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.steps button.on { background: var(--seg-on); color: var(--seg-on-ink); border-color: var(--seg-on-edge); }
 .targets { display: grid; gap: 3px; font-size: 13px; }
 .target { display: grid; grid-template-columns: 18px 1fr auto; gap: 6px; align-items: baseline; }
 .target .v { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -214,13 +225,14 @@ details.panel > summary { cursor: pointer; list-style-position: inside; }
 details.panel > summary h3 { display: inline; }
 details > summary { cursor: pointer; font-weight: 600; }
 .practice-flag { background: var(--info-bg); color: var(--info); padding: 6px 10px; border-radius: 6px; font-weight: 600; }
-.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
-.seg button { border: 0; background: var(--panel); padding: 5px 12px; cursor: pointer; border-right: 1px solid var(--edge); }
+.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: var(--seg); color: var(--ink); padding: 5px 12px; cursor: pointer; border-right: 1px solid var(--edge); }
+.seg button:not(.on):not(:disabled):hover { background: var(--seg-hover); }
 /* .seg clips the page's focus ring, so a segment draws its own inside. */
 .seg button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px var(--panel); }
 .seg button:disabled { color: var(--muted); cursor: not-allowed; }
 .seg button:last-child { border-right: 0; }
-.seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.seg button.on { background: var(--seg-on); color: var(--seg-on-ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--seg-on-edge); }
 
 /* ---------------------------------------------------------------- guide */
 @media (max-width: 900px) { #gbody { order: -1; } }  /* phone: the step before the list */
@@ -381,7 +393,7 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 /* Six tests: a grid of separate buttons, so a wrapped row never ends on a dangling divider. */
 #loopseg { display: grid; grid-template-columns: repeat(auto-fill, minmax(8em, 1fr)); gap: 6px; border: 0; overflow: visible; }
 #loopseg button { border: 1px solid var(--edge); border-radius: 6px; }
-#loopseg button.on { border-color: var(--accent); }
+#loopseg button.on { border-color: var(--seg-on-edge); }
 
 /* ---------------------------------------------------------------- wiring */
 .schematic-wrap { overflow-x: auto; }
@@ -516,7 +528,7 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .job-area details.howto { display: none; }           /* shown in the rail, beside the section it is for */
 .job-area > * { max-height: var(--work-h); overflow-y: auto; }
 .rail-panel { position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); max-height: var(--work-h);
-  overflow-y: auto; align-content: start; gap: 6px; }
+  overflow-y: auto; align-content: start; gap: 6px; background: var(--bg); border-color: var(--bg); }
 .rail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .rail-chain { margin: 0; }
 .rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -525,9 +537,9 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .rail-item { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: center; width: 100%;
   padding: 4px 8px; border: 1px solid transparent; border-radius: 6px; background: none; text-align: left;
   cursor: pointer; color: var(--ink); font: inherit; }
-.rail-item:not(.on):hover { border-color: var(--edge); }
+.rail-item:not(.on):hover { background: var(--seg-hover); }
 /* The open section: accent edge and rail, 5.96:1 (light) / 7.65:1 (dark) on the panel. */
-.rail-item.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.rail-item.on { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
 .rail-item .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
   font: 700 12px var(--sans); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--edge); }
 .rail-item.done .n { background: var(--ok); color: var(--on-state); box-shadow: none; }
