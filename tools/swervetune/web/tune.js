@@ -71,11 +71,10 @@ const Tune = (() => {
   }
 
   root.innerHTML = `
-    <div class="split">
-      <div class="stack">
-        <div class="panel">
+    <div class="tune">
+      <div class="panel tune-bar">
+        <div class="row tune-picks">
           <div class="seg" id="loopseg" role="group" aria-label="Test">${Object.entries(LOOPS).map(([k, v]) => `<button data-loop="${k}" data-tip="tune.loop.${k}">${v.label}</button>`).join("")}</div>
-          <p class="hint" id="blurb"></p>
           <div class="row"><span class="small muted" id="lbl-target">Run on</span>
             <div class="seg" id="targetseg" role="group" aria-labelledby="lbl-target"><button data-t="robot" data-tip="tune.target.robot">Robot</button><button data-t="practice" data-tip="tune.target.practice">Practice pod</button></div></div>
           <div class="row" id="surfacerow"><span class="small muted" id="lbl-surf">Practice surface</span>
@@ -83,9 +82,10 @@ const Tune = (() => {
           <div class="row" id="modrow">
             <label class="row small" data-tip="tune.module">Module <select id="module"><option>ALL</option><option>FL</option><option>FR</option><option>BL</option><option>BR</option></select></label>
             <label class="row small" data-tip="tune.pattern">Steps <select id="pattern"><option value="0">Standard</option><option value="1">Small (friction)</option><option value="2">Large (flat out)</option></select></label></div>
-          <div id="needs"></div>
-          <button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
         </div>
+        <p class="hint" id="blurb"></p>
+      </div>
+      <div class="tune-col tune-left">
         <div class="panel">
           <div class="row" style="justify-content:space-between"><h3 data-tip="tune.gains">Gains</h3><span class="hint" id="gainsrc"></span></div>
           <div class="gains" id="gains"></div>
@@ -94,14 +94,15 @@ const Tune = (() => {
             <button class="btn" id="revert" data-tip="tune.revert">Revert edits</button>
             <button class="btn" id="save" data-tip="tune.save">Save to files…</button>
           </div>
-          <p class="hint">Apply live changes the running robot only (never its flash); a restart puts back the files. Save writes the files.</p>
+          <div id="needs"></div>
+          <button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
         </div>
         <details class="panel" id="history-panel" open>
           <summary><h3 data-tip="tune.history">Earlier runs</h3></summary>
           <div id="history" class="small"></div>
         </details>
       </div>
-      <div class="stack">
+      <div class="tune-col tune-plots">
         <div class="panel">
           <div class="row" style="justify-content:space-between;align-items:flex-start">
             <div><h2 id="res-title" data-tip="tune.title" data-quiet>No run yet</h2><div class="small muted mono" id="res-file"></div></div>
@@ -113,33 +114,63 @@ const Tune = (() => {
           <div id="practice-flag" class="practice-flag" hidden>Practice pod: a model of a MAXSwerve module, not your robot.</div>
           <div id="empty-run" class="callout"><b>Start here.</b> No run yet. The practice pod is a model of one MAXSwerve module: nothing moves, so it's the place to learn what each gain does before touching the robot.
             <div class="row" style="margin-top:8px"><button class="btn primary" id="try-practice" data-tip="tune.try-practice">Try the practice pod</button></div></div>
-          <div id="next-step" class="next-step" hidden></div>
           <div id="run-view" class="stack" hidden>
-            <div class="plotwrap"><canvas class="plot" id="plot" aria-label="The setpoint and what the mechanism did" aria-describedby="story"></canvas></div>
+            <div class="plotwrap"><canvas class="plot" id="plot" role="img" aria-label="The setpoint and what the mechanism did" aria-describedby="story"></canvas></div>
             <div class="steps" id="steps" role="group" aria-label="Zoom to a step"></div>
             <div id="explain-head" class="row" style="justify-content:space-between" hidden>
               <h3>What the controller <span class="term" tabindex="0" data-learn="error">saw</span> and <span class="term" tabindex="0" data-learn="control_effort">did</span></h3>
               <label class="row small" data-tip="tune.xmod">Module <select id="xmod"></select></label>
             </div>
-            <div class="plotwrap" id="plot2wrap" hidden><canvas class="plot short" id="plot2" aria-label="The controller's output, split into its parts, in volts"></canvas></div>
+            <div class="plotwrap" id="plot2wrap" hidden><canvas class="plot short" id="plot2" role="img" aria-label="The controller's output, split into its parts, in volts"></canvas></div>
             <p class="hint" id="explain-hint" hidden>Volts, so the parts add up. Hover the graph to read every part at that moment; hover a shaded area or a marker to learn what is happening there.</p>
             <details id="metrics-wrap" hidden><summary data-tip="tune.metrics" data-quiet>Every step, in numbers</summary><div class="tblwrap" id="metrics"></div></details>
           </div>
         </div>
-        <div class="panel" id="report" hidden></div>
-        <div class="panel" id="whatif" hidden>
-          <div class="row" style="justify-content:space-between"><h3 data-tip="tune.whatif"><span class="term" tabindex="0" data-learn="what_if">What if…</span></h3><span class="small" id="wi-quality"></span></div>
-          <p class="hint">Drag a gain: the "what if" line on the top graph becomes the prediction for this same run with the new value. Then run it for real - the robot has the final word.</p>
-          <div id="wi-sliders" class="wi-sliders"></div>
-          <div id="wi-table" class="tblwrap"></div>
-          <div class="row"><button class="btn" id="wi-use" data-tip="tune.wi-use">Put these in the gains box</button><button class="btn" id="wi-reset" data-tip="tune.wi-reset">Back to the run's gains</button></div>
-        </div>
-        <div class="panel" id="story-panel" hidden>
-          <h3 id="story-head" data-tip="tune.story" data-quiet>What this run shows</h3>
-          <ol id="story" class="story small"></ol>
+      </div>
+      <div class="tune-col tune-right">
+        <div id="next-step" class="next-step" hidden></div>
+        <!-- The advice, the prediction and the story take turns in one pane. -->
+        <div class="panel panes" id="panes" hidden>
+          <div class="seg" id="paneseg" role="group" aria-label="Show">
+            <button data-pane="report" data-tip="tune.pane.report">Goals and advice</button>
+            <button data-pane="whatif" data-tip="tune.whatif">What if…</button>
+            <button data-pane="story-panel" data-tip="tune.story">What this run shows</button></div>
+          <div class="pane" id="report" hidden></div>
+          <div class="pane" id="whatif" hidden>
+            <div class="row" style="justify-content:space-between"><span class="small"><span class="term" tabindex="0" data-learn="what_if">What if…</span></span><span class="small" id="wi-quality"></span></div>
+            <div class="row"><button class="btn" id="wi-use" data-tip="tune.wi-use">Put these in the gains box</button><button class="btn" id="wi-reset" data-tip="tune.wi-reset">Back to the run's gains</button></div>
+            <p class="hint">Drag a gain: the "what if" line on the top graph becomes the prediction for this same run with the new value.</p>
+            <div id="wi-sliders" class="wi-sliders"></div>
+            <div id="wi-table" class="tblwrap"></div>
+          </div>
+          <div class="pane" id="story-panel" hidden>
+            <h3 id="story-head" class="sr" data-quiet>What this run shows</h3>
+            <ol id="story" class="story small"></ol>
+          </div>
         </div>
       </div>
     </div>`;
+
+  // ---------------------------------------------------------------- the pane on the right
+  // Goals and advice, What if, and the story take turns. Each tool code shows or hides its pane as
+  // before ([hidden] = nothing to show); this picks which of the available ones is in view.
+  let pane = "report";
+  function paintPanes() {
+    const box = $("#panes", root), ids = ["report", "whatif", "story-panel"];
+    const has = Object.fromEntries(ids.map(id => [id, !$("#" + id, root).hidden]));
+    box.hidden = !ids.some(id => has[id]);
+    if (!has[pane]) pane = ids.find(id => has[id]) || "report";
+    ids.forEach(id => $("#" + id, root).classList.toggle("sel", id === pane));
+    $$("#paneseg button", root).forEach(b => {
+      const on = b.dataset.pane === pane;
+      b.disabled = !has[b.dataset.pane];
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+  }
+  function showPane(id) { pane = id; paintPanes(); }
+  $$("#paneseg button", root).forEach(b => b.onclick = () => showPane(b.dataset.pane));
+  new MutationObserver(paintPanes).observe($("#panes", root), { attributes: true, attributeFilter: ["hidden"], subtree: true });
 
   // ---------------------------------------------------------------- gains
   function liveGains() {
@@ -484,6 +515,8 @@ const Tune = (() => {
     const b = k == null ? null : $(`#steps button[data-k="${k}"]`, root);
     stepSel = b ? k : null;
     zoom = b ? [Math.max(0, +b.dataset.a - 0.05), +b.dataset.b] : null;
+    // A step picked: the story says what happens in it, moment by moment.
+    if (b) showPane("story-panel");
     $$("#steps button", root).forEach(x => x.classList.toggle("on", x === b || (!b && x.dataset.z)));
     paintStory();
     redraw();

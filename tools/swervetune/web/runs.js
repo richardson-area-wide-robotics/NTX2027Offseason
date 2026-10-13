@@ -16,22 +16,22 @@
   async function paint() {
     const r = await App.api("/api/runs");
     const list = (r.runs || []).filter(x => filter === "all" || KIND(x) === filter);
-    root.innerHTML = `<div class="panel">
+    const logs = `<div class="panel runs-logs">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap"><h2 data-tip="runs.logs">Match logs</h2>
         <div class="row" style="flex-wrap:wrap"><label class="row small" data-tip="runs.folder">Log folder <input id="lg-folder" placeholder="USB stick or AdvantageScope downloads" style="min-width:20em"></label>
         <button class="btn" id="lg-go" data-tip="runs.list">List logs</button></div></div>
-      <p class="hint">AdvantageKit writes one log per power-up: to the USB stick in the roboRIO (/U/logs) or, on a roboRIO 2 with no stick, to its SD card (/home/lvuser/logs; to download those, set AdvantageScope's roboRIO log folder to that path). A roboRIO 1 without a stick keeps no logs. Copy them here, or point at the folder AdvantageScope downloads to.</p>
-      <div id="lg-list"></div><div id="lg-report"></div></div>
-      <div class="panel">
+      ${HowTo.block(`<p class="small">AdvantageKit writes one log per power-up: to the USB stick in the roboRIO (/U/logs) or, on a roboRIO 2 with no stick, to its SD card (/home/lvuser/logs; to download those, set AdvantageScope's roboRIO log folder to that path). A roboRIO 1 without a stick keeps no logs. Copy them here, or point at the folder AdvantageScope downloads to.</p>`, "Where the logs are")}
+      <div id="lg-list"></div><div id="lg-report"></div></div>`;
+    root.innerHTML = `<div class="runs2"><div class="panel runs-saved">
       <div class="row" style="justify-content:space-between"><h2 data-tip="runs.saved">Saved runs</h2>
         <div class="seg" id="rf" role="group" aria-label="Show"><button data-f="robot" data-tip="runs.f.robot">Robot</button><button data-f="sim" data-tip="runs.f.sim">Simulator</button><button data-f="practice" data-tip="runs.f.practice">Practice pod</button><button data-f="all" data-tip="runs.f.all">All</button></div></div>
       <p class="hint">Stored in tools/swervetune/runs (not committed). Press a run's time to open it; reopening re-checks it with the current advice.</p>
       ${list.length ? `<div class="tblwrap"><table class="t"><thead><tr><th><span class="term" tabindex="0" data-tip="runs.when" data-quiet>When</span></th><th>Robot</th><th>Test</th><th><span class="term" tabindex="0" data-tip="runs.where" data-quiet>Where</span></th><th><span class="term" tabindex="0" data-tip="runs.outcome" data-quiet>Outcome</span></th><th class="num"><span class="term" tabindex="0" data-tip="runs.score" data-quiet>Score</span></th><th>Summary</th></tr></thead><tbody>
         ${list.map(x => `<tr class="${x.outcome && x.outcome !== "DONE" ? "stopped" : ""}"><td class="nowrap"><button class="linkbtn" data-open="${esc(x.file)}">${esc(stamp(x.saved))}</button>
-          ${x.test === "straight" ? `<br><button class="btn small" data-tape="${esc(x.file)}" data-tip="runs.tape" data-quiet>Enter tape</button>` : ""}</td>
+          ${x.test === "straight" ? ` <button class="btn small" data-tape="${esc(x.file)}" data-tip="runs.tape" data-quiet>Enter tape</button>` : ""}</td>
           <td>${esc(x.robot || "")}</td><td>${esc(testName(x.test))}</td><td>${{ practice: "Practice pod", sim: "Simulator" }[KIND(x)] || esc(whereWord(x.env || ""))}</td>
           <td>${x.outcome === "DONE" ? "finished" : esc((x.outcome || "").toLowerCase())}</td><td class="num">${x.score == null || x.outcome !== "DONE" ? "–" : x.score}</td><td class="small">${esc(x.summary || "")}</td></tr>`).join("")}
-      </tbody></table></div>` : `<div class="empty">No runs ${filter === "all" ? "yet" : "of this kind yet"}.</div>`}</div>`;
+      </tbody></table></div>` : `<div class="empty">No runs ${filter === "all" ? "yet" : "of this kind yet"}.</div>`}</div>${logs}</div>`;
     $$("#rf button", root).forEach(b => { b.classList.toggle("on", b.dataset.f === filter); b.setAttribute("aria-pressed", String(b.dataset.f === filter)); b.onclick = () => { filter = b.dataset.f; paint(); }; });
     $$("[data-open]", root).forEach(b => b.onclick = async () => {
       const d = await App.api("/api/runs/" + encodeURIComponent(b.dataset.open));

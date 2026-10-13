@@ -10,7 +10,7 @@
 <body>
 <header class="top">
   <div class="brand">Swerve Tools</div>
-  <label class="field" data-tip="header.project">Robot code
+  <label class="field" data-tip="header.project"><span class="field-t">Robot code</span>
     <select id="project"></select>
   </label>
   <div class="conn">
@@ -33,7 +33,7 @@
     <span id="deadman-chip" class="chip" data-tip="header.deadman" hidden>Deadman: not held</span>
     <button id="motors-chip" class="chip" data-tip="header.motors" hidden>Motors OK</button>
   </div>
-  <button id="explain" class="btn" aria-pressed="true" data-tip="header.explain">Explain: on</button>
+  <button id="explain" class="btn" aria-pressed="false" data-tip="header.explain">Explain: off</button>
   <button id="lessons" class="btn" data-tip="header.lessons">Lessons</button>
   <button id="abort" class="abort" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
 </header>
@@ -41,17 +41,7 @@
      sticky header is its own stacking context, which the drawer and dialogs would cover. -->
 <button id="abort-pin" class="abort pin" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
 
-<div id="banner" class="banner" hidden>
-  <div class="banner-text"><b id="banner-state"></b> <span id="banner-msg"></span></div>
-  <div class="bar"><div id="banner-bar"></div></div>
-  <!-- The deadman: the tester's controller bumper, or this button held by mouse or touch. Never a
-       key: on the Driver Station laptop, SPACE is the Driver Station's E-STOP. -->
-  <div id="banner-hold" class="banner-hold" hidden>
-    <button id="hold" class="hold" data-tip="banner.hold">Hold to run</button>
-    <span class="banner-hint">Or hold the tester's controller right bumper (Driver Station port 1). Let go to stop.</span>
-  </div>
-</div>
-
+<div class="bar2">
 <nav class="tabs" aria-label="Screens">
   <button data-tab="guide" class="on" aria-current="page" data-tip="tab.guide">Guide</button>
   <button data-tab="live" data-tip="tab.live">Live</button>
@@ -64,6 +54,17 @@
   <button data-tab="config" data-tip="tab.config">Config</button>
   <button data-tab="runs" data-tip="tab.runs">Runs</button>
 </nav>
+<div id="banner" class="banner" hidden>
+  <div class="banner-text" role="status" data-tip="banner.status"><b id="banner-state"></b> <span id="banner-msg"></span></div>
+  <div class="bar"><div id="banner-bar"></div></div>
+  <!-- The deadman: the tester's controller bumper, or this button held by mouse or touch. Never a
+       key: on the Driver Station laptop, SPACE is the Driver Station's E-STOP. -->
+  <div id="banner-hold" class="banner-hold" hidden>
+    <button id="hold" class="hold" data-tip="banner.hold">Hold to run</button>
+    <span class="banner-hint">Or hold the tester's controller right bumper (Driver Station port 1). Let go to stop.</span>
+  </div>
+</div>
+</div>
 
 <main>
   <section id="tab-guide" class="tab on"></section>

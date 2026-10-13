@@ -25,8 +25,10 @@
   let recording = null, seen = new Set(), lastTs = -1, poller = null, trails = { left: [], right: [] };
 
   root.innerHTML = `
+    <div class="jobs" data-jobs="controllers">
     ${HowTo.slot("controllers")}
-    <div class="panel" style="margin-top:12px">
+    <div class="job-area">
+    <div class="panel">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
         <h2 data-tip="ct.title">Check a controller</h2>
         <span id="ct-rate" class="small muted"></span>
@@ -49,7 +51,7 @@
       <p id="ct-port-note" class="hint" hidden></p>
       <p id="ct-mapping" class="hint" hidden></p>
     </div>
-    <div class="grid2" style="margin-top:12px">
+    <div class="grid2">
       <div class="panel">
         <h3 data-tip="ct.live">Live</h3>
         <div class="ct-live">
@@ -70,15 +72,15 @@
         <div id="ct-step-box"></div>
       </div>
     </div>
-    <div class="panel" style="margin-top:12px">
+    <div class="panel">
       <h3 data-tip="ct.report">Report</h3>
       <div id="ct-report"><p class="hint">Run the steps above; the report appears here.</p></div>
       ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
     </div>
-    <div class="panel" style="margin-top:12px">
+    <div class="panel">
       <h3 data-tip="ct.history">Every controller checked</h3>
       <div id="ct-history"></div>
-    </div>`;
+    </div></div></div>`;
 
   // ---------------------------------------------------------------- reading the controller
   function pads() { return Array.from(navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean); }

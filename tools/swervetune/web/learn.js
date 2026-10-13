@@ -522,13 +522,13 @@ const Learn = (() => {
 
   // ---------------------------------------------------------------- Explain mode
   // Prints the first sentence of each control's tip under it, so a new student can read the whole
-  // screen without hovering. On by default: this tool is for learning. The header stays compact;
-  // its tips show on hover, focus and tap.
+  // screen without hovering. Off by default, so every section fits one laptop screen; the tips
+  // still show on hover, focus and tap. The header stays compact either way.
   const main = document.querySelector("main");
   const OBS = { childList: true, subtree: true };
   const INSIDE = new Set(["TH", "H2", "H3", "LABEL", "SUMMARY", "LEGEND"]);
-  let explainOn = true, seq = 0;
-  try { explainOn = localStorage.getItem("swervetune.explain") !== "off"; } catch (e) { /* storage blocked */ }
+  let explainOn = false, seq = 0;
+  try { explainOn = localStorage.getItem("swervetune.explain") === "on"; } catch (e) { /* storage blocked */ }
 
   function line(text) {
     const s = document.createElement("small");
@@ -549,7 +549,7 @@ const Learn = (() => {
       if (inside ? isLine(el.lastElementChild) : isLine(el.nextElementSibling)) continue;
       const s = line(esc(t[0]));
       if (inside) el.appendChild(s); else el.after(s);
-      el.setAttribute("aria-describedby", s.id);
+      el.setAttribute("aria-describedby", [el.getAttribute("aria-describedby"), s.id].filter(Boolean).join(" "));
     }
     // A segmented picker gets one line listing every choice.
     for (const seg of main.querySelectorAll(".seg")) {
@@ -572,7 +572,10 @@ const Learn = (() => {
     if (on) { annotate(); observe(); }
     else {
       $$(".tipline", main).forEach(s => s.remove());
-      $$("[aria-describedby^='tl-']", main).forEach(e => e.removeAttribute("aria-describedby"));
+      $$("[aria-describedby*='tl-']", main).forEach(e => {
+        const keep = e.getAttribute("aria-describedby").split(/\s+/).filter(x => !x.startsWith("tl-")).join(" ");
+        if (keep) e.setAttribute("aria-describedby", keep); else e.removeAttribute("aria-describedby");
+      });
     }
   }
   const explainBtn = document.getElementById("explain");

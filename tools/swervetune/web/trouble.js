@@ -47,18 +47,19 @@ const Trouble = (() => {
     const firstOpen = answers.findIndex(a => a === null);
     const failed = answers.indexOf("no");
     const at = failed >= 0 ? failed : firstOpen;
-    root.innerHTML = `<div class="stack">
+    // One drawing, beside the checks: where to look for the check being answered (or the one that failed).
+    const mapAt = at >= 0 && c.checks[at] && c.checks[at].diagram && answers[at] !== "yes" ? at : -1;
+    root.innerHTML = `<div class="tr-view">
       <div class="panel"><div class="row" style="justify-content:space-between"><h2>${esc(c.title)}</h2>
         <button class="btn" id="tr-back" data-tip="trouble.back" data-quiet>All symptoms</button></div><p class="hint">${esc(c.looks_like)}</p>
         ${c.note ? `<div class="callout info">${Learn.link(c.note, 2)}</div>` : ""}
         <p class="small"><b>Yes</b> means that part is fine. The first <b>No</b> is usually the cause.</p></div>
-      <div class="checks">${c.checks.map((k, i) => {
+      <div class="tr2 ${mapAt >= 0 ? "has-map" : ""}"><div class="checks">${c.checks.map((k, i) => {
         const a = answers[i];
         const state = a === "yes" ? "passed" : a === "no" ? "failed" : i === at ? "current" : "";
         return `<div class="check ${state}">
           <div class="row" style="justify-content:space-between"><span class="q" id="tq-${i}">${a === "yes" ? `<span class="level ok">fine</span> ` : ""}${i + 1}. ${esc(k.q)}</span><span class="chip" data-tip="trouble.where" data-quiet>${esc(whereWord(k.where))}</span></div>
           ${a === "yes" ? "" : `<div class="hint">${Learn.link(k.how, 2)}</div>`}
-          ${k.diagram && a !== "yes" && (i === at || a === "no") ? `<div class="frc-slot" data-diagram="${i}"></div>` : ""}
           ${k.auto_answer === "no" ? `<div class="small"><span class="level error" data-tip="trouble.found" data-quiet>tool found</span> ${esc((k.evidence || []).join(", "))}</div>` : ""}
           ${k.suggest === "yes" && a === null ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>config looks fine</span> the configuration check found nothing wrong here: press Yes if you agree</div>` : ""}
           ${a === "no" ? `<div class="callout safety"><b>Cause:</b> ${esc(k.if_no)}<br><b>Fix:</b> ${esc(k.fix)}</div>
@@ -67,6 +68,7 @@ const Trouble = (() => {
              <button class="btn small" data-no="${i}" aria-describedby="tq-${i}" data-tip="trouble.no" data-quiet>No</button>${actionButton(k.action)}</div>` : ""}
         </div>`;
       }).join("")}</div>
+      ${mapAt >= 0 ? `<div class="panel tr-where"><h3>Where to look: check ${mapAt + 1}</h3><div class="frc-slot" data-diagram="${mapAt}"></div></div>` : ""}</div>
       ${failed < 0 && firstOpen < 0 ? `<div class="panel"><b>Every usual cause checked out.</b>
         <p>Record a capture while the problem happens (the Guide's Sensor health step), then bring the saved run to a mentor - the Runs tab has the data.</p></div>` : ""}
     </div>`;

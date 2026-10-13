@@ -261,6 +261,9 @@ const Guide = (() => {
   ];
 
   const STATE_WORD = { done: "✓ Done", attention: "Needs a look", locked: "Locked", optional: "Optional" };
+  // Where the robot is for each step: the rail's group headings.
+  const PLACE = { connect: "Laptop", health: "Robot disabled", hand: "Robot disabled", offsets: "Robot disabled",
+    directions: "On blocks", "steer-blocks": "On blocks", profile: "Finish", commit: "Finish" };
   const SAFETY = {
     FIELD: "the robot moves. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot. Disable it before anyone walks up to it; enable only when everyone is clear.",
     BLOCKS: "the wheels spin while the deadman is held, starting with a short kick that checks they are off the floor. All four must be clear of the floor, and hands, hair and cables clear of every wheel. Disable before anyone touches a wheel.",
@@ -333,35 +336,45 @@ const Guide = (() => {
     const idx = Math.max(0, STEPS.findIndex(s => s.id === active));
     const step = STEPS[idx];
     const st = step.status(), next = STEPS[idx + 1];
-    root.innerHTML = `<div class="split">
-      <div class="panel"><h3 data-tip="guide.rail">The path to a tight swerve</h3>
-        <p class="small muted">✓ Done means every target was met on the real robot.</p>
+    // The steps in a rail, grouped by where the robot is: one line each, the open one says more.
+    let place = null;
+    const rail = STEPS.map((s, i) => {
+      const ss = s.status(), p = PLACE[s.id] || "On the floor";
+      const head = p !== place ? `${place === null ? "" : "</ol>"}<h3 class="rail-group">${p}</h3><ol class="rail">` : "";
+      place = p;
+      return head + `<li><button class="rail-item ${s.id === step.id ? "on" : ""} ${ss}" data-s="${s.id}" data-tip="guide.step.${s.id}" data-quiet ${s.id === step.id ? `aria-current="step"` : ""}>
+        <span class="n" aria-hidden="true">${i + 1}</span>
+        <span class="t"><span class="tt">${esc(s.title)}</span>${STATE_WORD[ss] ? ` <span class="st">· ${STATE_WORD[ss]}</span>` : ""}<span class="d">${esc(s.where)}</span></span></button></li>`;
+    }).join("") + "</ol>";
+    root.innerHTML = `<div class="jobs">
+      <nav class="panel rail-panel" aria-label="Guide steps">
+        <div class="rail-head"><h2 data-tip="guide.rail">The path to a tight swerve</h2></div>
         <div class="row"><button class="btn small" id="g-parts" data-tip="guide.parts">Already set up? Redo one part</button></div>
-        <ol class="guide-steps">${STEPS.map((s, i) => {
-          const ss = s.status();
-          return `<li><button class="gstep ${s.id === step.id ? "on" : ""} ${ss}" data-s="${s.id}" data-tip="guide.step.${s.id}" data-quiet ${s.id === step.id ? `aria-current="step"` : ""}>
-            <span class="n">${i + 1}</span>
-            <span><span class="t">${esc(s.title)}</span><br><span class="where">${esc(s.where)}</span>${STATE_WORD[ss] ? ` <span class="state">· ${STATE_WORD[ss]}</span>` : ""}</span></button></li>`;
-        }).join("")}</ol></div>
+        ${rail}</nav>
       <div class="panel" id="gbody">
-        <h2 tabindex="-1">${idx + 1}. ${esc(step.title)}</h2>
-        <div id="g-where-row"></div>
-        ${SAFETY_STEP[step.id] || SAFETY[step.env] ? `<div class="callout safety"><b>Safety:</b> ${SAFETY_STEP[step.id] || SAFETY[step.env]} Esc or ABORT stops everything.</div>` : ""}
-        <div><b>You need</b><ul style="margin:4px 0 0;padding-left:18px">${step.need.map(n => `<li>${Learn.link(n, 2)}</li>`).join("")}</ul></div>
-        <div><b>Do this</b><ol class="do">${step.todo.map(t => `<li>${Learn.link(t, 2)}</li>`).join("")}</ol></div>
-        ${step.run || step.tune ? `<div class="row">
-          ${step.run ? `<button class="btn primary" id="g-run" data-tip="guide.run">${esc(step.run.label)}</button>` : ""}
-          ${step.tune ? `<button class="btn primary" id="g-tune" data-tip="guide.tune">Open the tuner</button>` : ""}
-        </div>` : ""}
-        <div id="g-extra">${step.body ? step.body() : ""}</div>
-        <div id="g-result">${shown[step.id] || ""}</div>
-        ${(st === "done" || st === "optional") && next ? `<div class="row"><button class="btn primary" data-step="${next.id}" data-tip="guide.next">Next: ${idx + 2}. ${esc(next.title)} →</button></div>` : ""}
-        <div class="callout"><b>Why this step:</b> ${Learn.link(step.why, 3)}</div>
-        ${(step.learn || []).length ? `<div class="row learn-row"><span class="small muted">Learn:</span>${Learn.chips(step.learn)}</div>` : ""}
+        <div class="g-cols"><div>
+          <h2 tabindex="-1">${idx + 1}. ${esc(step.title)}</h2>
+          <div id="g-where-row"></div>
+          ${SAFETY_STEP[step.id] || SAFETY[step.env] ? `<div class="callout safety"><b>Safety:</b> ${SAFETY_STEP[step.id] || SAFETY[step.env]} Esc or ABORT stops everything.</div>` : ""}
+          <div><b>Do this</b><ol class="do">${step.todo.map(t => `<li>${Learn.link(t, 2)}</li>`).join("")}</ol></div>
+          ${step.run || step.tune ? `<div class="row">
+            ${step.run ? `<button class="btn primary" id="g-run" data-tip="guide.run">${esc(step.run.label)}</button>` : ""}
+            ${step.tune ? `<button class="btn primary" id="g-tune" data-tip="guide.tune">Open the tuner</button>` : ""}
+          </div>` : ""}
+          ${(st === "done" || st === "optional") && next ? `<div class="row"><button class="btn primary" data-step="${next.id}" data-tip="guide.next">Next: ${idx + 2}. ${esc(next.title)} →</button></div>` : ""}
+        </div><div>
+          <div><b>You need</b><ul style="margin:4px 0 0;padding-left:18px">${step.need.map(n => `<li>${Learn.link(n, 2)}</li>`).join("")}</ul></div>
+          <div id="g-extra">${step.body ? step.body() : ""}</div>
+          <div id="g-result">${shown[step.id] || ""}</div>
+          <div class="callout"><b>Why this step:</b> ${Learn.link(step.why, 3)}</div>
+          ${(step.learn || []).length ? `<div class="row learn-row"><span class="small muted">Learn:</span>${Learn.chips(step.learn)}</div>` : ""}
+        </div></div>
       </div></div>`;
     lastWhere = null;
     paintWhere();
-    $$(".gstep", root).forEach(b => b.onclick = () => go(b.dataset.s));
+    $$("[data-s]", root).forEach(b => b.onclick = () => go(b.dataset.s));
+    const on = $(".rail-item.on", root);
+    if (on) on.scrollIntoView({ block: "nearest" });
     $("#g-parts", root).onclick = () => Parts.open();
     $$("[data-step]", root).forEach(b => b.onclick = () => go(b.dataset.step));
     $$("[data-go]", root).forEach(b => b.onclick = () => App.show(b.dataset.go));

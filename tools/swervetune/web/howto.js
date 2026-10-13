@@ -1,19 +1,19 @@
 // How-to instructions, "where to start" and "what to do next", for every calibration and
-// configuration tool. Each tool's panels keep their instructions in a fold-away "How to" block;
-// one switch shows or hides them all (remembered on this laptop). The card at the top of each tool
-// lists its jobs in order with what the robot's files, the saved runs and the robot itself say is
-// done (server: setup.py), and points at the next one; when a job checks out, the panel says what
-// comes next, right where the person is looking.
+// configuration tool. Each tool is a rail and one section: the rail lists the tool's jobs in order
+// with what the robot's files, the saved runs and the robot itself say is done (server: setup.py),
+// marks the next one, and under them shows the open section's how-to instructions; beside it, only
+// the section being worked on shows, so every job fits one laptop screen. One switch shows or hides
+// the instructions everywhere (remembered on this laptop); when a job checks out, its section says
+// what comes next, right where the person is looking.
 "use strict";
 
 const HowTo = (() => {
   const KEY = "swervetune.howto";
   const WORD = { done: "done", attention: "needs a fix", todo: "to do", later: "later", optional: "optional", skip: "not needed" };
-  const CHIP = { done: "good", attention: "bad", todo: "todo", later: "info", optional: "opt", skip: "opt" };
+  const MARK = { done: "✓", attention: "!" };
   const NAME = { config: "Config", motors: "Motors", wiring: "Wiring", calibrate: "Calibrate", controllers: "Controllers" };
   const plans = {};   // tab -> the last plan shown
   const seqs = {};    // tab -> the newest paint asked for: a slow answer never paints over it
-  const showAll = {}; // tab -> on a phone, every job listed rather than only the next
 
   function shown() {
     try { return localStorage.getItem(KEY) !== "off"; } catch (e) { return true; }
@@ -25,7 +25,8 @@ const HowTo = (() => {
     $$("[data-howto-switch]").forEach(c => { c.checked = on; });
   }
 
-  /** A panel's instructions, folded away when the switch is off (each one can still be opened). */
+  /** A panel's instructions, folded away when the switch is off (each one can still be opened). In a
+   *  tool with a rail they show in the rail, beside the section they are for. */
   function block(html, label = "How to do it") {
     return `<details class="howto" ${shown() ? "open" : ""}><summary data-tip="howto.block">${esc(label)}</summary><div class="howto-body">${html}</div></details>`;
   }
@@ -43,16 +44,76 @@ const HowTo = (() => {
     $$("details.howto", root).forEach(d => { d.open = on; });
   }
 
-  /** Where a tool's card goes, and the line under a panel that says what comes next. */
-  const slot = tab => `<div class="panel plan" data-plan="${tab}"><p class="hint">Working out where to start…</p></div>`;
+  /** The rail of a tool: wrap the tool as `<div class="jobs" data-jobs="tab">${slot(tab)}<div class="job-area">…sections…</div></div>`.
+   *  Each top-level child of .job-area is one section. */
+  const slot = tab => `<nav class="panel rail-panel" data-plan="${tab}" aria-label="${esc(NAME[tab] || tab)} jobs"><p class="hint">Working out where to start…</p></nav>`;
   const nextLine = job => `<div class="howto-next" data-job="${job}" hidden></div>`;
 
-  function goButton(j, label, primary) {
-    return `<button class="btn ${primary ? "primary" : "small"}" data-go-job="${esc(j.id)}" data-tip="howto.go" ${primary ? "" : `data-quiet aria-label="Go to ${esc(j.title)}"`}>${esc(label)}</button>`;
+  // ---------------------------------------------------------------- sections
+  const wrapOf = tab => $(`[data-jobs="${tab}"]`);
+  const sectionsOf = wrap => wrap ? [...$(".job-area", wrap).children] : [];
+  function keyOf(sec, i) {
+    if (!sec.id && !sec.dataset.section) sec.dataset.section = "s" + i;
+    return sec.id || sec.dataset.section;
+  }
+  /** The section that holds an element (a job's go.panel), in its tool. */
+  const sectionOf = el => el && el.closest(".job-area > *");
+  /** A section's name: its first heading, without Explain's printed line. */
+  function labelOf(sec) {
+    const h = sec.querySelector("h2, h3");
+    if (!h) return "";
+    return [...h.childNodes].filter(n => !(n.classList && n.classList.contains("tipline"))).map(n => n.textContent).join("").trim();
+  }
+  function remembered(tab) {
+    try { return localStorage.getItem("swervetune.section." + tab) || ""; } catch (e) { return ""; }
+  }
+
+  /** Shows one section of a tool and marks it in the rail; the rest wait their turn. */
+  function select(tab, sec, focusIt) {
+    const wrap = wrapOf(tab);
+    const secs = sectionsOf(wrap);
+    if (!secs.length) return;
+    secs.forEach(keyOf);
+    if (typeof sec === "string") sec = secs.find(s => keyOf(s) === sec);
+    if (!sec || !secs.includes(sec)) sec = secs[0];
+    secs.forEach(s => s.classList.toggle("job-off", s !== sec));
+    try { localStorage.setItem("swervetune.section." + tab, keyOf(sec)); } catch (e) { /* storage blocked */ }
+    let first = true;
+    $$("[data-rail-job], [data-rail-sec]", wrap).forEach(b => {
+      const on = b._sec === sec;
+      b.classList.toggle("on", on);
+      if (on && first) { b.setAttribute("aria-current", "step"); first = false; } else b.removeAttribute("aria-current");
+    });
+    copyHowTo(wrap, sec);
+    if (focusIt) {
+      // The section's heading, not its first button: Enter twice must never start a run.
+      const h = sec.querySelector("h2, h3");
+      if (h) { h.setAttribute("tabindex", "-1"); h.focus({ preventScroll: true }); }
+    }
+  }
+
+  // The open section's instructions, shown in the rail under the jobs (the section's own copy is
+  // hidden there, so the section's width goes to its controls and results).
+  function copyHowTo(wrap, sec) {
+    const box = wrap && $(".rail-how", wrap);
+    if (!box) return;
+    const html = sec ? [...sec.querySelectorAll("details.howto")].map(d => d.outerHTML).join("") : "";
+    if (box._src === html) return;
+    box._src = html;
+    box.innerHTML = html;
+    $$("details.howto", box).forEach(d => { d.open = shown(); });
+    box.hidden = !html;
+  }
+
+  function railItem(attrs, cls, mark, title, sub, extra = "") {
+    return `<li><button class="rail-item ${cls}" ${attrs} data-tip="howto.go" data-quiet>
+      <span class="n" aria-hidden="true">${mark}</span><span class="t">${title}${sub ? `<span class="d">${sub}</span>` : ""}</span></button>${extra}</li>`;
   }
 
   async function paint(tab) {
     if (!$(`[data-plan="${tab}"]`)) return;
+    const wrap0 = wrapOf(tab);
+    if (wrap0 && !$(".job-off", wrap0)) select(tab, remembered(tab));
     const my = seqs[tab] = (seqs[tab] || 0) + 1;
     const p = await App.api("/api/setup?tab=" + tab);
     // The tool may have repainted itself (Config does, on every lint) while this was on its way.
@@ -61,38 +122,51 @@ const HowTo = (() => {
     if (p.ok === false) { box.innerHTML = `<p class="hint">${esc(p.error)}</p>`; return; }
     const before = plans[tab];
     plans[tab] = p;
+    const wrap = wrapOf(tab), secs = sectionsOf(wrap);
+    secs.forEach(keyOf);
+    const inTool = j => j && j.go && j.go.tab === tab && j.go.panel ? sectionOf(document.getElementById(j.go.panel)) : null;
+    const owned = new Set(p.jobs.map(inTool).filter(Boolean));
+    const others = secs.filter(s => !owned.has(s) && labelOf(s));
     const head = !p.done ? "Where to start" : p.next ? "What to do next" : "Done here";
     const parts = { calibrate: "camera", motors: "motor", wiring: "motor" }[tab];
     const ord = p.order || {};
     // The order between tools, and an earlier one still to finish.
-    const order = ord.chain ? `<p class="small muted">Tool ${ord.index + 1} of ${ord.chain.length}: ${ord.chain.map(t => t === tab ? `<b>${NAME[t]}</b>` : NAME[t]).join(" → ")}</p>` : "";
-    const earlier = ord.earlier ? `<div class="callout warn small"><b>${esc(NAME[ord.earlier.tab])}</b> comes first and has ${ord.earlier.count} job${ord.earlier.count === 1 ? "" : "s"} to do.
+    const order = ord.chain ? `<p class="small muted rail-chain">Tool ${ord.index + 1} of ${ord.chain.length}: ${ord.chain.map(t => t === tab ? `<b>${NAME[t]}</b>` : NAME[t]).join(" → ")}</p>` : "";
+    const earlier = ord.earlier ? `<div class="callout warn small"><b>${esc(NAME[ord.earlier.tab])}</b> comes first: ${ord.earlier.count} job${ord.earlier.count === 1 ? "" : "s"} to do.
       <button class="btn small" data-go-tab="${esc(ord.earlier.tab)}" data-tip="howto.earlier">Start there →</button></div>` : "";
-    const primary = p.next ? goButton(p.next, `${p.done ? "Next" : "Start here"}: ${p.next.title} →`, true)
-      : p.after ? `<button class="btn primary" data-go-after data-tip="howto.after">${esc(p.after.label)} →</button>` : "";
     const jobs = p.jobs.map(j => {
-      const now = p.next && j.id === p.next.id;
-      // A blocked job's only button is to what it waits for; its own panel can't be used yet.
-      const btn = j.unblock && j.status === "later"
-        ? `<button class="btn small" data-go-unblock="${esc(j.id)}" data-tip="howto.unblock" data-quiet>First: ${esc(j.unblock.label)} →</button>`
-        : j.go && !now && j.status !== "skip" ? goButton(j, "Go", false) : "";
-      return `<li class="${now ? "now" : ""} ${j.status}"><span class="chip ${CHIP[j.status]}">${WORD[j.status]}</span>
-        <span class="plan-t"><b>${esc(j.title)}</b> <span class="small muted">${esc(j.detail || "")}</span></span>${btn}</li>`;
+      const isNext = p.next && j.id === p.next.id, away = !inTool(j) && j.go;
+      // The state in words beside the mark (never the mark's shape alone); "to do" goes without saying.
+      const title = `<span class="tt">${esc(j.title)}</span>${j.status !== "todo" ? ` <span class="st">· ${esc(WORD[j.status])}</span>` : ""}${isNext ? ` <span class="chip info next-chip">Next</span>` : ""}${away ? ` <span class="away" aria-hidden="true">↗</span>` : ""}`;
+      // A blocked job's way forward is what it waits for; its own section can't be used yet.
+      const first = j.unblock && j.status === "later"
+        ? `<button class="btn small rail-first" data-go-unblock="${esc(j.id)}" data-tip="howto.unblock" data-quiet>First: ${esc(j.unblock.label)} →</button>` : "";
+      return railItem(`data-rail-job="${esc(j.id)}" aria-label="${esc(j.title)}, ${esc(WORD[j.status])}${isNext ? ", next" : ""}${away ? ", opens elsewhere" : ""}"`,
+        j.status, MARK[j.status] || "", title, esc(j.detail || ""), first);
     }).join("");
-    box.innerHTML = `<div class="row plan-head" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <h2 data-tip="howto.plan">${head} <span class="muted small">${p.done} of ${p.of} done</span></h2>
-        <label class="row small howto-switch" data-tip="howto.switch"><input type="checkbox" data-howto-switch ${shown() ? "checked" : ""}> Show how-to instructions</label>
-      </div>
+    const also = others.map(s => railItem(`data-rail-sec="${esc(keyOf(s))}"`, "view", "", `<span class="tt">${esc(labelOf(s))}</span>`, "")).join("");
+    box.innerHTML = `<div class="rail-head"><h2 data-tip="howto.plan">${esc(NAME[tab] || tab)}</h2><span class="small muted">${p.done} of ${p.of} done</span></div>
       <p class="sr-status" aria-live="polite">${esc(head)}: ${p.next ? esc(p.next.title) : esc((p.after || {}).label || "")}</p>
-      <div class="row plan-primary" style="flex-wrap:wrap">${primary}
-        ${parts ? `<button class="btn" data-parts="${parts}" data-tip="howto.parts">Redo one part</button>` : ""}</div>
       ${order}${earlier}
-      <p class="small">${esc(p.what)}</p>
-      ${(p.bring || []).length ? `<p class="small muted"><b>Bring:</b> ${p.bring.map(esc).join(" · ")}</p>` : ""}
-      <ol class="plan-jobs ${showAll[tab] ? "all" : ""}">${jobs}</ol>
-      <button class="btn small plan-all" data-show-all data-tip="howto.all">${showAll[tab] ? "Show only the next job" : `Show all ${p.jobs.length} jobs`}</button>`;
+      ${!p.next && p.after ? `<button class="btn primary" data-go-after data-tip="howto.after">${esc(p.after.label)} →</button>` : ""}
+      <ol class="rail">${jobs}</ol>
+      ${also ? `<h3 class="rail-group">Also here</h3><ol class="rail">${also}</ol>` : ""}
+      <details class="rail-about"><summary class="small" data-tip="howto.about">What this tool is for</summary>
+        <p class="small">${esc(p.what)}</p>${(p.bring || []).length ? `<p class="small muted"><b>Bring:</b> ${p.bring.map(esc).join(" · ")}</p>` : ""}</details>
+      <div class="row rail-foot">${parts ? `<button class="btn small" data-parts="${parts}" data-tip="howto.parts">Redo one part</button>` : ""}
+        <label class="row small howto-switch" data-tip="howto.switch"><input type="checkbox" data-howto-switch ${shown() ? "checked" : ""}> How-to</label></div>
+      <div class="rail-how" hidden></div>`;
+    // Each rail item knows its section: a job in this tool selects it; a job elsewhere goes there.
+    $$("[data-rail-job]", box).forEach(b => {
+      const j = p.jobs.find(x => x.id === b.dataset.railJob);
+      b._sec = inTool(j);
+      b.onclick = () => { if (b._sec) select(tab, b._sec, true); else go(j && j.go); };
+    });
+    $$("[data-rail-sec]", box).forEach(b => {
+      b._sec = secs.find(s => keyOf(s) === b.dataset.railSec);
+      b.onclick = () => select(tab, b._sec, true);
+    });
     $("[data-howto-switch]", box).onchange = e => set(e.target.checked);
-    $$("[data-go-job]", box).forEach(b => b.onclick = () => go((p.jobs.find(j => j.id === b.dataset.goJob) || {}).go));
     $$("[data-go-unblock]", box).forEach(b => b.onclick = () => go((p.jobs.find(j => j.id === b.dataset.goUnblock) || {}).unblock));
     const after = $("[data-go-after]", box);
     if (after) after.onclick = () => go(p.after);
@@ -100,9 +174,11 @@ const HowTo = (() => {
     if (gt) gt.onclick = () => go({ tab: gt.dataset.goTab });
     const pb = $("[data-parts]", box);
     if (pb) pb.onclick = () => Parts.open(pb.dataset.parts);
-    $("[data-show-all]", box).onclick = () => { showAll[tab] = !showAll[tab]; paint(tab); };
+    // Open the section last worked on; the first time, the next job's.
+    const keep = remembered(tab);
+    select(tab, secs.find(s => keyOf(s) === keep) || inTool(p.next) || secs[0]);
     const lines = paintNextLines(tab, p);
-    // A job that just checked out: say what comes next, once, unless the panel already says it on screen.
+    // A job that just checked out: say what comes next, once, unless the section already says it on screen.
     if (before) {
       const was = Object.fromEntries(before.jobs.map(j => [j.id, j.status]));
       const now = p.jobs.find(j => j.status === "done" && was[j.id] && was[j.id] !== "done");
@@ -110,7 +186,11 @@ const HowTo = (() => {
     }
   }
 
-  // Under each panel: once its job is done, a button to the next one. Returns the jobs it showed.
+  function goButton(j, label) {
+    return `<button class="btn primary" data-go-job="${esc(j.id)}" data-tip="howto.go">${esc(label)}</button>`;
+  }
+
+  // In each section: once its job is done, a button to the next one. Returns the jobs it showed.
   function paintNextLines(tab, p) {
     const root = $(`#tab-${tab}`), showing = new Set();
     $$(".howto-next", root).forEach(el => {
@@ -121,7 +201,7 @@ const HowTo = (() => {
       const r = el.getBoundingClientRect();
       if (r.bottom > 0 && r.top < innerHeight) showing.add(j.id);
       el.innerHTML = `<span class="chip good">✓ done</span> ${esc(j.detail || "")}
-        ${p.next ? goButton(p.next, `Next: ${p.next.title} →`, true) : p.after ? `<button class="btn primary" data-go-after data-tip="howto.after">${esc(p.after.label)} →</button>` : ""}`;
+        ${p.next ? goButton(p.next, `Next: ${p.next.title} →`) : p.after ? `<button class="btn primary" data-go-after data-tip="howto.after">${esc(p.after.label)} →</button>` : ""}`;
       $$("[data-go-job]", el).forEach(b => b.onclick = () => go((p.jobs.find(x => x.id === b.dataset.goJob) || {}).go));
       const a = $("[data-go-after]", el);
       if (a) a.onclick = () => go(p.after);
@@ -129,7 +209,7 @@ const HowTo = (() => {
     return showing;
   }
 
-  /** Takes the person to a job: a panel in a tool, a Guide step, a tuner, the battery picker, a part. */
+  /** Takes the person to a job: a section in a tool, a Guide step, a tuner, the battery picker, a part. */
   function go(g) {
     if (!g) return;
     if (g.part) { Parts.open(g.part, g.which); return; }
@@ -145,18 +225,21 @@ const HowTo = (() => {
     if (g.tab) {
       App.show(g.tab);
       if (g.camera) { const c = $("#cc-cam"); if (c) c.value = g.camera; }
-      const el = g.panel ? $("#" + g.panel) : $(`[data-plan="${g.tab}"]`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-        el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
-        // The panel's heading, not its first button: Enter twice must never start a run.
-        const h = el.querySelector("h2, h3");
+      const el = g.panel ? $("#" + g.panel) : null;
+      const sec = sectionOf(el);
+      if (sec) select(g.tab, sec, true);
+      const target = el || $(`[data-plan="${g.tab}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      target.classList.remove("flash"); void target.offsetWidth; target.classList.add("flash");
+      if (!sec) {
+        const h = target.querySelector("h2, h3");
         if (h) { h.setAttribute("tabindex", "-1"); setTimeout(() => h.focus({ preventScroll: true }), 400); }
       }
     }
   }
 
-  /** A tool's result for its checklist (the server stamps the time), then the card again. */
+  /** A tool's result for its checklist (the server stamps the time), then the rail again. */
   async function mark(tab, key, ok, detail) {
     await App.api("/api/mark", { key, result: ok ? "pass" : "fail", detail: detail || "" });
     paint(tab);
@@ -167,5 +250,5 @@ const HowTo = (() => {
   App.on("saved", () => TABS.forEach(t => { if ($(`#tab-${t}`).classList.contains("on")) paint(t); }));
   App.on("run", () => TABS.forEach(t => { if ($(`#tab-${t}`).classList.contains("on")) paint(t); }));
 
-  return { block, steps, slot, nextLine, paint, mark, go, shown, set, apply };
+  return { block, steps, slot, nextLine, paint, mark, go, select, shown, set, apply };
 })();

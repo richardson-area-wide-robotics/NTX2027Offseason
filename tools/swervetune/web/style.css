@@ -14,6 +14,10 @@
   --s0: #2b66a2; --s1: #a87d00; --s2: #af2437; --s3: #80588e;
   --mono: Consolas, "Cascadia Mono", "SF Mono", Menlo, monospace;
   --sans: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  /* Sizes (the same in both themes). app.js measures the header and the tab bar into --top-h and
+     --bar-h; the work area is what is left of the screen: 828 px on a 1920x1080 laptop at 100%. */
+  --top-h: 48px; --bar-h: 40px; --gap: 12px; --rail-w: 380px;
+  --work-h: calc(100dvh - var(--top-h) - var(--bar-h) - 2 * var(--gap));
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -36,15 +40,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mono, code, kbd { font-family: var(--mono); }
 kbd { border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
 code { background: var(--bg); padding: 1px 4px; border-radius: 3px; font-size: .92em; }
-h2 { font-size: 20px; margin: 0; }
-h3 { font-size: 16px; margin: 0; }
+h2 { font-size: 18px; line-height: 1.35; margin: 0; }
+h3 { font-size: 15px; line-height: 1.35; margin: 0; }
 p { margin: 0; max-width: 78ch; }
 a { color: var(--accent); }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ---------------------------------------------------------------- header */
-.top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
-  padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+.top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  padding: 6px 16px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+/* Under 1700 px the name and the "Robot code" label give their room to the chips (the select keeps
+   its tip and its accessible name). */
+@media (max-width: 1700px) {
+  .brand { display: none; }
+  .field-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 .brand { font-weight: 700; font-size: 16px; letter-spacing: .02em; }
 .field { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 .conn { display: flex; align-items: center; gap: 6px; }
@@ -66,7 +76,7 @@ button.chip:not(.learn-chip)::after { content: "\25BE" / ""; margin-left: 2px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
 .btn.small { padding: 2px 8px; font-size: 12px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-.abort { background: var(--bad); color: var(--on-state); border: 0; border-radius: 6px; padding: 8px 18px; font-weight: 800;
+.abort { background: var(--bad); color: var(--on-state); border: 0; border-radius: 6px; padding: 7px 18px; font-weight: 800;
   letter-spacing: .06em; cursor: pointer; }
 .btn[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
 select, input[type=text], input[type=number], input:not([type]) { border: 1px solid var(--edge); background: var(--panel);
@@ -76,12 +86,10 @@ input[type=number] { width: 7.5em; font-family: var(--mono); }
 .banner { position: sticky; top: var(--top-h, 57px); z-index: 9; background: var(--info-bg); color: var(--ink); padding: 8px 16px;
   display: grid; gap: 6px; border-bottom: 1px solid var(--rule); }
 .banner.waiting { background: var(--warn-bg); }
-.banner.bad { background: var(--bad-bg); }
 .bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
 .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
 .banner-hint { font-weight: 600; }
 .banner-hold { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-.banner-hold[hidden] { display: none; }
 /* The deadman: big, and nothing a finger does (scroll, select, long-press menu) takes it away. */
 .hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
   min-height: 48px; padding: 10px 22px; border-radius: 10px; border: 2px solid var(--ok); background: var(--panel);
@@ -89,10 +97,28 @@ input[type=number] { width: 7.5em; font-family: var(--mono); }
 .hold.held { background: var(--ok); color: var(--on-state); }
 
 .tabs { display: flex; gap: 2px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); overflow-x: auto; }
-.tabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; color: var(--muted);
+.tabs button { border: 0; background: none; padding: 8px 12px; cursor: pointer; color: var(--muted);
   border-bottom: 2px solid transparent; font-weight: 600; }
 .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
-main { padding: 16px; max-width: 1400px; margin: 0 auto; }
+/* The tabs and a running test's status, one bar that never changes height. */
+.bar2 { position: sticky; top: var(--top-h); z-index: 9; display: flex; flex-wrap: wrap; align-items: center;
+  gap: 0 16px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+@media (min-width: 601px) {
+  .bar2 > .tabs { padding: 0; background: none; border-bottom: 0; }
+  .bar2 > .banner { position: static; flex: 1 1 520px; min-width: 0; display: grid; align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 28px 3px; gap: 2px 12px;
+    padding: 2px 4px 1px 10px; border: 1px solid var(--info); border-radius: 6px; }
+  /* The tint alone is 1.2:1 on the panel; the edge in the state's color is 6.9:1 (light) / 8.2:1 (dark). */
+  .bar2 > .banner.waiting { border-color: var(--warn); }
+  .bar2 > .banner .banner-text { font-size: 12px; line-height: 14px; overflow: hidden;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .bar2 > .banner .bar { grid-column: 1; height: 3px; }
+  .bar2 > .banner .banner-hold { grid-column: 2; grid-row: 1 / -1; flex-wrap: nowrap; gap: 10px; }
+  .bar2 > .banner .hold { min-height: 0; height: 30px; padding: 0 14px; border-radius: 6px; }
+  .bar2 > .banner .banner-hint { font-size: 12px; line-height: 14px; max-width: 270px; font-weight: 600; }
+}
+@media (min-width: 601px) and (pointer: coarse) { .bar2 > .banner .hold { height: auto; min-height: 44px; } }
+main { padding: var(--gap) 16px; max-width: 1920px; margin: 0 auto; }
 .tab { display: none; }
 .tab.on { display: block; }
 
@@ -100,7 +126,7 @@ main { padding: 16px; max-width: 1400px; margin: 0 auto; }
 .grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
 @media (max-width: 900px) { .grid2, .split { grid-template-columns: minmax(0, 1fr); } }
-.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; align-content: start; }
 .stack { display: grid; gap: 12px; min-width: 0; align-content: start; }
 /* Grid children default to min-width: auto and grow to fit a wide table; let them shrink so .tblwrap scrolls. */
 .panel > *, .stack > * { min-width: 0; }
@@ -197,21 +223,6 @@ details > summary { cursor: pointer; font-weight: 600; }
 .seg button.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 
 /* ---------------------------------------------------------------- guide */
-.guide-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-.gstep { display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: center; text-align: left; border: 1px solid transparent;
-  background: none; padding: 7px 8px; border-radius: 6px; cursor: pointer; width: 100%; }
-.gstep:not(.on):hover { border-color: var(--edge); }
-.gstep.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
-.gstep .n { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--mono);
-  background: var(--rule); color: var(--ink); }
-.gstep.done .n { background: var(--ok); color: var(--on-state); }
-.gstep.attention .n { background: var(--warn); color: var(--on-state); }
-.gstep.locked .n { background: none; box-shadow: inset 0 0 0 1px var(--muted); color: var(--muted); }
-.gstep.locked .t { color: var(--muted); }
-.gstep .where { font-size: 12px; color: var(--muted); }
-.gstep .state { font-size: 12px; font-weight: 600; }
-.gstep.done .state { color: var(--ok); }
-.gstep.attention .state { color: var(--warn); }
 @media (max-width: 900px) { #gbody { order: -1; } }  /* phone: the step before the list */
 .need-where { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: var(--bg); }
 .need-where.met { box-shadow: inset 4px 0 0 var(--ok); }
@@ -239,7 +250,6 @@ ol.do { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 /* ---------------------------------------------------------------- modal, toast */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 50; padding: 16px;
   grid-template-columns: minmax(0, 1fr); }  /* a long diff line must scroll inside the box, not widen it past the screen */
-.modal[hidden] { display: none; }
 .modal-box { background: var(--panel); border-radius: 10px; max-width: 760px; width: 100%; min-width: 0; max-height: 90vh; overflow: auto;
   padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 pre.diff { background: var(--bg); border-radius: 6px; padding: 10px; overflow-x: auto; font: 12px/1.45 var(--mono); margin: 0; }
@@ -346,7 +356,7 @@ table.t tr.history > td:first-child { box-shadow: inset 4px 0 0 var(--warn); }
 th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px; }
 .learn-extra { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
 .learn-more { margin-top: 6px; border: 0; background: none; color: var(--accent); padding: 0; cursor: pointer; font-weight: 600; }
-.learn-drawer { position: fixed; z-index: 40; top: var(--top-h, 0px); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto;
+.learn-drawer { position: fixed; z-index: 40; top: calc(var(--top-h, 0px) + var(--bar-h, 0px)); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto;
   background: var(--panel); border-left: 1px solid var(--rule); padding: 16px; box-shadow: -8px 0 30px rgba(0, 0, 0, .15);
   display: grid; gap: 10px; align-content: start; }
 .learn-drawer p { max-width: none; }
@@ -459,7 +469,6 @@ details.howto { border: 1px dashed var(--rule); border-radius: 6px; padding: 2px
 details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); padding: 6px 0; }
 .howto-body { display: grid; gap: 6px; padding-bottom: 6px; }
 .howto-next { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; background: var(--ok-bg); }
-.howto-next[hidden] { display: none; }
 .howto-switch input { width: 18px; height: 18px; }
 @keyframes plan-flash { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
 .flash { animation: plan-flash 1.6s ease-out; }
@@ -487,7 +496,6 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .chip.todo { border-color: var(--edge); font-weight: 600; color: var(--ink); }
 .chip.opt { border-style: dashed; color: var(--muted); }
 .sr-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.plan-all { display: none; justify-self: start; }
 .art-tile { fill: #fff; stroke: var(--rule); }
 .ctl-pics { display: flex; flex-wrap: wrap; gap: 16px; }
 .ctl-pics figure { margin: 0; display: grid; gap: 4px; justify-items: start; }
@@ -498,6 +506,126 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
   .frcmap svg { filter: brightness(.92); }
 }
 
+/* ---------------------------------------------------------------- a tool: its jobs in a rail, one section beside it
+   The rail lists the jobs in order and, under them, the open section's how-to; the section gets the
+   rest of the width. Only the section being worked on shows, so each fits one laptop screen
+   (--work-h); one that outgrows it scrolls inside itself, never the page. */
+.jobs { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); gap: var(--gap); align-items: start; }
+.job-area { display: grid; gap: var(--gap); min-width: 0; }
+.job-area > .job-off { display: none; }             /* a class, not [hidden]: a tool's own hidden panels stay hidden */
+.job-area details.howto { display: none; }           /* shown in the rail, beside the section it is for */
+.job-area > * { max-height: var(--work-h); overflow-y: auto; }
+.rail-panel { position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); max-height: var(--work-h);
+  overflow-y: auto; align-content: start; gap: 6px; }
+.rail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rail-chain { margin: 0; }
+.rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rail > li { display: grid; }
+.rail-group { margin: 4px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.rail-item { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: center; width: 100%;
+  padding: 4px 8px; border: 1px solid transparent; border-radius: 6px; background: none; text-align: left;
+  cursor: pointer; color: var(--ink); font: inherit; }
+.rail-item:not(.on):hover { border-color: var(--edge); }
+/* The open section: accent edge and rail, 5.96:1 (light) / 7.65:1 (dark) on the panel. */
+.rail-item.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.rail-item .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 12px var(--sans); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--edge); }
+.rail-item.done .n { background: var(--ok); color: var(--on-state); box-shadow: none; }
+/* "Needs a fix" is amber, as in the Guide: red is for broken now and ABORT. */
+.rail-item.attention .n { background: var(--warn); color: var(--on-state); box-shadow: none; }
+.rail-item:is(.later, .optional, .skip, .locked) .n { box-shadow: none; border: 1.5px dashed var(--edge); }
+.rail-item.view .n { box-shadow: none; border: 1.5px solid var(--rule); border-radius: 4px; width: 14px; height: 14px; justify-self: center; }
+.rail-item .tt { font-weight: 600; }
+.rail-item:is(.later, .skip, .locked) .tt { color: var(--muted); }
+/* One line a job; the open job also says what it needs and what it waits for. */
+.rail-item .d { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); }
+.rail-item:not(.on) .d { display: none; }
+.rail-item .st { font-size: 12px; color: var(--muted); font-weight: 400; }
+.rail > li:not(:has(> .rail-item.on)) > .rail-first { display: none; }
+.rail-item .next-chip { padding: 0 6px; font-size: 11px; }
+.rail-item .away { color: var(--muted); }
+.rail-first { justify-self: start; margin: 2px 0 2px 38px; }
+.rail-about > summary { cursor: pointer; color: var(--muted); }
+.rail-foot { justify-content: space-between; }
+.rail-how { display: grid; gap: 6px; }
+@media (max-width: 900px) {
+  .jobs { grid-template-columns: minmax(0, 1fr); }
+  .rail-panel { position: static; max-height: none; }
+  .job-area > * { max-height: none; overflow: visible; }
+}
+
+/* Sections laid out to fit one screen: a list beside what to do about it. */
+#motors-live { grid-template-columns: minmax(0, 1fr) 480px; }
+.cfg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); column-gap: 24px; align-content: start; }
+.cfg-list > .finding { border-top: 0; border-bottom: 1px solid var(--rule); }
+.cfg-list > .finding[data-level="error"] { grid-column: 1 / -1; padding-left: 12px; box-shadow: inset 4px 0 0 var(--bad); }
+.pp-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 1200px) { #motors-live, .pp-cols { grid-template-columns: minmax(0, 1fr); } }
+table.t td > select { padding-block: 1px; }
+
+/* Runs: the saved runs scroll in their own box under a header that stays; the match logs beside them. */
+.runs2 { display: grid; grid-template-columns: minmax(0, 1fr) 560px; gap: var(--gap); align-items: start; }
+.runs2 > .panel { max-height: var(--work-h); min-height: 0; }
+.runs2 > .runs-saved { display: flex; flex-direction: column; }
+.runs2 > .runs-saved > .tblwrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.runs2 > .runs-logs { overflow-y: auto; }
+.runs2 table.t thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); box-shadow: inset 0 -1px 0 var(--rule); }
+#lg-list { max-height: 240px; overflow-y: auto; }
+@media (max-width: 1100px) { .runs2 { grid-template-columns: minmax(0, 1fr); } .runs2 > .panel { max-height: none; } }
+
+/* The Guide: the steps in the rail, the open step in two columns (what to do; what you need and why). */
+#gbody { max-height: var(--work-h); overflow-y: auto; }
+.g-cols { display: grid; grid-template-columns: minmax(0, 84ch) minmax(300px, 1fr); gap: 8px 28px; align-items: start; }
+.g-cols > div { display: grid; gap: 8px; min-width: 0; align-content: start; }
+@media (max-width: 1200px) { .g-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { #gbody { max-height: none; overflow: visible; } }
+
+/* Tune: the whole loop on one screen. The test picker across the top; gains and Run on the left,
+   the plots in the middle, the next step and one pane (advice, what if, the story) on the right.
+   Only Earlier runs and the pane scroll, each inside itself. */
+.tune { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1fr); align-items: start;
+  grid-template-areas: "bar" "left" "plots" "right"; }
+.tune-bar { grid-area: bar; padding: 8px 14px; gap: 4px; }
+.tune-left { grid-area: left; }
+.tune-plots { grid-area: plots; }
+.tune-right { grid-area: right; }
+.tune-col { display: grid; gap: var(--gap); align-content: start; min-width: 0; }
+.tune-picks { gap: 8px 20px; }
+/* The six tests in one row across the top (the picker is a wrapping grid elsewhere). */
+@media (min-width: 901px) { .tune-picks > #loopseg { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: max-content; } }
+#tab-tune #blurb { max-width: none; }
+.panes { gap: 8px; }
+.panes > .pane:not(.sel) { display: none; }
+.pane { display: grid; gap: 8px; min-width: 0; align-content: start; }
+#paneseg button:disabled { opacity: .45; cursor: not-allowed; }
+.next-step { background: var(--panel); }
+@media (min-width: 901px) {
+  .tune { grid-template-columns: 340px minmax(0, 1fr); grid-template-areas: "bar bar" "left plots" "left right"; }
+}
+@media (min-width: 1280px) {
+  .tune { grid-template-columns: clamp(300px, 19vw, 360px) minmax(0, 1fr) clamp(400px, 27vw, 520px);
+    grid-template-areas: "bar bar bar" "left plots right"; }
+}
+@media (min-width: 1280px) and (min-height: 700px) {
+  .tune { height: var(--work-h); grid-template-rows: auto minmax(0, 1fr); align-items: stretch; }
+  .tune-col { min-height: 0; overflow-y: auto; }
+  .tune-left { grid-template-rows: auto minmax(0, 1fr); }
+  .tune-left > #history-panel[open] { min-height: 0; overflow-y: auto; }
+  .tune-right { grid-template-rows: auto minmax(0, 1fr); }
+  .tune-right > .panes { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+  .tune-right .pane { min-height: 0; overflow-y: auto; }
+  /* The two graphs share what the screen leaves them, 3:2 (about 245 and 163 px at 1920x1080). */
+  #tab-tune canvas.plot { height: max(180px, calc((var(--work-h) - 420px) * .6)); }
+  #tab-tune canvas.plot.short { height: max(120px, calc((var(--work-h) - 420px) * .4)); }
+}
+
+/* Troubleshoot: the checks, and one drawing beside them for the check being answered. */
+.tr-view { display: grid; gap: var(--gap); }
+.tr2 { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1fr); align-items: start; }
+.tr2.has-map { grid-template-columns: minmax(480px, 1fr) minmax(0, 1.25fr); }
+.tr-where { --frc-h: calc(var(--work-h) - 260px); position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); }
+@media (max-width: 900px) { .tr2.has-map { grid-template-columns: minmax(0, 1fr); } .tr-where { position: static; } }
+
 /* ---------------------------------------------------------------- phones and touch screens
    Last in the file, so these win over the base rules above them. */
 /* Phones: the header wrapped to four rows (29% of the screen) with ABORT alone on the last one. ABORT
@@ -506,9 +634,6 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .abort.pin { display: none; }
 @media (max-width: 600px) {
   .plan-jobs li { grid-template-columns: 5.5em minmax(0, 1fr) auto; gap: 6px; padding: 5px 4px; }
-  /* On a phone the card shows the next job only; the rest on request. */
-  .plan-jobs:not(.all) li:not(.now) { display: none; }
-  .plan-all { display: inline-flex; }
   .frc-notours-t { display: none; }
   .brand, #abort { display: none; }
   .top { gap: 6px 10px; padding: 8px 12px; }
@@ -520,6 +645,7 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
      instead: ABORT is pinned anyway, and the test banner (with Hold to run) takes the top. The chips
      sit in one row that scrolls sideways. */
   .top { position: static; }
+  .bar2 { display: contents; }
   .banner { top: 0; }
   .learn-drawer { top: 0; }
   .chips { flex: 1 1 100%; order: 5; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }

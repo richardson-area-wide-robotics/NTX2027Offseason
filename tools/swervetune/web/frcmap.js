@@ -73,7 +73,7 @@ const FrcMap = (() => {
       const vb = VIEWS[view];
       // Sized to the view's own shape: a tall view in a wide box left the drawing a third of the width.
       el.innerHTML = `<figure class="frcmap"><svg viewBox="${vb.join(" ")}" role="img" aria-label="${esc(opts.alt || "The robot's control system, as FIRST draws it")}"
-        style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%, calc(72vh * ${(vb[2] / vb[3]).toFixed(3)}))">
+        style="aspect-ratio:${vb[2]}/${vb[3]};width:min(100%, calc(var(--frc-h, 72vh) * ${(vb[2] / vb[3]).toFixed(3)}))">
         <g class="frc-art">${inner}</g><g class="frc-over"></g></svg>
         <figcaption class="small muted">From <a href="https://docs.wpilib.org/en/stable/docs/controls-overviews/control-system-hardware.html" target="_blank" rel="noopener">FRC Control System - REV</a>
           by Team 3161 for WPILib, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>: cropped, dimmed and labeled by this tool.${opts.caption ? " " + esc(opts.caption) : ""}</figcaption></figure>`;

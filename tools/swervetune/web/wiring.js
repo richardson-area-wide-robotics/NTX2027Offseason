@@ -11,8 +11,9 @@ const Wiring = (() => {
   let extra = [];
 
   root.innerHTML = `
-    <div class="stack">
+    <div class="jobs" data-jobs="wiring">
       ${HowTo.slot("wiring")}
+      <div class="job-area">
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="wiring.title">Wiring</h2>
@@ -89,7 +90,7 @@ const Wiring = (() => {
         <div id="ww-body"></div>
         ${HowTo.nextLine("wiggle")}
       </div>
-    </div>`;
+    </div></div>`;
 
   // ---------------------------------------------------------------- data
   async function refresh() {

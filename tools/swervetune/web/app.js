@@ -323,8 +323,10 @@ function paintHeader() {
   if (running) {
     const waiting = status.state === "WAITING" || t.state === "WAITING";
     banner.className = "banner" + (waiting ? " waiting" : "");
-    $("#banner-state").textContent = testName(status.test || t.test || "test") + " · " + (status.state || t.state || "");
-    $("#banner-msg").textContent = status.message || t.message || "";
+    // Written only when it changes: it is a live region, and this repaints ten times a second.
+    const say = (el, text) => { if (el.textContent !== text) el.textContent = text; };
+    say($("#banner-state"), testName(status.test || t.test || "test") + " · " + (status.state || t.state || ""));
+    say($("#banner-msg"), status.message || t.message || "");
     $("#banner-bar").style.width = Math.round(100 * (status.progress || t.progress || 0)) + "%";
     // Only a test that moves a motor needs the deadman: not a capture, a hand check or a controller check.
     const MOVES = ["drive_step", "drive_ff", "steer_step", "slip", "spin", "spin_ff", "straight", "pdh_map"];
@@ -353,9 +355,16 @@ async function pollState() {
 $$(".tabs button").forEach(b => b.onclick = () => App.show(b.dataset.tab));
 // The header wraps on a narrow screen, so its height is measured: the test banner and the
 // Lessons drawer sit just under it, and ABORT is never covered.
+// The work area under them fills the rest of the screen (--work-h in style.css).
 if (window.ResizeObserver) {
-  new ResizeObserver(([e]) => document.documentElement.style.setProperty("--top-h", Math.ceil(e.target.getBoundingClientRect().height) + "px"))
-    .observe($(".top"));
+  const setH = () => {
+    const css = document.documentElement.style;
+    css.setProperty("--top-h", Math.ceil($(".top").getBoundingClientRect().height) + "px");
+    css.setProperty("--bar-h", Math.ceil($(".bar2").getBoundingClientRect().height) + "px");
+  };
+  const ro = new ResizeObserver(setH);
+  ro.observe($(".top"));
+  ro.observe($(".bar2"));
 }
 $("#lessons").onclick = () => Learn.open(null);
 $("#modal").addEventListener("click", e => { if (e.target.id === "modal") App.closeModal(); });

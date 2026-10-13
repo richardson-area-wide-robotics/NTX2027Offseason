@@ -9,17 +9,19 @@
   const STAGE_CLASS = { OK: "", WARN: "warn", DERATE: "derate", SHUTOFF: "shutoff" };
   const STAGE_DO = { WARN: "getting hot: ease off", DERATE: "at half power to cool", SHUTOFF: "cut to 2 A until it cools" };
   root.innerHTML = `
+    <div class="jobs" data-jobs="motors">
     ${HowTo.slot("motors")}
-    <div class="grid2" style="margin-top:12px">
+    <div class="job-area">
+    <div class="grid2" id="motors-live">
       <div class="stack">
         <div class="panel">
           <h2 data-tip="motors.title">Motors</h2>
-          <p class="hint">Red means broken now: fix it. Amber happened earlier or is getting hot: check it. Heat is the guard's estimate of the windings, as a share of what burns them out; the ticks are 50, 70 and 85%.</p>
+          <p class="hint">Red edge: broken now, fix it. Amber edge: happened earlier or getting hot, check it.</p>
           <div id="motor-off" class="callout bad" hidden>The motor guard is switched off in swervetune.json: nothing protects these motors from heat, stalls or failure.</div>
           <div class="tblwrap">
             <table class="t">
-              <thead><tr><th>Motor</th><th>${t("motors.stage", "Stage")}</th><th>${t("motors.heat", "Heat")}</th><th class="num">${t("motors.temp", "Temp")}</th><th class="num">${t("motors.current", "Current")}</th><th class="num">${t("motors.stall", "Stall")}</th><th>${t("motors.why", "Why")}</th></tr></thead>
-              <tbody id="motor-rows"><tr><td colspan="7" class="muted">Connect to a robot to see its motors.</td></tr></tbody>
+              <thead><tr><th>Motor</th><th>${t("motors.kind", "Type")}</th><th>${t("motors.stage", "Stage")}</th><th>${t("motors.heat", "Heat")}</th><th class="num">${t("motors.temp", "Temp")}</th><th class="num">${t("motors.current", "Current")}</th><th class="num">${t("motors.limit", "Limit")}</th><th class="num">${t("motors.stall", "Stall")}</th><th>${t("motors.why", "Why")}</th></tr></thead>
+              <tbody id="motor-rows"><tr><td colspan="9" class="muted">Connect to a robot to see its motors.</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -63,7 +65,7 @@
         </div>
       </div>
     </div>
-    <div class="panel" id="motor-inventory" style="margin-top:12px">
+    <div class="panel" id="motor-inventory">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
         <h2 data-tip="motors.inventory">Motors and controllers</h2>
         <button class="btn" id="inv-refresh" data-tip="motors.refresh">Check again</button>
@@ -76,7 +78,7 @@
         good: "every row the same three ways, every motor named." })}
       <div id="inv-art" class="frc-slot"></div>
       <div id="inv-body"><p class="hint">Reading the code…</p></div>
-    </div>`;
+    </div></div></div>`;
 
   // The number sits beside the bar, never on it: on the fill it was 1.4-3.1:1.
   const heatBar = pct => {
@@ -94,22 +96,22 @@
     $("#motor-rows", root).innerHTML = rows.length ? rows.map(m => {
       const limit = m.limit < m.base_limit
         ? `<b style="color:var(--bad)">${fmt(m.limit, 0)}</b> of ${fmt(m.base_limit, 0)} A`
-        : `limit ${fmt(m.base_limit, 0)} A`;
+        : `${fmt(m.base_limit, 0)} A`;
       const ovr = m.override_s > 0 ? ` <span class="chip info">override ${fmt(m.override_s, 0)} s</span>` : "";
       // Red: broken now. Amber: happened earlier, or a stage short of a cut.
       const row = m.flags ? "flagged" : (m.history || m.stage === "WARN" || m.stage === "DERATE") ? "history" : "";
       return `<tr class="${row}">
-        <td><b>${esc(m.name)}</b><div class="muted small">${esc(m.kind)}</div></td>
+        <td><b>${esc(m.name)}</b></td><td class="muted small">${esc(m.kind)}</td>
         <td>${m.stage === "OK" ? `<span class="muted">OK</span>` : `<span class="chip ${STAGE_CLASS[m.stage] || ""}">${esc(m.stage)}</span>`}${ovr}</td>
         <td>${heatBar(Number.isFinite(m.amps) ? m.heat_pct : NaN)}</td>
         <td class="num">${Number.isFinite(m.temp) ? fmt(m.temp, 0) + " °C" : "–"}</td>
-        <td class="num">${Number.isFinite(m.amps) ? fmt(m.amps, 1) + " A" : "–"}<div class="muted small">${limit}</div></td>
+        <td class="num">${Number.isFinite(m.amps) ? fmt(m.amps, 1) + " A" : "–"}</td><td class="num small">${limit}</td>
         <td class="num">${m.stall_s > 0 ? fmt(m.stall_s, 1) + " s" : "–"}</td>
         <td class="small">${STAGE_DO[m.stage] ? `<b>${STAGE_DO[m.stage]}</b>${m.cause ? ": " : ""}` : ""}${esc(m.cause || "")}
           ${m.flags ? `<div class="bad-ink"><b>Broken now:</b> ${esc(m.flags)}</div>` : ""}
           ${m.history ? `<div class="warn-ink">Earlier: ${esc(m.history)}</div>` : ""}</td>
       </tr>`;
-    }).join("") : `<tr><td colspan="7" class="muted">No motors are being watched${L.connected ? "" : " (not connected)"}.</td></tr>`;
+    }).join("") : `<tr><td colspan="9" class="muted">No motors are being watched${L.connected ? "" : " (not connected)"}.</td></tr>`;
 
     const events = guard.events || [];
     $("#motor-events", root).innerHTML = events.length

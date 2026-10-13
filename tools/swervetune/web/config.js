@@ -19,8 +19,8 @@
     const pp = F.filter(f => String(f.id || "").startsWith("pathplanner"));
     const tip = (key, text) => `<span class="term" tabindex="0" data-tip="${key}" data-quiet>${esc(text)}</span>`;
     const yes = v => v === true ? "<b>yes</b>" : v === false ? "no" : esc(String(v));
-    root.innerHTML = `${HowTo.slot("config")}<div class="grid2" style="margin-top:12px">
-      <div class="stack">
+    root.innerHTML = `<div class="jobs" data-jobs="config">${HowTo.slot("config")}<div class="job-area">
+      <div class="stack" id="cfg-files">
         <div class="panel"><h2 data-tip="config.summary">${esc(L.project)} <span class="muted small">team ${esc(s.team)}</span></h2>
           <table class="t"><tbody>
             <tr><th scope="row">Drive</th><td>${esc(s.drive_motor)} at ${s.drive_gear}:1 on ${s.wheel_diameter_in} in wheels</td></tr>
@@ -52,7 +52,7 @@
           "<b>Warnings</b> next: read them. Most are settled by the Guide's tests, which measure what the files can only guess.",
           "<b>Open the Guide</b> or <b>Open the tuner</b> takes you to the step that settles a finding."],
           good: "no errors. Warnings may stay until the Guide's tests have run." })}
-        <div>${own.length ? own.map(([f, i]) => `<div class="finding" data-level="${esc(f.level)}">
+        <div class="cfg-list">${own.length ? own.map(([f, i]) => `<div class="finding" data-level="${esc(f.level)}">
           <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
           <div class="why">${Learn.link(f.why, 3)}</div>
           ${f.fix && f.fix.kind === "edit" ? `<div class="row"><button class="btn small" data-fix="${i}" data-tip="config.fix" data-quiet>Preview the fix</button><span class="small muted">${esc(f.fix.file)}: ${esc(f.fix.path.join("."))} = ${esc(JSON.stringify(f.fix.value))}</span></div>` : ""}
@@ -62,9 +62,8 @@
         </div>`).join("") : `<span class="level ok">ok</span> Nothing found in the swerve files.`}
         ${pp.length ? `<div class="finding"><div class="head"><span class="level ${pp.some(f => f.level === "error") ? "error" : "warn"}">auto</span><span class="title">${pp.length} PathPlanner item${pp.length === 1 ? "" : "s"} for whoever writes the autos</span></div>
           <div class="row"><button class="btn small" data-pp="1" data-tip="config.see-pp">See the PathPlanner check</button></div></div>` : ""}</div></div>
-    </div>
-    <div class="panel" id="pp-panel" style="margin-top:12px"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>
-    <div class="panel" id="dl-panel" style="margin-top:12px"><h2 data-tip="config.designs">Mechanism designs</h2>
+    <div class="panel" id="pp-panel"><h2 data-tip="config.pp">PathPlanner against the code</h2><div id="pp-body"><p class="hint">Checking…</p></div></div>
+    <div class="panel" id="dl-panel"><h2 data-tip="config.designs">Mechanism designs</h2>
       ${HowTo.steps({ note: `Designed a mechanism in <a href="https://www.reca.lc/" target="_blank" rel="noopener">ReCalc</a> or
         <a href="https://ambcalc.com/" target="_blank" rel="noopener">AMBcalc</a>? The link holds the whole design: the tool reads it, attaches it to the motors it is for, and checks it against the code and the robot.`,
         steps: ["In the calculator, press Copy Link (or copy the address bar).", "Paste it below and press <b>Read it</b>.",
@@ -77,8 +76,8 @@
       <h3 data-tip="config.dl-saved">Saved designs</h3>
       <div class="row small" id="dl-log-row"></div>
       <div id="dl-saved"><p class="hint">Checking…</p></div>
-    </div>`;
-    $$("[data-pp]", root).forEach(b => b.onclick = () => $("#pp-panel", root).scrollIntoView({ behavior: "smooth" }));
+    </div></div></div>`;
+    $$("[data-pp]", root).forEach(b => b.onclick = () => HowTo.go({ tab: "config", panel: "pp-panel" }));
     paintPathPlanner();
     Designs.mount();
     HowTo.paint("config");
@@ -105,16 +104,16 @@
         steps: ["Close the PathPlanner app first: it writes its own values back when it closes.",
           "Press <b>Make PathPlanner match the code</b> and check the diff.", "Rows marked <b>measure it</b> (mass, moment of inertia) come from Calibrate: measure them there, then come back."],
         good: "every row the same; the named commands each registered (\"Shoot B\" is kept on purpose)." })}
-      <div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
+      <div class="pp-cols"><div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
         ${(r.rows || []).slice().sort((a, b) => (a.status === "ok") - (b.status === "ok")).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${esc(String(x.pathplanner ?? "–"))}</td>
           <td class="num mono">${esc(String(x.code ?? "–"))}</td><td class="small">${esc(x.source)}</td>
           <td>${x.status === "ok" ? `<span class="muted small">✓ same</span>` : `<span class="chip ${STATUS[x.status] || ""}" ${x.status === "unknown" ? `data-tip="config.measure" data-quiet` : ""}>${esc(x.status === "unknown" ? "measure it" : x.status)}</span>`}</td></tr>`).join("")}
-      </tbody></table></div>
+      </tbody></table></div><div class="stack">
       ${(r.fixes || []).length ? `<div class="row"><button class="btn primary" id="pp-fix" data-tip="config.ppfix">Make PathPlanner match the code…</button>
         <span class="small muted">Writes ${r.fixes.length} setting${r.fixes.length === 1 ? "" : "s"} in settings.json. Close the PathPlanner app first, or it writes its old values back.</span></div>` : ""}
       <p class="small muted">What this robot can do, for the path limits: ${fmt(cap.max_speed, 2)} m/s, ${fmt(cap.max_accel, 1)} m/s² (limited by ${esc(cap.accel_limited_by || "")}), turning ${fmt(cap.max_ang_vel_deg, 0)} deg/s.</p>
       ${F.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
-        <div class="why">${Learn.link(f.why, 2)}</div></div>`).join("") || `<p><span class="level ok">ok</span> PathPlanner and the code agree.</p>`}`;
+        <div class="why">${Learn.link(f.why, 2)}</div></div>`).join("") || `<p><span class="level ok">ok</span> PathPlanner and the code agree.</p>`}</div></div>`;
     const fix = $("#pp-fix", box);
     if (fix) fix.onclick = async () => {
       if (await App.previewAndSave({ kind: "pathplanner" }, "Make PathPlanner match the code")) paintPathPlanner();

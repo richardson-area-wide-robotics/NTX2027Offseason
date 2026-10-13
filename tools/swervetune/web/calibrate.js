@@ -8,8 +8,9 @@
   let spots = [], surveyTimer = null;
 
   root.innerHTML = `
-    <div class="stack">
+    <div class="jobs" data-jobs="calibrate">
       ${HowTo.slot("calibrate")}
+      <div class="job-area">
       <div class="panel" id="cal-positions">
         <h2 data-tip="cal.positions">1. Module positions</h2>
         <div class="grid2">
@@ -162,7 +163,7 @@
         <div id="fs-out"></div>
         ${HowTo.nextLine("field")}
       </div>
-    </div>`;
+    </div></div>`;
 
   function findings(F) {
     return (F || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
