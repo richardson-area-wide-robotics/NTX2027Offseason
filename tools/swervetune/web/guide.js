@@ -169,7 +169,7 @@ const Guide = (() => {
     { id: "straight", learn: ["gear_ratio", "offset"], title: "Straight line", where: "On the floor, 3 m clear",
       why: "The acceptance test. With no heading correction, whatever the robot does is the drivetrain itself.",
       need: ["A tape measure and a tape mark at the start (unless AprilTags are on)", "Deadman held"],
-      todo: ["Mark the floor at the robot's center.", "Open the tuner (Straight line, Robot) and Run.", "Measure where it stopped; enter it in Runs to get the wheel scale."],
+      todo: ["Mark the floor at the robot's center.", "Open the tuner (Straight line, Robot) and Run. Without AprilTags it stops at the far end.", "Measure from the start mark to the robot's center where it stopped, in meters; enter it in Runs to get the wheel scale."],
       tune: "straight",
       status: () => { const r = lastRun("straight", "FIELD"); return !r ? "todo" : r.score === 100 ? "done" : "attention"; } },
 

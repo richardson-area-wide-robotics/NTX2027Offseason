@@ -517,6 +517,22 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
+  void changingTheEnvironmentMidTestStopsIt() {
+    envMode.set("BLOCKS");
+    loop(2);
+    send("steer_step", "FL", "hold_s", "2", "settle_s", "0.5");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    loop(10);
+    assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
+    envMode.set("UNSET"); // what someone would naturally do when it looks wrong
+    loop(2);
+    assertEquals(SwerveTune.State.ABORTED, tune.state());
+    assertTrue(tune.message().contains("environment changed"), tune.message());
+    assertTrue(io.stopped);
+  }
+
+  @Test
   void noGainChangesWithTheFmsAttached() {
     ds.fms = true;
     loop(1);

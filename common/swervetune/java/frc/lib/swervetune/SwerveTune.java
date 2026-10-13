@@ -996,6 +996,14 @@ public final class SwerveTune {
       return;
     }
     boolean guarded = proc.needsEnabled() || proc.spinsWheels();
+    // The environment is fixed when the test is accepted. Changing it mid-test (to "unset" when
+    // something looks wrong, say) would otherwise switch off the field checks while it still drives.
+    TestEnvironment declared = environment();
+    if (declared != ctx.env) {
+      finish(State.ABORTED, "The environment changed from " + ctx.env + " to " + declared
+          + " during the test. Set it before a test, never during one.");
+      return;
+    }
     SafetySupervisor.Inputs in = gatherInputs(now);
 
     if (state == State.WAITING) {

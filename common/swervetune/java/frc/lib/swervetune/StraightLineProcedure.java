@@ -97,7 +97,9 @@ final class StraightLineProcedure implements Procedure {
   public void start(TestContext ctx) {
     pick(ctx);
     double go = profileSeconds(distanceM, speedMps, accel);
-    boolean comeBack = ctx.args.flag("return", true);
+    // With AprilTags the camera measures the run, so the robot can come back to the start. Without
+    // them a person measures with a tape, so it stops at the far end where they can measure it.
+    boolean comeBack = ctx.args.flag("return", ctx.visionInUse);
     timeline = new Timeline().add("align", 0.6, 0).add("out", go, 1).add("hold", 1.5, 0);
     if (comeBack) {
       timeline.add("back", go, -1).add("hold", 1.0, 0);

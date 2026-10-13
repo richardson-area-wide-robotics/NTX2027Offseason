@@ -97,6 +97,15 @@ def _clamp_ratio(new, old, lo=0.5, hi=2.0):
     return max(old * lo, min(old * hi, new))
 
 
+def _worse(cur, value):
+    """The worse of a running worst and a new value, where "never" (NaN: the step never got there)
+    is worst of all. ``max(0.0, nan)`` is 0.0 in Python, which once graded a step that never
+    finished as "0 ms, met"."""
+    if value is None:
+        return cur
+    return float("inf") if not A.finite(value) else max(cur, value)
+
+
 def _grade(name, value, target, lower_is_better=True):
     met = A.finite(value) and (value <= target if lower_is_better else value >= target)
     return {"name": name, "value": value, "target": target, "met": bool(met)}
@@ -172,10 +181,10 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
                 "encoder, a breaker, or kP so small the motor cannot overcome friction.",
                 {"type": "troubleshoot", "symptom": "pod_not_moving"}))
         L, S = summ.get("large", {}), summ.get("small", {})
-        worst["rise"] = max(worst["rise"], L.get("rise_time", 0) or 0)
+        worst["rise"] = _worse(worst["rise"], L.get("rise_time"))
         worst["os"] = max(worst["os"], summ["all"].get("overshoot_pct", 0) or 0)
-        worst["settle"] = max(worst["settle"], L.get("settling_time", 0) or 0)
-        worst["sse"] = max(worst["sse"], S.get("steady_state_error", 0) or 0)
+        worst["settle"] = _worse(worst["settle"], L.get("settling_time"))
+        worst["sse"] = _worse(worst["sse"], S.get("steady_state_error"))
         worst["osc"] = max(worst["osc"], summ["all"].get("oscillations", 0) or 0)
         worst["noise"] = max(worst["noise"], summ["all"].get("steady_state_noise", 0) or 0)
         worst["sat"] = max(worst["sat"], L.get("saturation", 0) or 0)
@@ -330,9 +339,10 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
             "ok", "Steering meets every target",
             "Save these gains so they survive a restart. Then run it once more on the floor if this "
             "was on blocks.", {"type": "save", "what": "steer_pid"}))
+    rise = f"{worst['rise'] * 1000:.0f} ms" if A.finite(worst["rise"]) else "never finished"
+    sse = f"{worst['sse']:.2f}°" if A.finite(worst["sse"]) else "never settled"
     report["summary"] = (f"Steering: {met}/{len(report['targets'])} targets met; large-step rise "
-                         f"{worst['rise'] * 1000:.0f} ms, overshoot {worst['os']:.0f}%, small-step "
-                         f"error {worst['sse']:.2f}°.")
+                         f"{rise}, overshoot {worst['os']:.0f}%, small-step error {sse}.")
     _practice_note(result, report)
     return _finish(report)
 
@@ -818,6 +828,16 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
     report["measured"] = {"odometry_forward_m": fwd, "odometry_lateral_m": lat,
                           "heading_change_deg": dh, "commanded_m": dist}
     report["targets"] = [_grade("heading change (deg)", abs(dh), 1.0)]
+    if measured_forward_m is not None and fwd and not (0.9 <= measured_forward_m / fwd <= 1.1):
+        # Wheels wear a few percent; 10% off is a measuring mistake (measured after the robot came
+        # back, the wrong mark, feet for meters), never a wheel size to write into the files.
+        F.append(finding(
+            "error", f"The tape says {measured_forward_m:.3f} m but the robot went out {fwd:.3f} m",
+            "That is too far apart to be the wheels. Measure from the start mark to the robot's center "
+            "where it stopped at the far end, in meters, and enter it again.",
+            {"type": "troubleshoot", "symptom": "auto_inaccurate"}))
+        report["measured"]["tape_forward_m"] = measured_forward_m
+        measured_forward_m = None
     if measured_forward_m is not None:
         report["measured"]["tape_forward_m"] = measured_forward_m
         scale = measured_forward_m / fwd if fwd else float("nan")
@@ -1355,7 +1375,11 @@ def analyze(result, gains=None, **kw):
     """Picks the report for a test result (a dict from TestResult.to_json or a practice run), and
     adds what the run says about the battery to any test that spun the wheels."""
     rep = _analyze_test(result, gains, **kw)
-    if result.get("test") in WHEEL_TESTS and isinstance(rep.get("findings"), list)             and len((result.get("channels") or {}).get("t", [])) >= 5:
+    outcome = result.get("outcome")
+    if outcome and outcome != "DONE" and isinstance(rep.get("findings"), list):
+        rep = _stopped(result, rep)
+    if result.get("test") in WHEEL_TESTS and isinstance(rep.get("findings"), list) \
+            and len((result.get("channels") or {}).get("t", [])) >= 5:
         kv = ks = None
         if result.get("test") == "drive_ff" and rep.get("env") != "BLOCKS":
             good = [f for f in (rep.get("modules") or {}).values() if f.get("ok")]
@@ -1364,6 +1388,25 @@ def analyze(result, gains=None, **kw):
         b = battery.report(result, kv, ks, kw.get("max_speed"))
         rep["battery"] = b["battery"]
         rep["findings"].extend(b["findings"])
+    return rep
+
+
+def _stopped(result, rep):
+    """A run that was stopped part-way: no score, no gains to change, and the next step is to find
+    out why it stopped. What it did measure stays, for reading only."""
+    why = result.get("message") or "it was stopped before the end"
+    for f in rep["findings"]:
+        f.pop("action", None)
+    stop = finding("error", f"Stopped before it finished: {why}",
+                   "Its numbers cover only part of the test, so they can't be scored or used to change "
+                   "gains. Find out why it stopped (the reason above), fix that, and run it again.",
+                   {"type": "stop", "reason": why})
+    rep["findings"].insert(0, stop)
+    rep["targets"] = []
+    rep["score"] = None
+    rep["cost"] = None
+    rep["next"] = stop
+    rep["summary"] = "Stopped: " + why
     return rep
 
 
