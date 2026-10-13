@@ -26,8 +26,8 @@ is in a single file. These are the files that change, counted from what each one
 | SystemCore's addresses (hostname `robot`, USB and Wi-Fi addresses) | `link.py`'s `candidate_hosts` already tries them | None |
 
 `Sampler`, `SafetySupervisor`, `MotorGuard`'s logic, `VisionGate` and `VisionTrust` touch no WPILib
-API at all. In the library that is about a dozen files of 38; in the robot projects, nearly
-every file.
+API at all. In the library that is about a dozen files of 40 (38 in `swervetune`, 2 in its
+PhotonVision adapter); in the robot projects, nearly every file.
 
 ## The porting checklist
 
