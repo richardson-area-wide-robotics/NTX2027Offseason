@@ -704,6 +704,38 @@ class SwerveTuneHarnessTest {
     assertTrue(tune.cameraMount("left").isEmpty());
   }
 
+  private VisionSource oneGoodPose() {
+    return new VisionSource() {
+      @Override
+      public List<Observation> poll() {
+        double[] p = io.pose();
+        return List.of(new Observation(p[0] + 0.05, p[1], 0.0, p[2], now[0], 2, 0.05, 2.0, "front"));
+      }
+    };
+  }
+
+  @Test
+  void visionPosesStayOutOfThePoseEstimatorUntilSwitchedOn() {
+    tune.setVisionSource(oneGoodPose());
+    loop(10);
+    assertEquals(0, io.visionFed.size(), "off by default: a wrong mount would pull the pose off");
+    assertEquals(0, tune.visionPosesFed());
+  }
+
+  @Test
+  void switchedOnAcceptedPosesFeedThePoseEstimatorWithTheirTrust() {
+    SwerveTuneConfig on = SwerveTuneConfig.parse("{\"vision\": {\"cameras\": [\"front\"], \"feedPoseEstimator\": true},"
+        + " \"cameras\": {\"front\": {\"x\": 0.3, \"y\": 0, \"z\": 0.5}}}");
+    tune = new SwerveTune(io, nt, ds, () -> now[0], "test robot", on, false, owner, true);
+    tune.setVisionSource(oneGoodPose());
+    loop(10);
+    assertTrue(io.visionFed.size() >= 5, "fed " + io.visionFed.size());
+    double[] f = io.visionFed.get(0);
+    assertEquals(0.02 + 0.04 * 4 / 2, f[4], 1e-9, "two tags at 2 m");
+    assertEquals(tune.visionPosesFed(), io.visionFed.size());
+    assertEquals(List.of("front"), tune.visionCameras());
+  }
+
   @Test
   void everyTagInTheNewestFramesIsPublishedForCalibration() {
     tune.setVisionSource(new VisionSource() {

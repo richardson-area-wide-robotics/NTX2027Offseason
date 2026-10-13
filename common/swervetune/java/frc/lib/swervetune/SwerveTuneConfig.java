@@ -93,6 +93,21 @@ public final class SwerveTuneConfig {
   public final Map<String, double[]> cameras = new LinkedHashMap<>();
 
   /**
+   * The cameras the robot uses, by their PhotonVision names ({@code "vision": {"cameras":
+   * ["front"]}}). Empty: no camera. Listing one is all it takes once PhotonLib is in the build:
+   * {@code PhotonVisionSetup.install} makes a source for each.
+   */
+  public final List<String> visionCameras = new ArrayList<>();
+
+  /**
+   * Whether accepted vision poses go into the drivetrain's own pose estimator ({@code "vision":
+   * {"feedPoseEstimator": true}}), which every auto and field-relative drive uses. Off until a
+   * camera's mount is measured and its poses look right on the Live tab: a wrong mount pulls the
+   * robot's idea of where it is off by the same mistake.
+   */
+  public boolean feedPoseEstimator = false;
+
+  /**
    * The team's batteries, by the number written on each: the choices in the dashboard's Battery
    * drop-down. Empty means 1 to 12.
    */
@@ -225,6 +240,25 @@ public final class SwerveTuneConfig {
         continue;
       }
       c.cameras.put(e.getKey(), v);
+    }
+
+    Map<String, Object> vision = map(m.get("vision"));
+    if (vision.get("cameras") instanceof List<?> list) {
+      for (Object o : list) {
+        String n = str(o, "").trim();
+        if (!n.isEmpty() && !c.visionCameras.contains(n)) {
+          c.visionCameras.add(n);
+        }
+      }
+    }
+    c.feedPoseEstimator = Boolean.TRUE.equals(vision.get("feedPoseEstimator"));
+    if (c.feedPoseEstimator) {
+      for (String n : c.visionCameras) {
+        if (!c.cameras.containsKey(n)) {
+          c.warnings.add("vision: camera " + n + " has no measured mount in \"cameras\", so its poses"
+              + " are not fed to the pose estimator. Measure it on the Calibrate tab.");
+        }
+      }
     }
 
     Map<String, Object> t = map(m.get("testLimits"));

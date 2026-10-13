@@ -13,6 +13,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.studica.frc.AHRS;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -315,6 +316,13 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   public double[] pose() {
     Pose2d p = drive.getPose();
     return new double[] {p.getX(), p.getY(), p.getRotation().getDegrees()};
+  }
+
+  @Override
+  public void addVisionMeasurement(double xM, double yM, double headingDeg, double timestampS,
+      double sdXyM, double sdHeadingRad) {
+    drive.addVisionMeasurement(new Pose2d(xM, yM, Rotation2d.fromDegrees(headingDeg)), timestampS,
+        VecBuilder.fill(sdXyM, sdXyM, sdHeadingRad));
   }
 
   @Override

@@ -196,6 +196,7 @@ public final class SwerveTune {
   private boolean lastSimEnable;
   private Supplier<Optional<Pose2d>> vision;
   private VisionSource visionSource;
+  private long visionFed;
   private final VisionGate visionGate = new VisionGate();
   private double[] lastVisionPose;
   private double lastVisionTimeS = Double.NEGATIVE_INFINITY;
@@ -588,6 +589,11 @@ public final class SwerveTune {
   /** Applies what {@code swervetune.json} asks for, once, and says what it did. */
   private List<String> applyStartupConfig() {
     List<String> report = new ArrayList<>(config.warnings);
+    if (!config.visionCameras.isEmpty()) {
+      report.add("Vision: " + String.join(", ", config.visionCameras) + (config.feedPoseEstimator
+          ? "; accepted poses feed the pose estimator"
+          : "; poses shown on the Live tab only (vision.feedPoseEstimator is off)"));
+    }
     if ("absolute".equals(config.steerFeedback)) {
       report.add("Steer feedback: " + io.useAbsoluteSteerFeedback().message());
     }
@@ -666,6 +672,11 @@ public final class SwerveTune {
         lastVisionPose = new double[] {o.xM(), o.yM(), o.headingDeg()};
         lastVisionTimeS = o.timestampS();
       }
+      if (v.accepted() && config.feedPoseEstimator) {
+        double[] sd = VisionTrust.stdDevs(o);
+        io.addVisionMeasurement(o.xM(), o.yM(), o.headingDeg(), o.timestampS(), sd[0], sd[1]);
+        visionFed++;
+      }
     }
     liveVisionCounts.set(new double[] {visionGate.accepted(), visionGate.rejected()});
     liveVisionReject.set(visionGate.lastReject());
@@ -680,6 +691,16 @@ public final class SwerveTune {
     }
     liveArray(SwerveTuneTopics.LIVE_VISION_SIGHTINGS).set(flat);
     liveStrings(SwerveTuneTopics.LIVE_VISION_SIGHTING_CAMERAS).set(cams);
+  }
+
+  /** The cameras swervetune.json's {@code "vision"} lists, for {@code PhotonVisionSetup}. */
+  public List<String> visionCameras() {
+    return List.copyOf(config.visionCameras);
+  }
+
+  /** Camera poses handed to the drivetrain's pose estimator since boot. */
+  public long visionPosesFed() {
+    return visionFed;
   }
 
   /**

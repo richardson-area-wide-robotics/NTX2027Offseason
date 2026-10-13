@@ -72,4 +72,48 @@ public interface VisionSource {
   default List<TagSighting> sightings() {
     return List.of();
   }
+
+  /** Several cameras as one source: every camera's observations and sightings, together. */
+  static VisionSource all(List<VisionSource> sources) {
+    List<VisionSource> list = List.copyOf(sources);
+    return new VisionSource() {
+      @Override
+      public List<Observation> poll() {
+        List<Observation> out = new java.util.ArrayList<>();
+        for (VisionSource s : list) {
+          out.addAll(s.poll());
+        }
+        return out;
+      }
+
+      @Override
+      public List<TagSighting> sightings() {
+        List<TagSighting> out = new java.util.ArrayList<>();
+        for (VisionSource s : list) {
+          out.addAll(s.sightings());
+        }
+        return out;
+      }
+    };
+  }
+
+  /**
+   * A camera whose mount hasn't been measured: its tag sightings still reach the Calibrate tab
+   * (they are in the camera's own frame, so the mount doesn't matter to them), but its robot poses,
+   * worked out from a mount nobody measured, are thrown away.
+   */
+  static VisionSource sightingsOnly(VisionSource source) {
+    return new VisionSource() {
+      @Override
+      public List<Observation> poll() {
+        source.poll();
+        return List.of();
+      }
+
+      @Override
+      public List<TagSighting> sightings() {
+        return source.sightings();
+      }
+    };
+  }
 }

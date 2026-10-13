@@ -124,6 +124,13 @@ public interface DrivetrainIO {
   /** Odometry pose, {@code {x m, y m, heading deg}}. */
   double[] pose();
 
+  /**
+   * One camera pose for the drivetrain's own pose estimator, with how far to trust it (standard
+   * deviations: meters for x and y, radians for heading). Does nothing on a drivetrain without one.
+   */
+  default void addVisionMeasurement(double xM, double yM, double headingDeg, double timestampS,
+      double sdXyM, double sdHeadingRad) {}
+
   double busVolts();
 
   /**

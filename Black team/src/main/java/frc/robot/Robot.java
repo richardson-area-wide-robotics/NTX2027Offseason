@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.lib.swervetune.AkLogging;
 import frc.lib.swervetune.SwerveTune;
+import frc.lib.swervetune.photonvision.PhotonVisionSetup;
 import org.littletonrobotics.junction.LoggedRobot;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Shooter;
@@ -26,6 +27,9 @@ public class Robot extends LoggedRobot {
     // already watched.
     shooter.watchMotors(tune::watchMotor);
     intake.watchMotors(tune::watchMotor);
+    // Cameras: whatever swervetune.json's "vision" lists (none yet). Fitting one is a config change;
+    // see docs/VISION_LUMA_PHOTONVISION.md.
+    PhotonVisionSetup.install(tune);
     // Back button: hold off heat shutoffs for 20 s in a match (stalls still cut out).
     controller.back().onTrue(Commands.runOnce(() -> tune.overrideMotorShutoffs(20))
         // A short buzz says it took; the dashboard shows "Heat override ON" with the time left.

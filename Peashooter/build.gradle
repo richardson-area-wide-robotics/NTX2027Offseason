@@ -78,7 +78,9 @@ dependencies {
 // The swerve tuning library in ../common is shared by every robot in this repo, so both
 // projects compile the same copy rather than each carrying its own. See ../common/README.md.
 sourceSets {
-    main { java { srcDir '../common/swervetune/java' } }
+    // The PhotonVision adapter needs PhotonLib (vendordeps/photonlib.json, pinned to the 2026
+    // release the cameras run). With no camera listed in swervetune.json it does nothing.
+    main { java { srcDir '../common/swervetune/java'; srcDir '../common/swervetune-photonvision/java' } }
     test { java { srcDir '../common/swervetune/test' } }
 }
 

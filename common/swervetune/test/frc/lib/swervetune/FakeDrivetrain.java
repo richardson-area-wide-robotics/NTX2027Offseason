@@ -243,6 +243,14 @@ final class FakeDrivetrain implements DrivetrainIO {
     return new double[] {x, y, heading};
   }
 
+  final java.util.List<double[]> visionFed = new java.util.ArrayList<>();
+
+  @Override
+  public void addVisionMeasurement(double xM, double yM, double headingDeg, double timestampS,
+      double sdXyM, double sdHeadingRad) {
+    visionFed.add(new double[] {xM, yM, headingDeg, timestampS, sdXyM, sdHeadingRad});
+  }
+
   @Override
   public double busVolts() {
     return bus;
