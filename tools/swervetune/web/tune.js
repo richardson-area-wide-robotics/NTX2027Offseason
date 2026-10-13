@@ -508,10 +508,13 @@ const Tune = (() => {
     if (!rep) { box.innerHTML = `<span class="hint">No analysis for this run.</span>`; return; }
     const targets = (rep.targets || []).map(t => `<div class="target"><span>${t.met ? "✓" : "✗"}</span>
       <span>${esc(t.name)}</span><span class="v">${typeof t.value === "number" ? fmt(t.value, 3) : esc(t.value)} / ${esc(t.target)}</span></div>`).join("");
+    // rep.next is a copy of one finding after JSON parsing, so find it by content, not identity.
+    const nextIdx = rep.next ? (rep.findings || []).findIndex(f => f.title === rep.next.title
+      && JSON.stringify(f.action || null) === JSON.stringify(rep.next.action || null)) : -1;
     const findings = (rep.findings || []).map((f, i) => `<div class="finding">
       <div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
       <div class="why">${Learn.link(f.why, 3)}</div>
-      ${f.action ? `<div class="row"><button class="btn small ${f === rep.next ? "primary" : ""}" data-i="${i}">${f === rep.next ? "Try this" : "Do this"}</button>
+      ${f.action ? `<div class="row"><button class="btn small ${i === nextIdx ? "primary" : ""}" data-i="${i}">${i === nextIdx ? "Try this" : "Do this"}</button>
         <span class="small muted">${esc(describeAction(f.action))}</span></div>` : ""}</div>`).join("");
     box.innerHTML = `<div class="stack">
       <p><b>${esc(rep.summary || "")}</b></p>

@@ -8,16 +8,19 @@ const Guide = (() => {
 
   const lastRun = (test, env, pred) => runsCache.find(r => r.test === test && !r.practice && (!env || r.env === env) && (!pred || pred(r)));
 
+  // The swerve configuration's findings: PathPlanner's auto checks are for whoever writes the autos.
+  const swerveLint = () => ((App.lint && App.lint.findings) || []).filter(f => !String(f.id || "").startsWith("pathplanner"));
+
   const STEPS = [
     { id: "connect", learn: ["control_loop", "gear_ratio", "current_limit"], title: "Connect and check the configuration", where: "Anywhere",
       why: "Most swerve problems are a wrong number in a JSON file. The tool reads every file, does the physics, and lists what does not add up - before anything moves.",
       need: ["The laptop on the robot's network (or the simulator running)"],
-      todo: ["Pick the robot code at the top (Black team or Peashooter).", "Press Connect.", "Read every red and yellow item in the Config tab. Fix the red ones before going on."],
-      status: () => !App.connected() ? "todo" : ((App.lint && App.lint.findings) || []).some(f => f.level === "error") ? "attention" : "done",
+      todo: ["Pick the robot code at the top (Black team or Peashooter).", "Press Connect.", "Read every red and yellow item in the Config tab. Fix the red swerve ones before going on; auto (PathPlanner) problems don't block swerve tuning."],
+      status: () => !App.connected() ? "todo" : swerveLint().some(f => f.level === "error") ? "attention" : "done",
       body: () => {
-        const f = (App.lint && App.lint.findings) || [];
+        const f = swerveLint(), auto = ((App.lint && App.lint.findings) || []).length - f.length;
         const e = f.filter(x => x.level === "error").length, w = f.filter(x => x.level === "warn").length;
-        return `<p>${App.connected() ? "Connected." : "Not connected."} The configuration has <b>${e}</b> errors and <b>${w}</b> warnings.</p>
+        return `<p>${App.connected() ? "Connected." : "Not connected."} The swerve configuration has <b>${e}</b> errors and <b>${w}</b> warnings${auto > 0 ? `, plus ${auto} auto (PathPlanner) items for whoever writes the autos` : ""}.</p>
           <div class="row"><button class="btn" data-go="config">Open the Config tab</button></div>`;
       } },
 
@@ -31,7 +34,8 @@ const Guide = (() => {
     { id: "hand", learn: ["hand_check", "coast_mode", "inversion", "motor_encoder", "absolute_encoder", "gear_ratio"], title: "Hand check: every direction", where: "Robot disabled, motors coasting",
       why: "Every later test assumes it knows which way is positive. A backwards sign makes a module run away or fight the others, and it looks like a tuning problem. Turning things by hand finds it in a minute, with nothing powered.",
       need: ["Robot disabled", "Somewhere to stand at each corner"],
-      todo: ["Press Record wheels (20 s). Turn each module so its wheel points straight ahead, then roll that wheel so its TOP moves toward the front of the robot, about one turn. Do all four, one direction only.",
+      todo: ["First turn every module so its wheel points straight ahead with the bevel gear (the gear on the side of the wheel) facing the robot's LEFT side. A module turned the other way reads backwards, and flipping its setting would hide the real mistake.",
+             "Press Record wheels (20 s). Roll each wheel so its TOP moves toward the front of the robot, about one turn. Do all four, one direction only.",
              "Press Record steering (20 s). Turn each module counter-clockwise, seen from above, about a quarter turn. All four, one direction only.",
              "Every row must say AGREES, and 'motor per module' must be 1.00 ± 0.03."],
       status: () => progress.hand === "pass" ? "done" : progress.hand === "fail" ? "attention" : "todo",

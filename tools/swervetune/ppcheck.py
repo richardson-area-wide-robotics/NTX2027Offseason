@@ -236,12 +236,13 @@ def check(project):
                       "why": "The auto fails to load. Renamed or deleted in the PathPlanner app?"})
     registered = set(re.findall(r'NamedCommands\.registerCommand\(\s*"([^"]+)"', code))
     for x in sorted(set(named_used) - registered):
-        close = [r for r in registered if r.lower().split()[0:1] == x.lower().split()[0:1]]
+        # Never suggest renaming it: only the auto's author knows which command it means (the team
+        # keeps "Shoot B" by name for exactly that reason).
         F.append({"level": "error", "kind": "names",
                   "title": f"Named command '{x}' is used by {', '.join(sorted(named_used[x]))} but the code never registers it",
                   "why": "PathPlanner skips it with only a console warning, so that step of the auto silently "
-                         "does nothing. Register it with NamedCommands.registerCommand"
-                         + (f", or use one that exists ({', '.join(sorted(close))})" if close else "") + "."})
+                         "does nothing. Ask whoever wrote the auto which command it means, then register it in "
+                         "the robot code with NamedCommands.registerCommand. This doesn't affect swerve tuning."})
     for x in sorted(registered - set(named_used)):
         F.append({"level": "info", "kind": "names", "title": f"Named command '{x}' is registered but no auto uses it",
                   "why": "Harmless; listed so a typo on either side is easy to spot."})
