@@ -17,16 +17,17 @@ steering, slip current, feedforward, drive gains, then autos.
 
 ## Findings
 
-### 1. Peashooter's autos plan for a different robot (fix before any auto runs)
+### 1. Peashooter's autos: the robot model now matches, except mass and MOI
 
-PathPlanner's robot config says Kraken X60 at 5.143:1 on a 48 mm wheel radius, modules 0.273 m
-from center, 5.45 m/s, 74 kg and 6.883 kg·m² (the app's defaults). YAGSL says NEO at 5.50:1, 38.1
-mm, 0.3048 m, 4.12 m/s. PathPlanner will plan accelerations and turns this robot can't make; the
-robot falls behind every path and the holonomic controller (kP 5) chases the error.
+PathPlanner's robot config described another robot (Kraken X60 at 5.143:1, a 48 mm wheel radius).
+On this branch it now matches the code (decision 15): NEO Vortex at 5.50:1, 38.1 mm wheel radius,
+modules 0.3048 m from center, 3.9 m/s, 40 A. Mass and moment of inertia are still the app's
+defaults (74 kg, 6.883 kg·m²), so PathPlanner plans accelerations and turns from a guess. "Kishores
+Auto" also runs "Shoot B", which the code never registers, so PathPlanner skips it without a word
+(kept by name, decision 16).
 
-**Do:** the Config tab lists each mismatch; fix them in PathPlanner's Settings, Robot Config. Weigh
-the robot (with bumpers and battery) and put `robotMassKg` in `swervetune.json`; until MOI is
-measured, the tool's estimate (6.62 kg·m², a 0.85 m slab) beats the default.
+**Do:** weigh the robot with bumpers and battery and put `robotMassKg` in `swervetune.json`; run
+spin_ff for the moment of inertia; then the PathPlanner check offers both edits.
 
 ### 2. Peashooter's sticks may be reversed (check on blocks)
 
@@ -43,12 +44,12 @@ comment. The Troubleshoot tab's "The robot goes the wrong way" walks through it.
 
 ### 3. No feedforward is measured, and the drive gains are at the extremes
 
-YAGSL's default drive feedforward is kV = 12 V divided by the top speed the code gives it (3.9 m/s
-on Peashooter, 4.1 on Black team): about 3 V per m/s, with no kS. A Vortex at this gearing needs
-nearer 2.4 V per m/s (12 V over its 4.9 m/s free speed), so the default asks for about 25% too much
-voltage at speed, and feedback has to pull it back. On carpet, kS (the voltage to start the wheel
-moving) is typically 0.1 to 0.25 V; without it, slow moves undershoot. Feedback has to make up all
-of this, but:
+YAGSL's default drive feedforward is kV = 12 V over the module's free speed for the configured
+motor and gearing: 2.44 V per m/s for these Vortexes at 5.50:1 on 3 in wheels (checked in YAGSL
+2026.4.1's bytecode; `createSwerveDrive(MAX_SPEED)` does not change it). That is the right slope
+for a free wheel. It has no kS and no kA: on carpet the wheel needs 0.1 to 0.25 V just to start
+moving, and extra volts to accelerate a 55 kg robot, so slow moves undershoot and starts lag.
+Feedback has to make up the difference, but:
 
 - **Peashooter: drive kP 1, kD 0.4.** kP 1 is several times the feedforward's own slope. The
   measured velocity is filtered and lags, so a gain this big buzzes and overshoots, and kD on a
@@ -56,7 +57,7 @@ of this, but:
 - **Black team: drive kP 0.002.** At 1 m/s of error it adds 0.2% output: the drive is effectively
   open loop on an unmeasured feedforward.
 
-**Do:** Guide step 9: measure the feedforward per module (`drive_ff`, on the floor), then tune
+**Do:** the Guide's feedforward step: measure it per module (`drive_ff`, on the floor), then tune
 drive kP up from about 0.04 with `drive_step`. Drop kD to 0.
 
 ### 4. Steering is soft and slew-limited

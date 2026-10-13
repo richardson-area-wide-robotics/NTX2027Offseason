@@ -107,6 +107,9 @@ def explain_module(result, gains, m, loop, current_limit=None):
         return None
     vbus = _channel(ch, "vbus", n, 12.0)
     per_duty = [compensation_volts(meta)] * n  # what a duty of 1 means, in volts
+    # The most the motor can be given at each moment: the battery, but no more than the 12 V the
+    # SPARK is compensated to, so "flat out" shows on a fresh battery too.
+    cap = [min(v, per_duty[0]) if A.finite(v) else per_duty[0] for v in vbus]
     volts = _channel(ch, f"m{m}.volts", n)
     amps = _channel(ch, f"m{m}.amps", n)
     names = (result.get("robot") or {}).get("modules") or []
@@ -159,7 +162,7 @@ def explain_module(result, gains, m, loop, current_limit=None):
         "asked": asked, "applied": volts, "battery": limit_line,
         "response": [], "controller": [], "story": [],
     }
-    _moments(out, t, sp, shown, err, p, d, ff, asked, volts, amps, vbus, limit, loop, units)
+    _moments(out, t, sp, shown, err, p, d, ff, asked, volts, amps, cap, limit, loop, units)
     return out
 
 
@@ -249,7 +252,7 @@ def _moments(out, t, sp, y, err, p, d, ff, asked, applied, amps, vbus, limit, lo
             ip = max(idx, key=lambda i: abs(p[i]))
             if abs(p[ip]) > 0.05:
                 vb = vbus[ip] if A.finite(vbus[ip]) else 12.0
-                clipped = (f" That is more than the {vb:.1f} V battery, so the controller can only "
+                clipped = (f" That is more than the {vb:.1f} V it can give, so the controller can only "
                            "give all it has." if abs(p[ip]) > vb else "")
                 _note(out, "controller", "point", "kP",
                       f"{step_name}: the biggest error, {abs(err[ip]):.3g}{units}, so P pushes hardest: "

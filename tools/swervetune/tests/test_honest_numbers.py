@@ -71,5 +71,41 @@ class TapeTest(unittest.TestCase):
         self.assertTrue(any((f.get("action") or {}).get("type") == "config" for f in rep["findings"]))
 
 
+class FlatOutTest(unittest.TestCase):
+    def test_flat_out_is_the_same_on_a_fresh_battery(self):
+        # YAGSL caps the SPARKs at 12 V, so a fresh 12.8 V battery must not hide saturation.
+        sats = []
+        for vb in (12.0, 12.8):
+            ch = plant.steer_step(rehearse.STEER_PATTERN, kP=0.05, surface="floor")
+            ch["vbus"] = [vb] * len(ch["vbus"])
+            rep = advisor.analyze({"test": "steer_step", "channels": ch, "env": "FIELD", "practice": True,
+                                   "robot": MODS}, {"Steer/kP": 0.05})
+            sats.append(rep["worst"]["sat"])
+        self.assertAlmostEqual(sats[0], sats[1], places=6)
+        self.assertGreater(sats[1], 0.5)
+
+
+class FeedforwardFitTest(unittest.TestCase):
+    START = {"Drive/kP": 0.0005, "Drive/kI": 0.0, "Drive/kD": 0.0, "Drive/RampS": 0.0,
+             "Drive/VelPeriodMs": 0, "Drive/VelDepth": 0}
+
+    def gains(self, ks, kv, ka):
+        g = dict(self.START)
+        for m in rehearse.MODULES:
+            g.update({f"FF/{m}/kS": ks, f"FF/{m}/kV": kv, f"FF/{m}/kA": ka})
+        return g
+
+    def test_a_feedforward_for_another_motor_is_measured_again(self):
+        g = self.gains(0.168, 2.835, 0.505)  # a NEO's, on a Vortex robot
+        rep = advisor.analyze(rehearse._drive_once(g, "floor", "vortex"), gains=g)
+        self.assertIn("doesn't fit", rep["next"]["title"])
+
+    def test_a_feedforward_that_fits_the_motor_leaves_the_rest_to_kp(self):
+        g = self.gains(0.15, 2.40, 0.0)  # right for a Vortex, just no kA
+        rep = advisor.analyze(rehearse._drive_once(g, "floor", "vortex"), gains=g)
+        self.assertNotIn("doesn't fit", (rep["next"] or {}).get("title", ""),
+                         "re-measuring would return the same numbers forever")
+
+
 if __name__ == "__main__":
     unittest.main()

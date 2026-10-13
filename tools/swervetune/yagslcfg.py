@@ -23,6 +23,7 @@ import re
 
 from . import contract as C
 from .plant import MOTORS
+from . import revspecs
 
 G = 9.81
 PP_DEFAULT_MASS = 74.088  # what a new PathPlanner project starts with
@@ -559,10 +560,11 @@ def lint(project):
                         "the feedforward, then tune kP (around 0.04 to start)."))
         if d_p > 2.0 * kv_duty or d_d > 0.05:
             F.append(_f("warn", "drive_p_hot", f"Drive kP {d_p:g}, kD {d_d:g} is very aggressive",
-                        f"kP {d_p:g} is {d_p / kv_duty:.1f}x the feedforward's own slope. A NEO's "
-                        "built-in velocity moves in coarse 42-count steps and lags, so a gain this "
-                        "large makes the drive buzz and overshoot; kD on a velocity loop mostly "
-                        "amplifies those steps. Expect twitchy, hot drive motors.",
+                        f"kP {d_p:g} is {d_p / kv_duty:.1f}x the feedforward's own slope. The speed "
+                        f"comes from {revspecs.drive_speed_sensor(dk)[3]}, measured a little late, "
+                        "so a gain this large turns every bump and flicker into a voltage kick: the "
+                        "drive buzzes and overshoots, and kD on a velocity loop multiplies it. Expect "
+                        "twitchy, hot drive motors.",
                         {"kind": "tune", "loop": "drive"}))
     a_p = float(p.pidf.get("angle", {}).get("p", 0) or 0)
     if a_p and a_p < 0.015:
@@ -581,15 +583,15 @@ def lint(project):
         slip = traction_current(dk, p.drive_gear(), p.wheel_d_in(), mass, mu)
         rec = 5 * round(0.85 * slip / 5)
         if d_lim > 1.1 * slip:
+            assumed = "assumed" in str(mass_src)
             F.append(_f(
-                "warn", "drive_current_over_traction",
-                f"Drive current limit {d_lim:.0f} A is above the {slip:.0f} A where wheels slip",
-                f"With {mass:.0f} kg ({mass_src}) and grip {mu}, each wheel breaks loose at about "
-                f"{slip:.0f} A. Above that, hard acceleration spins the wheels: odometry gains error "
-                f"nothing knows about, and four motors at {d_lim:.0f} A draw {4 * d_lim:.0f} A from "
-                f"a 120 A main breaker. About {rec} A keeps the wheels gripping.",
-                {"kind": "edit", "file": "modules/physicalproperties.json",
-                 "path": ["currentLimit", "drive"], "value": rec}))
+                "info" if assumed else "warn", "drive_current_over_traction",
+                f"Drive current limit {d_lim:.0f} A may be above where the wheels slip (about {slip:.0f} A)",
+                f"An estimate from {mass:.0f} kg ({mass_src}) and a datasheet grip of {mu}: each wheel "
+                f"should break loose near {slip:.0f} A. Above that, hard acceleration only spins the "
+                "wheels and odometry counts distance the robot never covered. Don't change the limit "
+                "from this estimate: the slip test measures it on your carpet and recommends the "
+                "number.", {"kind": "tune", "loop": "slip"}))
         elif d_lim < 0.6 * slip:
             F.append(_f("info", "drive_current_low",
                         f"Drive current limit {d_lim:.0f} A leaves acceleration on the table",

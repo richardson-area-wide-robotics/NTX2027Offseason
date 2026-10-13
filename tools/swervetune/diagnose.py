@@ -230,8 +230,8 @@ SYMPTOMS = [
             check("Is the drive kP gentle (under about 0.3) with kD at 0?",
                   "Config tab. Drive buzz is almost always too much drive kP or any drive kD.",
                   DISABLED,
-                  "A NEO's built-in velocity moves in coarse steps; big gains turn each step into "
-                  "a voltage kick.",
+                  "The measured speed is a little late and a little noisy; big gains turn every "
+                  "flicker into a voltage kick.",
                   "Measure the feedforward, then tune drive kP down from there.",
                   {"type": "tune", "loop": "drive"},
                   {"lint": ["drive_p_hot"]}),

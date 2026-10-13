@@ -33,6 +33,7 @@ import math
 
 from . import analysis as A
 from . import battery
+from . import explain
 from . import revspecs
 from . import ratios as R
 
@@ -97,6 +98,23 @@ def _clamp_ratio(new, old, lo=0.5, hi=2.0):
     return max(old * lo, min(old * hi, new))
 
 
+def _ff_misfit(gains, kind, result, wheel_d_in, kP):
+    """Whether a steady speed error means the feedforward in force is for another robot, motor or
+    surface (measure it again) rather than something kP should fix.
+
+    A measured kV more than 10% from what this motor and gearing need on a free wheel is the
+    signature of a feedforward measured elsewhere. Close to it, the feedforward is right and the
+    error is drag it can't model (carpet nap, a rubbing bumper): kP is the tool, and asking to
+    re-measure would only return the same numbers forever.
+    """
+    kvs = [v for k, v in gains.items() if k.startswith("FF/") and k.endswith("/kV") and A.finite(v) and v > 0]
+    gear = (result.get("meta") or {}).get("drive_gear_ratio") or 5.5
+    nominal = _nominal_kv(kind, gear, wheel_d_in or 3.0)
+    if kvs and A.finite(nominal):
+        return abs(A.median(kvs) / nominal - 1) > 0.10
+    return A.finite(kP) and kP >= 0.04
+
+
 def _worse(cur, value):
     """The worse of a running worst and a new value, where "never" (NaN: the step never got there)
     is worst of all. ``max(0.0, nan)`` is 0.0 in Python, which once graded a step that never
@@ -135,6 +153,9 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
     gains = gains or result.get("gains") or {}
     t = ch.get("t", [])
     vbus = A.mean(ch.get("vbus", [12.0])) or 12.0
+    # The most a motor can be given: the battery, but never more than the 12 V the SPARKs are
+    # compensated to. On a fresh 12.8 V battery a motor pinned at 12 V is flat out.
+    u_cap = min(vbus, explain.compensation_volts(result.get("meta") or {}))
     mods = _modules_in(ch, "sp")
     names = _module_names(result, max(mods) + 1 if mods else 0)
     report = {"test": "steer_step", "env": env, "practice": bool(result.get("practice")),
@@ -146,7 +167,7 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
         sp, y = ch[f"m{i}.sp"], ch[f"m{i}.steer"]
         volts = ch.get(f"m{i}.volts")
         amps = ch.get(f"m{i}.amps")
-        steps = A.analyze_steps(t, sp, y, volts, tol_abs=1.0, u_max=vbus, amps=amps,
+        steps = A.analyze_steps(t, sp, y, volts, tol_abs=1.0, u_max=u_cap, amps=amps,
                                 amp_limit=current_limit)
         summ = A.summarize_steps(steps)
         name = names[i]
@@ -299,12 +320,11 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
                 "info", f"Big moves take {worst['rise'] * 1000:.0f} ms, but the motor is already "
                 "giving everything",
                 f"The steering motor sat at its {current_limit:.0f} A limit or full voltage for "
-                f"{worst['sat'] * 100:.0f}% of the move. A higher kP cannot make it faster. The "
-                "lever is the steering current limit: a NEO 550 handles 25-30 A in short bursts. "
-                "Change currentLimit.angle in physicalproperties.json, redeploy, and watch the "
-                "steering motor temperature in the Live view.",
-                {"type": "config", "file": "modules/physicalproperties.json",
-                 "path": ["currentLimit", "angle"], "value": 25}))
+                f"{worst['sat'] * 100:.0f}% of the move, so a higher kP cannot make it faster. "
+                "The team keeps a NEO 550 at 20 A because it has the least heat capacity of any "
+                "motor on the robot, so this is as fast as the hardware allows. What still helps: "
+                "less steering friction (worn tread scrubbing, a tight bearing), and later a motion "
+                "profile that plans each move instead of slamming into it."))
         elif have_gains:
             F.append(finding(
                 "warn", f"Big moves are slow ({worst['rise'] * 1000:.0f} ms) with no overshoot",
@@ -335,8 +355,9 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
 
     met = sum(t["met"] for t in report["targets"])
     if not any(f["level"] in ("warn", "error") for f in F):
+        all_met = met == len(report["targets"])
         F.append(finding(
-            "ok", "Steering meets every target",
+            "ok", "Steering meets every target" if all_met else "Steering is as good as its limits allow",
             "Save these gains so they survive a restart. Then run it once more on the floor if this "
             "was on blocks.", {"type": "save", "what": "steer_pid"}))
     rise = f"{worst['rise'] * 1000:.0f} ms" if A.finite(worst["rise"]) else "never finished"
@@ -350,7 +371,16 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
 # ============================================================================ drive velocity
 
 
-def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, drive_kind=None):
+def _nominal_kv(kind, gear, wheel_d_in):
+    """12 V over the module's free speed: the kV a free wheel on this motor and gearing needs."""
+    m = revspecs.MOTORS.get(kind)
+    if not (m and gear and wheel_d_in):
+        return float("nan")
+    return 12.0 / (m["free_rpm"] / 60.0 / gear * math.pi * wheel_d_in * 0.0254)
+
+
+def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, drive_kind=None,
+                 wheel_d_in=None):
     ch = result["channels"]
     # A practice run says which motor the pod modeled; a robot run uses the robot's drive motor.
     kind = ((result.get("meta") or {}).get("pod_motor") or "neo") if result.get("practice") else (drive_kind or "neo")
@@ -359,6 +389,7 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
     gains = gains or result.get("gains") or {}
     t, sp = ch.get("t", []), ch.get("sp", [])
     vbus = A.mean(ch.get("vbus", [12.0])) or 12.0
+    u_cap = min(vbus, explain.compensation_volts(result.get("meta") or {}))
     mods = _modules_in(ch, "v")
     names = _module_names(result, max(mods) + 1 if mods else 0)
     report = {"test": "drive_step", "env": env, "practice": bool(result.get("practice")),
@@ -369,7 +400,7 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
     for i in mods:
         v = ch[f"m{i}.v"]
         name = names[i]
-        steps = A.analyze_steps(t, sp, v, ch.get(f"m{i}.volts"), tol_abs=0.05, u_max=vbus,
+        steps = A.analyze_steps(t, sp, v, ch.get(f"m{i}.volts"), tol_abs=0.05, u_max=u_cap,
                                 amps=ch.get(f"m{i}.amps"), amp_limit=current_limit, window=5)
         summ = A.summarize_steps(steps, small=0.6)
         d = A.response_delay(t, sp, v)
@@ -502,7 +533,7 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
                 + (" The error is worst at low speed, which is the missing kS." if
                    A.finite(lo) and A.finite(hi) and lo > 1.5 * hi else ""),
                 {"type": "run", "test": "drive_ff", "env": "FIELD", "args": {}}))
-        elif sse_frac > FF_MISFIT_FRAC:
+        elif sse_frac > FF_MISFIT_FRAC and _ff_misfit(gains, kind, result, wheel_d_in, kP):
             F.append(finding(
                 "warn", f"Holds speed {sse_frac * 100:.0f}% off target: the feedforward doesn't fit this robot",
                 "A measured feedforward on its own gets within a few percent; kP only cleans up the rest. "
@@ -1417,7 +1448,8 @@ def _analyze_test(result, gains=None, **kw):
     if test == "steer_step":
         return steer_report(result, gains, **{k: v for k, v in kw.items() if k == "current_limit"})
     if test == "drive_step":
-        return drive_report(result, gains, **{k: v for k, v in kw.items() if k in ("current_limit", "drive_kind")})
+        return drive_report(result, gains, **{k: v for k, v in kw.items()
+                                              if k in ("current_limit", "drive_kind", "wheel_d_in")})
     if test == "drive_ff":
         history = kw.get("history")
         if history is None and not result.get("practice"):

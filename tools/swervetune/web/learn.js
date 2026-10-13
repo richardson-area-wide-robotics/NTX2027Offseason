@@ -160,7 +160,8 @@ const Learn = (() => {
       body: ["The steering motor's hall sensor gives 42 counts per motor turn; through a 46.42:1 gearbox that is about 0.18° of module angle per count. Fine for position. For speed it is coarse, so the SPARK averages - which adds delay (see the speed filter).",
         "A high kP times a jumpy measurement makes a buzz."] },
     velocity_filter: { title: "Speed filter", short: "The SPARK averages encoder counts over a time window to get a smooth speed. Smoother means later.",
-      body: ["Speed is counts per time. Over 1 ms a NEO makes about one count, so the SPARK counts over a window (32 ms by default) and averages several readings. The result is smooth but up to tens of ms late, and a late measurement limits drive kP. A shorter window is quicker and noisier: the drive tests show the trade."] },
+      body: ["Speed is counts per time, so the SPARK counts over a window and averages a few windows. Smoother means later, and a late measurement limits how hard drive kP can push.",
+        "Our drive motors are Vortexes on SPARK Flex: 7168 counts a turn, averaged over 10 ms x 2 (YAGSL's setting), so the drive speed is fine-grained and only about 10 ms late. A NEO on a SPARK MAX has 42 counts a turn and a 32 ms x 8 window: coarse and several times later. The steering NEO 550s use their absolute encoders for angle, so this matters most for the drive."] },
     motor_encoder: { title: "Motor encoder", short: "The sensor inside the steering motor. Quick and fine, but it only knows how far it turned since power-on.",
       body: ["YAGSL's steering loop uses it by default and sets it from the absolute encoder at boot. If the gear ratio is wrong or a pinion slips, it drifts from the truth; encoder auto-sync re-aligns it when the module is still."] },
     absolute_encoder: { title: "Absolute encoder", short: "The sensor on the module itself: knows the real angle at power-on, every time. Slower and coarser than the motor encoder.",
@@ -192,7 +193,7 @@ const Learn = (() => {
     slip_current: { title: "Slip current", short: "The drive current at which a wheel breaks loose. The drive current limit belongs just below it - measured on your carpet, not guessed.",
       body: ["Motor current makes torque, torque makes the wheel push. So 'the push where the wheel slips' is a current, and the drive current limit can be set right under it.",
         "The test: a bumper flat against a wall so the robot cannot move, then a slowly rising push. While the wheels grip, they stay still and the current climbs. The moment a wheel slips, its encoder speed jumps. The highest current before that is its breakaway current, and that wheel is cut at once to spare the tread.",
-        "The limit is set to 90% of the weakest corner: carpets differ between venues and tread wears. It never goes above the team's policy for the motor. A datasheet-only limit like 80 A on a 55 kg robot is far above where its wheels slip - all that extra current only spins them."] },
+        "The limit is set to 90% of the weakest corner: carpets differ between venues and tread wears. It never goes above the team's policy for the motor. A datasheet estimate for our Vortexes on a 55 kg robot is about 69 A, under the 80 A policy: current above the slip point only spins the wheels."] },
 
     swerve_module: { title: "Swerve module", short: "Two loops per corner: steering (an angle) and drive (a speed). Eight loops for the robot.",
       body: ["The steering loop is a position loop, like WPILib's turret tutorial. The drive loop is a velocity loop, like its flywheel tutorial. Tune steering first: a drive loop can't be judged while the wheel points the wrong way."], links: ["turret", "flywheel"] },
