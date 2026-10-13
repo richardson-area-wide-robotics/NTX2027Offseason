@@ -40,6 +40,8 @@ public final class TestContext {
    * none (AdvantageKit not started, or no PDH on the bus).
    */
   public Supplier<double[]> pdhCurrents = () -> new double[0];
+  /** The Driver Station, for the controller check; null where there is none. */
+  public RobotSignals signals;
 
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();

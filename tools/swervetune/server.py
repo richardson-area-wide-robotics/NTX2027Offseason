@@ -585,6 +585,27 @@ def api_controllers_step(body):
     return out
 
 
+def api_controllers_robot(body):
+    """One step of the controller check through the robot: what the robot code receives from a
+    Driver Station port, recorded by the robot (disabled), judged like the laptop's own."""
+    b = body or {}
+    fn = _CONTROLLER_STEPS.get(b.get("step"))
+    if not fn:
+        return {"ok": False, "error": "Which step?"}
+    if not (S.link and S.link.is_connected()):
+        return {"ok": False, "error": "Connect to the robot first."}
+    secs = max(1.0, min(90.0, float(b.get("secs") or 5)))
+    res = S.link.run_test("controller", "ALL", {"port": int(b.get("port", 0)), "duration_s": secs},
+                          timeout=secs + 15)
+    if not res.accepted:
+        return {"ok": False, "error": res.message}
+    samples = controllers.rows_from_robot(res.channels)
+    out = fn(samples)
+    out.update(ok=True, interval_ms=controllers.update_interval_ms(samples), n=len(samples), source="robot",
+               name=next((n.split(": ", 1)[1] for n in res.notes if n.startswith("Controller on port")), ""))
+    return out
+
+
 def api_controllers_report(body):
     db = controllers.code_deadbands(S.project) if S.project else []
     out = controllers.report((body or {}).get("steps") or {}, db)
@@ -1089,6 +1110,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect,
         "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,
         "/api/survey/solve": api_survey_solve, "/api/gyro": api_gyro, "/api/battery/pick": api_battery_pick,
         "/api/controllers/step": api_controllers_step, "/api/controllers/report": api_controllers_report,
+        "/api/controllers/robot": api_controllers_robot,
         "/api/controllers/save": api_controllers_save}
 
 

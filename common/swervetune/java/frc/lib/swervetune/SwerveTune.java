@@ -261,6 +261,7 @@ public final class SwerveTune {
     procedures.put("slip", SlipProcedure::new);
     procedures.put("pdh_map", PdhMapProcedure::new);
     procedures.put("spin_ff", SpinFeedforwardProcedure::new);
+    procedures.put("controller", ControllerProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -906,6 +907,7 @@ public final class SwerveTune {
     c.drivePolicyA = drivePolicyA();
     c.driveLimitA = driveLimitA();
     c.pdhCurrents = pdhSource;
+    c.signals = signals;
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
@@ -926,6 +928,7 @@ public final class SwerveTune {
     ctx.drivePolicyA = c.drivePolicyA;
     ctx.driveLimitA = c.driveLimitA;
     ctx.pdhCurrents = pdhSource;
+    ctx.signals = signals;
     proc = p;
     profile = prof;
     activeSeq = seq;

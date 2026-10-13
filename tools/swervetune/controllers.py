@@ -46,6 +46,33 @@ FULL_REACH = 0.97         # a stick that reaches this everywhere asks for full s
 MIN_DEADBAND = 0.03
 
 
+# A WPILib XboxController's numbering, as the robot records it, to the browser's layout above.
+_FROM_WPILIB_BUTTON = {w: b for b, w in WPILIB_BUTTON.items()}
+_POV_BUTTONS = {12: (315, 0, 45), 13: (135, 180, 225), 14: (225, 270, 315), 15: (45, 90, 135)}
+
+
+def rows_from_robot(channels):
+    """A robot ``controller`` recording (WPILib numbering, a button bitmask, the POV angle) as rows
+    in the browser's layout, so the same checks judge both."""
+    t = channels.get("t") or []
+    a = [channels.get(f"a{i}") or [] for i in range(6)]
+    b = channels.get("buttons") or []
+    pov = channels.get("pov") or []
+    out = []
+    for k, tt in enumerate(t):
+        ax = [a[i][k] if k < len(a[i]) and A.finite(a[i][k]) else 0.0 for i in range(6)]
+        mask = int(b[k]) if k < len(b) and A.finite(b[k]) else 0
+        p = int(pov[k]) if k < len(pov) and A.finite(pov[k]) else -1
+        buttons = [0.0] * 16
+        for w, idx in _FROM_WPILIB_BUTTON.items():
+            buttons[idx] = 1.0 if mask & (1 << (w - 1)) else 0.0
+        buttons[6], buttons[7] = ax[2], ax[3]
+        for idx, angles in _POV_BUTTONS.items():
+            buttons[idx] = 1.0 if p in angles else 0.0
+        out.append([tt * 1000.0, ax[0], ax[1], ax[4], ax[5], *buttons])
+    return out
+
+
 def _rows(samples):
     return [r for r in samples or [] if isinstance(r, (list, tuple)) and len(r) >= 5]
 

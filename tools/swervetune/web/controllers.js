@@ -21,7 +21,7 @@
   const WPI = { 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 8: 7, 9: 8, 10: 9, 11: 10 };
   const DIGITAL = BUTTONS.map((_, i) => i).filter(i => i !== 6 && i !== 7);
 
-  let pad = null, codeDb = [], results = {}, rep = null, rec = null;
+  let pad = null, codeDb = [], results = {}, rep = null, rec = null, src = "laptop";
   let recording = null, seen = new Set(), lastTs = -1, poller = null, trails = { left: [], right: [] };
 
   root.innerHTML = `
@@ -33,7 +33,11 @@
       <p class="small">Plug the controller into this laptop with USB and press any button on it. No robot needed: the
         Driver Station reads the same controller the same way. Do this for every controller at the start of an event.</p>
       <div class="row" style="flex-wrap:wrap;gap:12px">
-        <label class="gain">Controller<select id="ct-pad"><option value="">none seen yet</option></select></label>
+        <label class="gain">Read from<select id="ct-src">
+          <option value="laptop">This laptop (USB)</option>
+          <option value="0">The robot: Driver Station port 0 (driver)</option>
+          <option value="1">The robot: Driver Station port 1</option></select></label>
+        <label class="gain" id="ct-pad-box">Controller<select id="ct-pad"><option value="">none seen yet</option></select></label>
         <label class="gain">Which one is it?<input id="ct-label" list="ct-labels" placeholder="Driver, Operator, Spare 1"></label>
         <datalist id="ct-labels"></datalist>
       </div>
@@ -151,6 +155,7 @@
   }
 
   function start(step) {
+    if (src !== "laptop") return startRobot(step);
     if (!current()) { App.toast("Plug in a controller and press a button on it first."); return; }
     recording = { step, rows: [], t0: performance.now() };
     if (step.id === "buttons") seen = new Set();
@@ -172,15 +177,44 @@
     tick();
   }
 
+  // Through the robot: the robot records the Driver Station port (disabled) and the laptop judges it.
+  async function startRobot(step) {
+    if (!App.connected()) { App.toast("Connect to the robot first."); return; }
+    recording = { step, rows: [], t0: performance.now(), robot: true };
+    const box = $("#ct-step-box", root);
+    box.innerHTML = `<p><b>${esc(step.title)}.</b> ${esc(step.text)}</p>
+      <p class="small muted">The robot is recording what the Driver Station sends on port ${src}. Keep it disabled.</p>
+      <div class="bar"><div id="ct-bar"></div></div>
+      <div class="row">${step.manual ? `<button class="btn primary" id="ct-done">Done</button>` : ""}</div>`;
+    if (step.manual) $("#ct-done", box).onclick = () => App.api("/api/stop", {});
+    paintSteps();
+    const secs = step.manual ? 30 : step.secs;
+    const tick = () => {
+      if (!recording || recording.step !== step) return;
+      const bar = $("#ct-bar", root);
+      if (bar) bar.style.width = Math.min(100, (performance.now() - recording.t0) / (secs * 10)).toFixed(0) + "%";
+      setTimeout(tick, 100);
+    };
+    tick();
+    const r = await App.api("/api/controllers/robot", { step: step.id, port: +src, secs });
+    recording = null;
+    show(step, r);
+  }
+
   async function finish() {
     if (!recording) return;
     const { step, rows } = recording;
     recording = null;
-    const r = await App.api("/api/controllers/step", { step: step.id, samples: rows });
+    show(step, await App.api("/api/controllers/step", { step: step.id, samples: rows }));
+  }
+
+  async function show(step, r) {
     const box = $("#ct-step-box", root);
     if (!r.ok) { box.innerHTML = `<p class="hint">${esc(r.error)}</p>`; paintSteps(); return; }
     results[step.id] = r;
-    if (A_finite(r.interval_ms)) $("#ct-rate", root).textContent = `This laptop sees the controller every ${fmt(r.interval_ms, 1)} ms`;
+    if (A_finite(r.interval_ms)) $("#ct-rate", root).textContent = r.source === "robot"
+      ? `The robot gets the controller every ${fmt(r.interval_ms, 1)} ms${r.name ? ` (${r.name})` : ""}`
+      : `This laptop sees the controller every ${fmt(r.interval_ms, 1)} ms`;
     box.innerHTML = r.findings.length ? r.findings.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span>
       <span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")
       : `<p class="small">${esc(step.title)}: nothing wrong.</p>`;
@@ -216,7 +250,8 @@
 
   async function save() {
     const p = current();
-    const r = await App.api("/api/controllers/save", { label: $("#ct-label", root).value, device: p ? p.id : "", report: rep });
+    const device = src === "laptop" ? (p ? p.id : "") : `through the robot, port ${src}`;
+    const r = await App.api("/api/controllers/save", { label: $("#ct-label", root).value, device, report: rep });
     if (!r.ok) { App.toast(r.error); return; }
     App.toast(`Saved: ${r.entry.label}.`);
     history();
@@ -243,6 +278,16 @@
   }
 
   $("#ct-pad", root).onchange = e => { pad = +e.target.value; trails = { left: [], right: [] }; listPads(); };
+  $("#ct-src", root).onchange = e => {
+    src = e.target.value;
+    $("#ct-pad-box", root).hidden = src !== "laptop";
+    results = {}; rep = null; rec = null;
+    $("#ct-report", root).innerHTML = `<p class="hint">Run the steps above; the report appears here.</p>`;
+    $("#ct-step-box", root).innerHTML = src === "laptop" ? "" : `<p class="hint">Through the robot: plug the controller
+      into the Driver Station laptop, connect this app to the robot, keep the robot disabled. The live view still shows
+      a controller plugged into this laptop, if any.</p>`;
+    paintSteps();
+  };
   window.addEventListener("gamepadconnected", listPads);
   window.addEventListener("gamepaddisconnected", listPads);
   App.on("tab", t => {

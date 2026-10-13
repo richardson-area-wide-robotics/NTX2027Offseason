@@ -35,6 +35,30 @@ public interface RobotSignals {
     return new double[0];
   }
 
+  /** A Driver Station port's axes as the robot code receives them; empty with no controller there. */
+  default double[] stickAxes(int port) {
+    return new double[0];
+  }
+
+  /** A port's buttons pressed now: bit 0 is button 1. */
+  default int stickButtons(int port) {
+    return 0;
+  }
+
+  /** A port's first D-pad (POV) in degrees, -1 when released or missing. */
+  default int stickPov(int port) {
+    return -1;
+  }
+
+  /** The controller's name as the Driver Station reports it. */
+  default String stickName(int port) {
+    return "";
+  }
+
+  default boolean stickIsXbox(int port) {
+    return false;
+  }
+
   /** WPILib 2026 Driver Station implementation. */
   final class Wpilib implements RobotSignals {
     private final int port;
@@ -102,6 +126,37 @@ public interface RobotSignals {
           && DriverStation.isJoystickConnected(deadmanPort)
           && deadmanButton <= DriverStation.getStickButtonCount(deadmanPort)
           && DriverStation.getStickButton(deadmanPort, deadmanButton);
+    }
+
+    @Override
+    public double[] stickAxes(int p) {
+      // Only axes the controller has: asking for more makes the Driver Station print a warning.
+      int n = DriverStation.getStickAxisCount(p);
+      double[] out = new double[Math.max(0, n)];
+      for (int i = 0; i < out.length; i++) {
+        out[i] = DriverStation.getStickAxis(p, i);
+      }
+      return out;
+    }
+
+    @Override
+    public int stickButtons(int p) {
+      return DriverStation.getStickButtons(p);
+    }
+
+    @Override
+    public int stickPov(int p) {
+      return DriverStation.getStickPOVCount(p) > 0 ? DriverStation.getStickPOV(p, 0) : -1;
+    }
+
+    @Override
+    public String stickName(int p) {
+      return DriverStation.getJoystickName(p);
+    }
+
+    @Override
+    public boolean stickIsXbox(int p) {
+      return DriverStation.getJoystickIsXbox(p);
     }
   }
 }

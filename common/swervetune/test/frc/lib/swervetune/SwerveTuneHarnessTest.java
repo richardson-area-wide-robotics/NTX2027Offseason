@@ -83,6 +83,24 @@ class SwerveTuneHarnessTest {
       return stick;
     }
 
+    double[] port1Axes = {0.02, -0.01, 0, 0, 0, 0};
+    int port1Buttons;
+
+    @Override
+    public double[] stickAxes(int port) {
+      return port == 1 ? port1Axes.clone() : new double[0];
+    }
+
+    @Override
+    public int stickButtons(int port) {
+      return port == 1 ? port1Buttons : 0;
+    }
+
+    @Override
+    public String stickName(int port) {
+      return port == 1 ? "Controller (Xbox One For Windows)" : "";
+    }
+
     @Override
     public boolean controllerDeadman() {
       return deadman;
@@ -538,6 +556,37 @@ class SwerveTuneHarnessTest {
     }
     assertTrue(Arrays.stream(p2).max().orElse(0) > 1, "and it does draw then");
     assertTrue(io.stopped);
+  }
+
+  @Test
+  void theControllerCheckRecordsWhatTheRobotReceives() {
+    ds.enabled = false;
+    loop(2);
+    send("controller", "ALL", "port", "1", "duration_s", "1");
+    loop(1);
+    assertTrue(ackAccepted(), ackMessage());
+    for (int i = 0; i < 80 && tune.state() != SwerveTune.State.DONE; i++) {
+      ds.port1Buttons = (i / 10) % 2 == 0 ? 0b10 : 0; // B pressed and released
+      loop(1);
+    }
+    assertEquals(SwerveTune.State.DONE, tune.state(), tune.message());
+    double[] a0 = data("a0");
+    double[] b = data("buttons");
+    assertTrue(a0.length > 10);
+    assertEquals(0.02, a0[0], 1e-12);
+    assertTrue(Arrays.stream(b).anyMatch(v -> v == 2) && Arrays.stream(b).anyMatch(v -> v == 0));
+    assertEquals(1, meta("port"), 1e-12);
+    assertTrue(notes().contains("Xbox One"), notes());
+  }
+
+  @Test
+  void theControllerCheckRefusesAnEmptyPort() {
+    ds.enabled = false;
+    loop(2);
+    send("controller", "ALL", "port", "3");
+    loop(1);
+    assertFalse(ackAccepted());
+    assertTrue(ackMessage().contains("No controller on Driver Station port 3"), ackMessage());
   }
 
   @Test

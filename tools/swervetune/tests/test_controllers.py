@@ -152,6 +152,30 @@ class CodeTest(unittest.TestCase):
         self.assertEqual(rep["recommended_deadband"], 0.22)
 
 
+class FromTheRobotTest(unittest.TestCase):
+    def test_a_robot_recording_becomes_the_same_rows(self):
+        ch = {"t": [0.0, 0.02, 0.04], "a0": [0.1, 0.1, 0.1], "a1": [-0.2, -0.2, -0.2], "a2": [0.0, 0.5, 1.0],
+              "a3": [0.0, 0.0, 0.25], "a4": [0.3, 0.3, 0.3], "a5": [0.4, 0.4, 0.4],
+              "buttons": [0, 2, 2 | 64], "pov": [-1, 90, 45]}
+        rows = C.rows_from_robot(ch)
+        self.assertEqual(rows[0][:5], [0.0, 0.1, -0.2, 0.3, 0.4], "WPILib axes 0, 1, 4, 5 are the sticks")
+        b = lambda r, i: rows[r][5 + i]
+        self.assertEqual((b(1, 1), b(1, 0)), (1.0, 0.0), "button 2 is B")
+        self.assertEqual(b(2, 5), 0.0)
+        self.assertEqual((b(2, 8), b(2, 9)), (1.0, 0.0), "bit 6 is WPILib button 7, Back")
+        self.assertEqual((b(2, 6), b(2, 7)), (1.0, 0.25), "WPILib axes 2 and 3 are the triggers")
+        self.assertEqual([b(1, i) for i in (12, 13, 14, 15)], [0, 0, 0, 1.0], "POV 90 is D-pad right")
+        self.assertEqual([b(2, i) for i in (12, 13, 14, 15)], [1.0, 0, 0, 1.0], "POV 45 is up and right")
+        self.assertEqual(rows[1][0], 20.0, "milliseconds")
+
+    def test_the_robots_rows_go_through_the_same_checks(self):
+        ch = {"t": [k * 0.02 for k in range(200)], **{f"a{i}": [0.12 if i == 0 else 0.0] * 200 for i in range(6)},
+              "buttons": [0] * 200, "pov": [-1] * 200}
+        r = C.rest(C.rows_from_robot(ch))
+        self.assertAlmostEqual(r["axes"][0]["offset"], 0.12)
+        self.assertEqual(C.update_interval_ms(C.rows_from_robot(ch)), 20.0)
+
+
 class SavedChecksTest(unittest.TestCase):
     def test_saved_checks_never_look_like_runs(self):
         import json

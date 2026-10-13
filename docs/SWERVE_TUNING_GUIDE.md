@@ -153,6 +153,11 @@ dropped, and save each check: **Every controller checked** shows which ones are 
 Xbox controllers have no gyro (and the Driver Station can't read a PlayStation controller's), so
 drift here means the sticks.
 
+To check a controller exactly as the robot receives it, plug it into the Driver Station laptop,
+connect this app to the robot, keep the robot disabled, and set **Read from** to the robot's
+port 0 (driver) or 1. The robot records each step and the same checks judge it; a button that
+bounces there is one the robot code will act on.
+
 ## After a match
 
 AdvantageKit logs every match: to the USB stick in the roboRIO, or on a roboRIO 2 without a stick,
