@@ -2,6 +2,9 @@ package frc.robot;
 
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.numbers.N2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 
@@ -59,9 +62,11 @@ public class Robot extends LoggedRobot {
 
     drive.setupPathPlanner();
 
+    // The left stick is deadbanded by its distance from center (a round deadband), not each axis on
+    // its own, so a gentle diagonal push keeps both axes instead of snapping to a straight line.
     drive.setDefaultCommand(drive.drive(
-        () -> MathUtil.applyDeadband(controller.getLeftY(), 0.1),
-        () -> MathUtil.applyDeadband(controller.getLeftX(), 0.1),
+        () -> leftStick().get(0),
+        () -> leftStick().get(1),
         () -> MathUtil.applyDeadband(controller.getRightX(), 0.1)
       )
     );
@@ -79,6 +84,11 @@ public class Robot extends LoggedRobot {
     controller.a().whileTrue(shooter.shootA());
     controller.x().whileTrue(shooter.shootX());
 
+  }
+
+  /** The left stick as (Y, X), zero within 0.1 of center and rescaled from there: a round deadband. */
+  private Vector<N2> leftStick() {
+    return MathUtil.applyDeadband(VecBuilder.fill(controller.getLeftY(), controller.getLeftX()), 0.1);
   }
 
   @Override

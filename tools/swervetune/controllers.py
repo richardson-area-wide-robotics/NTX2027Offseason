@@ -103,16 +103,68 @@ def _axis_in(text):
     return _WPILIB_TO_AXIS.get(int(m.group(1))) if m else None
 
 
+def _axes_in(text):
+    return [_GETTER_AXIS[g] for g in re.findall(r"get(LeftX|LeftY|RightX|RightY)\(\)", text)]
+
+
 def code_deadbands(project):
     """``[{"value", "file", "line", "axis"}]``: every ``MathUtil.applyDeadband(x, 0.1)`` in the robot
     code, with the stick axis it applies to when the call names it (``axis`` None when it deadbands a
-    variable, such as a supplier passed in from Robot.java)."""
+    variable, such as a supplier passed in from Robot.java). A deadband on a vector
+    (``applyDeadband(VecBuilder.fill(y, x), 0.1)``) is round: ``"round": True``, with ``"axes"`` when
+    the call names both."""
     out = []
     for name, src in (project.java or {}).items():
         for m in re.finditer(r"applyDeadband\(([^;]*?),\s*([0-9.]+)\s*\)", src):
-            out.append({"value": float(m.group(2)), "file": name.replace("\\", "/").split("/")[-1],
-                        "line": src.count("\n", 0, m.start()) + 1, "axis": _axis_in(m.group(1))})
+            arg = m.group(1)
+            d = {"value": float(m.group(2)), "file": name.replace("\\", "/").split("/")[-1],
+                 "line": src.count("\n", 0, m.start()) + 1, "axis": _axis_in(arg)}
+            if "VecBuilder.fill" in arg:
+                axes = _axes_in(arg)
+                d.update(axis=None, round=True, axes=sorted(axes) if len(axes) == 2 else None)
+            out.append(d)
     return out
+
+
+def round_sticks(code_db, read=None):
+    """``{stick: deadband}`` for each stick a round deadband in the code covers. A call that names
+    its axes says which; one on variables (suppliers passed in) covers the one stick whose two axes
+    the code reads, when there is exactly one."""
+    read = list(range(4)) if read is None else list(read)
+    both = [n for n, (ax, ay) in STICKS.items() if ax in read and ay in read]
+    out = {}
+    for d in code_db or []:
+        if not d.get("round"):
+            continue
+        axes = d.get("axes")
+        stick = (next((n for n, pair in STICKS.items() if sorted(pair) == axes), None) if axes
+                 else both[0] if len(both) == 1 else None)
+        if stick:
+            out[stick] = min(out.get(stick, d["value"]), d["value"])
+    return out
+
+
+def stick_deadbands(project):
+    """What the code ignores round each stick's center, for drawing it: ``{stick: {"value", "round"}}``
+    (a circle for a round deadband, a square when each axis has its own)."""
+    db, read = code_deadbands(project), axes_read(project)
+    rounds = round_sticks(db, read)
+    out = {}
+    for n, pair in STICKS.items():
+        if n in rounds:
+            out[n] = {"value": rounds[n], "round": True}
+            continue
+        vals = [v for v in (_axis_deadband(db, a) for a in pair) if v is not None]
+        if vals:
+            out[n] = {"value": min(vals), "round": False}
+    return out
+
+
+def _axis_deadband(db, a):
+    """The per-axis deadband the code applies to axis ``a``: its own, else one on a variable."""
+    own = [d["value"] for d in db if d.get("axis") == a and not d.get("round")]
+    loose = [d["value"] for d in db if d.get("axis") is None and not d.get("round")]
+    return min(own) if own else (min(loose) if loose else None)
 
 
 def axes_read(project):
@@ -141,6 +193,9 @@ def rest(samples):
         sd = math.sqrt(sum((x - mean) ** 2 for x in v) / len(v))
         out["axes"].append({"axis": a, "name": AXIS_NAMES[a], "wpilib_axis": WPILIB_AXIS[a], "offset": mean,
                             "noise": sd, "max_abs": max(abs(x) for x in v)})
+    # Distance from center, for a round deadband.
+    out["sticks"] = {n: {"max_radius": max(math.hypot(r[1 + ax], r[1 + ay]) for r in rows)}
+                     for n, (ax, ay) in STICKS.items()}
     worst = max(x["max_abs"] for x in out["axes"])
     out["worst"] = worst
     out["recommended_deadband"] = recommend_deadband(worst)
@@ -276,7 +331,7 @@ def buttons(samples):
 
 def axis_drift(steps):
     """Each stick axis's worst offset: where it rested or came back to after a flick, whichever is
-    further. Per axis, because the code deadbands each axis on its own."""
+    further. What a per-axis deadband sees."""
     out = {}
     for x in (steps.get("rest") or {}).get("axes") or []:
         out[x["axis"]] = x["max_abs"]
@@ -287,27 +342,41 @@ def axis_drift(steps):
     return out
 
 
+def stick_drift(steps):
+    """Each stick's worst distance from center, resting or after a flick: what a round deadband sees."""
+    out = {}
+    for n, s in ((steps.get("rest") or {}).get("sticks") or {}).items():
+        out[n] = s.get("max_radius", 0.0)
+    for n, s in ((steps.get("returns") or {}).get("sticks") or {}).items():
+        if A.finite(s.get("worst")):
+            out[n] = max(out.get(n, 0.0), s["worst"])
+    return out
+
+
 def report(steps, code_db=None, read=None):
-    """The whole check: each axis the code reads against the deadband it applies there, and every
-    step's findings. ``read`` is the axes the code reads (all four when unknown)."""
+    """The whole check: what the code reads against the deadband it applies there (each axis on its
+    own, or a stick's distance from center where the deadband is round), and every step's findings.
+    ``read`` is the axes the code reads (all four when unknown)."""
     F = []
     drift = axis_drift(steps)
     read = list(range(4)) if read is None else list(read)
-    judged = {a: v for a, v in drift.items() if a in read}
-    worst = max(judged.values(), default=float("nan"))
-    rec = recommend_deadband(worst) if A.finite(worst) else None
     db = code_db or []
-    loose = [d["value"] for d in db if d.get("axis") is None]
-    def deadband(a):
-        own = [d["value"] for d in db if d.get("axis") == a]
-        return min(own) if own else (min(loose) if loose else None)
+    rounds = round_sticks(db, read)
+    radial = stick_drift(steps)
+    covered = {a for n in rounds for a in STICKS[n]}
+    # (name, drift, the code's deadband or None)
+    judged = [(AXIS_NAMES[a], v, _axis_deadband(db, a)) for a, v in sorted(drift.items())
+              if a in read and a not in covered]
+    judged += [(n.capitalize() + " stick", radial[n], rounds[n]) for n in rounds if n in radial]
+    worst = max((v for _, v, _ in judged), default=float("nan"))
+    rec = recommend_deadband(worst) if A.finite(worst) else None
     if judged and db:
         where = ", ".join(sorted({d["file"] for d in db}))
-        rows = sorted(((a, v, deadband(a)) for a, v in judged.items() if deadband(a) is not None),
-                      key=lambda r: r[1] - r[2], reverse=True)
+        rows = sorted((r for r in judged if r[2] is not None), key=lambda r: r[1] - r[2], reverse=True)
         if rows:
-            a, v, cur = rows[0]
-            name = AXIS_NAMES[a]
+            name, v, cur = rows[0]
+            if name.endswith(" stick"):
+                name = f"{name} (distance from center)"
             if v >= cur:
                 F.append({"level": "error", "title": f"{name} drifts {v:.2f}, past the code's {cur:g} deadband",
                           "why": f"The robot will creep with nobody touching the sticks. Use another controller, or "
@@ -331,7 +400,7 @@ def report(steps, code_db=None, read=None):
     level = "error" if any(f["level"] == "error" for f in F) else "warn" if any(f["level"] == "warn" for f in F) else "ok"
     return {"recommended_deadband": rec, "worst_offset": worst, "code_deadbands": code_db or [],
             "axes_read": read, "axis_drift": {AXIS_NAMES[a]: v for a, v in sorted(drift.items())},
-            "verdict": level, "findings": F}
+            "stick_drift": radial, "round_deadbands": rounds, "verdict": level, "findings": F}
 
 
 def _range(rows, axis):

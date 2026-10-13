@@ -163,12 +163,37 @@ class CodeTest(unittest.TestCase):
 
     def test_the_axes_each_robot_reads(self):
         pea = Y.Project(os.path.join(REPO, "Peashooter"))
-        # Peashooter deadbands each getter it reads, so each deadband knows its axis.
-        self.assertEqual({d["axis"] for d in C.code_deadbands(pea)}, {0, 1, 2})
+        # Peashooter names its axes: a round deadband on the left stick, right X on its own.
+        db = C.code_deadbands(pea)
+        self.assertEqual([d["axes"] for d in db if d.get("round")], [[0, 1]])
+        self.assertEqual([d["axis"] for d in db if not d.get("round")], [2])
         self.assertEqual(C.axes_read(pea), [0, 1, 2], "left X, left Y, right X; never right Y")
         black = Y.Project(os.path.join(REPO, "Black team"))
         self.assertEqual({d["axis"] for d in C.code_deadbands(black)}, {None}, "suppliers passed in from Robot.java")
         self.assertEqual(C.axes_read(black), [0, 1, 2])
+
+    def test_both_robots_deadband_the_left_stick_round(self):
+        for robot, value in (("Peashooter", 0.1), ("Black team", 0.08)):
+            p = Y.Project(os.path.join(REPO, robot))
+            self.assertEqual(C.round_sticks(C.code_deadbands(p), C.axes_read(p)), {"left": value}, robot)
+            self.assertEqual(C.stick_deadbands(p), {"left": {"value": value, "round": True},
+                                                    "right": {"value": value, "round": False}}, robot)
+
+    def test_a_round_deadband_judges_the_distance_from_center(self):
+        # 0.07 on both left axes is 0.099 from center: inside a round 0.1, outside a round 0.08.
+        r = C.rest(rows(200, axes=lambda k: (0.07, 0.07, 0, 0)))
+        round01 = [{"value": 0.1, "file": "Robot.java", "line": 60, "axis": None, "round": True, "axes": [0, 1]},
+                   {"value": 0.1, "file": "Robot.java", "line": 62, "axis": 2}]
+        rep = C.report({"rest": r}, round01, read=[0, 1, 2])
+        self.assertEqual(rep["verdict"], "warn")
+        self.assertIn("Left stick (distance from center) drifts 0.10, close to the code's 0.1 deadband", titles(rep))
+        self.assertAlmostEqual(rep["stick_drift"]["left"], 0.099, places=3)
+        round008 = [{"value": 0.08, "file": "Drive.java", "line": 45, "axis": None, "round": True, "axes": None},
+                    {"value": 0.08, "file": "Drive.java", "line": 50, "axis": None}]
+        rep = C.report({"rest": r}, round008, read=[0, 1, 2])
+        self.assertEqual(rep["verdict"], "error")
+        self.assertIn("Left stick (distance from center) drifts 0.10, past the code's 0.08 deadband", titles(rep))
+        self.assertEqual(rep["recommended_deadband"], 0.12)
 
     def test_drift_on_an_axis_nothing_reads_never_fails_a_controller(self):
         r = C.rest(rows(200, axes=lambda k: (0.01, 0.0, 0.0, 0.2)))

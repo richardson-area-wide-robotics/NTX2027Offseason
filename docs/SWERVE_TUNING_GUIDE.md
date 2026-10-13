@@ -203,7 +203,8 @@ it (Driver, Operator, Spare 1). Then run the five steps; it takes about a minute
 
 The report says whether the controller is fit for a match and what deadband it needs. Peashooter's
 code ignores stick values under 0.1, Black team's under 0.08; a stick that drifts past that makes
-the robot creep by itself. Check every controller at the start of an event and after one is
+the robot creep by itself. The driving stick's deadband is round (its distance from center), so
+the check judges that stick by how far from center it rests; the turning stick, by its one axis. Check every controller at the start of an event and after one is
 dropped, and save each check: **Every controller checked** shows which ones are wearing out.
 Xbox controllers have no gyro (and the Driver Station can't read a PlayStation controller's), so
 drift here means the sticks.

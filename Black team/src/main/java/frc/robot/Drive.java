@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -37,10 +40,14 @@ public class Drive extends SubsystemBase {
 
     public Command drive(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation) {
     return this.run(() -> {
-        // Xbox stick: up/left are negative; WPILib: +x forward, +y left, +rot CCW
+        // Xbox stick: up/left are negative; WPILib: +x forward, +y left, +rot CCW.
+        // The stick is deadbanded by its distance from center (a round deadband), not each axis on
+        // its own, so a gentle diagonal push keeps both axes instead of snapping to a straight line.
+        Vector<N2> stick = MathUtil.applyDeadband(
+            VecBuilder.fill(translationY.getAsDouble(), translationX.getAsDouble()), 0.08);
         swerveDrive.drive(new Translation2d(
-                -MathUtil.applyDeadband(translationY.getAsDouble(), 0.08) * MAX_SPEED,
-                -MathUtil.applyDeadband(translationX.getAsDouble(), 0.08) * MAX_SPEED),
+                -stick.get(0) * MAX_SPEED,
+                -stick.get(1) * MAX_SPEED),
             -MathUtil.applyDeadband(rotation.getAsDouble(), 0.08) * MAX_ROTATION,
             fieldR,
             false);

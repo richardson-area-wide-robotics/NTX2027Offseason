@@ -139,7 +139,8 @@ lets go the moment the driver rotates.
 
 ### 11. Teleop input shaping
 
-Both use a linear deadband (0.10 and 0.08) and full-scale linear output. Squaring the stick (keeping
+Both use a linear deadband (0.10 and 0.08), round on the driving stick (its distance from center,
+so a gentle diagonal keeps both axes), and full-scale linear output. Squaring the stick (keeping
 its sign) gives finer control at low speed with the same top speed, and a translation slew-rate
 limit stops the driver from asking for more acceleration than the wheels can grip. Rotation is 3
 rad/s on Peashooter and 6.3 rad/s on Black team; the modules allow about 9.5 rad/s, and YAGSL

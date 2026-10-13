@@ -21,7 +21,7 @@
   const WPI = { 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 8: 7, 9: 8, 10: 9, 11: 10 };
   const DIGITAL = BUTTONS.map((_, i) => i).filter(i => i !== 6 && i !== 7);
 
-  let pad = null, codeDb = [], results = {}, rep = null, rec = null, src = "laptop";
+  let pad = null, codeDb = [], codeSticks = {}, results = {}, rep = null, rec = null, src = "laptop";
   let recording = null, seen = new Set(), lastTs = -1, poller = null, trails = { left: [], right: [] };
 
   root.innerHTML = `
@@ -53,8 +53,9 @@
         <div id="ct-axes" class="small mono"></div>
         <div id="ct-buttons" class="ct-buttons" role="list" aria-label="Buttons"></div>
         <p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
-          <span class="ct-key-code">Dashed square</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>).
-          <span class="ct-key-rec">Green square</span>: what this controller needs, once measured. A button turns green with ✓ once seen;
+          <span class="ct-key-code">Dashed outline</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>):
+          a circle where the deadband is round (distance from center), a square where each axis has its own.
+          <span class="ct-key-rec">Green outline</span>: what this controller needs, once measured. A button turns green with ✓ once seen;
           the number is the one robot code uses.</p>
       </div>
       <div class="panel">
@@ -109,13 +110,16 @@
   }
 
   // ---------------------------------------------------------------- drawing
-  function stickSvg(cx, x, y, trail, label) {
+  function stickSvg(cx, x, y, trail, label, key) {
     const R = 62, cy = 80;
-    const code = codeDb.length ? Math.min(...codeDb.map(d => d.value)) : null;
+    const mine = codeSticks[key];
+    const code = mine ? mine.value : null, round = !!(mine && mine.round);
     const pts = trail.map(([a, b]) => `${(cx + a * R).toFixed(1)},${(cy + b * R).toFixed(1)}`).join(" ");
     // The center, 5x: a 0.1 deadband is 6 px at full size, hidden under the dot; here it is 31 px.
     const S = 5 * R, H = 0.15, zy = 228, clamp = v => Math.max(-H, Math.min(H, v));
-    const zsq = (d, cls) => `<rect x="${cx - d * S}" y="${zy - d * S}" width="${2 * d * S}" height="${2 * d * S}" class="${cls}"/>`;
+    // A round deadband ignores a circle round the center; a per-axis one, a square.
+    const zsq = (d, cls) => round ? `<circle cx="${cx}" cy="${zy}" r="${d * S}" class="${cls}"/>`
+      : `<rect x="${cx - d * S}" y="${zy - d * S}" width="${2 * d * S}" height="${2 * d * S}" class="${cls}"/>`;
     const zpts = trail.filter(([a, b]) => Math.abs(a) < H * 1.3 && Math.abs(b) < H * 1.3)
       .map(([a, b]) => `${(cx + clamp(a) * S).toFixed(1)},${(zy + clamp(b) * S).toFixed(1)}`).join(" ");
     return `<circle cx="${cx}" cy="${cy}" r="${R}" class="ct-ring"/>
@@ -154,7 +158,7 @@
       trails[k].push([a[i], a[i + 1]]);
       if (trails[k].length > 60) trails[k].shift();
     }
-    $("#ct-svg", root).innerHTML = stickSvg(85, a[0], a[1], trails.left, "Left stick") + stickSvg(255, a[2], a[3], trails.right, "Right stick");
+    $("#ct-svg", root).innerHTML = stickSvg(85, a[0], a[1], trails.left, "Left stick", "left") + stickSvg(255, a[2], a[3], trails.right, "Right stick", "right");
     const b = i => (p && p.buttons[i] ? p.buttons[i].value : 0);
     $("#ct-lt", root).style.height = (b(6) * 100).toFixed(0) + "%";
     $("#ct-rt", root).style.height = (b(7) * 100).toFixed(0) + "%";
@@ -269,7 +273,8 @@
       <div class="row" style="gap:16px;flex-wrap:wrap">
         <span class="chip ${rep.verdict === "error" ? "bad" : rep.verdict === "warn" ? "warn" : "good"}">${rep.verdict === "error" ? "don't use in a match" : rep.verdict === "warn" ? "check the notes" : "good"}</span>
         <span>Drift <b class="mono">${A_finite(rep.worst_offset) ? fmt(rep.worst_offset, 3) : "–"}</b>
-          <span class="small muted">${Object.entries(rep.axis_drift || {}).map(([n, v]) => `${esc(n)} ${fmt(v, 2)}`).join(" · ")}</span></span>
+          <span class="small muted">${Object.entries(rep.round_deadbands || {}).map(([n]) => `${esc(n)} stick from center ${fmt((rep.stick_drift || {})[n], 2)}`)
+            .concat(Object.entries(rep.axis_drift || {}).map(([n, v]) => `${esc(n)} ${fmt(v, 2)}`)).join(" · ")}</span></span>
         <span>Needs a deadband of <b class="mono">${rec != null ? fmt(rec, 2) : "–"}</b></span>
         <span>The code uses <b class="mono">${code != null ? code : "none found"}</b></span>
         <span class="small muted">${done} of ${STEPS.length} steps</span>
@@ -306,6 +311,7 @@
   async function loadCode() {
     const r = await App.api("/api/controllers/code");
     codeDb = r.deadbands || [];
+    codeSticks = r.sticks || {};
     const where = [...new Set(codeDb.map(d => `${d.value} in ${d.file}`))].join(", ");
     $("#ct-code", root).textContent = where || "no deadband found in the robot code";
   }

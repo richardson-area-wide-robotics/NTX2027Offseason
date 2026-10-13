@@ -638,7 +638,8 @@ def api_controllers_code(_query=None):
     if not S.project:
         return {"ok": True, "deadbands": []}
     S.reload_project()
-    return {"ok": True, "project": S.project.name, "deadbands": controllers.code_deadbands(S.project)}
+    return {"ok": True, "project": S.project.name, "deadbands": controllers.code_deadbands(S.project),
+            "sticks": controllers.stick_deadbands(S.project)}
 
 
 def api_controllers_step(body):
