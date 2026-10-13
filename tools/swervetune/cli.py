@@ -8,6 +8,7 @@
     py -3.12 tools/swervetune gains set Steer/kP=0.015
     py -3.12 tools/swervetune save gains --yes
     py -3.12 tools/swervetune practice steer --kp 0.02 --surface floor
+    py -3.12 tools/swervetune design --project Peashooter   # the code against the design file
     py -3.12 tools/swervetune brief                     # the rules an agent must follow
 
 With ``--json`` every command prints exactly one JSON object, so an agent can parse it. The
@@ -442,6 +443,55 @@ def cmd_export(args, out):
     out.say(f"Wrote {path}: {len(names)} entries. Open it in AdvantageScope"
             + (", or in SysId (mechanism 'drive', one motor per module)." if doc.get("test") == "drive_ff" else "."))
     return out.done()
+
+
+def cmd_design(args, out):
+    """The robot's design file (src/main/deploy/design/devices.json): what doesn't add up in it, and
+    where the code disagrees. --draft drafts one from the code; --csv imports a spreadsheet; --yes
+    writes either (only when there is no file yet). Exit 1 on any error, for CI."""
+    from . import design as D
+    project = resolve_project(args.project)
+    if not project:
+        return out.done(out.fail("Which robot? Pass --project.", code="NO_PROJECT"))
+    path = D.path(project)
+    rel = os.path.relpath(path, project.path).replace(os.sep, "/")
+    have = D.load(project)
+    new = None
+    if args.csv:
+        with open(args.csv, encoding="utf-8-sig") as fh:
+            new = D.from_csv(fh.read(), robot=project.name, controller=args.controller)
+    elif args.draft:
+        new = D.from_code(project)
+        if args.controller:
+            new["controller"] = args.controller
+    if new is not None:
+        F = D.check(new)
+        out.put(design=new, findings=F, path=rel)
+        out.say(f"{'Imported' if args.csv else 'Drafted from the code'}: {len(new['motors'])} motors, "
+                f"{len(new.get('sensors') or [])} sensors")
+        for f in F:
+            out.say(f"  [{f['level'].upper()}] {f['title']}")
+        if have is not None:
+            out.say(f"  {rel} already exists: edit it, or move it aside first. Nothing written.")
+        elif args.yes:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8", newline="\n") as fh:
+                fh.write(D.text(new))
+            out.say(f"  wrote {rel}: now check it against the robot with the mechanical and electrical teams")
+        else:
+            out.say(f"  (add --yes to write {rel})")
+        return out.done(0)
+    if have is None:
+        return out.done(out.fail(f"No design file yet ({rel}). Draft one from the code with --draft, "
+                                 "or import the design team's spreadsheet with --csv FILE.", code="NOT_FOUND"))
+    F = D.check(have) + D.compare(project, have)
+    out.put(path=rel, findings=F, motors=len(have.get("motors") or []), sensors=len(have.get("sensors") or []))
+    out.say(f"=== {project.name}: {rel}")
+    for f in F:
+        out.say(f"  [{f['level'].upper()}] {f['title']}")
+    if not F:
+        out.say("  The code matches the design.")
+    return out.done(1 if any(f["level"] == "error" for f in F) else 0)
 
 
 def cmd_ppcheck(args, out):
@@ -1061,6 +1111,14 @@ def build_parser():
     s = sub.add_parser("logsummary", help="what went wrong in a match log (.wpilog), and where to look")
     s.add_argument("log")
     s.set_defaults(fn=cmd_logsummary)
+
+    s = sub.add_parser("design", help="the robot's design file: check it, compare the code with it, draft or import one")
+    s.add_argument("--draft", action="store_true", help="draft a design file from what the code says")
+    s.add_argument("--csv", help="import the design team's spreadsheet, saved as CSV")
+    s.add_argument("--controller", choices=("roborio", "roborio2", "systemcore"), default="roborio2",
+                   help="the robot controller, for a draft or an import (default roborio2)")
+    s.add_argument("--yes", action="store_true", help="with --draft or --csv: write the file (only if none exists)")
+    s.set_defaults(fn=cmd_design)
 
     s = sub.add_parser("ppcheck", help="does PathPlanner describe the same robot as the code? (exit 1 if not)")
     s.add_argument("--fix", action="store_true", help="show the settings.json change that makes it match")
