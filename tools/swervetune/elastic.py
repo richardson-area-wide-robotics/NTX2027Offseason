@@ -27,6 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 LAYOUT_FILE = os.path.join(HERE, "elastic", "drive-team-layout.json")
 HEALTH_GROUP = "Robot Health"  # DashboardAlerts.GROUP
 PERIOD = 0.06
+CHECK_W = 768
 
 
 def _w(title, x, y, w, h, kind, **props):
@@ -38,7 +39,10 @@ def layout():
     return {"version": 1.0, "grid_size": 128, "tabs": [{"name": "Drive team", "grid_layout": {"layouts": [], "containers": [
         _w("Battery: pick its number", 0, 0, 256, 128, "ComboBox Chooser", topic=C.BATTERY_CHOOSER.rstrip("/"),
            sort_options=False),
-        _w("Battery check", 256, 0, 384, 128, "Text Display", topic=C.BATTERY_CHECK, show_submit_button=False),
+        # Six cells: Elastic shows one line and clips the rest, and the longest line the robot sends
+        # ("Battery 12: resting voltage read once the robot is disabled - RETIRE it: ... - next: 10",
+        # 98 characters) is 660 px in its 16 px font. At three cells "CHARGE IT before a match" was cut.
+        _w("Battery check", 256, 0, CHECK_W, 128, "Text Display", topic=C.BATTERY_CHECK, show_submit_button=False),
         _w("Robot Health: red = fix before queuing", 0, 128, 640, 384, "Alerts",
            topic="/SmartDashboard/" + HEALTH_GROUP),
     ]}}]}

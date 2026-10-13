@@ -228,8 +228,8 @@ drops below about 6.8 V the roboRIO browns out and cuts the motors.
 3. Each button shows how that battery did last time: **good**, **practice** (fine for practice,
    keep it out of matches if better ones are charged) or **retire**.
 
-**On the Driver Station laptop**, load the drive team's Elastic layout once (Elastic: File >
-Open Layout, `tools/swervetune/elastic/drive-team-layout.json`). One tab with the Battery drop-down,
+**On the Driver Station laptop**, load the drive team's Elastic layout (Elastic: File >
+Open Layout, `tools/swervetune/elastic/drive-team-layout.json`), and again whenever that file changes. One tab with the Battery drop-down,
 a **Battery check** line ("Battery 7: 12.84 V at rest, charged") and the robot's health alerts. See
 [At the cart](#at-the-cart-the-drive-teams-checklist) below.
 

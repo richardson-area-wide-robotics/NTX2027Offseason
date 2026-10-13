@@ -32,6 +32,14 @@ class ElasticLayoutTest(unittest.TestCase):
         self.assertNotIn(C.BATTERY_REST_VOLTS, topics)
         self.assertNotIn(C.LIVE_BUS_VOLTS, topics)
 
+    def test_the_battery_check_line_fits_its_widget(self):
+        # Elastic's Text Display is one line that clips. The longest line the robot can send is 98
+        # characters (a borrowed-number battery, no rest reading yet, RETIRE grade, two-digit next);
+        # 7 px a character is above the 6.7 measured in its 16 px font.
+        w = next(w for w in elastic.layout()["tabs"][0]["grid_layout"]["containers"] if w["type"] == "Text Display")
+        inner = w["width"] - 10 - 15  # Elastic's card margin and padding
+        self.assertGreaterEqual(inner, 98 * 7, "CHARGE IT before a match was cut off at 384 px")
+
     def test_widgets_fit_the_grid(self):
         d = elastic.layout()
         for w in d["tabs"][0]["grid_layout"]["containers"]:

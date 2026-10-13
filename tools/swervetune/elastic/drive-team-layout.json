@@ -24,7 +24,7 @@
             "title": "Battery check",
             "x": 256.0,
             "y": 0.0,
-            "width": 384.0,
+            "width": 768.0,
             "height": 128.0,
             "type": "Text Display",
             "properties": {
