@@ -110,8 +110,9 @@ class BatteryPickerTest {
     SwerveTuneConfig c = SwerveTuneConfig.parse("{\"batteries\": [1, \"2024-3\", 1, \" \", 2.0]}");
     assertEquals(List.of("1", "2024-3", "2"), c.batteries);
     BatteryPicker p = new BatteryPicker(nt, c.batteries);
-    assertArrayEquals(new String[] {"1", "2024-3", "2"},
-        nt.getStringArrayTopic(SwerveTuneTopics.BATTERY_OPTIONS).subscribe(new String[0]).get());
+    assertArrayEquals(new String[] {"1", "2024-3", "2", "Borrowed"},
+        nt.getStringArrayTopic(SwerveTuneTopics.BATTERY_OPTIONS).subscribe(new String[0]).get(),
+        "the team's list, then Borrowed for a battery without a team number");
     assertEquals(c.batteries, p.roster());
   }
 }
