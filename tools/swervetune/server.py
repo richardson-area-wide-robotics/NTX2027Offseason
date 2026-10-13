@@ -1083,17 +1083,19 @@ def api_practice(body):
     kind = S.project.drive_kind() if S.project else None
     motor = kind if kind in plant.MOTORS and kind != "neo550" else "neo"
     pod = {"pod_motor": motor}
+    lim = S.limits()  # the robot's own current limits, so practice saturates where the robot would
     if loop == "steer":
         ch = plant.steer_step(rehearse.STEER_PATTERN, kP=g.get("Steer/kP", 0.01),
                               kI=g.get("Steer/kI", 0), kD=g.get("Steer/kD", 0),
                               i_zone=g.get("Steer/IZone", 0), ramp_s=g.get("Steer/RampS", 0),
-                              surface=surface)
+                              surface=surface, current_limit=lim["steer"])
         doc = {"test": "steer_step", "module": "FL"}
     elif loop == "drive":
         m = rehearse.MODULES[0]
         ch = plant.drive_step(rehearse.DRIVE_PATTERN, kP=g.get("Drive/kP", 0.002),
                               kI=g.get("Drive/kI", 0), kD=g.get("Drive/kD", 0),
                               ramp_s=g.get("Drive/RampS", 0), surface=surface, motor=motor,
+                              current_limit=lim["drive"],
                               meas_period_ms=int(g.get("Drive/VelPeriodMs") or 0) or None,
                               meas_depth=int(g.get("Drive/VelDepth") or 0) or None,
                               ff=(g.get(f"FF/{m}/kS", 0), g.get(f"FF/{m}/kV", plant.nominal_kv(motor)),

@@ -107,5 +107,45 @@ class FeedforwardFitTest(unittest.TestCase):
                          "re-measuring would return the same numbers forever")
 
 
+class AggressiveDriveTest(unittest.TestCase):
+    """M13: the pod has no sensor noise, flex or lash, so it can't be what rejects these."""
+
+    def test_peashooters_drive_gains_are_never_offered_save(self):
+        g = {"Drive/kP": 1.0, "Drive/kD": 0.4, "Drive/RampS": 0.0, "Drive/VelPeriodMs": 0, "Drive/VelDepth": 0}
+        rep = advisor.analyze(rehearse._drive_once(dict(g), "floor", "vortex"), gains=g)
+        actions = [f.get("action") or {} for f in rep["findings"]]
+        self.assertFalse(any(a.get("type") == "save" for a in actions), "never Save on a robot it would buzz")
+        hot = next(f for f in rep["findings"] if "too aggressive" in f["title"])
+        self.assertEqual(hot["action"]["values"], {"Drive/kP": 0.5, "Drive/kD": 0.2})
+
+    def test_the_advice_walks_them_down(self):
+        h = rehearse.rehearse("drive", {"Drive/kP": 1.0, "Drive/kD": 0.4, "Drive/RampS": 0.25,
+                                        "Drive/VelPeriodMs": 0, "Drive/VelDepth": 0}, motor="vortex")
+        self.assertEqual(h[-1]["score"], 100)
+        self.assertLessEqual(h[-1]["gains"]["Drive/kD"], 0.05)
+        self.assertLess(h[-1]["gains"]["Drive/kP"], 0.5)
+
+
+class CarpetKvTest(unittest.TestCase):
+    """M12: on carpet the chassis couples the wheels, so a module's kV can't name a weak motor."""
+
+    def fits_doc(self, surface):
+        return rehearse._ff_once({}, surface, "vortex")
+
+    def history(self, rep):
+        # Earlier runs where frontleft's kV sat 10% above its siblings: now it reads low against them.
+        mods = {n: {"ok": True, "kV": f["kV"] * (1.1 if n == "frontleft" else 1.0), "kS": f["kS"]}
+                for n, f in rep["modules"].items() if f.get("ok")}
+        return [{"saved": "20260901-000000", "modules": mods}] * 3
+
+    def test_a_motor_trend_is_judged_on_blocks_only(self):
+        for surface, expect in (("floor", False), ("blocks", True)):
+            doc = self.fits_doc(surface)
+            first = advisor.analyze(doc, gains={}, history=[])
+            rep = advisor.analyze(doc, gains={}, history=self.history(first))
+            said = any("kV down" in f["title"] for f in rep["findings"])
+            self.assertEqual(said, expect, surface)
+
+
 if __name__ == "__main__":
     unittest.main()

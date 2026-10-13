@@ -373,6 +373,11 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
 # ============================================================================ drive velocity
 
 
+# The config check's line for an aggressive drive loop (yagslcfg: drive_p_hot).
+HOT_DRIVE_P = 2.0
+HOT_DRIVE_D = 0.05
+
+
 def _nominal_kv(kind, gear, wheel_d_in):
     """12 V over the module's free speed: the kV a free wheel on this motor and gearing needs."""
     m = revspecs.MOTORS.get(kind)
@@ -579,6 +584,28 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
             "own corrections, so it reads as lag to PathPlanner. The current limit is what protects "
             "the wheels from slipping. 0.05 s keeps the gearbox happy without the lag.",
             gains_action(Drive__RampS=0.05)))
+    # The pod has no sensor noise, module flex or gear lash, so a gain far past the feedforward's
+    # own slope can pass every target here and still buzz on a robot. The same line as the config
+    # check (yagslcfg drive_p_hot): kP over twice the feedforward's slope, or kD over 0.05.
+    kvs = [v for k, v in gains.items() if k.startswith("FF/") and k.endswith("/kV") and A.finite(v) and v > 0]
+    kv = A.median(kvs) if kvs else _nominal_kv(kind, (result.get("meta") or {}).get("drive_gear_ratio") or 5.5,
+                                                wheel_d_in or 3.0)
+    slope = kv / 12.0 if A.finite(kv) and kv > 0 else float("nan")
+    if have and A.finite(slope) and (kP > HOT_DRIVE_P * slope or kD > HOT_DRIVE_D):
+        halve = {}
+        if kP > HOT_DRIVE_P * slope:
+            halve["Drive/kP"] = kP / 2
+        if kD > HOT_DRIVE_D:
+            halve["Drive/kD"] = kD / 2
+        F.append(finding(
+            "warn", f"Drive kP {kP:g}{f', kD {kD:g}' if kD else ''} is too aggressive for a robot",
+            f"kP is {kP / slope:.1f}× the feedforward's own slope ({slope:.3f} output per m/s). On a robot, "
+            "every bump in the carpet, flex in the module and lash in the gears shows up in the speed "
+            "reading, and a gain this large turns each one into a voltage kick: the drive buzzes, runs hot "
+            "and overshoots. The practice pod has none of that, so it can pass here and still fail on the "
+            "robot. Halve it, run, and repeat until it is under "
+            f"{HOT_DRIVE_P:g}× ({HOT_DRIVE_P * slope:.2f}){'; kD stays under ' + format(HOT_DRIVE_D, 'g') if kD > HOT_DRIVE_D else ''}.",
+            {"type": "gains", "values": halve}))
     met = sum(t["met"] for t in report["targets"])
     if not any(f["level"] in ("warn", "error") for f in F):
         F.append(finding("ok", "Drive velocity meets every target",
@@ -725,12 +752,15 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
                                  "Something else pushed on the robot during the run - a collision, "
                                  "a slipping wheel. Repeat it on clear carpet."))
         if kv_spread > 8 and len(kvs) > 1:
-            weakest = max(good, key=lambda n: good[n]["kV"])
+            odd = max(good, key=lambda n: abs(good[n]["kV"] / A.median(kvs) - 1))
             F.append(finding(
-                "warn", f"kV differs {kv_spread:.0f}% between modules; {weakest} is the weak corner",
+                "warn", f"kV differs {kv_spread:.0f}% between modules; {odd} is the odd one out",
                 "Up to about 8% is normal motor-to-motor variation and a per-module feedforward "
-                "absorbs it. More means that corner is mechanically different: check its gears, "
-                "tread and bearings before trusting its numbers."))
+                "absorbs it. On carpet the chassis drives every wheel at the robot's speed, so a worn "
+                "or smaller wheel, a slipping wheel and a different pinion all show up here the same "
+                "way a weak motor would. Check that corner's wheel size first (Calibrate tab, Wheel "
+                "sizes); to judge the motor itself, run the feedforward on blocks, where each wheel "
+                "spins free.", {"type": "run", "test": "drive_ff", "env": "BLOCKS", "args": {}}))
         ident_findings, ident = motor_identity_findings(kvs, ctx or {})
         F.extend(ident_findings)
         if ident:
@@ -746,7 +776,9 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
                 "Apply these live, then rerun drive_step: the speed error should collapse and the "
                 "drive kP can come down to a gentle correction. Save writes them to swervetune.json.",
                 {"type": "gains", "values": {k: round(v, 4) for k, v in values.items()}}))
-    if history:
+    # A motor's health is judged on blocks only: on carpet the chassis couples the wheels, so a
+    # module drifting from its siblings could be its wheel, its grip or its gearing.
+    if history and blocks:
         F.extend(motor_trend_findings(fits, history))
     met = sum(t["met"] for t in report["targets"])
     report["summary"] = (f"Feedforward: {len(good)}/{len(mods)} modules fitted, kV spread "

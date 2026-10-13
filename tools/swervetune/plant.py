@@ -143,9 +143,9 @@ class SteeringModule:
 
 
 def steer_step(targets, hold_s=0.6, settle_s=0.5, kP=0.01, kI=0.0, kD=0.0, i_zone=0.0,
-               ramp_s=0.0, feedback="motor", surface="blocks", rate_hz=200, bus=12.0, seed=1):
+               ramp_s=0.0, feedback="motor", surface="blocks", rate_hz=200, bus=12.0, seed=1, current_limit=20.0):
     """Same shape of result as the robot's steer_step: one module, as ``m0``."""
-    mod = SteeringModule(surface=surface, seed=seed)
+    mod = SteeringModule(surface=surface, seed=seed, current_limit=current_limit)
     pid = SparkPid(kP, kI, kD, i_zone, ramp_s, wrap=360.0)
     dt = 0.0002
     t = 0.0
@@ -221,6 +221,10 @@ class DriveModule:
         self._raw = []
         self.slipping = False
         self.rng = random.Random(seed)
+        # Carpet nap, tread lugs and module flex: a load torque that wanders, about a fifth of the
+        # friction torque on carpet and a twentieth in the air, changing over a few milliseconds.
+        self.dist_scale = (0.2 if surface == "floor" else 0.05) * self.kS_torque
+        self.dist = 0.0
 
     def measure_tick(self):
         """Once per millisecond: what the SPARK's velocity reading is now, in m/s."""
@@ -251,6 +255,11 @@ class DriveModule:
             fric = 0.0
         else:
             fric = self.kS_torque * (1 if self.w > 0 else -1)
+        if self.w != 0.0:
+            # A first-order random walk with a 4 ms time constant.
+            a = dt / 0.004
+            self.dist += a * (self.rng.gauss(0.0, 1.0) * self.dist_scale * 3.0 - self.dist)
+            fric += self.dist
         # Traction: the wheel cannot push the robot harder than the carpet allows.
         wheel_force = (torque - fric) * self.gear / self.r
         self.slipping = abs(wheel_force) > self.traction_force
@@ -272,7 +281,7 @@ def _ff_volts(v_sp, v_prev_sp, ff):
 
 def drive_step(speeds, hold_s=0.8, align_s=0.6, kP=0.002, kI=0.0, kD=0.0, ramp_s=0.0,
                ff=None, surface="floor", meas_period_ms=None, meas_depth=None,
-               rate_hz=100, bus=12.0, modules=4, seed=1, motor="neo"):
+               rate_hz=100, bus=12.0, modules=4, seed=1, motor="neo", current_limit=40.0):
     """Same shape of result as the robot's drive_step, with module-to-module variation.
 
     ``ff`` defaults to YAGSL's own (no kS, kV of 12 V over the free speed).
@@ -280,7 +289,8 @@ def drive_step(speeds, hold_s=0.8, align_s=0.6, kP=0.002, kI=0.0, kD=0.0, ramp_s
     ff = ff or (0.0, nominal_kv(motor), 0.0)
     rng = random.Random(seed)
     mods = [DriveModule(surface=surface, meas_period_ms=meas_period_ms, meas_depth=meas_depth,
-                        kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i, motor=motor)
+                        kS_volts=0.15 * (1 + 0.15 * (rng.random() - 0.5)), seed=seed + i, motor=motor,
+                        current_limit=current_limit)
             for i in range(modules)]
     pids = [SparkPid(kP, kI, kD, 0.0, ramp_s) for _ in mods]
     dt = 0.0002
