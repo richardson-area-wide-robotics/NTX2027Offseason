@@ -292,6 +292,39 @@ def cmd_run(args, out):
         lk.close()
 
 
+def run_kind(r):
+    """Where a saved run came from. Only "robot" runs are evidence about a robot."""
+    return "practice" if r.get("practice") else "sim" if r.get("env") == "SIM" else "robot"
+
+
+def cmd_runs(args, out):
+    rows = []
+    for r in runs.list_runs(1000):
+        kind = run_kind(r)
+        if args.show != "all" and kind != args.show:
+            continue
+        if args.test and r["test"] != args.test:
+            continue
+        if args.robot and (r["robot"] or "").lower() != args.robot.lower():
+            continue
+        done = r["outcome"] == "DONE"
+        # As in the Runs tab: a run that stopped part-way has no score and no cost.
+        rows.append({"file": r["file"], "kind": kind, "robot": r["robot"], "test": r["test"],
+                     "module": r["module"], "env": r["env"], "outcome": r["outcome"],
+                     "score": r["score"] if done else None, "cost": r["cost"] if done else None,
+                     "summary": r["summary"], "gains": r["gains"]})
+        if len(rows) >= args.limit:
+            break
+    out.put(runs=_clean(rows))
+    if not rows:
+        out.say(f"No {'' if args.show == 'all' else args.show + ' '}runs saved yet.")
+    for x in rows:
+        score = "-" if x["score"] is None else x["score"]
+        out.say(f"{x['file']}  {x['kind']:8} {x['test'] or '?':11} {(x['outcome'] or '?').lower():9} "
+                f"score {score}")
+    return out.done()
+
+
 def cmd_analyze(args, out):
     doc = runs.load(args.run)
     project = resolve_project(args.project) if args.project else None
@@ -809,6 +842,14 @@ def build_parser():
     s.add_argument("--module", default="ALL", help="ALL, FL, FR, BL, BR or a module name")
     s.add_argument("--arg", action="append", help="test argument key=value, repeatable")
     s.set_defaults(fn=cmd_run)
+
+    s = sub.add_parser("runs", help="saved runs, newest first, with score and cost")
+    s.add_argument("--show", choices=["robot", "sim", "practice", "all"], default="robot",
+                   help="robot (default): the real robot only; sim; practice (the practice pod); all")
+    s.add_argument("--test", help="only this test, e.g. steer_step")
+    s.add_argument("--robot", help="only this robot, e.g. Peashooter")
+    s.add_argument("--limit", type=int, default=20)
+    s.set_defaults(fn=cmd_runs)
 
     s = sub.add_parser("analyze", help="re-analyze a saved run")
     s.add_argument("run")

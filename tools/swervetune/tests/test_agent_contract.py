@@ -100,6 +100,41 @@ class ActionsTest(unittest.TestCase):
         self.assertIs(doc["practice"], True)
         self.assertIn("not your robot", doc["note"])
 
+    def test_runs_lists_robot_runs_and_scores_only_finished_ones(self):
+        import tempfile
+        from unittest import mock
+        from swervetune import runs
+        with tempfile.TemporaryDirectory() as d:
+            docs = {
+                "20261013-010000_peashooter_steer_step_all.json":
+                    {"test": "steer_step", "env": "BLOCKS", "outcome": "DONE", "robot": {"name": "Peashooter"},
+                     "report": {"score": 80, "cost": 1.5}},
+                "20261013-010100_peashooter_drive_step_all.json":
+                    {"test": "drive_step", "env": "FIELD", "outcome": "ABORTED", "robot": {"name": "Peashooter"},
+                     "report": {"score": 60, "cost": 2.0}},
+                "20261013-010200_practice-pod_steer_step_all.json":
+                    {"test": "steer_step", "env": "FIELD", "outcome": "DONE", "practice": True,
+                     "report": {"score": 100, "cost": 0.1}},
+                "20261013-010300_sim_steer_step_all.json":
+                    {"test": "steer_step", "env": "SIM", "outcome": "DONE", "report": {"score": 100}},
+            }
+            for name, doc in docs.items():
+                with open(os.path.join(d, name), "w", encoding="utf-8") as fh:
+                    json.dump(doc, fh)
+            with mock.patch.object(runs, "RUNS", d):
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    cli.main(["runs", "--json"])
+                rows = json.loads(buf.getvalue())["runs"]
+                self.assertEqual([r["test"] for r in rows], ["drive_step", "steer_step"], "robot runs, newest first")
+                self.assertIsNone(rows[0]["score"], "a stopped run has no score")
+                self.assertEqual(rows[1]["score"], 80)
+                buf = io.StringIO()
+                with redirect_stdout(buf):
+                    cli.main(["runs", "--show", "all", "--test", "steer_step", "--json"])
+                kinds = [r["kind"] for r in json.loads(buf.getvalue())["runs"]]
+                self.assertEqual(kinds, ["sim", "practice", "robot"])
+
     def test_json_output_is_strict(self):
         out = cli.Out(True)
         out.put(x=float("nan"), y=[float("inf")])

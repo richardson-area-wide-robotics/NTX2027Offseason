@@ -61,6 +61,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `gains show` / `gains set Steer/kP=0.015` | Reads or changes live gains (lost at restart until saved). |
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
 | `config --file F --path a.b --value V` | Shows the diff of one config change (a report's `config` action); `--yes` writes. Only the robot's own config files. |
+| `runs [--test steer_step] [--robot Peashooter] [--show robot\|sim\|practice\|all]` | Saved runs, newest first: file, test, outcome, score and cost, gains. Real robot runs only unless `--show` says otherwise; a run that stopped part-way has no score. |
 | `analyze <run>` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. |
 | `diagnose [symptom]` | The troubleshooter. |
 | `motors` | Heat, stalls and failures for every watched motor. |
@@ -126,8 +127,9 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `BAD_ARGS` | Your command's arguments: fix the command. |
 | `TIMEOUT`, `WAITED_TOO_LONG`, `BUSY`, `ROBOT_ERROR`, `OTHER` | Read `message` to the person and wait. |
 
-Stop when the score reaches 100, or the cost hasn't improved over three runs. Then summarize for
-the person: what was measured, what changed, what is left.
+Stop when the score reaches 100, or the cost hasn't improved over three runs (`runs --test <test>`
+lists them with their costs). Then summarize for the person: what was measured, what changed,
+what is left.
 
 Before spending battery and floor time on a strategy, `rehearse` it against the practice pod. The
 same advisor drives it, so a strategy that doesn't converge there won't converge on carpet.
