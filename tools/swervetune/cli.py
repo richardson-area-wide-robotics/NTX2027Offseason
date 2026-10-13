@@ -381,7 +381,7 @@ def cmd_ppcheck(args, out):
         if args.fix and r["fixes"]:
             path, new = ppcheck.fixed_text(p, r["fixes"])
             old = open(path, encoding="utf-8").read()
-            out.say(yagslcfg.diff(old, new, os.path.relpath(path, p.path)))
+            out.say(yagslcfg.diff(old, new, os.path.relpath(path, p.path).replace(os.sep, "/")))
             if args.yes:
                 with open(path, "w", encoding="utf-8", newline="\n") as fh:
                     fh.write(new)
