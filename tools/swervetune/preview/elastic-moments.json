@@ -1,0 +1,19 @@
+{
+ "booted": {"check": "Pick the battery number (next to use: 3)", "alerts": [
+    "kWarning: Which battery is in? Pick its number under Battery."
+  ]},
+ "ready": {"check": "Battery 7: 12.84 V at rest, charged \u00b7 next: 3", "alerts": []},
+ "after_match": {"check": "Battery 2: resting voltage read once the robot is disabled \u00b7 practice only \u00b7 next: 3", "alerts": [
+    "kError: Shooter leader (CAN 10) is cut to 2 A until it cools (heat estimate 85%)",
+    "kInfo: Spindexter (CAN 14) is a SPARK Flex but the code created a SPARK MAX: create it as new SparkFlex(...), or for a swerve motor fix the YAGSL type (for a programmer)",
+    "kWarning: CAN bus errors in 14 loops: wiggle-test the CAN chain",
+    "kWarning: frontleft drive (CAN 5) dropped off the CAN bus 2 times: wiggle-test its CAN plugs",
+    "kWarning: frontright: steering more than 10\u00b0 from where it is told to point, 3 times this session. A loose or slipping module, a wrong offset, or steering gains too soft: Troubleshoot, \"A wheel points the wrong way\"."
+  ]},
+ "override": {"check": "Battery 3: 12.71 V at rest, charged \u00b7 next: 7", "alerts": [
+    "kError: Intake pivot (CAN 12) stalled and is cut to 2 A (stalled 10 s): stop driving it and clear the jam; it comes back once nothing pushes it",
+    "kWarning: Shooter leader (CAN 10) is at half power to cool (heat estimate 90% - override holding it on for 14 s more): ease off",
+    "kWarning: Heat override ON, 14 s left: shut-off motors run at half power; stalls still cut out. Back again restarts the 20 s. Still off: Intake pivot (stalled: clear the jam)."
+  ]},
+ "charge_it": {"check": "Battery 4: 12.21 V at rest, CHARGE IT before a match \u00b7 next: 3", "alerts": []}
+}

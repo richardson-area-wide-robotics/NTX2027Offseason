@@ -88,6 +88,11 @@ motors, and finding wiring faults: `py -3.12 tools/swervetune gui`. Start with
 the [brief for AI agents](docs/AGENT_TUNING.md), [notes for 2027](docs/MIGRATION_2027.md) and
 [REV's numbers for our motors, controllers, swerve modules and battery](docs/REV_HARDWARE.md).
 
+To show the tools and the drive team's dashboard to someone away from the robot, run Peashooter in
+the simulator and then `py -3.12 -m swervetune.preview.make` from `tools/`. It records the real app
+and builds a clickable copy in `tools/swervetune/preview/site/` that runs in any browser, with no
+robot needed ([how it works](tools/swervetune/preview/make.py)).
+
 ## CI
 
 [`.github/workflows/build.yml`](.github/workflows/build.yml) runs `./gradlew build` on both projects for every pull request into `main`, and again on `main` after a merge. The `CI` check has to be green before a pull request can merge. Mentor notes are in [`.github/README-ci.md`](.github/README-ci.md).
