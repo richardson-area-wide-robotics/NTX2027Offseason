@@ -41,7 +41,7 @@ TRIGGERS = {6: ("Left trigger", 2), 7: ("Right trigger", 3)}
 DIGITAL = [b for b in range(16) if b not in TRIGGERS]
 
 PRESSED = 0.5
-BOUNCE_MS = 30.0          # a press or release shorter than this is a bounce, not a person
+BOUNCE_MS = 30.0          # a release shorter than this, between two presses, is a bounce
 FULL_REACH = 0.97         # a stick that reaches this everywhere asks for full speed
 MIN_DEADBAND = 0.03
 
@@ -90,14 +90,41 @@ def recommend_deadband(worst):
 
 
 # ---------------------------------------------------------------------------- the code's deadband
+# WPILib's Xbox getters, and raw WPILib axis numbers, as the browser's stick axes 0-3.
+_GETTER_AXIS = {"LeftX": 0, "LeftY": 1, "RightX": 2, "RightY": 3}
+_WPILIB_TO_AXIS = {w: a for a, w in WPILIB_AXIS.items()}
+
+
+def _axis_in(text):
+    m = re.search(r"get(LeftX|LeftY|RightX|RightY)\(\)", text)
+    if m:
+        return _GETTER_AXIS[m.group(1)]
+    m = re.search(r"getRawAxis\(\s*(\d)\s*\)", text)
+    return _WPILIB_TO_AXIS.get(int(m.group(1))) if m else None
+
+
 def code_deadbands(project):
-    """``[{"value", "file", "line"}]``: every ``MathUtil.applyDeadband(x, 0.1)`` in the robot code."""
+    """``[{"value", "file", "line", "axis"}]``: every ``MathUtil.applyDeadband(x, 0.1)`` in the robot
+    code, with the stick axis it applies to when the call names it (``axis`` None when it deadbands a
+    variable, such as a supplier passed in from Robot.java)."""
     out = []
     for name, src in (project.java or {}).items():
-        for m in re.finditer(r"applyDeadband\([^;]*?,\s*([0-9.]+)\s*\)", src):
-            out.append({"value": float(m.group(1)), "file": name.replace("\\", "/").split("/")[-1],
-                        "line": src.count("\n", 0, m.start()) + 1})
+        for m in re.finditer(r"applyDeadband\(([^;]*?),\s*([0-9.]+)\s*\)", src):
+            out.append({"value": float(m.group(2)), "file": name.replace("\\", "/").split("/")[-1],
+                        "line": src.count("\n", 0, m.start()) + 1, "axis": _axis_in(m.group(1))})
     return out
+
+
+def axes_read(project):
+    """The stick axes (0-3, the browser's numbers) the robot code reads anywhere: drift on an axis
+    nothing reads can't move the robot."""
+    seen = set()
+    for src in (project.java or {}).values():
+        for m in re.finditer(r"get(LeftX|LeftY|RightX|RightY)\(\)|getRawAxis\(\s*(\d)\s*\)", src):
+            a = _GETTER_AXIS.get(m.group(1)) if m.group(1) else _WPILIB_TO_AXIS.get(int(m.group(2)))
+            if a is not None:
+                seen.add(a)
+    return sorted(seen)
 
 
 # ---------------------------------------------------------------------------- steps
@@ -177,7 +204,9 @@ def returns(samples):
                     settles.append((sum(q[1 + ax] for q in win) / len(win), sum(q[1 + ay] for q in win) / len(win)))
                     moving, quiet_since = False, None
         worst = max((math.hypot(x, y) for x, y in settles), default=float("nan"))
-        out["sticks"][name] = {"settles": settles, "worst": worst}
+        out["sticks"][name] = {"settles": settles, "worst": worst,
+                               "worst_axis": {ax: max((abs(x) for x, _ in settles), default=float("nan")),
+                                              ay: max((abs(y) for _, y in settles), default=float("nan"))}}
         label = name.capitalize() + " stick"
         if len(settles) < 3:
             out["findings"].append({"level": "warn", "title": f"{label}: fewer than 3 flicks seen",
@@ -227,15 +256,17 @@ def buttons(samples):
                 changes.append((r[0], s))
                 state = s
         presses = sum(1 for _, s in changes[1:] if s)
-        # A press or a release that lasted less than BOUNCE_MS is the switch bouncing, not a person.
-        short = sum(1 for (t0, _), (t1, _) in zip(changes[1:], changes[2:]) if t1 - t0 < BOUNCE_MS)
+        # A bounce is an extra press: released for less than BOUNCE_MS and pressed again, which the
+        # robot sees as a double-tap. A quick tap (a short press) is just a person.
+        short = sum(1 for (t0, s0), (t1, s1) in zip(changes[1:], changes[2:])
+                    if not s0 and s1 and t1 - t0 < BOUNCE_MS)
         out["buttons"][BUTTON_NAMES[b]] = {"presses": presses, "bounces": short, "wpilib": WPILIB_BUTTON.get(b)}
         if short:
             bounced.append(f"{BUTTON_NAMES[b]} ({short}x)")
     missing = [n for n, x in out["buttons"].items() if x["presses"] == 0]
     if bounced:
         out["findings"].append({"level": "error", "title": f"Bouncing: {', '.join(bounced)}",
-                                "why": f"A single press showed up as more than one (gaps under {BOUNCE_MS:.0f} ms). "
+                                "why": f"A single press showed up as more than one (released for under {BOUNCE_MS:.0f} ms). "
                                        "The robot sees a double-tap: a toggle flips twice. Replace the controller."})
     if missing:
         out["findings"].append({"level": "warn", "title": f"Never pressed: {', '.join(missing)}",
@@ -243,34 +274,63 @@ def buttons(samples):
     return out
 
 
-def report(steps, code_db=None):
-    """The whole check: a recommended deadband against the code's, and every step's findings."""
+def axis_drift(steps):
+    """Each stick axis's worst offset: where it rested or came back to after a flick, whichever is
+    further. Per axis, because the code deadbands each axis on its own."""
+    out = {}
+    for x in (steps.get("rest") or {}).get("axes") or []:
+        out[x["axis"]] = x["max_abs"]
+    for s in ((steps.get("returns") or {}).get("sticks") or {}).values():
+        for a, v in (s.get("worst_axis") or {}).items():
+            if A.finite(v):
+                out[int(a)] = max(out.get(int(a), 0.0), v)
+    return out
+
+
+def report(steps, code_db=None, read=None):
+    """The whole check: each axis the code reads against the deadband it applies there, and every
+    step's findings. ``read`` is the axes the code reads (all four when unknown)."""
     F = []
-    worst_rest = (steps.get("rest") or {}).get("worst")
-    worst_return = (steps.get("returns") or {}).get("worst")
-    worst = max([w for w in (worst_rest, worst_return) if A.finite(w)], default=float("nan"))
+    drift = axis_drift(steps)
+    read = list(range(4)) if read is None else list(read)
+    judged = {a: v for a, v in drift.items() if a in read}
+    worst = max(judged.values(), default=float("nan"))
     rec = recommend_deadband(worst) if A.finite(worst) else None
-    code = [d["value"] for d in code_db or []]
-    if rec is not None and code:
-        cur = min(code)
-        where = ", ".join(sorted({d["file"] for d in code_db}))
-        if worst >= cur:
-            F.append({"level": "error",
-                      "title": f"This controller drifts {worst:.2f}, past the code's {cur:g} deadband",
-                      "why": f"The robot will creep with nobody touching the sticks. Use another controller, or "
-                             f"raise the deadband in {where} to {rec:.2f}.", "learn": "deadband"})
-        elif rec > cur:
-            F.append({"level": "warn", "title": f"Drift {worst:.2f} is close to the code's {cur:g} deadband",
-                      "why": f"No creep today, but there is little margin; {rec:.2f} would be safe. Worn sticks get "
-                             "worse.", "learn": "deadband"})
-        else:
-            F.append({"level": "info", "title": f"Drift {worst:.2f}: well inside the code's {cur:g} deadband",
-                      "why": f"{rec:.2f} would be enough for this controller; a smaller deadband means finer "
-                             "control near center.", "learn": "deadband"})
+    db = code_db or []
+    loose = [d["value"] for d in db if d.get("axis") is None]
+    def deadband(a):
+        own = [d["value"] for d in db if d.get("axis") == a]
+        return min(own) if own else (min(loose) if loose else None)
+    if judged and db:
+        where = ", ".join(sorted({d["file"] for d in db}))
+        rows = sorted(((a, v, deadband(a)) for a, v in judged.items() if deadband(a) is not None),
+                      key=lambda r: r[1] - r[2], reverse=True)
+        if rows:
+            a, v, cur = rows[0]
+            name = AXIS_NAMES[a]
+            if v >= cur:
+                F.append({"level": "error", "title": f"{name} drifts {v:.2f}, past the code's {cur:g} deadband",
+                          "why": f"The robot will creep with nobody touching the sticks. Use another controller, or "
+                                 f"raise the deadband in {where} to {recommend_deadband(v):.2f}.", "learn": "deadband"})
+            elif recommend_deadband(v) > cur:
+                F.append({"level": "warn", "title": f"{name} drifts {v:.2f}, close to the code's {cur:g} deadband",
+                          "why": f"No creep today, but there is little margin; {recommend_deadband(v):.2f} would be "
+                                 "safe. Worn sticks get worse.", "learn": "deadband"})
+            else:
+                F.append({"level": "info", "title": f"Drift at most {v:.2f}: well inside the code's {cur:g} deadband",
+                          "why": f"{rec:.2f} would be enough for this controller; a smaller deadband means finer "
+                                 "control near center.", "learn": "deadband"})
+    unread = sorted(a for a, v in drift.items() if a not in read and v >= MIN_DEADBAND + 0.02)
+    if unread and len(read) < 4:
+        F.append({"level": "info", "title": "Drift on axes the robot code doesn't read: "
+                  + ", ".join(f"{AXIS_NAMES[a]} {drift[a]:.2f}" for a in unread),
+                  "why": "Nothing reads them, so they can't move the robot. Worth knowing if a new command "
+                         "starts using that stick."})
     for name in ("rest", "sticks", "returns", "triggers", "buttons"):
         F.extend((steps.get(name) or {}).get("findings") or [])
     level = "error" if any(f["level"] == "error" for f in F) else "warn" if any(f["level"] == "warn" for f in F) else "ok"
     return {"recommended_deadband": rec, "worst_offset": worst, "code_deadbands": code_db or [],
+            "axes_read": read, "axis_drift": {AXIS_NAMES[a]: v for a, v in sorted(drift.items())},
             "verdict": level, "findings": F}
 
 

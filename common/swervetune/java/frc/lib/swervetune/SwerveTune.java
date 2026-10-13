@@ -1053,6 +1053,10 @@ public final class SwerveTune {
     }
     boolean done = proc.execute(ctx, t);
     progress = proc.progress(ctx, t);
+    String live = proc.liveMessage(ctx, t);
+    if (live != null) {
+      message = live;
+    }
     if (manualSampling) {
       ctx.sampler.sampleNow();
     }

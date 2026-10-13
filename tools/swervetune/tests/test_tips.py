@@ -46,7 +46,7 @@ for name, src in SOURCES.items():
         USED.setdefault(m.group(1), name)
 
 # Files whose hover-only title="" attributes haven't been replaced by tips yet. It only shrinks.
-TITLES_PENDING = {"wiring.js"}
+TITLES_PENDING = set()
 
 
 class TipsTest(unittest.TestCase):

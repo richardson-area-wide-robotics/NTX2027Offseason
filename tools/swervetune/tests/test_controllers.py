@@ -137,6 +137,21 @@ class ButtonsTest(unittest.TestCase):
     def test_update_interval(self):
         self.assertEqual(C.update_interval_ms(rows(50, dt=4.0)), 4.0)
 
+    def test_a_quick_tap_through_the_robot_is_not_a_bounce(self):
+        # The robot samples every 20 ms: a firm quick tap is one frame pressed. That is a person.
+        def b(k):
+            return {0: 1.0} if k in (10, 30, 50) else {}
+        r = C.buttons(rows(80, dt=20.0, buttons=b))
+        self.assertEqual(r["buttons"]["A"]["presses"], 3)
+        self.assertEqual(r["buttons"]["A"]["bounces"], 0)
+
+    def test_a_one_frame_release_between_presses_is_a_bounce(self):
+        # Released for one 20 ms frame and pressed again: the robot sees two presses.
+        def b(k):
+            return {0: 1.0} if 10 <= k < 14 or 15 <= k < 20 else {}
+        r = C.buttons(rows(40, dt=20.0, buttons=b))
+        self.assertEqual(r["buttons"]["A"]["bounces"], 1)
+
 
 class CodeTest(unittest.TestCase):
     def test_both_robots_deadbands(self):
@@ -145,6 +160,28 @@ class CodeTest(unittest.TestCase):
         self.assertEqual({d["value"] for d in pea}, {0.1})
         self.assertEqual({d["file"] for d in pea}, {"Robot.java"})
         self.assertEqual({d["value"] for d in black}, {0.08})
+
+    def test_the_axes_each_robot_reads(self):
+        pea = Y.Project(os.path.join(REPO, "Peashooter"))
+        # Peashooter deadbands each getter it reads, so each deadband knows its axis.
+        self.assertEqual({d["axis"] for d in C.code_deadbands(pea)}, {0, 1, 2})
+        self.assertEqual(C.axes_read(pea), [0, 1, 2], "left X, left Y, right X; never right Y")
+        black = Y.Project(os.path.join(REPO, "Black team"))
+        self.assertEqual({d["axis"] for d in C.code_deadbands(black)}, {None}, "suppliers passed in from Robot.java")
+        self.assertEqual(C.axes_read(black), [0, 1, 2])
+
+    def test_drift_on_an_axis_nothing_reads_never_fails_a_controller(self):
+        r = C.rest(rows(200, axes=lambda k: (0.01, 0.0, 0.0, 0.2)))
+        rep = C.report({"rest": r}, [{"value": 0.1, "file": "Robot.java", "line": 59, "axis": 1}], read=[0, 1, 2])
+        self.assertNotEqual(rep["verdict"], "error")
+        self.assertIn("axes the robot code doesn't read: Right stick Y 0.20", titles(rep))
+
+    def test_each_axis_is_judged_on_its_own(self):
+        # 0.07 on both left axes is 0.099 from center, but the code deadbands each axis: no creep.
+        r = C.rest(rows(200, axes=lambda k: (0.07, 0.07, 0, 0)))
+        rep = C.report({"rest": r}, [{"value": 0.08, "file": "Drive.java", "line": 42, "axis": None}], read=[0, 1, 2])
+        self.assertNotEqual(rep["verdict"], "error")
+        self.assertIn("close to the code's 0.08 deadband", titles(rep))
 
     def test_no_deadband_in_the_code_means_no_comparison(self):
         rep = C.report({"rest": C.rest(rows(100, axes=lambda k: (0.2, 0, 0, 0)))}, [])

@@ -10,7 +10,10 @@
   root.innerHTML = `
     <div class="stack">
       <div class="panel">
-        <h2>Module positions</h2>
+        <p class="small">Measure the robot in this order: each one uses the ones before it. Every panel has <b>Practice</b>, which runs it on made-up data with a known answer, so you can see what a good result looks like before measuring for real.</p>
+      </div>
+      <div class="panel">
+        <h2 data-tip="cal.positions">1. Module positions</h2>
         <div class="grid2">
           <div>
             <svg viewBox="0 0 320 300" class="geo-diagram" role="img" aria-label="Top view of the robot: wheelbase is front axle to back axle, track width is left wheel to right wheel">
@@ -26,18 +29,19 @@
           <div>
             <p class="small">Measure between the <b>centers of the wheels</b>, not the frame: the wheels sit inside it. Wheelbase is front axle to back axle; track width is the middle of a left wheel to the middle of the right one. Inches, to the nearest 1/8.</p>
             <div class="row" style="flex-wrap:wrap">
-              <label class="small">Wheelbase (in) <input type="number" id="cg-wb" step="0.125" min="6" max="40" style="width:7em"></label>
-              <label class="small">Track width (in) <input type="number" id="cg-tw" step="0.125" min="6" max="40" style="width:7em"></label>
-              <button class="btn" id="cg-tape">Compare with the files</button>
+              <label class="small" data-tip="cal.wb">Wheelbase (in) <input type="number" id="cg-wb" step="0.125" min="6" max="40" style="width:7em"></label>
+              <label class="small" data-tip="cal.tw">Track width (in) <input type="number" id="cg-tw" step="0.125" min="6" max="40" style="width:7em"></label>
+              <button class="btn" id="cg-tape" data-tip="cal.compare">Compare with the files</button>
             </div>
+            <p class="small good-result"><b>A good result:</b> every module within about 1/8 in of the files. A bigger difference means the code has a wrong number.</p>
             <div id="cg-tape-out"></div>
           </div>
         </div>
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2>Wheel sizes</h2>
-          <button class="btn" id="cg-wheel-practice">Practice</button>
+          <h2 data-tip="cal.wheels">2. Wheel sizes</h2>
+          <button class="btn" id="cg-wheel-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         <p class="small">Tread wears and compresses, and every distance odometry reports is wheel turns times the wheel size. With the motors coasting, a push makes each wheel roll freely over the same ground, so each one's count against a tape measure is its real size. Driving can't measure this: the speed loop makes every wheel report the speed it was asked for.</p>
         <ol class="small">
@@ -47,60 +51,65 @@
           <li>Type how far one point of the robot really moved, then <b>Measure</b>.</li>
         </ol>
         <div class="row" style="flex-wrap:wrap">
-          <button class="btn primary" id="cg-push">Record the push</button>
-          <label class="small">Distance moved (m) <input type="number" id="cg-tape-m" step="0.005" min="0.5" value="3.0" style="width:7em"></label>
-          <button class="btn" id="cg-measure" disabled>Measure</button>
+          <button class="btn primary" id="cg-push" data-tip="cal.push">Record the push</button>
+          <label class="small" data-tip="cal.distance">Distance moved (m) <input type="number" id="cg-tape-m" step="0.005" min="0.5" value="3.0" style="width:7em"></label>
+          <button class="btn" id="cg-measure" disabled data-tip="cal.measure">Measure</button>
           <span class="small muted" id="cg-push-state"></span>
         </div>
+        <p class="small good-result"><b>A good result:</b> all four wheels within about 1% of each other, and close to the 3 in on the drawing. One wheel far off the others is worn tread, or it slipped during the push.</p>
         <div id="cg-wheel-out"></div>
       </div>
       <div class="panel">
-        <h2>Check with a spin</h2>
+        <h2 data-tip="cal.spin">3. Check with a spin</h2>
         <p class="small">After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune tab). Turning on the spot, the gyro's turn rate against the wheels' speeds says whether the two agree as a whole.</p>
-        <div class="row"><button class="btn" id="cg-spin">Check the newest floor spin</button></div>
+        <div class="row"><button class="btn" id="cg-spin" data-tip="cal.spin-check">Check the newest floor spin</button></div>
+        <p class="small good-result"><b>A good result:</b> the gyro and the wheels agree within a few percent. If they don't, recheck the module positions and wheel sizes before blaming the gyro.</p>
         <div id="cg-spin-out"></div>
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2><span class="term" data-learn="gyro">Gyro</span></h2>
-          <button class="btn" id="gy-practice">Practice</button>
+          <h2 data-tip="cal.gyro">4. Gyro</h2>
+          <button class="btn" id="gy-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         <p class="small">Where the gyro sits on the robot doesn't matter for localization: odometry uses only the heading, and every part of the robot turns by the same angle. What matters is how well it reads: does the heading creep while nothing moves, does a full turn read 360 degrees, and is it mounted level.</p>
         <ol class="small">
           <li><b>Standing still:</b> after the gyro has finished calibrating (the top bar), record a minute with nobody touching the robot.</li>
-          <li><b>Full turns:</b> line a bumper edge up with a tape line on the floor. Start recording, then turn the robot counter-clockwise (seen from above) exactly that many full turns, with the sticks or by hand, and stop with the same edge back on the line. Press <b>Back on the line</b>.</li>
+          <li><b>Full turns:</b> line a bumper edge up with a tape line on the floor. Start recording, then turn the robot counter-clockwise (seen from above) exactly that many full turns, with the sticks or by hand, and stop with the same edge back on the line. Press <b>Back on the line</b> (it appears once the recording starts).</li>
         </ol>
         <div class="row" style="flex-wrap:wrap">
-          <button class="btn" id="gy-still">Record a minute still</button>
-          <label class="small">Full turns <input type="number" id="gy-turns" value="5" min="1" max="20" style="width:5em"></label>
-          <button class="btn" id="gy-turn">Start recording the turns</button>
-          <button class="btn primary" id="gy-done" hidden>Back on the line</button>
+          <button class="btn" id="gy-still" data-tip="cal.still">Record a minute still</button>
+          <label class="small" data-tip="cal.turns">Full turns <input type="number" id="gy-turns" value="5" min="1" max="20" style="width:5em"></label>
+          <button class="btn" id="gy-turn" data-tip="cal.turn">Start recording the turns</button>
+          <button class="btn primary" id="gy-done" hidden data-tip="cal.done">Back on the line</button>
           <span class="small muted" id="gy-state"></span>
         </div>
+        <p class="small good-result"><b>A good result:</b> under 0.5° a minute of drift standing still, and full turns that read within 1% of 360° each. The team corrects the scale only when it is more than 1% off.</p>
         <div id="gy-out"></div>
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2><span class="term" data-learn="moment_of_inertia">Mass and moment of inertia</span></h2>
-          <button class="btn" id="mi-practice">Practice</button>
+          <h2 data-tip="cal.moi">5. Mass and moment of inertia</h2>
+          <button class="btn" id="mi-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         <p class="small">PathPlanner plans every auto from the robot's mass and its moment of inertia (how hard it is to start and stop turning). Weigh the robot with bumpers and battery. The moment of inertia can't be weighed: spinning the robot in place, with every wheel pushing along its circle, measures it against how hard the robot is to push in a straight line.</p>
         <div class="row" style="flex-wrap:wrap">
-          <label class="small">Mass with bumpers and battery (kg) <input type="number" id="mi-mass" step="0.1" min="10" max="80" style="width:7em"></label>
-          <button class="btn" id="mi-mass-save">Save the mass…</button>
-          <span class="small muted" id="mi-now"></span>
+          <label class="small" data-tip="cal.mass">Mass with bumpers and battery (kg) <input type="number" id="mi-mass" step="0.1" min="10" max="80" style="width:7em"></label>
+          <button class="btn" id="mi-mass-save" data-tip="cal.mass-save">Save the mass…</button>
+          <span class="small" id="mi-now"></span>
         </div>
+        <div id="mi-assumed" class="callout warn" hidden></div>
         <ol class="small">
           <li>Measure the feedforward on the floor first (Guide step 10, <b>Measure the feedforward</b>): this compares against it.</li>
           <li>Robot on the floor, at least a meter clear all round. Hold the deadman for about 20 seconds while it spins each way, slowly, then briskly.</li>
         </ol>
-        <div class="row"><button class="btn primary" id="mi-run">Spin and measure</button></div>
+        <div class="row"><button class="btn primary" id="mi-run" data-tip="cal.moi-run">Spin and measure</button></div>
+        <p class="small good-result"><b>A good result:</b> a fit the tool calls plausible: for a robot this size, a few kg·m². It saves the number for PathPlanner.</p>
         <div id="mi-out"></div>
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2><span class="term" data-learn="camera_mount">Camera positions</span></h2>
-          <button class="btn" id="cc-practice">Practice</button>
+          <h2 data-tip="cal.camera">6. Camera positions</h2>
+          <button class="btn" id="cc-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         <p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses 3.5 cm at 2 m. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
         <ol class="small">
@@ -110,22 +119,23 @@
           <li><b>Take a sighting</b> (2 s, robot still). Then move: closer, further, to each side. Three spots or more, then <b>Work it out</b>.</li>
         </ol>
         <div class="row" style="flex-wrap:wrap;gap:10px">
-          <label class="small">Camera <input id="cc-cam" value="front" style="width:8em" aria-label="Camera name, as PhotonVision shows it"></label>
-          <label class="small">Tag ID <input type="number" id="cc-tag" value="1" min="0" style="width:5em"></label>
-          <label class="small">Side facing the wall <select id="cc-side"><option>front</option><option>back</option><option>left</option><option>right</option></select></label>
-          <label class="small">Wall to center (m) <input type="number" id="cc-d" step="0.005" style="width:6em"></label>
-          <label class="small">Tag left of center (m) <input type="number" id="cc-l" step="0.005" value="0" style="width:6em"></label>
-          <label class="small">Tag height (m) <input type="number" id="cc-h" step="0.005" style="width:6em"></label>
-          <button class="btn primary" id="cc-take">Take a sighting</button>
+          <label class="small" data-tip="cal.cam">Camera <input id="cc-cam" value="front" style="width:8em"></label>
+          <label class="small" data-tip="cal.tag">Tag ID <input type="number" id="cc-tag" value="1" min="0" style="width:5em"></label>
+          <label class="small" data-tip="cal.side">Side facing the wall <select id="cc-side"><option>front</option><option>back</option><option>left</option><option>right</option></select></label>
+          <label class="small" data-tip="cal.wall">Wall to center (m) <input type="number" id="cc-d" step="0.005" style="width:6em"></label>
+          <label class="small" data-tip="cal.left">Tag left of center (m) <input type="number" id="cc-l" step="0.005" value="0" style="width:6em"></label>
+          <label class="small" data-tip="cal.height">Tag height (m) <input type="number" id="cc-h" step="0.005" style="width:6em"></label>
+          <button class="btn primary" id="cc-take" data-tip="cal.sight">Take a sighting</button>
         </div>
         <div id="cc-spots"></div>
-        <div class="row"><button class="btn" id="cc-solve" disabled>Work it out</button><button class="btn" id="cc-clear">Clear the spots</button></div>
+        <div class="row"><button class="btn" id="cc-solve" disabled data-tip="cal.solve">Work it out</button><button class="btn" id="cc-clear" data-tip="cal.clear">Clear the spots</button></div>
+        <p class="small good-result"><b>A good result:</b> three or more spots that agree with each other; the tool says how well. A spot that disagrees with the rest was probably measured wrong: remove it and take it again.</p>
         <div id="cc-out"></div>
       </div>
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2><span class="term" data-learn="field_survey">Field tags</span></h2>
-          <button class="btn" id="fs-practice">Practice</button>
+          <h2 data-tip="cal.field">7. Field tags</h2>
+          <button class="btn" id="fs-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         <p class="small">Tags on a real field are hung by people: a few centimeters off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
         <ol class="small">
@@ -134,12 +144,13 @@
           <li><b>Work it out</b>. Only tags measured to have really moved are changed; the rest keep their official place.</li>
         </ol>
         <div class="row" style="flex-wrap:wrap">
-          <button class="btn primary" id="fs-start">Start recording</button>
-          <button class="btn" id="fs-stop" disabled>Stop</button>
-          <label class="small">Field <select id="fs-variant"><option value="">Tell from the tags</option><option value="welded">Welded</option><option value="andymark">AndyMark</option></select></label>
-          <button class="btn" id="fs-solve">Work it out</button>
+          <button class="btn primary" id="fs-start" data-tip="cal.fs-start">Start recording</button>
+          <button class="btn" id="fs-stop" disabled data-tip="cal.fs-stop">Stop</button>
+          <label class="small" data-tip="cal.fs-variant">Field <select id="fs-variant"><option value="">Tell from the tags</option><option value="welded">Welded</option><option value="andymark">AndyMark</option></select></label>
+          <button class="btn" id="fs-solve" data-tip="cal.fs-solve">Work it out</button>
           <span class="small muted" id="fs-state"></span>
         </div>
+        <p class="small good-result"><b>A good result:</b> most tags where the field drawing puts them. Only tags measured to have moved by more than the noise change; a move over 30 cm is refused as a misread.</p>
         <div id="fs-out"></div>
       </div>
     </div>`;
@@ -261,6 +272,9 @@
     const lint = App.lint || await App.api("/api/lint");
     const s = (lint && lint.summary) || {};
     if (s.mass_kg) $("#mi-now", root).textContent = `Now: ${fmt(s.mass_kg, 1)} kg (${s.mass_source || ""})`;
+    const assumed = /assumed/.test(s.mass_source || "");
+    $("#mi-assumed", root).hidden = !assumed;
+    if (assumed) $("#mi-assumed", root).textContent = `Not weighed yet: PathPlanner is planning every auto with an assumed ${fmt(s.mass_kg, 0)} kg. Weigh the robot with bumpers and battery, and save it here.`;
   }
   $("#mi-mass-save", root).onclick = async () => {
     const kg = +$("#mi-mass", root).value;

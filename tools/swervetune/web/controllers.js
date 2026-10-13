@@ -27,46 +27,48 @@
   root.innerHTML = `
     <div class="panel">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-        <h2><span class="term" data-learn="stick_drift">Check a controller</span></h2>
+        <h2 data-tip="ct.title">Check a controller</h2>
         <span id="ct-rate" class="small muted"></span>
       </div>
       <p class="small">Plug the controller into this laptop with USB and press any button on it. No robot needed: the
         Driver Station reads the same controller the same way. Do this for every controller at the start of an event.</p>
       <div class="row" style="flex-wrap:wrap;gap:12px">
-        <label class="gain">Read from<select id="ct-src">
+        <label class="gain" data-tip="ct.src">Read from<select id="ct-src">
           <option value="laptop">This laptop (USB)</option>
           <option value="0">The robot: Driver Station port 0 (driver)</option>
           <option value="1">The robot: Driver Station port 1</option></select></label>
-        <label class="gain" id="ct-pad-box">Controller<select id="ct-pad"><option value="">none seen yet</option></select></label>
-        <label class="gain">Which one is it?<input id="ct-label" list="ct-labels" placeholder="Driver, Operator, Spare 1"></label>
+        <label class="gain" id="ct-pad-box" data-tip="ct.pad">Controller<select id="ct-pad"><option value="">none seen yet</option></select></label>
+        <label class="gain" data-tip="ct.label">Which one is it?<input id="ct-label" list="ct-labels" placeholder="Driver, Operator, Spare 1"></label>
         <datalist id="ct-labels"></datalist>
       </div>
       <p id="ct-mapping" class="hint" hidden></p>
     </div>
     <div class="grid2" style="margin-top:12px">
       <div class="panel">
-        <h3>Live</h3>
+        <h3 data-tip="ct.live">Live</h3>
         <div class="ct-live">
-          <svg id="ct-svg" viewBox="0 0 340 170" role="img" aria-label="Stick positions"></svg>
-          <div class="ct-trig" aria-label="Triggers"><div><b><i id="ct-lt"></i></b><span>LT</span></div><div><b><i id="ct-rt"></i></b><span>RT</span></div></div>
+          <svg id="ct-svg" viewBox="0 0 340 302" role="img" aria-label="Stick positions, with each stick's center zoomed in below"></svg>
+          <div class="ct-trig" role="group" aria-label="Triggers" data-tip="ct.trig" data-quiet><div><b><i id="ct-lt"></i></b><span>LT (axis 2)</span></div><div><b><i id="ct-rt"></i></b><span>RT (axis 3)</span></div></div>
         </div>
         <div id="ct-axes" class="small mono"></div>
-        <div id="ct-buttons" class="ct-buttons"></div>
-        <p class="hint">Square: what the robot code ignores (<span id="ct-code">no deadband found</span>).
-          <span class="ct-key-rec">Green</span>: what this controller needs, once measured.</p>
+        <div id="ct-buttons" class="ct-buttons" role="list" aria-label="Buttons"></div>
+        <p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
+          <span class="ct-key-code">Dashed square</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>).
+          <span class="ct-key-rec">Green square</span>: what this controller needs, once measured. A button turns green with ✓ once seen;
+          the number is the one robot code uses.</p>
       </div>
       <div class="panel">
-        <h3>Steps</h3>
-        <ol id="ct-steps" class="ct-steps"></ol>
+        <h3 data-tip="ct.steps">Steps</h3>
+        <ol id="ct-steps" class="ct-steps" role="list"></ol>
         <div id="ct-step-box"></div>
       </div>
     </div>
     <div class="panel" style="margin-top:12px">
-      <h3>Report</h3>
+      <h3 data-tip="ct.report">Report</h3>
       <div id="ct-report"><p class="hint">Run the steps above; the report appears here.</p></div>
     </div>
     <div class="panel" style="margin-top:12px">
-      <h3>Every controller checked</h3>
+      <h3 data-tip="ct.history">Every controller checked</h3>
       <div id="ct-history"></div>
     </div>`;
 
@@ -109,16 +111,39 @@
   // ---------------------------------------------------------------- drawing
   function stickSvg(cx, x, y, trail, label) {
     const R = 62, cy = 80;
-    const sq = d => `<rect x="${cx - d * R}" y="${cy - d * R}" width="${2 * d * R}" height="${2 * d * R}"`;
     const code = codeDb.length ? Math.min(...codeDb.map(d => d.value)) : null;
     const pts = trail.map(([a, b]) => `${(cx + a * R).toFixed(1)},${(cy + b * R).toFixed(1)}`).join(" ");
+    // The center, 5x: a 0.1 deadband is 6 px at full size, hidden under the dot; here it is 31 px.
+    const S = 5 * R, H = 0.15, zy = 228, clamp = v => Math.max(-H, Math.min(H, v));
+    const zsq = (d, cls) => `<rect x="${cx - d * S}" y="${zy - d * S}" width="${2 * d * S}" height="${2 * d * S}" class="${cls}"/>`;
+    const zpts = trail.filter(([a, b]) => Math.abs(a) < H * 1.3 && Math.abs(b) < H * 1.3)
+      .map(([a, b]) => `${(cx + clamp(a) * S).toFixed(1)},${(zy + clamp(b) * S).toFixed(1)}`).join(" ");
     return `<circle cx="${cx}" cy="${cy}" r="${R}" class="ct-ring"/>
       <line x1="${cx - R}" x2="${cx + R}" y1="${cy}" y2="${cy}" class="ct-axis"/><line x1="${cx}" x2="${cx}" y1="${cy - R}" y2="${cy + R}" class="ct-axis"/>
-      ${code ? sq(code) + ` class="ct-code"/>` : ""}
-      ${rec ? sq(rec) + ` class="ct-rec"/>` : ""}
       <polyline points="${pts}" class="ct-trail"/>
       <circle cx="${cx + x * R}" cy="${cy + y * R}" r="6" class="ct-dot"/>
-      <text x="${cx}" y="164" text-anchor="middle" class="ct-label">${label}</text>`;
+      <text x="${cx}" y="160" text-anchor="middle" class="ct-label">${label}</text>
+      <rect x="${cx - H * S}" y="${zy - H * S}" width="${2 * H * S}" height="${2 * H * S}" rx="6" class="ct-zoom"/>
+      <line x1="${cx - H * S}" x2="${cx + H * S}" y1="${zy}" y2="${zy}" class="ct-axis"/><line x1="${cx}" x2="${cx}" y1="${zy - H * S}" y2="${zy + H * S}" class="ct-axis"/>
+      ${code ? zsq(code, "ct-code") : ""}
+      ${rec ? zsq(rec, "ct-rec") : ""}
+      <polyline points="${zpts}" class="ct-trail"/>
+      ${Math.abs(x) <= H && Math.abs(y) <= H ? `<circle cx="${cx + x * S}" cy="${zy + y * S}" r="4" class="ct-dot"/>` : ""}
+      <text x="${cx}" y="296" text-anchor="middle" class="ct-label">center, 5×</text>`;
+  }
+
+  // The button chips are built once and only their classes change, 60 times a second: rebuilding
+  // them every frame would throw away any focus or tip on them.
+  function buildButtons() {
+    $("#ct-buttons", root).innerHTML = DIGITAL.map(i => `<span class="chip" role="listitem" data-b="${i}" ${WPI[i] ? `data-tip="ct.button"` : `data-tip="ct.dpad"`} data-quiet>
+      ${esc(BUTTONS[i])}${WPI[i] ? ` <span class="muted">${WPI[i]}</span>` : ""}</span>`).join("");
+  }
+  // Names the robot sends in its live line, "Pressed now: A, D-pad up".
+  function robotPressed() {
+    const msg = (((App.live || {}).status) || {}).message || (App.state.status || {}).message || "";
+    if (!msg.startsWith("Pressed now:")) return new Set();
+    const names = msg.slice(12).split(",").map(s => s.trim());
+    return new Set(DIGITAL.filter(i => names.includes(BUTTONS[i])));
   }
 
   function paint() {
@@ -136,8 +161,14 @@
     $("#ct-axes", root).textContent = p
       ? `Left X ${fmt(a[0], 3)}  Y ${fmt(a[1], 3)} · Right X ${fmt(a[2], 3)}  Y ${fmt(a[3], 3)} · LT ${fmt(b(6), 2)}  RT ${fmt(b(7), 2)}`
       : "No controller yet.";
-    $("#ct-buttons", root).innerHTML = DIGITAL.map(i => `<span class="chip ${b(i) >= 0.5 ? "good" : seen.has(i) ? "info" : ""}">
-      ${esc(BUTTONS[i])}${WPI[i] ? ` <span class="muted">${WPI[i]}</span>` : ""}</span>`).join("");
+    const viaRobot = recording && recording.robot ? robotPressed() : null;
+    if (viaRobot) viaRobot.forEach(i => seen.add(i));
+    if (!$("#ct-buttons [data-b]", root)) buildButtons();
+    $$("#ct-buttons [data-b]", root).forEach(c => {
+      const i = +c.dataset.b, down = viaRobot ? viaRobot.has(i) : b(i) >= 0.5;
+      c.classList.toggle("down", down);
+      c.classList.toggle("seen", seen.has(i));
+    });
   }
 
   function frame() { paint(); requestAnimationFrame(frame); }
@@ -147,7 +178,7 @@
     $("#ct-steps", root).innerHTML = STEPS.map(s => {
       const r = results[s.id];
       const bad = r && r.findings.some(f => f.level === "error"), warn = r && r.findings.some(f => f.level === "warn");
-      return `<li><button class="btn ${recording && recording.step.id === s.id ? "primary" : ""}" data-step="${s.id}"
+      return `<li><button class="btn ${recording && recording.step.id === s.id ? "primary" : ""}" data-step="${s.id}" data-tip="ct.step.${s.id}"
         ${recording ? "disabled" : ""}>${esc(s.title)}</button>
         ${r ? `<span class="chip ${bad ? "bad" : warn ? "warn" : "good"}">${bad ? "problem" : warn ? "check" : "ok"}</span>` : ""}</li>`;
     }).join("");
@@ -181,9 +212,10 @@
   async function startRobot(step) {
     if (!App.connected()) { App.toast("Connect to the robot first."); return; }
     recording = { step, rows: [], t0: performance.now(), robot: true };
+    if (step.id === "buttons") seen = new Set();
     const box = $("#ct-step-box", root);
     box.innerHTML = `<p><b>${esc(step.title)}.</b> ${esc(step.text)}</p>
-      <p class="small muted">The robot is recording what the Driver Station sends on port ${src}. Keep it disabled.</p>
+      <p class="small muted">The robot is recording what the Driver Station sends on port ${src}. Keep it disabled.${step.id === "buttons" ? " Each button lights as the robot sees it." : ""}</p>
       <div class="bar"><div id="ct-bar"></div></div>
       <div class="row">${step.manual ? `<button class="btn primary" id="ct-done">Done</button>` : ""}</div>`;
     if (step.manual) $("#ct-done", box).onclick = () => App.api("/api/stop", {});
@@ -236,14 +268,15 @@
     box.innerHTML = `
       <div class="row" style="gap:16px;flex-wrap:wrap">
         <span class="chip ${rep.verdict === "error" ? "bad" : rep.verdict === "warn" ? "warn" : "good"}">${rep.verdict === "error" ? "don't use in a match" : rep.verdict === "warn" ? "check the notes" : "good"}</span>
-        <span>Drift <b class="mono">${A_finite(rep.worst_offset) ? fmt(rep.worst_offset, 3) : "–"}</b></span>
+        <span>Drift <b class="mono">${A_finite(rep.worst_offset) ? fmt(rep.worst_offset, 3) : "–"}</b>
+          <span class="small muted">${Object.entries(rep.axis_drift || {}).map(([n, v]) => `${esc(n)} ${fmt(v, 2)}`).join(" · ")}</span></span>
         <span>Needs a deadband of <b class="mono">${rec != null ? fmt(rec, 2) : "–"}</b></span>
         <span>The code uses <b class="mono">${code != null ? code : "none found"}</b></span>
         <span class="small muted">${done} of ${STEPS.length} steps</span>
       </div>
       ${rep.findings.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span>
         <span class="title">${esc(f.title)}</span></div><div class="why">${f.learn ? Learn.link(f.why, 2) : esc(f.why)}</div></div>`).join("")}
-      <div class="row"><button class="btn primary" id="ct-save" ${done ? "" : "disabled"}>Save this check</button>
+      <div class="row"><button class="btn primary" id="ct-save" ${done ? "" : "disabled"} data-tip="ct.save">Save this check</button>
         <span class="small muted">Saved checks show which controllers are wearing out.</span></div>`;
     $("#ct-save", box).onclick = save;
   }

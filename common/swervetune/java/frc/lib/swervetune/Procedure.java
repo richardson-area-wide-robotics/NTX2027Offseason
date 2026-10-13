@@ -56,6 +56,14 @@ public interface Procedure {
     return ctx.speedCapMps;
   }
 
+  /**
+   * A line for the laptop's banner while the test runs, e.g. the buttons held right now in a
+   * controller check; null keeps "Running.".
+   */
+  default String liveMessage(TestContext ctx, double t) {
+    return null;
+  }
+
   default double spaceBudgetM(TestContext ctx) {
     return 0;
   }

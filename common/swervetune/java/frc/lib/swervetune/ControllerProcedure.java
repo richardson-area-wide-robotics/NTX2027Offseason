@@ -97,6 +97,42 @@ final class ControllerProcedure implements Procedure {
     return stopRequested || t >= durationS;
   }
 
+  // WPILib's Xbox button numbers, 1 to 10, by the names the laptop's Controllers tab uses.
+  static final String[] XBOX_BUTTONS = {"A", "B", "X", "Y", "Left bumper", "Right bumper", "Back", "Start",
+      "Left stick press", "Right stick press"};
+
+  /** "Pressed now: A, D-pad up": the laptop lights each button as the robot sees it. */
+  static String pressedNow(int buttons, int pov) {
+    java.util.List<String> on = new java.util.ArrayList<>();
+    for (int i = 0; i < XBOX_BUTTONS.length; i++) {
+      if ((buttons & (1 << i)) != 0) {
+        on.add(XBOX_BUTTONS[i]);
+      }
+    }
+    if (pov >= 0) {
+      int d = ((pov % 360) + 360) % 360;
+      if (d >= 315 || d <= 45) {
+        on.add("D-pad up");
+      }
+      if (d >= 45 && d <= 135) {
+        on.add("D-pad right");
+      }
+      if (d >= 135 && d <= 225) {
+        on.add("D-pad down");
+      }
+      if (d >= 225 && d <= 315) {
+        on.add("D-pad left");
+      }
+    }
+    return "Pressed now: " + (on.isEmpty() ? "nothing" : String.join(", ", on));
+  }
+
+  @Override
+  public String liveMessage(TestContext ctx, double t) {
+    int p = port(ctx);
+    return pressedNow(ctx.signals.stickButtons(p), ctx.signals.stickPov(p));
+  }
+
   @Override
   public void end(TestContext ctx, boolean aborted) {}
 

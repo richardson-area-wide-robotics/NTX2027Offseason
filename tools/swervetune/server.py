@@ -609,7 +609,8 @@ def api_controllers_robot(body):
 
 def api_controllers_report(body):
     db = controllers.code_deadbands(S.project) if S.project else []
-    out = controllers.report((body or {}).get("steps") or {}, db)
+    read = controllers.axes_read(S.project) if S.project else None
+    out = controllers.report((body or {}).get("steps") or {}, db, read or None)
     out["ok"] = True
     return out
 

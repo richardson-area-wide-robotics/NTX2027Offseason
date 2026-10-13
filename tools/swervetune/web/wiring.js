@@ -13,51 +13,52 @@ const Wiring = (() => {
     <div class="stack">
       <div class="panel">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2>Wiring</h2>
+          <h2 data-tip="wiring.title">Wiring</h2>
           <div class="row" style="flex-wrap:wrap">
-            <label class="small">See a practice fault
+            <label class="small" data-tip="wiring.demo">See a practice fault
               <select id="w-demo"><option value="">Live robot</option></select></label>
-            <button class="btn" id="w-edit">Edit the map</button>
+            <button class="btn" id="w-edit" data-tip="wiring.edit">Edit the map</button>
           </div>
         </div>
         <p class="hint" id="w-meta"></p>
         <div id="w-banner"></div>
-        <div class="schematic-wrap"><svg id="w-svg" class="schematic" role="img" aria-label="CAN chain and power schematic"></svg></div>
+        <div class="schematic-wrap"><svg id="w-svg" class="schematic" role="group" aria-label="CAN chain and power schematic, in cable order"></svg></div>
         <div class="row small muted" style="flex-wrap:wrap;gap:14px">
-          <span><span class="swatch can-h"></span><span class="term" data-learn="can_bus">CAN-H / CAN-L</span></span>
+          <span><span class="swatch can-h"></span><span class="term" tabindex="0" data-learn="can_bus">CAN-H / CAN-L</span>, numbered in cable order from the roboRIO</span>
           <span><span class="swatch ok"></span>heard on the bus</span>
-          <span><span class="swatch warn"></span>has had trouble</span>
+          <span><span class="swatch warn"></span>had trouble</span>
           <span><span class="swatch bad"></span>missing now</span>
-          <span><span class="term" data-learn="can_termination">Ω = terminator</span></span>
-          <span>Hover a box for its details; click to mark it.</span>
+          <span><span class="term" tabindex="0" data-learn="can_termination">Ω = terminator</span></span>
+          <span>Click a box (or Tab to it and press Enter) to see its details below.</span>
         </div>
+        <div id="w-detail" class="callout" hidden></div>
       </div>
       <div class="grid2">
         <div class="panel">
-          <h3>Where to look</h3>
+          <h3 data-tip="wiring.findings">Where to look</h3>
           <div id="w-findings"></div>
         </div>
         <div class="stack">
           <div class="panel">
-            <h3><span class="term" data-learn="can_termination">Termination check</span></h3>
+            <h3 data-tip="wiring.ohms"><span class="term" tabindex="0" data-learn="can_termination">Termination check</span></h3>
             <p class="small">Robot <b>off</b>. Multimeter on ohms, probes on CAN-H (yellow) and CAN-L (green) at any free CAN plug.</p>
-            <div class="row"><input type="number" id="w-ohms" placeholder="ohms" step="0.1" aria-label="Measured ohms"><button class="btn" id="w-ohms-go">Check</button></div>
+            <div class="row"><label class="row small">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
           </div>
           <div class="panel" id="w-editor" hidden></div>
         </div>
       </div>
       <div class="panel">
-        <h3><span class="term" data-learn="power_path">PDH ports</span></h3>
+        <h3 data-tip="wiring.pdh"><span class="term" tabindex="0" data-learn="power_path">PDH ports</span></h3>
         <div id="w-pdh" class="pdh-grid"></div>
       </div>
       <div class="panel" id="w-find">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h3>Find the PDH ports</h3>
+          <h3 data-tip="wiring.find">Find the PDH ports</h3>
           <div class="row" style="flex-wrap:wrap">
-            <button class="btn" id="wf-pulse">Swerve motors: pulse on blocks</button>
-            <button class="btn" id="wf-log">Every motor: from a practice log</button>
-            <button class="btn" id="wf-practice">Practice</button>
+            <button class="btn" id="wf-pulse" data-tip="wiring.pulse">Swerve motors: pulse on blocks</button>
+            <button class="btn" id="wf-log" data-tip="wiring.fromlog">Every motor: from a practice log</button>
+            <button class="btn" id="wf-practice" data-tip="wiring.practice">Practice</button>
           </div>
         </div>
         <p class="small">Fills in the port numbers from the robot instead of from labels. <b>On blocks</b>, the robot turns each swerve motor in turn (about 12 s, deadman held) and the port whose current rises is that motor's. <b>From a practice log</b>, each motor's current is matched to the PDH channel that rises and falls with it: no test needed, so it works for mechanisms too, as long as they ran on their own. The PDH measures the <span class="term" data-learn="battery_current">battery side</span>, so expect smaller numbers than the motor's own current.</p>
@@ -66,10 +67,10 @@ const Wiring = (() => {
       </div>
       <div class="panel" id="w-wiggle">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h3><span class="term" data-learn="wiggle_test">Wiggle test</span></h3>
+          <h3 data-tip="wiring.wiggle"><span class="term" tabindex="0" data-learn="wiggle_test">Wiggle test</span></h3>
           <div class="row" style="flex-wrap:wrap">
-            <button class="btn" id="ww-start">Start on the robot</button>
-            <button class="btn" id="ww-practice">Practice</button>
+            <button class="btn" id="ww-start" data-tip="wiring.wiggle-start">Start on the robot</button>
+            <button class="btn" id="ww-practice" data-tip="wiring.practice">Practice</button>
           </div>
         </div>
         <p class="small">Finds a loose plug or a cracked wire that only fails when it moves. Robot <b>on and disabled</b>: hands in the robot only while it is disabled. Go through the steps, gently wiggling each cable and plug for a few seconds; the tool watches the CAN bus and every controller, and says which step made something happen.</p>
@@ -126,7 +127,8 @@ const Wiring = (() => {
 
     const svg = $("#w-svg", root);
     svg.innerHTML = "";
-    const W = Math.max(640, svg.clientWidth || 900), bw = 150, bh = 62, gx = 36, gy = 54, pad = 26;
+    const details = {};
+    const W = Math.max(640, svg.clientWidth || 900), bw = 150, bh = 76, gx = 36, gy = 54, pad = 26;
     const perRow = Math.max(2, Math.floor((W - 2 * pad + gx) / (bw + gx)));
     const pos = chain.map((n, i) => {
       const r = Math.floor(i / perRow), c = i % perRow;
@@ -151,8 +153,7 @@ const Wiring = (() => {
     for (const s of hl.segs) {
       if (!(s.a in idx) || !(s.b in idx)) continue;
       const a = center(idx[s.a]), b = center(idx[s.b]);
-      const g = el("g", { class: "suspect" }, svg);
-      el("title", {}, g, s.f.title + ". " + s.f.why);
+      const g = el("g", { class: "suspect", "aria-label": "Suspect cable: " + s.f.title }, svg);
       el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: "suspect-line" }, g);
       const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
       el("circle", { cx: mx, cy: my, r: 11, class: "suspect-dot" }, g);
@@ -164,24 +165,37 @@ const Wiring = (() => {
       let state = "unknown";
       if (r) state = r.present === 0 ? "bad" : (r.dropouts || r.resets || r.brownouts) ? "warn" : "ok";
       if (hl.devs.has(name)) state = hl.devs.get(name);
-      const g = el("g", { class: "node " + state + (focus === name ? " focus" : ""), tabindex: 0 }, svg);
+      const word = { bad: "MISSING NOW", warn: "had trouble", ok: "heard", unknown: "" }[state] || "";
+      const g = el("g", { class: "node " + state + (focus === name ? " focus" : ""), tabindex: 0, role: "button",
+        "aria-pressed": String(focus === name), "aria-label": `${i}. ${name}${word ? ", " + word : ""}` }, svg);
       const port = m.pdhPorts[name];
-      const tip = [name, dev.model, dev.can_id != null ? "CAN ID " + dev.can_id : null,
+      details[name] = [dev.model, dev.can_id != null ? "CAN ID " + dev.can_id : null,
         port != null ? "PDH port " + port : (dev.kind === "controller" ? "PDH port not set" : null), dev.source,
-        r ? `heard on the bus: ${r.present ? "yes" : "NO"}; dropped out ${r.dropouts || 0}x; rebooted ${r.resets || 0}x; low supply ${r.brownouts || 0}x` : null,
-        r && Number.isFinite(r.bus_volts) ? `supply at the controller ${fmt(r.bus_volts, 2)} V` : null].filter(Boolean).join("\n");
-      el("title", {}, g, tip);
+        r ? `heard on the bus: ${r.present ? "yes" : "NO"}; dropped out ${r.dropouts || 0}×; rebooted ${r.resets || 0}×; low supply ${r.brownouts || 0}×` : null,
+        r && Number.isFinite(r.bus_volts) ? `supply at the controller ${fmt(r.bus_volts, 2)} V` : null].filter(Boolean);
+      el("rect", { x: p.x - 4, y: p.y - 4, width: bw + 8, height: bh + 8, rx: 11, class: "ring" }, g);
       el("rect", { x: p.x, y: p.y, width: bw, height: bh, rx: 8, class: "box" }, g);
-      el("text", { x: p.x + 10, y: p.y + 22, class: "nm" }, g, name.length > 19 ? name.slice(0, 18) + "…" : name);
+      const label = `${i}. ${name}`;
+      el("text", { x: p.x + 10, y: p.y + 22, class: "nm" }, g, label.length > 19 ? label.slice(0, 18) + "…" : label);
       const sub = name === "roboRIO" ? "120 Ω built in" : name === "PDH"
         ? `CAN ${dev.can_id} · term ${m.pdh.terminationOn ? "ON" : "OFF"}`
         : `CAN ${dev.can_id ?? "?"} · PDH ${port ?? "?"}`;
       el("text", { x: p.x + 10, y: p.y + 42, class: "sub" }, g, sub);
+      if (word) el("text", { x: p.x + 10, y: p.y + 62, class: "state" }, g, word);
       if (name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn)) {
         el("text", { x: p.x + bw - 22, y: p.y + 22, class: "ohm" }, g, "Ω");
       }
       g.onclick = () => { focus = focus === name ? null : name; paint(); };
+      // Enter opens it; Space stays the deadman everywhere on this page.
+      g.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); g.onclick(); } };
     });
+    const det = $("#w-detail", root);
+    det.hidden = !focus || !details[focus];
+    if (focus && details[focus]) {
+      const segs = hl.segs.filter(s => s.a === focus || s.b === focus);
+      det.innerHTML = `<b>${esc(focus)}</b><ul style="margin:4px 0 0;padding-left:18px">${details[focus].map(x => `<li>${esc(x)}</li>`).join("")}
+        ${segs.map(s => `<li class="bad-ink">Suspect cable next to it: ${esc(s.f.title)}. ${Learn.link(s.f.why, 2)}</li>`).join("")}</ul>`;
+    }
     if (!m.pdh.terminationOn) {
       const last = pos[chain.length - 1];
       el("text", { x: last.x, y: last.y + bh + 18, class: "warn-text" }, svg, "No terminator at this end: switch the PDH's termination ON");
@@ -198,14 +212,14 @@ const Wiring = (() => {
     for (let p = 0; p < 24; p++) {
       const amps = cur[p], names = byPort[p] || [];
       const pct = Number.isFinite(amps) ? Math.min(100, amps / 40 * 100) : 0;
-      cells.push(`<div class="pdh-port ${names.length ? "" : "empty"}" title="${esc(names.join(", ") || "nothing mapped")}">
-        <span class="mono small">${p}${p >= 20 ? (p === 23 ? " sw" : " lo") : ""}</span>
-        <span class="small">${esc(names.join(", ") || "–")}</span>
+      cells.push(`<div class="pdh-port ${names.length ? "" : "unmapped"}">
+        <span class="mono small">${p}${p >= 20 ? (p === 23 ? " switchable" : " low current") : ""}</span>
+        <span class="small names">${esc(names.join(", ") || "nothing mapped")}</span>
         <div class="pdh-bar"><div style="width:${pct}%"></div></div>
         <span class="mono small">${Number.isFinite(amps) ? fmt(amps, 1) + " A" : ""}</span></div>`);
     }
     $("#w-pdh", root).innerHTML = cells.join("") +
-      `<p class="hint" style="grid-column:1/-1">Ports 0-19 take 40 A breakers, 20-22 are low-current, 23 is switchable. Live currents come from AdvantageKit's PDH log.</p>`;
+      `<p class="hint" style="grid-column:1/-1">Ports 0-19 take 40 A breakers, 20-22 are low-current, 23 is switchable. Each bar is full at 40 A. Live currents come from AdvantageKit's PDH log.</p>`;
   }
 
   function paintFindings() {

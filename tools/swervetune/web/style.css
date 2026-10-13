@@ -256,8 +256,18 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
   border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
 .ct-trig i { display: block; width: 100%; height: 0; background: var(--accent); }
 .ct-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
-.ct-steps { display: grid; gap: 8px; padding-left: 20px; margin: 0 0 12px; }
-.ct-steps li { display: flex; gap: 10px; align-items: center; }
+/* A button seen is solid green with a check; one held now gets a ring. Neither is color alone. */
+.ct-buttons .chip.seen { background: var(--ok); color: var(--on-state); border-color: var(--ok); }
+.ct-buttons .chip.seen::before { content: "\2713"; }
+.ct-buttons .chip.seen .muted { color: inherit; }
+.ct-buttons .chip.down { box-shadow: 0 0 0 2px var(--accent); }
+.ct-zoom { fill: var(--bg); stroke: var(--edge); stroke-width: 1; }
+.ct-key-code { color: var(--warn); font-weight: 600; }
+/* The steps keep their numbers (a flex li drops the list marker). */
+.ct-steps { display: grid; gap: 8px; margin: 0 0 12px; padding-left: 0; list-style: none; counter-reset: ct; }
+.ct-steps li { display: flex; gap: 10px; align-items: center; counter-increment: ct; }
+.ct-steps li::before { content: counter(ct); flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 12px var(--mono); background: var(--rule); color: var(--ink); }
 /* Battery picker: big targets for a drive team at the cart. */
 .batt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin: 6px 0 12px; }
 .batt { display: grid; place-items: center; gap: 4px; min-height: 88px; padding: 10px 6px; border-radius: 10px;
@@ -352,18 +362,23 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .schematic .wire.can-h, .swatch.can-h { stroke: #e5b31b; background: #e5b31b; }
 .schematic .wire.can-l { stroke: #3b875a; }
 .schematic .node { cursor: pointer; }
-.schematic .node .box { fill: var(--panel); stroke: var(--rule); stroke-width: 1.5; }
+.schematic .node .box { fill: var(--panel); stroke: var(--edge); stroke-width: 1.5; }
 .schematic .node.ok .box { fill: var(--ok-bg); stroke: var(--ok); }
 .schematic .node.warn .box { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 2.5; }
 .schematic .node.bad .box { fill: var(--bad-bg); stroke: var(--bad); stroke-width: 3; }
-.schematic .node.focus .box { stroke: var(--accent); stroke-width: 3.5; }
-.schematic .node:focus-visible .box { stroke: var(--accent); stroke-width: 3.5; }
+/* Focus and "marked" get their own ring outside the box, so they never repaint its state. */
+.schematic .node .ring { fill: none; stroke: none; }
+.schematic .node.focus .ring, .schematic .node:focus-visible .ring { stroke: var(--accent); stroke-width: 2.5; }
+.schematic .node:focus-visible { outline: none; }
+.schematic .state { font: 700 11px var(--sans); fill: var(--muted); }
+.schematic .node.bad .state { fill: var(--bad); }
+.schematic .node.warn .state { fill: var(--warn); }
 .schematic .nm { font: 600 13px var(--sans); fill: var(--ink); }
 .schematic .sub { font: 12px var(--mono); fill: var(--muted); }
 .schematic .ohm { font: 700 15px var(--sans); fill: var(--accent); }
 .schematic .suspect-line { stroke: var(--bad); stroke-width: 7; stroke-dasharray: 10 6; opacity: .85; }
 .schematic .suspect-dot { fill: var(--bad); }
-.schematic .suspect-mark { font: 800 15px var(--sans); fill: #fff; }
+.schematic .suspect-mark { font: 800 15px var(--sans); fill: var(--on-state); }
 .schematic .warn-text { font: 600 12px var(--sans); fill: var(--bad); }
 .swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: middle; border: 1px solid var(--rule); }
 .swatch.ok { background: var(--ok-bg); border-color: var(--ok); }
@@ -377,6 +392,7 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .geo-diagram .ext { stroke: var(--muted); stroke-dasharray: 3 3; }
 .geo-diagram .lbl { font: 600 12px var(--sans); fill: var(--ink); }
 .warn-ink { color: var(--warn); font-weight: 600; }
+.good-result { border-left: 3px solid var(--ok); padding-left: 8px; }
 .fs-map { width: 100%; height: auto; display: block; margin: 8px 0 2px; }
 .fs-map .fs-field { fill: var(--bg); stroke: var(--muted); stroke-width: 1.5; }
 .fs-tag circle { stroke: var(--panel); stroke-width: 1.5; }
@@ -400,8 +416,9 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .wiggle-list li.current { font-weight: 600; }
 .pdh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
 .pdh-port { border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px; display: grid; gap: 2px; min-width: 0; }
-.pdh-port.empty { opacity: .55; }
-.pdh-port .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pdh-port.unmapped { border-style: dashed; }
+.pdh-port.unmapped .names { color: var(--muted); }
+.pdh-port .names { overflow-wrap: anywhere; }
 .pdh-bar { height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; }
 .pdh-bar > div { height: 100%; background: var(--accent); }
 ol.chain-edit { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 4px; }
