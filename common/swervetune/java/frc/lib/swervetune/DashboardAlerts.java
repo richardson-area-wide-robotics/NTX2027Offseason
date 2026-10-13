@@ -2,6 +2,7 @@ package frc.lib.swervetune;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,8 +107,10 @@ final class DashboardAlerts {
       set(m.name + "/brownouts", AlertType.kWarning, m.brownouts() > 0 && !brownFlood,
           who + " got low voltage " + times(m.brownouts()) + ": check its power leads" + power);
       MotorGuard.Stage s = m.stage();
-      set(m.name + "/shutoff", AlertType.kError, s == MotorGuard.Stage.SHUTOFF,
-          who + " is cut to " + MotorGuard.SHUTOFF_LIMIT_A + " A until it cools (" + m.cause() + ")");
+      set(m.name + "/shutoff", AlertType.kError, s == MotorGuard.Stage.SHUTOFF, m.stalledOff()
+          ? who + " stalled and is cut to " + MotorGuard.SHUTOFF_LIMIT_A + " A (" + m.cause() + "): stop"
+              + " driving it and clear the jam; it comes back once nothing pushes it"
+          : who + " is cut to " + MotorGuard.SHUTOFF_LIMIT_A + " A until it cools (" + m.cause() + ")");
       set(m.name + "/hot", AlertType.kWarning, s == MotorGuard.Stage.DERATE || s == MotorGuard.Stage.WARN,
           s == MotorGuard.Stage.DERATE ? who + " is at half power to cool (" + m.cause() + "): ease off"
               : who + " is getting hot (" + m.cause() + "): ease off");
@@ -118,11 +121,21 @@ final class DashboardAlerts {
           + (m.derates() > 0 ? "half power " + times(m.derates()) : "")
           + "): give it less load or more cooling");
       set(m.name + "/flags", AlertType.kError, !m.flags().isEmpty() && m.present(), who + ": " + m.flags());
+      set(m.name + "/code", AlertType.kInfo, !m.codeIssue().isEmpty() && m.present(),
+          who + " " + m.codeIssue() + " (for a programmer)");
       set(m.name + "/history", AlertType.kWarning, !m.history().isEmpty() && m.present(),
           who + ": " + m.history() + ", clear now: watch it");
     }
+    // A motor still cut off while the override runs is one it couldn't save: say which, and why.
+    List<String> stillOff = new ArrayList<>();
+    for (MotorGuard.Motor m : motors) {
+      if (m.stage() == MotorGuard.Stage.SHUTOFF) {
+        stillOff.add(m.name + (m.stalledOff() ? " (stalled: clear the jam)" : " (too hot to save)"));
+      }
+    }
     set("override", AlertType.kWarning, overrideS > 0, String.format("Heat override ON, %.0f s left:"
-        + " shut-off motors run at half power; stalls still cut out. Back again restarts the 20 s.", overrideS));
+        + " shut-off motors run at half power; stalls still cut out. Back again restarts the 20 s.", overrideS)
+        + (stillOff.isEmpty() ? "" : " Still off: " + String.join(", ", stillOff) + "."));
     if (can.length >= 5) {
       set("can/busoff", AlertType.kError, can[1] > 0,
           "CAN bus shut down " + times((int) can[1]) + ": check termination and every CAN connector");

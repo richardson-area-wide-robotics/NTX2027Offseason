@@ -142,3 +142,65 @@ class GradingTest(unittest.TestCase):
                                "meta": {"ceiling_a": 80, "policy_a": 80, "limit_before_a": 80}}, {})
         self.assertEqual(rep["score"], 100, [f["title"] for f in rep["findings"]])
         self.assertEqual(rep["wheels_slipped"], 0)
+
+
+class FromRunTest(unittest.TestCase):
+    """m8: a measured result goes only onto the robot it was measured on, while it is fresh."""
+
+    def _save(self, robot, practice=False, hours_ago=1):
+        import tempfile, time as _t
+        from swervetune import runs as R
+        d = tempfile.mkdtemp()
+        stamp = _t.strftime("%Y%m%d-%H%M%S", _t.localtime(_t.time() - hours_ago * 3600))
+        path = os.path.join(d, f"{stamp}_x_drive_ff_all.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump({"test": "drive_ff", "env": "FIELD", "robot": {"name": robot}, "saved": stamp,
+                       "practice": practice}, fh)
+        return path
+
+    def test_another_robots_run_is_refused(self):
+        bad = cli._from_run_problem(self._save("Black team"), {"name": "Peashooter"}, False)
+        self.assertEqual(bad[0], "WRONG_ROBOT")
+        self.assertIn("Black team", bad[1])
+
+    def test_the_practice_pod_is_no_robot(self):
+        self.assertEqual(cli._from_run_problem(self._save("practice", practice=True), {"name": "Peashooter"}, True)[0],
+                         "WRONG_ROBOT")
+
+    def test_a_day_old_run_is_stale_unless_forced(self):
+        old = self._save("Peashooter", hours_ago=30)
+        self.assertEqual(cli._from_run_problem(old, {"name": "Peashooter"}, False)[0], "STALE_RUN")
+        self.assertIsNone(cli._from_run_problem(old, {"name": "Peashooter"}, True))
+
+    def test_a_fresh_run_on_this_robot_goes_through(self):
+        self.assertIsNone(cli._from_run_problem(self._save("Peashooter"), {"name": "Peashooter"}, False))
+
+    def test_a_missing_run_says_so(self):
+        self.assertEqual(cli._from_run_problem("no-such-run.json", {"name": "Peashooter"}, False)[0], "NOT_FOUND")
+
+    def test_gains_set_refuses_before_touching_the_robot(self):
+        from unittest import mock
+
+        class FakeLink:
+            calls = []
+
+            def gains(self):
+                return {"FF/drive/kV": 2.0}
+
+            def robot_info(self):
+                return {"name": "Peashooter"}
+
+            def set_gains(self, values, timeout=3.0, reason=""):
+                self.calls.append(values)
+                return "Applied.", values
+
+            def close(self):
+                pass
+
+        lk = FakeLink()
+        buf = io.StringIO()
+        with mock.patch.object(cli, "open_link", return_value=lk), redirect_stdout(buf):
+            rc = cli.main(["gains", "set", "FF/drive/kV=2.1", "--from-run", self._save("Black team"), "--json"])
+        self.assertEqual(lk.calls, [], "nothing sent to the robot")
+        self.assertNotEqual(rc, 0)
+        self.assertEqual(json.loads(buf.getvalue())["code"], "WRONG_ROBOT")

@@ -467,6 +467,15 @@ public final class SwerveTune {
     return guard.override("ALL", seconds, clock.getAsDouble());
   }
 
+  /**
+   * Motors cut off that the heat override can't bring back, e.g. {@code "Intake pivot (stalled:
+   * clear the jam)"}; empty when none. Read it after {@link #overrideMotorShutoffs} to tell the
+   * driver whether the override took: a long buzz when it didn't.
+   */
+  public List<String> motorsStillOff() {
+    return guard.beyondOverride();
+  }
+
   private void handleMotorOverride(double now) {
     long seq = overrideSeq.get();
     if (seq == lastOverrideSeq) {

@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import frc.lib.swervetune.MotorGuard.Motor;
 import frc.lib.swervetune.MotorGuard.Stage;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class MotorGuardTest {
@@ -211,9 +212,24 @@ class MotorGuardTest {
     c.demandA = 100;
     Motor m = add("Intake pivot", c, MotorKind.VORTEX, true);
     timeTo(m, Stage.SHUTOFF, 30);
-    guard.override("ALL", 20, t);
+    String reply = guard.override("ALL", 20, t);
     run(1);
     assertEquals(Stage.SHUTOFF, m.stage());
+    assertTrue(reply.contains("Still off: Intake pivot (stalled: clear the jam)"), reply);
+    assertEquals(List.of("Intake pivot (stalled: clear the jam)"), guard.beyondOverride(), "the long buzz");
+    assertTrue(m.stalledOff());
+  }
+
+  @Test
+  void anOverrideThatSavesEveryMotorLeavesNoneStillOff() {
+    FakeMotorChannel c = new FakeMotorChannel(20);
+    Motor m = add("Arm", c, MotorKind.NEO_550, true);
+    c.tempC = 66;
+    run(0.1);
+    assertEquals(Stage.SHUTOFF, m.stage());
+    guard.override("ALL", 20, t);
+    assertEquals(List.of(), guard.beyondOverride(), "the short buzz: a heat cut the override can hold");
+    assertFalse(m.stalledOff());
   }
 
   @Test
@@ -454,14 +470,16 @@ class MotorGuardTest {
     c.codeClass = "SPARK MAX";
     Motor m = guard.register("frontleft drive", c, MotorKind.VORTEX, false, false);
     guard.update(0.02);
-    assertTrue(m.flags().contains("is a SPARK Flex but the code created a SPARK MAX"), m.flags());
-    assertTrue(m.flags().contains("create it as new SparkFlex(...)"), "the class REVLib really has: " + m.flags());
+    assertTrue(m.codeIssue().contains("is a SPARK Flex but the code created a SPARK MAX"), m.codeIssue());
+    assertTrue(m.codeIssue().contains("create it as new SparkFlex(...)"), "the class REVLib really has: " + m.codeIssue());
+    assertEquals("", m.flags(), "a programmer's fix, never red for the drive team");
     c.codeClass = "SPARK Flex";
     guard.update(0.04);
-    assertFalse(m.flags().contains("is a SPARK"), "agreeing is fine");
+    assertEquals("", m.codeIssue(), "agreeing is fine");
+    c.codeClass = "SPARK MAX";
     c.model = "";
     guard.update(0.06);
-    assertFalse(m.flags().contains("is a SPARK"), "a controller that can't say isn't accused");
+    assertEquals("", m.codeIssue(), "a controller that can't say isn't accused");
   }
 
   @Test

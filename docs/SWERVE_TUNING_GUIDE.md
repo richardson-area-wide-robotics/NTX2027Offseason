@@ -211,8 +211,9 @@ check those before retiring one. The list of numbers lives in `swervetune.json` 
 Everything the drive team needs is on the one Elastic tab, and none of it needs this laptop.
 
 1. **Pick the battery** after every swap, then read the **Battery check** line. *Charged* is ready;
-   *partly charged* is fine for practice; *CHARGE IT before a match* means swap it. "Picked while
-   enabled" means the robot couldn't read it at rest: disable, then pick it again.
+   *partly charged* is fine for practice; *CHARGE IT before a match* means swap it. "Resting
+   voltage read once the robot is disabled" means it was picked while enabled: it fills in by itself
+   a couple of seconds after the robot is disabled.
 2. **Read Robot Health.** The colors mean one thing each:
    - **Red: broken now.** A motor off the CAN bus, a motor cut off for heat, an active controller
      fault. Fix it before queuing.
@@ -227,9 +228,10 @@ Everything the drive team needs is on the one Elastic tab, and none of it needs 
    fault names the motor's PDH port, a CAN fault the devices either side of it on the cable (only
    after the cable order has been checked on the robot).
 3. **The heat override.** In the last seconds of a match, when losing a motor costs more than the
-   motor, the driver presses **Back**: the controller buzzes, and Robot Health shows **Heat override
-   ON** with the seconds left. Motors cut off for heat run at half power for 20 seconds; stalls
-   still cut out, and a motor already past saving stays off. Each press restarts the 20 seconds.
+   motor, the driver presses **Back**: a short buzz, and Robot Health shows **Heat override ON**
+   with the seconds left. Motors cut off for heat run at half power for 20 seconds; stalls still
+   cut out, and a motor already past saving stays off. A **long buzz** means one of those is still
+   off, and the override line names it. Each press restarts the 20 seconds.
 
 ## The drive team's controllers
 
@@ -276,7 +278,7 @@ The robot code already has everything the tools need:
   NEO Vortex 80 A, NEO 2.0 80 A, NEO V1.1 60 A, NEO 550 20 A.
 - The driver controller's **Back** button lets motors cut off for heat run at half power for 20
   seconds, with a short buzz and a "Heat override ON" alert, for when losing a motor costs more
-  than the motor. It never lifts a stall cutout.
+  than the motor. It never lifts a stall cutout; a long buzz says a motor stayed off.
 
 ## Going deeper: every SPARK's CAN traffic (optional)
 

@@ -144,6 +144,7 @@ public final class MotorGuard {
     String cause = "";
     String flags = "";
     String history = "";
+    String codeIssue = "";
     int derates;
     int shutoffs;
     double overrideUntilS = Double.NEGATIVE_INFINITY;
@@ -194,6 +195,19 @@ public final class MotorGuard {
      */
     public String history() {
       return history;
+    }
+
+    /**
+     * A mismatch only a programmer can fix, e.g. the code created the wrong controller class; empty
+     * when none. Info on the dashboard: nothing the drive team can do at the cart.
+     */
+    public String codeIssue() {
+      return codeIssue;
+    }
+
+    /** Cut off for a stall: it comes back once nothing is pushing it into the jam. */
+    public boolean stalledOff() {
+      return stage == Stage.SHUTOFF && stallLatch == Stage.SHUTOFF;
     }
 
     /** Times it was halved for heat since the robot code started. */
@@ -407,14 +421,9 @@ public final class MotorGuard {
     List<String> cannot = new ArrayList<>();
     for (Motor m : targets) {
       m.overrideUntilS = nowS + s;
-      if (s > 0 && m.stage == Stage.SHUTOFF) {
-        boolean tooHot = (plausibleTemp(m.tempC) && m.tempC >= m.kind.shutoffC + HYSTERESIS_C)
-            || m.heatFraction() >= NO_OVERRIDE_HEAT;
-        if (m.stallLatch == Stage.SHUTOFF) {
-          cannot.add(m.name + " (stalled: clear the jam)");
-        } else if (tooHot) {
-          cannot.add(m.name + " (too hot to save)");
-        }
+      String why = s > 0 ? whyNoOverride(m) : "";
+      if (!why.isEmpty()) {
+        cannot.add(m.name + " (" + why + ")");
       }
     }
     String who = targets.size() == 1 ? targets.get(0).name : "every motor";
@@ -425,6 +434,33 @@ public final class MotorGuard {
             + (cannot.isEmpty() ? "" : " Still off: " + String.join(", ", cannot) + ".");
     event(nowS, text);
     return text;
+  }
+
+  /**
+   * Motors cut off that a heat override can't bring back, e.g. {@code "Intake pivot (stalled: clear
+   * the jam)"}; empty when none.
+   */
+  public List<String> beyondOverride() {
+    List<String> out = new ArrayList<>();
+    for (Motor m : motors.values()) {
+      String why = whyNoOverride(m);
+      if (!why.isEmpty()) {
+        out.add(m.name + " (" + why + ")");
+      }
+    }
+    return out;
+  }
+
+  private static String whyNoOverride(Motor m) {
+    if (m.stage != Stage.SHUTOFF) {
+      return "";
+    }
+    if (m.stallLatch == Stage.SHUTOFF) {
+      return "stalled: clear the jam";
+    }
+    boolean tooHot = (plausibleTemp(m.tempC) && m.tempC >= m.kind.shutoffC + HYSTERESIS_C)
+        || m.heatFraction() >= NO_OVERRIDE_HEAT;
+    return tooHot ? "too hot to save" : "";
   }
 
   /** Seconds left on the longest running thermal override, 0 when none is on. */
@@ -620,10 +656,10 @@ public final class MotorGuard {
     m.history = sticky != null && !sticky.isEmpty() ? "faults since last cleared: " + sticky : "";
     String isA = m.channel.controllerModel();
     String cls = m.channel.controllerClass();
-    if (isA != null && cls != null && !isA.isEmpty() && !cls.isEmpty() && !isA.equals(cls)) {
-      flags.add("is a " + isA + " but the code created a " + cls
-          + ": create it as new " + javaClass(isA) + "(...), or for a swerve motor fix the YAGSL type");
-    }
+    m.codeIssue = isA != null && cls != null && !isA.isEmpty() && !cls.isEmpty() && !isA.equals(cls)
+        ? "is a " + isA + " but the code created a " + cls
+            + ": create it as new " + javaClass(isA) + "(...), or for a swerve motor fix the YAGSL type"
+        : "";
     m.flags = String.join("; ", flags);
   }
 

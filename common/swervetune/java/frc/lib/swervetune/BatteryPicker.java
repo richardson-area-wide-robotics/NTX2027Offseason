@@ -22,12 +22,20 @@ import java.util.List;
  * <p>It is published as the same topics WPILib's {@code SendableChooser} uses, so it needs no
  * SmartDashboard (gone in WPILib 2027). A dashboard that reconnects sends back the pick it had
  * before - including one already connected when the robot code starts. After a fresh power-on that
- * pick is the battery from before the swap, so a pick arriving within {@link #RESTORE_WINDOW_S} of a
- * dashboard connecting is cleared and the drive team picks again. After a code restart (a redeploy,
- * the roboRIO still powered) it is the same battery, and the restored pick is kept.
+ * pick is the battery from before the swap, so until the first pick of this power-on, a pick arriving
+ * within {@link #RESTORE_WINDOW_S} of a dashboard connecting is cleared and the drive team picks
+ * again. (After that first pick a new connection, which every laptop command is, never blanks it.)
+ * After a code restart (a redeploy, the roboRIO still powered) it is the same battery, and the
+ * restored pick is kept.
+ *
+ * <p>The resting voltage is the bus voltage once the robot has been disabled for {@link
+ * #REST_SETTLE_S}: at the pick when it already has been, otherwise as soon as it has, with no second
+ * pick (a dashboard doesn't send a pick of the number it already shows).
  */
 final class BatteryPicker {
   static final double RESTORE_WINDOW_S = 3.0;
+  /** Disabled this long, the battery has recovered from the last load enough to read at rest. */
+  static final double REST_SETTLE_S = 2.0;
   /** Robot code starting this soon after the roboRIO powered up counts as a fresh power-on. */
   static final double FRESH_POWER_ON_S = 120.0;
   static final List<String> DEFAULT_ROSTER = numbers(12);
@@ -54,6 +62,8 @@ final class BatteryPicker {
   private int dashboards = 0;
   private final boolean freshPowerOn;
   private double ignoreUntilS = Double.NEGATIVE_INFINITY;
+  private double disabledSinceS = Double.NaN;
+  private double rest = Double.NaN;
 
   BatteryPicker(NetworkTableInstance nt, List<String> roster) {
     this(nt, roster, true);
@@ -98,7 +108,7 @@ final class BatteryPicker {
       return "Pick the battery number";
     }
     if (!Double.isFinite(rest)) {
-      return "Battery " + battery + ": picked while enabled. Disable, then pick it again to read it";
+      return "Battery " + battery + ": resting voltage read once the robot is disabled";
     }
     return String.format("Battery %s: %.2f V at rest, %s", battery, rest,
         rest >= CHARGED_V ? "charged" : rest >= CHARGE_IT_V ? "partly charged" : "CHARGE IT before a match");
@@ -113,10 +123,22 @@ final class BatteryPicker {
    */
   String update(double nowS, int dashboards, double busVolts, boolean disabled) {
     // A dashboard appearing (including one already there at the first loop) may put back its old pick.
-    if (dashboards > this.dashboards) {
+    if (dashboards > this.dashboards && current.isEmpty()) {
       ignoreUntilS = nowS + RESTORE_WINDOW_S;
     }
     this.dashboards = dashboards;
+    if (!disabled) {
+      disabledSinceS = Double.NaN;
+    } else if (Double.isNaN(disabledSinceS)) {
+      disabledSinceS = nowS;
+    }
+    boolean atRest = disabled && nowS - disabledSinceS >= REST_SETTLE_S && Double.isFinite(busVolts) && busVolts > 1;
+    if (!current.isEmpty() && Double.isNaN(rest) && atRest) {
+      // Picked while enabled (or just after): read it now that it has rested.
+      rest = busVolts;
+      restVolts.set(rest);
+      check.set(checkText(current, rest));
+    }
     String s = selected.get();
     s = s == null ? "" : s.trim();
     if (s.equals(lastSeen)) {
@@ -136,7 +158,7 @@ final class BatteryPicker {
     current = s;
     id.set(s);
     active.set(s);
-    double rest = disabled && Double.isFinite(busVolts) && busVolts > 1 ? busVolts : Double.NaN;
+    rest = atRest ? busVolts : Double.NaN;
     restVolts.set(rest);
     check.set(checkText(s, rest));
     return current;

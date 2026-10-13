@@ -21,7 +21,7 @@
   const WPI = { 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6, 8: 7, 9: 8, 10: 9, 11: 10 };
   const DIGITAL = BUTTONS.map((_, i) => i).filter(i => i !== 6 && i !== 7);
 
-  let pad = null, codeDb = [], codeSticks = {}, results = {}, rep = null, rec = null, src = "laptop";
+  let pad = null, codeDb = [], codeSticks = {}, operator = {}, results = {}, rep = null, rec = null, src = "laptop";
   let recording = null, seen = new Set(), lastTs = -1, poller = null, trails = { left: [], right: [] };
 
   root.innerHTML = `
@@ -41,6 +41,7 @@
         <label class="gain" data-tip="ct.label">Which one is it?<input id="ct-label" list="ct-labels" placeholder="Driver, Operator, Spare 1"></label>
         <datalist id="ct-labels"></datalist>
       </div>
+      <p id="ct-port-note" class="hint" hidden></p>
       <p id="ct-mapping" class="hint" hidden></p>
     </div>
     <div class="grid2" style="margin-top:12px">
@@ -314,11 +315,41 @@
     codeSticks = r.sticks || {};
     const where = [...new Set(codeDb.map(d => `${d.value} in ${d.file}`))].join(", ");
     $("#ct-code", root).textContent = where || "no deadband found in the robot code";
+    operator = r.operator || {};
+    const { drive, deadman, button } = ports();
+    for (const p of [0, 1]) {
+      const o = $(`#ct-src option[value="${p}"]`, root);
+      if (o) o.textContent = `The robot: Driver Station port ${p}` + (p === drive ? " (driver)" : p === deadman ? ` (deadman: button ${button})` : "");
+    }
+    portNote();
+  }
+
+  // swervetune.json "operator": the driver's port, and the port and button that hold a test's deadman.
+  function ports() {
+    const n = (v, d) => Number.isInteger(v) ? v : d;
+    return { drive: n(operator.driverPort, 0), deadman: n(operator.deadmanPort, 1), button: n(operator.deadmanButton, 6) };
+  }
+
+  // The deadman controller matters to the tests for one button only: say so, so nobody fails it
+  // for a drifting stick the drivetrain never reads.
+  function portNote() {
+    const { drive, deadman, button } = ports();
+    const label = ($("#ct-label", root).value || "").toLowerCase();
+    const isDeadman = deadman !== drive && (src === String(deadman) || label.includes("deadman"));
+    const el = $("#ct-port-note", root);
+    el.hidden = !isDeadman;
+    if (isDeadman) {
+      el.textContent = `Port ${deadman} is the deadman controller: the swerve tests read only button ${button}`
+        + `${button === 6 ? " (the right bumper)" : ""}. Hold it and a test runs; let go and it stops. Its sticks`
+        + " never move the drivetrain, so check them only if the robot code uses this controller for something else.";
+    }
   }
 
   $("#ct-pad", root).onchange = e => { pad = +e.target.value; trails = { left: [], right: [] }; listPads(); };
+  $("#ct-label", root).addEventListener("input", portNote);
   $("#ct-src", root).onchange = e => {
     src = e.target.value;
+    portNote();
     $("#ct-pad-box", root).hidden = src !== "laptop";
     results = {}; rep = null; rec = null;
     $("#ct-report", root).innerHTML = `<p class="hint">Run the steps above; the report appears here.</p>`;

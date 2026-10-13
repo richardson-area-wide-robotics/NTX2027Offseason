@@ -63,7 +63,35 @@ class BatteryPickerTest {
     assertEquals("Pick the battery number", BatteryPicker.checkText("", Double.NaN));
     assertEquals("Battery 4: 12.45 V at rest, partly charged", BatteryPicker.checkText("4", 12.45));
     assertEquals("Battery 4: 12.10 V at rest, CHARGE IT before a match", BatteryPicker.checkText("4", 12.1));
-    assertTrue(BatteryPicker.checkText("4", Double.NaN).contains("Disable, then pick it again"));
+    assertTrue(BatteryPicker.checkText("4", Double.NaN).contains("read once the robot is disabled"));
+  }
+
+  @Test
+  void aPickMadeWhileDrivingIsReadOnceTheRobotRests() {
+    BatteryPicker p = new BatteryPicker(nt, List.of());
+    p.update(0, 1, 11.2, false);
+    dashboard.set("4");
+    p.update(10, 1, 11.2, false);
+    p.update(11, 1, 12.4, true);
+    assertTrue(Double.isNaN(num(SwerveTuneTopics.BATTERY_REST_VOLTS)), "just disabled: still recovering");
+    p.update(13.5, 1, 12.62, true);
+    assertEquals(12.62, num(SwerveTuneTopics.BATTERY_REST_VOLTS), 1e-9, "no second pick needed");
+    assertEquals("Battery 4: 12.62 V at rest, partly charged", str(SwerveTuneTopics.BATTERY_CHECK));
+    p.update(30, 1, 12.75, true);
+    assertEquals(12.62, num(SwerveTuneTopics.BATTERY_REST_VOLTS), 1e-9, "read once per pick");
+  }
+
+  @Test
+  void aNewConnectionAfterThePickNeverBlanksIt() {
+    BatteryPicker p = new BatteryPicker(nt, List.of(), true);
+    p.update(0, 1, 12.7, true);
+    dashboard.set("5");
+    assertEquals("5", p.update(5, 1, 12.7, true));
+    // A laptop command connects (every CLI command is one), and the student re-picks right then.
+    p.update(6, 2, 12.7, true);
+    dashboard.set("8");
+    assertEquals("8", p.update(6.5, 2, 12.7, true), "the restore window is only for the first pick");
+    assertEquals("8", str(SwerveTuneTopics.BATTERY_SELECTED));
   }
 
   @Test

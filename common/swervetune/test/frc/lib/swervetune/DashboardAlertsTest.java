@@ -127,6 +127,33 @@ class DashboardAlertsTest {
   }
 
   @Test
+  void aControllerTheCodeCreatedWrongIsInfoForAProgrammer() {
+    FakeMotorChannel c = add("Shooter leader");
+    c.model = "SPARK Flex";
+    c.codeClass = "SPARK MAX";
+    run(0.1);
+    assertEquals("", shown("Shooter leader/flags"), "not red: nothing to fix at the cart");
+    assertTrue(shown("Shooter leader/code").startsWith("kInfo"), shown("Shooter leader/code"));
+    assertTrue(shown("Shooter leader/code").contains("for a programmer"), shown("Shooter leader/code"));
+  }
+
+  @Test
+  void aStalledMotorSaysClearTheJamNotWaitForItToCool() {
+    FakeMotorChannel c = new FakeMotorChannel(80);
+    c.demandA = 100;
+    channels.add(c);
+    motors.add(guard.register("Intake pivot", c, MotorKind.VORTEX, false, true));
+    for (int i = 0; i < 3000 && !shown("Intake pivot/shutoff").startsWith("kError"); i++) {
+      run(0.02);
+    }
+    String cut = shown("Intake pivot/shutoff");
+    assertTrue(cut.contains("clear the jam") && !cut.contains("until it cools"), cut);
+    guard.override("ALL", 20, t);
+    run(0.1);
+    assertTrue(shown("override").contains("Still off: Intake pivot (stalled: clear the jam)"), shown("override"));
+  }
+
+  @Test
   void theDriversOverrideShowsWithTheTimeLeft() {
     add("Arm");
     run(0.1);

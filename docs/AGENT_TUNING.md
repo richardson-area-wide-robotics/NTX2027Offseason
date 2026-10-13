@@ -55,16 +55,19 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 
 | Command | What it does |
 |---|---|
-| `lint --project Peashooter` | Checks the YAGSL config files; no robot needed. Start here. |
+| `lint --project Peashooter` | Checks the YAGSL config files; no robot needed. Start here. Each finding's `fix` says what carries it out: `edit` is one `config` change (a person's OK first), `tune` is the test for that loop (`steer` is `steer_step`, `drive` is `drive_step`, `slip` is `slip`), `pathplanner` is `ppcheck`, and `guide` (with a `symptom`, `diagnose <symptom>`) is a step a person does in the GUI's Guide tab: tell them which. |
+| `ppcheck --project Peashooter` | Whether PathPlanner's settings describe the same robot as the code. Exits 1 on an error; report it, never edit PathPlanner's files. |
 | `status` | Robot, environment, live modules, problems. |
 | `netcheck` | Whether this laptop reaches the robot and the internet at the same time (two networks, a VPN). Run it when `status` can't reach the robot, and tell the person what it says; never change a network setting yourself. |
 | `env --mode BLOCKS` / `env --mode FIELD --space 3 --side 1.5` | Tells the robot where it is. |
-| `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it, prints the report. |
-| `gains show` / `gains set Steer/kP=0.015 --why "<finding title>"` | Reads or changes live gains (lost at restart until saved). Always give `--why`: it goes into the robot's match log with the change. |
+| `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it (`run_file`), prints the report. The `--arg` keys are below; leave them out unless a report or a person asks. |
+| `gains show` / `gains set Steer/kP=0.015 --why "<finding title>" --from-run <run_file>` | Reads or changes live gains (lost at restart until saved). Always give `--why`: it goes into the robot's match log with the change. Always give `--from-run` with the run whose report gave the values: it refuses another robot's run, the practice pod's, or one more than a day old. |
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
 | `config --file F --path a.b --value V` | Shows the diff of one config change (a report's `config` action); `--yes` writes. Only the robot's own config files. |
 | `runs [--test steer_step] [--robot Peashooter] [--show robot\|sim\|practice\|all]` | Saved runs, newest first: file, test, outcome, score and cost, gains. Real robot runs only unless `--show` says otherwise; a run that stopped part-way has no score. |
-| `analyze <run>` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. |
+| `analyze <run> [--tape-forward 2.52]` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. For a `straight` run, `--tape-forward` is the distance a person measured with a tape, in meters: the ground truth the wheel size is graded on. |
+| `offsets <run> --project P` | New absolute encoder offsets from a `capture` run with every wheel set straight (a person aligns them); `--yes` writes, with their OK. |
+| `watch [--seconds 30]` | Prints problems as the robot's monitor spots them (a dropout, a hot motor, a brownout) while people drive. |
 | `diagnose [symptom]` | The troubleshooter. |
 | `motors` | Heat, stalls and failures for every watched motor. With `--project`, also what each motor and controller is, and any fix as an `edits` list: each edit is one `config --file --path --value`, shown to a person before `--yes`. |
 | `practice steer|drive ...` / `rehearse steer|drive ...` | One run, or the whole advice loop, on the simulated practice pod. Its JSON carries `"practice": true`: never save gains from it. |
@@ -74,6 +77,20 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 Tests for `run`: `capture` (sensors only, disabled), `steer_step`, `drive_step`, `drive_ff`,
 `spin`, `spin_ff` (moment of inertia), `straight`, `slip`, `pdh_map`, `controller` (a Driver
 Station port as the robot sees it; disabled, moves nothing).
+
+Their `--arg` keys (the robot clamps each to a safe range and says so):
+
+| Test | Keys |
+|---|---|
+| `capture` | `duration_s`, `rate_hz`, `coast=1` (wheels free to push by hand) |
+| `steer_step` | `pattern` (0 standard, 1 small, 2 large), `hold_s`, `settle_s`, `rate_hz` |
+| `drive_step` | `s0`, `s1`, ... (the speeds, m/s), `hold_s`, `align_s`, `angle_deg` |
+| `drive_ff`, `spin_ff` | `max_v`, `ramp_vps`, `step_v`, `step_s`, `rest_s` |
+| `spin` | `omega` (rad/s), `duration_s` |
+| `straight` | `distance_m`, `speed`, `accel`, `return=1` (come back; leaves nothing to measure) |
+| `slip` | `ceiling_a`, `ramp_vps`, `slip_mps`, `direction` (1 or -1) |
+| `pdh_map` | `volts` |
+| `controller` | `port`, `duration_s` |
 
 ## The loop
 
@@ -98,7 +115,7 @@ before each test, and if a gain isn't what you last set, ask before going on.
 Act on `next.action` and only on it. Every action is one the commands above carry out as written:
 
 - `{"type": "gains", "values": {...}}`: `gains set` exactly those values with `--why` the finding's
-  title, then rerun the same test, or the test in `then` when the action has one (`{"test":
+  title and `--from-run` the run the report came from, then rerun the same test, or the test in `then` when the action has one (`{"test":
   "drive_step", "env": "FIELD"}` after a measured feedforward).
 - `{"type": "run", "test": ..., "env": ...}`: run that test next (ask a person to change the
   environment if it differs).
@@ -132,6 +149,8 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `NO_PROJECT`, `NOT_FOUND` | A robot project or saved run that doesn't exist: `runs` lists runs; the projects are Peashooter and Black team. |
 | `WRONG_PLACE` | The test can't run where the robot is (a floor test on blocks, the PDH map on the floor): ask a person to move it and set the environment. |
 | `GAINS_REFUSED` | The robot refused a gain change (a test running, the FMS attached): nothing changed; wait, then `gains show`. |
+| `WRONG_ROBOT` | `--from-run` names another robot's run, or the practice pod's: run the test on this robot. |
+| `STALE_RUN` | `--from-run` names a run more than a day old: run the test again; `--force` only with a person's OK. |
 | `TOOL_ERROR` | The tool itself failed: report the message to a person; don't retry blindly. |
 | `TIMEOUT`, `WAITED_TOO_LONG`, `BUSY`, `ROBOT_ERROR`, `OTHER` | Read `message` to the person and wait. |
 
@@ -150,7 +169,8 @@ Follow the GUI's Guide tab order; each step depends on the ones before it:
 1. `lint`, then `status`.
 2. `run capture` with the robot disabled: sensor health.
 3. Hand check (a person turns wheels; the GUI's Guide does this).
-4. Absolute encoder offsets (`run capture`, then `offsets <run>`; a person aligns the wheels).
+4. Absolute encoder offsets (`run capture`, then `offsets <run> --project P`; a person aligns
+   the wheels first, and approves the diff before `--yes`).
 5. On blocks: every wheel drives the right way.
 6. Measure the robot: module positions (tape) and wheel sizes (a push in coast), in the GUI's
    Calibrate tab. People measure; you can walk them through it.

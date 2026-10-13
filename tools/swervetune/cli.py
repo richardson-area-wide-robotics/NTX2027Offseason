@@ -527,6 +527,37 @@ def cmd_layout(args, out):
     return out.done()
 
 
+MAX_RUN_AGE_H = 24.0
+
+
+def _from_run_problem(file, info, force):
+    """Why the values a saved run measured must not go onto the connected robot: (code, message) or None.
+
+    A feedforward fitted on Black team means nothing on Peashooter (the gain names are the same on
+    both), the practice pod's numbers mean nothing on any robot, and a day-old fit was made on other
+    wheels, carpet or battery: rerun the test (``--force`` takes an old one anyway).
+    """
+    try:
+        doc = runs.load(file)
+    except (OSError, ValueError):
+        return "NOT_FOUND", f"No saved run {file!r}: `runs` lists them."
+    kind = run_kind(doc)
+    here = (info or {}).get("name") or ""
+    there = (doc.get("robot") or {}).get("name") or ""
+    if kind == "practice":
+        return "WRONG_ROBOT", f"{doc['_file']} is a practice-pod run: its numbers belong to no robot."
+    if here and there and here != there:
+        return "WRONG_ROBOT", f"{doc['_file']} was measured on {there}; this robot is {here}. Run the test here."
+    try:
+        age_h = (time.time() - time.mktime(time.strptime(str(doc.get("saved")), "%Y%m%d-%H%M%S"))) / 3600
+    except ValueError:
+        age_h = None
+    if age_h is not None and age_h > MAX_RUN_AGE_H and not force:
+        return "STALE_RUN", (f"{doc['_file']} is {age_h:.0f} hours old: wheels, carpet and battery have changed "
+                             "since. Run the test again (or --force with a person's OK).")
+    return None
+
+
 def cmd_gains(args, out):
     lk = open_link(args, out)
     if not lk:
@@ -539,6 +570,10 @@ def cmd_gains(args, out):
                 out.say(f"  {k:28s} {v}")
             return out.done()
         want = _parse_kv(args.values)
+        if args.from_run:
+            bad = _from_run_problem(args.from_run, lk.robot_info(), args.force)
+            if bad:
+                return out.done(out.fail(bad[1], code=bad[0]))
         problems = []
         for k, v in want.items():
             if k not in now:
@@ -971,6 +1006,8 @@ def build_parser():
     s.add_argument("values", nargs="*", help="Name=value, e.g. Steer/kP=0.015")
     s.add_argument("--force", action="store_true", help="allow more than a 2x step")
     s.add_argument("--why", help="why this change, logged with it on the robot: e.g. the finding's title")
+    s.add_argument("--from-run", help="the saved run whose report gave these values: refused if it is "
+                   "another robot's, the practice pod's, or more than a day old")
     s.set_defaults(fn=cmd_gains)
 
     s = sub.add_parser("save", help="write the robot's live gains into the JSON files")

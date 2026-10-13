@@ -651,7 +651,9 @@ def api_controllers_code(_query=None):
         return {"ok": True, "deadbands": []}
     S.reload_project()
     return {"ok": True, "project": S.project.name, "deadbands": controllers.code_deadbands(S.project),
-            "sticks": controllers.stick_deadbands(S.project)}
+            "sticks": controllers.stick_deadbands(S.project),
+            # Which Driver Station port drives and which holds the test deadman (swervetune.json).
+            "operator": (S.project.data.get("swervetune.json") or {}).get("operator") or {}}
 
 
 def api_controllers_step(body):
