@@ -117,5 +117,16 @@ class LogSummaryTest(unittest.TestCase):
         self.assertEqual((rows["B"]["present"], rows["C"]["present"]), (1, 0))
 
 
+class ModuleWatchInTheLogTest(unittest.TestCase):
+    def test_each_new_episode_is_an_event(self):
+        series = {"/RealOutputs/SwerveTune/Watch/frontleft/SteerOff": [(1.0, 0), (5.0, 1), (6.0, 1), (9.0, 2)],
+                  "/RealOutputs/SwerveTune/Watch/backright/Backwards": [(1.0, 0)]}
+        rep = L.summarize(series)
+        texts = [e["text"] for e in rep["events"] if "frontleft" in e["text"]]
+        self.assertEqual(len(texts), 2, rep["events"])
+        self.assertIn("steering more than 10", texts[0])
+        self.assertFalse(any("backright" in e["text"] for e in rep["events"]), "a count of 0 is nothing")
+
+
 if __name__ == "__main__":
     unittest.main()

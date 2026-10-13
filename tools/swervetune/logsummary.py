@@ -11,11 +11,11 @@ judges them live: a run of them to the end of the chain is the cable at its star
 from __future__ import annotations
 
 from . import battery
-from . import wiring
+from . import diagnose, wiring
 
 PREFIXES = ("/DriverStation/", "/SystemStats/", "/PowerDistribution/", "/RealOutputs/Motors/",
             "/RealOutputs/LoggedRobot/FullCycleMS", "/RealOutputs/SwerveTune/Test",
-            "/RealOutputs/SwerveTune/Battery",
+            "/RealOutputs/SwerveTune/Battery", "/RealOutputs/SwerveTune/Watch/",
             "/RealOutputs/SwerveTune/Gains/", "/RealMetadata/")
 GAINS = "/RealOutputs/SwerveTune/Gains/"
 PDH_FAULT_BITS = {24: "brownout", 25: "CAN warning", 26: "hardware fault"}
@@ -239,6 +239,18 @@ def summarize(series, wiring_map=None):
                 if f and f not in seen and "not heard" not in f:
                     seen.add(f)
                     ev(ts, "warn", f"{m}: {f}.", None, {"devices": [m]})
+
+    # The robot's module checks (ModuleWatch): each new episode, with the module and what to look at.
+    watch_words = {"SteerOff": ("steering more than 10\u00b0 from where it was told to point", "pod_wrong_direction"),
+                   "SensorsDisagree": ("steering motor encoder and absolute encoder more than 3\u00b0 apart", "pod_drifts"),
+                   "Backwards": ("wheel turned against its command", "wheel_backwards")}
+    for key in sorted(k for k in series if k.startswith("/RealOutputs/SwerveTune/Watch/")):
+        module, _, rule = key[len("/RealOutputs/SwerveTune/Watch/"):].rpartition("/")
+        what, symptom = watch_words.get(rule, (rule, None))
+        title = next((x["title"] for x in diagnose.SYMPTOMS if x["id"] == symptom), None)
+        for t, n in _increments(series.get(key)):
+            ev(t, "warn", f"{module}: {what}. Troubleshoot: \"{title}\"." if title else f"{module}: {what}.",
+               None, {"module": module, "symptom": symptom})
 
     # Gains changed while the robot code ran (from the laptop or AdvantageScope): a robot that
     # drove differently halfway through has its reason here.

@@ -67,6 +67,19 @@ final class DashboardAlerts {
   }
 
   /** Red while swervetune.json switches protection off: nothing else on the robot would say so. */
+  /**
+   * The module checks (ModuleWatch): yellow while it is happening and afterwards with its count,
+   * like every other "it happened" line, so the drive team sees it after the match.
+   */
+  void modules(List<ModuleWatch.Flag> flags) {
+    for (ModuleWatch.Flag f : flags) {
+      String times = f.count == 1 ? "once" : f.count + " times";
+      set("watch/" + f.module + "/" + f.rule.key, AlertType.kWarning, f.count > 0,
+          f.module + ": " + f.rule.what + (f.active ? " now (" + f.detail + ")" : "") + ", " + times
+              + " this session. " + f.rule.look);
+    }
+  }
+
   void protectionOff(boolean guardOff, boolean policyOff) {
     set("protection", AlertType.kError, guardOff || policyOff,
         (guardOff ? "Motor heat and stall protection is OFF" : "The team's current limits are NOT enforced")

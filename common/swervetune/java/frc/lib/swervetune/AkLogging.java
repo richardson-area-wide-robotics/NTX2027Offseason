@@ -212,6 +212,16 @@ public final class AkLogging {
     return deleted;
   }
 
+  /** The module checks, every loop: each one's count for the session, for the post-match summary. */
+  static void recordWatch(List<ModuleWatch.Flag> flags) {
+    if (!started) {
+      return;
+    }
+    for (ModuleWatch.Flag f : flags) {
+      Logger.recordOutput("SwerveTune/Watch/" + f.module + "/" + f.rule.key, f.count);
+    }
+  }
+
   /** Which battery is in ("" until picked), every loop, for the post-match summary. */
   static void recordBattery(String id) {
     if (started) {

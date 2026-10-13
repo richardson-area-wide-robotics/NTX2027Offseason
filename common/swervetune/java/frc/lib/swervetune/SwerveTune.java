@@ -88,6 +88,8 @@ public final class SwerveTune {
   private final SafetySupervisor supervisor;
   private final LiveGains gains;
   private final BatteryPicker battery;
+  /** The module checks the laptop's monitor makes, here too, so they watch matches. */
+  private ModuleWatch watch;
   private final long bootId;
   private final boolean manualSampling;
   private final Map<String, Supplier<Procedure>> procedures = new LinkedHashMap<>();
@@ -1448,6 +1450,18 @@ public final class SwerveTune {
     liveArray(SwerveTuneTopics.LIVE_STEER_TEMP_C).set(steerTemp);
     liveAbsIssue.set(absIssue);
     liveFaults.set(faults);
+    if (watch == null) {
+      String[] mods = new String[n];
+      for (int m = 0; m < n; m++) {
+        mods[m] = io.moduleName(m);
+      }
+      watch = new ModuleWatch(mods);
+    }
+    watch.update(now, signals.enabled(), steer, steerSp, steerMotor, driveV, driveSp);
+    if (dashboard != null) {
+      dashboard.modules(watch.flags());
+    }
+    AkLogging.recordWatch(watch.flags());
     DrivetrainIO.GyroStatus gyro = io.gyroStatus();
     liveGyro.set(new String[] {gyro.type(), gyro.connected() ? "connected" : "NOT CONNECTED",
         gyro.calibrating() ? "calibrating" : "ready", gyro.faults()});
