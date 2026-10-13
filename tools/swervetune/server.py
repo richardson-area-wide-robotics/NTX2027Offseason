@@ -623,7 +623,11 @@ def api_battery(_query=None):
                      "v_rest": last.get("v_rest"), "when": last.get("when"), "source": last.get("source"),
                      "n": len(h), "trend": [x["mohm"] for x in h[-12:]]})
     current = live.get("battery_id") or ""
+    grades = battery.grades_for_robot(rows)
+    saved = (S.project.data.get("swervetune.json") or {}).get("batteryGrades") if S.project else None
     return {"ok": True, "connected": bool(live), "id": current,
+            # What the robot shows on Elastic comes from swervetune.json: offer to send newer grades.
+            "robot_grades": grades, "robot_grades_stale": bool(S.project) and bool(grades) and grades != (saved or {}),
             "rest_v": live.get("battery_rest"), "batteries": rows, "robot_path": battery.robot_path_suspect(hist),
             "next": battery.suggest_next(rows, current),
             "good_max_mohm": battery.GOOD_MAX_OHM * 1000, "practice_max_mohm": battery.PRACTICE_MAX_OHM * 1000,
@@ -1256,12 +1260,19 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
+        # Read the body before anything else, even a refusal: a socket closed with its request still
+        # unread is reset on Windows, and the client can lose the answer (the suite's intermittent
+        # ConnectionAbortedError in the token test).
+        try:
+            n = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            n = 0
+        raw = self.rfile.read(n) if n > 0 else b""
         if not self._guard_origin():
             return self._send(403, {"ok": False, "error": "Refused: this page is out of date or isn't the tool's own. "
                                     "Reload it (the tool may have restarted)."})
         try:
-            n = int(self.headers.get("Content-Length") or 0)
-            body = json.loads(self.rfile.read(n) or b"{}")
+            body = json.loads(raw or b"{}")
             if path not in POST:
                 return self._send(404, {"ok": False, "error": "no such action"})
             return self._send(200, POST[path](body))

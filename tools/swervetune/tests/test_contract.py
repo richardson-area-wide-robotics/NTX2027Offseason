@@ -3,6 +3,7 @@
 Reads the Java source rather than trusting a copy, so renaming a topic on one side fails here.
 """
 
+import glob
 import os
 import re
 import unittest
@@ -33,6 +34,19 @@ class ContractTest(unittest.TestCase):
         for name, value in topics.items():
             self.assertTrue(hasattr(C, name), f"contract.py is missing {name}")
             self.assertEqual(getattr(C, name), value, f"{name} differs between Java and Python")
+
+    def test_java_string_literals_are_ascii(self):
+        # javac in WPILib 2026's JDK 17 reads source as cp1252 on Windows (neither build.gradle
+        # sets an encoding), so a "·" typed into a string reached the dashboard as "Â·". Escape it.
+        lit = re.compile(r'"(?:[^"\\\n]|\\.)*"')
+        bad = []
+        for d in ("java", "test"):
+            for path in glob.glob(os.path.join(REPO, "common", "swervetune", d, "**", "*.java"), recursive=True):
+                with open(path, encoding="utf-8") as fh:
+                    for n, line in enumerate(fh, 1):
+                        if any(ord(c) > 127 for m in lit.finditer(line) for c in m.group(0)):
+                            bad.append(f"{os.path.basename(path)}:{n}")
+        self.assertEqual(bad, [], "write it as \\u00b7 and so on")
 
     def test_protocol_version_matches(self):
         _, version = java_topics()

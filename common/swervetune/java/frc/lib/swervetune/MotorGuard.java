@@ -145,6 +145,7 @@ public final class MotorGuard {
     String flags = "";
     String history = "";
     String codeIssue = "";
+    boolean resendLimit;
     int derates;
     int shutoffs;
     double overrideUntilS = Double.NEGATIVE_INFINITY;
@@ -516,6 +517,8 @@ public final class MotorGuard {
       m.resets++;
       m.lastResetS = nowS;
       m.channel.clearResetFlag();
+      // It came back with the limit in its flash; ours (a policy cap or a derate) was never saved.
+      m.resendLimit = true;
       event(nowS, m.name + " rebooted: it lost power for a moment. Check its power leads, the PDH"
           + " port and its breaker.");
     }
@@ -615,10 +618,12 @@ public final class MotorGuard {
     // (each send is a blocking CAN transaction); and re-send a lowered limit every two seconds.
     double sinceSend = nowS - m.lastLimitSendS;
     boolean send = (limit != m.activeLimitA && (target != m.stage || sinceSend >= 0.5))
-        || (limit != m.baseLimitA && sinceSend >= RESEND_S);
+        || (limit != m.baseLimitA && sinceSend >= RESEND_S)
+        || (m.resendLimit && sinceSend >= 0.5);
     if (send) {
       if (m.channel.setCurrentLimit(limit)) {
         m.activeLimitA = limit;
+        m.resendLimit = false;
       }
       m.lastLimitSendS = nowS;
     }

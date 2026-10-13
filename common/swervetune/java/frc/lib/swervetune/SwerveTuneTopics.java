@@ -228,6 +228,8 @@ public final class SwerveTuneTopics {
   public static final String BATTERY_REST_VOLTS = ROOT + "/Battery/RestVolts";
   /** One line for the drive team: "Battery 7: 12.84 V at rest, charged". */
   public static final String BATTERY_CHECK = ROOT + "/Battery/Check";
+  /** The battery to put in next: graded best, then the one picked longest ago; empty if none. */
+  public static final String BATTERY_NEXT = ROOT + "/Battery/Next";
 
   /**
    * The CAN bus: utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors,

@@ -55,7 +55,7 @@ class BatteryPickerTest {
     assertEquals("2025-3", str(SwerveTuneTopics.BATTERY_ID));
     assertEquals("2025-3", str(SwerveTuneTopics.BATTERY_ACTIVE));
     assertEquals(12.81, num(SwerveTuneTopics.BATTERY_REST_VOLTS), 1e-9);
-    assertEquals("Battery 2025-3: 12.81 V at rest, charged", str(SwerveTuneTopics.BATTERY_CHECK));
+    assertEquals("Battery 2025-3: 12.81 V at rest, charged \u00b7 next: 2024-1", str(SwerveTuneTopics.BATTERY_CHECK));
   }
 
   @Test
@@ -76,7 +76,7 @@ class BatteryPickerTest {
     assertTrue(Double.isNaN(num(SwerveTuneTopics.BATTERY_REST_VOLTS)), "just disabled: still recovering");
     p.update(13.5, 1, 12.62, true);
     assertEquals(12.62, num(SwerveTuneTopics.BATTERY_REST_VOLTS), 1e-9, "no second pick needed");
-    assertEquals("Battery 4: 12.62 V at rest, partly charged", str(SwerveTuneTopics.BATTERY_CHECK));
+    assertEquals("Battery 4: 12.62 V at rest, partly charged \u00b7 next: 1", str(SwerveTuneTopics.BATTERY_CHECK));
     p.update(30, 1, 12.75, true);
     assertEquals(12.62, num(SwerveTuneTopics.BATTERY_REST_VOLTS), 1e-9, "read once per pick");
   }
@@ -134,6 +134,49 @@ class BatteryPickerTest {
   }
 
   @Test
+  void theCheckLineCarriesTheGradeAndTheNextBattery() {
+    BatteryPicker p = new BatteryPicker(nt, List.of("1", "2", "3", "4"), true,
+        java.util.Map.of("1", "retire", "2", "practice", "3", "good"), null);
+    assertEquals("Pick the battery number (next to use: 3)", str(SwerveTuneTopics.BATTERY_CHECK),
+        "good before practice before not measured; never a retired one");
+    p.update(0, 1, 12.8, true);
+    dashboard.set("2");
+    p.update(10, 1, 12.8, true);
+    assertEquals("Battery 2: 12.80 V at rest, charged \u00b7 practice only \u00b7 next: 3", str(SwerveTuneTopics.BATTERY_CHECK));
+    dashboard.set("3");
+    p.update(11, 1, 12.8, true);
+    assertEquals("Battery 3: 12.80 V at rest, charged \u00b7 next: 2", str(SwerveTuneTopics.BATTERY_CHECK),
+        "3 is in now; 2 is the best of the rest");
+    assertEquals("2", str(SwerveTuneTopics.BATTERY_NEXT));
+    dashboard.set("1");
+    p.update(12, 1, 12.8, true);
+    assertTrue(str(SwerveTuneTopics.BATTERY_CHECK).contains("RETIRE it"), str(SwerveTuneTopics.BATTERY_CHECK));
+  }
+
+  @Test
+  void theBatteryPickedLongestAgoIsNextAcrossPowerOns(@org.junit.jupiter.api.io.TempDir java.nio.file.Path dir) {
+    java.nio.file.Path log = dir.resolve("picks.txt");
+    var grades = java.util.Map.of("1", "good", "2", "good", "3", "good");
+    BatteryPicker p = new BatteryPicker(nt, List.of("1", "2", "3"), true, grades, log);
+    p.update(0, 1, 12.8, true);
+    for (String b : List.of("1", "2", "3")) {
+      dashboard.set(b);
+      p.update(10 + Integer.parseInt(b), 1, 12.8, true);
+    }
+    assertEquals("1", p.next(), "1 has been off the robot longest");
+    nt.close();
+    // A power-on later: a new robot program reads the order back.
+    nt = NetworkTableInstance.create();
+    dashboard = nt.getStringTopic(SwerveTuneTopics.BATTERY_SELECTED).publish();
+    BatteryPicker after = new BatteryPicker(nt, List.of("1", "2", "3"), true, grades, log);
+    assertEquals("1", after.next());
+    after.update(0, 1, 12.8, true);
+    dashboard.set("1");
+    after.update(10, 1, 12.8, true);
+    assertEquals("2", after.next(), "1 is in; 2 was picked before 3");
+  }
+
+  @Test
   void theRosterComesFromTheConfigWithoutDuplicates() {
     SwerveTuneConfig c = SwerveTuneConfig.parse("{\"batteries\": [1, \"2024-3\", 1, \" \", 2.0]}");
     assertEquals(List.of("1", "2024-3", "2"), c.batteries);
@@ -142,5 +185,12 @@ class BatteryPickerTest {
         nt.getStringArrayTopic(SwerveTuneTopics.BATTERY_OPTIONS).subscribe(new String[0]).get(),
         "the team's list, then Borrowed for a battery without a team number");
     assertEquals(c.batteries, p.roster());
+  }
+
+  @Test
+  void gradesComeFromTheConfigAndANonsenseGradeIsAWarning() {
+    SwerveTuneConfig c = SwerveTuneConfig.parse("{\"batteryGrades\": {\"7\": \"Practice\", \"8\": \"great\", \"_note\": \"x\"}}");
+    assertEquals(java.util.Map.of("7", "practice"), c.batteryGrades);
+    assertTrue(c.warnings.stream().anyMatch(w -> w.contains("battery 8")), c.warnings.toString());
   }
 }

@@ -58,11 +58,18 @@ const Battery = (() => {
         Good up to ${r.good_max_mohm}, practice up to ${r.practice_max_mohm}, retire above. A new ${esc(r.datasheet.name)} alone is about
         ${r.datasheet.r_ohm * 1000} mΩ (its datasheet). Every wheel test and every match log you open measures the battery that was picked.</p>
       </details>
-      <div class="row"><button class="btn" id="batt-edit">Edit the battery list…</button><button class="btn" id="batt-close">Close</button></div>`,
+      ${r.robot_grades_stale ? `<p class="small">The robot's Battery check line on the dashboard shows these grades and the
+        battery to use next, from the last grades sent. These are newer.</p>` : ""}
+      <div class="row">${r.robot_grades_stale ? `<button class="btn primary" id="batt-send" data-tip="battery.send">Send the grades to the robot…</button>` : ""}<button class="btn" id="batt-edit" data-tip="battery.edit">Edit the battery list…</button><button class="btn" id="batt-close">Close</button></div>`,
     root => {
       $$("[data-id]", root).forEach(b => b.onclick = () => pick(b.dataset.id));
       $("#batt-close", root).onclick = () => App.closeModal();
       $("#batt-edit", root).onclick = () => edit(shown.filter(b => b.listed).map(b => b.id));
+      const send = $("#batt-send", root);
+      if (send) send.onclick = async () => {
+        if (await App.previewAndSave({ kind: "edit", file: "swervetune.json", path: ["batteryGrades"], value: r.robot_grades },
+          "Battery grades for the robot")) App.toast("Saved. Redeploy, and the dashboard shows them.", 6000);
+      };
     });
   }
 

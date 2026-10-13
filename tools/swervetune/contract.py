@@ -138,6 +138,7 @@ BATTERY_ACTIVE = BATTERY_CHOOSER + "active"
 BATTERY_ID = ROOT + "/Battery/Id"
 BATTERY_REST_VOLTS = ROOT + "/Battery/RestVolts"
 BATTERY_CHECK = ROOT + "/Battery/Check"
+BATTERY_NEXT = ROOT + "/Battery/Next"
 # Utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors, and the running
 # count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"

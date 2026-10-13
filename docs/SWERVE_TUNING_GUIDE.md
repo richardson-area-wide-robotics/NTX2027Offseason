@@ -209,12 +209,13 @@ check those before retiring one. The list of numbers lives in `swervetune.json` 
 ## At the cart: the drive team's checklist
 
 Everything the drive team does at the cart is on the one Elastic tab, and none of it needs this
-laptop. One thing isn't there yet: each battery's grade (*retire*, *practice only*) and which one
-to use next are worked out on the laptop's Battery tab, from earlier sag. Elastic's Battery check
-line is today's resting voltage only, so check the Battery tab before an event day.
+laptop. The battery grades on it come from the laptop: after the batteries have been measured,
+open the Battery tab, press **Send the grades to the robot**, and redeploy. Do it before an event.
 
 1. **Pick the battery** after every swap, then read the **Battery check** line. *Charged* is ready;
-   *partly charged* is fine for practice; *CHARGE IT before a match* means swap it. "Resting
+   *partly charged* is fine for practice; *CHARGE IT before a match* means swap it. *Practice only*
+   or *RETIRE it* after that is the battery's grade from its measured sag; *next: 3* is the battery
+   to put in next (graded best, then the one picked longest ago). "Resting
    voltage read once the robot is disabled" means it was picked while enabled: it fills in by itself
    a couple of seconds after the robot is disabled.
 2. **Read Robot Health.** The colors mean one thing each:

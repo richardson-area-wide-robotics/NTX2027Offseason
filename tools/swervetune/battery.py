@@ -288,6 +288,13 @@ def suggest_next(rows, current=None, now=None):
     return {"id": b["id"], "why": why + "."}
 
 
+def grades_for_robot(rows):
+    """``{id: grade}`` for the robot's Battery check line and its next-battery choice: each listed
+    battery's latest grade. Borrowed is many batteries under one name, so it is never graded."""
+    return {b["id"]: b["status"] for b in rows
+            if b.get("listed") and b.get("status") and b["id"] != BORROWED}
+
+
 def history(entries):
     """Per battery id, its measurements oldest first. ``entries`` are ``(when, id, fit, source)``."""
     out = {}

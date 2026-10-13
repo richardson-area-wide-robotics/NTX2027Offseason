@@ -351,7 +351,10 @@ public final class SwerveTune {
     gains = new LiveGains(nt, io, config, bootId);
     // The FPGA clock restarts only when the roboRIO powers up: early in it, this is a fresh power-on
     // (maybe a new battery); later, only the robot code restarted (the same battery).
-    battery = new BatteryPicker(nt, config.batteries, clock.getAsDouble() < BatteryPicker.FRESH_POWER_ON_S);
+    battery = new BatteryPicker(nt, config.batteries, clock.getAsDouble() < BatteryPicker.FRESH_POWER_ON_S,
+        config.batteryGrades,
+        // On the roboRIO, next to the robot program (survives power-offs); the simulator keeps none.
+        RobotBase.isReal() ? Filesystem.getOperatingDirectory().toPath().resolve("swervetune-battery-picks.txt") : null);
     lastCmdSeq = cmdSeq.get();
     lastAbortSeq = abortSeq.get();
     lastOverrideSeq = overrideSeq.get();

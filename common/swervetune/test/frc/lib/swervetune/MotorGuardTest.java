@@ -387,6 +387,21 @@ class MotorGuardTest {
     assertEquals(2, m.brownouts());
   }
 
+  @Test
+  void aControllerThatRebootsGetsThePolicyLimitBack() {
+    FakeMotorChannel c = new FakeMotorChannel(40); // over the NEO 550's 20 A policy
+    all[count++] = c;
+    Motor m = guard.register("Arm", c, MotorKind.NEO_550, true, true);
+    assertEquals(20, c.limit);
+    run(0.1);
+    // A brownout reboots the SPARK: it comes back with the 40 A its flash holds.
+    c.limit = 40;
+    c.resetFlag = true;
+    run(1.0);
+    assertEquals(1, m.resets());
+    assertEquals(20, c.limit, "the policy cap was never saved to flash, so the guard sends it again");
+  }
+
   // ------------------------------------------------------------------ policy and plumbing
 
   @Test

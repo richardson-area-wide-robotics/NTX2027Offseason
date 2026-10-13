@@ -4,7 +4,8 @@ Elastic is the dashboard the Driver Station laptop runs. This layout puts the th
 team needs at the cart on one tab:
 
 * **Battery** - the drop-down the robot asks them to pick after every swap (``BatteryPicker``);
-* **Battery check** - one line with the verdict: "Battery 7: 12.84 V at rest, charged". (The
+* **Battery check** - one line with the verdict: "Battery 7: 12.84 V at rest, charged · next: 3",
+  with the grade when it isn't good ("practice only", "RETIRE it") from the laptop's last sent grades. (The
   Driver Station already shows the voltage now, so there is no second voltage widget.)
 * **Robot Health** - the robot's alerts (``DashboardAlerts``). Red means broken now: fix it before
   queuing. Yellow happened or needs watching, and stays with its count until the code restarts.

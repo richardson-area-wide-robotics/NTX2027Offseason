@@ -120,6 +120,14 @@ public final class SwerveTuneConfig {
    */
   public final List<String> batteries = new ArrayList<>();
 
+  /**
+   * Each battery's grade from its measured sag, written by the laptop's Battery tab ("Send the
+   * grades to the robot"): {@code "good"}, {@code "practice"} or {@code "retire"}. A battery not
+   * listed hasn't been measured. The dashboard's Battery check line shows it, and the next battery
+   * to use is chosen from it, so the drive team needs no laptop at the cart.
+   */
+  public final Map<String, String> batteryGrades = new java.util.LinkedHashMap<>();
+
   /** Problems found while reading, shown on the laptop at connect. */
   public final List<String> warnings = new ArrayList<>();
 
@@ -231,6 +239,19 @@ public final class SwerveTuneConfig {
         if (!id.isEmpty() && !c.batteries.contains(id)) {
           c.batteries.add(id);
         }
+      }
+    }
+
+    for (Map.Entry<String, Object> e : map(m.get("batteryGrades")).entrySet()) {
+      String g = str(e.getValue(), "").trim().toLowerCase(java.util.Locale.ROOT);
+      if (e.getKey().startsWith("_")) {
+        continue;
+      }
+      if (g.equals("good") || g.equals("practice") || g.equals("retire")) {
+        c.batteryGrades.put(e.getKey().trim(), g);
+      } else {
+        c.warnings.add("batteryGrades: battery " + e.getKey() + " has grade \"" + g
+            + "\"; expected good, practice or retire. Ignored.");
       }
     }
 

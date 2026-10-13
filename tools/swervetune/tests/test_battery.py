@@ -161,5 +161,13 @@ class CompensationTest(unittest.TestCase):
         self.assertEqual(out["battery"][5], 10.5, "the battery line is what it had")
 
 
+class GradesForTheRobotTest(unittest.TestCase):
+    def test_listed_graded_batteries_only_and_never_borrowed(self):
+        rows = [{"id": "1", "listed": True, "status": "good"}, {"id": "2", "listed": True, "status": None},
+                {"id": "3", "listed": False, "status": "retire"}, {"id": B.BORROWED, "listed": True, "status": "good"},
+                {"id": "4", "listed": True, "status": "practice"}]
+        self.assertEqual(B.grades_for_robot(rows), {"1": "good", "4": "practice"})
+
+
 if __name__ == "__main__":
     unittest.main()

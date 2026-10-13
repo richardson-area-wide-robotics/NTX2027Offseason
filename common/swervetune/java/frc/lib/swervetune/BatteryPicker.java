@@ -6,8 +6,14 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StringArrayPublisher;
 import edu.wpi.first.networktables.StringPublisher;
 import edu.wpi.first.networktables.StringSubscriber;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Which battery is in, picked by the drive team.
@@ -31,6 +37,12 @@ import java.util.List;
  * <p>The resting voltage is the bus voltage once the robot has been disabled for {@link
  * #REST_SETTLE_S}: at the pick when it already has been, otherwise as soon as it has, with no second
  * pick (a dashboard doesn't send a pick of the number it already shows).
+ *
+ * <p>Each battery's grade comes from the laptop, saved into {@code swervetune.json} and deployed;
+ * the order batteries were picked in is kept on the roboRIO across power-ons. From those it names
+ * the battery to put in next, as the laptop's Battery tab does: never the one in now, a borrowed or
+ * a retired one; good before practice before not yet measured; then the one picked longest ago,
+ * the likeliest to be charged and cool.
  */
 final class BatteryPicker {
   static final double RESTORE_WINDOW_S = 3.0;
@@ -45,6 +57,11 @@ final class BatteryPicker {
   static final double CHARGE_IT_V = 12.3;
 
   private final List<String> roster;
+  private final Map<String, String> grades;
+  private final Path useLog;
+  /** Battery id to the order it was last picked in (higher is more recent), across power-ons. */
+  private final Map<String, Long> lastPicked = new LinkedHashMap<>();
+  private final StringPublisher next;
   private final StringSubscriber selected;
   private final StringPublisher clearSelected;
   private final StringPublisher active;
@@ -69,12 +86,22 @@ final class BatteryPicker {
     this(nt, roster, true);
   }
 
+  BatteryPicker(NetworkTableInstance nt, List<String> roster, boolean freshPowerOn) {
+    this(nt, roster, freshPowerOn, Map.of(), null);
+  }
+
   /**
    * @param freshPowerOn true when the roboRIO has just powered up (a battery may have been swapped);
    *     false when only the robot code restarted
+   * @param grades battery id to "good", "practice" or "retire", from the laptop's measurements
+   * @param useLog where the order of picks is kept across power-ons, or null to keep it in memory
    */
-  BatteryPicker(NetworkTableInstance nt, List<String> roster, boolean freshPowerOn) {
+  BatteryPicker(NetworkTableInstance nt, List<String> roster, boolean freshPowerOn,
+      Map<String, String> grades, Path useLog) {
     this.freshPowerOn = freshPowerOn;
+    this.grades = grades == null ? Map.of() : Map.copyOf(grades);
+    this.useLog = useLog;
+    readUseLog();
     this.roster = roster == null || roster.isEmpty() ? DEFAULT_ROSTER : List.copyOf(roster);
     String t = SwerveTuneTopics.BATTERY_CHOOSER;
     type = nt.getStringTopic(t + ".type").publish();
@@ -99,7 +126,90 @@ final class BatteryPicker {
     restVolts = nt.getDoubleTopic(SwerveTuneTopics.BATTERY_REST_VOLTS).publish();
     restVolts.set(Double.NaN);
     check = nt.getStringTopic(SwerveTuneTopics.BATTERY_CHECK).publish();
-    check.set(checkText("", Double.NaN));
+    next = nt.getStringTopic(SwerveTuneTopics.BATTERY_NEXT).publish();
+    publishCheck();
+  }
+
+  /** The battery to put in next, or "" when every other one is in use, borrowed or retired. */
+  String next() {
+    String best = "";
+    int bestRank = Integer.MAX_VALUE;
+    long bestPicked = Long.MAX_VALUE;
+    for (String id : roster) {
+      String g = grades.get(id);
+      if (id.equals(current) || id.equals(BORROWED) || "retire".equals(g)) {
+        continue;
+      }
+      int rank = "good".equals(g) ? 0 : "practice".equals(g) ? 1 : 2;
+      long picked = lastPicked.getOrDefault(id, -1L); // never picked here: as rested as any
+      if (rank < bestRank || (rank == bestRank && picked < bestPicked)) {
+        best = id;
+        bestRank = rank;
+        bestPicked = picked;
+      }
+    }
+    return best;
+  }
+
+  /** What the grade adds to the check line. */
+  static String gradeText(String grade) {
+    return grade == null ? "" : switch (grade) {
+      case "practice" -> " \u00b7 practice only";
+      case "retire" -> " \u00b7 RETIRE it: it sagged hard";
+      default -> "";
+    };
+  }
+
+  /** The check line with the battery's grade and the one to use next. */
+  static String checkText(String battery, double rest, String grade, String nextId) {
+    String n = nextId == null || nextId.isEmpty() ? "" : nextId;
+    if (battery.isEmpty()) {
+      return checkText(battery, rest) + (n.isEmpty() ? "" : " (next to use: " + n + ")");
+    }
+    return checkText(battery, rest) + gradeText(grade) + (n.isEmpty() ? "" : " \u00b7 next: " + n);
+  }
+
+  private void publishCheck() {
+    String n = next();
+    next.set(n);
+    check.set(checkText(current, rest, grades.get(current), n));
+  }
+
+  private void readUseLog() {
+    if (useLog == null || !Files.exists(useLog)) {
+      return;
+    }
+    try {
+      for (String line : Files.readAllLines(useLog, StandardCharsets.UTF_8)) {
+        int eq = line.lastIndexOf('=');
+        if (eq > 0) {
+          try {
+            lastPicked.put(line.substring(0, eq).trim(), Long.parseLong(line.substring(eq + 1).trim()));
+          } catch (NumberFormatException e) {
+            // a damaged line is a battery with no record, nothing worse
+          }
+        }
+      }
+    } catch (IOException e) {
+      // no record: every battery is as rested as any
+    }
+  }
+
+  private void recordPick(String id) {
+    long seq = lastPicked.values().stream().mapToLong(Long::longValue).max().orElse(0) + 1;
+    lastPicked.remove(id);
+    lastPicked.put(id, seq);
+    if (useLog == null) {
+      return;
+    }
+    StringBuilder sb = new StringBuilder("# Order batteries were picked in (swervetune). Safe to delete.\n");
+    lastPicked.forEach((k, v) -> sb.append(k).append('=').append(v).append('\n'));
+    try {
+      Files.createDirectories(useLog.toAbsolutePath().getParent());
+      Files.writeString(useLog, sb.toString(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      // The next-battery choice falls back to this boot's picks; nothing else depends on it.
+    }
   }
 
   /** The drive team's one line: which battery, its resting voltage, and what to do. */
@@ -137,7 +247,7 @@ final class BatteryPicker {
       // Picked while enabled (or just after): read it now that it has rested.
       rest = busVolts;
       restVolts.set(rest);
-      check.set(checkText(current, rest));
+      publishCheck();
     }
     String s = selected.get();
     s = s == null ? "" : s.trim();
@@ -158,9 +268,10 @@ final class BatteryPicker {
     current = s;
     id.set(s);
     active.set(s);
+    recordPick(s);
     rest = atRest ? busVolts : Double.NaN;
     restVolts.set(rest);
-    check.set(checkText(s, rest));
+    publishCheck();
     return current;
   }
 
