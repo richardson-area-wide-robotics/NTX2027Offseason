@@ -898,16 +898,21 @@ def cmd_setup(args, out):
             if kind not in SP.PARTS:
                 return out.done(out.fail(f"No part {kind!r}. Parts: " + ", ".join(SP.PARTS), code="BAD_ARGS"))
             key = SP.part_key(kind, which)
-            parts = progress.load(project.name).get("parts") or {}
-            if args.start or key not in parts:
-                if not args.start:
-                    return out.done(out.fail(f"{key} isn't started. Add --start: only what is done from then on "
-                                             "counts for it.", code="NOT_FOUND"))
-                parts[key] = {"started": SP.stamp(), "marks": {}}
-                progress.update(project.name, {"parts": parts})
-                ctx["prog"] = progress.load(project.name)
-            plan = SP.part_plan(kind, which, ctx, parts[key]["started"])
-            out.put(part=key, started=parts[key]["started"], plan=plan)
+            if args.start:
+                # The same locked change the GUI makes: a GUI writing at the same moment loses nothing.
+                ctx["prog"] = progress.change(project.name, lambda p: p.setdefault("parts", {}).__setitem__(
+                    key, {"started": SP.stamp(), "marks": {}}))
+            started = ((ctx["prog"].get("parts") or {}).get(key) or {}).get("started")
+            if not started:
+                # Not started: its jobs as the GUI previews them, nothing counted yet (a start far ahead).
+                plan = SP.part_plan(kind, which, ctx, "99999999-999999")
+                out.put(part=key, started=None, preview=True, plan=plan,
+                        hint="Not started. Add --start: only what is done from then on counts for it.")
+                _say_plan(out, plan)
+                out.say("  not started: add --start; only what is done from then on counts.")
+                return out.done()
+            plan = SP.part_plan(kind, which, ctx, started)
+            out.put(part=key, started=started, plan=plan)
             _say_plan(out, plan)
             return out.done()
         tabs = [args.tab] if args.tab else list(SP.TOOLS)

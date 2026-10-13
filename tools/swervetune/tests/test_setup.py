@@ -188,6 +188,26 @@ class ServerTest(unittest.TestCase):
         server.api_part_stop({"kind": "module", "which": "frontleft"})
         self.assertEqual(server.api_parts()["active"], [])
 
+    def test_an_unstarted_part_previews_its_jobs_with_nothing_counted(self):
+        server.api_mark({"key": "cal_health", "result": "pass", "detail": "All green."})
+        p = server.api_part_plan({"kind": "module", "which": "frontleft"})
+        self.assertTrue(p["preview"])
+        self.assertIsNone(p["started"])
+        self.assertTrue(p["jobs"], "the jobs it would ask for")
+        self.assertNotIn("done", jobs(p).values(), "a health check from before the part changed never counts")
+
+    def test_the_simulator_never_counts(self):
+        sim = mock.Mock()
+        sim.is_connected.return_value = True
+        sim.environment.return_value = {"active": "SIM"}
+        server.api_part_start({"kind": "module", "which": "frontleft"})
+        with mock.patch.object(server.S, "link", sim):
+            self.assertFalse(server.api_mark({"key": "cal_positions", "result": "pass"})["ok"])
+            self.assertFalse(server.api_part_mark({"kind": "module", "which": "frontleft", "step": "offset", "result": "pass"})["ok"])
+        prog = progress.load("Peashooter")
+        self.assertNotIn("cal_positions", prog)
+        self.assertEqual(prog["parts"]["module:frontleft"]["marks"], {})
+
     def test_a_tools_mark_and_its_card(self):
         self.assertFalse(server.api_mark({"key": "geometry", "result": "pass"})["ok"], "only the tools' own keys")
         server.api_mark({"key": "cal_positions", "result": "pass", "detail": "Matches the files."})
@@ -211,6 +231,27 @@ class ServerTest(unittest.TestCase):
         d = json.loads(buf.getvalue())
         self.assertEqual((d["ok"], d["part"]), (True, "gyro"))
         self.assertEqual(d["plan"]["next"]["id"], "health")
+
+    def cli_json(self, *argv):
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            cli.main(["setup", "--project", "Peashooter", *argv, "--json"])
+        return json.loads(buf.getvalue())
+
+    def test_the_cli_takes_the_robots_short_names(self):
+        d = self.cli_json("--part", "module:FL")
+        self.assertEqual(d["part"], "module:frontleft", "FL is frontleft, as the tuner and the robot accept")
+        self.assertTrue(d["preview"], "not started: its jobs, and how to start it")
+        self.assertIn("--start", d["hint"])
+
+    def test_the_cli_names_the_robots_parts_when_one_is_wrong(self):
+        d = self.cli_json("--part", "module:nope")
+        self.assertEqual((d["ok"], d["code"]), (False, "BAD_ARGS"))
+        self.assertIn("frontleft", d["error"])
+        d = self.cli_json("--part", "module")
+        self.assertEqual(d["code"], "BAD_ARGS", "which module?")
+        d = self.cli_json("--part", "wheel")
+        self.assertEqual(d["code"], "BAD_ARGS")
 
 
 if __name__ == "__main__":

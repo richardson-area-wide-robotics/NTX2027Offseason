@@ -1,7 +1,9 @@
 """The Guide's ticks are each robot's own, and only real runs earn them."""
 
+import glob
 import os
 import tempfile
+import threading
 import unittest
 from unittest import mock
 
@@ -63,6 +65,31 @@ class ProgressTest(unittest.TestCase):
     def test_a_person_cannot_write_run_results(self):
         progress.update("Peashooter", {"runs": {"steer_step/FIELD": {"score": 100}}})
         self.assertEqual(progress.load("Peashooter")["runs"], {})
+
+    def test_changes_from_many_threads_all_land(self):
+        # The GUI answers on many threads; a read-change-write that isn't locked loses some.
+        def bump(p):
+            p["n"] = p.get("n", 0) + 1
+
+        def work():
+            for _ in range(25):
+                progress.change("Peashooter", bump)
+        ts = [threading.Thread(target=work) for _ in range(8)]
+        [t.start() for t in ts]
+        [t.join() for t in ts]
+        self.assertEqual(progress.load("Peashooter")["n"], 200)
+        self.assertEqual(glob.glob(progress.PATH + ".*.tmp"), [], "no temp file left behind")
+
+    def test_a_damaged_file_is_set_aside_not_erased(self):
+        os.makedirs(os.path.dirname(progress.PATH), exist_ok=True)
+        with open(progress.PATH, "w", encoding="utf-8") as fh:
+            fh.write('{"Peashooter": {"hand": "pass"')
+        progress.update("Black team", {"hand": "pass"})
+        kept = glob.glob(progress.PATH + ".unreadable-*")
+        self.assertEqual(len(kept), 1, "the damaged file is kept for a person to rescue")
+        with open(kept[0], encoding="utf-8") as fh:
+            self.assertIn("Peashooter", fh.read())
+        self.assertEqual(progress.load("Black team")["hand"], "pass")
 
 
 if __name__ == "__main__":
