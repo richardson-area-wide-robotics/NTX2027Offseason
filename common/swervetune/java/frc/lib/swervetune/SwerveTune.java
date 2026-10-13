@@ -987,6 +987,7 @@ public final class SwerveTune {
     profile = prof;
     activeSeq = seq;
     lastTest = test;
+    resetLift();
     state = State.WAITING;
     message = "Accepted, waiting to start.";
     progress = 0;
@@ -1061,6 +1062,11 @@ public final class SwerveTune {
           return;
         }
         if (v.action() == SafetySupervisor.Action.WAIT) {
+          if (!Double.isNaN(liftStartS) && !liftPassed) {
+            // Mid-pulse, a wait (the deadman let go) is a stop: the motors are running.
+            finish(State.ABORTED, "Stopped during the lift check: " + v.reason());
+            return;
+          }
           message = v.reason();
           if (now - requestedAtS > MAX_WAIT_S) {
             finish(State.ABORTED, "Gave up after a minute waiting: " + v.reason());
@@ -1070,6 +1076,12 @@ public final class SwerveTune {
       } else if (in.fmsAttached) {
         finish(State.ABORTED, "FMS attached.");
         return;
+      }
+      if (guarded && needsLift()) {
+        liftCheck(now);
+        if (state != State.WAITING || !liftPassed) {
+          return;
+        }
       }
       begin(now);
       return;
@@ -1107,6 +1119,96 @@ public final class SwerveTune {
     }
     if (done) {
       finish(State.DONE, "Finished.");
+    }
+  }
+
+  // ------------------------------------------------------------------ the lift check
+  private double liftStartS = Double.NaN;
+  private double liftLastS;
+  private double[] liftAmpS;
+  private double[] liftPeakMps;
+  private boolean liftJudged;
+  private boolean liftPassed;
+
+  private void resetLift() {
+    liftStartS = Double.NaN;
+    liftJudged = false;
+    liftPassed = false;
+  }
+
+  private boolean needsLift() {
+    return ctx.env == TestEnvironment.BLOCKS && proc.drivesWheels() && !liftPassed;
+  }
+
+  /**
+   * Before a blocks test that drives the wheels: a short pulse on every drive motor. A wheel in the
+   * air gains speed fast for little current; one carrying the robot needs many times the current for
+   * less speed. Two or more wheels like that and the robot is on the floor, whatever it was told:
+   * the test stops before it starts. Decided by physics, not by the test's own gains.
+   */
+  private void liftCheck(double now) {
+    SafetySupervisor.Limits lim = supervisor.limits();
+    int n = io.moduleCount();
+    if (Double.isNaN(liftStartS)) {
+      ownership.acquire();
+      liftStartS = now;
+      liftLastS = now;
+      liftAmpS = new double[n];
+      liftPeakMps = new double[n];
+      for (int m = 0; m < n; m++) {
+        io.setDriveVolts(m, lim.liftVolts);
+      }
+      message = "Checking the wheels are off the floor: a short pulse.";
+      return;
+    }
+    double dt = now - liftLastS;
+    liftLastS = now;
+    double el = now - liftStartS;
+    for (int m = 0; m < n; m++) {
+      if (el <= lim.liftPulseS + 1e-6) {
+        liftAmpS[m] += Math.abs(io.driveAmps(m)) * dt;
+      }
+      // The speed reading lags a status frame: watch one loop past the pulse.
+      if (el <= lim.liftPulseS + 0.025) {
+        liftPeakMps[m] = Math.max(liftPeakMps[m], Math.abs(io.driveMps(m)));
+      }
+    }
+    if (el < lim.liftPulseS) {
+      return;
+    }
+    for (int m = 0; m < n; m++) {
+      io.setDriveVolts(m, 0);
+    }
+    if (!liftJudged && el >= lim.liftPulseS + 0.02) {
+      liftJudged = true;
+      double[] ratio = new double[n];
+      int carrying = 0;
+      int judged = 0;
+      for (int m = 0; m < n; m++) {
+        if (liftAmpS[m] < 0.05) {
+          ratio[m] = Double.NaN; // no current read: can't judge this wheel
+          continue;
+        }
+        judged++;
+        ratio[m] = liftPeakMps[m] / liftAmpS[m];
+        if (ratio[m] < lim.liftMinMpsPerAmpS) {
+          carrying++;
+        }
+      }
+      double[] sorted = java.util.Arrays.stream(ratio).filter(Double::isFinite).sorted().toArray();
+      double median = sorted.length == 0 ? Double.NaN : sorted[sorted.length / 2];
+      ctx.meta("lift_mps_per_amp_s", median);
+      if (carrying >= Math.max(2, (judged + 1) / 2)) {
+        finish(State.ABORTED, String.format("NOT on blocks: a short pulse sped the wheels up only %.2f m/s per"
+                + " amp-second (wheels in the air reach over %.1f), so they are carrying weight: the robot is on"
+                + " the floor, or the wheels touch the blocks. Put it on blocks, or switch the environment to"
+                + " FIELD.", median, lim.liftMinMpsPerAmpS));
+        return;
+      }
+      ctx.note(String.format("Lift check: wheels free (%.2f m/s per amp-second).", median));
+    }
+    if (el >= lim.liftPulseS + lim.liftSettleS) {
+      liftPassed = true;
     }
   }
 

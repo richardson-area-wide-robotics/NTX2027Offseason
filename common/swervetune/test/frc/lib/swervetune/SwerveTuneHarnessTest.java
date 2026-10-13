@@ -454,7 +454,7 @@ class SwerveTuneHarnessTest {
     assertTrue(tune.message().contains("deadman"), tune.message());
     assertEquals(0, io.speed[0], 1e-9);
     ds.deadman = true;
-    loop(3);
+    loop(30); // the lift check first: a 0.12 s pulse, then the wheels coast still
     assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
     loop(10);
     ds.deadman = false;
@@ -468,16 +468,52 @@ class SwerveTuneHarnessTest {
     // B1 in the review: a drive test on carpet, told "blocks", drove 1.4 m without one abort.
     onBlocks();
     io.chassisMoves = true; // it is really on the floor,
-    io.driveLagS = 0.3; // so each wheel speeds up as slowly as one pushing a quarter of the robot
+    // so each wheel speeds up like one pushing a quarter of a 55 kg robot (kA/kV, about 0.13 s). The
+    // lift check is an open-loop pulse, so whatever gains the test would use don't matter.
+    io.driveLagS = 0.13;
     loop(1);
     send("drive_step", "ALL");
     loop(200);
     assertEquals(SwerveTune.State.ABORTED, tune.state(), tune.message());
     assertTrue(tune.message().startsWith("NOT on blocks"), tune.message());
-    // The gentle first steps (0.25 and 0.5 m/s) don't draw enough current for long enough to tell;
-    // the 1 m/s step does. The person holding the deadman covers what comes before it.
+    // The lift check stops it before the test itself starts: a pulse of a few centimeters.
+    assertTrue(tune.message().contains("short pulse"), tune.message());
     double travel = Math.hypot(io.x, io.y);
-    assertTrue(travel < 1.0, "stopped well short of the whole test's 1.4 m: " + travel);
+    assertTrue(travel < 0.15, "stopped within a few centimeters: " + travel);
+  }
+
+  @Test
+  void onBlocksTheLiftCheckPassesAndTheTestRuns() {
+    onBlocks();
+    loop(1);
+    send("drive_step", "ALL");
+    loop(3);
+    assertEquals(SwerveTune.State.WAITING, tune.state());
+    assertTrue(tune.message().contains("off the floor"), tune.message());
+    loop(30);
+    assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
+  }
+
+  @Test
+  void lettingGoMidPulseStopsTheLiftCheck() {
+    onBlocks();
+    loop(1);
+    send("drive_step", "ALL");
+    loop(4); // inside the 0.12 s pulse
+    ds.deadman = false;
+    loop(1);
+    assertEquals(SwerveTune.State.ABORTED, tune.state());
+    assertTrue(tune.message().startsWith("Stopped during the lift check"), tune.message());
+    assertEquals(0, io.volts[0], 1e-9, "the motors stopped");
+  }
+
+  @Test
+  void aSteeringTestOnBlocksNeedsNoLiftCheck() {
+    onBlocks();
+    loop(1);
+    send("steer_step", "FL", "hold_s", "0.3", "settle_s", "0.2");
+    loop(3);
+    assertEquals(SwerveTune.State.RUNNING, tune.state(), tune.message());
   }
 
   @Test

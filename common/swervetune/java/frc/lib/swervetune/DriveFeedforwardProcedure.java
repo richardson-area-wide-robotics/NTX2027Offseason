@@ -49,6 +49,11 @@ final class DriveFeedforwardProcedure implements Procedure {
   }
 
   @Override
+  public boolean drivesWheels() {
+    return true;
+  }
+
+  @Override
   public boolean spinsWheels() {
     return true;
   }

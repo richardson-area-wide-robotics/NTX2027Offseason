@@ -118,7 +118,7 @@ const Guide = (() => {
       need: ["Blocks under the frame, all four wheels clear", "The tool set to On blocks", "The robot enabled in the Driver Station (Teleop or Test): the first step that turns a motor",
              "Someone holding the deadman for the whole run: the tester's controller right bumper (port 1), or Hold to run on screen"],
       todo: ["Enable the robot in the Driver Station (Teleop or Test mode). The wheels stay still until you press Run.",
-             "Press Run directions, then hold the deadman. Watch the TOP of each tire while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did, then Confirm."],
+             "Press Run directions, then hold the deadman. The wheels give a short kick first: the tool checking they spin free, off the floor. Then watch the TOP of each tire while the speed is positive: it must roll toward the front of the robot.", "Tick each wheel that did, then Confirm."],
       run: { label: "Run directions", test: "drive_step", args: { s0: 0.4, s1: 0, s2: -0.4, s3: 0, hold_s: 1.5 } },
       status: () => progress.directions === "pass" ? "done" : progress.directions === "fail" ? "attention" : "todo",
       body: () => `<div class="row">${App.modules().map(m => `<label class="row" data-tip="guide.dir"><input type="checkbox" class="g-dir" value="${esc(m)}" ${((progress.dirs || {})[m]) ? "checked" : ""}> ${abbr(m)} rolled forward</label>`).join("")}</div>
@@ -217,7 +217,7 @@ const Guide = (() => {
   const STATE_WORD = { done: "✓ Done", attention: "Needs a look", locked: "Locked" };
   const SAFETY = {
     FIELD: "the robot moves. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot.",
-    BLOCKS: "the wheels spin while the deadman is held. All four must be clear of the floor, and hands, hair and cables clear of every wheel.",
+    BLOCKS: "the wheels spin while the deadman is held, starting with a short kick that checks they are off the floor. All four must be clear of the floor, and hands, hair and cables clear of every wheel.",
   };
 
   // Saves marks a person or a measurement set. In the simulator nothing is ticked: it teaches the

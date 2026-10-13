@@ -51,7 +51,8 @@ the VPN included, must use the school Wi-Fi.
 4. **Once per laptop**, as Administrator, run the fix it gives you:
 
    ```
-   powershell -ExecutionPolicy Bypass -File toolsobot_preflight.ps1 -Team 1745 -Fix
+   powershell -ExecutionPolicy Bypass -File tools
+obot_preflight.ps1 -Team 1745 -Fix
    ```
 
    The robot's radio hands out an internet gateway like any router. If Windows prefers the USB
@@ -77,9 +78,10 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
   stops. No key does it: on the Driver Station laptop, SPACE is the E-STOP. Whoever holds it
   stands where they can see the wheels.
 - **Tell it where the robot is.** "On blocks" means every wheel is off the ground. "On the
-  floor" needs the clear distance ahead and to each side, measured. If the robot turns while it's
-  supposed to be on blocks, or a wheel works like it's carrying weight, it stops: it knows it's on
-  the floor.
+  floor" needs the clear distance ahead and to each side, measured. Before a blocks test that drives
+  the wheels, they get a short kick (a quarter second): a wheel in the air spins up fast for little
+  current, one carrying the robot doesn't, and then the test stops before it starts. If the robot
+  turns while it's supposed to be on blocks, it stops too.
 - **Stopping.** The red ABORT button or Esc stops everything. The Driver Station's disable is the
   real emergency stop and always works. Touching a joystick also hands the robot straight back.
 - It will not run on a match field (FMS attached) or in autonomous, and it stops if the laptop

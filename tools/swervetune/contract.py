@@ -245,6 +245,8 @@ STOP_CODES = [
     ("current ceiling", "BAD_ARGS"), ("At most", "BAD_ARGS"), ("Steps must stay", "BAD_ARGS"), ("Pick at least", "BAD_ARGS"),
     # Waited a minute for a condition; the reason after the colon usually matched above.
     ("Gave up", "WAITED_TOO_LONG"),
+    # Stopped mid lift check: the reason after the colon (the deadman, above) usually matched.
+    ("Enable the robot", "DISABLED"), ("lift check", "ABORTED_BY_PERSON"),
 ]
 
 

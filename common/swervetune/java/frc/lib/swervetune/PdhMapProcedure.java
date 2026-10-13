@@ -36,6 +36,11 @@ final class PdhMapProcedure implements Procedure {
   }
 
   @Override
+  public boolean drivesWheels() {
+    return true;
+  }
+
+  @Override
   public boolean spinsWheels() {
     return true;
   }

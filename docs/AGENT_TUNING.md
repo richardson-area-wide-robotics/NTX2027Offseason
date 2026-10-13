@@ -40,7 +40,8 @@ yours, and nothing in the tools will stop you from breaking them:
 The robot refuses to start, or aborts, when: the FMS is attached; it is in autonomous; the
 environment is unset; the laptop heartbeat is lost (0.5 s); the gyro isn't reporting; a FIELD
 test has no measured clear space; the deadman is released mid-test (on blocks or the floor); a driver
-touches a stick; the chassis turns, or a wheel works like it carries weight, while "on blocks"; the robot leaves its space (geofence), hits something (impact),
+touches a stick; the chassis turns, or the lift check before a blocks drive test finds the wheels
+carrying weight (a short pulse, NOT_ON_BLOCKS), while "on blocks"; the robot leaves its space (geofence), hits something (impact),
 pushes against something (stall) or goes faster than asked; the battery starts below 11.8 V on
 the floor (11.0 V on blocks) or sags below 7 V; a motor guard stage stops it. The refusal or
 abort reason comes back in the command's output: read it, act on it, and tell the person.

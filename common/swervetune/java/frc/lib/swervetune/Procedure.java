@@ -20,6 +20,14 @@ public interface Procedure {
   /** Whether it commands any motor. Decides deadman, heartbeat and environment rules. */
   boolean spinsWheels();
 
+  /**
+   * Whether it drives the wheels (not only the steering). On blocks such a test starts with a lift
+   * check: a short pulse that tells a wheel in the air from one carrying the robot.
+   */
+  default boolean drivesWheels() {
+    return false;
+  }
+
   /** Whether the chassis is expected to travel. Decides the geofence. */
   boolean movesChassis(TestContext ctx);
 

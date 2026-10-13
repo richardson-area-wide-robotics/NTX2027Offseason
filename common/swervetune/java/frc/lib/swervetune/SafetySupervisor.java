@@ -97,6 +97,20 @@ public final class SafetySupervisor {
     public double carryHoldS = 0.15;
     /** A free wheel would change speed by far more than this in that time, m/s. */
     public double carrySpeedChangeMps = 1.5;
+    /**
+     * The lift check before a blocks test that drives the wheels: every drive motor gets
+     * {@link #liftVolts} for {@link #liftPulseS}, and each wheel's speed gained per amp-second of
+     * current is compared with {@link #liftMinMpsPerAmpS}. A wheel in the air gains it fast; one
+     * carrying a quarter of the robot needs many times the current for less speed. On the practice
+     * pod's physics, sampled as the robot samples (50 Hz, current a status frame late): blocks 1.9 to
+     * 5.4 m/s per A*s, floor 0.12 to 0.48 (a 30 kg robot on NEOs is the highest), whatever the gains.
+     * On the floor the pulse moves the robot a few centimeters. To confirm on a robot.
+     */
+    public double liftVolts = 2.5;
+    public double liftPulseS = 0.12;
+    /** Time for the wheels to coast still before the test itself starts, seconds. */
+    public double liftSettleS = 0.4;
+    public double liftMinMpsPerAmpS = 1.0;
   }
 
   /** Everything the supervisor looks at, gathered fresh each loop. */
