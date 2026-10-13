@@ -22,6 +22,7 @@ improves every saved design.
 
 from __future__ import annotations
 
+import math
 import os
 import re
 
@@ -71,6 +72,81 @@ def velocity_setpoints(src):
     for m in re.finditer(r"(?:setSetpoint|setReference)\(\s*(-?[\d.]+)\s*,\s*(?:\w+\.)*ControlType\.kVelocity", src or ""):
         out.append(abs(float(m.group(1))))
     return sorted(set(out))
+
+
+# A constant that names a place to go (INTAKE_DOWN_POSITION = 17.8), not how close is close enough.
+_POS_CONST = re.compile(r"\b([A-Z][A-Z0-9_]*(?:POSITION|POS|ANGLE|HEIGHT|SETPOINT)[A-Z0-9_]*)\s*=\s*(-?[\d.]+)\s*;")
+
+
+def position_setpoints(src):
+    """Where a subsystem with position control sends its motor: literal position setpoints, and
+    constants named like positions (tolerances left out). In the code's units: motor turns unless
+    it sets a position conversion factor."""
+    if not re.search(r"ControlType\.k(?:Position|MAXMotionPositionControl)\b", src or ""):
+        return []
+    out = [float(m.group(1)) for m in re.finditer(
+        r"(?:setSetpoint|setReference)\(\s*(-?[\d.]+)\s*,\s*(?:\w+\.)*ControlType\.k(?:Position|MAXMotionPositionControl)", src)]
+    out += [float(v) for name, v in _POS_CONST.findall(src) if "TOL" not in name]
+    return sorted(set(out))
+
+
+def code_current_limits(src):
+    """The current limits a subsystem sets: smartCurrentLimit(40) and friends, in amps."""
+    return sorted({int(x) for x in re.findall(r"(?:smartCurrentLimit|secondaryCurrentLimit)\(\s*(\d+)", src or "")})
+
+
+def _against_code(d, src, names):
+    """The design against what the subsystem's code actually does."""
+    F = []
+    who = " and ".join(names) if len(names) <= 2 else f"{names[0]} and {len(names) - 1} more"
+    lim, lims = d.get("current_limit_a"), code_current_limits(src)
+    if lim and not lims:
+        F.append(_f("info", f"The code sets no current limit for {who}; the design assumes {lim:g} A",
+                    "Until the subsystem sets one, the controller keeps its own default, and the motor guard lowers it "
+                    f"to the team's policy at boot. Set smartCurrentLimit({lim:g}) in the subsystem's config so the "
+                    "robot does what the design predicts.", learn="current_limit"))
+    elif lim and all(abs(x - lim) > max(2.0, 0.1 * lim) for x in lims):
+        F.append(_f("warn", f"The design assumes {lim:g} A; the code sets {', '.join(str(x) for x in lims)} A",
+                    "Speed, acceleration and holding force all scale with the current limit. Make them agree: change "
+                    "the calculator, or smartCurrentLimit(...) in the subsystem.", learn="current_limit"))
+    pos, ratio = position_setpoints(src), d.get("ratio")
+    if pos and "positionConversionFactor" in src:
+        F.append(_f("info", "Its position targets are in the code's own units",
+                    "The subsystem sets a position conversion factor, so its targets aren't motor turns: compare them "
+                    "with the design's range by hand."))
+    elif len(pos) >= 2 and ratio:
+        turns = max(pos) - min(pos)
+        if d.get("kind") == "arm" and d.get("angles_deg"):
+            lo, hi = d["angles_deg"]
+            design, code = abs(hi - lo), turns / ratio * 360
+            if code > design + 5:
+                F.append(_f("warn", f"The code moves it {code:.0f}°; the design covers {design:.0f}°",
+                            f"Its targets run from {min(pos):g} to {max(pos):g} motor turns: at {ratio:g}:1 that is "
+                            f"{code:.0f}° of arm. Past the design's range it meets a hard stop, or a load the calculator "
+                            "never saw. Check the targets, or the gear ratio in the calculator."))
+            else:
+                F.append(_f("ok", f"The code's targets fit the design's range: {code:.0f}° of {design:.0f}°",
+                            f"From {min(pos):g} to {max(pos):g} motor turns, at {ratio:g}:1."))
+        elif d.get("travel_m") and d.get("spool_diameter_m"):
+            code_m = turns / ratio * math.pi * d["spool_diameter_m"] * (2 if d.get("cascade") else 1)
+            if code_m > d["travel_m"] * 1.05 + 0.01:
+                F.append(_f("warn", f"The code moves it {code_m:.2f} m; the design travels {d['travel_m']:.2f} m",
+                            f"Its targets run from {min(pos):g} to {max(pos):g} motor turns: at {ratio:g}:1 on a "
+                            f"{d['spool_diameter_m'] * 1000:.0f} mm spool{' (cascade)' if d.get('cascade') else ''} that is "
+                            f"{code_m:.2f} m. Past the design's travel it runs into its end. Check the targets, the "
+                            "spool or the ratio."))
+            else:
+                F.append(_f("ok", f"The code's targets fit the design's travel: {code_m:.2f} m of {d['travel_m']:.2f} m",
+                            f"From {min(pos):g} to {max(pos):g} motor turns, at {ratio:g}:1."))
+    vel = velocity_setpoints(src)
+    if d.get("target_rpm") and ratio and vel and "velocityConversionFactor" not in src:
+        wheel = [v / ratio for v in vel]
+        if not any(abs(w - d["target_rpm"]) <= 0.15 * d["target_rpm"] for w in wheel):
+            F.append(_f("info", f"None of the code's speeds is the design's {d['target_rpm']:g} rpm",
+                        f"At {ratio:g}:1 the code's {', '.join(f'{v:g}' for v in vel)} rpm at the motor is "
+                        f"{', '.join(f'{w:.0f}' for w in wheel)} rpm at the wheel. The design's spin-up and recovery "
+                        "are for its own target: put the speed you shoot at most into the calculator."))
+    return F
 
 
 # ---------------------------------------------------------------------------- mechanisms
@@ -131,9 +207,13 @@ def check_mechanism(d, project, rows, stats=None):
                     "the arm out level takes",
                     "Below 1 it can't hold the load level at all; below about 1.3 it has nothing left to lift with. "
                     "Gear it down, shorten the arm or lighten the load.", learn="current_limit"))
+    names = [r["name"] for r in rows]
+    _, code = mechanism_file(project, names)
+    if code:
+        F.extend(_against_code(d, code, names))
     F.extend(_from_log(d, rows, stats))
-    if not F:
-        F.append(_f("ok", "The design matches the robot", "Motor, count and current limit agree with the code."))
+    if not [f for f in F if f["level"] != "ok"]:
+        F.append(_f("ok", "The design matches the robot", "Motor, count, current limit and targets agree with the code."))
     return F
 
 

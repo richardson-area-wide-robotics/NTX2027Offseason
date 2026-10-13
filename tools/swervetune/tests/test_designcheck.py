@@ -108,5 +108,33 @@ class DrivetrainTest(unittest.TestCase):
         self.assertIn("the files have 40 A", titles(out["findings"]))
 
 
+class AgainstTheCodeTest(unittest.TestCase):
+    """R39: the design against what the subsystem's code does (Peashooter's Intake.java, Shooter.java)."""
+
+    def test_the_pivots_targets_against_the_arms_range(self):
+        arm = dict(motor={"name": "NEO Vortex", "quantity": 1}, statorLimit={"s": 40, "u": "A"},
+                   minAngle={"s": 0, "u": "deg"}, maxAngle={"s": 110, "u": "deg"},
+                   armLength={"s": 10, "u": "in"}, load={"s": 2, "u": "lbs"})
+        F = K.evaluate(recalc("arm", ratio={"magnitude": 60, "ratioType": "Reduction"}, **arm), PEA, ["Intake pivot"])["findings"]
+        self.assertIn("The code's targets fit the design's range: 107° of 110°", titles(F), "0 to 17.8 motor turns at 60:1")
+        self.assertIn("The code sets no current limit for Intake pivot; the design assumes 40 A", titles(F))
+        F = K.evaluate(recalc("arm", ratio={"magnitude": 45, "ratioType": "Reduction"}, **arm), PEA, ["Intake pivot"])["findings"]
+        self.assertIn("The code moves it 142°; the design covers 110°", titles(F))
+
+    def test_the_shooters_speeds_against_the_designs_target(self):
+        url = recalc("flywheel", motor={"name": "NEO Vortex", "quantity": 2}, ratio={"magnitude": 1, "ratioType": "Reduction"},
+                     statorLimit={"s": 80, "u": "A"}, shooterTargetSpeed={"s": 2000, "u": "rpm"})
+        self.assertIn("None of the code's speeds is the design's 2000 rpm", titles(K.evaluate(url, PEA, SHOOTER)["findings"]))
+        url = url.replace("2000", "4000")
+        self.assertNotIn("None of the code's speeds", titles(K.evaluate(url, PEA, SHOOTER)["findings"]), "3950 is within 15%")
+
+    def test_what_counts_as_a_position(self):
+        src = """ControlType.kPosition; static final double ARM_STOW_POSITION = -2.5; static final double POSITION_TOLERANCE = 0.5;
+                 pid.setSetpoint(12.0, ControlType.kPosition);"""
+        self.assertEqual(K.position_setpoints(src), [-2.5, 12.0], "the tolerance isn't a place to go")
+        self.assertEqual(K.position_setpoints("ARM_POSITION = 3.0;"), [], "no position control: not a target")
+        self.assertEqual(K.code_current_limits("cfg.smartCurrentLimit(40); other.smartCurrentLimit( 60 )"), [40, 60])
+
+
 if __name__ == "__main__":
     unittest.main()
