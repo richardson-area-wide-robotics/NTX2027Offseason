@@ -38,9 +38,10 @@ const Guide = (() => {
       } },
 
     { id: "health", env: "DISABLED", learn: ["quantization", "motor_encoder", "absolute_encoder"], title: "Sensor health", where: "Robot disabled",
-      why: "A noisy encoder or a drifting gyro makes every later number wrong. Three seconds standing still finds both.",
+      why: "A noisy encoder or a drifting gyro makes every later number wrong. Three seconds standing still finds a noisy or slipped encoder. A gyro's drift is too small to see in three seconds, so it gets a minute of its own in the Calibrate tab.",
       need: ["Robot on, disabled, not moving"],
-      todo: ["Leave the robot completely still.", "Press Run health check."],
+      todo: ["Leave the robot completely still.", "Press Run health check.",
+             "Once per robot, and after the gyro is moved: Calibrate tab, panel 4 (Gyro), Record a minute still."],
       run: { label: "Run health check", test: "capture", args: { duration_s: 3 }, record: "health" },
       status: () => progress.health === "pass" ? "done" : progress.health === "fail" ? "attention" : "todo" },
 

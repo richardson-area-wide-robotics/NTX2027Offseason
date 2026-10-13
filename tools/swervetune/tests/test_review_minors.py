@@ -32,6 +32,12 @@ class GyroDriftTest(unittest.TestCase):
         drift = next(t for t in rep["targets"] if "drift" in t["name"])
         self.assertFalse(drift["met"])
         self.assertTrue(any("Gyro drifts 2.0" in f["title"] for f in rep["findings"]))
+        self.assertIn("gyro drift 2.00", rep["summary"])
+
+    def test_a_short_capture_claims_nothing_about_the_gyro(self):
+        rep = advisor.analyze(capture(3, 0.0))
+        self.assertIn("gyro drift not judged", rep["summary"])
+        self.assertNotIn("gyro drift 0.00", rep["summary"])
 
 
 class BatteryPathTest(unittest.TestCase):

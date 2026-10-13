@@ -1009,9 +1009,12 @@ def health_report(result):
                          f"A capture under {GYRO_DRIFT_MIN_S:.0f} s can't tell drift from noise. The Calibrate "
                          "tab's Gyro panel records a minute standing still for that."))
     if not F:
-        F.append(finding("ok", "Sensors healthy", "Quiet encoders, encoders agree, gyro steady."))
+        F.append(finding("ok", "Sensors healthy", "Quiet encoders, encoders agree"
+                         + (", gyro steady." if long_enough else ".")))
+    # Only what was measured: a short capture says nothing about the gyro.
     report["summary"] = (f"Health: noise {worst_noise:.2f}°, motor/absolute gap {worst_gap:.1f}°, "
-                         f"gyro drift {drift:.2f}°/min.")
+                         + (f"gyro drift {drift:.2f}°/min." if long_enough
+                            else f"gyro drift not judged (under {GYRO_DRIFT_MIN_S:.0f} s)."))
     return _finish(report)
 
 
