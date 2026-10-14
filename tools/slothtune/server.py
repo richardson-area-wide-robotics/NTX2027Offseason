@@ -1873,8 +1873,11 @@ def api_handcheck(body):
 
 
 def api_symptoms(_):
+    """Every problem Troubleshoot knows, with the groups it shows under (kind of problem, and device
+    or system), and those groups' names in order."""
     return {"symptoms": [{"id": s["id"], "title": s["title"], "looks_like": s["looks_like"],
-                          "group": s.get("group", "robot")} for s in diagnose.SYMPTOMS]}
+                          **diagnose.groups(s["id"])} for s in diagnose.SYMPTOMS],
+            "groups": {"issues": [list(g) for g in diagnose.ISSUES], "devices": [list(g) for g in diagnose.DEVICES]}}
 
 
 def api_diagnose(sid):

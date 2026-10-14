@@ -333,6 +333,8 @@ const TIPS = {
   "live.startup": ["The settings the robot loaded from its files when its code started.", "A file change counts only after a redeploy; check here that yours loaded.", "redeploy"],
 
   // ---------------------------------------------------------------- troubleshoot
+  "trouble.by-issues": ["The problems grouped by what kind of problem they are: wrong way, shaky, slow, power, drift, connection.", "A problem can sit in more than one group; each card names its devices underneath.", null],
+  "trouble.by-devices": ["The problems grouped by the device or system they involve: steering, drive, gyro, network, power and more.", "A problem can sit in more than one group; each card names its kind of problem underneath.", null],
   "trouble.list": ["Start here: pick the problem that looks most like what you see.", "Yes/no questions go cheapest first; the first No names the cause and the fix.", null],
   "trouble.sym.pod_wrong_direction": ["Checks offsets, encoder direction and steering ratio, then a steering test.", "Most often an offset copied from another robot or rounded off.", "offset"],
   "trouble.sym.wheel_backwards": ["Checks drive inversion in the files, then watches each tire on blocks.", "Usually a module captured 180° off and \"fixed\" by inverting its drive.", "bevel_gear"],

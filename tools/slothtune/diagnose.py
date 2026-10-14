@@ -670,7 +670,6 @@ SYMPTOMS = [
     },
     {
         "id": "no_comms",
-        "group": "connect",
         "title": "The Driver Station shows no communications",
         "looks_like": "The Driver Station's Communications light stays red: it can't reach the robot at all.",
         "checks": [
@@ -723,7 +722,6 @@ SYMPTOMS = [
     },
     {
         "id": "no_robot_code",
-        "group": "connect",
         "title": "Communications, but no robot code",
         "looks_like": "Communications is green but Robot Code stays red.",
         "checks": [
@@ -750,7 +748,6 @@ SYMPTOMS = [
     },
     {
         "id": "comms_drops",
-        "group": "connect",
         "title": "The robot keeps losing communication",
         "looks_like": "Communications goes red for a moment, the robot stops, then it comes back.",
         "checks": [
@@ -784,7 +781,6 @@ SYMPTOMS = [
     },
     {
         "id": "after_event",
-        "group": "connect",
         "title": "Back from an event, it won't connect at home",
         "looks_like": "It worked at the competition; at the shop the Driver Station can't reach it.",
         "checks": [
@@ -818,6 +814,64 @@ SYMPTOMS = [
 ]
 
 BY_ID = {s["id"]: s for s in SYMPTOMS}
+
+
+# Troubleshoot finds a problem two ways: by the kind of problem it is, and by the device or system it
+# involves. A problem sits in every group it belongs to (a motor that cuts out is a power problem and
+# a drive, steering or mechanism one), so whichever way a student looks, it is there.
+ISSUES = [            # (key, name, a short name for a card)
+    ("connect", "Won't connect, or keeps dropping", "Connection"),
+    ("direction", "Goes or points the wrong way", "Wrong way"),
+    ("shaky", "Shakes, twitches or oscillates", "Shaky"),
+    ("weak", "Slow, weak, or won't move", "Slow or weak"),
+    ("power", "Cuts out, browns out or gets hot", "Power or heat"),
+    ("accuracy", "Drifts, slips or ends up off", "Drift or accuracy"),
+]
+DEVICES = [
+    ("network", "Radio, network and Driver Station", "Network"),
+    ("controller", "roboRIO or SystemCore, and its code", "roboRIO and code"),
+    ("power", "Battery, PDH and breakers", "Power"),
+    ("can", "CAN bus and wiring", "CAN and wiring"),
+    ("drive", "Drive motors and wheels", "Drive"),
+    ("steer", "Steering and its absolute encoders", "Steering"),
+    ("gyro", "Gyro", "Gyro"),
+    ("joysticks", "Joysticks and how driving feels", "Joysticks"),
+    ("autos", "Autos, PathPlanner and odometry", "Autos"),
+    ("mechanisms", "Mechanisms: arms, elevators, shooters", "Mechanisms"),
+    ("settings", "Code settings: gains, limits, YAGSL", "Settings"),
+]
+# Each problem's groups: (kinds of problem, devices or systems).
+GROUPS = {
+    "pod_wrong_direction": (["direction"], ["steer"]),
+    "wheel_backwards": (["direction"], ["drive", "settings"]),
+    "robot_wrong_direction": (["direction"], ["joysticks", "settings"]),
+    "field_relative_wrong": (["direction", "accuracy"], ["gyro"]),
+    "pod_oscillates": (["shaky"], ["steer", "settings"]),
+    "pod_slow": (["weak"], ["steer", "settings"]),
+    "pod_not_moving": (["weak"], ["steer", "power", "can"]),
+    "wont_drive_straight": (["accuracy"], ["steer", "drive", "gyro"]),
+    "skew_when_rotating": (["accuracy"], ["steer", "settings"]),
+    "robot_slow": (["weak"], ["drive", "settings", "power"]),
+    "wheel_slip": (["accuracy"], ["drive", "settings", "autos"]),
+    "brownout": (["power"], ["power", "can", "drive"]),
+    "auto_inaccurate": (["accuracy"], ["autos", "drive", "settings"]),
+    "twitchy": (["shaky"], ["joysticks", "settings"]),
+    "pod_jitter": (["shaky"], ["steer", "joysticks"]),
+    "gear_ratio": (["accuracy"], ["drive", "steer", "settings"]),
+    "motor_hot": (["power"], ["drive", "steer", "mechanisms", "settings"]),
+    "motor_dead": (["weak", "power"], ["drive", "steer", "mechanisms", "can", "power"]),
+    "pod_drifts": (["accuracy"], ["steer"]),
+    "no_comms": (["connect"], ["network", "controller"]),
+    "no_robot_code": (["connect"], ["controller"]),
+    "comms_drops": (["connect", "power"], ["network", "power"]),
+    "after_event": (["connect"], ["network"]),
+}
+
+
+def groups(symptom_id):
+    """``{"issues": [...], "devices": [...]}``: the groups a problem shows under."""
+    issues, devices = GROUPS[symptom_id]
+    return {"issues": list(issues), "devices": list(devices)}
 
 
 # Questions the configuration files fully answer: when the linter finds nothing, "fine" is offered

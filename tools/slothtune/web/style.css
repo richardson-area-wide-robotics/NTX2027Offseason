@@ -275,8 +275,22 @@ ol.do { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
   cursor: pointer; display: grid; gap: 4px; align-content: start; }
 .symptom:hover { border-color: var(--accent); }
 .symptom .t { font-weight: 700; }
-.sym-groups h3 { margin: 0 0 4px; }
-.sym-groups h3:not(:first-child) { margin-top: 8px; }
+/* Troubleshoot's problems: the groups down the left, the chosen group's problems beside them. */
+.sym-browse { display: grid; grid-template-columns: minmax(250px, 300px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.sym-cats { display: flex; flex-direction: column; gap: 10px; }
+.sym-cats .seg { align-self: flex-start; }
+.sym-cats ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.sym-cats li button { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; text-align: left;
+  border: 0; background: none; color: var(--ink); padding: 6px 10px; border-radius: 6px; cursor: pointer; font: inherit; }
+.sym-cats li button:hover { background: var(--seg-hover); }
+.sym-cats li button.on { background: var(--seg-on); color: var(--seg-on-ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--seg-on-edge); }
+.sym-cats .n { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.sym-cats li button.on .n { color: inherit; }
+.sym-pane h3 { margin: 2px 0 8px; }
+/* Every problem at once outgrows a 740 px screen: the cards scroll inside their pane, never the page. */
+.sym-pane .symptoms { max-height: calc(var(--work-h) - 160px); overflow-y: auto; padding: 2px 6px 2px 2px; }
+.symptom .g { display: block; margin-top: 4px; font-size: 11px; color: var(--accent); }
+@media (max-width: 900px) { .sym-browse { grid-template-columns: minmax(0, 1fr); } }
 p.hint.wide { max-width: none; }
 .symptom .d { color: var(--muted); font-size: 13px; }
 .checks { display: grid; gap: 8px; }

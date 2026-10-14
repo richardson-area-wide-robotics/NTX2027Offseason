@@ -11,7 +11,40 @@ const Trouble = (() => {
   async function list() {
     const r = await App.api("/api/symptoms");
     symptoms = r.symptoms || [];
+    groupNames = r.groups || groupNames;
     paintList();
+  }
+
+  // The problems, grouped by the kind of problem or by the device or system: a problem sits in every
+  // group it belongs to. The groups down the left, the chosen group's problems beside them; each
+  // card names its groups the other way, so a problem filed under one thing shows what else it is.
+  let groupBy = "issues", cat = "all", groupNames = { issues: [], devices: [] };
+  try {
+    const g = JSON.parse(localStorage.getItem("slothtune.trouble.groups") || "{}");
+    if (g.by === "devices") groupBy = "devices";
+    if (typeof g.cat === "string") cat = g.cat;
+  } catch (e) { /* no storage */ }
+  const saveGroups = () => { try { localStorage.setItem("slothtune.trouble.groups", JSON.stringify({ by: groupBy, cat })); } catch (e) { /* no storage */ } };
+  const OTHER = { issues: "devices", devices: "issues" };
+  const groupName = (by, k, short) => { const g = (groupNames[by] || []).find(x => x[0] === k); return g ? g[short ? 2 : 1] : k; };
+  function symptomsHtml() {
+    const G = groupNames[groupBy] || [];
+    if (cat !== "all" && !G.some(g => g[0] === cat)) cat = "all";
+    const S = symptoms.filter(s => cat === "all" || (s[groupBy] || []).includes(cat));
+    const count = k => symptoms.filter(s => (s[groupBy] || []).includes(k)).length;
+    const cats = [["all", "All problems", symptoms.length], ...G.map(g => [g[0], g[1], count(g[0])])].filter(c => c[2]);
+    return `<div class="panel sym-browse">
+      <nav class="sym-cats" aria-label="Groups">
+        <div class="seg" role="group" aria-label="Group by">${[["issues", "Kind of problem"], ["devices", "Device or system"]].map(([k, l]) =>
+          `<button data-by="${k}" class="${groupBy === k ? "on" : ""}" aria-pressed="${groupBy === k}" data-tip="trouble.by-${k}">${l}</button>`).join("")}</div>
+        <ul>${cats.map(([k, n, c]) => `<li><button data-cat="${esc(k)}" class="${cat === k ? "on" : ""}" aria-pressed="${cat === k}"><span>${esc(n)}</span><span class="n">${c}</span></button></li>`).join("")}</ul>
+      </nav>
+      <div class="sym-pane">
+        <h3>${esc(cat === "all" ? "All problems" : groupName(groupBy, cat))} <span class="muted small">${S.length}</span></h3>
+        <div class="symptoms">${S.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet>
+          <span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span>
+          <span class="g">${(s[OTHER[groupBy]] || []).map(k => esc(groupName(OTHER[groupBy], k, true))).join(" · ")}</span></button>`).join("")}</div>
+      </div></div>`;
   }
 
   // The first page shows the symptoms or the robot's messages, one at a time: side by side, neither
@@ -30,13 +63,12 @@ const Trouble = (() => {
           : homeView === "lights" ? `<p class="hint wide">Pick the device, then find its light's color and pattern. Each row says what it means and what to do; with the robot connected, the rows it should be showing now are marked.</p>`
           : `<div class="row" style="justify-content:space-between"><p class="small muted" id="tr-msgs-src"></p>
               <button class="btn small" id="tr-msgs-clear" data-tip="trouble.msgs-clear" data-quiet>Clear the counts</button></div>`}</div>
-      ${homeView === "symptoms" ? `<div class="panel sym-groups">${[["connect", "Connecting to the robot"], ["robot", "Driving, motors and mechanisms"]].map(([g, name]) => {
-          const S = symptoms.filter(s => (s.group || "robot") === g);
-          return S.length ? `<h3>${name}</h3><div class="symptoms">${S.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div>` : "";
-        }).join("")}</div>`
+      ${homeView === "symptoms" ? symptomsHtml()
         : homeView === "lights" ? lightsHtml()
         : `<div class="panel tr-msgs"><div id="tr-msgs-list" class="tr-msgs-list"></div></div>`}</div>`;
     $$(".symptom", root).forEach(b => b.onclick = () => open(b.dataset.id));
+    $$("[data-by]", root).forEach(b => b.onclick = () => { groupBy = b.dataset.by; cat = "all"; saveGroups(); paintList(); });
+    $$("[data-cat]", root).forEach(b => b.onclick = () => { cat = b.dataset.cat; saveGroups(); paintList(); });
     $("#tr-net", root).onclick = () => App.checkNetworks();
     $$("[data-home]", root).forEach(b => b.onclick = () => { homeView = b.dataset.home; lightsFrom = null; paintList(); });
     $$("[data-light-dev]", root).forEach(b => b.onclick = () => { lightsDevice = b.dataset.lightDev; paintList(); });
