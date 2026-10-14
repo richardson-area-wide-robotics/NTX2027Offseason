@@ -65,6 +65,7 @@ class Session:
         self.test_thread = None
         self.test_state = {"running": False}
         self.last_run = None
+        self.autotune = None        # the auto-tuner, while it runs and after (its result, to save)
         self.connect_error = ""
         # What the robot keeps reporting: its console (a real roboRIO) and its alerts, counted.
         self.robotlog = robotlog.Tally()
@@ -179,39 +180,46 @@ class Session:
             return False, "A test is already running."
         if not self.link:
             return False, "Not connected to a robot."
-        self.test_state = {"running": True, "test": test, "module": module, "state": "SENDING",
-                           "message": "Sending to the robot...", "progress": 0.0}
+        if self.autotune and self.autotune.state in ("running", "paused"):
+            return False, "The auto-tuner is running: stop it first."
 
         def work():
             try:
-                gains = self.link.gains()
-
-                def on_status(st):
-                    self.test_state.update(state=st["state"], message=st["message"],
-                                           progress=st["progress"])
-
-                res = self.link.run_test(test, module, args, on_status=on_status)
-                doc = res.to_json()
-                if not res.accepted:
-                    self.test_state.update(running=False, state="REFUSED", message=res.message)
-                    return
-                lim = self.limits()
-                rep = advisor.analyze(doc, gains,
-                                      current_limit=lim["steer" if test == "steer_step" else "drive"],
-                                      **advisor.robot_context(self.project))
-                path = runs.save(doc, rep, gains)
-                self.last_run = os.path.basename(path)
-                # A real run of a Guide test ticks (or un-ticks) its step for this robot.
-                progress.record_run(self.project.name if self.project else None, doc, rep, self.last_run)
-                self.test_state.update(running=False, state=res.outcome, message=res.message,
-                                       run=self.last_run, progress=1.0)
+                self.run_test_sync(test, module, args)
             except Exception as e:  # noqa: BLE001 - the GUI must hear about any failure
                 traceback.print_exc()
                 self.test_state.update(running=False, state="ERROR", message=str(e))
 
+        self.test_state = {"running": True, "test": test, "module": module, "state": "SENDING",
+                           "message": "Sending to the robot...", "progress": 0.0}
         self.test_thread = threading.Thread(target=work, name="swervetune-test", daemon=True)
         self.test_thread.start()
         return True, "Started."
+
+    def run_test_sync(self, test, module, args):
+        """Runs one test to its end, the banner following it, and saves the run like any other:
+        ``(result, document, saved run's file name)``; the document is None when it was refused."""
+        self.test_state = {"running": True, "test": test, "module": module, "state": "SENDING",
+                           "message": "Sending to the robot...", "progress": 0.0}
+        gains = self.link.gains()
+
+        def on_status(st):
+            self.test_state.update(state=st["state"], message=st["message"], progress=st["progress"])
+
+        res = self.link.run_test(test, module, args, on_status=on_status)
+        doc = res.to_json()
+        if not res.accepted:
+            self.test_state.update(running=False, state="REFUSED", message=res.message)
+            return res, None, None
+        lim = self.limits()
+        rep = advisor.analyze(doc, gains, current_limit=lim["steer" if test == "steer_step" else "drive"],
+                              **advisor.robot_context(self.project))
+        path = runs.save(doc, rep, gains)
+        self.last_run = os.path.basename(path)
+        # A real run of a Guide test ticks (or un-ticks) its step for this robot.
+        progress.record_run(self.project.name if self.project else None, doc, rep, self.last_run)
+        self.test_state.update(running=False, state=res.outcome, message=res.message, run=self.last_run, progress=1.0)
+        return res, doc, self.last_run
 
 
 S = Session()
@@ -367,8 +375,61 @@ def api_test(body):
 
 
 def api_abort(_):
+    if S.autotune:
+        S.autotune.stop("Stopped by ABORT.")
     if S.link:
         S.link.abort()
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------------------- the auto-tuner
+
+
+def api_autotune_start(body):
+    """Starts the auto-tuner on every pod's steering or drive gains: on the robot (a person holds the
+    deadman for every round) or on the practice pods."""
+    from . import autotune
+
+    body = body or {}
+    loop = body.get("loop")
+    if loop not in autotune.TESTS:
+        return {"ok": False, "error": "Pick steering or drive."}
+    if S.autotune and S.autotune.state in ("running", "paused"):
+        return {"ok": False, "error": "The auto-tuner is already running."}
+    if body.get("target") == "practice":
+        gains = dict(body.get("gains") or {})
+        runner = autotune.PracticeRunner(gains, surface="floor" if body.get("surface") == "floor" else "blocks")
+    else:
+        if not (S.link and S.link.is_connected()):
+            return {"ok": False, "error": "Connect to the robot first."}
+        if S.test_state.get("running"):
+            return {"ok": False, "error": "A test is running: let it finish first."}
+        # Where the robot is (blocks or floor) is the robot's own check: an unset place refuses every test.
+        runner = autotune.RobotRunner(S)
+        if not runner.modules():
+            return {"ok": False, "error": "The robot didn't say what its pods are called."}
+    S.autotune = autotune.AutoTune(runner, loop, max_rounds=int(body.get("rounds") or autotune.MAX_ROUNDS))
+    S.autotune.target = "practice" if body.get("target") == "practice" else "robot"
+    S.autotune.start()
+    return {"ok": True, **S.autotune.to_json()}
+
+
+def api_autotune(_):
+    if not S.autotune:
+        return {"ok": True, "state": "none"}
+    return {"ok": True, "target": getattr(S.autotune, "target", "robot"), **S.autotune.to_json()}
+
+
+def api_autotune_continue(_):
+    if not S.autotune or S.autotune.state != "paused":
+        return {"ok": False, "error": "The auto-tuner isn't paused."}
+    S.autotune.resume()
+    return {"ok": True}
+
+
+def api_autotune_stop(_):
+    if S.autotune:
+        S.autotune.stop("Stopped.")
     return {"ok": True}
 
 
@@ -1583,7 +1644,7 @@ def api_sim(body):
     return {"ok": True}
 
 
-GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
+GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state, "/api/autotune": api_autotune,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/robotlog": api_robotlog, "/api/systems": api_systems,
@@ -1598,6 +1659,8 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
 POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netcheck": api_netcheck, "/api/netcheck/save": api_netcheck_save,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
+        "/api/autotune/start": api_autotune_start, "/api/autotune/continue": api_autotune_continue,
+        "/api/autotune/stop": api_autotune_stop,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,

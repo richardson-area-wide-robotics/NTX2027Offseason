@@ -114,7 +114,8 @@ const Tune = (() => {
             <button class="btn" id="save" data-tip="tune.save">Save…</button>
           </div>
           <div id="needs"></div>
-          <button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
+          <div class="row"><button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
+            <button class="btn" id="auto" data-tip="tune.auto" hidden>Auto-tune all four…</button></div>
         </div>
         <details class="panel" id="history-panel" open>
           <summary><h3 data-tip="tune.history">Earlier runs</h3></summary>
@@ -147,6 +148,7 @@ const Tune = (() => {
         </div>
       </div>
       <div class="tune-col tune-right">
+        <div class="panel at-panel" id="autotune" hidden></div>
         <div id="next-step" class="next-step" hidden></div>
         <!-- The advice, the prediction and the story take turns in one pane. -->
         <div class="panel panes" id="panes" hidden>
@@ -808,6 +810,8 @@ const Tune = (() => {
     const why = needs();
     $("#needs", root).innerHTML = why.text ? `<div class="callout ${why.block ? "warn" : ""}">${esc(why.text)}</div>` : "";
     $("#run", root).disabled = why.block;
+    // The auto-tuner: every pod at once, so only in the Each pod stage, for steering and drive speed.
+    $("#auto", root).hidden = !(stage === "pod" && (loop === "steer" || loop === "drive"));
     $("#run", root).textContent = target === "practice" ? "Run on the practice pod" : "Run on the robot";
     $("#apply", root).textContent = target === "practice" ? "Use these" : "Apply live";
     paintGains();
@@ -820,6 +824,9 @@ const Tune = (() => {
   $$("#surfseg button", root).forEach(b => b.onclick = () => { surface = b.dataset.s; sync(); });
   $("#pattern", root).onchange = e => { pattern = +e.target.value; };
   $("#run", root).onclick = run;
+  $("#auto", root).onclick = () => AutoTuneUI.open({ loop, target, surface,
+    gains: target === "practice" ? (practiceGains || fromFiles()) : null });
+  AutoTuneUI.attach($("#autotune", root));
   $("#try-practice", root).onclick = () => { target = "practice"; edits = {}; sync(); run(); };
   $("#export", root).onclick = async () => {
     if (!current || !current._file) return;
