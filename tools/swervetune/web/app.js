@@ -15,7 +15,7 @@ const WHERE = { UNSET: "Where: not set", BLOCKS: "On blocks", FIELD: "On the flo
 const whereWord = k => WHERE[k] || k;
 const TEST_NAME = { steer_step: "Steering", drive_step: "Drive speed", drive_ff: "Feedforward", slip: "Slip current",
   spin: "Spin", straight: "Straight line", capture: "Sensor capture", pdh_map: "PDH port finder", motor_test: "Motor test",
-  moi: "Moment of inertia", controller: "Controller check", spin_ff: "Spin feedforward", sensors: "Sensor readout" };
+  moi: "Moment of inertia", controller: "Controller check", spin_ff: "Spin feedforward", sensors: "Sensor readout", can_load: "CAN load test" };
 const testName = k => TEST_NAME[k] || k;
 
 const App = {

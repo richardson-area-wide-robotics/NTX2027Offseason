@@ -108,6 +108,50 @@ class BusesTest(unittest.TestCase):
         self.assertFalse(back["buses"][1]["orderConfirmed"], "its place on the bus needs checking")
 
 
+def load_run(quiet_err=0, loaded_err=0, busoff=0, util=(0.3, 0.7), env="BLOCKS"):
+    """A can_load run: 3 s quiet, 8 s loaded, 2 s quiet, at 50 Hz; errors in the first n samples of a phase."""
+    phase = [0] * 150 + [1] * 400 + [2] * 100
+    ch = {"t": [i / 50 for i in range(len(phase))], "phase": phase,
+          "util": [util[0] if p != 1 else util[1] for p in phase],
+          "busoff": [0] * 300 + [busoff] * (len(phase) - 300), "txfull": [0] * len(phase),
+          "rxerr": [0] * len(phase), "txerr": [0] * len(phase)}
+    for i in range(quiet_err):
+        ch["rxerr"][i] = 2
+    for i in range(loaded_err):
+        ch["rxerr"][150 + i] = 5
+    return {"test": "can_load", "env": env, "outcome": "DONE", "channels": ch, "meta": {}, "notes": []}
+
+
+class CanLoadTest(unittest.TestCase):
+    def kinds(self, **kw):
+        rep = W.can_load_report(load_run(**kw))
+        return rep, [(f["level"], f["title"]) for f in rep["findings"]]
+
+    def test_clean_says_what_it_cannot_prove(self):
+        rep, f = self.kinds()
+        self.assertEqual(f[0], ("ok", "No errors at 70% busy"))
+        self.assertIn("does not prove", rep["findings"][0]["why"])
+        self.assertIsNone(rep["score"])
+
+    def test_errors_only_under_load(self):
+        rep, f = self.kinds(loaded_err=12)
+        self.assertEqual(f[0][0], "warn")
+        self.assertIn("only when the bus got busy (12 of 400 samples at 70%)", f[0][1])
+
+    def test_errors_when_quiet_and_bus_off(self):
+        self.assertEqual(self.kinds(quiet_err=3, loaded_err=3)[1][0][0], "error")
+        self.assertIn("shut itself down 2 times", self.kinds(busoff=2)[1][0][1])
+
+    def test_too_little_load_and_the_simulator(self):
+        self.assertEqual(self.kinds(util=(0.1, 0.2))[1][0][0], "info")
+        rep, f = self.kinds(env="SIM", loaded_err=50)
+        self.assertEqual(f, [], "the simulator has no real bus")
+
+    def test_the_advisor_routes_it(self):
+        from swervetune import advisor
+        self.assertEqual(advisor.analyze(load_run())["test"], "can_load")
+
+
 class TerminationTest(unittest.TestCase):
     """Two readings at a bus's far end, robot off: terminator in, then out."""
 

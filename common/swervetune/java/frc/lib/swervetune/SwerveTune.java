@@ -281,6 +281,7 @@ public final class SwerveTune {
     procedures.put("controller", ControllerProcedure::new);
     procedures.put("motor_test", MotorTestProcedure::new);
     procedures.put("sensors", SensorProcedure::new);
+    procedures.put("can_load", CanLoadProcedure::new);
 
     List<String> startup = applyStartupConfig();
 

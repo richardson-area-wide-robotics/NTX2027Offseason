@@ -60,6 +60,9 @@ const Wiring = (() => {
               <label class="row small" data-tip="wiring.ohms-out">Out <input id="w-ohms2" inputmode="decimal" style="width:5em"> Ω</label>
               <button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
+            <div class="row small" style="margin-top:6px"><button class="btn small" id="w-load" data-tip="wiring.load">Load the bus (robot on)…</button>
+              <span class="muted">No meter: counts CAN errors with the bus busy. Clean proves little.</span></div>
+            <div id="w-load-out" class="small"></div>
             ${HowTo.nextLine("ohms")}
           </div>
         </div>
@@ -876,6 +879,23 @@ const Wiring = (() => {
       <p class="small">${B.length > 1 ? `<b>${esc(labelOf(b))}</b>: ` : ""}measure at ${esc(farEnd(b))}. ${termChip(b)}</p>`;
     $$("[data-ob]", box).forEach(x => x.onclick = () => { ohmsBus = +x.dataset.ob; $("#w-ohms-out", root).innerHTML = ""; paintOhmsBus(); });
   }
+
+  // The load test: errors that show only on a busy bus. A clean result proves little; the meter does.
+  $("#w-load", root).onclick = async () => {
+    if (!App.connected()) { App.toast("Connect to the robot first: the robot on, disabled is fine."); return; }
+    const out = $("#w-load-out", root), b = $("#w-load", root);
+    b.disabled = true;
+    out.innerHTML = `<p class="muted">About 13 seconds: quiet, loaded, quiet again.</p>`;
+    try {
+      const doc = await App.runTest("can_load", "ALL", {});
+      const rep = doc.report || {};
+      out.innerHTML = `<p><b>${esc(rep.summary || "")}</b></p>${(rep.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${Learn.link(f.why, 3)}</div></div>`).join("")}`;
+    } catch (e) {
+      out.innerHTML = `<p class="bad-ink">${esc(e.message)}</p>`;
+    } finally {
+      b.disabled = false;
+    }
+  };
 
   $("#w-ohms-go", root).onclick = async () => {
     const b = ((data && data.map && data.map.buses) || [])[ohmsBus];

@@ -1681,6 +1681,9 @@ def _analyze_test(result, gains=None, **kw):
     if test == "sensors":
         from . import bringup
         return bringup.sensors_report(result, kw.get("design"))
+    if test == "can_load":
+        from . import wiring
+        return wiring.can_load_report(result)
     if test == "spin_ff":
         history = kw.get("history")
         if history is None and not result.get("practice"):

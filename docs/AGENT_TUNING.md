@@ -84,7 +84,9 @@ Tests for `run`: `capture` (sensors only, disabled), `steer_step`, `drive_step`,
 Station port as the robot sees it; disabled, moves nothing), `motor_test` (bring-up: runs chosen
 motors briefly at low output, on blocks, with the robot's own code paused; rule 9), `sensors`
 (bring-up: every sensor's value live while a person trips each by hand; moves nothing, runs
-disabled; ends on `stop` or after `duration_s`).
+disabled; ends on `stop` or after `duration_s`), `can_load` (3 s quiet, 8 s with the swerve
+controllers' status frames sped up, 2 s quiet: counts CAN errors and bus-offs; moves nothing; a clean
+result does not prove the termination, the meter check does).
 
 Their `--arg` keys (the robot clamps each to a safe range and says so):
 
@@ -100,6 +102,7 @@ Their `--arg` keys (the robot clamps each to a safe range and says so):
 | `pdh_map` | `volts` |
 | `controller` | `port`, `duration_s` |
 | `sensors` | `duration_s` (5-300, default 120). Reads the sensors the code registers (`watchSensor`) and the deployed design file's others, opened from their ports for the readout only |
+| `can_load` | none |
 | `motor_test` | `drive`, `zero`, `watch` (bit masks over the robot's motor list, in the order `motors` lists them: run, hold at zero, only record; never drive or zero a follower, drive its leader), `duty` (0.02-0.15), `pulse` (0.2-1.0 s), `sign` (1 or -1), `stop_amps` |
 
 ## The loop
@@ -157,6 +160,7 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `NO_CONTROLLER`, `NO_PDH` | The robot can't read what the test needs; tell the person. |
 | `BAD_ARGS` | Your command's arguments: fix the command. |
 | `NO_SENSORS` | The sensor readout has nothing to read: the code registers no sensor and the deployed design file lists none. Deploy the design file, or register the code's sensors with `watchSensor`. |
+| `NO_CAN_STATUS` | The robot code can't read the CAN bus's status, so the load test has nothing to count. |
 | `JAMMED` | A motor pulled hard without turning: jammed, or motors on one shaft pushing against each other. A person looks first; then run each motor on that shaft alone. |
 | `NO_MOTORS`, `NOT_SUPPORTED` | The robot has no motors registered with its motor guard, or one the test can't run: tell the person. |
 | `NO_PROJECT`, `NOT_FOUND` | A robot project or saved run that doesn't exist: `runs` lists runs; the projects are Peashooter and Black team. |

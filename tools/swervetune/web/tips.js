@@ -212,6 +212,7 @@ const TIPS = {
   "motors.inv.pick": ["What this motor really is, if the code doesn't say or says it wrong.", "The motor guard picks its heat model and current limit from this. Save writes swervetune.json; redeploy.", "motor_inventory"],
   "wiring.ohms-in": ["Your multimeter's reading at the bus's far end with its terminator in, robot off, in ohms.", "About 60 is right: both terminators.", null],
   "wiring.ohms-out": ["The same spot with the far terminator out: the PDH's TERM switch OFF, or the terminator unplugged.", "About 120 is right. Type OL if the meter shows OL. Put it back after.", null],
+  "wiring.load": ["Runs the CAN bus busy for 8 seconds (the swerve controllers report faster) and counts its errors. Moves nothing.", "Errors only when busy: a terminator or plug nearly bad. No errors proves little: use the meter.", "can_termination"],
   "wiring.ohms-bus": ["Which CAN bus you are measuring.", "Each bus has its own two terminators: check each.", null],
   "wiring.term-state": ["This bus's last termination check, with a multimeter, robot off.", "The Termination check below records it, one bus at a time.", "can_termination"],
   "wiring.bus-label": ["What people call this bus: Drive train, Intake, Sensors.", "Shown everywhere instead of the code's name.", null],

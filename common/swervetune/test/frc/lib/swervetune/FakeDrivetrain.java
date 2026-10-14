@@ -31,6 +31,8 @@ final class FakeDrivetrain implements DrivetrainIO {
   /** A pod's own PID, set apart from the shared one; null means it runs the shared gains. */
   final double[][] podSteerPid = new double[4][];
   final double[][] podDrivePid = new double[4][];
+  /** Each change of the status frames, in order: true sped up, false back to normal. */
+  final java.util.List<Boolean> fastTelemetry = new java.util.ArrayList<>();
   double[][] ff = new double[4][];
   boolean gyroConnected = true;
   boolean gyroCalibrating = false;
@@ -353,6 +355,7 @@ final class FakeDrivetrain implements DrivetrainIO {
 
   @Override
   public ApplyResult applyFastTelemetry(boolean fast) {
+    fastTelemetry.add(fast);
     return ApplyResult.ok("fast " + fast);
   }
 

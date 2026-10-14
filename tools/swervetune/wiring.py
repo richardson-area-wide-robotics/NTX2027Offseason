@@ -281,6 +281,71 @@ def termination_verdict(ohms):
                   "unterminated.")
 
 
+def can_load_report(doc):
+    """A can_load run (CanLoadProcedure): errors on a quiet bus, then on a loaded one. Errors that
+    show only under load point at a terminator or a connection that is nearly bad; a clean result
+    proves little, since a short robot bus can run cleanly with one terminator missing."""
+    ch = doc.get("channels") or {}
+    phase = ch.get("phase") or []
+    sim = doc.get("env") == "SIM"
+
+    def rows(p):
+        return [i for i, x in enumerate(phase) if x == p]
+
+    def col(name, idx):
+        v = ch.get(name) or []
+        return [v[i] for i in idx if i < len(v) and v[i] == v[i]]
+
+    quiet, loaded = rows(0), rows(1)
+    util_q = col("util", quiet)
+    util_l = col("util", loaded)
+    mean = lambda xs: sum(xs) / len(xs) if xs else float("nan")
+    uq, ul = mean(util_q), mean(util_l)
+    err = lambda idx: sum(1 for a, b in zip(col("rxerr", idx), col("txerr", idx)) if a > 0 or b > 0)
+    eq, el = err(quiet), err(loaded)
+    off = col("busoff", range(len(phase)))
+    full = col("txfull", range(len(phase)))
+    busoff = (max(off) - min(off)) if off else 0
+    txfull = (max(full) - min(full)) if full else 0
+    pct = lambda u: f"{u * 100:.0f}%" if u == u else "unknown"
+    meter = "Take the two meter readings in the termination check, robot off, on each bus."
+    F = []
+    if sim:
+        summary = "Simulator: there is no real bus, so only the sequence was checked."
+    elif busoff:
+        F.append(_level("error", f"The bus shut itself down {_times(busoff)} during the test",
+                        "Transmissions kept failing: a missing or doubled terminator, CAN-H and CAN-L swapped, a short or a "
+                        "break. " + meter))
+        summary = "Bus-off under load."
+    elif eq:
+        F.append(_level("error", f"Errors even on the quiet bus ({eq} of {len(quiet)} samples)",
+                        "Something is wrong now, not only under load: termination or a connection. " + meter
+                        + " Then wiggle-test the plugs while watching the errors."))
+        summary = f"Errors quiet and loaded ({pct(uq)} then {pct(ul)} busy)."
+    elif el:
+        F.append(_level("warn", f"Errors only when the bus got busy ({el} of {len(loaded)} samples at {pct(ul)})",
+                        "A terminator or a connection that is nearly bad: fine when quiet, garbling frames when the bus "
+                        "is busy, as it is in a match. " + meter))
+        summary = f"Errors under load only, at {pct(ul)} busy."
+    elif ul == ul and ul < 0.4:
+        F.append(_level("info", f"The bus only reached {pct(ul)} busy",
+                        "Too little load to say much. The swerve controllers' faster status frames are what loads it: "
+                        "check they took (the run's notes)."))
+        summary = f"No errors, but only {pct(ul)} busy."
+    else:
+        F.append(_level("ok", f"No errors at {pct(ul)} busy",
+                        "This does not prove both terminators are there: a short robot bus can run cleanly with one "
+                        "missing. " + meter))
+        summary = f"No errors at {pct(ul)} busy (quiet {pct(uq)})."
+    if txfull and not sim:
+        F.append(_level("info", f"The roboRIO's transmit queue filled {_times(txfull)}",
+                        "Frames waited to be sent: a very busy bus, or nobody acknowledging them."))
+    return {"test": "can_load", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
+            "score": None, "next": None, "modules": {},
+            "can": {"quiet_util": uq, "loaded_util": ul, "quiet_error_samples": eq, "loaded_error_samples": el,
+                    "busoff": busoff, "txfull": txfull}}
+
+
 def parse_ohms(text):
     """A multimeter reading as typed: a number of ohms; "OL" (or "open") is no connection at all,
     infinite; blank is no reading."""
