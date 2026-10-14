@@ -567,6 +567,8 @@ const Wiring = (() => {
     const part = partOf(name, dev, live || ctl);
     const pics = [part, ...(part === "SPARK Flex" ? [] : MOTOR_PICS[motor] || [])]
       .map(k => FrcMap.pic(k) && { ...FrcMap.pic(k), cap: k }).filter(Boolean);
+    // Its status light, every color and pattern; marked where its faults say it should be now.
+    const light = Blinks.has(live || ctl) ? live || ctl : Blinks.has(part) ? part : null;
     const bi = m.buses.findIndex(b => b.chain.includes(name)), bus = m.buses[bi];
     const at = bus ? bus.chain.indexOf(name) : -1;
     const before = at > 0 ? bus.chain[at - 1] : null, after = bus && at >= 0 && at < bus.chain.length - 1 ? bus.chain[at + 1] : null;
@@ -592,13 +594,16 @@ const Wiring = (() => {
         ${Number.isFinite(r.bus_volts) ? ` · ${fmt(r.bus_volts, 2)} V at the controller` : ""}
         ${earlier.length ? `<div class="warn-ink"><b>Since the code started:</b> ${esc(earlier.join("; "))}</div>` : ""}</div>`;
     }
-    return `<div class="dcard-head"><b>${esc(name)}</b><span class="small muted">${esc(type)}</span></div>
+    return `<div class="dcard-main"><div class="dcard-head"><b>${esc(name)}</b><span class="small muted">${esc(type)}</span></div>
       ${pics.length ? `<div class="dcard-pics">${pics.map(p => `<figure><img src="${p.src}" alt="${esc(p.alt)}" width="${p.w}" height="${p.h}">
         <figcaption>${esc(p.cap)}</figcaption></figure>`).join("")}</div>` : ""}
       ${WHAT[live || ctl] ? `<p class="small">${esc(WHAT[live || ctl])}${motor && MOTOR[motor] ? ` This one drives a ${esc(motor)}: ${esc(MOTOR[motor])}.` : ""}</p>` : ""}
       <dl class="dcard-facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
       ${health}
-      ${pics.length ? `<p class="dcard-credit">Drawings: FRC Control System Diagrams, by Team 3161, CC BY 4.0.</p>` : ""}`;
+      ${pics.length ? `<p class="dcard-credit">Drawings: FRC Control System Diagrams, by Team 3161, CC BY 4.0.</p>` : ""}</div>
+      ${light ? `<div class="dcard-lights"><h4>Its status light</h4><p class="small muted">${esc(Blinks.DEVICES[light].light)}</p>
+        ${Blinks.table(light, { compact: true, ctx: { mode: Blinks.liveMode(), flags: r && r.flags, present: r && r.present } })}
+        <p class="dcard-credit">From ${Blinks.source(light)}. Troubleshoot, Status lights: what to do for each.</p></div>` : ""}`;
   }
 
   let hoverName = null, hoverEl = null;
@@ -607,6 +612,7 @@ const Wiring = (() => {
     hoverName = name;
     hoverEl = g;
     card.innerHTML = cardHtml(name);
+    card.classList.toggle("wide", !!$(".dcard-lights", card));
     card.hidden = false;
     // Beside the box, on whichever side has room, kept on screen.
     const b = g.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;

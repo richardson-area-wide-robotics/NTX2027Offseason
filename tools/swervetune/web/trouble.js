@@ -5,6 +5,8 @@
 const Trouble = (() => {
   const root = $("#tab-trouble");
   let symptoms = [], current = null, answers = [];
+  // The Status lights view: which device, and the symptom it was opened from (to go back to).
+  let lightsDevice = "SPARK MAX", lightsFrom = null, lightsNow = "";
 
   async function list() {
     const r = await App.api("/api/symptoms");
@@ -18,22 +20,29 @@ const Trouble = (() => {
   function paintList() {
     root.innerHTML = `<div class="stack">
       <div class="panel"><div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2 data-tip="trouble.list">${homeView === "symptoms" ? "What is the robot doing?" : "What the robot keeps reporting"}</h2>
+          <h2 data-tip="trouble.list">${{ symptoms: "What is the robot doing?", msgs: "What the robot keeps reporting", lights: "What does its status light mean?" }[homeView]}</h2>
           <div class="row"><button class="btn" id="tr-net" data-tip="net.check">Check the networks</button>
           <div class="seg" role="group" aria-label="Show">
             <button data-home="symptoms" class="${homeView === "symptoms" ? "on" : ""}" aria-pressed="${homeView === "symptoms"}" data-tip="trouble.list">Symptoms</button>
-            <button data-home="msgs" class="${homeView === "msgs" ? "on" : ""}" aria-pressed="${homeView === "msgs"}" data-tip="trouble.msgs">Robot messages <span id="tr-msgs-count" class="chip"></span></button></div></div></div>
+            <button data-home="msgs" class="${homeView === "msgs" ? "on" : ""}" aria-pressed="${homeView === "msgs"}" data-tip="trouble.msgs">Robot messages <span id="tr-msgs-count" class="chip"></span></button>
+            <button data-home="lights" class="${homeView === "lights" ? "on" : ""}" aria-pressed="${homeView === "lights"}" data-tip="trouble.lights">Status lights</button></div></div></div>
         ${homeView === "symptoms" ? `<p class="hint wide">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p>`
+          : homeView === "lights" ? `<p class="hint wide">Pick the device, then find its light's color and pattern. Each row says what it means and what to do; with the robot connected, the rows it should be showing now are marked.</p>`
           : `<div class="row" style="justify-content:space-between"><p class="small muted" id="tr-msgs-src"></p>
               <button class="btn small" id="tr-msgs-clear" data-tip="trouble.msgs-clear" data-quiet>Clear the counts</button></div>`}</div>
       ${homeView === "symptoms" ? `<div class="panel sym-groups">${[["connect", "Connecting to the robot"], ["robot", "Driving, motors and mechanisms"]].map(([g, name]) => {
           const S = symptoms.filter(s => (s.group || "robot") === g);
           return S.length ? `<h3>${name}</h3><div class="symptoms">${S.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div>` : "";
         }).join("")}</div>`
+        : homeView === "lights" ? lightsHtml()
         : `<div class="panel tr-msgs"><div id="tr-msgs-list" class="tr-msgs-list"></div></div>`}</div>`;
     $$(".symptom", root).forEach(b => b.onclick = () => open(b.dataset.id));
     $("#tr-net", root).onclick = () => App.checkNetworks();
-    $$("[data-home]", root).forEach(b => b.onclick = () => { homeView = b.dataset.home; paintList(); });
+    $$("[data-home]", root).forEach(b => b.onclick = () => { homeView = b.dataset.home; lightsFrom = null; paintList(); });
+    $$("[data-light-dev]", root).forEach(b => b.onclick = () => { lightsDevice = b.dataset.lightDev; paintList(); });
+    $$("[data-light-go]", root).forEach(b => b.onclick = () => Blinks.go(JSON.parse(b.dataset.lightGo)));
+    const back = $("#tr-lights-back", root);
+    if (back) back.onclick = () => open(lightsFrom);
     const clear = $("#tr-msgs-clear", root);
     if (clear) clear.onclick = async () => { await App.api("/api/robotlog/clear", {}); loadMessages(); };
     loadMessages();
@@ -70,8 +79,36 @@ const Trouble = (() => {
   }
   setInterval(() => { if (root.classList.contains("on") && !current) loadMessages(); }, 2000);
 
+  // ---------------------------------------------------------------- what a status light means
+  function lightsHtml() {
+    const d = Blinks.DEVICES[lightsDevice], mode = Blinks.liveMode();
+    const from = lightsFrom && symptoms.find(s => s.id === lightsFrom);
+    lightsNow = JSON.stringify([lightsDevice, [...Blinks.nowIds(lightsDevice, { mode })]]);
+    return `<div class="panel lights-view">
+      <div class="row lights-devs" role="group" aria-label="Device">${Blinks.ORDER.map(n => {
+        const p = Blinks.DEVICES[n].pic && FrcMap.pic(Blinks.DEVICES[n].pic);
+        return `<button class="btn lights-dev ${n === lightsDevice ? "on" : ""}" aria-pressed="${n === lightsDevice}" data-light-dev="${esc(n)}" data-tip="lights.device" data-quiet>${
+          p ? `<img src="${p.src}" alt="" width="${p.w}" height="${p.h}">` : ""}${esc(n)}</button>`;
+      }).join("")}${from ? `<button class="btn" id="tr-lights-back" data-tip="lights.back" data-quiet>Back to: ${esc(from.title)}</button>` : ""}</div>
+      <p class="small">${esc(d.light)} From ${Blinks.source(lightsDevice)}.${mode ? "" : " Connect to the robot to mark what it should show now."}</p>
+      <div class="lights-box">${Blinks.table(lightsDevice, { ctx: { mode } })}</div></div>`;
+  }
+  // The marks follow the robot (enabled, disabled, E-stopped): repaint only when they change.
+  setInterval(() => {
+    if (!root.classList.contains("on") || !$(".lights-view", root)) return;
+    const now = JSON.stringify([lightsDevice, [...Blinks.nowIds(lightsDevice, { mode: Blinks.liveMode() })]]);
+    if (now !== lightsNow) paintList();
+  }, 1000);
+  function showLights(device, from) {
+    lightsDevice = device;
+    lightsFrom = from || null;
+    homeView = "lights";
+    paintList();
+  }
+
   async function open(id) {
     App.show("trouble");
+    homeView = "symptoms";
     current = await App.api("/api/diagnose/" + encodeURIComponent(id));
     answers = current.checks.map(c => c.auto_answer || null);
     paint();
@@ -92,6 +129,9 @@ const Trouble = (() => {
     }
     return `<button class="btn small primary" data-act='${esc(JSON.stringify(a))}' data-tip="trouble.action" data-quiet>${esc(label)}</button>`;
   }
+  // A check whose drawing shows a status light: what that light's colors mean.
+  const lightsButton = k => k.lights ? `<button class="btn small" data-lights='${esc(JSON.stringify(k.lights))}' data-tip="trouble.check-lights" data-quiet>${
+    k.lights.length > 1 ? "What their lights mean" : "What its lights mean"}</button>` : "";
 
   function paint() {
     const c = current;
@@ -116,9 +156,9 @@ const Trouble = (() => {
             ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>network check: fine</span> the network check found this part fine: press Yes if you agree</div>`
             : `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>config looks fine</span> the configuration check found nothing wrong here: press Yes if you agree</div>`) : ""}
           ${a === "no" ? `<div class="callout safety"><b>Cause:</b> ${esc(k.if_no)}<br><b>Fix:</b> ${esc(k.fix)}</div>
-             <div class="row">${actionButton(k.action)}<button class="btn small" data-redo="${i}" data-tip="trouble.redo" data-quiet>I fixed it, check again</button></div>` : ""}
+             <div class="row">${actionButton(k.action)}${lightsButton(k)}<button class="btn small" data-redo="${i}" data-tip="trouble.redo" data-quiet>I fixed it, check again</button></div>` : ""}
           ${i === at && a === null ? `<div class="row"><button class="btn small primary" data-yes="${i}" aria-describedby="tq-${i}" data-tip="trouble.yes" data-quiet>Yes</button>
-             <button class="btn small" data-no="${i}" aria-describedby="tq-${i}" data-tip="trouble.no" data-quiet>No</button>${actionButton(k.action)}</div>` : ""}
+             <button class="btn small" data-no="${i}" aria-describedby="tq-${i}" data-tip="trouble.no" data-quiet>No</button>${actionButton(k.action)}${lightsButton(k)}</div>` : ""}
         </div>`;
       }).join("")}</div>
       ${mapAt >= 0 ? `<div class="panel tr-where"><h3>Where to look: check ${mapAt + 1}</h3><div class="frc-slot" data-diagram="${mapAt}"></div></div>` : ""}</div>
@@ -132,6 +172,7 @@ const Trouble = (() => {
     $$("[data-no]", root).forEach(b => b.onclick = () => answer(+b.dataset.no, "no"));
     $$("[data-redo]", root).forEach(b => b.onclick = () => answer(+b.dataset.redo, null));
     $$("[data-act]", root).forEach(b => b.onclick = () => act(JSON.parse(b.dataset.act)));
+    $$("[data-lights]", root).forEach(b => b.onclick = () => showLights(JSON.parse(b.dataset.lights)[0], c.id));
   }
 
   // Every answer repaints the list, so focus moves to the question now waiting, not to the page top.
@@ -163,5 +204,5 @@ const Trouble = (() => {
 
   App.on("tab", t => { if (t === "trouble" && !current) list(); });
   list();
-  return { open };
+  return { open, showLights };
 })();

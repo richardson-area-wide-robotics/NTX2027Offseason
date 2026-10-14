@@ -35,6 +35,8 @@ def check(q, how, where, if_no, fix, action=None, auto=None, diagram=None):
         c["auto"] = auto
     if diagram:
         c["diagram"] = diagram
+        if diagram.get("lights"):
+            c["lights"] = diagram["lights"]   # Troubleshoot's Status lights (web/blinks.js), by device
     return c
 
 
@@ -43,21 +45,21 @@ def _spot(part, label):
     return {"part": part, "state": "here", "label": label}
 
 
-SEE_POWER = {"view": "power", "focus": [_spot("battery", "Battery: 12.3 V or more at rest"),
+SEE_POWER = {"view": "power", "lights": ["REV PDH", "roboRIO"], "focus": [_spot("battery", "Battery: 12.3 V or more at rest"),
                                         _spot("breaker", "120 A main breaker: tight lugs"),
                                         _spot("pdh_battery", "Battery leads into the PDH: no wobble"),
                                         _spot("pdh_display", "The PDH shows the voltage")]}
-SEE_CAN = {"view": "can", "wires": "can", "focus": [_spot("rio_can", "One end: the roboRIO, 120 ohms inside"),
+SEE_CAN = {"view": "can", "wires": "can", "lights": ["SPARK MAX", "SPARK Flex", "REV PDH"], "focus": [_spot("rio_can", "One end: the roboRIO, 120 ohms inside"),
                                                     _spot("pdh_can", "CAN at the PDH"),
                                                     _spot("pdh_term", "The other end: TERM ON")]}
-SEE_FAULT = {"view": "controllers", "focus": [_spot("sparkmax", "SPARK MAX: its light blinks on a fault"),
+SEE_FAULT = {"view": "controllers", "lights": ["SPARK MAX", "SPARK Flex"], "focus": [_spot("sparkmax", "SPARK MAX: its light blinks on a fault"),
                                               _spot("sparkflex", "SPARK Flex: the same light")]}
-SEE_RADIO = {"view": "radio", "focus": [_spot("radio", "The radio: PWR and SYS lights"),
+SEE_RADIO = {"view": "radio", "lights": ["VH-109 radio"], "focus": [_spot("radio", "The radio: PWR and SYS lights"),
                                         _spot("radio_power", "Its power: tight")]}
-SEE_RIO_LINK = {"view": "rio", "focus": [_spot("rio_ethernet", "Ethernet to the radio's RIO port"),
+SEE_RIO_LINK = {"view": "rio", "lights": ["roboRIO"], "focus": [_spot("rio_ethernet", "Ethernet to the radio's RIO port"),
                                          _spot("rio_leds", "Its power and status lights")]}
 NETCHECK = {"type": "netcheck"}
-SEE_FEED = {"view": "controllers", "focus": [_spot("sparkmax", "Its V+ and V- leads"), _spot("sparkflex", "Its V+ and V- leads"),
+SEE_FEED = {"view": "controllers", "lights": ["SPARK MAX", "SPARK Flex", "REV PDH"], "focus": [_spot("sparkmax", "Its V+ and V- leads"), _spot("sparkflex", "Its V+ and V- leads"),
                                              _spot("pdh", "Its PDH port and breaker (Wiring tab: which port)")]}
 
 

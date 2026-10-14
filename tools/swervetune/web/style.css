@@ -687,6 +687,7 @@ table.t td > select { padding-block: 1px; }
   .tr2 { min-height: 0; }
   .tr2 > * { min-height: 0; max-height: calc(var(--work-h) - 150px); overflow-y: auto; }
   .tr-where { position: static; }
+  .lights-box { max-height: calc(var(--work-h) - 290px); }
   /* Tune: two gains to a row in the narrow left column. */
   .tune-left .gains { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   /* The motor inventory: the controller and motor pictures sit in the heading row, small. */
@@ -774,6 +775,54 @@ table.t td > select { padding-block: 1px; }
 .dcard-facts dt { color: var(--muted); }
 .dcard-facts dd { margin: 0; }
 .dcard-credit { font-size: 10px; color: var(--muted); }
+/* A card with the device's status light: the facts and the light side by side. */
+.dcard.wide { width: 720px; display: grid; grid-template-columns: 290px 1fr; gap: 14px; }
+.dcard-lights h4 { margin: 0 0 2px; font-size: 13px; }
+.dcard-lights > p { margin: 0 0 4px; }
+.lights-card { width: 470px; }
+@media (max-width: 760px) { .dcard.wide { width: calc(100vw - 16px); grid-template-columns: 1fr; } .lights-card { width: calc(100vw - 16px); } }
+
+/* Status lights (blinks.js): a dot that blinks the way the real light does, with its words beside it. */
+.led { display: inline-block; flex: none; width: 13px; height: 13px; border-radius: 50%; background: var(--a);
+       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35), 0 0 5px var(--a); }
+.led.off { background: #26292d; box-shadow: inset 0 0 0 1.5px #7b8188; }
+.led + .led { margin-left: -3px; }
+.led.blink { animation: led-blink 1s steps(1, end) infinite; }
+.led.alt { animation: led-alt 1s steps(1, end) infinite; }
+.led.slow { animation-duration: 2s; }
+.led.fast { animation-duration: .3s; }
+.led.count2 { animation: led-count2 2.4s steps(1, end) infinite; }
+.led.count3 { animation: led-count3 2.6s steps(1, end) infinite; }
+.led.count4 { animation: led-count4 2.8s steps(1, end) infinite; }
+@keyframes led-blink { 50% { opacity: .15; } }
+@keyframes led-alt { 50% { background: var(--b); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35), 0 0 5px var(--b); } }
+@keyframes led-count2 { 0% { opacity: 1; } 9% { opacity: .15; } 18% { opacity: 1; } 27% { opacity: .15; } }
+@keyframes led-count3 { 0% { opacity: 1; } 8% { opacity: .15; } 16% { opacity: 1; } 24% { opacity: .15; } 32% { opacity: 1; } 40% { opacity: .15; } }
+@keyframes led-count4 { 0% { opacity: 1; } 7% { opacity: .15; } 14% { opacity: 1; } 21% { opacity: .15; } 28% { opacity: 1; } 35% { opacity: .15; } 42% { opacity: 1; } 49% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) {
+  /* Still: two colors half and half, a blinking light as a ring. The words say the pattern. */
+  .led.blink, .led.alt { animation: none; }
+  .led.alt { background: linear-gradient(90deg, var(--a) 50%, var(--b) 50%); }
+  .led.blink { background: transparent; box-shadow: inset 0 0 0 3px var(--a); }
+}
+.led-look { display: flex; align-items: center; gap: 6px; }
+.led-look + .led-look { margin-top: 3px; }
+table.lights td { vertical-align: top; }
+table.lights td.led-cell { white-space: nowrap; }
+table.lights td.led-cell .chip { margin-top: 3px; }
+table.lights tr.now td { background: var(--warn-bg); }
+table.lights .lights-group th { text-align: left; font-size: 12px; color: var(--muted); padding: 8px 6px 2px; border-bottom: 1px solid var(--rule); }
+table.lights.compact { font-size: 11.5px; table-layout: fixed; width: 100%; }
+table.lights.compact td { padding: 2px 6px 2px 0; }
+table.lights.compact td.led-cell { width: 50%; white-space: normal; }
+table.lights.compact .lights-group th { padding-top: 5px; }
+.lit { border-bottom: 1px dotted var(--muted); cursor: help; }
+/* Troubleshoot's Status lights: the devices, then the chosen one's table, which scrolls in its box. */
+.lights-devs { flex-wrap: wrap; gap: 6px; }
+.lights-dev { display: inline-flex; align-items: center; gap: 6px; }
+.lights-dev img { height: 22px; width: auto; background: #fff; border-radius: 3px; padding: 1px; }
+.lights-dev.on { border-color: var(--seg-on-edge); background: var(--seg-on); color: var(--seg-on-ink); }
+.lights-box { overflow: auto; }
 
 /* Tune drive train: a pod whose gains differ from the shared ones. */
 #podseg button.own::after { content: " \2022"; color: var(--warn); }
