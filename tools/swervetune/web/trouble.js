@@ -100,7 +100,7 @@ const Trouble = (() => {
     const mapAt = at >= 0 && c.checks[at] && c.checks[at].diagram && answers[at] !== "yes" ? at : -1;
     root.innerHTML = `<div class="tr-view">
       <div class="panel"><div class="row" style="justify-content:space-between"><h2>${esc(c.title)}</h2>
-        <button class="btn" id="tr-back" data-tip="trouble.back" data-quiet>All symptoms</button></div><p class="hint">${esc(c.looks_like)}</p>
+        <button class="btn" id="tr-back" data-tip="trouble.back" data-quiet>All symptoms</button></div><p class="hint wide">${esc(c.looks_like)}</p>
         ${c.note ? `<div class="callout info">${Learn.link(c.note, 2)}</div>` : ""}
         <p class="small"><b>Yes</b> means that part is fine. The first <b>No</b> is usually the cause.</p></div>
       <div class="tr2 ${mapAt >= 0 ? "has-map" : ""}"><div class="checks">${c.checks.map((k, i) => {

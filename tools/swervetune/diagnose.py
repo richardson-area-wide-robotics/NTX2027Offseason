@@ -671,8 +671,6 @@ SYMPTOMS = [
         "group": "connect",
         "title": "The Driver Station shows no communications",
         "looks_like": "The Driver Station's Communications light stays red: it can't reach the robot at all.",
-        "note": "Check the networks reads most of these for you: the Driver Station, this laptop's address, "
-                "the firewall and the radios.",
         "checks": [
             check("Is the Driver Station the same year as the robot code?",
                   "Its Diagnostics tab shows its version: 26.x for 2026.", LAPTOP,

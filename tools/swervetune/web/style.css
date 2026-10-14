@@ -251,7 +251,7 @@ ol.do { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
   cursor: pointer; display: grid; gap: 4px; align-content: start; }
 .symptom:hover { border-color: var(--accent); }
 .symptom .t { font-weight: 700; }
-.sym-groups h3 { margin: 0 0 6px; }
+.sym-groups h3 { margin: 0 0 4px; }
 .sym-groups h3:not(:first-child) { margin-top: 8px; }
 p.hint.wide { max-width: none; }
 .symptom .d { color: var(--muted); font-size: 13px; }
@@ -680,7 +680,7 @@ table.t td > select { padding-block: 1px; }
   #w-pdh-map { --frc-h: calc(var(--work-h) - 150px); }
   /* Troubleshoot: compact cards (the full text is in each card's tip); the checks scroll in their box. */
   .symptom { padding: 7px 11px; gap: 2px; }
-  .symptoms { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 8px; }
+  .symptoms { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 6px; }
   .symptom .d { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 12px; }
   .tr-view { max-height: var(--work-h); grid-template-rows: auto minmax(0, 1fr); }
   .tr2 { min-height: 0; }
