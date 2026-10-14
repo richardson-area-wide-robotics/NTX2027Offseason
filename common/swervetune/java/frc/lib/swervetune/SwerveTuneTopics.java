@@ -157,6 +157,13 @@ public final class SwerveTuneTopics {
   public static final String LIVE_ACCEL = LIVE + "AccelMps2";
   /** Gyro {@code {type, connected|NOT CONNECTED, calibrating|ready, faults}}. */
   public static final String LIVE_GYRO = LIVE + "Gyro";
+  /** Game-piece current sensors: names, "motor|mode|system" each, and {amps, detected, hasPiece, threshold} each. */
+  public static final String PIECE_NAMES = ROOT + "/Pieces/Names";
+  public static final String PIECE_INFO = ROOT + "/Pieces/Info";
+  public static final String PIECE_VALUES = ROOT + "/Pieces/Values";
+  /** Holds: motor names, and {amps, duty, on, tuned} each. */
+  public static final String HOLD_NAMES = ROOT + "/Holds/Names";
+  public static final String HOLD_VALUES = ROOT + "/Holds/Values";
   /** More about the gyro, "name=value" lines: temperature, firmware, sticky faults (a Canandgyro's). */
   public static final String LIVE_GYRO_DETAILS = LIVE + "GyroDetails";
   /** Odometry pose, {@code x m, y m, heading deg}. */

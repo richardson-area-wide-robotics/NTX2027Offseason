@@ -100,6 +100,13 @@ LIVE_ABS_READ_ISSUE = LIVE + "AbsoluteReadIssue"
 LIVE_HEADING_DEG = LIVE + "HeadingDeg"
 LIVE_ACCEL = LIVE + "AccelMps2"
 LIVE_GYRO = LIVE + "Gyro"
+# Game pieces by current: each sensor's name, "motor|mode|system", and {amps, detected, hasPiece,
+# threshold}; each hold's motor and {amps, duty, on, tuned}.
+PIECE_NAMES = ROOT + "/Pieces/Names"
+PIECE_INFO = ROOT + "/Pieces/Info"
+PIECE_VALUES = ROOT + "/Pieces/Values"
+HOLD_NAMES = ROOT + "/Holds/Names"
+HOLD_VALUES = ROOT + "/Holds/Values"
 LIVE_GYRO_DETAILS = LIVE + "GyroDetails"   # "name=value": temperature, firmware, sticky (a Canandgyro's)
 LIVE_POSE = LIVE + "Pose"
 LIVE_VISION_POSE = LIVE + "VisionPose"
@@ -259,6 +266,11 @@ STOP_CODES = [
     ("No sensors to read", "NO_SENSORS"), ("can't read the CAN bus", "NO_CAN_STATUS"), ("without turning", "JAMMED"),
     # Systems: a mechanism's limits and its closed-loop test.
     ("No such system", "BAD_ARGS"), ("has limits to find", "BAD_ARGS"), ("Disable the robot first", "NEEDS_DISABLED"),
+    # Game pieces: a current sensor's calibration and a hold's tuning.
+    ("No such hold", "BAD_ARGS"), ("No such current sensor", "BAD_ARGS"), ("Start above the lowest current", "BAD_ARGS"),
+    ("The hold's motor", "NO_SYSTEM_HOOK"), ("reads a motor the motor guard doesn't watch", "NO_SYSTEM_HOOK"),
+    ("Pick the mechanism that runs it", "NO_SYSTEM_HOOK"), ("Give the sweep a speed", "BAD_ARGS"),
+    ("Give the roller the speed", "BAD_ARGS"),
     ("doesn't give", "NO_SYSTEM_HOOK"), ("Give the test a maximum speed", "BAD_ARGS"), ("Set the limits of", "NO_LIMITS"),
     ("went past its limits", "PAST_LIMITS"), ("faster than the test allows", "OVERSPEED"), ("above the test's top speed", "OVERSPEED"), ("No motors are registered", "NO_MOTORS"), ("can't be run by a test", "NOT_SUPPORTED"),
     ("names a motor the robot", "BAD_ARGS"), ("No motor to run", "BAD_ARGS"),
@@ -349,4 +361,4 @@ def gain_spec(key):
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
 TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",
-         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_step")
+         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_step", "system_piece", "system_hold")

@@ -155,6 +155,21 @@ public final class SwerveTuneConfig {
   public double canandgyroAccelerationMs = 20;
   public double canandgyroStatusMs = 100;
 
+  /** A current sensor's calibration (swervetune.json "currentSensors", by the sensor's name). */
+  public static final class CurrentSensorConfig {
+    public String mode = "rise";
+    public double thresholdA = Double.NaN;
+    public double holdS = 0.06;
+    public double ignoreS = 0.25;
+    public double[][] baseline = new double[0][];
+  }
+
+  /** Each current sensor's calibration, by its name (the Systems tab writes them). */
+  public final Map<String, CurrentSensorConfig> currentSensors = new LinkedHashMap<>();
+
+  /** Each hold's {current amps, power -1 to 1}, by its motor's name (swervetune.json "holds"). */
+  public final Map<String, double[]> holds = new LinkedHashMap<>();
+
   /** Problems found while reading, shown on the laptop at connect. */
   public final List<String> warnings = new ArrayList<>();
 
@@ -200,6 +215,34 @@ public final class SwerveTuneConfig {
       c.steerFeedback = fb;
     } else {
       c.warnings.add("steerFeedback must be \"motor\" or \"absolute\"; got \"" + fb + "\".");
+    }
+
+    for (Map.Entry<String, Object> e : map(m.get("currentSensors")).entrySet()) {
+      Map<String, Object> s = map(e.getValue());
+      CurrentSensorConfig cs = new CurrentSensorConfig();
+      cs.mode = str(s.get("mode"), "rise");
+      if (!List.of("rise", "drop", "aboveBaseline").contains(cs.mode)) {
+        c.warnings.add("currentSensors." + e.getKey() + ".mode must be rise, drop or aboveBaseline; using rise.");
+        cs.mode = "rise";
+      }
+      cs.thresholdA = num(s.get("thresholdA"), Double.NaN);
+      cs.holdS = Math.max(0, num(s.get("holdS"), 0.06));
+      cs.ignoreS = Math.max(0, num(s.get("ignoreS"), 0.25));
+      List<double[]> base = new ArrayList<>();
+      if (s.get("baseline") instanceof List<?> rows) {
+        for (Object r : rows) {
+          if (r instanceof List<?> pair && pair.size() >= 2 && pair.get(0) instanceof Number p && pair.get(1) instanceof Number a) {
+            base.add(new double[] {p.doubleValue(), a.doubleValue()});
+          }
+        }
+      }
+      base.sort((x, y) -> Double.compare(x[0], y[0]));
+      cs.baseline = base.toArray(new double[0][]);
+      c.currentSensors.put(e.getKey(), cs);
+    }
+    for (Map.Entry<String, Object> e : map(m.get("holds")).entrySet()) {
+      Map<String, Object> h = map(e.getValue());
+      c.holds.put(e.getKey(), new double[] {num(h.get("currentA"), Double.NaN), num(h.get("duty"), Double.NaN)});
     }
 
     Map<String, Object> gyro = map(m.get("canandgyro"));

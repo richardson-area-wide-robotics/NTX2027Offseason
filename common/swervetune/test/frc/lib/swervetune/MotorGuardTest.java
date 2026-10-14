@@ -113,6 +113,34 @@ class MotorGuardTest {
   // ------------------------------------------------------------------ stall timer
 
   @Test
+  void aHoldLowersTheLimitAndRestsTheStallTimerButNotTheHeat() {
+    FakeMotorChannel c = new FakeMotorChannel(20);
+    c.demandA = 100; // pushing into a game piece, the shaft still
+    Motor m = add("Intake roller", c, MotorKind.NEO_550, true);
+    m.hold(8);
+    run(20);
+    assertEquals(8, c.limit, "the hold's limit");
+    assertEquals(0, m.stallSeconds(), "a hold is a stall on purpose");
+    assertEquals(Stage.OK, m.stage(), m.cause());
+    m.release();
+    run(0.1);
+    assertEquals(20, c.limit, "its own limit is back");
+    run(1);
+    assertTrue(m.stallSeconds() > 0.5, "out of the hold, a stall counts again");
+  }
+
+  @Test
+  void aHotMotorsHoldIsHalvedLikeAnyLimit() {
+    FakeMotorChannel c = new FakeMotorChannel(20);
+    c.demandA = 100;
+    c.tempC = 80; // past a NEO 550's derate temperature
+    Motor m = add("Intake roller", c, MotorKind.NEO_550, true);
+    m.hold(10);
+    run(1);
+    assertTrue(c.limit <= 5, "the hold, halved or less: " + c.limit);
+  }
+
+  @Test
   void aJamWarnsDeratesThenCutsOutAndStaysOutUntilReleased() {
     FakeMotorChannel c = new FakeMotorChannel(80);
     c.demandA = 100; // driven into a hard stop

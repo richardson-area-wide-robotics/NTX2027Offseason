@@ -52,6 +52,10 @@ public final class TestContext {
   public Sensors.Opener sensorPorts;
   /** The mechanisms the robot code registered for the Systems tab, in order. */
   public List<TunableSystem> systems = List.of();
+  /** Game-piece current sensors the robot code registered, in order. */
+  public List<CurrentSensor> currentSensors = List.of();
+  /** Holds (a game piece held by a current limit) the robot code registered, in order. */
+  public List<HoldCurrent> holds = List.of();
 
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();

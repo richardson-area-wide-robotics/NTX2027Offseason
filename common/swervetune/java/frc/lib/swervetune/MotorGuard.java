@@ -168,6 +168,8 @@ public final class MotorGuard {
     int shutoffs;
     double overrideUntilS = Double.NEGATIVE_INFINITY;
     double lastLimitSendS = Double.NEGATIVE_INFINITY;
+    /** Holding a game piece at this many amps (HoldCurrent); 0 when not. */
+    volatile int holdA;
     double tempC = Double.NaN;
     double amps = Double.NaN;
     double busVolts = Double.NaN;
@@ -184,6 +186,24 @@ public final class MotorGuard {
       this.kind = kind;
       this.channel = channel;
       this.stallTimer = stallTimer;
+    }
+
+    /**
+     * Holds a game piece: its limit drops to {@code amps} and the stall timer rests (a hold is a
+     * stall on purpose), while the heat rules still apply and halve it when hot. 0 ends it.
+     */
+    public void hold(int amps) {
+      holdA = Math.max(0, amps);
+    }
+
+    /** Ends a hold: the normal limit comes back. */
+    public void release() {
+      holdA = 0;
+    }
+
+    /** The hold's amps, 0 when it isn't holding. */
+    public int holdAmps() {
+      return holdA;
     }
 
     /** Estimated winding heat as a fraction of what burns it out: 0 cold, 1 failing. */
@@ -570,8 +590,8 @@ public final class MotorGuard {
     // full rate at the full limit, half rate when derated (a quarter of the heat), and holds while
     // shut off and still being driven into the jam; it only runs down once the push stops.
     boolean pushing = Double.isFinite(amps) && amps >= 0.8 * m.activeLimitA && !turning;
-    if (!m.stallTimer) {
-      m.stallS = 0;
+    if (!m.stallTimer || m.holdA > 0) {
+      m.stallS = 0;   // a drive motor pushing, or a hold: both stall on purpose
     } else if (pushing) {
       m.stallS += m.activeLimitA >= m.baseLimitA ? dt : m.activeLimitA > SHUTOFF_LIMIT_A ? dt / 2 : 0;
     } else {
@@ -627,16 +647,18 @@ public final class MotorGuard {
       cause += String.format(" - override holding it on for %.0f s more", m.overrideUntilS - nowS);
     }
 
+    // A hold lowers the limit it starts from; the stages lower it further.
+    int base = m.holdA > 0 ? Math.min(m.holdA, m.baseLimitA) : m.baseLimitA;
     int limit = switch (target) {
-      case OK, WARN -> m.baseLimitA;
-      case DERATE -> Math.max(SHUTOFF_LIMIT_A, m.baseLimitA / 2);
+      case OK, WARN -> base;
+      case DERATE -> Math.max(SHUTOFF_LIMIT_A, base / 2);
       case SHUTOFF -> SHUTOFF_LIMIT_A;
     };
     // Send at once on a stage change; retry a refused send twice a second, not every loop
     // (each send is a blocking CAN transaction); and re-send a lowered limit every two seconds.
     double sinceSend = nowS - m.lastLimitSendS;
-    boolean send = (limit != m.activeLimitA && (target != m.stage || sinceSend >= 0.5))
-        || (limit != m.baseLimitA && sinceSend >= RESEND_S)
+    boolean send = (limit != m.activeLimitA && (target != m.stage || sinceSend >= 0.5 || base != m.baseLimitA))
+        || (limit != base && sinceSend >= RESEND_S)
         || (m.resendLimit && sinceSend >= 0.5);
     if (send) {
       if (m.channel.setCurrentLimit(limit)) {

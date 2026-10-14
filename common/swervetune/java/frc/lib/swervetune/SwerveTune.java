@@ -148,6 +148,13 @@ public final class SwerveTune {
   private final List<String> drivetrainMotors = new ArrayList<>();
   private final List<Sensors.Registered> sensors = new ArrayList<>();
   private final List<TunableSystem> systems = new ArrayList<>();
+  private final List<CurrentSensor> currentSensors = new ArrayList<>();
+  private final List<HoldCurrent> holds = new ArrayList<>();
+  private StringArrayPublisher pieceNames;
+  private StringArrayPublisher pieceInfo;
+  private DoubleArrayPublisher pieceValues;
+  private StringArrayPublisher holdNames;
+  private DoubleArrayPublisher holdValues;
   private SystemBoard systemBoard;
   private List<Sensors.Designed> designedSensors = List.of();
   private Sensors.Opener sensorPorts;
@@ -290,6 +297,8 @@ public final class SwerveTune {
     procedures.put("can_load", CanLoadProcedure::new);
     procedures.put("system_limits", SystemLimitsProcedure::new);
     procedures.put("system_step", SystemStepProcedure::new);
+    procedures.put("system_piece", PieceSenseProcedure::new);
+    procedures.put("system_hold", HoldProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -507,6 +516,94 @@ public final class SwerveTune {
     }
     systems.add(s);
     return s;
+  }
+
+  /**
+   * A game piece sensed through a motor's own current (see {@link CurrentSensor}): the motor by the
+   * name the motor guard watches it under, so watch it first. Its calibration comes from
+   * swervetune.json's {@code "currentSensors"}, which the Systems tab writes.
+   */
+  public CurrentSensor currentSensor(String name, String motorName) {
+    return currentSensor(name, motorName, null);
+  }
+
+  /**
+   * As {@link #currentSensor(String, String)}, for an arm or elevator: {@code system} gives its
+   * position, for the current it draws empty at each position ({@code aboveBaseline}).
+   */
+  public CurrentSensor currentSensor(String name, String motorName, TunableSystem system) {
+    MotorGuard.Motor m = guard.motor(motorName);
+    if (m == null) {
+      DriverStation.reportWarning("SwerveTune: current sensor '" + name + "' reads motor '" + motorName
+          + "', which isn't watched; it will never see a piece. Watch the motor first.", false);
+    }
+    CurrentSensor s = new CurrentSensor(name, motorName, m, system == null ? null : system.position);
+    s.configure(config.currentSensors.get(name));
+    currentSensors.removeIf(x -> x.name.equals(name));
+    currentSensors.add(s);
+    return s;
+  }
+
+  /**
+   * Holding a game piece by its motor's current limit (see {@link HoldCurrent}): the motor by its
+   * watched name, and how to set its power. swervetune.json's {@code "holds"} gives the current.
+   */
+  public HoldCurrent holdCurrent(String motorName, java.util.function.DoubleConsumer setDuty) {
+    MotorGuard.Motor m = guard.motor(motorName);
+    if (m == null) {
+      DriverStation.reportWarning("SwerveTune: the hold for '" + motorName
+          + "' has no watched motor of that name: its current limit won't change. Watch the motor first.", false);
+    }
+    HoldCurrent h = new HoldCurrent(motorName, m, setDuty);
+    h.configure(config.holds.get(motorName));
+    holds.removeIf(x -> x.motorName.equals(motorName));
+    holds.add(h);
+    return h;
+  }
+
+  /** The game-piece sensors and holds on NetworkTables, for the Systems tab. */
+  private void publishPieces() {
+    if (pieceNames == null) {
+      pieceNames = nt.getStringArrayTopic(SwerveTuneTopics.PIECE_NAMES).publish();
+      pieceInfo = nt.getStringArrayTopic(SwerveTuneTopics.PIECE_INFO).publish();
+      pieceValues = nt.getDoubleArrayTopic(SwerveTuneTopics.PIECE_VALUES).publish();
+      holdNames = nt.getStringArrayTopic(SwerveTuneTopics.HOLD_NAMES).publish();
+      holdValues = nt.getDoubleArrayTopic(SwerveTuneTopics.HOLD_VALUES).publish();
+    }
+    String[] n = new String[currentSensors.size()];
+    String[] info = new String[n.length];
+    double[] v = new double[4 * n.length];
+    for (int i = 0; i < n.length; i++) {
+      CurrentSensor s = currentSensors.get(i);
+      n[i] = s.name;
+      String sys = "";
+      for (TunableSystem y : systems) {
+        if (s.position != null && y.position == s.position || y.motors.contains(s.motorName)) {
+          sys = y.name;
+          break;
+        }
+      }
+      info[i] = s.motorName + "|" + s.mode.key() + "|" + sys;
+      v[4 * i] = s.amps();
+      v[4 * i + 1] = s.detected() ? 1 : 0;
+      v[4 * i + 2] = s.hasPiece() ? 1 : 0;
+      v[4 * i + 3] = s.thresholdA;
+    }
+    pieceNames.set(n);
+    pieceInfo.set(info);
+    pieceValues.set(v);
+    String[] hn = new String[holds.size()];
+    double[] hv = new double[4 * hn.length];
+    for (int i = 0; i < hn.length; i++) {
+      HoldCurrent h = holds.get(i);
+      hn[i] = h.motorName;
+      hv[4 * i] = h.currentA;
+      hv[4 * i + 1] = h.duty;
+      hv[4 * i + 2] = h.isOn() ? 1 : 0;
+      hv[4 * i + 3] = h.tuned ? 1 : 0;
+    }
+    holdNames.set(hn);
+    holdValues.set(hv);
   }
 
   private void addSensor(Sensors.Registered s) {
@@ -927,6 +1024,10 @@ public final class SwerveTune {
         systemBoard = new SystemBoard(nt, bootId, systems);
       }
       systemBoard.periodic(gainsBlocked);
+      for (CurrentSensor s : currentSensors) {
+        s.update(now);
+      }
+      publishPieces();
       Map<String, Double> gainsNow = gains.takeChanged();
       if (gainsNow != null) {
         AkLogging.recordGains(gainsNow, gains.reason());
@@ -1130,6 +1231,8 @@ public final class SwerveTune {
     c.designedSensors = designedSensors;
     c.sensorPorts = sensorPorts;
     c.systems = List.copyOf(systems);
+    c.currentSensors = List.copyOf(currentSensors);
+    c.holds = List.copyOf(holds);
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
@@ -1159,6 +1262,8 @@ public final class SwerveTune {
     ctx.designedSensors = c.designedSensors;
     ctx.sensorPorts = c.sensorPorts;
     ctx.systems = c.systems;
+    ctx.currentSensors = c.currentSensors;
+    ctx.holds = c.holds;
     proc = p;
     profile = prof;
     activeSeq = seq;

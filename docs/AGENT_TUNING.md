@@ -91,7 +91,13 @@ controllers' status frames sped up, 2 s quiet: counts CAN errors and bus-offs; m
 result does not prove the termination, the meter check does), `system_limits` (a person moves a
 pivot or elevator by hand to both ends, robot disabled, its motors coasting: those are its limits),
 `system_step` (a registered mechanism's own closed loop, its goal moved along a path no faster than
-`vmax` nor `amax`; refuses a pivot or elevator without limits, stops it past them or too fast).
+`vmax` nor `amax`; refuses a pivot or elevator without limits, stops it past them or too fast),
+`system_piece` (calibrates a game-piece current sensor: `sensor` and `system` by number and
+`pieces`; a roller runs while a person feeds that many pieces one at a time when the banner says,
+stopping between them; an arm or elevator sweeps empty, then once with each piece; a person is
+part of it, so never run it without one), `system_hold` (tunes a hold current like the slip test:
+`hold` by number, a piece in; the limit steps down from `start_a` while a person pulls the piece the
+same way each time, until it slips; then 1.5 times that is held for `heat_s` to see the motor warm).
 
 Their `--arg` keys (the robot clamps each to a safe range and says so):
 
