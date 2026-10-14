@@ -72,6 +72,14 @@ const Systems = (() => {
       : `${s.name}: ${n4(s.velocity)} ${s.units} · goal ${n4(s.goal)}`;
   }
 
+  // The gains that apply to its kind: a wheel has no gravity, an elevator's is constant (kG), an
+  // arm's follows its angle (kCos). One that doesn't apply shows only if someone set it.
+  const OFF_KIND = { FLYWHEEL: ["kG", "kCos"], ROLLER: ["kG", "kCos"], ELEVATOR: ["kCos"], PIVOT: ["kG"] };
+  function shownGains(s) {
+    const off = OFF_KIND[s.kind] || [];
+    return Object.entries(s.gains || {}).filter(([k, g]) => !off.includes(k) || +g.value !== 0);
+  }
+
   // ---------------------------------------------------------------- setup
   function val(k) { const s = current(); return k in edits ? edits[k] : ((s && s.settings) || {})[k]; }
 
@@ -96,8 +104,8 @@ const Systems = (() => {
               <label>Load kg <input data-ph="load_kg" type="number" step="any" value="${esc(typed.load_kg ?? "")}" style="width:5em"></label>`}
         </div></details>
       <p class="small">${s.physics_error ? `<span class="bad-ink">${esc(s.physics_error)}</span>` : !s.physics ? `<span class="muted">No physics yet.</span>`
-        : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1))} ${esc(s.units)}${positional(s) ? "/s" : ""}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per radian)` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
-      <label class="row small" data-tip="sys.scale">One radian of it${positional(s) ? "" : " per second"} is <input id="sys-scale" type="number" step="any" value="${n4(s.scale)}" style="width:6em"> ${esc(s.units)}</label>
+        : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1))} ${esc(s.units)}${positional(s) ? "/s" : ""}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per ${s.kind === "ELEVATOR" ? "meter" : "radian"})` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
+      <label class="row small" data-tip="sys.scale">One ${s.kind === "ELEVATOR" ? "meter" : "radian"} of it${positional(s) ? "" : " per second"} is <input id="sys-scale" type="number" step="any" value="${n4(s.scale)}" style="width:6em"> ${esc(s.units)}</label>
       ${positional(s) ? `<h3 data-tip="sys.limits">2. Its limits</h3>
         <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min)} to ${n4(s.max)} ${esc(s.units)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
           <button class="btn small" id="sys-limits" data-tip="sys.limits-run">Set limits by hand…</button></div>` : ""}
@@ -108,7 +116,7 @@ const Systems = (() => {
       ${Object.keys(s.gains || {}).length ? `<div class="row" style="justify-content:space-between"><h3 data-tip="sys.gains">Its gains, live</h3>
           <span class="row small"><span class="muted">Live only: a value to keep goes into the code.</span>
           <button class="btn small" id="sys-apply" data-tip="sys.apply">Apply live</button></span></div>
-        <div class="gains sys-gains">${Object.entries(s.gains).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
+        <div class="gains sys-gains">${shownGains(s).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
     const ap = $("#sys-apply", box);
     if (ap) ap.onclick = async () => {
       const v = {};

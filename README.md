@@ -1,13 +1,14 @@
 # NTX 2027 Offseason
 
-Offseason robot code for FRC Team 7525 (Richardson Area Wide Robotics). This repo holds two WPILib Java projects. Each one is a YAGSL swerve drive that runs in simulation.
+Offseason robot code for FRC Team 7525 (Richardson Area Wide Robotics). This repo holds three WPILib Java projects. Each one is a YAGSL swerve drive that runs in simulation.
 
 | Project | Description |
 | --- | --- |
 | [`Black team/`](Black%20team/) | Swerve drive project for the Black team. Also includes the CTRE Phoenix 6 vendordep. |
 | [`Peashooter/`](Peashooter/) | Swerve drive project for Peashooter. |
+| [`Examples/`](Examples/) | Simulator only: mechanisms from past seasons (an elevator, a shooter pivot, a two-joint arm, a two-wheel shooter, a feeder, a climber), rebuilt the way these robots are written, to practice tuning in the Systems tab. |
 
-Right now the robot code in both projects is the same. The assignment for each one is in its own readme ([Black team](Black%20team/readme.md), [Peashooter](Peashooter/README.md)).
+Right now the robot code in Black team and Peashooter is the same. The assignment for each one is in its own readme ([Black team](Black%20team/readme.md), [Peashooter](Peashooter/README.md)).
 
 ## Requirements
 

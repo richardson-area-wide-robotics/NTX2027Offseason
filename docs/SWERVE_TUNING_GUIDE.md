@@ -26,8 +26,8 @@ From the repository folder:
 py -3.12 tools/swervetune gui
 ```
 
-Your browser opens at `http://127.0.0.1:5806/`. Pick the **robot code** (Peashooter or Black
-team), then who to talk to: the robot (by team number) or the **simulator on this laptop**, and
+Your browser opens at `http://127.0.0.1:5806/`. Pick the **robot code** (Peashooter, Black
+team, or Examples, which runs only in the simulator), then who to talk to: the robot (by team number) or the **simulator on this laptop**, and
 press **Connect**. The chips across the top show the robot, battery voltage, where the robot
 thinks it is, AprilTags and the deadman.
 
@@ -323,6 +323,10 @@ Set each mechanism up from top to bottom:
      volts that held it. If a flywheel settles short of its goal, the report suggests a kV from the
      physics, and its **Try kV** button applies it live.
    - **In the simulator,** the mechanism's physics aren't modeled, so only the sequence is checked.
+
+**Practice first.** The [Examples](../Examples/README.md) project is a simulated robot with an
+elevator, a shooter pivot, a two-joint arm, a two-wheel shooter and a feeder from past seasons.
+Each moves under WPILib's physics, so a test there shows real tracking and overshoot to learn from.
 
 **First time on the real robot? Walk me through it** opens the mechanism's checklist, which works
 like the Guide's **Redo one part**. Each step ticks itself off from what the robot shows, counting

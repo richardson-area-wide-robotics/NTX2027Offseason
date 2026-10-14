@@ -100,9 +100,15 @@ def groups(project, design=None, registered=()):
                     e["aka"].append(d["subsystem"])
                 if d["name"] not in e[kind]:
                     e[kind].append(d["name"])
+    def squash(x):
+        return re.sub(r"[^a-z0-9]", "", x.lower())
+
     for s in registered:
+        # By a shared motor, else the subsystem its name starts with, the longest: "Shooter pivot" is
+        # ShooterPivot's, not Shooter's.
+        named = [e for e in g.values() if squash(s["name"]).startswith(squash(e["name"]))]
         home = next((e for e in g.values() if set(s.get("motors") or []) & set(e["motors"])), None) \
-            or next((e for e in g.values() if s["name"].lower().startswith(e["name"].lower())), None) \
+            or max(named, key=lambda e: len(squash(e["name"])), default=None) \
             or grp(s["name"])
         home["systems"].append(s["name"])
     return sorted(g.values(), key=lambda e: (e["name"] != "Drive train", e["name"]))
@@ -133,10 +139,18 @@ def scale(entry, units, mech):
     if (entry or {}).get("unitsPerRadian"):
         return float(entry["unitsPerRadian"])
     u, g = (units or "").lower(), (mech or {}).get("ratio")
+    if (mech or {}).get("kind") == "elevator":
+        # One meter of travel: the drum turns 1 / (pi d) times, the motor g times that.
+        d = mech.get("spool_diameter_m")
+        if "rot" in u and d:
+            return (g if "motor" in u and g else 1.0) / (math.pi * d)
+        return {"m": 1.0, "meter": 1.0, "meters": 1.0, "cm": 100.0, "mm": 1000.0,
+                "in": 1 / 0.0254, "inch": 1 / 0.0254, "inches": 1 / 0.0254}.get(u)
     if "motor" in u and "rot" in u and g:
         return g / TWO_PI
     if "rpm" in u:
-        return (g or 1) * 60 / TWO_PI     # a motor's encoder in RPM, through the gearbox
+        # A motor's encoder in RPM is through the gearbox; "wheel RPM" is the mechanism's own.
+        return (1 if "wheel" in u or "mechanism" in u else (g or 1)) * 60 / TWO_PI
     if "deg" in u:
         return 180 / math.pi
     if u.startswith("rad"):
@@ -202,6 +216,9 @@ def step_report(doc, all_settings=None):
     meas = pos if positional else vel
     volts = [v for k, v in sorted(ch.items()) if re.fullmatch(r"volts\d+", k)]
     sim = doc.get("env") == "SIM"
+    # A simulated mechanism with physics (the Examples robot) moves; one without never does.
+    seen = [x for x in meas if x == x]
+    modeled = bool(seen) and max(seen) - min(seen) > 1e-6
     F, moves = [], []
     legs = _legs(t, goal)
     for n, (i0, g) in enumerate(legs):
@@ -240,7 +257,7 @@ def step_report(doc, all_settings=None):
     ff = plan_.get("feedforward") if plan_.get("ok") else None
     k = plan_.get("scale") if plan_.get("ok") else None
     actions = []
-    if not sim:
+    if modeled or not sim:
         if worst_os > 15:
             F.append(advisor.finding("warn", f"{name} overshoots {worst_os:.0f}%",
                                      "It passes the goal and comes back: less kP, or some kD to brake it."))
@@ -272,8 +289,10 @@ def step_report(doc, all_settings=None):
                                          "Far apart means the physical data (ratio, inertia, motor) or the units are off, "
                                          "or friction the model leaves out."))
     score = None if sim else max(0, round(100 - 2 * worst_os - 5 * worst_err - 10 * len(slow)))
-    summary = ("Simulator: the mechanism's physics aren't modeled, so only the sequence was checked." if sim else
-               f"{len(moves)} moves: overshoot up to {worst_os:.0f}%, settled within {worst_err:.1f}% of the goal.")
+    judged = f"{len(moves)} moves: overshoot up to {worst_os:.0f}%, settled within {worst_err:.1f}% of the goal."
+    summary = (judged if not sim else
+               f"Simulator, practice only (it never counts for the real robot). {judged}" if modeled else
+               "Simulator: the mechanism's physics aren't modeled, so only the sequence was checked.")
     return {"test": "system_step", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
             "score": score, "next": None, "modules": {}, "moves": moves, "actions": actions,
             "system": {"name": name, "kind": kind, "units": units}}

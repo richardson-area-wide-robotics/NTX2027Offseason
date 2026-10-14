@@ -33,6 +33,8 @@ jobs:
         include:
           - project: Black team
             slug: black-team
+          - project: Examples
+            slug: examples
           - project: Peashooter
             slug: peashooter
     steps:

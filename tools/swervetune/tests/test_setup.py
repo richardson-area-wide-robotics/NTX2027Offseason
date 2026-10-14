@@ -180,7 +180,7 @@ class PartTest(unittest.TestCase):
         self.assertEqual([j["go"] for j in p["jobs"] if j["id"] == "module"], [{"part": "module", "which": "frontleft"}])
 
     def test_the_real_robots_have_every_plan(self):
-        for robot in ("Peashooter", "Black team"):
+        for robot in ("Peashooter", "Black team", "Examples"):
             p = Y.Project(os.path.join(REPO, robot))
             c = SP.gather(p)
             for fn in SP.TOOLS.values():

@@ -8,7 +8,9 @@ from swervetune import advisor, systems as SY, yagslcfg
 from swervetune.tests.test_mechanics import ARM, recalc
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PEA = yagslcfg.Project(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(HERE))), "Peashooter"))
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
+PEA = yagslcfg.Project(os.path.join(REPO, "Peashooter"))
+EXA = yagslcfg.Project(os.path.join(REPO, "Examples"))
 
 PIVOT = {"name": "Intake pivot", "kind": "PIVOT", "units": "motor rotations", "motors": ["Intake pivot"],
          "min": 0.0, "max": 17.8}
@@ -41,6 +43,34 @@ class GroupsTest(unittest.TestCase):
         self.assertEqual(sorted(g["Feeder"]["aka"]), ["Spindexter", "Tower"])
         self.assertEqual(g["Feeder"]["sensors"], ["Tower beam"], "follows its design subsystem's motors")
         self.assertEqual(g["Drive train"]["aka"], ["Drive"])
+
+
+class ExamplesTest(unittest.TestCase):
+    """The Examples robot: past seasons' mechanisms, each with a complete plan from its settings."""
+    UNITS = {"Elevator": "meters", "Shooter pivot": "degrees", "Arm shoulder": "degrees", "Arm elbow": "degrees",
+             "Shooter left": "wheel RPM", "Shooter right": "wheel RPM", "Feeder": "RPM"}
+
+    def test_every_mechanism_is_registered_and_has_a_complete_plan(self):
+        kinds = SY.in_code(EXA)
+        self.assertEqual(sorted(kinds), sorted(self.UNITS))
+        cfg = SY.settings(EXA)
+        self.assertEqual(sorted(cfg), sorted(self.UNITS))
+        for name, entry in cfg.items():
+            reg = {"name": name, "kind": kinds[name], "units": self.UNITS[name], "min": entry.get("min"), "max": entry.get("max")}
+            plan = SY.plan(entry, reg)
+            self.assertTrue(plan["ok"], (name, plan))
+        # The physics the links give match the gains in the code: the elevator's kG, the pivot's kCos.
+        lift = SY.plan(cfg["Elevator"], {"kind": "ELEVATOR", "units": "meters", "min": 0, "max": 1.18})
+        self.assertAlmostEqual(lift["feedforward"]["kG"], 0.40, delta=0.01)
+        pivot = SY.plan(cfg["Shooter pivot"], {"kind": "PIVOT", "units": "degrees", "min": 3.6, "max": 111.6})
+        self.assertAlmostEqual(pivot["feedforward"]["kG"], 0.42, delta=0.01)
+
+    def test_the_climber_is_a_subsystem_with_nothing_to_tune(self):
+        g = {x["name"]: x for x in SY.groups(EXA, None, [{"name": n, "motors": [n]} for n in self.UNITS])}
+        self.assertEqual(g["Climber"]["motors"], ["Climber", "Climber follower"])
+        self.assertEqual(g["Climber"]["systems"], [])
+        self.assertEqual(sorted(g["Shooter"]["systems"]), ["Shooter left", "Shooter right"])
+        self.assertEqual(sorted(g["TwoJointArm"]["systems"]), ["Arm elbow", "Arm shoulder"])
 
 
 class InCodeTest(unittest.TestCase):
@@ -124,9 +154,26 @@ class StepReportTest(unittest.TestCase):
         self.assertEqual([f for f in rep["findings"] if f["level"] == "warn"], [])
         self.assertEqual(rep["score"], 100)
 
-    def test_the_simulator_judges_nothing(self):
+    def test_the_simulator_never_scores(self):
         rep = advisor.analyze(flywheel_run(env="SIM"))
         self.assertIsNone(rep["score"])
+        self.assertIn("practice only", rep["summary"], "a modeled mechanism moved: worth reading")
+        still = flywheel_run(env="SIM")
+        still["channels"]["vel"] = [0.0] * len(still["channels"]["t"])
+        rep = advisor.analyze(still)
+        self.assertIn("aren't modeled", rep["summary"])
+        self.assertEqual(rep["findings"], [])
+
+    def test_wheel_rpm_is_the_wheels_own(self):
+        belt = {"kind": "flywheel", "motor": "NEO Vortex", "count": 1, "ratio": 0.5}
+        self.assertAlmostEqual(SY.scale({}, "wheel RPM", belt), 60 / (2 * math.pi))
+        self.assertAlmostEqual(SY.scale({}, "RPM", belt), 0.5 * 60 / (2 * math.pi), msg="a motor's RPM, through the belt")
+
+    def test_an_elevator_in_motor_rotations_scales_per_meter(self):
+        mech = {"kind": "elevator", "motor": "NEO Vortex", "count": 1, "ratio": 5.0, "spool_diameter_m": 0.04}
+        self.assertAlmostEqual(SY.scale({}, "motor rotations", mech), 5.0 / (math.pi * 0.04))
+        self.assertAlmostEqual(SY.scale({}, "inches", mech), 39.37, places=2)
+        self.assertEqual(SY.scale({}, "meters", mech), 1.0)
 
 
 class LimitsReportTest(unittest.TestCase):

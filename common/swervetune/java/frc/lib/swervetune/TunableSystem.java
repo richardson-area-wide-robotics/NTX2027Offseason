@@ -147,6 +147,8 @@ public final class TunableSystem {
     sparkGain(spark, "kV", a.feedForward::getkV, (c, v) -> c.closedLoop.feedForward.kV(v), 0, 20);
     sparkGain(spark, "kA", a.feedForward::getkA, (c, v) -> c.closedLoop.feedForward.kA(v), 0, 20);
     sparkGain(spark, "kG", a.feedForward::getkG, (c, v) -> c.closedLoop.feedForward.kG(v), -12, 12);
+    // An arm's gravity: volts at horizontal, scaled by the cosine of its angle (kCosRatio sets the units).
+    sparkGain(spark, "kCos", a.feedForward::getkCos, (c, v) -> c.closedLoop.feedForward.kCos(v), -12, 12);
     return this;
   }
 
