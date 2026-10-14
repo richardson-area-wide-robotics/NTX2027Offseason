@@ -417,11 +417,30 @@ class Project:
 
 
 def edits_for_gains(project, gains):
-    """Maps live gain names to the JSON fields that keep them. Unknown names are ignored."""
+    """Maps live gain names to the JSON fields that keep them. Unknown names are ignored.
+
+    A pod's own gains go to swervetune.json's "podGains", only where they differ from the shared
+    ones (pidfproperties.json): a pod running the shared gains needs no entry, and one it already
+    has is set back to the shared values so it no longer overrides them."""
     e = []
     pid_map = {"kP": "p", "kI": "i", "kD": "d", "IZone": "iz"}
+    pidf = (project.data.get("modules/pidfproperties.json") or {}) if project else {}
+    pods_in_file = ((project.data.get("swervetune.json") or {}).get("podGains") or {}) if project else {}
+
+    def shared(loop, k):
+        if f"{loop}/{k}" in gains:
+            return gains[f"{loop}/{k}"]
+        return (pidf.get("angle" if loop == "Steer" else "drive") or {}).get(pid_map[k], 0.0)
+
     for key, value in gains.items():
         parts = key.split("/")
+        if parts[0] == "Pod" and len(parts) == 4 and parts[2] in ("Steer", "Drive") and parts[3] in pid_map:
+            pod, loop, k = parts[1], parts[2], parts[3]
+            has = loop.lower() in (pods_in_file.get(pod) or {})
+            differs = abs(float(value) - float(shared(loop, k))) > 1e-12
+            if differs or has:
+                e.append(("swervetune.json", ("podGains", pod, loop.lower(), pid_map[k]), value))
+            continue
         if parts[0] in ("Steer", "Drive") and parts[1] in pid_map:
             e.append(("modules/pidfproperties.json",
                       ("angle" if parts[0] == "Steer" else "drive", pid_map[parts[1]]), value))

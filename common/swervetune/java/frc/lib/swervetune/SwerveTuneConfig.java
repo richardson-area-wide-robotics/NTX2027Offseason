@@ -37,6 +37,12 @@ public final class SwerveTuneConfig {
   /** Measured feedforward by YAGSL module name: {@code {kS, kV, kA}}. Absent means YAGSL's default. */
   public final Map<String, double[]> driveFeedforward = new LinkedHashMap<>();
 
+  /**
+   * A pod's own PID, by YAGSL module name, then "steer" or "drive": {@code {p, i, d, iz}}, any of
+   * them NaN to keep the shared value from pidfproperties.json. Absent means the shared gains.
+   */
+  public final Map<String, Map<String, double[]>> podGains = new LinkedHashMap<>();
+
   public boolean angularVelocityCompensationTeleop = false;
   public boolean angularVelocityCompensationAuto = false;
   public double angularVelocityCoefficient = 0.0;
@@ -183,6 +189,20 @@ public final class SwerveTuneConfig {
         continue;
       }
       c.driveFeedforward.put(e.getKey(), new double[] {ks, kv, ka});
+    }
+
+    for (Map.Entry<String, Object> e : map(m.get("podGains")).entrySet()) {
+      Map<String, double[]> pod = new LinkedHashMap<>();
+      for (String loop : new String[] {"steer", "drive"}) {
+        Map<String, Object> g = map(map(e.getValue()).get(loop));
+        if (!g.isEmpty()) {
+          pod.put(loop, new double[] {num(g.get("p"), Double.NaN), num(g.get("i"), Double.NaN),
+              num(g.get("d"), Double.NaN), num(g.get("iz"), Double.NaN)});
+        }
+      }
+      if (!pod.isEmpty()) {
+        c.podGains.put(e.getKey(), pod);
+      }
     }
 
     Map<String, Object> avc = map(m.get("angularVelocityCompensation"));

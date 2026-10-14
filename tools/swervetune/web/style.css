@@ -759,3 +759,7 @@ table.t td > select { padding-block: 1px; }
 .dcard-facts dt { color: var(--muted); }
 .dcard-facts dd { margin: 0; }
 .dcard-credit { font-size: 10px; color: var(--muted); }
+
+/* Tune drive train: a pod whose gains differ from the shared ones. */
+#podseg button.own::after { content: " \2022"; color: var(--warn); }
+#podcmp p { margin: 4px 0; }

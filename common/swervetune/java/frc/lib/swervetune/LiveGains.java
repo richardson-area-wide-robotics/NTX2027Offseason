@@ -70,6 +70,14 @@ final class LiveGains {
     spec("EncoderSync/DeadbandDeg", 0.25, 10, "encSync");
   }
 
+  static final String[] POD_LOOPS = {"Steer", "Drive"};
+  static final String[] PID_KEYS = {"kP", "kI", "kD", "IZone"};
+
+  /** A pod's own gain: {@code Pod/frontleft/Steer/kP}. */
+  static String podKey(String module, String loop, String k) {
+    return "Pod/" + module + "/" + loop + "/" + k;
+  }
+
   /** Bounds for every module's feedforward. */
   static final Spec FF_KS = new Spec("kS", 0, 1.5, "ff");
 
@@ -109,6 +117,16 @@ final class LiveGains {
       specByKey.put(base + "kV", new Spec(base + "kV", FF_KV.min(), FF_KV.max(), "ff:" + m));
       specByKey.put(base + "kA", new Spec(base + "kA", FF_KA.min(), FF_KA.max(), "ff:" + m));
     }
+    // Each pod's own PID, within the same bounds as the shared one: Pod/<module>/Steer/kP and so on.
+    for (int m = 0; m < io.moduleCount(); m++) {
+      for (String loop : POD_LOOPS) {
+        for (String k : PID_KEYS) {
+          Spec shared = specByKey.get(loop + "/" + k);
+          String key = podKey(io.moduleName(m), loop, k);
+          specByKey.put(key, new Spec(key, shared.min(), shared.max(), loop.toLowerCase() + "Pid:" + m));
+        }
+      }
+    }
 
     double[] sp = io.steerPid();
     double[] dp = io.drivePid();
@@ -134,6 +152,14 @@ final class LiveGains {
       current.put(base + "kS", ff[0]);
       current.put(base + "kV", ff[1]);
       current.put(base + "kA", ff[2]);
+    }
+    for (int m = 0; m < io.moduleCount(); m++) {
+      double[] s = io.steerPid(m);
+      double[] d = io.drivePid(m);
+      for (int k = 0; k < PID_KEYS.length; k++) {
+        current.put(podKey(io.moduleName(m), "Steer", PID_KEYS[k]), s[k]);
+        current.put(podKey(io.moduleName(m), "Drive", PID_KEYS[k]), d[k]);
+      }
     }
 
     for (Map.Entry<String, Double> e : current.entrySet()) {
@@ -294,6 +320,15 @@ final class LiveGains {
             current.put(s.key(), wanted.get(s.key()));
           }
         }
+        // The shared gains go to every pod: each pod's own now reads the same.
+        if (g.getKey().equals("steerPid") || g.getKey().equals("drivePid")) {
+          String loop = g.getKey().equals("steerPid") ? "Steer" : "Drive";
+          for (int m = 0; m < io.moduleCount(); m++) {
+            for (String k : PID_KEYS) {
+              current.put(podKey(io.moduleName(m), loop, k), wanted.get(loop + "/" + k));
+            }
+          }
+        }
         done.add(r.message());
       } else {
         refused.add(r.message());
@@ -333,6 +368,17 @@ final class LiveGains {
       int m = Integer.parseInt(group.substring(3));
       String base = "FF/" + io.moduleName(m) + "/";
       return io.applyDriveFeedforward(m, w.get(base + "kS"), w.get(base + "kV"), w.get(base + "kA"));
+    }
+    if (group.startsWith("steerPid:") || group.startsWith("drivePid:")) {
+      int m = Integer.parseInt(group.substring(group.indexOf(':') + 1));
+      String n = io.moduleName(m);
+      boolean steer = group.startsWith("steer");
+      String loop = steer ? "Steer" : "Drive";
+      double kP = w.get(podKey(n, loop, "kP"));
+      double kI = w.get(podKey(n, loop, "kI"));
+      double kD = w.get(podKey(n, loop, "kD"));
+      double iz = w.get(podKey(n, loop, "IZone"));
+      return steer ? io.applySteerPid(m, kP, kI, kD, iz) : io.applyDrivePid(m, kP, kI, kD, iz);
     }
     return switch (group) {
       case "steerPid" -> io.applySteerPid(

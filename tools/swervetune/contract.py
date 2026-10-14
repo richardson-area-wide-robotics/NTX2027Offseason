@@ -301,6 +301,25 @@ GAIN_SPECS = {
     "EncoderSync/DeadbandDeg": (0.25, 10),
 }
 FF_SPECS = {"kS": (0, 1.5), "kV": (0.5, 8.0), "kA": (0, 4.0)}
+# Each pod's own PID: Pod/<module>/Steer/kP and so on, in the shared gain's range (LiveGains.podKey).
+POD_LOOPS = ("Steer", "Drive")
+PID_KEYS = ("kP", "kI", "kD", "IZone")
+
+
+def pod_key(module, loop, k):
+    return f"Pod/{module}/{loop}/{k}"
+
+
+def gain_spec(key):
+    """The robot's range for any live gain: shared, a module's feedforward, or a pod's own."""
+    if key in GAIN_SPECS:
+        return GAIN_SPECS[key]
+    parts = key.split("/")
+    if parts[0] == "Pod" and len(parts) == 4:
+        return GAIN_SPECS.get(f"{parts[2]}/{parts[3]}")
+    if parts[0] == "FF" and len(parts) == 3:
+        return FF_SPECS.get(parts[2])
+    return None
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
 TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",

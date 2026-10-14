@@ -169,6 +169,16 @@ public interface DrivetrainIO {
 
   ApplyResult applyDrivePid(double kP, double kI, double kD, double iZone);
 
+  /** One pod's steering PID; the other pods keep theirs. */
+  default ApplyResult applySteerPid(int module, double kP, double kI, double kD, double iZone) {
+    return ApplyResult.failed("this drivetrain sets steering gains on every pod at once");
+  }
+
+  /** One pod's drive PID; the other pods keep theirs. */
+  default ApplyResult applyDrivePid(int module, double kP, double kI, double kD, double iZone) {
+    return ApplyResult.failed("this drivetrain sets drive gains on every pod at once");
+  }
+
   /** Drive feedforward for one module: volts = kS*sgn(v) + kV*v + kA*a. */
   ApplyResult applyDriveFeedforward(int module, double kS, double kV, double kA);
 
@@ -200,6 +210,16 @@ public interface DrivetrainIO {
   double[] steerPid();
 
   double[] drivePid();
+
+  /** One pod's steering PID, {@code {kP, kI, kD, iZone}}. */
+  default double[] steerPid(int module) {
+    return steerPid();
+  }
+
+  /** One pod's drive PID. */
+  default double[] drivePid(int module) {
+    return drivePid();
+  }
 
   /** {@code {steer seconds, drive seconds}}. */
   double[] rampRates();

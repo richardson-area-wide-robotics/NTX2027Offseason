@@ -2,6 +2,7 @@ package frc.lib.swervetune;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -613,6 +614,38 @@ class SwerveTuneHarnessTest {
     assertTrue(status.contains("REFUSED") && status.contains("Drive/kP"), status);
     double echoed = nt.getDoubleTopic(SwerveTuneTopics.GAINS_APPLIED + "Drive/kP").subscribe(-1).get();
     assertEquals(0.002, echoed, 1e-12, "the echo shows what is really running");
+  }
+
+  @Test
+  void onePodsGainsChangeThatPodOnlyAndTheSharedGainsResetEveryPod() {
+    loop(1);
+    String fl = io.moduleName(0);
+    DoublePublisher podKp = nt.getDoubleTopic(SwerveTuneTopics.GAINS + "Pod/" + fl + "/Steer/kP").publish();
+    DoublePublisher kp = nt.getDoubleTopic(SwerveTuneTopics.GAINS + "Steer/kP").publish();
+    IntegerPublisher apply = nt.getIntegerTopic(SwerveTuneTopics.GAINS_APPLY_SEQ).publish();
+    IntegerPublisher boot = nt.getIntegerTopic(SwerveTuneTopics.GAINS_BOOT_ID).publish();
+    boot.set(tune.bootId());
+    podKp.set(0.03);
+    apply.set(1);
+    loop(2);
+    assertArrayEquals(new double[] {0.03, 0, 0.001, 0}, io.podSteerPid[0], 1e-12, "the pod's own, the rest kept");
+    assertNull(io.podSteerPid[1], "the other pods untouched");
+    assertEquals(0.01, io.steerPid[0], 1e-12, "the shared gains untouched");
+    double echoed = nt.getDoubleTopic(SwerveTuneTopics.GAINS_APPLIED + "Pod/" + fl + "/Steer/kP").subscribe(-1).get();
+    assertEquals(0.03, echoed, 1e-12);
+    // The shared gains go to every pod, and every pod's echo says so.
+    kp.set(0.02);
+    apply.set(2);
+    loop(2);
+    assertNull(io.podSteerPid[0], "the shared gains replaced the pod's own");
+    echoed = nt.getDoubleTopic(SwerveTuneTopics.GAINS_APPLIED + "Pod/" + fl + "/Steer/kP").subscribe(-1).get();
+    assertEquals(0.02, echoed, 1e-12);
+  }
+
+  @Test
+  void aPodsOwnGainKeepsTheSharedOnesItDoesNotGive() {
+    assertArrayEquals(new double[] {0.03, 0, 0.002, 0},
+        SwerveTune.merge(new double[] {0.03, Double.NaN, 0.002, Double.NaN}, new double[] {0.01, 0, 0.001, 0}), 1e-12);
   }
 
   @Test

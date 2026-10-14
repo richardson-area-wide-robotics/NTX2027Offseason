@@ -80,6 +80,30 @@ def _module_names(result, count):
     return [names[i] if i < len(names) else f"m{i}" for i in range(count)]
 
 
+def pod_doc(doc, pod):
+    """One pod's view of a run: only its channels (the time and whole-robot channels kept), and the
+    gains that pod ran with in place of the shared ones, so the report and its advice are that
+    pod's. ``pod`` is a module name or index; an unknown one returns the run unchanged."""
+    names = list((doc.get("robot") or {}).get("modules") or [])
+    i = names.index(pod) if pod in names else (int(pod) if str(pod).isdigit() else -1)
+    if i < 0:
+        return doc
+    out = dict(doc)
+    pre = f"m{i}."
+    out["channels"] = {k: v for k, v in (doc.get("channels") or {}).items()
+                       if not (k.startswith("m") and "." in k and k[1:k.index(".")].isdigit()) or k.startswith(pre)}
+    g = dict(doc.get("gains") or {})
+    name = names[i] if i < len(names) else str(i)
+    for loop in ("Steer", "Drive"):
+        for k in ("kP", "kI", "kD", "IZone"):
+            v = g.get(f"Pod/{name}/{loop}/{k}")
+            if v is not None:
+                g[f"{loop}/{k}"] = v
+    out["gains"] = g
+    out["pod"] = name
+    return out
+
+
 def _modules_in(channels, suffix):
     out = []
     for key in channels:

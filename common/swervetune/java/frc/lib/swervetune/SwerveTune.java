@@ -648,6 +648,17 @@ public final class SwerveTune {
   }
 
   /** Applies what {@code swervetune.json} asks for, once, and says what it did. */
+  /** A pod's values over the shared ones: NaN keeps the shared value. */
+  static double[] merge(double[] own, double[] shared) {
+    double[] out = shared.clone();
+    for (int i = 0; i < Math.min(own.length, out.length); i++) {
+      if (!Double.isNaN(own[i])) {
+        out[i] = own[i];
+      }
+    }
+    return out;
+  }
+
   private List<String> applyStartupConfig() {
     List<String> report = new ArrayList<>(config.warnings);
     if (!config.visionCameras.isEmpty()) {
@@ -673,6 +684,24 @@ public final class SwerveTune {
       }
       double[] f = e.getValue();
       report.add(io.applyDriveFeedforward(m, f[0], f[1], f[2]).message());
+    }
+    // A pod's own gains, over the shared ones: a value it doesn't give keeps the shared one.
+    for (Map.Entry<String, Map<String, double[]>> e : config.podGains.entrySet()) {
+      int m = moduleIndex(e.getKey());
+      if (m < 0) {
+        report.add("podGains names a module that does not exist: " + e.getKey());
+        continue;
+      }
+      double[] s = e.getValue().get("steer");
+      if (s != null) {
+        double[] k = merge(s, io.steerPid(m));
+        report.add(io.applySteerPid(m, k[0], k[1], k[2], k[3]).message());
+      }
+      double[] d = e.getValue().get("drive");
+      if (d != null) {
+        double[] k = merge(d, io.drivePid(m));
+        report.add(io.applyDrivePid(m, k[0], k[1], k[2], k[3]).message());
+      }
     }
     if (config.angularVelocityCompensationTeleop || config.angularVelocityCompensationAuto) {
       report.add(io.applyAngularVelocityCompensation(

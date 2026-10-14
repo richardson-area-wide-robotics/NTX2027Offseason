@@ -349,6 +349,8 @@ def cmd_analyze(args, out):
             project = resolve_project((doc.get("robot") or {}).get("name"))
         except CliError:
             project = None
+    if getattr(args, "pod", None):
+        doc = advisor.pod_doc(doc, args.pod)  # one pod, with its own gains
     rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=args.tape_forward,
                           measured_lateral_m=args.tape_lateral, **advisor.robot_context(project))
     out.put(report=_clean(rep), run_file=doc["_file"])
@@ -629,7 +631,7 @@ def cmd_gains(args, out):
             if k not in now:
                 problems.append(f"{k} is not a live gain")
                 continue
-            spec = C.GAIN_SPECS.get(k) or C.FF_SPECS.get(k.split("/")[-1])
+            spec = C.gain_spec(k)
             if spec and not (spec[0] <= v <= spec[1]):
                 problems.append(f"{k}={v} is outside the robot's range {spec}")
             old = now[k]
@@ -1089,6 +1091,7 @@ def build_parser():
     s.add_argument("run")
     s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward m")
     s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways m")
+    s.add_argument("--pod", help="one pod only, judged against its own gains, e.g. frontleft")
     s.set_defaults(fn=cmd_analyze)
 
     s = sub.add_parser("explain", help="what the controller saw and did in a saved step run")

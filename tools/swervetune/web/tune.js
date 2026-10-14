@@ -32,6 +32,22 @@ const Tune = (() => {
   const COLORS = ["--s0", "--s1", "--s2", "--s3"];
 
   let loop = "steer", target = "robot", surface = "floor", module = "ALL", pattern = 0;
+  // Each pod first: one pod's steer motor, then its drive motor, each with that pod's own gains.
+  // Then the whole drive train: all pods together on the gains they share, and the chassis tests.
+  let stage = "pod", pod = "FL";
+  const STAGE_LOOPS = { pod: ["steer", "drive"], whole: ["steer", "drive", "ff", "slip", "spin", "straight"] };
+  const POD_LABEL = { steer: "Steer motor", drive: "Drive motor" };
+  const WHOLE_LABEL = { steer: "All pods: steering", drive: "All pods: drive speed" };
+  const POD_BLURB = {
+    steer: "This pod's steering motor on its own: the other pods hold still. Tune it until it meets every target, then the next pod. The gains here are this pod's own; when every pod wants the same, Use on every pod.",
+    drive: "This pod's drive motor. The test runs all four wheels (on the floor the robot rolls on all of them), and this shows this pod's response, judged on its own, and changes this pod's gains only.",
+  };
+  const PODS = { FL: "Front left", FR: "Front right", BL: "Back left", BR: "Back right" };
+  const podName = () => App.modules().find(m => abbr(m) === pod) || pod;
+  // A shared PID name as the chosen pod's own, on the robot in the Each pod stage.
+  const PODDED = /^(Steer|Drive)\/(kP|kI|kD|IZone)$/;
+  const podify = k => stage === "pod" && target !== "practice" && PODDED.test(k) ? `Pod/${podName()}/${k}` : k;
+  const podifyAll = vals => Object.fromEntries(Object.entries(vals).map(([k, v]) => [podify(k), v]));
   let edits = {}, practiceGains = null, current = null, compare = null, zoom = null;
   let xmod = 0, whatIf = { values: {}, pred: null, seq: 0 }, predTimer = null, stepSel = null;
   // With the whole run in view, only what needs attention is marked; pick a step to see it all.
@@ -74,13 +90,14 @@ const Tune = (() => {
     <div class="tune">
       <div class="panel tune-bar">
         <div class="row tune-picks">
+          <div class="seg" id="stageseg" role="group" aria-label="What to tune"><button data-stage="pod" data-tip="tune.stage.pod">Each pod</button><button data-stage="whole" data-tip="tune.stage.whole">Whole drive train</button></div>
+          <div class="seg" id="podseg" role="group" aria-label="Pod">${Object.entries(PODS).map(([k, v]) => `<button data-pod="${k}" data-tip="tune.pod">${v}</button>`).join("")}</div>
           <div class="seg" id="loopseg" role="group" aria-label="Test">${Object.entries(LOOPS).map(([k, v]) => `<button data-loop="${k}" data-tip="tune.loop.${k}">${v.label}</button>`).join("")}</div>
           <div class="row"><span class="small muted" id="lbl-target">Run on</span>
             <div class="seg" id="targetseg" role="group" aria-labelledby="lbl-target"><button data-t="robot" data-tip="tune.target.robot">Robot</button><button data-t="practice" data-tip="tune.target.practice">Practice pod</button></div></div>
           <div class="row" id="surfacerow"><span class="small muted" id="lbl-surf">Practice surface</span>
             <div class="seg" id="surfseg" role="group" aria-labelledby="lbl-surf"><button data-s="floor" data-tip="tune.surface.floor">Floor</button><button data-s="blocks" data-tip="tune.surface.blocks">Blocks</button></div></div>
           <div class="row" id="modrow">
-            <label class="row small" data-tip="tune.module">Module <select id="module"><option>ALL</option><option>FL</option><option>FR</option><option>BL</option><option>BR</option></select></label>
             <label class="row small" data-tip="tune.pattern">Steps <select id="pattern"><option value="0">Standard</option><option value="1">Small (friction)</option><option value="2">Large (flat out)</option></select></label></div>
         </div>
         <p class="hint" id="blurb"></p>
@@ -90,10 +107,11 @@ const Tune = (() => {
         <div class="panel">
           <div class="row" style="justify-content:space-between"><h3 data-tip="tune.gains">Gains</h3><span class="hint" id="gainsrc"></span></div>
           <div class="gains" id="gains"></div>
+          <div id="podcmp" class="small"></div>
           <div class="row">
             <button class="btn" id="apply" data-tip="tune.apply">Apply live</button>
-            <button class="btn" id="revert" data-tip="tune.revert">Revert edits</button>
-            <button class="btn" id="save" data-tip="tune.save">Save to files…</button>
+            <button class="btn" id="revert" data-tip="tune.revert">Revert</button>
+            <button class="btn" id="save" data-tip="tune.save">Save…</button>
           </div>
           <div id="needs"></div>
           <button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
@@ -200,8 +218,9 @@ const Tune = (() => {
   }
 
   function fields() {
-    if (loop === "steer") return GAINS.steer;
-    if (loop === "drive") return GAINS.drive;
+    const own = list => list.map(([k, label, unit]) => [podify(k), podify(k) === k ? label + (stage === "pod" && target !== "practice" ? " (every pod)" : "") : label, unit]);
+    if (loop === "steer") return own(GAINS.steer);
+    if (loop === "drive") return own(GAINS.drive);
     if (loop === "slip") return [];
     if (loop === "ff") {
       const mods = target === "practice" ? ["frontleft"] : App.modules();
@@ -228,6 +247,43 @@ const Tune = (() => {
       if (inp.value === "") delete edits[k]; else edits[k] = +inp.value;
       inp.classList.toggle("changed", k in edits);
     });
+    paintPodCmp();
+  }
+
+  // This pod's gains against the others', and the way to give every pod the same. Rebuilt only when
+  // it changes: the page repaints with every state poll, and a rebuilt button loses the click.
+  function paintPodCmp() {
+    const box = $("#podcmp", root);
+    let html = "";
+    const L = loop === "steer" ? "Steer" : "Drive", g = liveGains(), me = podName(), keys = ["kP", "kI", "kD", "IZone"];
+    const mine = k => (`Pod/${me}/${L}/${k}` in edits ? edits[`Pod/${me}/${L}/${k}`] : g[`Pod/${me}/${L}/${k}`]);
+    if (stage === "pod" && target !== "practice" && ["steer", "drive"].includes(loop)) {
+      // The other pods, grouped by what differs: "FR, BL, BR: kP 0.01".
+      const groups = {};
+      for (const m of App.modules().filter(x => x !== me)) {
+        const d = keys.filter(k => Math.abs((g[`Pod/${m}/${L}/${k}`] ?? NaN) - (mine(k) ?? NaN)) > 1e-12)
+          .map(k => `${k} ${num(g[`Pod/${m}/${L}/${k}`])}`).join(", ");
+        (groups[d] = groups[d] || []).push(abbr(m));
+      }
+      const same = groups[""] || [];
+      delete groups[""];
+      html = `<p><b>${esc(abbr(me))}'s own.</b> ${same.length ? `${same.join(", ")}: the same. ` : ""}${Object.entries(groups).map(([d, ms]) =>
+        `<span class="warn-ink">${ms.join(", ")}: ${esc(d)}.</span>`).join(" ")}
+        <button class="btn small" id="pod-all" data-tip="tune.pod-all" ${Object.keys(groups).length ? "" : "disabled"}>Use on every pod</button></p>`;
+    }
+    if (box._html !== html) {
+      box._html = html;
+      box.innerHTML = html;
+      const b = $("#pod-all", box);
+      if (b) b.onclick = () => applyEdits(Object.fromEntries(keys.map(k => [`${L}/${k}`, +mine(k)])),
+        `Tune drive train: ${PODS[pod].toLowerCase()}'s ${L.toLowerCase()} gains on every pod`);
+    }
+    // Which pods' gains differ from the shared ones: a mark on their buttons.
+    $$("#podseg button", root).forEach(b => {
+      const m = App.modules().find(x => abbr(x) === b.dataset.pod);
+      const own = stage === "pod" && m && keys.some(k => Math.abs((g[`Pod/${m}/${L}/${k}`] ?? NaN) - (g[`${L}/${k}`] ?? NaN)) > 1e-12);
+      b.classList.toggle("own", !!own);
+    });
   }
 
   async function applyEdits(values, reason) {
@@ -242,7 +298,7 @@ const Tune = (() => {
     }
     if (!App.connected()) { App.toast("Connect first."); return false; }
     // The reason goes into the robot's match log with the change.
-    const r = await App.api("/api/gains", { values: vals, reason: reason || "Tune tab: typed by hand" });
+    const r = await App.api("/api/gains", { values: vals, reason: reason || "Tune drive train: typed by hand" });
     App.toast(r.status || r.error, 6000);
     if (r.gains) App.state.gains = r.gains;
     edits = {};
@@ -280,6 +336,7 @@ const Tune = (() => {
         if (Object.keys(edits).length && !(await applyEdits())) return;
         const args = loop === "steer" ? { pattern } : {};
         doc = await App.runTest(L.test, loop === "steer" ? module : "ALL", args);
+        if (stage === "pod") doc = await podView(doc._file);
       }
       show(doc);
       loadHistory();
@@ -288,6 +345,13 @@ const Tune = (() => {
     } finally {
       $("#run", root).disabled = false;
     }
+  }
+
+  // A run as one pod sees it: its own channels, judged against its own gains.
+  async function podView(file) {
+    const d = await App.api("/api/runs/" + encodeURIComponent(file) + (stage === "pod" ? "?pod=" + encodeURIComponent(podName()) : ""));
+    d._file = file;
+    return d;
   }
 
   // ---------------------------------------------------------------- results
@@ -458,7 +522,7 @@ const Tune = (() => {
     const ex = explained();
     if (!ex || !current._file) return;
     const seq = ++whatIf.seq;
-    const r = await App.api("/api/predict", { file: current._file, module: ex.index, gains: whatIf.values });
+    const r = await App.api("/api/predict", { file: current._file, module: ex.index, gains: whatIf.values, pod: stage === "pod" ? podName() : "" });
     if (seq !== whatIf.seq) return;
     Object.assign(whatIf, { pred: r, file: current._file, index: ex.index });
     paintPrediction();
@@ -561,8 +625,9 @@ const Tune = (() => {
 
   async function doAction(a, why) {
     if (a.type === "gains") {
-      await applyEdits(Object.fromEntries(Object.entries(a.values).map(([k, v]) => [k, +v])),
-        why ? "Tune tab, advice: " + why : "Tune tab, advice");
+      // The advice names the shared gains; in the Each pod stage it is about this pod's own.
+      await applyEdits(podifyAll(Object.fromEntries(Object.entries(a.values).map(([k, v]) => [k, +v]))),
+        (why ? "Tune drive train, advice: " + why : "Tune drive train, advice") + (stage === "pod" ? ` (${podName()})` : ""));
       if (a.then) {
         // Gains measured by one test are checked by another (the feedforward, by Drive speed).
         const to = Object.entries(LOOPS).find(([, v]) => v.test === a.then.test);
@@ -672,18 +737,19 @@ const Tune = (() => {
       <td class="nowrap"><button class="linkbtn" data-open="${esc(x.file)}">${esc(clock(x.saved))}</button></td><td>${x.practice ? "practice" : esc(whereWord(x.env || "").toLowerCase())}</td>
       <td class="num">${x.score == null || (x.outcome && x.outcome !== "DONE") ? "–" : x.score}</td><td class="small">${esc(changed(x, list[i + 1]))}</td></tr>`).join("")}</tbody></table>`
       : `<span class="hint">None yet for this test.</span>`;
-    $$("#history [data-open]", root).forEach(b => b.onclick = async () => {
-      const d = await App.api("/api/runs/" + encodeURIComponent(b.dataset.open));
-      d._file = b.dataset.open;
-      show(d);
-    });
+    $$("#history [data-open]", root).forEach(b => b.onclick = async () => show(await podView(b.dataset.open)));
     if (current) $$("#history tr", root).forEach(tr => tr.toggleAttribute("aria-current", tr.dataset.f === current._file));
   }
 
   async function saveGains() {
     if (target === "practice") { App.toast("Practice gains are not the robot's. Try them on the robot, then save."); return; }
     if (loop === "slip") { App.toast("Use Try this on the recommended limit to write it to the files."); return; }
-    const prefix = { steer: ["Steer"], drive: ["Drive"], ff: ["FF"], spin: ["Chassis", "EncoderSync"], straight: ["Chassis", "EncoderSync"] }[loop];
+    const L = { steer: "Steer", drive: "Drive" }[loop];
+    let prefix = { steer: ["Steer"], drive: ["Drive"], ff: ["FF"], spin: ["Chassis", "EncoderSync"], straight: ["Chassis", "EncoderSync"] }[loop];
+    // Each pod: this pod's own (and the shared ramp and filters it shows). Whole: the shared gains, and
+    // every pod's own, so a pod that now runs the shared gains no longer overrides them in the files.
+    if (L && stage === "pod") prefix = [`Pod/${podName()}/${L}/`, `${L}/RampS`, ...(L === "Drive" ? ["Drive/Vel"] : [])];
+    else if (L) prefix = [L, ...App.modules().map(m => `Pod/${m}/${L}/`)];
     await App.previewAndSave({ kind: "gains", keys: prefix }, "Save the gains the robot is running");
   }
 
@@ -693,17 +759,40 @@ const Tune = (() => {
   function faultScope() {
     if (target === "practice") return null;
     if (loop === "steer") return { kind: "steer", module, quiet: true, what: module === "ALL" ? "the steer motors" : `the ${MODNAME[module] || module} steer motor` };
+    if (loop === "drive" && stage === "pod") return { kind: "drive", module: pod, quiet: true, what: `the ${MODNAME[pod]} drive motor` };
     if (["drive", "ff", "slip"].includes(loop)) return { kind: "drive", quiet: true, what: "the drive motors" };
     return { kind: "swerve", gyro: true, quiet: true, what: "the swerve motors and the gyro" };
   }
 
   // ---------------------------------------------------------------- controls
+  function setStage(s) {
+    stage = s;
+    module = stage === "pod" ? pod : "ALL";
+    $$("#stageseg button", root).forEach(b => { b.classList.toggle("on", b.dataset.stage === s); b.setAttribute("aria-pressed", b.dataset.stage === s); });
+    $("#podseg", root).hidden = s !== "pod";
+    $$("#loopseg button", root).forEach(b => {
+      const k = b.dataset.loop;
+      b.hidden = !STAGE_LOOPS[s].includes(k);
+      b.textContent = (s === "pod" ? POD_LABEL : WHOLE_LABEL)[k] || LOOPS[k].label;
+    });
+    setLoop(STAGE_LOOPS[s].includes(loop) ? loop : STAGE_LOOPS[s][0]);
+  }
+  function setPod(p) {
+    pod = p;
+    if (stage === "pod") module = pod;
+    $$("#podseg button", root).forEach(b => { b.classList.toggle("on", b.dataset.pod === p); b.setAttribute("aria-pressed", b.dataset.pod === p); });
+    edits = {};
+    current = null;
+    sync();
+    loadHistory();
+  }
+
   function setLoop(l) {
     loop = l;
     edits = {};
     if (!LOOPS[l].practice) target = "robot";
     $$("#loopseg button", root).forEach(b => b.classList.toggle("on", b.dataset.loop === l));
-    $("#blurb", root).innerHTML = Learn.link(LOOPS[l].blurb, 3);
+    $("#blurb", root).innerHTML = Learn.link(stage === "pod" && POD_BLURB[l] ? POD_BLURB[l] : LOOPS[l].blurb, 3);
     $("#modrow", root).hidden = l !== "steer";
     sync();
     loadHistory();
@@ -725,9 +814,10 @@ const Tune = (() => {
   }
 
   $$("#loopseg button", root).forEach(b => b.onclick = () => setLoop(b.dataset.loop));
+  $$("#stageseg button", root).forEach(b => b.onclick = () => setStage(b.dataset.stage));
+  $$("#podseg button", root).forEach(b => b.onclick = () => setPod(b.dataset.pod));
   $$("#targetseg button", root).forEach(b => b.onclick = () => { target = b.dataset.t; edits = {}; sync(); });
   $$("#surfseg button", root).forEach(b => b.onclick = () => { surface = b.dataset.s; sync(); });
-  $("#module", root).onchange = e => { module = e.target.value; };
   $("#pattern", root).onchange = e => { pattern = +e.target.value; };
   $("#run", root).onclick = run;
   $("#try-practice", root).onclick = () => { target = "practice"; edits = {}; sync(); run(); };
@@ -744,7 +834,7 @@ const Tune = (() => {
   $("#wi-reset", root).onclick = () => { whatIf = { values: {}, pred: null, seq: whatIf.seq + 1 }; paintWhatIf(); redraw(); };
   $("#wi-use", root).onclick = () => {
     if (!Object.keys(whatIf.values).length) { App.toast("Drag a slider first."); return; }
-    Object.assign(edits, whatIf.values);
+    Object.assign(edits, podifyAll(whatIf.values));
     paintGains();
     App.toast(target === "practice" ? "In the gains box. Press Use these, then Run, to check the prediction." : "In the gains box. Apply live and Run to see what the robot really does.", 6000);
   };
@@ -757,26 +847,23 @@ const Tune = (() => {
 
   // On a phone the earlier-runs list starts closed, so the result isn't pushed below it.
   if (window.matchMedia && matchMedia("(max-width: 900px)").matches) $("#history-panel", root).open = false;
-  setLoop("steer");
+  setPod("FL");
+  setStage("pod");
   Faults.mount($("#tune-faults", root), faultScope);
   return {
     open(l, opts = {}) {
       if (opts.target) target = opts.target;
-      if (opts.module) {
-        // One part: the tuner on that module only (a replaced or misbehaving one).
-        module = abbr(opts.module);
-        const m = $("#module", root);
-        if (m) m.value = module;
-      }
       if (opts.fresh) {
-        // From the Guide: every module, the standard steps. A one-corner run (the troubleshooter's
-        // "pick FL only") never stands in for all four.
-        module = "ALL"; pattern = 0;
-        const m = $("#module", root), p = $("#pattern", root);
-        if (m) m.value = "ALL";
+        // From the Guide: every pod together, the standard steps. A one-corner run (the
+        // troubleshooter's "pick FL only") never stands in for all four.
+        pattern = 0;
+        const p = $("#pattern", root);
         if (p) p.value = "0";
       }
-      setLoop(l);
+      // One part: the tuner on that pod only (a replaced or misbehaving one).
+      if (opts.module) setPod(abbr(opts.module));
+      loop = l;
+      setStage(opts.module && STAGE_LOOPS.pod.includes(l) ? "pod" : opts.fresh || !STAGE_LOOPS.pod.includes(l) ? "whole" : stage);
       App.show("tune");
     },
     show,

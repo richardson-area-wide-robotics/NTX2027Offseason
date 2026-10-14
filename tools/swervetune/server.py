@@ -543,8 +543,11 @@ def api_runs(_):
     return {"runs": runs.list_runs(100)}
 
 
-def api_run(name):
+def api_run(name, query=None):
     doc = runs.load(name)
+    # One pod's view (Tune drive train, Each pod): its channels and its own gains only.
+    if (query or {}).get("pod"):
+        doc = advisor.pod_doc(doc, query["pod"])
     # Re-analyze on every open: the advisor may be newer than the run, and the channels are kept.
     lim = S.limits()
     doc["report"] = advisor.analyze(doc, doc.get("gains"),
@@ -1344,6 +1347,8 @@ def api_export(body):
 def api_predict(body):
     """'What if': the same run, predicted with changed gains. Gains not given keep their value."""
     doc = runs.load(body["file"])
+    if body.get("pod"):
+        doc = advisor.pod_doc(doc, body["pod"])  # from that pod's own gains
     now = {k: float(v) for k, v in (doc.get("gains") or {}).items() if isinstance(v, (int, float))}
     new = dict(now)
     new.update({k: float(v) for k, v in (body.get("gains") or {}).items()})
@@ -1537,7 +1542,8 @@ class Handler(BaseHTTPRequestHandler):
             if path in GET:
                 return self._send(200, GET[path](dict(parse_qsl(urlparse(self.path).query))))
             if path.startswith("/api/runs/"):
-                return self._send(200, api_run(unquote(path[len("/api/runs/"):])))
+                return self._send(200, api_run(unquote(path[len("/api/runs/"):]),
+                                               dict(parse_qsl(urlparse(self.path).query))))
             if path.startswith("/api/diagnose/"):
                 return self._send(200, api_diagnose(unquote(path[len("/api/diagnose/"):])))
             rel = "index.html" if path in ("/", "") else path.lstrip("/")

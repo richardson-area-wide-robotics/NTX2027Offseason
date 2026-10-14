@@ -403,11 +403,20 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
 
   /** Sends a minimal configuration to every SPARK of one kind, never persisted. */
   private ApplyResult configureAll(boolean driveMotors, boolean steerMotors, Consumer<SparkBaseConfig> edit) {
+    return configure(-1, driveMotors, steerMotors, edit);
+  }
+
+  /** As {@link #configureAll}, for one pod ({@code only} its index) or every pod ({@code only} -1). */
+  private ApplyResult configure(int only, boolean driveMotors, boolean steerMotors, Consumer<SparkBaseConfig> edit) {
     if (sim) {
       return ApplyResult.ok("simulation: recorded only");
     }
     List<String> failures = new ArrayList<>();
-    for (SwerveModule module : modules) {
+    for (int i = 0; i < modules.length; i++) {
+      if (only >= 0 && i != only) {
+        continue;
+      }
+      SwerveModule module = modules[i];
       List<SwerveMotor> targets = new ArrayList<>();
       if (driveMotors) {
         targets.add(module.getDriveMotor());
@@ -464,6 +473,20 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
     }
     return label(configureAll(true, false, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
         String.format("drive PID %.5g/%.3g/%.4g", kP, kI, kD));
+  }
+
+  @Override
+  public ApplyResult applySteerPid(int m, double kP, double kI, double kD, double iZone) {
+    modules[m].setAnglePIDF(new PIDFConfig(kP, kI, kD, 0, iZone));
+    return label(configure(m, false, true, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
+        String.format("%s steer PID %.5g/%.3g/%.4g", modules[m].configuration.name, kP, kI, kD));
+  }
+
+  @Override
+  public ApplyResult applyDrivePid(int m, double kP, double kI, double kD, double iZone) {
+    modules[m].setDrivePIDF(new PIDFConfig(kP, kI, kD, 0, iZone));
+    return label(configure(m, true, false, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
+        String.format("%s drive PID %.5g/%.3g/%.4g", modules[m].configuration.name, kP, kI, kD));
   }
 
   @Override
@@ -594,6 +617,18 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   @Override
   public double[] drivePid() {
     PIDFConfig p = modules[0].getDrivePIDF();
+    return new double[] {p.p, p.i, p.d, p.iz};
+  }
+
+  @Override
+  public double[] steerPid(int m) {
+    PIDFConfig p = modules[m].getAnglePIDF();
+    return new double[] {p.p, p.i, p.d, p.iz};
+  }
+
+  @Override
+  public double[] drivePid(int m) {
+    PIDFConfig p = modules[m].getDrivePIDF();
     return new double[] {p.p, p.i, p.d, p.iz};
   }
 

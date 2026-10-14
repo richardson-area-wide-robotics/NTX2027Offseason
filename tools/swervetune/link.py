@@ -476,9 +476,12 @@ class RobotLink:
     def gains(self):
         """Every gain the robot is actually running, from its echo."""
         out = {}
-        for key in list(C.GAIN_SPECS) + self._ff_keys():
+        for key in list(C.GAIN_SPECS) + self._ff_keys() + self._pod_keys():
             out[key] = self.get("double", C.GAINS_APPLIED + key)
         return out
+
+    def _pod_keys(self):
+        return [C.pod_key(m, loop, k) for m in self.get("str[]", C.MODULE_NAMES) for loop in C.POD_LOOPS for k in C.PID_KEYS]
 
     def _ff_keys(self):
         return [f"FF/{m}/{k}" for m in self.get("str[]", C.MODULE_NAMES) for k in C.FF_SPECS]

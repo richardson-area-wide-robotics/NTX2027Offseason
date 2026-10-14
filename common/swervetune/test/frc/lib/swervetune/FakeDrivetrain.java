@@ -28,6 +28,9 @@ final class FakeDrivetrain implements DrivetrainIO {
   double injectedYawRate;
   double[] steerPid = {0.01, 0, 0.001, 0};
   double[] drivePid = {0.002, 0, 0, 0};
+  /** A pod's own PID, set apart from the shared one; null means it runs the shared gains. */
+  final double[][] podSteerPid = new double[4][];
+  final double[][] podDrivePid = new double[4][];
   double[][] ff = new double[4][];
   boolean gyroConnected = true;
   boolean gyroCalibrating = false;
@@ -316,6 +319,7 @@ final class FakeDrivetrain implements DrivetrainIO {
   @Override
   public ApplyResult applySteerPid(double kP, double kI, double kD, double iZone) {
     steerPid = new double[] {kP, kI, kD, iZone};
+    java.util.Arrays.fill(podSteerPid, null);
     applied.add("steerPid");
     return ApplyResult.ok("steer PID");
   }
@@ -323,6 +327,7 @@ final class FakeDrivetrain implements DrivetrainIO {
   @Override
   public ApplyResult applyDrivePid(double kP, double kI, double kD, double iZone) {
     drivePid = new double[] {kP, kI, kD, iZone};
+    java.util.Arrays.fill(podDrivePid, null);
     applied.add("drivePid");
     return ApplyResult.ok("drive PID");
   }
@@ -378,6 +383,30 @@ final class FakeDrivetrain implements DrivetrainIO {
   @Override
   public double[] steerPid() {
     return steerPid.clone();
+  }
+
+  @Override
+  public ApplyResult applySteerPid(int m, double kP, double kI, double kD, double iZone) {
+    podSteerPid[m] = new double[] {kP, kI, kD, iZone};
+    applied.add("steerPid:" + m);
+    return ApplyResult.ok("pod " + m + " steer PID");
+  }
+
+  @Override
+  public ApplyResult applyDrivePid(int m, double kP, double kI, double kD, double iZone) {
+    podDrivePid[m] = new double[] {kP, kI, kD, iZone};
+    applied.add("drivePid:" + m);
+    return ApplyResult.ok("pod " + m + " drive PID");
+  }
+
+  @Override
+  public double[] steerPid(int m) {
+    return podSteerPid[m] != null ? podSteerPid[m].clone() : steerPid.clone();
+  }
+
+  @Override
+  public double[] drivePid(int m) {
+    return podDrivePid[m] != null ? podDrivePid[m].clone() : drivePid.clone();
   }
 
   @Override
