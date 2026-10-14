@@ -268,9 +268,30 @@ def api_netcheck(body=None):
     except Exception:  # noqa: BLE001 - a log this can't read leaves the rest of the check alone
         ds_log = None
     r = netcheck.run(team or 1745, (body or {}).get("adapter") or None, year=getattr(S.project, "year", None),
-                     robot=robot, accepted=station.accepted_images(S.project) if S.project else [], ds_log=ds_log)
+                     robot=robot, accepted=station.accepted_images(S.project) if S.project else [], ds_log=ds_log,
+                     versions=_version_checks())
     S.netcheck_last = r
     return r
+
+
+def _version_checks():
+    """Each robot's libraries against the newest for its year, and the camera's PhotonVision (from the
+    connected robot) against PhotonLib: :mod:`versions`. Examples runs only in the simulator."""
+    from . import versions, yagslcfg
+
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    projects = [(os.path.basename(p), p, None) for p in yagslcfg.find_projects(repo) if os.path.basename(p) != "Examples"]
+    cam = None
+    if S.link and S.link.is_connected():
+        try:
+            cam = S.link.get("str", "/photonvision/version") or None
+        except Exception:  # noqa: BLE001 - no camera on this robot
+            cam = None
+    try:
+        return versions.checks(projects, cam)
+    except Exception as e:  # noqa: BLE001 - a version check never stops the network check
+        return [{"id": "versions-error", "group": versions.GROUP, "level": "info",
+                 "title": "Couldn't check the software versions", "why": str(e)[:200]}]
 
 
 def api_netcheck_save(_body=None):

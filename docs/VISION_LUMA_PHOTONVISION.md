@@ -26,7 +26,7 @@ carry on unchanged through 2027.
 
 ## 2. Turn it on: a config change
 
-Both robots already build with PhotonLib (`vendordeps/photonlib.json`, pinned to **v2026.3.3**,
+Both robots already build with PhotonLib (`vendordeps/photonlib.json`, pinned to **v2026.3.4**,
 the 2026 release; keep it the same version as the camera's PhotonVision, and don't take a 2027
 alpha) and call `PhotonVisionSetup.install(tune)` in `Robot`. With no camera listed, that does
 nothing. To fit one, list it in `src/main/deploy/swerve/swervetune.json` and redeploy:

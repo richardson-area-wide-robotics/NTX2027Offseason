@@ -1014,6 +1014,21 @@ def cmd_dslog(args, out):
     return out.done(0 if not any(c["level"] == "fail" for c in found) else 1)
 
 
+def _version_checks(camera_version):
+    from . import versions
+    projects = [(os.path.basename(p), p, None) for p in yagslcfg.find_projects(REPO) if os.path.basename(p) != "Examples"]
+    return versions.checks(projects, camera_version)
+
+
+def cmd_versions(args, out):
+    found = _version_checks(args.camera)
+    out.put(checks=found)
+    for c in found:
+        out.say(f"  [{c['level'].upper():4s}] {c['title']}")
+        out.say(f"         {c['why']}")
+    return out.done(1 if any(c["level"] == "fail" for c in found) else 0)
+
+
 def cmd_netcheck(args, out):
     from . import link as L
 
@@ -1028,8 +1043,9 @@ def cmd_netcheck(args, out):
         ds_log = dslog.latest_summary()
     except Exception:  # noqa: BLE001 - a log this can't read leaves the rest of the check alone
         ds_log = None
+    vchecks = _version_checks(None)
     if team:
-        r = netcheck.run(team, args.adapter, year=year, ds_log=ds_log)
+        r = netcheck.run(team, args.adapter, year=year, ds_log=ds_log, versions=vchecks)
     else:
         # No robot named: try each robot's team in this repo, and report the one this laptop is on.
         # Projects sharing a number are named together; Examples (simulator only) last.
@@ -1040,7 +1056,7 @@ def cmd_netcheck(args, out):
                 robots.setdefault(t, []).append(os.path.basename(p))
         robots = {t: " / ".join(n) for t, n in robots.items()} or {1745: "robot"}
         for t in robots:
-            r = netcheck.run(t, args.adapter, ds_log=ds_log)
+            r = netcheck.run(t, args.adapter, ds_log=ds_log, versions=vchecks)
             if r.get("robot_adapter") or r.get("error"):
                 name, team = robots[t].split(" / ")[0], t
                 break
@@ -1252,6 +1268,9 @@ def build_parser():
     s.add_argument("--adapter", help="the network adapter on the robot's Wi-Fi, if it can't be found")
     s.add_argument("--save", action="store_true", help="also save it to tools/swervetune/reports/, to send")
     s.set_defaults(fn=cmd_netcheck)
+    s = sub.add_parser("versions", help="is each robot's software the newest for its year (vendor libraries, PhotonLib, the camera)")
+    s.add_argument("--camera", help="the camera's PhotonVision version, if known (the page reads it from the robot)")
+    s.set_defaults(fn=cmd_versions)
     s = sub.add_parser("dslog", help="what a Driver Station log recorded of the link: drops, packet loss, brownouts")
     s.add_argument("file", nargs="?", help="a .dslog file (default: this laptop's newest session with a robot)")
     s.set_defaults(fn=cmd_dslog)

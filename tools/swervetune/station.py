@@ -40,7 +40,8 @@ DSLOG = "Driver Station log"
 SCRIPT_GROUPS = {"internet": INTERNET, "vpn": INTERNET, "claude": INTERNET, "claude-route": INTERNET,
                  "killswitch": INTERNET, "robot-adapter": ADDRESS, "robot-route": ADDRESS, "robot-metric": ADDRESS,
                  "overlap": ADDRESS, "robot-ping": RADIO, "nt4": RADIO, "firewall": FIREWALL}
-ORDER = [DS, ADDRESS, FIREWALL, RADIO, DSLOG, ROBOT, INTERNET]
+VERSIONS = "Software versions"   # versions.GROUP
+ORDER = [DS, ADDRESS, FIREWALL, RADIO, DSLOG, ROBOT, VERSIONS, INTERNET]
 MIN_FIRMWARE = (1, 3, 0)
 
 
@@ -300,10 +301,11 @@ def robot_software(image, wpilib, year, accepted=()):
     return out
 
 
-def checks(out, team, year=None, robot=None, accepted=(), ds_log=None):
+def checks(out, team, year=None, robot=None, accepted=(), ds_log=None, versions=None):
     """Every check for a network-check result: the script's own, then these, each with its group,
     in the page's order. ``robot`` is ``{"image", "wpilib"}`` from the connected robot; ``ds_log``
-    the newest Driver Station session's summary (:mod:`dslog`)."""
+    the newest Driver Station session's summary (:mod:`dslog`); ``versions`` the software version
+    checks (:mod:`versions`), already made."""
     facts = out.get("facts") or {}
     mine = []
     if facts:
@@ -317,6 +319,7 @@ def checks(out, team, year=None, robot=None, accepted=(), ds_log=None):
     if ds_log:
         from . import dslog
         mine += dslog.checks(ds_log)
+    mine += list(versions or [])
     base = [dict(c, group=SCRIPT_GROUPS.get(c.get("id"), ADDRESS)) for c in out.get("checks") or []
             # The script's one-line firewall hint gives way to the firewall checks above.
             if not (facts and c.get("id") == "firewall")]

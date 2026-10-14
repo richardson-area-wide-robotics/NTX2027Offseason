@@ -34,7 +34,8 @@ def _shell():
     return shutil.which("powershell") or shutil.which("pwsh")
 
 
-def run(team, robot_adapter=None, timeout=60, runner=subprocess.run, year=None, robot=None, accepted=(), ds_log=None):
+def run(team, robot_adapter=None, timeout=60, runner=subprocess.run, year=None, robot=None, accepted=(), ds_log=None,
+        versions=None):
     """``{"ok", "checks": [{"id", "group", "level", "title", "why"}], "robot_adapter", "internet_adapter",
     "vpn", "fix"}``, or ``{"ok": False, "error"}`` when it can't run (not Windows, no PowerShell).
 
@@ -64,7 +65,7 @@ def run(team, robot_adapter=None, timeout=60, runner=subprocess.run, year=None, 
         checks = [checks]
     out["checks"] = checks
     from . import station
-    out["checks"] = station.checks(out, team, year, robot, accepted, ds_log)
+    out["checks"] = station.checks(out, team, year, robot, accepted, ds_log, versions)
     out["ds_log"] = ds_log
     out["ok"] = not any(c.get("level") == "fail" for c in out["checks"])
     out["fix"] = fix_command(team) if any(c.get("id") == "robot-metric" and c.get("level") in ("fail", "warn")

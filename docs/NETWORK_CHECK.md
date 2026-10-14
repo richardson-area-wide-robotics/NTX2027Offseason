@@ -79,6 +79,8 @@ py -3.12 tools/swervetune netcheck --project Peashooter --save
 | roboRIO image is from another year | Image the roboRIO with the roboRIO Imaging Tool (FRC Game Tools 2026). |
 | The link to the robot dropped (from the Driver Station's log) | Troubleshoot: **The robot keeps losing communication**. |
 | Browned out (from the Driver Station's log) | Charge or swap the battery; check its leads are tight. |
+| The camera runs another PhotonVision than the robot code's PhotonLib | Make them the same: flash the camera with that release's Luma P1 image (or upload its `linuxarm64` .jar on the camera's Settings page), or change `vendordeps/photonlib.json`. |
+| A library or PhotonLib has a newer version (amber, Software versions) | Not urgent. Update it with WPILib's **Manage Vendor Libraries**, build, and test on the robot before an event. PhotonLib and the camera go together. |
 
 The yellow lines are worth reading but don't stop the robot. Troubleshoot's **Connecting to the
 robot** symptoms walk through the same causes one question at a time.
