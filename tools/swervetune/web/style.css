@@ -270,7 +270,7 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
   padding: 10px 16px; border-radius: 8px; z-index: 60; max-width: 90vw; }
 .envopt { display: grid; gap: 6px; border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
 .envopt.on { border-color: var(--accent); background: var(--bg); }
-/* Controllers tab: the live sticks, triggers and buttons. */
+/* Joysticks tab: the live sticks, triggers and buttons. */
 .ct-live { display: flex; gap: 14px; align-items: stretch; }
 #ct-svg { width: 100%; max-width: 420px; height: auto; display: block; }
 .ct-ring { fill: var(--bg); stroke: var(--rule); stroke-width: 2; }

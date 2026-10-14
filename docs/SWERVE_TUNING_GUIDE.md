@@ -97,6 +97,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 | **Motors** | Each motor's heat, current and health. Warns before a motor overheats, and stops one that's stalled or failing. |
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. Every device, the PDH's ports and each finding are shown on FIRST's own control-system drawing (WPILib's REV layout, CC BY 4.0), with the part in question outlined and the parts our robots don't use, such as pneumatics, faded. Troubleshoot's power and CAN checks use the same drawing. Each CAN bus is drawn in its cable color with its name (Drive train, Intake); the termination check takes two meter readings per bus to tell a missing terminator from one that isn't working or a broken cable; and each controller's faults, now and since the code started, are in Where to look. |
 | **Tune drive train** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. **Each pod** first: one pod's steer motor, then its drive motor, each with that pod's own gains (saved to swervetune.json's `podGains` only where they differ from pidfproperties.json); **Use on every pod** when they all want the same. Then **Whole drive train**: all pods together on the shared gains, feedforward, slip current, spin and straight line. Faults on the motors being tuned show above it. |
+| **Systems** | The robot's other mechanisms, grouped by subsystem (from the code and the design file) with their motors and sensors. Each one the code registers, such as a shooter's flywheel or an intake's pivot, is set up and tested through its own control loop: its physics, its limits found by hand, the team's top speed, then a test that stays inside the limits and under that speed. See [Tuning a mechanism](#tuning-a-mechanism-the-systems-tab). |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, each camera's lens (PhotonVision, with the team's 9 x 11 in 8 x 8 ChArUco board, drawn), where the cameras sit, and where the field's AprilTags really are. Faults on the motors and gyro a measurement depends on show with it. |
 | **Joysticks** | Checks the drive team's joysticks, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
 | **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. **Robot messages** lists every error and warning the robot has reported since you connected (its console on a real robot, its alerts on any), each once with how often and how recently, so what keeps coming back stands out. |
@@ -166,7 +167,7 @@ never tick a step.
 
 ## Where to start, and what to do next, in each tool
 
-Calibrate, Config, Motors, Wiring and Controllers each open with a card: what the tool is for,
+Calibrate, Config, Motors, Wiring and Joysticks each open with a card: what the tool is for,
 what to bring, and its jobs in order, each marked **done**, **needs a fix**, **to do**,
 **later** (with a button to what it waits for), **optional** or **not needed**. The highlighted
 job is the one to do next; **Start here** or **Next** goes to it. The marks come from evidence:
@@ -237,6 +238,95 @@ It fills in only what a design should decide: a drivetrain's gearing when it is 
 robot's mass until it is weighed, and the motor type of a mechanism motor nobody has named yet.
 Never the drive current limit: the slip test measures that. Saved designs keep only the link, in
 `swervetune.json` under `"designs"`.
+
+## Tuning a mechanism (the Systems tab)
+
+The Systems tab lists every subsystem with its motors and sensors. A subsystem comes from the code
+(each class that extends `SubsystemBase`, with the motors it gives the motor guard) and from the
+design file's `subsystem` field, joined by name: Intake shows its rollers from the code and its
+beam break from the design file. The drive train is tuned on **Tune drive train**.
+
+A mechanism can be tuned once its subsystem registers it. The subsystem keeps its own control loop
+and only tells the tool how to read the mechanism and how to set its goal, so what gets tuned is
+what runs in a match. Register it after `SwerveTune.install`, as Peashooter's `Intake.tuneWith`
+does:
+
+```java
+tune.system("Intake pivot", TunableSystem.Kind.PIVOT)
+    .units("motor rotations")
+    .position(moveEncoder::getPosition)
+    .velocity(() -> moveEncoder.getVelocity() / 60.0)
+    .goal(p -> targetPosition = p)
+    .stop(() -> targetPosition = moveEncoder.getPosition())
+    .subsystem(this)
+    .motors("Intake pivot")
+    .sparkGains(intakeMoveMotor);
+```
+
+- **Kinds:**
+  - `PIVOT` and `ELEVATOR` are positions. They need `position(...)` and limits.
+  - `FLYWHEEL` and `ROLLER` are speeds. Their `velocity(...)` and `goal(...)` are in the speed units,
+    such as RPM.
+- **What each call does:**
+  - `goal` sets the subsystem's target.
+  - `stop` says what stopping means: a pivot holds where it is, a flywheel coasts down.
+  - `subsystem` is held while a test runs, so its default command stops. Its `periodic()` keeps
+    running.
+  - `motors` names the motors whose current and volts are recorded.
+- **Live gains:**
+  - `sparkGains` lets the tab change the SPARK's closed-loop gains live: kP, kI, kD, kS, kV, kA
+    and kG.
+  - `gain(...)` adds any other gain.
+  - Live gains are never saved. A value to keep goes into the code.
+
+Set each mechanism up from top to bottom:
+
+1. **Its physics.**
+   - Paste its ReCalc share link, which holds the whole design (nothing is fetched). Or type the
+     numbers from the AMB spreadsheet: motor, count and ratio, then the arm length and load, the
+     spool diameter and load, or the flywheel's moment of inertia. Only a ReCalc link carries a
+     flywheel's target speed.
+   - From these it works out the free speed and the feedforward (kS, kV, kA and kG), using
+     WPILib's motor models.
+   - If the units don't say how they relate to the mechanism, fill in **One radian of it is**. The
+     units it understands without help are motor rotations, RPM, degrees, radians, rotations and
+     meters. For a flywheel or roller the field reads **One radian of it per second is**.
+2. **Its limits** (a pivot or elevator). **Set limits by hand…** runs with the robot disabled and
+   the mechanism's motors coasting. A person slowly moves it to each hard stop, and those two
+   positions become its minimum and maximum. No test runs without them.
+3. **Its top speed.** Set the team's maximum speed and acceleration for testing it.
+   **Save to swervetune.json…** writes the physics, limits and maximums, showing the diff first.
+   Redeploy so the robot enforces them from startup.
+4. **Test it.**
+   - **Before you run:** the robot is enabled, the deadman is held, and someone is watching with
+     hands clear.
+   - **A pivot or elevator** moves between 30% and 70% of its travel. Its top speed is a quarter of
+     its free speed. Its acceleration is a quarter of what full voltage gives, less what holding it
+     up takes.
+   - **A flywheel** spins up to half its target speed, then to its target speed, then down. That
+     speed is capped at 90% of its free speed. With no target speed, it goes to 60% of its free
+     speed.
+   - **Limits:** the team's maximum caps both kinds. The goal moves along a profile, holds at each
+     end, and stays at least 5% inside the limits.
+   - **Stops:** the robot stops the test at once if the mechanism goes 3% past a limit, or faster
+     than 1.5 times the test's top speed.
+   - **The report:** how it followed each move, its overshoot, how long it took to settle, and the
+     volts that held it. If a flywheel settles short of its goal, the report suggests a kV from the
+     physics, and its **Try kV** button applies it live.
+   - **In the simulator,** the mechanism's physics aren't modeled, so only the sequence is checked.
+
+Faults on the mechanism's motors show at the top of the tab. The settings live in `swervetune.json`
+under `"systems"`, one entry per mechanism:
+
+```json
+"systems": {
+  "Intake pivot": {"min": 0.0, "max": 17.8, "maxVelocity": 20, "maxAccel": 60,
+                   "recalc": "https://www.reca.lc/arm?..."}
+}
+```
+
+The robot reads `min`, `max`, `maxVelocity` and `maxAccel`, and enforces them. The laptop also reads
+`recalc`, or `physics` for the typed-in numbers, and `unitsPerRadian`.
 
 ## Saving what you find
 
