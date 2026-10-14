@@ -525,6 +525,7 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .ctl-pics { display: flex; flex-wrap: wrap; gap: 16px; }
 .ctl-pics figure { margin: 0; display: grid; gap: 4px; justify-items: start; }
 .ctl-pics img { width: 160px; height: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 4px; }
+.inv-art .ctl-pics img { width: auto; height: 64px; }
 @media (prefers-color-scheme: dark) {
   /* The drawing stays white; take the glare off it. */
   .frcmap { background: #e9edf1; }
@@ -688,10 +689,11 @@ table.t td > select { padding-block: 1px; }
   .tr-where { position: static; }
   /* Tune: two gains to a row in the narrow left column. */
   .tune-left .gains { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* The motor inventory: the two controller pictures sit in the heading row, small. */
-  .inv-art .ctl-pics { gap: 10px; }
-  .inv-art .ctl-pics figure { grid-template-columns: auto auto; align-items: center; gap: 6px; }
-  .inv-art .ctl-pics img { width: 64px; padding: 2px; }
+  /* The motor inventory: the controller and motor pictures sit in the heading row, small. */
+  .inv-art .ctl-pics { gap: 4px; align-items: flex-end; }
+  .inv-art .ctl-pics figure { justify-items: center; gap: 2px; }
+  .inv-art .ctl-pics figure.ctl { margin-left: 10px; }
+  .inv-art .ctl-pics img { width: auto; height: 46px; padding: 2px; }
   .inv-art .ctl-credit { margin: 0; }
   #inv-body .tblwrap { max-height: calc(var(--work-h) - 150px); overflow: auto; }
   #inv-body table.t thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); }
@@ -733,6 +735,10 @@ table.t td > select { padding-block: 1px; }
 /* Calibrate, 6. Camera lens: the board beside its settings. The board is a picture of a real
    object, so it stays black on white in both themes. */
 .cal-lens { display: grid; grid-template-columns: minmax(170px, 250px) 1fr; gap: 16px; align-items: start; }
+/* 7. Camera positions: where a Luma P1's lens is, on white like every part drawing. */
+.cam-lens-fig { margin: 6px 0 0; display: grid; gap: 4px; }
+.cam-lens-fig img { width: 150px; height: auto; background: #fff; border-radius: 6px; padding: 4px; }
+.cam-lens-fig figcaption { margin: 0; }
 .board-fig { margin: 0; }
 .board-svg { width: 100%; height: auto; max-height: 340px; display: block; }
 .board-dim line { stroke: var(--muted); stroke-width: 0.03; }
@@ -757,7 +763,12 @@ table.t td > select { padding-block: 1px; }
 .dcard { position: fixed; z-index: 30; width: 330px; max-height: calc(100vh - 16px); overflow: auto; background: var(--panel);
   color: var(--ink); border: 1px solid var(--edge); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .25); padding: 10px 12px; pointer-events: none; }
 .dcard-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
-.dcard-pic { display: block; width: 100%; max-height: 150px; object-fit: contain; background: #fff; border-radius: 6px; margin: 4px 0 6px; }
+/* The part's drawing and its motor's, on white (the drawings are dark parts on nothing). A fixed
+   height, so the card knows its size before they load and is placed on screen once. */
+.dcard-pics { display: flex; justify-content: center; align-items: flex-end; gap: 8px; background: #fff; border-radius: 6px; padding: 6px; margin: 4px 0 6px; }
+.dcard-pics figure { margin: 0; display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.dcard-pics img { height: 84px; width: auto; max-width: 100%; object-fit: contain; }
+.dcard-pics figcaption { font-size: 10px; color: #3a3f45; }
 .dcard p { margin: 4px 0; }
 .dcard-facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 6px 0; font-size: 12px; }
 .dcard-facts dt { color: var(--muted); }

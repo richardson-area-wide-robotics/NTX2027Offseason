@@ -235,10 +235,13 @@ const Wiring = (() => {
         port != null ? "PDH port " + port : (dev.kind === "controller" ? "PDH port not set" : null), dev.source,
         r ? `heard on the bus: ${r.present ? "yes" : "NO"}; dropped out ${r.dropouts || 0}×; rebooted ${r.resets || 0}×; low supply ${r.brownouts || 0}×` : null,
         r && Number.isFinite(r.bus_volts) ? `supply at the controller ${fmt(r.bus_volts, 2)} V` : null].filter(Boolean);
-      // FIRST's drawing of the part: a cached bitmap, drawn once (the schematic repaints every second).
-      const art = name === "roboRIO" ? "rio" : name === "PDH" ? "pdh_top" : FrcMap.kind(dev.model);
-      const pic = !multi && art && FrcMap.thumbCached(art);
-      if (!multi && art && !pic) FrcMap.thumb(art);
+      // The part's own drawing; the PDH's top from the big drawing, a bitmap cut once.
+      const own = name === "PDH" ? null : FrcMap.pic(partOf(name, dev));
+      let pic = !multi && own ? own.src : null;
+      if (!multi && name === "PDH") {
+        pic = FrcMap.thumbCached("pdh_top");
+        if (!pic) FrcMap.thumb("pdh_top");
+      }
       const sub = name === "roboRIO" ? "120 Ω built in" : name === "PDH"
         ? `CAN ${dev.can_id} · term ${m.pdh.terminationOn ? "ON" : "OFF"}`
         : `CAN ${dev.can_id ?? "?"} · PDH ${port ?? "?"}`;
@@ -544,7 +547,15 @@ const Wiring = (() => {
     "NEO": "REV's brushless motor (V1.1 or 2.0)",
     "Kraken X60": "WCP's brushless motor with a Talon FX inside",
   };
-  const ART = { "SPARK MAX": "sparkmax", "SPARK Flex": "sparkflex", "REV PDH": "pdh_top", "roboRIO": "rio" };
+  // Which motor drawings a card shows: one NEO not yet told apart shows both kinds, to tell which it is.
+  const MOTOR_PICS = { "NEO V1.1": ["NEO V1.1"], "NEO 2.0": ["NEO 2.0"], "NEO 550": ["NEO 550"],
+                       "NEO": ["NEO V1.1", "NEO 2.0"], "NEO (V1.1 or 2.0?)": ["NEO V1.1", "NEO 2.0"] };
+  /** The part a device is, as FrcMap.pic names it: the robot controller the design says, or the controller. */
+  function partOf(name, dev, what) {
+    if (name === "roboRIO") return data.controller === "systemcore" ? "SystemCore" : "roboRIO";
+    if (name === "PDH") return "REV PDH";
+    return FrcMap.pic(what) ? what : FrcMap.kindLabel(dev.model);
+  }
   const ordinal = n => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th");
 
   function cardHtml(name) {
@@ -552,16 +563,19 @@ const Wiring = (() => {
     const type = name === "roboRIO" ? "roboRIO" : (dev.type || dev.model || "");
     const [ctl, motor] = type.split(" · ");
     const live = r && r.controller;
-    const art = ART[live || ctl] || FrcMap.kind(dev.model);
-    const pic = art && FrcMap.thumbCached(art);
-    if (art && !pic) FrcMap.thumb(art).then(() => { if (hoverName === name) showCard(name, hoverEl); });
+    // The part's drawing and its motor's beside it; a SPARK Flex is drawn docked on its Vortex already.
+    const part = partOf(name, dev, live || ctl);
+    const pics = [part, ...(part === "SPARK Flex" ? [] : MOTOR_PICS[motor] || [])]
+      .map(k => FrcMap.pic(k) && { ...FrcMap.pic(k), cap: k }).filter(Boolean);
     const bi = m.buses.findIndex(b => b.chain.includes(name)), bus = m.buses[bi];
     const at = bus ? bus.chain.indexOf(name) : -1;
     const before = at > 0 ? bus.chain[at - 1] : null, after = bus && at >= 0 && at < bus.chain.length - 1 ? bus.chain[at + 1] : null;
     const port = m.pdhPorts[name];
     const facts = [];
     if (dev.can_id != null) facts.push(["CAN ID", String(dev.can_id)]);
-    if (bus) facts.push(["Bus", `${swatchOf(bi)}${esc(labelOf(bus))}, ${ordinal(at)} along it` + (before || after ? `: between ${esc(before || "the start")} and ${esc(after || "the far end")}` : "")]);
+    // The robot controller is where a bus starts (place 0); the devices count from 1 after it.
+    if (bus) facts.push(["Bus", at === 0 ? `${swatchOf(bi)}${esc(labelOf(bus))}: it starts here${after ? `, then ${esc(after)}` : ""}`
+      : `${swatchOf(bi)}${esc(labelOf(bus))}, ${ordinal(at)} along it` + (before || after ? `: between ${esc(before || "the start")} and ${esc(after || "the far end")}` : "")]);
     if (port != null) facts.push(["Power", `PDH port ${port}${dd.breaker ? `, ${dd.breaker} A breaker` : ""}`]);
     else if (dev.kind === "controller") facts.push(["Power", `PDH port not set${dd.breaker ? ` (${dd.breaker} A breaker in the design)` : ""}`]);
     if (dd.subsystem) facts.push(["Part of", esc(dd.subsystem)]);
@@ -579,11 +593,12 @@ const Wiring = (() => {
         ${earlier.length ? `<div class="warn-ink"><b>Since the code started:</b> ${esc(earlier.join("; "))}</div>` : ""}</div>`;
     }
     return `<div class="dcard-head"><b>${esc(name)}</b><span class="small muted">${esc(type)}</span></div>
-      ${pic ? `<img class="dcard-pic" src="${pic}" alt="FIRST's drawing of a ${esc(live || ctl)}">` : ""}
+      ${pics.length ? `<div class="dcard-pics">${pics.map(p => `<figure><img src="${p.src}" alt="${esc(p.alt)}" width="${p.w}" height="${p.h}">
+        <figcaption>${esc(p.cap)}</figcaption></figure>`).join("")}</div>` : ""}
       ${WHAT[live || ctl] ? `<p class="small">${esc(WHAT[live || ctl])}${motor && MOTOR[motor] ? ` This one drives a ${esc(motor)}: ${esc(MOTOR[motor])}.` : ""}</p>` : ""}
       <dl class="dcard-facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
       ${health}
-      ${pic ? `<p class="dcard-credit">Drawing: FRC Control System - REV, by Team 3161 for WPILib, CC BY 4.0.</p>` : ""}`;
+      ${pics.length ? `<p class="dcard-credit">Drawings: FRC Control System Diagrams, by Team 3161, CC BY 4.0.</p>` : ""}`;
   }
 
   let hoverName = null, hoverEl = null;

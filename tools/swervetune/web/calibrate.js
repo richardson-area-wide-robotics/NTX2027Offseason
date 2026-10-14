@@ -162,7 +162,13 @@
           <li>Measure the wall to the robot's <b>center</b> (to the bumper, plus half the robot's length with bumpers), and how far the tag is left (+) or right (-) of the robot's center line, looking from the robot.</li>
           <li><b>Take a sighting</b> (2 s, robot still). Then move: closer, further, to each side. Three spots or more, then <b>Work it out</b>.</li>
         </ol>
-        <p class="small good-result"><b>A good result:</b> three or more spots that agree with each other; the tool says how well. A spot that disagrees with the rest was probably measured wrong: remove it and take it again.</p>`)}
+        <p class="small good-result"><b>A good result:</b> three or more spots that agree with each other; the tool says how well. A spot that disagrees with the rest was probably measured wrong: remove it and take it again.</p>
+        <figure class="cam-lens-fig">
+          <img src="img/parts/luma-p1.svg" alt="A Luma P1 from the lens side" width="274.36" height="167.96">
+          <figcaption class="small">To check the answer with a tape, measure to the middle of the lens. On a <b>Luma P1</b> it is
+            centered across, 4 mm off the middle of the four holes toward the edge away from the name, and its front is 3 mm
+            out from the case (±1.5: it screws in and out to focus). From <a href="https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf" target="_blank" rel="noopener">Luma's drawing</a>.</figcaption>
+        </figure>`)}
         <div class="row" style="flex-wrap:wrap;gap:10px">
           <label class="small" data-tip="cal.cam">Camera <input id="cc-cam" value="front" style="width:8em"></label>
           <label class="small" data-tip="cal.tag">Tag ID <input type="number" id="cc-tag" value="1" min="0" style="width:5em"></label>

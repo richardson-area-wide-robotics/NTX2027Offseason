@@ -173,10 +173,31 @@ const FrcMap = (() => {
     }
   }
 
-  // Small pictures of one part, for places that repaint often (the Wiring schematic, every second):
-  // drawn once onto a canvas from the same file, then reused as a bitmap.
-  const THUMB = { rio: P.rio, pdh_top: [1612, 102, 458, 300], sparkmax: P.sparkmax, sparkflex: [2199, 89, 316, 178],
-                  radio: P.radio, breaker: P.breaker };
+  // One part on its own (img/parts/, credited in img/ATTRIBUTION.md): FRC Control System Diagrams'
+  // Individual Components (Team 3161, CC BY 4.0), and the Luma P1 drawn in their style from Luma's
+  // public drawing. [file, width, height]: the size is the file's viewBox (a few say width="100%").
+  const PICS = {
+    "SPARK MAX": ["spark-max.svg", 264.82, 135.78], "SPARK Flex": ["spark-flex-on-neo-vortex.svg", 282.99, 180.32],
+    "NEO V1.1": ["neo-1.1.svg", 650, 1008], "NEO 2.0": ["neo-2.0.svg", 711, 983], "NEO 550": ["neo-550.svg", 415, 663],
+    "roboRIO": ["roborio-2.svg", 504, 496.51], "SystemCore": ["systemcore.svg", 1601, 845],
+    "REV PDH": ["pdh.svg", 463.36, 920.75], "Luma P1": ["luma-p1.svg", 274.36, 167.96],
+  };
+  const PIC_ALT = { "SPARK Flex": "A SPARK Flex docked on a NEO Vortex", "roboRIO": "A roboRIO 2.0" };
+  const PIC_CREDIT = `Drawings: <a href="https://github.com/stefacep/FRC-Control-System-Diagrams" target="_blank" rel="noopener">FRC Control System Diagrams</a>
+    (Team 3161), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.`;
+  /** A part's own drawing, by its name ("SPARK MAX", "NEO 550", "Luma P1"...): {src, alt, w, h}, or null. */
+  function pic(label) {
+    const p = PICS[label];
+    return p ? { src: "img/parts/" + p[0], alt: PIC_ALT[label] || "A " + label, w: p[1], h: p[2] } : null;
+  }
+  /** The controller a model name is, as PICS names it. */
+  function kindLabel(model) {
+    return { sparkmax: "SPARK MAX", sparkflex: "SPARK Flex" }[kind(model)] || null;
+  }
+
+  // The top of the PDH from the big drawing (its own drawing is tall, too thin in a schematic box):
+  // drawn once onto a canvas, then reused as a bitmap.
+  const THUMB = { pdh_top: [1612, 102, 458, 300] };
   const thumbs = {}, pending = {};
   let sheet = null;
 
@@ -223,5 +244,5 @@ const FrcMap = (() => {
     return out;
   }
 
-  return { render, kind, deviceFocus, thumb, thumbCached, PARTS: P, VIEWS };
+  return { render, kind, kindLabel, deviceFocus, thumb, thumbCached, pic, PIC_CREDIT, PARTS: P, VIEWS };
 })();

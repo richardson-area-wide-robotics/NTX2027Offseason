@@ -280,7 +280,7 @@ def build(rec_dir=REC, site=SITE, web=WEB):
     scripts = re.findall(r'<script src="([^"]+)"></script>', html)
     for f in scripts:
         shutil.copy(os.path.join(web, f), os.path.join(site, f))
-    shutil.copy(os.path.join(web, "img", "frc-control-system-layout-rev.svg"), os.path.join(site, "img"))
+    shutil.copytree(os.path.join(web, "img"), os.path.join(site, "img"), dirs_exist_ok=True)
     for f in ("mock.js", "preview.js", "preview.css"):
         shutil.copy(os.path.join(HERE, f), os.path.join(site, f))
     with open(os.path.join(web, "style.css"), encoding="utf-8") as fh:
@@ -306,7 +306,9 @@ def build(rec_dir=REC, site=SITE, web=WEB):
 <section id="pv-elastic" aria-label="Elastic dashboard"></section>
 """
     with open(os.path.join(site, "index.html"), "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(f'<title>Swerve Tools Preview</title>\n<link rel="stylesheet" href="style.css">\n'
+        # The charset first: a server that sends none (python -m http.server) otherwise reads the
+        # scripts as cp1252, and their "·" and "Ω" come out as two letters each.
+        fh.write(f'<meta charset="utf-8">\n<title>Swerve Tools Preview</title>\n<link rel="stylesheet" href="style.css">\n'
                  f'<link rel="stylesheet" href="preview.css">\n{ribbon}{body}\n')
 
     # The steering test's motion and a moment either side, not the idle time after it.

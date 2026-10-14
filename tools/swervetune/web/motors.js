@@ -216,17 +216,21 @@
     $("#motor-kinds", root).innerHTML = Object.values(kinds).map(([label, amps, w, d, s]) =>
       `<tr><td>${esc(label)}</td><td class="num">${amps} A</td><td class="num">${w} °C</td><td class="num">${d} °C</td><td class="num">${s} °C</td></tr>`).join("");
   });
-  // What each controller looks like: two small pictures from FIRST's drawing, side by side.
-  App.on("tab", async t => {
+  // What each controller and motor looks like, from their own drawings: a SPARK MAX and the three
+  // NEOs it drives (a NEO V1.1 and a NEO 2.0 spin alike, so only their look tells them apart), and a
+  // SPARK Flex docked on its Vortex.
+  App.on("tab", t => {
     const art = $("#inv-art", root);
     if (t !== "motors" || !art || art.dataset.drawn) return;
     art.dataset.drawn = "1";
-    const [mx, fx] = await Promise.all([FrcMap.thumb("sparkmax", 120), FrcMap.thumb("sparkflex", 120)]);
+    const fig = (k, cap, cls = "") => {
+      const p = FrcMap.pic(k);
+      return `<figure class="${cls}"><img src="${p.src}" alt="${esc(p.alt)}" width="${p.w}" height="${p.h}"><figcaption class="small">${cap}</figcaption></figure>`;
+    };
     art.innerHTML = `<div class="ctl-pics">
-        <figure>${mx ? `<img src="${mx}" alt="A SPARK MAX">` : ""}<figcaption class="small"><b>SPARK MAX</b>: NEO, NEO 2.0, NEO 550</figcaption></figure>
-        <figure>${fx ? `<img src="${fx}" alt="A SPARK Flex docked on a NEO Vortex">` : ""}<figcaption class="small"><b>SPARK Flex</b>, docked on a NEO Vortex</figcaption></figure>
+        ${fig("SPARK MAX", "<b>SPARK MAX</b> drives:", "ctl")}${fig("NEO V1.1", "NEO V1.1")}${fig("NEO 2.0", "NEO 2.0")}${fig("NEO 550", "NEO 550")}
+        ${fig("SPARK Flex", "<b>SPARK Flex</b> on a NEO Vortex", "ctl")}
       </div>
-      <p class="small muted ctl-credit">Drawings from <a href="https://docs.wpilib.org/en/stable/docs/controls-overviews/control-system-hardware.html" target="_blank" rel="noopener">FRC Control System - REV</a>
-        (Team 3161, WPILib), <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>.</p>`;
+      <p class="small muted ctl-credit">${FrcMap.PIC_CREDIT}</p>`;
   });
 })();

@@ -58,6 +58,11 @@ Calibrate tab, **7. Camera positions**: tape one tag flat on a wall, put the rob
 three or more measured spots, take a sighting at each, and **Work it out**. The spread between the
 spots says how far to trust the answer. Save, redeploy.
 
+To check the answer with a tape, measure to the middle of the lens. On a **Luma P1** (72.2 x 44.2 mm,
+four 5 mm holes 64 x 36 mm apart) the lens is centered across the case, 4 mm off the middle of the
+holes toward the edge away from the name, and its front is 3 mm out from the case, give or take
+1.5 mm as it screws in and out to focus ([Luma's drawing](https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf)).
+
 ## 4. At an event: survey the field
 
 Calibrate tab, **Field tags**: drive slowly around the field with the camera seeing two or more

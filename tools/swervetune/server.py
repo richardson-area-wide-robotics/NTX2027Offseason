@@ -1102,6 +1102,8 @@ def api_wiring(query=None):
             # Each bus's cable color (CAN-H; CAN-L is green on all), and the colors CTRE's cable comes in.
             "bus_colors": wiring.bus_colors(m, design), "palette": D.BUS_COLORS,
             "bus_labels": wiring.bus_labels(m, design),
+            # The robot controller the design names (roborio, roborio2, systemcore): which one is drawn.
+            "controller": (design or {}).get("controller") or "",
             # From the design file, for a device's hover card: its subsystem and breaker.
             "design_devices": {x.get("name"): {"subsystem": x.get("subsystem") or "",
                                                "breaker": (x.get("pdh") or {}).get("breaker"),
