@@ -1363,7 +1363,17 @@ def robot_context(project):
         vmax = None
     return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi, "drive_gear": project.drive_gear(),
             "wheel_d_in": project.wheel_d_in(), "drive_kind": project.drive_kind(), "drive_inventory": inv,
-            "max_speed": vmax, "inverted_imu": bool((project.data.get("swervedrive.json") or {}).get("invertedIMU", False))}
+            "max_speed": vmax, "inverted_imu": bool((project.data.get("swervedrive.json") or {}).get("invertedIMU", False)),
+            "design": _design(project)}
+
+
+def _design(project):
+    """The robot's design file, for bring-up's motor test; None without one."""
+    from . import design
+    try:
+        return design.load(project)
+    except (OSError, ValueError):
+        return None
 
 
 # Free speed at 12 V, rpm (REV's spec tables). A NEO V1.1 and a NEO 2.0 spin alike, so this can't
@@ -1641,6 +1651,9 @@ def _analyze_test(result, gains=None, **kw):
         return slip_report(result)
     if test == "pdh_map":
         return pdh_map_report(result)
+    if test == "motor_test":
+        from . import bringup
+        return bringup.motor_test_report(result, kw.get("design"))
     if test == "spin_ff":
         history = kw.get("history")
         if history is None and not result.get("practice"):

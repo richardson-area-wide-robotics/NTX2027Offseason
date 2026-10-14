@@ -25,6 +25,9 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
   int canId = 7;
   String model = "";
   String codeClass = "";
+  /** The last test output a bring-up test asked for; NaN until one did. */
+  double testDuty = Double.NaN;
+  int testDutyCalls;
 
   FakeMotorChannel(int configuredLimitA) {
     this.configured = configuredLimitA;
@@ -33,6 +36,13 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
 
   void advance(double dt) {
     rotations += rpm / 60 * dt;
+  }
+
+  @Override
+  public boolean testDuty(double d) {
+    testDuty = d;
+    testDutyCalls++;
+    return true;
   }
 
   @Override

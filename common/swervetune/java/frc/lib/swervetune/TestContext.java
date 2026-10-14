@@ -42,6 +42,8 @@ public final class TestContext {
   public Supplier<double[]> pdhCurrents = () -> new double[0];
   /** The Driver Station, for the controller check; null where there is none. */
   public RobotSignals signals;
+  /** Every motor the motor guard watches, in its order (the laptop's motor list), for bring-up. */
+  public List<MotorGuard.Motor> motors = List.of();
 
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();

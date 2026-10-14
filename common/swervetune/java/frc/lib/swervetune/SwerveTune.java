@@ -142,6 +142,8 @@ public final class SwerveTune {
 
   // motor guard
   private final MotorGuard guard = new MotorGuard();
+  /** Whether a bring-up motor test paused the robot's code: resumed when the test ends, however. */
+  private boolean robotCodePaused;
   private final Map<String, StringArrayPublisher> liveStrings = new HashMap<>();
   private final List<String> drivetrainMotors = new ArrayList<>();
   private final IntegerSubscriber overrideSeq;
@@ -270,6 +272,7 @@ public final class SwerveTune {
     procedures.put("pdh_map", PdhMapProcedure::new);
     procedures.put("spin_ff", SpinFeedforwardProcedure::new);
     procedures.put("controller", ControllerProcedure::new);
+    procedures.put("motor_test", MotorTestProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -979,6 +982,7 @@ public final class SwerveTune {
     c.driveLimitA = driveLimitA();
     c.pdhCurrents = pdhSource;
     c.signals = signals;
+    c.motors = guard.motors();
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
@@ -1003,6 +1007,7 @@ public final class SwerveTune {
     ctx.driveLimitA = c.driveLimitA;
     ctx.pdhCurrents = pdhSource;
     ctx.signals = signals;
+    ctx.motors = c.motors;
     proc = p;
     profile = prof;
     activeSeq = seq;
@@ -1123,7 +1128,12 @@ public final class SwerveTune {
       finish(State.ABORTED, String.format("Ran past its %.0f s time limit.", timeoutS));
       return;
     }
-    if (proc.spinsWheels() && !ownership.isHeld()) {
+    String stop = proc.abortReason(ctx);
+    if (stop != null) {
+      finish(State.ABORTED, stop);
+      return;
+    }
+    if (proc.spinsWheels() && !proc.pausesRobotCode() && !ownership.isHeld()) {
       finish(State.ABORTED, "Another command took the drivetrain during the test, so nothing it"
           + " measured from there is the test's. Keep drive buttons alone while a test runs.");
       return;
@@ -1235,7 +1245,12 @@ public final class SwerveTune {
   private void begin(double now) {
     supervisor.reset();
     startPose = io.pose();
-    if (proc.spinsWheels()) {
+    if (proc.pausesRobotCode()) {
+      // The drivetrain stopped first: with the scheduler paused nothing else will command it.
+      io.stop();
+      ownership.pauseRobotCode();
+      robotCodePaused = true;
+    } else if (proc.spinsWheels()) {
       ownership.acquire();
     }
     try {
@@ -1327,6 +1342,10 @@ public final class SwerveTune {
     }
     ctx.sampler.stop();
     ownership.release();
+    if (robotCodePaused) {
+      ownership.resumeRobotCode();
+      robotCodePaused = false;
+    }
     if (outcome == State.ABORTED) {
       ctx.note("Stopped early: " + reason);
     }

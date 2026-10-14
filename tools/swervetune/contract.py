@@ -233,6 +233,9 @@ MOTOR_KINDS = {
 # Why the robot refused or stopped a test, as a short code an agent can act on. The robot sends
 # sentences for people; these match them, most specific first. OTHER means read the message.
 STOP_CODES = [
+    # Bring-up's motor test.
+    ("without turning", "JAMMED"), ("No motors are registered", "NO_MOTORS"), ("can't be run by a test", "NOT_SUPPORTED"),
+    ("names a motor the robot", "BAD_ARGS"), ("No motor to run", "BAD_ARGS"),
     ("took the drivetrain", "DRIVETRAIN_TAKEN"), ("FMS", "FMS_ATTACHED"), ("autonomous", "AUTONOMOUS"), ("Say where the robot is", "ENV_UNSET"),
     ("environment changed", "ENV_CHANGED"), ("heartbeat", "NO_HEARTBEAT"), ("gyro", "GYRO"),
     ("clear floor", "NO_SPACE"), ("eadman", "DEADMAN"), ("stick", "DRIVER_INPUT"),
@@ -301,4 +304,4 @@ FF_SPECS = {"kS": (0, 1.5), "kV": (0.5, 8.0), "kA": (0, 4.0)}
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
 TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",
-         "controller")
+         "controller", "motor_test")

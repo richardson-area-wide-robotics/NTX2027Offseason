@@ -34,6 +34,9 @@ yours, and nothing in the tools will stop you from breaking them:
    the heartbeat to get a test to run. If a refusal looks wrong, report it to a person.
 8. **An abort is information.** After an impact, stall, overspeed or driver-override abort, don't
    rerun until a person has looked at the robot and said it's clear.
+9. **A motor test needs eyes on the mechanism.** `motor_test` runs a mechanism's motor with the
+   robot's own code paused. Before each one, confirm a person sees the mechanism, it is clear of
+   hands and hard stops, and they will say which way it turned: its encoder can't tell you that.
 
 ## What the robot stops by itself
 
@@ -74,10 +77,12 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `practice steer|drive ...` / `rehearse steer|drive ...` | One run, or the whole advice loop, on the simulated practice pod. Its JSON carries `"practice": true`: never save gains from it. |
 | `logsummary <file.wpilog> --project P` | What went wrong in a match log, and where to look. |
 | `pdhports <run or .wpilog> --project P` | Which PDH port feeds each motor. |
+| `design --project P [--draft \| --csv FILE] [--yes]` | The robot's design file (`src/main/deploy/design/devices.json`): what doesn't add up in it, and where the code disagrees with it (CAN IDs, MAX vs Flex, followers, inversion, ports). `--draft` drafts one from the code, `--csv` imports the design team's spreadsheet; `--yes` writes it only when none exists, with a person's OK. Exits 1 on an error. |
 
 Tests for `run`: `capture` (sensors only, disabled), `steer_step`, `drive_step`, `drive_ff`,
 `spin`, `spin_ff` (moment of inertia), `straight`, `slip`, `pdh_map`, `controller` (a Driver
-Station port as the robot sees it; disabled, moves nothing).
+Station port as the robot sees it; disabled, moves nothing), `motor_test` (bring-up: runs chosen
+motors briefly at low output, on blocks, with the robot's own code paused; rule 9).
 
 Their `--arg` keys (the robot clamps each to a safe range and says so):
 
@@ -92,6 +97,7 @@ Their `--arg` keys (the robot clamps each to a safe range and says so):
 | `slip` | `ceiling_a`, `ramp_vps`, `slip_mps`, `direction` (1 or -1) |
 | `pdh_map` | `volts` |
 | `controller` | `port`, `duration_s` |
+| `motor_test` | `drive`, `zero`, `watch` (bit masks over the robot's motor list, in the order `motors` lists them: run, hold at zero, only record; never drive or zero a follower, drive its leader), `duty` (0.02-0.15), `pulse` (0.2-1.0 s), `sign` (1 or -1), `stop_amps` |
 
 ## The loop
 
@@ -147,6 +153,8 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `DISABLED`, `NEEDS_DISABLED` | The Driver Station mode is wrong for this test: ask a person. |
 | `NO_CONTROLLER`, `NO_PDH` | The robot can't read what the test needs; tell the person. |
 | `BAD_ARGS` | Your command's arguments: fix the command. |
+| `JAMMED` | A motor pulled hard without turning: jammed, or motors on one shaft pushing against each other. A person looks first; then run each motor on that shaft alone. |
+| `NO_MOTORS`, `NOT_SUPPORTED` | The robot has no motors registered with its motor guard, or one the test can't run: tell the person. |
 | `NO_PROJECT`, `NOT_FOUND` | A robot project or saved run that doesn't exist: `runs` lists runs; the projects are Peashooter and Black team. |
 | `WRONG_PLACE` | The test can't run where the robot is (a floor test on blocks, the PDH map on the floor): ask a person to move it and set the environment. |
 | `GAINS_REFUSED` | The robot refused a gain change (a test running, the FMS attached): nothing changed; wait, then `gains show`. |

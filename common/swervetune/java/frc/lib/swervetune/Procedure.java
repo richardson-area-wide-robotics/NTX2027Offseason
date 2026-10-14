@@ -39,6 +39,21 @@ public interface Procedure {
     return false;
   }
 
+  /**
+   * Whether the robot's own code pauses while it runs (every command cancelled, the command
+   * scheduler and with it every subsystem's periodic stopped), for a test that runs a mechanism's
+   * motor directly: a subsystem setting that motor every loop would fight it. It resumes when the
+   * test ends, however it ends.
+   */
+  default boolean pausesRobotCode() {
+    return false;
+  }
+
+  /** A reason to stop now, checked every loop (a jam, motors fighting); null to carry on. */
+  default String abortReason(TestContext ctx) {
+    return null;
+  }
+
   /** Whether the robot must be enabled. Capture-only procedures run disabled, safest of all. */
   default boolean needsEnabled() {
     return spinsWheels();

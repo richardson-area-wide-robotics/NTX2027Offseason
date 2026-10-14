@@ -26,6 +26,15 @@ public interface DriveOwnership {
     return true;
   }
 
+  /**
+   * Pauses all of the robot's code for a test that runs a mechanism's motor directly: every
+   * command cancelled and the scheduler stopped, so no subsystem's periodic sets a motor.
+   */
+  default void pauseRobotCode() {}
+
+  /** Undoes {@link #pauseRobotCode}: default commands come back on the next loop. */
+  default void resumeRobotCode() {}
+
   /** Does nothing. For robots that drive without the command framework, and for tests. */
   DriveOwnership NONE =
       new DriveOwnership() {
@@ -64,6 +73,17 @@ public interface DriveOwnership {
       if (hold.isScheduled()) {
         hold.cancel();
       }
+    }
+
+    @Override
+    public void pauseRobotCode() {
+      CommandScheduler.getInstance().cancelAll();
+      CommandScheduler.getInstance().disable();
+    }
+
+    @Override
+    public void resumeRobotCode() {
+      CommandScheduler.getInstance().enable();
     }
   }
 }

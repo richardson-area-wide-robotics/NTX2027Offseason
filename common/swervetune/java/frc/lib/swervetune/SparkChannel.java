@@ -238,6 +238,12 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   }
 
   @Override
+  public boolean testDuty(double duty) {
+    spark.set(Math.max(-1, Math.min(1, duty)));
+    return true;
+  }
+
+  @Override
   public boolean setCurrentLimit(int amps) {
     if (simulation) {
       return true;

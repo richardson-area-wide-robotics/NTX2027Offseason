@@ -74,6 +74,14 @@ public final class MotorGuard {
     boolean setCurrentLimit(int amps);
 
     /**
+     * Bring-up only ({@link MotorTestProcedure}, with the robot's code paused): runs this motor at a
+     * duty cycle, -1 to 1, outside its subsystem. Returns false if this controller can't be run so.
+     */
+    default boolean testDuty(double duty) {
+      return false;
+    }
+
+    /**
      * The supply voltage at the controller's own terminals. Compared with the PDH's voltage under
      * load, it shows the resistance of that controller's power wiring: a loose connection shows up
      * as a sag only that controller sees.
