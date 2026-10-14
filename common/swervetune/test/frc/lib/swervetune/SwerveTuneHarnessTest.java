@@ -780,13 +780,13 @@ class SwerveTuneHarnessTest {
   }
 
   @Test
-  void theControllerCheckRefusesAnEmptyPort() {
+  void theJoystickCheckRefusesAnEmptyPort() {
     ds.enabled = false;
     loop(2);
     send("controller", "ALL", "port", "3");
     loop(1);
     assertFalse(ackAccepted());
-    assertTrue(ackMessage().contains("No controller on Driver Station port 3"), ackMessage());
+    assertTrue(ackMessage().contains("No joystick on Driver Station port 3"), ackMessage());
   }
 
   @Test

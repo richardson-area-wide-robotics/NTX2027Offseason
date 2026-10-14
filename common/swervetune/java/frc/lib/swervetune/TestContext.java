@@ -40,7 +40,7 @@ public final class TestContext {
    * none (AdvantageKit not started, or no PDH on the bus).
    */
   public Supplier<double[]> pdhCurrents = () -> new double[0];
-  /** The Driver Station, for the controller check; null where there is none. */
+  /** The Driver Station, for the joystick check; null where there is none. */
   public RobotSignals signals;
   /** Every motor the motor guard watches, in its order (the laptop's motor list), for bring-up. */
   public List<MotorGuard.Motor> motors = List.of();
@@ -50,6 +50,8 @@ public final class TestContext {
   public List<Sensors.Designed> designedSensors = List.of();
   /** Opens a designed sensor's ports for the readout; null where none can be opened. */
   public Sensors.Opener sensorPorts;
+  /** The mechanisms the robot code registered for the Systems tab, in order. */
+  public List<TunableSystem> systems = List.of();
 
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();

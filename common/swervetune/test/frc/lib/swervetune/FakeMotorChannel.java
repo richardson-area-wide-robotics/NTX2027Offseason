@@ -26,6 +26,9 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
   String model = "";
   String codeClass = "";
   /** The last test output a bring-up test asked for; NaN until one did. */
+  /** Its idle mode: true coast; and every change asked of it, in order. */
+  boolean coastNow;
+  final java.util.List<Boolean> coastCalls = new java.util.ArrayList<>();
   double testDuty = Double.NaN;
   int testDutyCalls;
 
@@ -36,6 +39,18 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
 
   void advance(double dt) {
     rotations += rpm / 60 * dt;
+  }
+
+  @Override
+  public Boolean coast() {
+    return coastNow;
+  }
+
+  @Override
+  public boolean setCoast(boolean coast) {
+    coastNow = coast;
+    coastCalls.add(coast);
+    return true;
   }
 
   @Override

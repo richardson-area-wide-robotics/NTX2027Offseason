@@ -143,6 +143,25 @@ BATTERY_NEXT = ROOT + "/Battery/Next"
 # count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"
 
+# Systems (TunableSystem): a team's mechanism, its live state and its live gains.
+SYSTEMS = ROOT + "/Systems/"
+SYSTEMS_NAMES = SYSTEMS + "Names"
+SYSTEMS_KINDS = SYSTEMS + "Kinds"
+SYSTEMS_UNITS = SYSTEMS + "Units"
+SYSTEMS_MOTORS = SYSTEMS + "Motors"
+SYSTEMS_POSITION = SYSTEMS + "Position"
+SYSTEMS_VELOCITY = SYSTEMS + "Velocity"
+SYSTEMS_GOAL = SYSTEMS + "Goal"
+SYSTEMS_LIMITS = SYSTEMS + "Limits"
+SYSTEMS_LIMITS_FROM = SYSTEMS + "LimitsFrom"
+SYSTEMS_GAIN_NAMES = SYSTEMS + "GainNames"
+SYSTEMS_GAINS = SYSTEMS + "Gains/"
+SYSTEMS_GAINS_APPLIED = SYSTEMS + "Applied/"
+SYSTEMS_APPLY_SEQ = SYSTEMS + "ApplySeq"
+SYSTEMS_APPLY_BOOT_ID = SYSTEMS + "ApplyBootId"
+SYSTEMS_APPLIED_SEQ = SYSTEMS + "AppliedSeq"
+SYSTEMS_APPLY_STATUS = SYSTEMS + "ApplyStatus"
+
 # AdvantageKit's own live topics (NT4Publisher), read for power and CAN health.
 AK = "/AdvantageKit"
 AK_PDH_CURRENTS = AK + "/PowerDistribution/ChannelCurrent"
@@ -234,7 +253,11 @@ MOTOR_KINDS = {
 # sentences for people; these match them, most specific first. OTHER means read the message.
 STOP_CODES = [
     # Bring-up's sensor readout and motor test.
-    ("No sensors to read", "NO_SENSORS"), ("can't read the CAN bus", "NO_CAN_STATUS"), ("without turning", "JAMMED"), ("No motors are registered", "NO_MOTORS"), ("can't be run by a test", "NOT_SUPPORTED"),
+    ("No sensors to read", "NO_SENSORS"), ("can't read the CAN bus", "NO_CAN_STATUS"), ("without turning", "JAMMED"),
+    # Systems: a mechanism's limits and its closed-loop test.
+    ("No such system", "BAD_ARGS"), ("has limits to find", "BAD_ARGS"), ("Disable the robot first", "NEEDS_DISABLED"),
+    ("doesn't give", "NO_SYSTEM_HOOK"), ("Give the test a maximum speed", "BAD_ARGS"), ("Set the limits of", "NO_LIMITS"),
+    ("went past its limits", "PAST_LIMITS"), ("faster than the test allows", "OVERSPEED"), ("above the test's top speed", "OVERSPEED"), ("No motors are registered", "NO_MOTORS"), ("can't be run by a test", "NOT_SUPPORTED"),
     ("names a motor the robot", "BAD_ARGS"), ("No motor to run", "BAD_ARGS"),
     ("took the drivetrain", "DRIVETRAIN_TAKEN"), ("FMS", "FMS_ATTACHED"), ("autonomous", "AUTONOMOUS"), ("Say where the robot is", "ENV_UNSET"),
     ("environment changed", "ENV_CHANGED"), ("heartbeat", "NO_HEARTBEAT"), ("gyro", "GYRO"),
@@ -244,7 +267,7 @@ STOP_CODES = [
     ("current limit was cut", "MOTOR_GUARD"), ("m of floor only allows", "NO_SPACE"), ("Spinning needs", "NO_SPACE"),
     ("cannot run with the robot declared", "WRONG_PLACE"), ("Busy:", "BUSY"), ("not applied while", "GAINS_REFUSED"),
     ("attery", "BATTERY"), ("Robot disabled", "DISABLED"), ("only allowed while the robot is disabled", "NEEDS_DISABLED"),
-    ("time limit", "TIMEOUT"), ("Aborted from the laptop", "ABORTED_BY_PERSON"), ("controller", "NO_CONTROLLER"),
+    ("time limit", "TIMEOUT"), ("Aborted from the laptop", "ABORTED_BY_PERSON"), ("joystick", "NO_JOYSTICK"),
     ("PDH", "NO_PDH"), ("already running", "BUSY"), ("Not connected", "NOT_CONNECTED"), ("No answer", "NOT_CONNECTED"),
     ("error", "ROBOT_ERROR"), ("could not start", "ROBOT_ERROR"),
     # The test's own arguments: fix the command, not the robot.
@@ -323,4 +346,4 @@ def gain_spec(key):
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
 TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",
-         "controller", "motor_test", "sensors", "can_load")
+         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_step")

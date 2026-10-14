@@ -73,7 +73,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 ## Staying safe
 
 - **The deadman.** On blocks and on the floor, nothing that moves a motor runs unless someone
-  holds the deadman for the whole test: the tester's controller right bumper (Driver Station port
+  holds the deadman for the whole test: the tester's joystick right bumper (Driver Station port
   1), or **Hold to run** in the app's test banner, pressed with the mouse or a finger. Let go and it
   stops. No key does it: on the Driver Station laptop, SPACE is the E-STOP. Whoever holds it
   stands where they can see the wheels.
@@ -98,7 +98,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. Every device, the PDH's ports and each finding are shown on FIRST's own control-system drawing (WPILib's REV layout, CC BY 4.0), with the part in question outlined and the parts our robots don't use, such as pneumatics, faded. Troubleshoot's power and CAN checks use the same drawing. Each CAN bus is drawn in its cable color with its name (Drive train, Intake); the termination check takes two meter readings per bus to tell a missing terminator from one that isn't working or a broken cable; and each controller's faults, now and since the code started, are in Where to look. |
 | **Tune drive train** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. **Each pod** first: one pod's steer motor, then its drive motor, each with that pod's own gains (saved to swervetune.json's `podGains` only where they differ from pidfproperties.json); **Use on every pod** when they all want the same. Then **Whole drive train**: all pods together on the shared gains, feedforward, slip current, spin and straight line. Faults on the motors being tuned show above it. |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, each camera's lens (PhotonVision, with the team's 9 x 11 in 8 x 8 ChArUco board, drawn), where the cameras sit, and where the field's AprilTags really are. Faults on the motors and gyro a measurement depends on show with it. |
-| **Joysticks** | Checks the drive team's joysticks (game controllers), no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
+| **Joysticks** | Checks the drive team's joysticks, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
 | **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. **Robot messages** lists every error and warning the robot has reported since you connected (its console on a real robot, its alerts on any), each once with how often and how recently, so what keeps coming back stands out. |
 | **Config** | Checks the swerve config files for mistakes, with one-click fixes. |
 | **Runs** | Every saved test, and **Match logs**: what went wrong in a match and where to look. |
@@ -304,9 +304,9 @@ open the Battery tab, press **Send the grades to the robot**, and redeploy. Do i
    cut out, and a motor already past saving stays off. A **long buzz** means one of those is still
    off, and the override line names it. Each press restarts the 20 seconds.
 
-## The drive team's controllers
+## The drive team's joysticks
 
-Plug a controller into the laptop with USB, open **Joysticks**, press any button on it, and name
+Plug a joystick into the laptop with USB, open **Joysticks**, press any button on it, and name
 it (Driver, Operator, Spare 1). Then run the five steps; it takes about a minute:
 
 1. **Hands off**: where each stick rests when nobody touches it.
@@ -316,15 +316,15 @@ it (Driver, Operator, Spare 1). Then run the five steps; it takes about a minute
 5. **Press every button**: each press seen once. A worn button "bounces", and the robot sees a
    double-tap.
 
-The report says whether the controller is fit for a match and what deadband it needs. Peashooter's
+The report says whether the joystick is fit for a match and what deadband it needs. Peashooter's
 code ignores stick values under 0.1, Black team's under 0.08; a stick that drifts past that makes
 the robot creep by itself. The driving stick's deadband is round (its distance from center), so
-the check judges that stick by how far from center it rests; the turning stick, by its one axis. Check every controller at the start of an event and after one is
-dropped, and save each check: **Every controller checked** shows which ones are wearing out.
-Xbox controllers have no gyro (and the Driver Station can't read a PlayStation controller's), so
+the check judges that stick by how far from center it rests; the turning stick, by its one axis. Check every joystick at the start of an event and after one is
+dropped, and save each check: **Every joystick checked** shows which ones are wearing out.
+Xbox joysticks have no gyro (and the Driver Station can't read a PlayStation joystick's), so
 drift here means the sticks.
 
-To check a controller exactly as the robot receives it, plug it into the Driver Station laptop,
+To check a joystick exactly as the robot receives it, plug it into the Driver Station laptop,
 connect this app to the robot, keep the robot disabled, and set **Read from** to the robot's
 port 0 (driver) or 1. The robot records each step and the same checks judge it; a button that
 bounces there is one the robot code will act on.
@@ -347,7 +347,7 @@ The robot code already has everything the tools need:
 - `AkLogging.start(...)` first in `Robot`'s constructor (AdvantageKit logging).
 - Each subsystem registers its motors with the motor guard, which enforces the current policy:
   NEO Vortex 80 A, NEO 2.0 80 A, NEO V1.1 60 A, NEO 550 20 A.
-- The driver controller's **Back** button lets motors cut off for heat run at half power for 20
+- The driver's joystick **Back** button lets motors cut off for heat run at half power for 20
   seconds, with a short buzz and a "Heat override ON" alert, for when losing a motor costs more
   than the motor. It never lifts a stall cutout; a long buzz says a motor stayed off.
 

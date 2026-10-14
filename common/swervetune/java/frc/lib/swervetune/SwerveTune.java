@@ -147,6 +147,8 @@ public final class SwerveTune {
   private final Map<String, StringArrayPublisher> liveStrings = new HashMap<>();
   private final List<String> drivetrainMotors = new ArrayList<>();
   private final List<Sensors.Registered> sensors = new ArrayList<>();
+  private final List<TunableSystem> systems = new ArrayList<>();
+  private SystemBoard systemBoard;
   private List<Sensors.Designed> designedSensors = List.of();
   private Sensors.Opener sensorPorts;
   private final IntegerSubscriber overrideSeq;
@@ -282,6 +284,8 @@ public final class SwerveTune {
     procedures.put("motor_test", MotorTestProcedure::new);
     procedures.put("sensors", SensorProcedure::new);
     procedures.put("can_load", CanLoadProcedure::new);
+    procedures.put("system_limits", SystemLimitsProcedure::new);
+    procedures.put("system_step", SystemStepProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -474,6 +478,26 @@ public final class SwerveTune {
   /** As {@link #watchSensor(String, java.util.function.BooleanSupplier)}, for a number: an encoder, a distance. */
   public void watchSensor(String name, DoubleSupplier read) {
     addSensor(new Sensors.Registered(name, false, read));
+  }
+
+  /**
+   * Registers a mechanism for the Systems tab and returns it to describe: how to read it, how to
+   * set its goal, its subsystem, its motors and gains (see {@link TunableSystem}). swervetune.json's
+   * {@code "systems"} entry of the same name gives its limits.
+   */
+  public TunableSystem system(String name, TunableSystem.Kind kind) {
+    systems.removeIf(s -> s.name.equals(name));
+    TunableSystem s = new TunableSystem(name, kind);
+    double[] lim = config.systems.get(name);
+    if (lim != null) {
+      if (Double.isFinite(lim[0]) && Double.isFinite(lim[1])) {
+        s.setLimits(lim[0], lim[1], "swervetune.json");
+      }
+      s.maxVelocity = lim[2];
+      s.maxAccel = lim[3];
+    }
+    systems.add(s);
+    return s;
   }
 
   private void addSensor(Sensors.Registered s) {
@@ -855,6 +879,10 @@ public final class SwerveTune {
           : state == State.RUNNING || state == State.WAITING ? "a test is running" : null;
       gains.poll(gainsBlocked);
       gains.pollTuning(gainsBlocked);
+      if (systemBoard == null) {
+        systemBoard = new SystemBoard(nt, bootId, systems);
+      }
+      systemBoard.periodic(gainsBlocked);
       Map<String, Double> gainsNow = gains.takeChanged();
       if (gainsNow != null) {
         AkLogging.recordGains(gainsNow, gains.reason());
@@ -1052,6 +1080,7 @@ public final class SwerveTune {
     c.sensors = List.copyOf(sensors);
     c.designedSensors = designedSensors;
     c.sensorPorts = sensorPorts;
+    c.systems = List.copyOf(systems);
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
@@ -1080,6 +1109,7 @@ public final class SwerveTune {
     ctx.sensors = c.sensors;
     ctx.designedSensors = c.designedSensors;
     ctx.sensorPorts = c.sensorPorts;
+    ctx.systems = c.systems;
     proc = p;
     profile = prof;
     activeSeq = seq;
@@ -1192,7 +1222,7 @@ public final class SwerveTune {
         return;
       }
     } else if (in.fmsAttached) {
-      // A capture or controller check started in the pit must not run on into a match.
+      // A capture or joystick check started in the pit must not run on into a match.
       finish(State.ABORTED, "FMS attached: a match is starting.");
       return;
     }

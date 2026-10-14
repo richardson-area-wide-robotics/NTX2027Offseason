@@ -35,7 +35,7 @@ public interface RobotSignals {
     return new double[0];
   }
 
-  /** A Driver Station port's axes as the robot code receives them; empty with no controller there. */
+  /** A Driver Station port's axes as the robot code receives them; empty with no joystick there. */
   default double[] stickAxes(int port) {
     return new double[0];
   }
@@ -50,7 +50,7 @@ public interface RobotSignals {
     return -1;
   }
 
-  /** The controller's name as the Driver Station reports it. */
+  /** The joystick's name as the Driver Station reports it. */
   default String stickName(int port) {
     return "";
   }
@@ -130,7 +130,7 @@ public interface RobotSignals {
 
     @Override
     public double[] stickAxes(int p) {
-      // Only axes the controller has: asking for more makes the Driver Station print a warning.
+      // Only axes the joystick has: asking for more makes the Driver Station print a warning.
       int n = DriverStation.getStickAxisCount(p);
       double[] out = new double[Math.max(0, n)];
       for (int i = 0; i < out.length; i++) {

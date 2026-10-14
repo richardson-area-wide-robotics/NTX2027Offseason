@@ -494,7 +494,7 @@ SYMPTOMS = [
             check("With sticks centered, do the setpoints in the Live view stay still?",
                   "Stick drift below the deadband should command nothing.", BLOCKS,
                   "The sticks are drifting through the deadband.",
-                  "Raise the deadband (0.08-0.1) or replace the controller.", None),
+                  "Raise the deadband (0.08-0.1) or replace the joystick.", None),
             check("Is the absolute encoder quiet at rest?", "The Guide's Sensor health step.", DISABLED,
                   "Sensor noise is driving the loop.", "Reseat cable, check magnet.",
                   {"type": "run", "test": "capture", "env": "ANY", "args": {"duration_s": 3}},

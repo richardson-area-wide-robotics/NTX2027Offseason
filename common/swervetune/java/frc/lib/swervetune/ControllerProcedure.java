@@ -1,15 +1,15 @@
 package frc.lib.swervetune;
 
 /**
- * Records one Driver Station controller exactly as the robot code receives it: every axis, the
+ * Records one Driver Station joystick exactly as the robot code receives it: every axis, the
  * buttons and the D-pad, about every 20 ms (each Driver Station packet).
  *
- * <p>The laptop's Controllers tab checks a controller plugged into the laptop; this is the same
+ * <p>The laptop's Joysticks tab checks a joystick plugged into the laptop; this is the same
  * check through the robot, so it sees what the robot code sees - including a button bounce the
  * Driver Station passes on, which a toggle in the code would act on. Runs disabled, commands
  * nothing, and ends early when asked (the "Done" of the buttons step).
  *
- * <p>Channels: {@code a0..a5} (WPILib axis numbers: on an Xbox controller 0/1 the left stick, 2/3 the
+ * <p>Channels: {@code a0..a5} (WPILib axis numbers: on an Xbox joystick 0/1 the left stick, 2/3 the
  * triggers, 4/5 the right stick), {@code buttons} (bit 0 is button 1) and {@code pov} (degrees, -1
  * when the D-pad is released).
  */
@@ -50,11 +50,11 @@ final class ControllerProcedure implements Procedure {
   @Override
   public String validate(TestContext ctx) {
     if (ctx.signals == null) {
-      return "This robot code can't read the Driver Station's controllers.";
+      return "This robot code can't read the Driver Station's joysticks.";
     }
     int p = port(ctx);
     if (ctx.signals.stickAxes(p).length == 0) {
-      return "No controller on Driver Station port " + p + ". Plug it in and check its USB tab.";
+      return "No joystick on Driver Station port " + p + ". Plug it in and check its USB tab.";
     }
     return null;
   }
@@ -91,7 +91,7 @@ final class ControllerProcedure implements Procedure {
     ctx.meta("axis_count", s.stickAxes(p).length);
     ctx.meta("is_xbox", s.stickIsXbox(p) ? 1 : 0);
     ctx.meta("duration_s", durationS);
-    ctx.note("Controller on port " + p + ": " + s.stickName(p));
+    ctx.note("Joystick on port " + p + ": " + s.stickName(p));
   }
 
   @Override
@@ -99,7 +99,7 @@ final class ControllerProcedure implements Procedure {
     return stopRequested || t >= durationS;
   }
 
-  // WPILib's Xbox button numbers, 1 to 10, by the names the laptop's Controllers tab uses.
+  // WPILib's Xbox button numbers, 1 to 10, by the names the laptop's Joysticks tab uses.
   static final String[] XBOX_BUTTONS = {"A", "B", "X", "Y", "Left bumper", "Right bumper", "Back", "Start",
       "Left stick press", "Right stick press"};
 

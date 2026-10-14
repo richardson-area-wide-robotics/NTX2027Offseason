@@ -43,6 +43,12 @@ public final class SwerveTuneConfig {
    */
   public final Map<String, Map<String, double[]>> podGains = new LinkedHashMap<>();
 
+  /**
+   * A system's limits, by its registered name: {@code {min, max, maxVelocity, maxAccel}} in its own
+   * units, NaN where not given. The robot enforces them in every system test.
+   */
+  public final Map<String, double[]> systems = new LinkedHashMap<>();
+
   public boolean angularVelocityCompensationTeleop = false;
   public boolean angularVelocityCompensationAuto = false;
   public double angularVelocityCoefficient = 0.0;
@@ -53,7 +59,7 @@ public final class SwerveTuneConfig {
   public Boolean chassisDiscretizationAuto = null;
   public double chassisDiscretizationDtS = 0.02;
 
-  /** Driver controller port. Moving its sticks takes control back from any test. */
+  /** The driver's joystick port. Moving its sticks takes control back from any test. */
   public int driverPort = 0;
 
   /**
@@ -203,6 +209,12 @@ public final class SwerveTuneConfig {
       if (!pod.isEmpty()) {
         c.podGains.put(e.getKey(), pod);
       }
+    }
+
+    for (Map.Entry<String, Object> e : map(m.get("systems")).entrySet()) {
+      Map<String, Object> s = map(e.getValue());
+      c.systems.put(e.getKey(), new double[] {num(s.get("min"), Double.NaN), num(s.get("max"), Double.NaN),
+          num(s.get("maxVelocity"), Double.NaN), num(s.get("maxAccel"), Double.NaN)});
     }
 
     Map<String, Object> avc = map(m.get("angularVelocityCompensation"));

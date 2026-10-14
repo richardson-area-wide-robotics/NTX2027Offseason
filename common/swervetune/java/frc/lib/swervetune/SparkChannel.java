@@ -238,6 +238,25 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   }
 
   @Override
+  public Boolean coast() {
+    SparkBaseConfigAccessor a = accessor(spark);
+    if (simulation || a == null) {
+      return null;
+    }
+    return a.getIdleMode() == SparkBaseConfig.IdleMode.kCoast;
+  }
+
+  @Override
+  public boolean setCoast(boolean coast) {
+    if (simulation) {
+      return true;
+    }
+    SparkBaseConfig c = spark instanceof SparkFlex ? new SparkFlexConfig() : new SparkMaxConfig();
+    c.idleMode(coast ? SparkBaseConfig.IdleMode.kCoast : SparkBaseConfig.IdleMode.kBrake);
+    return spark.configure(c, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters) == REVLibError.kOk;
+  }
+
+  @Override
   public boolean testDuty(double duty) {
     spark.set(Math.max(-1, Math.min(1, duty)));
     return true;

@@ -15,7 +15,7 @@ const WHERE = { UNSET: "Where: not set", BLOCKS: "On blocks", FIELD: "On the flo
 const whereWord = k => WHERE[k] || k;
 const TEST_NAME = { steer_step: "Steering", drive_step: "Drive speed", drive_ff: "Feedforward", slip: "Slip current",
   spin: "Spin", straight: "Straight line", capture: "Sensor capture", pdh_map: "PDH port finder", motor_test: "Motor test",
-  moi: "Moment of inertia", controller: "Controller check", spin_ff: "Spin feedforward", sensors: "Sensor readout", can_load: "CAN load test" };
+  moi: "Moment of inertia", controller: "Joystick check", spin_ff: "Spin feedforward", sensors: "Sensor readout", can_load: "CAN load test" };
 const testName = k => TEST_NAME[k] || k;
 
 const App = {
@@ -343,7 +343,7 @@ function paintHeader() {
     const seen = sl ? Object.values(sl) : [];
     say($("#banner-msg"), sl ? `${seen.filter(x => x.changed).length} of ${seen.length} sensors changed so far. Trip each one by hand; Stop on the Bring-up tab when done.` : msg);
     $("#banner-bar").style.width = Math.round(100 * (status.progress || t.progress || 0)) + "%";
-    // Only a test that moves a motor needs the deadman: not a capture, a hand check or a controller check.
+    // Only a test that moves a motor needs the deadman: not a capture, a hand check or a joystick check.
     const MOVES = ["drive_step", "drive_ff", "steer_step", "slip", "spin", "spin_ff", "straight", "pdh_map", "motor_test"];
     $("#banner-hold").hidden = !((env === "FIELD" || env === "BLOCKS") && MOVES.includes(status.test || t.test));
   }

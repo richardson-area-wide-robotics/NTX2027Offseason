@@ -77,6 +77,16 @@ public final class MotorGuard {
      * Bring-up only ({@link MotorTestProcedure}, with the robot's code paused): runs this motor at a
      * duty cycle, -1 to 1, outside its subsystem. Returns false if this controller can't be run so.
      */
+    /** Its idle mode now: true coast, false brake, null when it can't say. */
+    default Boolean coast() {
+      return null;
+    }
+
+    /** Coast (true) or brake, never persisted; false if it can't. For moving a mechanism by hand. */
+    default boolean setCoast(boolean coast) {
+      return false;
+    }
+
     default boolean testDuty(double duty) {
       return false;
     }

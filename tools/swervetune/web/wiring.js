@@ -612,7 +612,7 @@ const Wiring = (() => {
     $("#wf-logs", root).innerHTML = "";
     if (!App.connected()) { App.toast("Connect to the robot first (or try Practice)."); return; }
     if (!["BLOCKS", "SIM"].includes(App.env())) { App.toast("Set the environment to On blocks first (top bar)."); return; }
-    out.innerHTML = `<div class="callout info">Every wheel off the ground. Enable the robot, then hold the deadman (the tester's controller right bumper, or Hold to run on screen) for about 12 seconds while each swerve motor turns in turn.</div>`;
+    out.innerHTML = `<div class="callout info">Every wheel off the ground. Enable the robot, then hold the deadman (the tester's joystick right bumper, or Hold to run on screen) for about 12 seconds while each swerve motor turns in turn.</div>`;
     try {
       const doc = await App.runTest("pdh_map", "ALL", {});
       showFound(await App.api("/api/wiring/pdhfind?run=" + encodeURIComponent(doc._file)), "pulse");

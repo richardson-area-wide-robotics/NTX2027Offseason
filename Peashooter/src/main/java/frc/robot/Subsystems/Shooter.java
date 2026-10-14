@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.swervetune.MotorKind;
 import frc.lib.swervetune.MotorWatcher;
+import frc.lib.swervetune.SwerveTune;
+import frc.lib.swervetune.TunableSystem;
 
 public class Shooter extends SubsystemBase{
 // ids 10, 11
@@ -49,5 +51,20 @@ SparkClosedLoopController leaderPID = leader.getClosedLoopController();
     public void watchMotors(MotorWatcher w) {
         w.watch("Shooter leader", leader, MotorKind.VORTEX);
         w.watch("Shooter follower", follower, MotorKind.VORTEX);
+    }
+
+    /**
+     * The swerve tools' Systems tab: the flywheel's speed in RPM, set through its own closed loop
+     * on the leader SPARK (the follower follows). Its gains change live there, never saved.
+     */
+    public void tuneWith(SwerveTune tune) {
+        tune.system("Shooter", TunableSystem.Kind.FLYWHEEL)
+            .units("RPM")
+            .velocity(() -> leader.getEncoder().getVelocity())
+            .goal(rpm -> leaderPID.setSetpoint(rpm, ControlType.kVelocity))
+            .stop(() -> leader.set(0))
+            .subsystem(this)
+            .motors("Shooter leader", "Shooter follower")
+            .sparkGains(leader);
     }
 }

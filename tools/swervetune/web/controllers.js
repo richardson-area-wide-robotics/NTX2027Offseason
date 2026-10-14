@@ -1,12 +1,12 @@
-// Joysticks tab (internally "controllers"): check the drive team's controllers in the pit - drift, deadband, reach, triggers,
-// buttons - from a controller plugged into this laptop. No robot needed.
+// Joysticks tab (internally "controllers"): check the drive team's joysticks in the pit - drift, deadband, reach, triggers,
+// buttons - from a joystick plugged into this laptop. No robot needed.
 "use strict";
 
 (() => {
   const root = $("#tab-controllers");
   const STEPS = [
     { id: "rest", title: "Hands off", secs: 4,
-      text: "Put the controller down flat and don't touch it." },
+      text: "Put the joystick down flat and don't touch it." },
     { id: "sticks", title: "Circle the sticks", secs: 10,
       text: "Roll both sticks slowly round their edges, pressing outward, three times each." },
     { id: "returns", title: "Flick and let go", secs: 12,
@@ -30,11 +30,11 @@
     <div class="job-area">
     <div class="panel">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-        <h2 data-tip="ct.title">Check a controller</h2>
+        <h2 data-tip="ct.title">Check a joystick</h2>
         <span id="ct-rate" class="small muted"></span>
       </div>
-      ${HowTo.steps({ note: "No robot needed: the Driver Station reads the same controller the same way. Do this for every controller at the start of an event.",
-        steps: ["Plug the controller into this laptop with USB and press any button on it.",
+      ${HowTo.steps({ note: "No robot needed: the Driver Station reads the same joystick the same way. Do this for every joystick at the start of an event.",
+        steps: ["Plug the joystick into this laptop with USB and press any button on it.",
           "Say which one it is (Driver, Operator, Spare 1): its saved checks are kept under that name.",
           "Run the steps on the right in order: rest, sticks, return to center, triggers, buttons.",
           "Read the report, then <b>Save the check</b>."],
@@ -44,7 +44,7 @@
           <option value="laptop">This laptop (USB)</option>
           <option value="0">The robot: Driver Station port 0 (driver)</option>
           <option value="1">The robot: Driver Station port 1</option></select></label>
-        <label class="gain" id="ct-pad-box" data-tip="ct.pad">Controller<select id="ct-pad"><option value="">none seen yet</option></select></label>
+        <label class="gain" id="ct-pad-box" data-tip="ct.pad">Joystick<select id="ct-pad"><option value="">none seen yet</option></select></label>
         <label class="gain" data-tip="ct.label">Which one is it?<input id="ct-label" list="ct-labels" placeholder="Driver, Operator, Spare 1"></label>
         <datalist id="ct-labels"></datalist>
       </div>
@@ -63,7 +63,7 @@
         <details class="small"><summary>What the drawing shows</summary><p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
           <span class="ct-key-code">Dashed outline</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>):
           a circle where the deadband is round (distance from center), a square where each axis has its own.
-          <span class="ct-key-rec">Green outline</span>: what this controller needs, once measured. A button turns green with ✓ once seen;
+          <span class="ct-key-rec">Green outline</span>: what this joystick needs, once measured. A button turns green with ✓ once seen;
           the number is the one robot code uses.</p></details>
       </div>
       <div class="panel">
@@ -78,11 +78,11 @@
       ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
     </div>
     <div class="panel">
-      <h3 data-tip="ct.history">Every controller checked</h3>
+      <h3 data-tip="ct.history">Every joystick checked</h3>
       <div id="ct-history"></div>
     </div></div></div>`;
 
-  // ---------------------------------------------------------------- reading the controller
+  // ---------------------------------------------------------------- reading the joystick
   function pads() { return Array.from(navigator.getGamepads ? navigator.getGamepads() : []).filter(Boolean); }
   function current() { return pads().find(p => p.index === pad) || null; }
 
@@ -97,7 +97,7 @@
     const m = $("#ct-mapping", root);
     m.hidden = !p || p.mapping === "standard";
     m.textContent = p && p.mapping !== "standard"
-      ? "This controller isn't in the browser's standard layout, so the names below may be wrong. An Xbox controller is." : "";
+      ? "This joystick isn't in the browser's standard layout, so the names below may be wrong. An Xbox joystick is." : "";
   }
 
   function row(p) {
@@ -173,7 +173,7 @@
     $("#ct-rt", root).style.height = (b(7) * 100).toFixed(0) + "%";
     $("#ct-axes", root).textContent = p
       ? `Left X ${fmt(a[0], 3)}  Y ${fmt(a[1], 3)} · Right X ${fmt(a[2], 3)}  Y ${fmt(a[3], 3)} · LT ${fmt(b(6), 2)}  RT ${fmt(b(7), 2)}`
-      : "No controller yet.";
+      : "No joystick yet.";
     const viaRobot = recording && recording.robot ? robotPressed() : null;
     if (viaRobot) viaRobot.forEach(i => seen.add(i));
     if (!$("#ct-buttons [data-b]", root)) buildButtons();
@@ -200,7 +200,7 @@
 
   function start(step) {
     if (src !== "laptop") return startRobot(step);
-    if (!current()) { App.toast("Plug in a controller and press a button on it first."); return; }
+    if (!current()) { App.toast("Plug in a joystick and press a button on it first."); return; }
     recording = { step, rows: [], t0: performance.now() };
     if (step.id === "buttons") seen = new Set();
     const box = $("#ct-step-box", root);
@@ -258,8 +258,8 @@
     if (!r.ok) { box.innerHTML = `<p class="hint">${esc(r.error)}</p>`; paintSteps(); return; }
     results[step.id] = r;
     if (A_finite(r.interval_ms)) $("#ct-rate", root).textContent = r.source === "robot"
-      ? `The robot gets the controller every ${fmt(r.interval_ms, 1)} ms${r.name ? ` (${r.name})` : ""}`
-      : `This laptop sees the controller every ${fmt(r.interval_ms, 1)} ms`;
+      ? `The robot gets the joystick every ${fmt(r.interval_ms, 1)} ms${r.name ? ` (${r.name})` : ""}`
+      : `This laptop sees the joystick every ${fmt(r.interval_ms, 1)} ms`;
     box.innerHTML = r.findings.length ? r.findings.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span>
       <span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")
       : `<p class="small">${esc(step.title)}: nothing wrong.</p>`;
@@ -291,7 +291,7 @@
       ${rep.findings.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span>
         <span class="title">${esc(f.title)}</span></div><div class="why">${f.learn ? Learn.link(f.why, 2) : esc(f.why)}</div></div>`).join("")}
       <div class="row"><button class="btn primary" id="ct-save" ${done ? "" : "disabled"} data-tip="ct.save">Save this check</button>
-        <span class="small muted">Saved checks show which controllers are wearing out.</span></div>`;
+        <span class="small muted">Saved checks show which joysticks are wearing out.</span></div>`;
     $("#ct-save", box).onclick = save;
   }
 
@@ -309,7 +309,7 @@
     const h = (await App.api("/api/controllers/history")).history || [];
     $("#ct-labels", root).innerHTML = [...new Set(h.map(e => e.label))].map(l => `<option value="${esc(l)}">`).join("");
     const when = s => { const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(s || ""); return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : ""; };
-    $("#ct-history", root).innerHTML = h.length ? `<div class="tblwrap"><table class="t"><thead><tr><th>Controller</th><th>When</th>
+    $("#ct-history", root).innerHTML = h.length ? `<div class="tblwrap"><table class="t"><thead><tr><th>Joystick</th><th>When</th>
       <th>Drift</th><th>Deadband needed</th><th></th><th>Problems</th></tr></thead><tbody>
       ${h.slice().reverse().map(e => `<tr><td>${esc(e.label)}</td><td class="small">${esc(when(e.when))}</td>
         <td class="num">${A_finite(e.worst_offset) ? fmt(e.worst_offset, 3) : "–"}</td><td class="num">${e.recommended_deadband != null ? fmt(e.recommended_deadband, 2) : "–"}</td>
@@ -339,7 +339,7 @@
     return { drive: n(operator.driverPort, 0), deadman: n(operator.deadmanPort, 1), button: n(operator.deadmanButton, 6) };
   }
 
-  // The deadman controller matters to the tests for one button only: say so, so nobody fails it
+  // The deadman joystick matters to the tests for one button only: say so, so nobody fails it
   // for a drifting stick the drivetrain never reads.
   function portNote() {
     const { drive, deadman, button } = ports();
@@ -348,9 +348,9 @@
     const el = $("#ct-port-note", root);
     el.hidden = !isDeadman;
     if (isDeadman) {
-      el.textContent = `Port ${deadman} is the deadman controller: the swerve tests read only button ${button}`
+      el.textContent = `Port ${deadman} is the deadman joystick: the swerve tests read only button ${button}`
         + `${button === 6 ? " (the right bumper)" : ""}. Hold it and a test runs; let go and it stops. Its sticks`
-        + " never move the drivetrain, so check them only if the robot code uses this controller for something else.";
+        + " never move the drivetrain, so check them only if the robot code uses this joystick for something else.";
     }
   }
 
@@ -362,9 +362,9 @@
     $("#ct-pad-box", root).hidden = src !== "laptop";
     results = {}; rep = null; rec = null;
     $("#ct-report", root).innerHTML = `<p class="hint">Run the steps above; the report appears here.</p>`;
-    $("#ct-step-box", root).innerHTML = src === "laptop" ? "" : `<p class="hint">Through the robot: plug the controller
+    $("#ct-step-box", root).innerHTML = src === "laptop" ? "" : `<p class="hint">Through the robot: plug the joystick
       into the Driver Station laptop, connect this app to the robot, keep the robot disabled. The live view still shows
-      a controller plugged into this laptop, if any.</p>`;
+      a joystick plugged into this laptop, if any.</p>`;
     paintSteps();
   };
   window.addEventListener("gamepadconnected", listPads);

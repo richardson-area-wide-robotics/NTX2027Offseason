@@ -81,7 +81,7 @@ public interface Procedure {
 
   /**
    * A line for the laptop's banner while the test runs, e.g. the buttons held right now in a
-   * controller check; null keeps "Running.".
+   * joystick check; null keeps "Running.".
    */
   default String liveMessage(TestContext ctx, double t) {
     return null;

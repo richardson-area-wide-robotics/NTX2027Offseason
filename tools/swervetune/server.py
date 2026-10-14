@@ -941,7 +941,7 @@ def api_controllers_step(body):
 
 
 def api_controllers_robot(body):
-    """One step of the controller check through the robot: what the robot code receives from a
+    """One step of the joystick check through the robot: what the robot code receives from a
     Driver Station port, recorded by the robot (disabled), judged like the laptop's own."""
     b = body or {}
     fn = _CONTROLLER_STEPS.get(b.get("step"))
@@ -973,7 +973,7 @@ def api_controllers_save(body):
     b = body or {}
     label = str(b.get("label") or "").strip()
     if not label:
-        return {"ok": False, "error": "Name the controller first (Driver, Operator, Spare 1...)."}
+        return {"ok": False, "error": "Name the joystick first (Driver, Operator, Spare 1...)."}
     rep = b.get("report") or {}
     entry = {"when": time.strftime("%Y%m%d-%H%M%S"), "label": label, "device": str(b.get("device") or "")[:120],
              "worst_offset": rep.get("worst_offset"), "recommended_deadband": rep.get("recommended_deadband"),

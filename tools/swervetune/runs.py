@@ -120,7 +120,7 @@ CONTROLLER_LOG = os.path.join(DATA, "controllers.json")
 
 
 def controller_log():
-    """Every controller check saved, oldest first."""
+    """Every joystick check saved, oldest first."""
     try:
         with open(CONTROLLER_LOG, encoding="utf-8") as fh:
             return json.load(fh)

@@ -1,7 +1,7 @@
-"""The drive team's controllers: drift, deadband, reach, triggers and buttons, checked in the pit.
+"""The drive team's joysticks: drift, deadband, reach, triggers and buttons, checked in the pit.
 
-The browser reads a controller plugged into this laptop (the Gamepad API, the same XInput device
-the Driver Station reads), so this needs no robot. A student follows the Controllers tab's steps;
+The browser reads a joystick plugged into this laptop (the Gamepad API, the same XInput device
+the Driver Station reads), so this needs no robot. A student follows the Joysticks tab's steps;
 the samples come here, and each step gets judged:
 
 * **Hands off** - where each stick rests and how much it wanders. A worn stick rests off center
@@ -16,10 +16,10 @@ the samples come here, and each step gets judged:
 
 Samples are rows ``[t_ms, a0, a1, a2, a3, b0 ... b16]`` in the browser's standard layout (axes 0-3
 are the sticks; buttons 6 and 7 are the analog triggers; 12-15 the D-pad). Only rows where the
-controller reported new data are sent, so the gaps between rows are its real update interval.
+joystick reported new data are sent, so the gaps between rows are its real update interval.
 
-An Xbox controller has no gyro, and neither the Driver Station nor the browser reads the gyro in a
-PlayStation controller, so "drift" here is stick drift.
+An Xbox joystick has no gyro, and neither the Driver Station nor the browser reads the gyro in a
+PlayStation joystick, so "drift" here is stick drift.
 """
 
 from __future__ import annotations
@@ -78,7 +78,7 @@ def _rows(samples):
 
 
 def update_interval_ms(samples):
-    """How often the controller reported new data: the median gap between rows."""
+    """How often the joystick reported new data: the median gap between rows."""
     t = [r[0] for r in _rows(samples)]
     gaps = [b - a for a, b in zip(t, t[1:]) if b > a]
     return A.median(gaps) if gaps else float("nan")
@@ -204,7 +204,7 @@ def rest(samples):
     out["stuck"] = pressed
     if pressed:
         out["findings"].append({"level": "error", "title": f"Pressed with nobody touching it: {', '.join(pressed)}",
-                                "why": "A stuck button or trigger: the robot sees it held. Clean or replace the controller."})
+                                "why": "A stuck button or trigger: the robot sees it held. Clean or replace the joystick."})
     return out
 
 
@@ -234,7 +234,7 @@ def sticks(samples):
             out["findings"].append({
                 "level": "warn", "title": f"{label} only reaches {reach:.2f} toward {_direction(worst)}",
                 "why": "Full speed needs 1.0. Worn sticks stop short: the robot never asks for full speed that "
-                       "way. Swap the controller, or scale the stick in the code."})
+                       "way. Swap the joystick, or scale the stick in the code."})
         else:
             out["findings"].append({"level": "info", "title": f"{label} reaches full deflection all round",
                                     "why": f"At least {reach:.2f} in every direction."})
@@ -379,7 +379,7 @@ def report(steps, code_db=None, read=None):
                 name = f"{name} (distance from center)"
             if v >= cur:
                 F.append({"level": "error", "title": f"{name} drifts {v:.2f}, past the code's {cur:g} deadband",
-                          "why": f"The robot will creep with nobody touching the sticks. Use another controller, or "
+                          "why": f"The robot will creep with nobody touching the sticks. Use another joystick, or "
                                  f"raise the deadband in {where} to {recommend_deadband(v):.2f}.", "learn": "deadband"})
             elif recommend_deadband(v) > cur:
                 F.append({"level": "warn", "title": f"{name} drifts {v:.2f}, close to the code's {cur:g} deadband",
@@ -387,7 +387,7 @@ def report(steps, code_db=None, read=None):
                                  "safe. Worn sticks get worse.", "learn": "deadband"})
             else:
                 F.append({"level": "info", "title": f"Drift at most {v:.2f}: well inside the code's {cur:g} deadband",
-                          "why": f"{rec:.2f} would be enough for this controller; a smaller deadband means finer "
+                          "why": f"{rec:.2f} would be enough for this joystick; a smaller deadband means finer "
                                  "control near center.", "learn": "deadband"})
     unread = sorted(a for a, v in drift.items() if a not in read and v >= MIN_DEADBAND + 0.02)
     if unread and len(read) < 4:

@@ -368,8 +368,8 @@ def controllers_plan(ctx):
 
     jobs = []
     for jid, title, words, detail in (
-            ("driver", "Check the driver's controller", ("driv",), "Port 0: the sticks that drive."),
-            ("tester", "Check the tester's controller", ("test", "dead", "operat"),
+            ("driver", "Check the driver's joystick", ("driv",), "Port 0: the sticks that drive."),
+            ("tester", "Check the tester's joystick", ("test", "dead", "operat"),
              "Port 1: its right bumper is the deadman for every test.")):
         e = find(*words)
         if not e:
@@ -382,17 +382,17 @@ def controllers_plan(ctx):
                              go={"tab": "controllers", "panel": "ct-steps"}))
     needs = [e for e in latest.values() if e.get("recommended_deadband") and code_db
              and e["recommended_deadband"] > code_db + 1e-9]
-    jobs.append(_job("deadband", "The code's deadband covers every controller", "attention" if needs else
+    jobs.append(_job("deadband", "The code's deadband covers every joystick", "attention" if needs else
                      ("done" if latest else "later"),
                      ("Needs more than the code's " + str(code_db) + ": "
                       + ", ".join(f"{e.get('label')} {e['recommended_deadband']}" for e in needs)) if needs
-                     else ("Every checked controller rests inside it." if latest else "Check a controller first."),
+                     else ("Every checked joystick rests inside it." if latest else "Check a joystick first."),
                      go={"tab": "controllers", "panel": "ct-history"}))
     jobs.append(_job("spares", "Check the spares", "optional", "Before an event, so a swap mid-event is safe.",
                      go={"tab": "controllers", "panel": "ct-steps"}, optional=True))
     return _plan("Joysticks: the drivers' sticks and buttons",
-                 "Drift, dead zones, reach and buttons, for each Xbox controller, against the deadband the code uses.",
-                 ["Each controller, with a USB cable"], jobs, {"guide": "", "label": "Back to the Guide"})
+                 "Drift, dead zones, reach and buttons, for each Xbox joystick, against the deadband the code uses.",
+                 ["Each joystick, with a USB cable"], jobs, {"guide": "", "label": "Back to the Guide"})
 
 
 def is_swerve(name):

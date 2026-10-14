@@ -240,6 +240,33 @@ public final class SwerveTuneTopics {
   /** False when swervetune.json switched the guard off. */
   public static final String MOTORS_GUARD_ON = MOTORS + "GuardOn";
 
+  // ---------------------------------------------------------------- systems (TunableSystem)
+  public static final String SYSTEMS = ROOT + "/Systems/";
+  /** Each registered system, in order: its name, kind (FLYWHEEL, PIVOT...), units and motors (comma list). */
+  public static final String SYSTEMS_NAMES = SYSTEMS + "Names";
+  public static final String SYSTEMS_KINDS = SYSTEMS + "Kinds";
+  public static final String SYSTEMS_UNITS = SYSTEMS + "Units";
+  public static final String SYSTEMS_MOTORS = SYSTEMS + "Motors";
+  /** Live, one entry per system: position, velocity (units/s, or the flywheel's speed), last goal. */
+  public static final String SYSTEMS_POSITION = SYSTEMS + "Position";
+  public static final String SYSTEMS_VELOCITY = SYSTEMS + "Velocity";
+  public static final String SYSTEMS_GOAL = SYSTEMS + "Goal";
+  /** Four per system: min, max, max velocity, max acceleration (NaN where unknown). */
+  public static final String SYSTEMS_LIMITS = SYSTEMS + "Limits";
+  /** Where each system's limits came from: "swervetune.json", "moved by hand", or "". */
+  public static final String SYSTEMS_LIMITS_FROM = SYSTEMS + "LimitsFrom";
+  /** Every live gain as "system/gain|min|max". */
+  public static final String SYSTEMS_GAIN_NAMES = SYSTEMS + "GainNames";
+  /** Requested gains, laptop -> robot: SYSTEMS_GAINS + "system/gain". */
+  public static final String SYSTEMS_GAINS = SYSTEMS + "Gains/";
+  /** What each gain really is now. */
+  public static final String SYSTEMS_GAINS_APPLIED = SYSTEMS + "Applied/";
+  /** Bumped to apply the requested gains; ignored unless the boot id matches. */
+  public static final String SYSTEMS_APPLY_SEQ = SYSTEMS + "ApplySeq";
+  public static final String SYSTEMS_APPLY_BOOT_ID = SYSTEMS + "ApplyBootId";
+  public static final String SYSTEMS_APPLIED_SEQ = SYSTEMS + "AppliedSeq";
+  public static final String SYSTEMS_APPLY_STATUS = SYSTEMS + "ApplyStatus";
+
   // ---------------------------------------------------------------- motor guard, laptop -> robot
   /** Bumped to request an override; ignored unless {@link #MOTORS_OVERRIDE_BOOT_ID} matches. */
   public static final String MOTORS_OVERRIDE_SEQ = MOTORS + "Override/Seq";

@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.swervetune.MotorKind;
 import frc.lib.swervetune.MotorWatcher;
+import frc.lib.swervetune.SwerveTune;
+import frc.lib.swervetune.TunableSystem;
 
 public class Intake extends SubsystemBase {
 
@@ -103,5 +105,21 @@ public class Intake extends SubsystemBase {
     w.watch("Intake pivot", intakeMoveMotor, MotorKind.VORTEX);
     w.watch("Intake roller 1", intakeSpinMotorOne, MotorKind.VORTEX);
     w.watch("Intake roller 2", intakeSpinMotorTwo, MotorKind.VORTEX);
+  }
+
+  /**
+   * The swerve tools' Systems tab: the pivot's position in motor rotations (0 up, about 17.8
+   * down), set through targetPosition, which periodic() sends to the SPARK's own position loop.
+   */
+  public void tuneWith(SwerveTune tune) {
+    tune.system("Intake pivot", TunableSystem.Kind.PIVOT)
+        .units("motor rotations")
+        .position(moveEncoder::getPosition)
+        .velocity(() -> moveEncoder.getVelocity() / 60.0)
+        .goal(p -> targetPosition = p)
+        .stop(() -> targetPosition = moveEncoder.getPosition())
+        .subsystem(this)
+        .motors("Intake pivot")
+        .sparkGains(intakeMoveMotor);
   }
 }
