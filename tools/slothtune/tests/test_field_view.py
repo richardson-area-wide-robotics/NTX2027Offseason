@@ -65,7 +65,7 @@ class RobotOutlineTest(unittest.TestCase):
 class ApiFieldTest(unittest.TestCase):
     def setUp(self):
         self.dir = tempfile.mkdtemp(prefix="slothtune-field-")
-        self.project = SimpleNamespace(path=self.dir, name="Test")
+        self.project = SimpleNamespace(path=self.dir, name="Test", data={})
 
     def _write(self, rel, data):
         path = os.path.join(self.dir, *rel.split("/"))
@@ -79,9 +79,17 @@ class ApiFieldTest(unittest.TestCase):
                                   lambda p: os.path.join(p.path, "src", "main", "deploy", "pathplanner", "settings.json")):
             return server.api_field()
 
-    def test_not_surveyed_yet(self):
+    def test_not_surveyed_yet_draws_the_official_layout(self):
         r = self._call()
         self.assertEqual((r["ok"], r["surveyed"], r["robot"]), (True, False, None))
+        self.assertTrue(r["official"])
+        self.assertEqual(r["variant"], "welded")
+        self.assertGreater(len(r["tags"]), 20, "the robot uses the official tags until a survey")
+
+    def test_the_variant_the_robot_loads(self):
+        self.project.data = {"slothtune.json": {"vision": {"field": "andymark"}}}
+        r = self._call()
+        self.assertEqual(r["variant"], "andymark")
 
     def test_surveyed_with_pathplanners_robot(self):
         self._write("src/main/deploy/apriltags/surveyed.json", _layout([(1, 2.0, 3.0, 0.0)]))

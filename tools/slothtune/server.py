@@ -398,9 +398,23 @@ def robot_outline(settings):
                                                           float(settings.get("bumperOffsetY") or 0.0)]}
 
 
+def official_field_view(project):
+    """The official layout the robot loads without a survey: slothtune.json's ``vision.field``
+    variant (welded unless it says andymark), as :func:`field_view` draws it; None without one."""
+    tune = (project.data.get("slothtune.json") or {}) if project else {}
+    variant = str((tune.get("vision") or {}).get("field") or "welded").lower()
+    variant = variant if variant in ("welded", "andymark") else "welded"
+    try:
+        with open(os.path.join(fieldsurvey.FIELDS, f"2026-rebuilt-{variant}.json"), encoding="utf-8") as fh:
+            return dict(field_view(json.load(fh)), variant=variant)
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+
+
 def api_field(_query=None):
     """The field the Live tab draws the robot on: this field's surveyed tags (New field's layout),
-    or ``surveyed: False`` when there are none yet; and the robot's bumpers from PathPlanner."""
+    else the official layout the robot loads without one (``surveyed: False, official: True``: the
+    real field's tags may sit a little off it); and the robot's bumpers from PathPlanner."""
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
     robot = None
@@ -411,7 +425,8 @@ def api_field(_query=None):
         pass
     path = _layout_path()
     if not os.path.exists(path):
-        return {"ok": True, "surveyed": False, "robot": robot}
+        off = official_field_view(S.project)
+        return {"ok": True, "surveyed": False, "robot": robot, **({"official": True, **off} if off else {})}
     try:
         with open(path, encoding="utf-8") as fh:
             view = field_view(json.load(fh))

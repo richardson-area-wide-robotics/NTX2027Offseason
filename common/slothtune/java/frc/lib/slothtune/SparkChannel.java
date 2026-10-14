@@ -32,7 +32,13 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   private final int limitRpm;
   private final double positionFactor;
   private final String bootReport;
-  private final String settings;
+  /** Its settings ("name=value;..."): read at startup, then each live change, listed under "live". */
+  private volatile String settings;
+  private final java.util.Map<String, String> settingsMap;
+  private final java.util.Set<String> live = new java.util.LinkedHashSet<>();
+  /** Every SPARK the guard watches, to record a live change on the right one. */
+  private static final java.util.Map<SparkBase, SparkChannel> BY_SPARK =
+      java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
   private final String model;
   private final String firmware;
 
@@ -72,7 +78,9 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
       spark.clearFaults();
     }
     this.bootReport = report;
-    this.settings = readSettings(a);
+    this.settingsMap = readSettings(a);
+    this.settings = join(settingsMap, live);
+    BY_SPARK.put(spark, this);
     this.model = simulation ? "" : detectModel(spark);
     String fw = "";
     if (!simulation) {
@@ -140,11 +148,11 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
    * current limits, ramp rate, slot 0's PID and feedforward, MAXMotion's cruise speed, acceleration
    * and allowed error. A value it won't give, or a zero for an optional one, is left out.
    */
-  static String readSettings(SparkBaseConfigAccessor a) {
-    if (a == null) {
-      return "";
-    }
+  static java.util.Map<String, String> readSettings(SparkBaseConfigAccessor a) {
     java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+    if (a == null) {
+      return out;
+    }
     // REV's names start with a k (kBrake): "brake", "coast".
     put(out, "idle", () -> a.getIdleMode().name().replaceFirst("^k", "").toLowerCase(java.util.Locale.ROOT));
     put(out, "inverted", () -> a.getInverted() ? "yes" : "no");
@@ -167,9 +175,43 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
     putNum(out, "mmError", a.closedLoop.maxMotion::getAllowedProfileError, true);
     put(out, "sensor", () -> a.closedLoop.getFeedbackSensor().name().replaceFirst("^k", ""));
     putNum(out, "follows", () -> (double) a.getFollowerModeLeaderId(), true);
+    return out;
+  }
+
+  /** The settings as published: each "name=value", then "live=" the names changed live. */
+  static String join(java.util.Map<String, String> map, java.util.Set<String> live) {
     StringBuilder b = new StringBuilder();
-    out.forEach((k, v) -> b.append(b.length() == 0 ? "" : ";").append(k).append('=').append(v));
+    map.forEach((k, v) -> b.append(b.length() == 0 ? "" : ";").append(k).append('=').append(v));
+    if (!live.isEmpty()) {
+      b.append(b.length() == 0 ? "" : ";").append("live=").append(String.join(",", live));
+    }
     return b.toString();
+  }
+
+  /**
+   * A setting changed live on this SPARK (the Tune or Systems tab): recorded on its settings and
+   * listed as live, so the laptop shows what it runs now, not only what it started with. Pairs of
+   * name and value; a SPARK the guard doesn't watch is ignored.
+   */
+  public static void note(SparkBase spark, Object... nameValue) {
+    SparkChannel ch = spark == null ? null : BY_SPARK.get(spark);
+    if (ch == null) {
+      return;
+    }
+    synchronized (ch) {
+      for (int i = 0; i + 1 < nameValue.length; i += 2) {
+        String k = String.valueOf(nameValue[i]);
+        Object v = nameValue[i + 1];
+        ch.settingsMap.put(k, v instanceof Number n ? num(n.doubleValue()) : String.valueOf(v));
+        ch.live.add(k);
+      }
+      ch.settings = join(ch.settingsMap, ch.live);
+    }
+  }
+
+  private static String num(double v) {
+    return String.format(java.util.Locale.ROOT, "%.6g", v).replaceAll("(\\.\\d*?)0+(e|$)", "$1$2")
+        .replace(".e", "e").replaceAll("\\.$", "");
   }
 
   private static void put(java.util.Map<String, String> out, String key, java.util.function.Supplier<String> get) {
@@ -188,8 +230,7 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
     try {
       double v = get.getAsDouble();
       if (Double.isFinite(v) && !(skipZero && v == 0)) {
-        out.put(key, String.format(java.util.Locale.ROOT, "%.6g", v).replaceAll("(\\.\\d*?)0+(e|$)", "$1$2")
-            .replace(".e", "e").replaceAll("\\.$", ""));
+        out.put(key, num(v));
       }
     } catch (RuntimeException e) {
       // This controller won't say: leave it out.

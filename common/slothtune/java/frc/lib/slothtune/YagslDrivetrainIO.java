@@ -551,6 +551,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   public ApplyResult applySteerPid(double kP, double kI, double kD, double iZone) {
     for (SwerveModule module : modules) {
       module.setAnglePIDF(new PIDFConfig(kP, kI, kD, 0, iZone));
+      SparkChannel.note(spark(module.getAngleMotor()), "kP", kP, "kI", kI, "kD", kD, "iZone", iZone);
     }
     return label(configureAll(false, true, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
         String.format("steer PID %.5g/%.3g/%.4g", kP, kI, kD));
@@ -560,6 +561,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   public ApplyResult applyDrivePid(double kP, double kI, double kD, double iZone) {
     for (SwerveModule module : modules) {
       module.setDrivePIDF(new PIDFConfig(kP, kI, kD, 0, iZone));
+      SparkChannel.note(spark(module.getDriveMotor()), "kP", kP, "kI", kI, "kD", kD, "iZone", iZone);
     }
     return label(configureAll(true, false, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
         String.format("drive PID %.5g/%.3g/%.4g", kP, kI, kD));
@@ -568,6 +570,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   @Override
   public ApplyResult applySteerPid(int m, double kP, double kI, double kD, double iZone) {
     modules[m].setAnglePIDF(new PIDFConfig(kP, kI, kD, 0, iZone));
+    SparkChannel.note(spark(modules[m].getAngleMotor()), "kP", kP, "kI", kI, "kD", kD, "iZone", iZone);
     return label(configure(m, false, true, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
         String.format("%s steer PID %.5g/%.3g/%.4g", modules[m].configuration.name, kP, kI, kD));
   }
@@ -575,6 +578,7 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
   @Override
   public ApplyResult applyDrivePid(int m, double kP, double kI, double kD, double iZone) {
     modules[m].setDrivePIDF(new PIDFConfig(kP, kI, kD, 0, iZone));
+    SparkChannel.note(spark(modules[m].getDriveMotor()), "kP", kP, "kI", kI, "kD", kD, "iZone", iZone);
     return label(configure(m, true, false, c -> c.closedLoop.pid(kP, kI, kD).iZone(iZone)),
         String.format("%s drive PID %.5g/%.3g/%.4g", modules[m].configuration.name, kP, kI, kD));
   }
@@ -593,6 +597,10 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
         c -> c.closedLoopRampRate(steerSeconds).openLoopRampRate(steerSeconds));
     ApplyResult d = configureAll(true, false,
         c -> c.closedLoopRampRate(driveSeconds).openLoopRampRate(driveSeconds));
+    for (SwerveModule module : modules) {
+      SparkChannel.note(spark(module.getAngleMotor()), "rampS", steerSeconds, "openRampS", steerSeconds);
+      SparkChannel.note(spark(module.getDriveMotor()), "rampS", driveSeconds, "openRampS", driveSeconds);
+    }
     return s.ok() && d.ok()
         ? ApplyResult.ok(String.format("ramp steer %.2f s, drive %.2f s", steerSeconds, driveSeconds))
         : ApplyResult.failed("ramp rates failed: " + s.message() + " " + d.message());

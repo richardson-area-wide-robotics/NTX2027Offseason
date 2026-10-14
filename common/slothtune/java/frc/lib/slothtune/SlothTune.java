@@ -702,9 +702,11 @@ public final class SlothTune {
     } else {
       int n = guard.clearSticky();
       boolean gyro = io.gyroClearStickyFaults().ok();
-      msg = String.format(Locale.ROOT, "Cleared the sticky faults on %d controller%s%s, and the counts of drop-outs, "
-          + "reboots and low supply. The PDH keeps its own: clear those in REV Hardware Client.",
-          n, n == 1 ? "" : "s", gyro ? " and the gyro" : "");
+      boolean pdh = AkLogging.clearPdhStickyFaults();
+      msg = String.format(Locale.ROOT, "Cleared the sticky faults on %d controller%s%s%s, and the counts of drop-outs, "
+          + "reboots and low supply.%s",
+          n, n == 1 ? "" : "s", gyro ? ", the gyro" : "", pdh ? ", the PDH" : "",
+          pdh ? "" : " No REV PDH answered, so its own faults are as they were.");
     }
     clearAckMessage.set(msg);
     clearAckSeq.set(seq);

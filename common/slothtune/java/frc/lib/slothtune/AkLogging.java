@@ -3,7 +3,9 @@ package frc.lib.slothtune;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.CAN;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.RuntimeType;
 import java.io.File;
@@ -135,6 +137,34 @@ public final class AkLogging {
   /** Whether {@link #start} ran: in unit tests it never does, and nothing is recorded. */
   public static boolean isStarted() {
     return started;
+  }
+
+  // The REV PDH's clear-faults frame (WPILib's HAL_ClearREVPDHStickyFaults, PDHFrames.h):
+  // manufacturer REV, device type power distribution, API 110 (extended id 0x8051b80), no data.
+  static final int REV_MANUFACTURER = 5;
+  static final int POWER_DISTRIBUTION = 8;
+  static final int PDH_CLEAR_FAULTS_API = (0x8051b80 >> 6) & 0x3FF;
+
+  /**
+   * Clears the PDH's sticky faults: the same empty CAN frame WPILib's {@code clearStickyFaults}
+   * sends, on a CAN handle of our own (AdvantageKit holds the PDH's, and a second
+   * {@code PowerDistribution} would be refused; CAN handles are not exclusive). Its CAN id and type
+   * come from AdvantageKit's Conduit. False before {@link #start}, or with no REV PDH.
+   */
+  public static boolean clearPdhStickyFaults() {
+    if (!started) {
+      return false;
+    }
+    ConduitApi c = ConduitApi.getInstance();
+    if (c.getPDPChannelCount() <= 0 || c.getPDPType() != PowerDistribution.ModuleType.kRev.value) {
+      return false;
+    }
+    try (CAN can = new CAN(c.getPDPModuleId(), REV_MANUFACTURER, POWER_DISTRIBUTION)) {
+      can.writePacket(new byte[0], PDH_CLEAR_FAULTS_API);
+      return true;
+    } catch (RuntimeException e) {
+      return false;
+    }
   }
 
   /**

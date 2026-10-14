@@ -614,16 +614,20 @@ const Wiring = (() => {
     }
     // Its settings as it reported them at startup: current limits, PID, feedforward, MAXMotion.
     const st = (r && r.settings) || {}, nm = v => typeof v === "number" ? String(+v.toPrecision(4)) : esc(String(v));
-    const list = keys => keys.filter(([k]) => st[k] != null).map(([k, l]) => `${l} ${nm(st[k])}`).join(" · ");
+    // What was changed live since the code started (the Tune or Systems tab): marked where it shows.
+    const liveSet = new Set(String(st.live || "").split(",").filter(Boolean));
+    const mark = k => liveSet.has(k) ? `<sup class="live-mark">live</sup>` : "";
+    const list = keys => keys.filter(([k]) => st[k] != null).map(([k, l]) => `${l} ${nm(st[k])}${mark(k)}`).join(" · ");
     const sets = [];
     const lim = [st.stallA != null ? `${nm(st.stallA)} A` : null, st.freeA ? `${nm(st.freeA)} A at speed` : null,
       st.secondaryA ? `secondary ${nm(st.secondaryA)} A` : null].filter(Boolean).join(" · ");
     const guardNow = r && Number.isFinite(r.limit) && st.stallA != null && Math.round(r.limit) !== Math.round(st.stallA)
       ? ` <span class="warn-ink">· ${nm(r.limit)} A now (the motor guard)</span>` : "";
     if (lim || guardNow) sets.push(["Current limit", lim + guardNow]);
-    const mode = [st.idle ? String(st.idle).replace(/^k/i, "").toLowerCase() + " mode" : null, st.inverted === "yes" ? "inverted" : null, st.rampS ? `closed-loop ramp ${nm(st.rampS)} s` : null,
-      st.openRampS ? `open-loop ramp ${nm(st.openRampS)} s` : null].filter(Boolean).join(" · ");
-    if (mode) sets.push(["Mode", esc(mode)]);
+    const mode = [st.idle ? esc(String(st.idle).replace(/^k/i, "").toLowerCase()) + " mode" : null, st.inverted === "yes" ? "inverted" : null,
+      st.rampS ? `closed-loop ramp ${nm(st.rampS)} s${mark("rampS")}` : null,
+      st.openRampS ? `open-loop ramp ${nm(st.openRampS)} s${mark("openRampS")}` : null].filter(Boolean).join(" · ");
+    if (mode) sets.push(["Mode", mode]);
     for (const [title, keys] of [["PID", [["kP", "kP"], ["kI", "kI"], ["kD", "kD"], ["iZone", "I zone"]]],
       ["Feedforward", [["kS", "kS"], ["kV", "kV"], ["kA", "kA"], ["kG", "kG"], ["kCos", "kCos"]]],
       ["MAXMotion", [["mmCruise", "cruise"], ["mmAccel", "accel"], ["mmError", "allowed error"]]]]) {
@@ -633,7 +637,8 @@ const Wiring = (() => {
     if (st.follows) sets.push(["Follows", `CAN ID ${nm(st.follows)}`]);
     const settingsHtml = name === "roboRIO" || name === "PDH" ? "" : `<div class="dcard-settings small"><h4>Its settings</h4>
       ${sets.length ? `<dl class="dcard-facts">${sets.map(([k, v]) => `<dt>${k}</dt><dd class="mono">${v}</dd>`).join("")}</dl>
-        <p class="muted">As it reported them when the robot code started, in its own units (its conversion factors). A live change on the Tune or Systems tab shows there.</p>`
+        <p class="muted">As it reported them when the robot code started, in its own units (its conversion factors)${liveSet.size
+          ? `; <sup class="live-mark">live</sup> marks a value changed since on the Tune or Systems tab, which it runs now (a restart puts the code's or slothtune.json's back)` : ""}.</p>`
         : `<p class="muted">${!App.connected() ? "Connect to read its PID, MAXMotion and current limits from it."
           : r ? "It didn't report them: robot code from before this tool read them, or a controller that won't say."
           : "The robot doesn't watch this one, so it can't read them."}</p>`}</div>`;

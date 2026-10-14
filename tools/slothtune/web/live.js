@@ -224,7 +224,8 @@
     if (!field.ok) return { text: field.error || "Can't read the field." };
     const why = [];
     if (!camera) why.push("the robot reports no camera");
-    if (!field.surveyed) why.push("this field's tags aren't surveyed yet");
+    // Not surveyed: the official layout, as the robot itself uses until this field is surveyed.
+    if (!field.surveyed && !(field.tags || []).length) why.push("there is no field layout to draw");
     return why.length ? { text: `No field view: ${why.join(", and ")}.`, camera, surveyed: field.surveyed, error: field.error } : null;
   }
 
@@ -264,8 +265,14 @@
       el("rect", { x: sx(len) + 0.02 * k, y: sy(wid), width: 0.1 * k, height: wid * k, class: "wall red" }, fieldSvg);
       el("line", { x1: sx(len / 2), y1: sy(0), x2: sx(len / 2), y2: sy(wid), class: "mid" }, fieldSvg);
     }
-    $("#field-credit", root).textContent = pic ? `Field: ${pic.name}, picture from PathPlanner (MIT license).`
-      : `Field: ${U.length(len, 0)} by ${U.length(wid, 0)}, drawn plain (no PathPlanner picture of this field yet).`;
+    const credit = $("#field-credit", root);
+    credit.innerHTML = (pic ? `Field: ${esc(pic.name)}, picture from PathPlanner (MIT license).`
+      : `Field: ${U.length(len, 0)} by ${U.length(wid, 0)}, drawn plain (no PathPlanner picture of this field yet).`)
+      + (field.surveyed ? ` Tags: this field's, as surveyed.`
+        : ` <span class="warn-ink">Tags: the official ${esc(field.variant || "")} layout. This field's may sit an inch or two off it: fields are built and hung by people.</span>
+          <button class="btn small" data-newfield data-tip="live.field-survey">Survey this field</button>`);
+    const sv = $("[data-newfield]", credit);
+    if (sv) sv.onclick = () => { App.show("calibrate"); const p = $("#cal-newfield"); if (p) p.scrollIntoView({ block: "start" }); };
     const tags = {};
     for (const t of field.tags) {
       const g = el("g", { transform: `translate(${sx(t.x)} ${sy(t.y)}) rotate(${-t.yaw_deg})`, class: "tag" }, fieldSvg);

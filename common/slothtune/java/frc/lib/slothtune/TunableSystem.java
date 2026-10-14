@@ -186,6 +186,7 @@ public final class TunableSystem {
       SparkBaseConfig c = spark instanceof SparkFlex ? new SparkFlexConfig() : new SparkMaxConfig();
       edit.edit(c, v);
       spark.configure(c, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+      SparkChannel.note(spark, name, v);
     }, min, max);
   }
 

@@ -487,6 +487,8 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .dcard-faults h4, .dcard-settings h4 { margin: 8px 0 2px; }
 .dcard-faults p, .dcard-settings p { margin: 2px 0; }
 .lights-only { margin: 4px 0 0; }
+.live-mark { margin-left: 3px; padding: 0 4px; border-radius: 4px; background: var(--info-bg, var(--seg-on)); color: var(--accent);
+  font: 700 9px var(--sans); letter-spacing: .03em; text-transform: uppercase; }
 .fault-key { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; margin-right: 4px;
   font: 800 11px var(--sans); vertical-align: middle; }
 .fault-key.bad { background: var(--bad); color: #fff; }
