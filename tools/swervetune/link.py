@@ -314,6 +314,7 @@ class RobotLink:
         out.update({
             "faults": list(self.get("str[]", C.LIVE_FAULTS)),
             "gyro": list(self.get("str[]", C.LIVE_GYRO)),
+            "gyro_details": dict(x.split("=", 1) for x in self.get("str[]", C.LIVE_GYRO_DETAILS) if "=" in x),
             "heading": self.get("double", C.LIVE_HEADING_DEG),
             "accel": list(self.get("double[]", C.LIVE_ACCEL)),
             "pose": list(self.get("double[]", C.LIVE_POSE)),
@@ -484,6 +485,12 @@ class RobotLink:
 
     def stop(self):
         seq = self._send("stop")
+        return self._wait_ack(seq)
+
+    def gyro_command(self, action, seconds=None):
+        """The gyro's own commands: calibrate, identify (blink its light), identify_stop, clear_faults.
+        Returns (accepted, message)."""
+        seq = self._send("gyro_" + action, "ALL", {"seconds": seconds} if seconds else None)
         return self._wait_ack(seq)
 
     # ------------------------------------------------------------------ gains

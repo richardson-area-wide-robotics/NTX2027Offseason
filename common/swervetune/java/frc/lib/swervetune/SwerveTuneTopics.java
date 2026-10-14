@@ -157,6 +157,8 @@ public final class SwerveTuneTopics {
   public static final String LIVE_ACCEL = LIVE + "AccelMps2";
   /** Gyro {@code {type, connected|NOT CONNECTED, calibrating|ready, faults}}. */
   public static final String LIVE_GYRO = LIVE + "Gyro";
+  /** More about the gyro, "name=value" lines: temperature, firmware, sticky faults (a Canandgyro's). */
+  public static final String LIVE_GYRO_DETAILS = LIVE + "GyroDetails";
   /** Odometry pose, {@code x m, y m, heading deg}. */
   public static final String LIVE_POSE = LIVE + "Pose";
   /** Vision pose when one is in use, same layout as LIVE_POSE; empty otherwise. */

@@ -783,7 +783,17 @@ def lint(project):
                     "YAGSL 2026.8 and later build on YAMS with renamed JSON fields, and old files load "
                     "without error while silently dropping the renamed ones. Check every value in the "
                     "YAGSL schema-changes page before trusting a lint result here."))
-    imu = (p.data["swervedrive.json"].get("imu") or {}).get("type", "")
+    imu_cfg = p.data["swervedrive.json"].get("imu") or {}
+    imu = imu_cfg.get("type", "")
+    if imu.lower() == "canandgyro":
+        if imu_cfg.get("id") in (0, None):
+            F.append(_f("warn", "canandgyro_id_0", "The Canandgyro is set to CAN ID 0",
+                        "A new Canandgyro comes as ID 0, and Redux advise against using 0. Give it its own ID in "
+                        "Alchemist (docs/GYRO_CANANDGYRO.md), then put that ID in swervedrive.json's imu.id."))
+        if str(imu_cfg.get("canbus") or "").strip():
+            F.append(_f("info", "canandgyro_canbus", f"imu.canbus is \"{imu_cfg.get('canbus')}\": YAGSL 2026.4.1 ignores it",
+                        "It always opens the Canandgyro on the robot controller's own CAN bus, and the Canandgyro "
+                        "can't work on a CANivore (it isn't CAN FD). Wire it to the main bus."))
     if "spi" in imu.lower():
         F.append(_f("info", "imu_spi_2027", f"Gyro is {imu}: there is no SPI on SystemCore",
                     "The 2027 control system has no MXP or SPI port. Plan on its onboard IMU (YAGSL "

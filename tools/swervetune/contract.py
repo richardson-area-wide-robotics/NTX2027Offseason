@@ -100,6 +100,7 @@ LIVE_ABS_READ_ISSUE = LIVE + "AbsoluteReadIssue"
 LIVE_HEADING_DEG = LIVE + "HeadingDeg"
 LIVE_ACCEL = LIVE + "AccelMps2"
 LIVE_GYRO = LIVE + "Gyro"
+LIVE_GYRO_DETAILS = LIVE + "GyroDetails"   # "name=value": temperature, firmware, sticky (a Canandgyro's)
 LIVE_POSE = LIVE + "Pose"
 LIVE_VISION_POSE = LIVE + "VisionPose"
 

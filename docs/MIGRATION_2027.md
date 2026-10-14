@@ -17,7 +17,7 @@ is in a single file. These are the files that change, counted from what each one
 | Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2`, and `SwerveTune.install`, which builds it | All of it: both `Robot.java`, every subsystem, the controller bindings, PathPlanner's `NamedCommands` |
 | REVLib's 2027 API | `SparkChannel`, `YagslDrivetrainIO`, `MotorWatcher`, and `SwerveTune`'s `watchMotor` overloads | Every subsystem that builds a `SparkMax` or `SparkFlex` (Peashooter's Shooter, Intake and Feeder; Black team's Shooter and Intake) |
 | YAGSL, the module hardware | `DrivetrainIO` / `YagslDrivetrainIO`, and `SwerveTune.install`, which takes a `SwerveDrive` | Each `Drive.java`, and the JSON files (see YAGSL below) |
-| Gyros: no SPI on SystemCore | `YagslDrivetrainIO` (it reads the navX and the Canandgyro directly) | `swervedrive.json`'s IMU; the navX comes off |
+| Gyros: no SPI on SystemCore | `YagslDrivetrainIO` (it reads the navX and the Canandgyro directly) | `swervedrive.json`'s IMU; the navX comes off, and the Canandgyro (Boron) goes on: [GYRO_CANANDGYRO.md](GYRO_CANANDGYRO.md). ReduxLib 2027 moves it to `com.reduxrobotics.canandgyro` with a `CANPort`; YAGSL 2027 calls it `canandgyro_can` |
 | Alerts | `DashboardAlerts` | None |
 | WPILib's JSON library (Jackson to Avaje Jsonb) | None: `MiniJson` reads `swervetune.json` with neither | None |
 | Camera libraries (PhotonLib's estimator API) | `PhotonVisionSource` and `PhotonVisionSetup` only; `VisionSource` keeps PhotonLib out of the rest | `vendordeps/photonlib.json` in each robot |

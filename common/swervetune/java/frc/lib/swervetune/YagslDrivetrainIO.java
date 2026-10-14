@@ -1,7 +1,9 @@
 package frc.lib.swervetune;
 
+import com.reduxrobotics.canand.CanandFirmwareVersion;
 import com.reduxrobotics.sensors.canandgyro.Canandgyro;
 import com.reduxrobotics.sensors.canandgyro.CanandgyroFaults;
+import com.reduxrobotics.sensors.canandgyro.CanandgyroSettings;
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.ResetMode;
@@ -24,6 +26,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.RobotController;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 import swervelib.SwerveDrive;
@@ -297,19 +300,106 @@ public final class YagslDrivetrainIO implements DrivetrainIO {
     Object imu = drive.getGyro().getIMU();
     if (imu instanceof Canandgyro c) {
       CanandgyroFaults f = c.getActiveFaults();
-      List<String> faults = new ArrayList<>();
-      if (f.canIDConflict()) faults.add("CAN ID conflict");
-      if (f.canGeneralError()) faults.add("CAN error");
-      if (f.hardwareFault()) faults.add("hardware fault");
-      if (f.outOfTemperatureRange()) faults.add("out of temperature range");
-      if (f.angularVelocitySaturation()) faults.add("rotation rate saturated");
-      if (f.accelerationSaturation()) faults.add("acceleration saturated");
-      return new GyroStatus("Canandgyro", c.isConnected(), c.isCalibrating(), String.join(", ", faults));
+      // isCalibrating() reports only a calibration the code started; the one at power-on shows as a
+      // fault bit (ReduxLib 2026.1.2's source).
+      return new GyroStatus("Canandgyro", c.isConnected(), c.isCalibrating() || f.calibrating(),
+          String.join(", ", faultWords(f, false)));
     }
     if (imu instanceof AHRS navx) {
       return new GyroStatus("navX", navx.isConnected(), navx.isCalibrating(), "");
     }
     return new GyroStatus(imu == null ? "unknown" : imu.getClass().getSimpleName(), true, false, "");
+  }
+
+  /** A Canandgyro's faults in words, the same words the laptop's status lights match. */
+  private static List<String> faultWords(CanandgyroFaults f, boolean sticky) {
+    List<String> out = new ArrayList<>();
+    if (sticky && f.powerCycle()) out.add("restarted");
+    if (f.canIDConflict()) out.add("CAN ID conflict");
+    if (f.canGeneralError()) out.add("CAN error");
+    if (f.hardwareFault()) out.add("hardware fault");
+    if (f.outOfTemperatureRange()) out.add("out of temperature range");
+    if (f.angularVelocitySaturation()) out.add("rotation rate saturated");
+    if (f.accelerationSaturation()) out.add("acceleration saturated");
+    return out;
+  }
+
+  private Canandgyro canandgyro() {
+    return !sim && drive.getGyro().getIMU() instanceof Canandgyro c ? c : null;
+  }
+
+  @Override
+  public ApplyResult gyroCalibrate() {
+    Canandgyro c = canandgyro();
+    if (c == null) {
+      return DrivetrainIO.super.gyroCalibrate();
+    }
+    c.startCalibration();
+    return ApplyResult.ok("Calibrating: keep the robot completely still for about 7 seconds. Its light is"
+        + " solid yellow until it finishes.");
+  }
+
+  @Override
+  public ApplyResult gyroIdentify(boolean on) {
+    Canandgyro c = canandgyro();
+    if (c == null) {
+      return DrivetrainIO.super.gyroIdentify(on);
+    }
+    c.setPartyMode(on ? 1 : 0);
+    return ApplyResult.ok(on ? "Its light is blinking: look for it on the robot." : "Stopped blinking.");
+  }
+
+  @Override
+  public ApplyResult gyroClearStickyFaults() {
+    Canandgyro c = canandgyro();
+    if (c == null) {
+      return DrivetrainIO.super.gyroClearStickyFaults();
+    }
+    c.clearStickyFaults();
+    return ApplyResult.ok("Its sticky faults are cleared.");
+  }
+
+  @Override
+  public String[] gyroDetails() {
+    Canandgyro c = canandgyro();
+    if (c == null) {
+      return new String[0];
+    }
+    List<String> out = new ArrayList<>();
+    out.add(String.format(Locale.ROOT, "temperature=%.1f", c.getTemperature()));
+    CanandFirmwareVersion fw = c.getFirmwareVersion();
+    if (fw != null) {
+      out.add("firmware=" + fw.year() + "." + fw.minor() + "." + fw.patch());
+    }
+    out.add("sticky=" + String.join(", ", faultWords(c.getStickyFaults(), true)));
+    return out.toArray(new String[0]);
+  }
+
+  @Override
+  public ApplyResult applyGyroFramePeriods(double yawS, double angularPositionS, double angularVelocityS,
+      double accelerationS, double statusS) {
+    Canandgyro c = canandgyro();
+    if (c == null) {
+      return ApplyResult.ok("");
+    }
+    CanandgyroSettings s = new CanandgyroSettings();
+    if (yawS > 0) s.setYawFramePeriod(yawS);
+    if (angularPositionS > 0) s.setAngularPositionFramePeriod(angularPositionS);
+    if (angularVelocityS > 0) s.setAngularVelocityFramePeriod(angularVelocityS);
+    if (accelerationS > 0) s.setAccelerationFramePeriod(accelerationS);
+    if (statusS > 0) s.setStatusFramePeriod(statusS);
+    // Not written to its flash: applied again at every startup, so nothing wears it out.
+    s.setEphemeral(true);
+    String what = String.format(Locale.ROOT, "yaw %s, angular position %s, angular velocity %s, acceleration %s, status %s",
+        ms(yawS), ms(angularPositionS), ms(angularVelocityS), ms(accelerationS), ms(statusS));
+    return c.setSettings(s, 0.5)
+        ? ApplyResult.ok("Canandgyro reports every " + what + ", until it powers off.")
+        : ApplyResult.failed("The Canandgyro didn't take all of its report rates (" + what
+            + "). Check it is on the CAN bus.");
+  }
+
+  private static String ms(double s) {
+    return s > 0 ? Math.round(s * 1000) + " ms" : "as it was";
   }
 
   @Override

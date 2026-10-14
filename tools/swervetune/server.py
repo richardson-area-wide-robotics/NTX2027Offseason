@@ -374,6 +374,18 @@ def api_test(body):
     return {"ok": ok, "message": msg}
 
 
+def api_gyro_command(body):
+    """The gyro's own commands (a Canandgyro's): calibrate with the robot disabled, blink its light so
+    a person can find it, or clear its sticky faults."""
+    action = (body or {}).get("action")
+    if action not in ("calibrate", "identify", "identify_stop", "clear_faults"):
+        return {"ok": False, "error": "Unknown gyro action."}
+    if not (S.link and S.link.is_connected()):
+        return {"ok": False, "error": "Connect to the robot first."}
+    ok, msg = S.link.gyro_command(action, (body or {}).get("seconds"))
+    return {"ok": ok, "message": msg, "error": None if ok else msg}
+
+
 def api_abort(_):
     if S.autotune:
         S.autotune.stop("Stopped by ABORT.")
@@ -1660,7 +1672,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
         "/api/autotune/start": api_autotune_start, "/api/autotune/continue": api_autotune_continue,
-        "/api/autotune/stop": api_autotune_stop,
+        "/api/autotune/stop": api_autotune_stop, "/api/gyro/command": api_gyro_command,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,

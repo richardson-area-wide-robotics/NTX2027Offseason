@@ -81,9 +81,9 @@ const Trouble = (() => {
 
   // ---------------------------------------------------------------- what a status light means
   function lightsHtml() {
-    const d = Blinks.DEVICES[lightsDevice], mode = Blinks.liveMode();
+    const d = Blinks.DEVICES[lightsDevice], ctx = Blinks.liveCtx(), mode = ctx.mode;
     const from = lightsFrom && symptoms.find(s => s.id === lightsFrom);
-    lightsNow = JSON.stringify([lightsDevice, [...Blinks.nowIds(lightsDevice, { mode })]]);
+    lightsNow = JSON.stringify([lightsDevice, [...Blinks.nowIds(lightsDevice, ctx)]]);
     return `<div class="panel lights-view">
       <div class="row lights-devs" role="group" aria-label="Device">${Blinks.ORDER.map(n => {
         const p = Blinks.DEVICES[n].pic && FrcMap.pic(Blinks.DEVICES[n].pic);
@@ -91,12 +91,12 @@ const Trouble = (() => {
           p ? `<img src="${p.src}" alt="" width="${p.w}" height="${p.h}">` : ""}${esc(n)}</button>`;
       }).join("")}${from ? `<button class="btn" id="tr-lights-back" data-tip="lights.back" data-quiet>Back to: ${esc(from.title)}</button>` : ""}</div>
       <p class="small">${esc(d.light)} From ${Blinks.source(lightsDevice)}.${mode ? "" : " Connect to the robot to mark what it should show now."}</p>
-      <div class="lights-box">${Blinks.table(lightsDevice, { ctx: { mode } })}</div></div>`;
+      <div class="lights-box">${Blinks.table(lightsDevice, { ctx })}</div></div>`;
   }
   // The marks follow the robot (enabled, disabled, E-stopped): repaint only when they change.
   setInterval(() => {
     if (!root.classList.contains("on") || !$(".lights-view", root)) return;
-    const now = JSON.stringify([lightsDevice, [...Blinks.nowIds(lightsDevice, { mode: Blinks.liveMode() })]]);
+    const now = JSON.stringify([lightsDevice, [...Blinks.nowIds(lightsDevice, Blinks.liveCtx())]]);
     if (now !== lightsNow) paintList();
   }, 1000);
   function showLights(device, from) {

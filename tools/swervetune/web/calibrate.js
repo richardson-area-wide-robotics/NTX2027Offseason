@@ -80,6 +80,7 @@
           <button class="btn" id="gy-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         <div data-faults="gyro"></div>
+        <div id="cg-box" class="cg-box"></div>
         ${HowTo.block(`<p class="small">Where the gyro sits on the robot doesn't matter for localization: odometry uses only the heading, and every part of the robot turns by the same angle. What matters is how well it reads: does the heading creep while nothing moves, does a full turn read 360 degrees, and is it mounted level.</p>
         <ol class="small">
           <li><b>Standing still:</b> after the gyro has finished calibrating (the top bar), record a minute with nobody touching the robot.</li>
@@ -283,6 +284,63 @@
   $("#cg-wheel-practice", root).onclick = async () => showWheels(await App.api("/api/geometry/wheels", { practice: true }));
 
   // ---------------------------------------------------------------- gyro
+  // The robot's own gyro: what it is, and for a Canandgyro (the "Boron", next year's gyro) its
+  // calibration, its light and its report rates. A navX calibrates only when it powers on.
+  // A reading's name that explains itself on hover, focus or tap.
+  const cgTerm = (key, text) => `<span class="term" tabindex="0" data-tip="${key}" data-quiet>${esc(text)}</span>`;
+  const CG_RATES = [
+    ["yawFramePeriodMs", cgTerm("cal.cg.yaw", "Yaw"), 10, 10],
+    ["angularPositionFramePeriodMs", cgTerm("cal.cg.position", "Angular position"), 10, 20],
+    ["angularVelocityFramePeriodMs", cgTerm("cal.cg.velocity", "Angular velocity"), 20, 100],
+    ["accelerationFramePeriodMs", cgTerm("cal.cg.accel", "Acceleration"), 20, 100],
+    ["statusFramePeriodMs", cgTerm("cal.cg.status", "Status"), 100, 100],
+  ];
+  function paintCanandgyro() {
+    const box = $("#cg-box", root);
+    if (!box) return;
+    const L = App.connected() && App.live && App.live.live, g = (L && L.gyro) || [], d = (L && L.gyro_details) || {};
+    const fitted = g[0] || "";
+    const imu = ((((App.lint || {}).swervedrive || {}).imu) || {}).type || "";
+    const cg = fitted === "Canandgyro" || imu.toLowerCase() === "canandgyro";
+    const file = (((App.lint || {}).swervetune || {}).canandgyro) || {};
+    const status = !fitted ? `<span class="muted">Connect to the robot to read its gyro.</span>`
+      : `<b>${esc(fitted)}</b> · ${esc(g[1] || "")} · ${g[2] === "calibrating" ? `<span class="chip warn">calibrating: keep it still</span>` : esc(g[2] || "")}`
+        + (d.temperature ? ` · ${esc(d.temperature)} °C` : "") + (d.firmware ? ` · firmware ${esc(d.firmware)}` : "")
+        + (g[3] ? ` · <span class="bad-ink">${esc(g[3])}</span>` : "") + (d.sticky ? ` · <span class="warn-ink">earlier: ${esc(d.sticky)}</span>` : "");
+    const can = fitted === "Canandgyro";
+    const html = `<div class="row cg-status" style="flex-wrap:wrap"><span class="small" data-tip="cal.cg.status-line">${status}</span>
+        <span class="lit small" tabindex="0" data-blink="${fitted === "navX" ? "navX" : "Canandgyro"}">its light</span></div>
+      ${cg ? `<div class="row" style="flex-wrap:wrap">
+        <button class="btn" id="cg-cal" data-tip="cal.cg.calibrate" ${can ? "" : "disabled"}>Calibrate it</button>
+        <button class="btn" id="cg-blink" data-tip="cal.cg.identify" ${can ? "" : "disabled"}>Blink its light</button>
+        <button class="btn" id="cg-clear" data-tip="cal.cg.clear" ${can ? "" : "disabled"}>Clear its sticky faults</button>
+        <span class="small muted" id="cg-msg"></span></div>
+      <details class="cg-rates"><summary data-tip="cal.cg.rates">Canandgyro report rates</summary>
+        <p class="small">How often it sends each reading over CAN. YAGSL resets the gyro to its factory settings at every startup, so the robot code sets these again each time (not saved on the gyro). Saved to swervetune.json; they take effect when the robot code restarts.</p>
+        <table class="t small"><thead><tr><th>Reading</th><th class="num">Every (ms)</th><th class="num">Redux default</th></tr></thead><tbody>
+          ${CG_RATES.map(([k, name, ours, redux]) => `<tr><td>${name}</td>
+            <td class="num"><input type="number" min="0" max="${k === "statusFramePeriodMs" ? 16383 : 65535}" step="1" data-cg="${k}" value="${file[k] != null ? file[k] : ours}" style="width:6em"></td>
+            <td class="num">${redux}</td></tr>`).join("")}</tbody></table>
+        <div class="row"><button class="btn" id="cg-save" data-tip="cal.cg.save">Save the report rates…</button></div>
+      </details>` : `<p class="small muted">${fitted === "navX" ? "A navX calibrates itself when it powers on: keep the robot still for a few seconds after turning it on (its CAL light goes off when it's done)." : ""}</p>`}`;
+    if (box._h === html) return;
+    const open = $(".cg-rates", box) && $(".cg-rates", box).open;
+    box._h = html;
+    box.innerHTML = html;
+    if (open && $(".cg-rates", box)) $(".cg-rates", box).open = true;
+    const say = r => { const m = $("#cg-msg", box); if (m) m.textContent = r.ok ? r.message : (r.error || r.message || "It didn't work."); };
+    if ($("#cg-cal", box)) $("#cg-cal", box).onclick = async () => say(await App.api("/api/gyro/command", { action: "calibrate" }));
+    if ($("#cg-blink", box)) $("#cg-blink", box).onclick = async () => say(await App.api("/api/gyro/command", { action: "identify", seconds: 10 }));
+    if ($("#cg-clear", box)) $("#cg-clear", box).onclick = async () => say(await App.api("/api/gyro/command", { action: "clear_faults" }));
+    if ($("#cg-save", box)) $("#cg-save", box).onclick = () => {
+      const edits = $$("[data-cg]", box).map(i => ({ file: "swervetune.json", path: ["canandgyro", i.dataset.cg], value: Math.max(0, Math.round(+i.value || 0)) }));
+      App.previewAndSave({ kind: "edits", edits }, "Canandgyro report rates");
+    };
+  }
+  App.on("live", () => { if (root.classList.contains("on")) paintCanandgyro(); });
+  App.on("lint", paintCanandgyro);
+  App.on("tab", t => { if (t === "calibrate") paintCanandgyro(); });
+
   function showGyro(r, append) {
     const out = $("#gy-out", root);
     if (r.ok === false) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }

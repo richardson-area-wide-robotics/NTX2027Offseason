@@ -984,4 +984,31 @@ class SwerveTuneHarnessTest {
     loop(1);
     assertTrue(ackMessage().contains("Unknown module"));
   }
+
+  @Test
+  void theGyroCalibratesOnlyWithTheRobotDisabled() {
+    loop(1);
+    send("gyro_calibrate", "ALL");
+    loop(1);
+    assertFalse(ackAccepted());
+    assertTrue(ackMessage().contains("Disable the robot first"), ackMessage());
+    ds.enabled = false;
+    send("gyro_calibrate", "ALL");
+    loop(1);
+    // The fake drivetrain's gyro has no calibration a program can start, like a navX.
+    assertFalse(ackAccepted());
+    assertTrue(ackMessage().contains("calibrates itself when it powers on"), ackMessage());
+  }
+
+  @Test
+  void aGyroWithoutALightSaysSo() {
+    loop(1);
+    send("gyro_identify", "ALL", "seconds", "5");
+    loop(1);
+    assertFalse(ackAccepted());
+    assertTrue(ackMessage().contains("no light"), ackMessage());
+    send("gyro_dance", "ALL");
+    loop(1);
+    assertTrue(ackMessage().contains("Unknown gyro command"), ackMessage());
+  }
 }

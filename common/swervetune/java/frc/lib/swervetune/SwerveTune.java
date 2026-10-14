@@ -175,6 +175,10 @@ public final class SwerveTune {
   private final BooleanPublisher liveFms;
   private final StringArrayPublisher liveFaults;
   private final StringArrayPublisher liveGyro;
+  private final StringArrayPublisher liveGyroDetails;
+  private double lastGyroDetails = -1;
+  // When the gyro's light stops blinking (identify), in robot seconds; 0 when it isn't.
+  private double identifyUntil = 0;
   private final DoubleArrayPublisher liveAbsIssue;
 
   // the run in progress, or the last one
@@ -346,6 +350,7 @@ public final class SwerveTune {
     liveFms = nt.getBooleanTopic(SwerveTuneTopics.LIVE_FMS_ATTACHED).publish();
     liveFaults = nt.getStringArrayTopic(SwerveTuneTopics.LIVE_FAULTS).publish();
     liveGyro = nt.getStringArrayTopic(SwerveTuneTopics.LIVE_GYRO).publish();
+    liveGyroDetails = nt.getStringArrayTopic(SwerveTuneTopics.LIVE_GYRO_DETAILS).publish();
     liveAbsIssue = nt.getDoubleArrayTopic(SwerveTuneTopics.LIVE_ABS_READ_ISSUE).publish();
 
     // Identity. Published once; the laptop reads it on connect.
@@ -688,8 +693,43 @@ public final class SwerveTune {
     return out;
   }
 
+  /**
+   * The gyro's own commands, from the laptop's Calibrate tab: calibrate (robot disabled, so nothing
+   * moves it), blink its light for a while so a person can find it, or clear its sticky faults.
+   */
+  private DrivetrainIO.ApplyResult gyroCommand(String cmd, TestArgs args, double now) {
+    switch (cmd) {
+      case "gyro_calibrate":
+        if (signals.enabled()) {
+          return DrivetrainIO.ApplyResult.failed("Disable the robot first: the gyro must stay still while it calibrates.");
+        }
+        return io.gyroCalibrate();
+      case "gyro_identify":
+        DrivetrainIO.ApplyResult r = io.gyroIdentify(true);
+        if (r.ok()) {
+          identifyUntil = now + args.get("seconds", 10, 1, 60);
+        }
+        return r;
+      case "gyro_identify_stop":
+        identifyUntil = 0;
+        return io.gyroIdentify(false);
+      case "gyro_clear_faults":
+        return io.gyroClearStickyFaults();
+      default:
+        return DrivetrainIO.ApplyResult.failed("Unknown gyro command '" + cmd + "'.");
+    }
+  }
+
   private List<String> applyStartupConfig() {
     List<String> report = new ArrayList<>(config.warnings);
+    if (config.canandgyroApply) {
+      DrivetrainIO.ApplyResult g = io.applyGyroFramePeriods(config.canandgyroYawMs / 1000.0,
+          config.canandgyroAngularPositionMs / 1000.0, config.canandgyroAngularVelocityMs / 1000.0,
+          config.canandgyroAccelerationMs / 1000.0, config.canandgyroStatusMs / 1000.0);
+      if (!g.message().isEmpty()) {
+        report.add(g.message());
+      }
+    }
     if (!config.visionCameras.isEmpty()) {
       report.add("Vision: " + String.join(", ", config.visionCameras) + (config.feedPoseEstimator
           ? "; accepted poses feed the pose estimator"
@@ -1042,6 +1082,11 @@ public final class SwerveTune {
     if (proc != null) {
       ack(seq, false, "Busy: '" + proc.name() + "' is still " + state.name().toLowerCase(Locale.ROOT)
           + ". Stop or abort it first.");
+      return;
+    }
+    if (test.startsWith("gyro_")) {
+      DrivetrainIO.ApplyResult r = gyroCommand(test, TestArgs.of(cmdArgKeys.get(), cmdArgValues.get()), now);
+      ack(seq, r.ok(), r.message());
       return;
     }
     Supplier<Procedure> factory = procedures.get(test);
@@ -1593,6 +1638,14 @@ public final class SwerveTune {
     DrivetrainIO.GyroStatus gyro = io.gyroStatus();
     liveGyro.set(new String[] {gyro.type(), gyro.connected() ? "connected" : "NOT CONNECTED",
         gyro.calibrating() ? "calibrating" : "ready", gyro.faults()});
+    if (now - lastGyroDetails >= 0.5) {
+      lastGyroDetails = now;
+      liveGyroDetails.set(io.gyroDetails());
+    }
+    if (identifyUntil > 0 && now >= identifyUntil) {
+      identifyUntil = 0;
+      io.gyroIdentify(false);
+    }
     livePose.set(io.pose());
     double[] vp = visionPoseArray();
     liveVisionPose.set(vp == null ? new double[0] : vp);

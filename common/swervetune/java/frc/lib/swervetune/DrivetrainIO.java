@@ -26,6 +26,40 @@ public interface DrivetrainIO {
    */
   record GyroStatus(String type, boolean connected, boolean calibrating, String faults) {}
 
+  /**
+   * Starts the gyro's own calibration: a Canandgyro's takes about 7 s with the robot kept still. A
+   * gyro that calibrates only when it powers on (a navX) says so.
+   */
+  default ApplyResult gyroCalibrate() {
+    return ApplyResult.failed("This gyro calibrates itself when it powers on; there is nothing to start.");
+  }
+
+  /** Blinks the gyro's light so a person can find it on the robot, or stops (a Canandgyro's party mode). */
+  default ApplyResult gyroIdentify(boolean on) {
+    return ApplyResult.failed("This gyro has no light the robot code can blink.");
+  }
+
+  /** Clears the faults the gyro remembers after they have gone (its sticky faults). */
+  default ApplyResult gyroClearStickyFaults() {
+    return ApplyResult.failed("This gyro keeps no sticky faults.");
+  }
+
+  /** More about the gyro, as "name=value" lines (temperature, firmware, sticky); empty when unknown. */
+  default String[] gyroDetails() {
+    return new String[0];
+  }
+
+  /**
+   * How often the gyro reports each reading, in seconds (0 leaves one as it is): a Canandgyro's yaw,
+   * angular position, angular velocity, acceleration and status frames. Not saved on the gyro, so it
+   * is applied at every startup (YAGSL resets the gyro to its factory settings when it starts). An
+   * empty message means this gyro has no such settings.
+   */
+  default ApplyResult applyGyroFramePeriods(double yawS, double angularPositionS, double angularVelocityS,
+      double accelerationS, double statusS) {
+    return ApplyResult.ok("");
+  }
+
   /** Result of a live configuration change. */
   record ApplyResult(boolean ok, String message) {
     public static ApplyResult ok(String message) {

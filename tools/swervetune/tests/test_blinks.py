@@ -62,7 +62,7 @@ class BlinksTest(unittest.TestCase):
         words = re.findall(r'"([^"]+)"', re.search(r"\[(\"CAN fault\"[^\]]+)\]", SRC).group(1))
         self.assertIn("gate driver fault", words)
         for w in words:
-            self.assertIn(f'"{w}"' if w in ("CAN ID conflict", "hardware fault") else f' {w}"', java, w)
+            self.assertIn(f'"{w}"' if w in ("CAN ID conflict", "hardware fault", "CAN error") else f' {w}"', java, w)
 
     def test_spark_fault_rows_carry_those_words(self):
         for w in ("sensor fault", "gate driver fault", "CAN fault", "over temperature"):

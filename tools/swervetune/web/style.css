@@ -818,6 +818,10 @@ table.lights.compact td.led-cell { width: 50%; white-space: normal; }
 table.lights.compact .lights-group th { padding-top: 5px; }
 .lit { border-bottom: 1px dotted var(--muted); cursor: help; }
 .lights-caution { margin: 0 0 6px; }
+/* Calibrate, 4. Gyro: the robot's own gyro, and a Canandgyro's buttons and report rates. */
+.cg-box { display: grid; gap: 6px; margin-bottom: 6px; }
+.cg-rates summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.cg-rates table { max-width: 420px; }
 /* Troubleshoot's Status lights: the devices, then the chosen one's table, which scrolls in its box. */
 .lights-devs { flex-wrap: wrap; gap: 6px; }
 .lights-dev { display: inline-flex; align-items: center; gap: 6px; }

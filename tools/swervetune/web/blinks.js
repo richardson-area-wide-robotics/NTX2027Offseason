@@ -181,7 +181,7 @@ const Blinks = (() => {
           { n: NAMES, s: "Self-test failed: hardware.", d: "A hardware fault: replace the navX." }),
         row([L("orange", "slow"), L("green"), L("green")], "The gyro is calibrating.",
           { n: NAMES, s: "Calibrating: keep it still.", d: "Keep the robot still and flat until CAL goes off: about a second on a navX2, up to about 15 s on an older navX.", id: "calibrating" }),
-        row([L(null), L("green"), L("green")], "Working normally.", { n: NAMES, s: "Working." }),
+        row([L(null), L("green"), L("green")], "Working normally.", { n: NAMES, s: "Working.", id: "ok" }),
         row([L("green", "blink"), L("green", "blink")], "S1 and S2 blinking in turn: sometimes a self-test failure.", { n: ["S1", "S2"], s: "Sometimes a self-test failure." }),
         row(L(null), "S1 off while it runs: no signals from its sensor chips.", { n: ["S1"], s: "No signals from its sensors.", d: "A hardware fault." }),
         row(L(null), "S2 off after it has started: its processor can't talk to its sensor chips.", { n: ["S2"], s: "Can't reach its sensors.", d: "A hardware fault." }),
@@ -195,9 +195,9 @@ const Blinks = (() => {
     ] },
     "Canandgyro": { pic: null, light: "One light on the case.", source: REDUX, groups: [
       { title: "The light", rows: [
-        row(L("green", "slow"), "Working, and sees the roboRIO on the CAN bus."),
-        row(L("red", "slow"), "Doesn't see the roboRIO, or another CAN fault.", { d: "Check its CAN wiring.", go: { tab: "wiring" } }),
-        row(L("yellow"), "Calibrating: it works, less accurately until it finishes.", { d: "Keep the robot still until it finishes." }),
+        row(L("green", "slow"), "Working, and sees the robot controller on the CAN bus.", { id: "ok" }),
+        row(L("red", "slow"), "Doesn't see the robot controller, or another CAN fault.", { d: "Check its CAN wiring.", go: { tab: "wiring" }, id: "CAN error" }),
+        row(L("yellow"), "Calibrating: it works, less accurately until it finishes.", { d: "Keep the robot still until it finishes (about 7 s). Calibrate tab, Gyro: Calibrate it, to do it again.", id: "calibrating" }),
         row(L("blue", "blink"), "Firmware update (DFU) in progress."),
         row(L("blue"), "A firmware update failed.", { d: "Update it again with Redux Alchemist." }),
         row(L("red/yellow", "blink"), "Hardware fault.", { d: "Power cycle it. If it comes back, contact Redux Robotics.", id: "hardware fault" }),
@@ -245,8 +245,14 @@ const Blinks = (() => {
       else if (["DISABLED", "AUTO", "TELEOP", "TEST"].includes(mode)) ids.add(mode);
     }
     if ((name === "RSL" || name === "SystemCore") && mode) ids.add(mode === "DISABLED" ? "DISABLED" : ["AUTO", "TELEOP", "TEST"].includes(mode) ? "enabled" : "");
+    // A gyro's own report (the Live data's gyro: type, connected, ready or calibrating, faults).
+    const g = ctx.gyro || [];
+    if ((name === "Canandgyro" || name === "navX") && g[0] === name) {
+      ids.add(g[2] === "calibrating" ? "calibrating" : g[1] === "connected" && !g[3] ? "ok" : "");
+      ctx = { ...ctx, flags: [ctx.flags, g[3]].filter(Boolean).join(", ") };
+    }
     const f = String(ctx.flags || "");
-    ["CAN fault", "sensor fault", "gate driver fault", "over temperature", "hardware fault", "CAN ID conflict"]
+    ["CAN fault", "sensor fault", "gate driver fault", "over temperature", "hardware fault", "CAN ID conflict", "CAN error"]
       .forEach(w => { if (f.includes(w)) ids.add(w); });
     if (ctx.present === 0) ids.add("dark");
     ids.delete("");
@@ -291,7 +297,7 @@ const Blinks = (() => {
     popFor = el;
     const ctx = el._blinkCtx || {};
     pop.innerHTML = `<div class="dcard-head"><b>${esc(name)}: its status light</b><span class="small muted">${esc(DEVICES[name].light)}</span></div>
-      ${table(name, { compact: true, ctx: { mode: liveMode(), ...ctx } })}<p class="dcard-credit">From ${source(name)}.</p>`;
+      ${table(name, { compact: true, ctx: { ...liveCtx(), ...ctx } })}<p class="dcard-credit">From ${source(name)}.</p>`;
     pop.hidden = false;
     const b = el.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
     let x = b.right + 10;
@@ -303,6 +309,8 @@ const Blinks = (() => {
     if (pop && (!el || popFor === el)) { pop.hidden = true; popFor = null; }
   }
   const liveMode = () => (App.connected() && App.live && App.live.live && App.live.live.mode) || null;
+  /** What the connected robot says, for marking rows: its mode and its gyro's report. */
+  const liveCtx = () => ({ mode: liveMode(), gyro: (App.connected() && App.live && App.live.live && App.live.live.gyro) || [] });
   document.addEventListener("mouseover", e => { const el = e.target.closest && e.target.closest("[data-blink]"); if (el && el !== popFor) show(el); });
   document.addEventListener("mouseout", e => { const el = e.target.closest && e.target.closest("[data-blink]"); if (el && !el.contains(e.relatedTarget)) hide(el); });
   document.addEventListener("focusin", e => { const el = e.target.closest && e.target.closest("[data-blink]"); if (el) show(el); });
@@ -316,5 +324,5 @@ const Blinks = (() => {
     else if (g.tab) App.show(g.tab);
   }
 
-  return { DEVICES, ORDER, table, dot, words, source, nowIds, go, liveMode, has: name => !!DEVICES[name] };
+  return { DEVICES, ORDER, table, dot, words, source, nowIds, go, liveMode, liveCtx, has: name => !!DEVICES[name] };
 })();

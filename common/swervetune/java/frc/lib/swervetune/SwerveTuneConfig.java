@@ -140,8 +140,33 @@ public final class SwerveTuneConfig {
    */
   public final Map<String, String> batteryGrades = new java.util.LinkedHashMap<>();
 
+  /**
+   * How often a Canandgyro reports each reading, in milliseconds (swervetune.json "canandgyro"). YAGSL
+   * resets the gyro to its factory settings at every startup, so these are applied after it, each
+   * time, and not saved on the gyro. 0 leaves a reading as YAGSL left it. The defaults: yaw 10 (its
+   * own default), angular position 10 (YAGSL's heading comes from this one; its own default is 20),
+   * angular velocity and acceleration 20 (its own 100 is too slow for impact detection and YAGSL's
+   * angular velocity compensation), status 100.
+   */
+  public boolean canandgyroApply = true;
+  public double canandgyroYawMs = 10;
+  public double canandgyroAngularPositionMs = 10;
+  public double canandgyroAngularVelocityMs = 20;
+  public double canandgyroAccelerationMs = 20;
+  public double canandgyroStatusMs = 100;
+
   /** Problems found while reading, shown on the laptop at connect. */
   public final List<String> warnings = new ArrayList<>();
+
+  /** A Canandgyro frame period: 0 (leave it), or 1 ms up to the gyro's own limit; else the default. */
+  private static double framePeriod(SwerveTuneConfig c, Map<String, Object> gyro, String key, double fallback, double max) {
+    double v = num(gyro.get(key), fallback);
+    if (v != 0 && (v < 1 || v > max)) {
+      c.warnings.add("canandgyro." + key + " must be 0 or 1 to " + (int) max + " ms; got " + v + ". Using " + (int) fallback + ".");
+      return fallback;
+    }
+    return v;
+  }
 
   /** Reads the file, or returns the do-nothing defaults if it is missing or unreadable. */
   public static SwerveTuneConfig load(Path file) {
@@ -175,6 +200,18 @@ public final class SwerveTuneConfig {
       c.steerFeedback = fb;
     } else {
       c.warnings.add("steerFeedback must be \"motor\" or \"absolute\"; got \"" + fb + "\".");
+    }
+
+    Map<String, Object> gyro = map(m.get("canandgyro"));
+    c.canandgyroApply = bool(gyro.get("apply"), true);
+    c.canandgyroYawMs = framePeriod(c, gyro, "yawFramePeriodMs", c.canandgyroYawMs, 65535);
+    c.canandgyroAngularPositionMs = framePeriod(c, gyro, "angularPositionFramePeriodMs", c.canandgyroAngularPositionMs, 65535);
+    c.canandgyroAngularVelocityMs = framePeriod(c, gyro, "angularVelocityFramePeriodMs", c.canandgyroAngularVelocityMs, 65535);
+    c.canandgyroAccelerationMs = framePeriod(c, gyro, "accelerationFramePeriodMs", c.canandgyroAccelerationMs, 65535);
+    c.canandgyroStatusMs = framePeriod(c, gyro, "statusFramePeriodMs", c.canandgyroStatusMs, 16383);
+    if (c.canandgyroStatusMs == 0) {
+      c.warnings.add("canandgyro.statusFramePeriodMs can't be 0 (it carries the faults); using 100.");
+      c.canandgyroStatusMs = 100;
     }
 
     Map<String, Object> sync = map(m.get("encoderAutoSync"));

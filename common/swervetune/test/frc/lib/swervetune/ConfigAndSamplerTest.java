@@ -185,4 +185,26 @@ class ConfigAndSamplerTest {
     return new TestContext(io, TestArgs.empty(), env, new int[] {0, 1, 2, 3}, cap, space, space,
         false, Sampler.create(64), true, () -> true, () -> null);
   }
+
+  @Test
+  void aCanandgyrosReportRatesDefaultForImpactDetectionAndYagslsHeading() {
+    SwerveTuneConfig c = SwerveTuneConfig.parse("{}");
+    assertTrue(c.canandgyroApply);
+    assertEquals(10, c.canandgyroYawMs);
+    assertEquals(10, c.canandgyroAngularPositionMs, "YAGSL's heading comes from this frame");
+    assertEquals(20, c.canandgyroAccelerationMs, "impact detection reads acceleration");
+    assertEquals(100, c.canandgyroStatusMs);
+  }
+
+  @Test
+  void aCanandgyroReportRateOutOfRangeFallsBackWithAWarning() {
+    SwerveTuneConfig c = SwerveTuneConfig.parse(
+        "{\"canandgyro\": {\"yawFramePeriodMs\": 5, \"accelerationFramePeriodMs\": 0.5,"
+            + " \"statusFramePeriodMs\": 0, \"apply\": false}}");
+    assertFalse(c.canandgyroApply);
+    assertEquals(5, c.canandgyroYawMs);
+    assertEquals(20, c.canandgyroAccelerationMs);
+    assertEquals(100, c.canandgyroStatusMs, "its status frame carries the faults: never off");
+    assertEquals(2, c.warnings.size(), String.join("; ", c.warnings));
+  }
 }
