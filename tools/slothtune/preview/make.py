@@ -27,6 +27,7 @@ To refresh the dashboard text after the robot code's wording changes:
 
 import argparse
 import json
+import math
 import os
 import re
 import shutil
@@ -268,10 +269,62 @@ def _when(iso):
     return f"{local:%b} {local.day} at {local:%I:%M %p}".replace(" 0", " ") + f" {abbr} ({utc:%H:%M} UTC)"
 
 
+HUB_2026 = (4.63, 4.03)       # the blue hub's center, meters: the example drive aims at it
+
+
+def field_example(rec):
+    """The Live tab's field view needs a camera and a surveyed field, and the simulator has
+    neither. When the recording has no survey, the preview stands the official 2026 layout in for
+    one (the ribbon says so); ``drive_example`` then moves the robot. Returns the layout, or None."""
+    got = rec["get"].get("/api/field") or {}
+    if not got.get("ok") or got.get("surveyed"):
+        return None
+    from .. import fieldsurvey, server
+    with open(os.path.join(fieldsurvey.FIELDS, "2026-rebuilt-welded.json"), encoding="utf-8") as fh:
+        view = server.field_view(json.load(fh))
+    rec["get"]["/api/field"] = dict(got, surveyed=True, file="the official 2026 layout (an example)", **view)
+    for st in rec["state"]:
+        if isinstance(st.get("environment"), dict):
+            st["environment"].update(vision_available=True, vision_in_use=True)
+    rec["note"] = ((rec.get("note") or "") + " Live's On the field is an example too: the official 2026 tag "
+                   "layout stands in for this field's survey, and the robot drives a made-up loop aiming at "
+                   "the blue hub, since the simulator has no camera.").strip()
+    return view
+
+
+def tags_in_view(tags, x, y, heading_deg, fov_deg=70.0, range_m=5.0):
+    """The tags a forward camera at the robot's center would see: in range, inside its field of
+    view, and facing it."""
+    out = []
+    for t in tags:
+        dx, dy = t["x"] - x, t["y"] - y
+        d = math.hypot(dx, dy)
+        off = (math.degrees(math.atan2(dy, dx)) - heading_deg + 540) % 360 - 180
+        faces = math.cos(math.radians(t["yaw_deg"])) * -dx + math.sin(math.radians(t["yaw_deg"])) * -dy
+        if 0.3 < d <= range_m and abs(off) <= fov_deg / 2 and faces > 0.2 * d:
+            out.append(t["id"])
+    return sorted(out)
+
+
+def drive_example(frames, view, center=(2.5, 4.03), radius=(0.9, 1.5)):
+    """One loop beside the blue hub over the replayed frames, always aiming at the hub; the
+    cameras' own pose wanders a little off odometry's, as a real one does."""
+    n = max(1, len(frames))
+    for i, f in enumerate(frames):
+        th = 2 * math.pi * i / n
+        x, y = center[0] + radius[0] * math.cos(th), center[1] + radius[1] * math.sin(th)
+        hd = math.degrees(math.atan2(HUB_2026[1] - y, HUB_2026[0] - x))
+        live = f["live"]
+        live["pose"], live["heading"] = [x, y, hd], hd
+        live["vision_pose"] = [x + 0.05 * math.sin(3 * th), y - 0.04 * math.cos(2 * th), hd + 1.5 * math.sin(th)]
+        f["seen_tags"] = tags_in_view(view["tags"], x, y, hd)
+
+
 def build(rec_dir=REC, site=SITE, web=WEB):
     """Assembles the site from the tool's page, the recording and the dashboard. Returns its files."""
     with open(os.path.join(rec_dir, "rec.json"), encoding="utf-8") as fh:
         rec = json.load(fh)
+    example_field = field_example(rec)
     shutil.rmtree(site, ignore_errors=True)
     os.makedirs(os.path.join(site, "img"))
     os.makedirs(os.path.join(site, "rec", "runs"))
@@ -328,6 +381,8 @@ def build(rec_dir=REC, site=SITE, web=WEB):
     if moving:
         live = live[max(0, moving[0] - 10):moving[-1] + 15]
     rec["live"] = [x for x in live if x["live"].get("mode") != "DISABLED"] or live
+    if example_field:
+        drive_example(rec["live"], example_field)
     with open(os.path.join(site, "rec", "rec.json"), "w", encoding="utf-8") as fh:
         json.dump(rec, fh, separators=(",", ":"))
     runs = os.path.join(rec_dir, "runs")

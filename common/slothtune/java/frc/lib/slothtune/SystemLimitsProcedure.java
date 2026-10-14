@@ -120,7 +120,7 @@ final class SystemLimitsProcedure implements Procedure {
   @Override
   public String liveMessage(TestContext ctx, double t) {
     return String.format(Locale.ROOT, "%s now %.3f %s; lowest %.3f, highest %.3f. Move it all the way both ways.",
-        sys.name, sys.position.getAsDouble(), sys.units, lo, hi);
+        sys.name, sys.shown(sys.position.getAsDouble()), sys.shownUnits(), sys.shown(lo), sys.shown(hi));
   }
 
   @Override
@@ -133,7 +133,8 @@ final class SystemLimitsProcedure implements Procedure {
       double scale = Math.max(Math.abs(lo), Math.abs(hi));
       if (!aborted && hi - lo > MIN_RANGE_FRACTION * Math.max(1, scale)) {
         sys.setLimits(lo, hi, "moved by hand");
-        ctx.note(String.format(Locale.ROOT, "%s limits for this session: %.4f to %.4f %s", sys.name, lo, hi, sys.units));
+        ctx.note(String.format(Locale.ROOT, "%s limits for this session: %.4f to %.4f %s", sys.name, sys.shown(lo),
+            sys.shown(hi), sys.shownUnits()));
       }
     }
   }

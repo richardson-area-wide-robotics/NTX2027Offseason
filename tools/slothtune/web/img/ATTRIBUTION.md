@@ -43,3 +43,13 @@ The Wiring tab's device cards and the Motors tab show them, credited under each.
 `luma-p1.svg` is ours, drawn for this tool in the same style: the Luma P1's lens side, every size
 taken from Luma's public drawing ("P1 Assembly Public Drawing", <https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf>). The name on it is
 the camera's own engraving, as Luma draws it.
+
+## fields/: the field from above
+
+`fields/field26.png` is PathPlanner's 2026 REBUILT field picture, `images/field26.png` from
+<https://github.com/mjansen4857/pathplanner> (fetched 2026-10-14), by Michael Jansen and the
+PathPlanner contributors, under the MIT License (`fields/LICENSE-PathPlanner.txt`). Here it is at
+half its size (1754 x 907 px, so 100 px a meter with PathPlanner's 0.5 m margin) and reduced to
+256 colors. The Live tab places the robot on it the way PathPlanner's `field_image.dart` and
+`path_painter_util.dart` do. A new season's field: add PathPlanner's new picture the same way and
+a line for it in `FIELD_PICS` (`../live.js`); until then the Live tab draws the field plain.

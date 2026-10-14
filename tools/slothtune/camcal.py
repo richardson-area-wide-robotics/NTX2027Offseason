@@ -23,11 +23,19 @@ from __future__ import annotations
 import math
 import statistics
 
+from . import units as U
+
 SIDES = {"front": 0.0, "left": 90.0, "back": 180.0, "right": -90.0}
 SPREAD_CM_WARN = 2.0
 SPREAD_DEG_WARN = 1.0
 AMBIGUITY_WARN = 0.2
 MIN_SAMPLES = 5
+
+
+def cm_words(cm):
+    """A distance in centimeters, worded in inches: two decimals under an inch."""
+    inches = cm / 2.54
+    return f"{inches:.{2 if abs(inches) < 1 else 1}f} in"
 
 
 # ---------------------------------------------------------------------------- rotations
@@ -190,12 +198,12 @@ def solve(camera, placements, current=None):
                          "measurements agree with each other."})
     if len(mounts) > 1 and (spread_cm > SPREAD_CM_WARN or spread_deg > SPREAD_DEG_WARN):
         F.append({"level": "warn",
-                  "title": f"The spots disagree by up to {spread_cm:.1f} cm and {spread_deg:.1f} degrees",
+                  "title": f"The spots disagree by up to {cm_words(spread_cm)} and {spread_deg:.1f} degrees",
                   "why": "Check each spot's tape measurements, that the robot was square to the wall, that "
                          "the tag is flat, and that PhotonVision's tag size matches the printed tag "
                          "(FRC tags: 6.5 in = 0.1651 m across the black square)."})
     if not (0.0 < result["z"] < 1.5):
-        F.append({"level": "error", "title": f"The camera comes out {result['z']:.2f} m above the floor",
+        F.append({"level": "error", "title": f"The camera comes out {U.length(result['z'])} above the floor",
                   "why": "Not possible on this robot. Check the tag height, and which side of the robot "
                          "faced the wall."})
     edit = None
@@ -204,7 +212,7 @@ def solve(camera, placements, current=None):
         cur = euler_to_mat(current.get("roll", 0.0), current.get("pitch", 0.0), current.get("yaw", 0.0))
         d_deg = angle_between(cur, r)
         F.append({"level": "warn" if d_cm > 1.0 or d_deg > 0.5 else "ok",
-                  "title": f"{d_cm:.1f} cm and {d_deg:.1f} degrees from what slothtune.json says now",
+                  "title": f"{cm_words(d_cm)} and {d_deg:.1f} degrees from what slothtune.json says now",
                   "why": "Every vision pose moves by about this much once it's saved and redeployed."})
     if result["z"] > 0 and not any(f["level"] == "error" for f in F):
         edit = ("slothtune.json", ("cameras", camera),

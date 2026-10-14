@@ -345,7 +345,74 @@ def api_live(_):
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],
             "deadman": S.link.get("bool", C.STATUS_DEADMAN_HELD),
+            "seen_tags": seen_tags(S.link.sightings(), live.get("t")),
             "motor_guard": {k: v for k, v in S.link.motors().items() if k != "motors"}}
+
+
+SEEN_S = 0.5     # a tag counts as in view while its newest sighting is this fresh
+
+
+def seen_tags(sightings, now):
+    """The tags a camera sees right now. Each camera's newest frame stays published after it loses
+    its tags, so a sighting counts only while it is fresh against the robot's clock."""
+    out = set()
+    for s in sightings:
+        t = s.get("t")
+        if not (isinstance(now, (int, float)) and math.isfinite(now) and now > 0
+                and isinstance(t, (int, float)) and math.isfinite(t) and t > 0) or now - t <= SEEN_S:
+            out.add(int(s["tag"]))
+    return sorted(out)
+
+
+def field_view(layout):
+    """The field from above for the Live tab, from an AprilTag layout file: its size, and each tag
+    where it stands and which way it faces (yaw, degrees counter-clockwise from the red wall's
+    direction, +x). Meters, like the file."""
+    tags = []
+    for t in layout.get("tags") or []:
+        tr, q = t["pose"]["translation"], t["pose"]["rotation"]["quaternion"]
+        w, x, y, z = (float(q[k]) for k in ("W", "X", "Y", "Z"))
+        yaw = math.degrees(math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z)))
+        tags.append({"id": int(t["ID"]), "x": float(tr["x"]), "y": float(tr["y"]), "z": float(tr["z"]),
+                     "yaw_deg": round(yaw, 3)})
+    field = layout.get("field") or {}
+    return {"length": float(field.get("length", 0)), "width": float(field.get("width", 0)), "tags": tags}
+
+
+def robot_outline(settings):
+    """The robot's bumpers as PathPlanner draws them, from its settings.json (robotLength along x,
+    robotWidth along y, bumperOffsetX/Y; meters), or None without them."""
+    try:
+        length, width = float(settings["robotLength"]), float(settings["robotWidth"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not (0.2 < length < 2.5 and 0.2 < width < 2.5):
+        return None
+    return {"length": length, "width": width, "offset": [float(settings.get("bumperOffsetX") or 0.0),
+                                                          float(settings.get("bumperOffsetY") or 0.0)]}
+
+
+def api_field(_query=None):
+    """The field the Live tab draws the robot on: this field's surveyed tags (New field's layout),
+    or ``surveyed: False`` when there are none yet; and the robot's bumpers from PathPlanner."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    robot = None
+    try:
+        with open(ppcheck.settings_path(S.project), encoding="utf-8") as fh:
+            robot = robot_outline(json.load(fh))
+    except (OSError, ValueError):
+        pass
+    path = _layout_path()
+    if not os.path.exists(path):
+        return {"ok": True, "surveyed": False, "robot": robot}
+    try:
+        with open(path, encoding="utf-8") as fh:
+            view = field_view(json.load(fh))
+    except (OSError, ValueError, KeyError, TypeError) as e:
+        return {"ok": True, "surveyed": False, "robot": robot, "error": f"Can't read {os.path.basename(path)}: {e}"}
+    return {"ok": True, "surveyed": True, "file": os.path.relpath(path, S.project.path).replace(os.sep, "/"),
+            "saved": os.path.getmtime(path), "robot": robot, **view}
 
 
 def api_motor_override(body):
@@ -1257,7 +1324,7 @@ def api_geometry_wheels(body):
         try:
             tape = float(body.get("tape_m"))
         except (TypeError, ValueError):
-            return {"ok": False, "error": "Type how far the robot moved, in meters."}
+            return {"ok": False, "error": "Type how far the robot moved, in inches."}
         doc = runs.load(body["file"])
         names = (doc.get("robot") or {}).get("modules") or names
     r = geometry.wheel_sizes(doc, tape, cfg, names)
@@ -1888,7 +1955,7 @@ def api_sim(body):
 
 
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state, "/api/autotune": api_autotune,
-       "/api/camera/lighting": api_camera_lighting_state, "/api/newfield": api_newfield,
+       "/api/camera/lighting": api_camera_lighting_state, "/api/newfield": api_newfield, "/api/field": api_field,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/robotlog": api_robotlog, "/api/systems": api_systems,

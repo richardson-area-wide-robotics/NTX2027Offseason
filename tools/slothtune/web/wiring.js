@@ -181,11 +181,13 @@ const Wiring = (() => {
     // One bus in full; several, a short line each and the lengths' basis once.
     const count = b => b.chain.filter(n => n !== "roboRIO" && n !== "PDH").length;
     const L = bi => data.lengths[bi] || [0, 0, 0];
+    // The design file keeps each segment in meters; a whole bus reads in feet, the way a cable run is measured.
+    const ft = m => fmt(m * U.FT_PER_M, 1);
     const busLine = m.buses.length === 1
-      ? `${count(m.buses[0])} devices on ${esc(labelOf(m.buses[0]))} · bus about ${fmt(L(0)[0], 1)} m (${L(0)[1]} of ${L(0)[2]} segments measured; CAN allows 40 m)`
+      ? `${count(m.buses[0])} devices on ${esc(labelOf(m.buses[0]))} · bus about ${ft(L(0)[0])} ft (${L(0)[1]} of ${L(0)[2]} segments measured; CAN allows about 130 ft)`
         + ` · ${termChip(m.buses[0])}`
-      : m.buses.map((b, bi) => `${swatchOf(bi)}${esc(labelOf(b))}: ${count(b)} devices, about ${fmt(L(bi)[0], 1)} m`).join(" · ")
-        + ` (${m.buses.reduce((a, b, bi) => a + L(bi)[1], 0)} of ${m.buses.reduce((a, b, bi) => a + L(bi)[2], 0)} segments measured; CAN allows 40 m on each bus)`;
+      : m.buses.map((b, bi) => `${swatchOf(bi)}${esc(labelOf(b))}: ${count(b)} devices, about ${ft(L(bi)[0])} ft`).join(" · ")
+        + ` (${m.buses.reduce((a, b, bi) => a + L(bi)[1], 0)} of ${m.buses.reduce((a, b, bi) => a + L(bi)[2], 0)} segments measured; CAN allows about 130 ft on each bus)`;
     const confirmed = m.buses.every(b => b.orderConfirmed);
     $("#w-meta", root).innerHTML = `${esc(data.path)} · ${busLine} ·
       ${confirmed ? `<span class="chip good">order checked on the robot</span>` : `<span class="chip warn">order not checked yet</span>`}

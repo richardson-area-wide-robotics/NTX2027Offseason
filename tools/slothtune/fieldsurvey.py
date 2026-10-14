@@ -28,6 +28,7 @@ import os
 import statistics
 
 from . import camcal as K
+from . import units as U
 
 TRUST_M = 0.30
 TRUST_DEG = 10.0
@@ -390,30 +391,30 @@ def survey(sightings, variant=None, year=2026):
     layout = official(chosen, year)
     if not told_apart:
         F.append({"level": "info", "title": "Can't tell the welded and AndyMark layouts apart from this drive",
-                  "why": f"Compared against the {chosen} layout. The two differ by a few centimeters "
+                  "why": f"Compared against the {chosen} layout. The two differ by an inch or so "
                          "across the field, so telling them apart takes views that tie distant tags "
                          "together; or ask the event which tag mounts it uses."})
     elif variant and variant != best and fits[best]["rms_cm"] + 0.5 < fits[variant]["rms_cm"]:
         F.append({"level": "warn", "title": f"This field fits the {best} layout better than {variant}",
-                  "why": f"Average tag error {fits[best]['rms_cm']:.1f} cm against {best}, "
-                         f"{fits[variant]['rms_cm']:.1f} cm against {variant}. Ask the event which tag "
+                  "why": f"Average tag error {K.cm_words(fits[best]['rms_cm'])} against {best}, "
+                         f"{K.cm_words(fits[variant]['rms_cm'])} against {variant}. Ask the event which tag "
                          "mounts they use, and load that layout in the robot code."})
     elif not variant:
         others = [v for v in VARIANTS if v != best]
         F.append({"level": "info", "title": f"The tags fit the {best} layout best",
-                  "why": f"Average error {fits[best]['rms_cm']:.1f} cm, against "
-                         + ", ".join(f"{fits[v]['rms_cm']:.1f} cm for {v}" for v in others) + "."})
+                  "why": f"Average error {K.cm_words(fits[best]['rms_cm'])}, against "
+                         + ", ".join(f"{K.cm_words(fits[v]['rms_cm'])} for {v}" for v in others) + "."})
     for r in sorted(res["rows"], key=lambda r: -r["moved_cm"]):
         if not r["measured"]:
             continue
         if not r["trusted"]:
-            F.append({"level": "error", "title": f"Tag {r['id']} is {r['moved_cm']:.0f} cm and {r['turned_deg']:.0f} degrees off",
-                      "why": f"Beyond {TRUST_M * 100:.0f} cm or {TRUST_DEG:g} degrees, more likely a misread or "
+            F.append({"level": "error", "title": f"Tag {r['id']} is {r['moved_cm'] / 2.54:.0f} in and {r['turned_deg']:.0f} degrees off",
+                      "why": f"Beyond {U.length(TRUST_M, 0)} or {TRUST_DEG:g} degrees, more likely a misread or "
                              "a tag on the wrong bracket than a real offset: the robot keeps the official "
                              "pose for it. Look at the tag itself.", "tag": r["id"]})
         elif r["significant"]:
-            F.append({"level": "warn", "title": f"Tag {r['id']} is {r['moved_cm']:.1f} cm and {r['turned_deg']:.1f} degrees from its official pose",
-                      "why": f"Measured to about ±{r['sigma_cm']:.1f} cm and ±{r['sigma_deg']:.1f} degrees over "
+            F.append({"level": "warn", "title": f"Tag {r['id']} is {K.cm_words(r['moved_cm'])} and {r['turned_deg']:.1f} degrees from its official pose",
+                      "why": f"Measured to about ±{K.cm_words(r['sigma_cm'])} and ±{r['sigma_deg']:.1f} degrees over "
                              f"{r['views']} views. Saved in the surveyed layout, so poses solved from it "
                              "move back by that much.", "tag": r["id"]})
     quiet = [r for r in res["rows"] if r["measured"] and r["trusted"] and not r["significant"]]

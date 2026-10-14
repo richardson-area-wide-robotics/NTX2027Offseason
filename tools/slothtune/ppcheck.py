@@ -27,6 +27,7 @@ import math
 import os
 import re
 
+from . import units as U
 from . import yagslcfg as Y
 
 G = 9.81
@@ -152,15 +153,19 @@ def _walk(cmd, named, paths):
 
 
 def _limits(where, c, cap, F):
-    checks = [("maxVelocity", "max_speed", "m/s", "speed"), ("maxAcceleration", "max_accel", "m/s²", "acceleration"),
-              ("maxAngularVelocity", "max_ang_vel_deg", "deg/s", "turn rate"),
-              ("maxAngularAcceleration", "max_ang_accel_deg", "deg/s²", "turn acceleration")]
-    for key, capkey, unit, what in checks:
+    # (key, capability, PathPlanner's unit, the team's unit and factor, what it is): PathPlanner keeps
+    # and shows speeds in m/s, so the words give its number too, to find it there.
+    checks = [("maxVelocity", "max_speed", "m/s", "ft/s", U.FT_PER_M, "speed"),
+              ("maxAcceleration", "max_accel", "m/s²", "ft/s²", U.FT_PER_M, "acceleration"),
+              ("maxAngularVelocity", "max_ang_vel_deg", "deg/s", "deg/s", 1.0, "turn rate"),
+              ("maxAngularAcceleration", "max_ang_accel_deg", "deg/s²", "deg/s²", 1.0, "turn acceleration")]
+    for key, capkey, unit, team, k, what in checks:
         v = c.get(key)
         if v is not None and v > cap[capkey] * SLACK:
             F.append({"level": "warn", "kind": "limits",
-                      "title": f"{where}: {what} limit {v:g} {unit} is more than the robot can do ({cap[capkey]:.3g} {unit})",
-                      "why": "PathPlanner will plan for it and the robot will fall behind the path. "
+                      "title": f"{where}: {what} limit {v * k:.3g} {team} is more than the robot can do ({cap[capkey] * k:.3g} {team})",
+                      "why": ("" if k == 1.0 else f"PathPlanner has it as {v:g} {unit}. ")
+                             + "PathPlanner will plan for it and the robot will fall behind the path. "
                              + ("Top speed comes from " + cap["max_speed_source"] + "." if capkey == "max_speed" else
                                 "Acceleration is limited by " + cap["accel_limited_by"] + "." if "accel" in capkey else
                                 "Turning is the top speed over the module radius.")})

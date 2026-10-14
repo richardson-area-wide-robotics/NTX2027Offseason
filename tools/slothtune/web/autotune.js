@@ -25,7 +25,7 @@ const AutoTuneUI = (() => {
     const checks = !robot ? [] : [
       ["place", env === "BLOCKS"
         ? "<b>All four wheels off the ground</b>, free to spin, nothing touching them or the steering."
-        : "<b>Bumpers on</b>, the floor clear for 2 m all round, and everyone back from the robot."],
+        : "<b>Bumpers on</b>, the floor clear for 6 ft all round, and everyone back from the robot."],
       ["holder", "<b>One person holds the deadman the whole time</b> (the tester's joystick right bumper, Driver Station port 1, or <b>Hold to run</b> on this page) and watches the robot, ready to let go."],
       ["enabled", "The robot is <b>enabled</b> in the Driver Station (Teleop or Test), as for any test."],
       ["battery", `A charged battery: 12.5 V or more at rest${volts != null ? ` (it reads ${fmt(volts, 1)} V now)` : ""}. A sagging battery makes every round look worse.`],

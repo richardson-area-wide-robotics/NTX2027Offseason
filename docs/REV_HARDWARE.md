@@ -5,6 +5,9 @@ numbers their makers publish and where each comes from. Collected 2026-10-12 fro
 [docs.revrobotics.com](https://docs.revrobotics.com/brushless), REV's product pages and datasheets,
 REV's release notes, and MK Battery's datasheet. The tools read the same numbers from
 `tools/slothtune/revspecs.py`; a test keeps the two, the practice pod and the robot code in step.
+Where a maker publishes a metric number (torque, weight, speed), theirs comes first, exactly as
+published and as the tools read it, and the team's unit follows in parentheses (ft/s, inches,
+pounds, foot-pounds).
 
 The robots run **YAGSL**, not REV's MAXSwerve Java template. Nothing here comes from the template,
 and its constants (max speed, slew rates) don't apply to our code.
@@ -33,10 +36,10 @@ All at 12 V: "All of the data listed on the product page and motor testing was r
 | Free speed | 5676 rpm | 5676 rpm | 6784 rpm | 11000 rpm |
 | Free current | 1.8 A | 1.8 A | 3.6 A | 1.4 A |
 | Stall current | 105 A | 150 A | 211 A | 100 A |
-| Stall torque | 2.6 N·m | 3.75 N·m | 3.6 N·m | 0.97 N·m |
+| Stall torque | 1.92 ft·lb (2.6 N·m) | 2.77 ft·lb (3.75 N·m) | 2.66 ft·lb (3.6 N·m) | 0.72 ft·lb (0.97 N·m) |
 | Peak power | 406 W | 540 W | 640 W | 279 W |
 | Encoder | 42 counts/turn (hall) | not published | 7168 counts/turn on a SPARK Flex; 42 through the Solo Adapter on a SPARK MAX | 42 counts/turn (hall) |
-| Weight | 425 g | 364 g | 447 g | 142 g |
+| Weight | 0.94 lb (425 g) | 0.80 lb (364 g) | 0.99 lb (447 g) | 0.31 lb (142 g) |
 | Shaft | 8 mm keyed | 15T spline | 1/2 in hex spindle (docked) | 1/8 in |
 | REV's current-limit advice | 40 to 60 A | none published | 80 A | 20 to 40 A |
 | Our policy | 60 A | 80 A | 80 A | 20 A |
@@ -46,7 +49,7 @@ What these numbers mean for us:
 
 - **A NEO V1.1 and a NEO 2.0 spin exactly alike** (same Kv, same free speed), so no measurement can
   tell them apart; only a person can. Look at the shaft (2.0: spline; V1.1: keyed round), the
-  sensor cable (2.0: unplugs; V1.1: fixed) and the body (2.0: 48 mm long with flats; V1.1: 58 mm round).
+  sensor cable (2.0: unplugs; V1.1: fixed) and the body (2.0: 1.9 in long with flats; V1.1: 2.3 in round).
   The NEO V1.1 is discontinued.
 - **A Vortex spins about 20% faster per volt than a NEO.** That is how a floor drive_ff run names
   the drive motors (NEO about 473 rpm per volt, Vortex 565, NEO 550 917).
@@ -59,7 +62,8 @@ What these numbers mean for us:
 
 Where REV's own pages disagree:
 - The NEO 2.0 table mixes the NEO V1.1's measured speed with its theoretical stall numbers
-  (150 A, 3.75 N·m are the V1.1's theoretical values; its measured ones are 105 A and 2.6 N·m).
+  (150 A, 2.77 ft·lb (3.75 N·m) are the V1.1's theoretical values; its measured ones are 105 A and
+  1.92 ft·lb (2.6 N·m)).
 - The Vortex's Kv is 565 in the spec table (6784 rpm / 12 V), 560 in a feature list, and 550 in an
   older "pre-production" table. The tools use 565.
 - The NEO 2.0 product page lists "REV-21-1651" in its kit contents; that is the NEO 550's part number.
@@ -104,14 +108,14 @@ From the [product page](https://www.revrobotics.com/rev-21-3005/) and REV's
 
 | REV's name | Ratio | Pinion | Spur | Free speed, NEO | Free speed, Vortex |
 |---|---|---|---|---|---|
-| Low | 5.50:1 | 12T | 22T | 4.12 m/s | 4.92 m/s |
-| Medium | 5.08:1 | 13T | 22T | 4.46 m/s | 5.33 m/s |
-| High | 4.71:1 | 14T | 22T | 4.80 m/s | 5.74 m/s |
-| Extra High 1 | 4.50:1 | 14T | 21T | 5.03 m/s | 6.01 m/s |
-| Extra High 2 | 4.29:1 | 14T | 20T | 5.28 m/s | 6.32 m/s |
-| Extra High 3 | 4.00:1 | 15T | 20T | 5.66 m/s | 6.77 m/s |
-| Extra High 4 | 3.75:1 | 16T | 20T | 6.04 m/s | 7.22 m/s |
-| Extra High 5 | 3.56:1 | 16T | 19T | 6.36 m/s | 7.60 m/s |
+| Low | 5.50:1 | 12T | 22T | 13.5 ft/s (4.12 m/s) | 16.1 ft/s (4.92 m/s) |
+| Medium | 5.08:1 | 13T | 22T | 14.6 ft/s (4.46 m/s) | 17.5 ft/s (5.33 m/s) |
+| High | 4.71:1 | 14T | 22T | 15.8 ft/s (4.80 m/s) | 18.8 ft/s (5.74 m/s) |
+| Extra High 1 | 4.50:1 | 14T | 21T | 16.5 ft/s (5.03 m/s) | 19.7 ft/s (6.01 m/s) |
+| Extra High 2 | 4.29:1 | 14T | 20T | 17.3 ft/s (5.28 m/s) | 20.7 ft/s (6.32 m/s) |
+| Extra High 3 | 4.00:1 | 15T | 20T | 18.6 ft/s (5.66 m/s) | 22.2 ft/s (6.77 m/s) |
+| Extra High 4 | 3.75:1 | 16T | 20T | 19.8 ft/s (6.04 m/s) | 23.7 ft/s (7.22 m/s) |
+| Extra High 5 | 3.56:1 | 16T | 19T | 20.9 ft/s (6.36 m/s) | 24.9 ft/s (7.60 m/s) |
 
 The Extra High gears come in the Gear Ratio Upgrade Kit (REV-21-3008). A NEO 2.0 needs the 15T
 Spline Input Kit (REV-21-3009). Free speeds are motor free speed through the gearing on a new 3 in
@@ -133,7 +137,7 @@ of depth lost); replace spiky tread at 1/8 in less diameter or on flat spots. A 
 the robot travel less than odometry thinks; the Calibrate tab's push test measures each wheel.
 
 **Geometry.** The wheel's center is 1.75 in in from the module's outer edge; the module takes 2×1
-tube or MAXTube. 1720 g each with a NEO.
+tube or MAXTube. 3.8 lb (1720 g) each with a NEO.
 
 **Upkeep.** REV's [pre-match checklist](https://docs.revrobotics.com/ion-build/motion/maxswerve/maxswerve-module-inspection):
 wheel wear, fork and axle screws, bevel gears, hub bolts, grease, the six UltraPlanetary bolts,
@@ -143,7 +147,7 @@ both encoder cables on the steering SPARK, and the drive and steering turning in
 
 From MK Battery's [datasheet](https://revrobotics.com/content/docs/ES17-12_User_Guide.pdf): 12 V
 nominal; 18 Ah drained over 20 hours, but 9.6 Ah at 18 A and 6.3 Ah at 54 A; about 12 mΩ inside
-(measured at 1 kHz); 270 A for at most 5 s; 5.86 kg.
+(measured at 1 kHz); 270 A for at most 5 s; 12.9 lb (5.86 kg).
 
 "12 V" is the label. Charged and rested it reads about 12.7 to 13 V; under load it sags by its
 resistance times the current. The tools measure each battery's sag in every wheel test and match

@@ -415,7 +415,8 @@ def _fmt(v, unit, digits=3):
 
 
 def describe(d):
-    """``[(label, value)]``: every number the link carries, in plain words, metric with US in brackets."""
+    """``[(label, value)]``: every number the link carries, in plain words: the team's units, with
+    metric in brackets (the calculators work in either)."""
     rows = []
     m = d.get("motor")
     if m:
@@ -431,11 +432,11 @@ def describe(d):
     for key, label in (("arm_length_m", "Arm length (pivot to load)"), ("spool_diameter_m", "Spool diameter"),
                        ("wheel_diameter_m", "Wheel diameter"), ("radius_m", "Radius"), ("travel_m", "Travel")):
         if d.get(key):
-            rows.append((label, f"{d[key]:.4g} m ({d[key] / 0.0254:.3g} in)"))
+            rows.append((label, f"{d[key] / 0.0254:.3g} in ({d[key]:.4g} m)"))
     if d.get("mass_kg"):
-        rows.append(("Mass" if d["kind"] == "drivetrain" else "Load", f"{d['mass_kg']:.3g} kg ({d['mass_kg'] / 0.45359237:.3g} lb)"))
+        rows.append(("Mass" if d["kind"] == "drivetrain" else "Load", f"{d['mass_kg'] / 0.45359237:.3g} lb ({d['mass_kg']:.3g} kg)"))
     if d.get("load_n"):
-        rows.append(("Load force", f"{d['load_n']:.3g} N ({d['load_n'] / 4.448:.3g} lbf)"))
+        rows.append(("Load force", f"{d['load_n'] / 4.448:.3g} lbf ({d['load_n']:.3g} N)"))
     if d.get("angles_deg"):
         rows.append(("Range of motion", f"{d['angles_deg'][0]:g}° to {d['angles_deg'][1]:g}°"))
     if d.get("target_rpm"):
@@ -451,7 +452,7 @@ def describe(d):
     if p.get("free_speed_mps"):
         # A wheel's rim speed is not how fast anything travels: say which it is.
         label = "Surface speed of the wheel, at free speed" if d["kind"] in ("flywheel", "roller", "mechanism") else "Free speed"
-        rows.append((label, f"{p['free_speed_mps']:.3g} m/s ({p['free_speed_mps'] / 0.3048:.3g} ft/s)"))
+        rows.append((label, f"{p['free_speed_mps'] / 0.3048:.3g} ft/s ({p['free_speed_mps']:.3g} m/s)"))
     if p.get("hold_margin"):
         rows.append(("Holding the load out level", f"{p['hold_margin']:.2g}× what it takes"))
     return rows

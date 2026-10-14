@@ -9,10 +9,12 @@ import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfigAccessor;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -173,6 +175,39 @@ public final class TunableSystem {
 
   boolean hasLimits() {
     return Double.isFinite(min) && Double.isFinite(max) && max > min;
+  }
+
+  /**
+   * The unit a person reads this mechanism's numbers in: the team's (inches, ft/s, degrees,
+   * pounds, foot-pounds) for one read in meters, radians, kilograms or newton-meters, its own
+   * otherwise (RPM, motor rotations, degrees). Only the words convert: its goal, limits and every
+   * recorded number stay in its own units. tools/slothtune/units.py's system_unit is the laptop's
+   * twin of this.
+   */
+  String shownUnits() {
+    return shownUnit().label();
+  }
+
+  /** A value in its own units (or its units per second), in {@link #shownUnits()}. */
+  double shown(double v) {
+    return v * shownUnit().factor();
+  }
+
+  private record Shown(String label, double factor) {}
+
+  private Shown shownUnit() {
+    String u = units == null ? "" : units.trim().toLowerCase(Locale.ROOT);
+    return switch (u) {
+      case "m", "meter", "meters", "metre", "metres" -> new Shown("in", Units.metersToInches(1));
+      case "m/s", "mps", "meters per second" -> new Shown("ft/s", Units.metersToFeet(1));
+      case "cm", "centimeters" -> new Shown("in", Units.metersToInches(0.01));
+      case "mm", "millimeters" -> new Shown("in", Units.metersToInches(0.001));
+      case "rad", "radian", "radians" -> new Shown("deg", Units.radiansToDegrees(1));
+      case "rad/s", "radians per second" -> new Shown("deg/s", Units.radiansToDegrees(1));
+      case "kg", "kilograms" -> new Shown("lb", Units.kilogramsToLbs(1));
+      case "nm", "n*m", "n-m", "n\u00b7m", "newton meters" -> new Shown("ft-lb", 1 / 1.3558179483);
+      default -> new Shown(units == null ? "" : units, 1);
+    };
   }
 
   /** Applies {@code each} to every gain; for tests. */

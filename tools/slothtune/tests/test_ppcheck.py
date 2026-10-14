@@ -100,8 +100,11 @@ class PlantedTest(unittest.TestCase):
         self.edit_json("paths/hub shoot.path", fast)
         r = P.check(Y.Project(self.dir))
         lim = [f["title"] for f in r["findings"] if f["kind"] == "limits"]
-        self.assertTrue(any("Path 'hub shoot': speed limit 6" in x for x in lim), lim)
-        self.assertTrue(any("Path 'hub shoot': acceleration limit 20" in x for x in lim), lim)
+        # Worded in the team's units, with PathPlanner's own number (m/s) to find it there.
+        self.assertTrue(any("Path 'hub shoot': speed limit 19.7 ft/s" in x for x in lim), lim)
+        self.assertTrue(any("Path 'hub shoot': acceleration limit 65.6 ft/s²" in x for x in lim), lim)
+        speed = next(f for f in r["findings"] if f["title"].startswith("Path 'hub shoot': speed limit"))
+        self.assertIn("PathPlanner has it as 6 m/s", speed["why"])
 
     def test_no_settings_file(self):
         os.remove(os.path.join(self.pp, "settings.json"))

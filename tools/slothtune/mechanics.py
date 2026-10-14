@@ -22,6 +22,8 @@ from __future__ import annotations
 
 import math
 
+from . import units as U
+
 G_ACCEL = 9.80665
 VOLTS = 12.0
 
@@ -159,8 +161,9 @@ ACCEL_FRACTION = 0.25
 FLYWHEEL_FRACTION = 0.6
 
 
-def test_plan(mech, limits, units_per_mech_unit, team_max_velocity=None):
-    """The safe test: ``{"vmax", "amax", "a", "b", "why"}`` in the system's own units.
+def test_plan(mech, limits, units_per_mech_unit, team_max_velocity=None, units=""):
+    """The safe test: ``{"vmax", "amax", "a", "b", "why"}`` in the system's own units; ``why``'s
+    words in the team's (``units`` names the system's, as TunableSystem does).
 
     ``units_per_mech_unit``: how many of its units are one radian of the mechanism (one meter of an
     elevator; for a flywheel read in RPM, RPM per rad/s). ``limits``: (min, max) found by hand, for a
@@ -171,6 +174,12 @@ def test_plan(mech, limits, units_per_mech_unit, team_max_velocity=None):
     k = units_per_mech_unit
     free = ff["free_speed"] * k
     why = []
+    said, f_said = U.system_unit(units)
+
+    def num(x, rate=""):
+        """A value in the mechanism's (shown) units; ``rate`` "/s" or "/s²" for a speed or acceleration."""
+        unit = f" {said}{rate}" if said else {"/s": " per s", "/s²": " per s²"}.get(rate, "")
+        return f"{x * f_said:.4g}{unit}"
     if ff["kA"]:
         full = (VOLTS - abs(ff["kG"] or 0)) / ff["kA"] * k
     else:
@@ -178,18 +187,18 @@ def test_plan(mech, limits, units_per_mech_unit, team_max_velocity=None):
     if mech["kind"] == "flywheel":
         target = (mech.get("target_rad_s") or 0) * k
         vmax = min(target, 0.9 * free) if target else FLYWHEEL_FRACTION * free
-        why.append(f"top speed {vmax:.4g}: " + ("its target speed" if target else f"{FLYWHEEL_FRACTION:.0%} of its free speed, {free:.4g}"))
+        why.append(f"top speed {num(vmax)}: " + ("its target speed" if target else f"{FLYWHEEL_FRACTION:.0%} of its free speed, {num(free)}"))
         amax = ACCEL_FRACTION * full if full else vmax / 1.0
-        why.append(f"spin-up {amax:.4g} per s: " + (f"a quarter of what full voltage gives" if full else "no inertia in the data, so a full second to top speed"))
+        why.append(f"spin-up {num(amax, '/s')}: " + (f"a quarter of what full voltage gives" if full else "no inertia in the data, so a full second to top speed"))
     else:
         vmax = SPEED_FRACTION * free
-        why.append(f"top speed {vmax:.4g} per s: a quarter of its free speed, {free:.4g}")
+        why.append(f"top speed {num(vmax, '/s')}: a quarter of its free speed, {num(free, '/s')}")
         amax = ACCEL_FRACTION * full if full else vmax / 0.5
-        why.append(f"acceleration {amax:.4g} per s^2: " + ("a quarter of what full voltage gives, less holding it up" if full
+        why.append(f"acceleration {num(amax, '/s²')}: " + ("a quarter of what full voltage gives, less holding it up" if full
                                                             else "no inertia in the data, so half a second to top speed"))
     if team_max_velocity and 0 < team_max_velocity < vmax:
         vmax = team_max_velocity
-        why.append(f"capped at the team's maximum, {team_max_velocity:.4g}")
+        why.append(f"capped at the team's maximum, {num(team_max_velocity, '' if mech['kind'] == 'flywheel' else '/s')}")
     if mech["kind"] == "flywheel":
         return {"vmax": vmax, "amax": amax, "a": 0.5 * vmax, "b": vmax, "why": why}
     lo, hi = limits

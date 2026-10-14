@@ -161,6 +161,26 @@ class SystemProceduresTest {
   }
 
   @Test
+  void aMechanismInMetersIsWordedInInchesAndItsNumbersStayInMeters() {
+    Pivot p = new Pivot();
+    TunableSystem s = p.system().units("meters");
+    assertEquals("in", s.shownUnits());
+    assertEquals(39.37, s.shown(1), 0.01);
+    assertEquals("deg", new TunableSystem("Arm", TunableSystem.Kind.PIVOT).units("radians").shownUnits());
+    assertEquals("RPM", new TunableSystem("Shooter", TunableSystem.Kind.FLYWHEEL).units("RPM").shownUnits());
+    assertEquals(3000, new TunableSystem("Shooter", TunableSystem.Kind.FLYWHEEL).units("RPM").shown(3000), 1e-12);
+    s.setLimits(0, 18, "moved by hand");
+    SystemStepProcedure proc = new SystemStepProcedure();
+    enabled = true;
+    TestContext c = ctx(s, new String[] {"system", "vmax", "amax", "a", "b"}, new double[] {0, 4, 20, 4, 14});
+    proc.start(c);
+    p.pos = 18.8;
+    String why = proc.abortReason(c);
+    assertTrue(why.contains("(740.157, limits 0.000 to 708.661 in)"), why);
+    assertEquals(18, s.max, 1e-12, "the limits stay in the mechanism's own units");
+  }
+
+  @Test
   void aFlywheelRampsUpAndBackDownWithinItsTopSpeed() {
     double[] speed = {0};
     List<Double> goals = new ArrayList<>();

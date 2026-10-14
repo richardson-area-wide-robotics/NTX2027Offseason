@@ -279,7 +279,7 @@ STOP_CODES = [
     ("clear floor", "NO_SPACE"), ("eadman", "DEADMAN"), ("stick", "DRIVER_INPUT"),
     ("NOT on blocks", "NOT_ON_BLOCKS"), ("Impact", "IMPACT"), ("Left the declared space", "GEOFENCE"),
     ("solid wall", "NO_WALL"), ("motor is at", "MOTOR_GUARD"), ("stalled", "STALL"), ("Wheel speed", "OVERSPEED"),
-    ("current limit was cut", "MOTOR_GUARD"), ("m of floor only allows", "NO_SPACE"), ("Spinning needs", "NO_SPACE"),
+    ("current limit was cut", "MOTOR_GUARD"), ("of floor only allows", "NO_SPACE"), ("Spinning needs", "NO_SPACE"),
     ("cannot run with the robot declared", "WRONG_PLACE"), ("Busy:", "BUSY"), ("not applied while", "GAINS_REFUSED"),
     ("attery", "BATTERY"), ("Robot disabled", "DISABLED"), ("only allowed while the robot is disabled", "NEEDS_DISABLED"),
     ("time limit", "TIMEOUT"), ("Aborted from the laptop", "ABORTED_BY_PERSON"), ("joystick", "NO_JOYSTICK"),
@@ -287,7 +287,8 @@ STOP_CODES = [
     ("error", "ROBOT_ERROR"), ("could not start", "ROBOT_ERROR"),
     # The test's own arguments: fix the command, not the robot.
     ("current ceiling", "BAD_ARGS"), ("At most", "BAD_ARGS"), ("Steps must stay", "BAD_ARGS"), ("Pick at least", "BAD_ARGS"),
-    ("m/s cap", "BAD_ARGS"), ("Unknown module", "BAD_ARGS"),
+    # Robot messages may word a speed in m/s or in the team's ft/s.
+    ("m/s cap", "BAD_ARGS"), ("ft/s cap", "BAD_ARGS"), ("Unknown module", "BAD_ARGS"),
     # Waited a minute for a condition; the reason after the colon usually matched above.
     ("Gave up", "WAITED_TOO_LONG"),
     # Stopped mid lift check: the reason after the colon (the deadman, above) usually matched.

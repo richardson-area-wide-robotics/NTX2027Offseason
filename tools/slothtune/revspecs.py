@@ -25,7 +25,7 @@ MOTORS = {
         "label": "NEO V1.1", "part": "REV-21-1650", "kv_rpm_per_v": 473, "free_rpm": 5676, "free_a": 1.8,
         "stall_a": 105, "stall_nm": 2.6, "peak_w": 406, "counts_per_rev": {"SPARK MAX": 42, "SPARK Flex": 42},
         "mass_kg": 0.425, "shaft": "8 mm keyed", "current_limit_a": (40, 60),
-        "note": "Empirical, measured with a SPARK MAX. Theoretical: 150 A, 3.75 N·m, 540 W. Discontinued; "
+        "note": "Empirical, measured with a SPARK MAX. Theoretical: 150 A, 2.8 ft·lb (3.75 N·m), 540 W. Discontinued; "
                 "replaced by the NEO 2.0.",
         "locked_rotor": {60: "fails after about 105 s stalled", 80: "torque collapses after about 43 s"},
         "source": "https://docs.revrobotics.com/brushless/neo/v1.1",
@@ -36,7 +36,7 @@ MOTORS = {
         "mass_kg": 0.364, "shaft": "15T spline", "current_limit_a": None,
         "note": "REV's table mixes the NEO V1.1's empirical speed with its theoretical stall numbers; no "
                 "NEO 2.0 current-limit advice or encoder resolution is published. It spins exactly like a "
-                "V1.1, so only a person can tell them apart: spline shaft, detachable sensor cable, 48 mm body.",
+                "V1.1, so only a person can tell them apart: spline shaft, detachable sensor cable, 1.9 in (48 mm) body.",
         "source": "https://docs.revrobotics.com/brushless/neo/2.0",
     },
     "vortex": {

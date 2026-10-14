@@ -1,5 +1,7 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
+
 /**
  * Measures the robot's rotational feedforward, {@code volts = kS*sgn(w) + kV*w + kA*alpha}, to get
  * its moment of inertia.
@@ -75,7 +77,7 @@ final class SpinFeedforwardProcedure implements Procedure {
     if (ctx.env == TestEnvironment.FIELD) {
       double need = SpinProcedure.maxRadius(ctx.io) + 0.5;
       if (ctx.spaceForwardM < need || ctx.spaceSideM < need) {
-        return String.format("Spinning needs %.1f m clear on every side.", need);
+        return String.format("Spinning needs %.0f in clear on every side.", Units.metersToInches(need));
       }
     }
     return null;

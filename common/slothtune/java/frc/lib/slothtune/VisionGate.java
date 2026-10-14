@@ -1,5 +1,7 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
+
 /**
  * Decides whether a camera pose is believable, and how much to trust it.
  *
@@ -94,22 +96,24 @@ public final class VisionGate {
     boolean single = o.tagCount() == 1;
     double maxD = single ? limits.maxSingleTagDistanceM : limits.maxMultiTagDistanceM;
     if (o.nearestTagM() > maxD) {
-      return String.format("tag too far: %.1f m (limit %.1f m)", o.nearestTagM(), maxD);
+      return String.format("tag too far: %.0f in (limit %.0f in)", Units.metersToInches(o.nearestTagM()),
+          Units.metersToInches(maxD));
     }
     if (single && (o.ambiguity() < 0 || o.ambiguity() > limits.maxSingleTagAmbiguity)) {
       return String.format("ambiguous single tag: %.2f", o.ambiguity());
     }
     if (Math.abs(o.zM()) > limits.maxZErrorM) {
-      return String.format("off the floor: z = %.2f m", o.zM());
+      return String.format("off the floor: z = %.1f in", Units.metersToInches(o.zM()));
     }
     double m = limits.fieldMarginM;
     if (o.xM() < -m || o.yM() < -m || o.xM() > limits.fieldLengthM + m || o.yM() > limits.fieldWidthM + m) {
-      return String.format("off the field: (%.2f, %.2f)", o.xM(), o.yM());
+      return String.format("off the field: (%.0f, %.0f) in", Units.metersToInches(o.xM()),
+          Units.metersToInches(o.yM()));
     }
     if (single && currentXy != null) {
       double jump = Math.hypot(o.xM() - currentXy[0], o.yM() - currentXy[1]);
       if (jump > limits.maxSingleTagJumpM) {
-        return String.format("single tag jumps %.1f m from the current pose", jump);
+        return String.format("single tag jumps %.0f in from the current pose", Units.metersToInches(jump));
       }
     }
     return null;

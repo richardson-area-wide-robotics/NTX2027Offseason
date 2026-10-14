@@ -7,6 +7,12 @@ goes: hover any underlined word, or press **Lessons**, for the control theory be
 Much works without a robot too: most tuners and tools have a **Practice** button with made-up data, so
 you can learn it at home.
 
+It talks in the team's units: speed in ft/s, distances in inches, weight in pounds, torque in
+foot-pounds, angles in degrees, and you type them the same way. The robot code, `slothtune.json`
+and the YAGSL files keep WPILib's meters, kilograms and radians (YAGSL's own wheel size and module
+positions are already inches); the app converts both ways. A gain (kP, kV and the rest) is always
+in the code's units, so the number on screen is the number in the file.
+
 ## Setting up (once per laptop)
 
 1. Install WPILib 2026 (it brings the JDK and VS Code), and Python 3.12 from python.org.
@@ -333,7 +339,9 @@ tune.system("Intake pivot", TunableSystem.Kind.PIVOT)
 ```
 
 - **Kinds:**
-  - `PIVOT` and `ELEVATOR` are positions. They need `position(...)` and limits.
+  - `PIVOT` and `ELEVATOR` are positions. They need `position(...)` and limits. One the code reads
+    in meters (or radians) shows in inches (or degrees) in the app and the robot's messages; the
+    code, its goals and the limits saved in `slothtune.json` stay in its own units.
   - `FLYWHEEL` and `ROLLER` are speeds. Their `velocity(...)` and `goal(...)` are in the speed units,
     such as RPM.
 - **What each call does:**

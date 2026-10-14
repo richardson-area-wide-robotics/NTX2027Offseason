@@ -1,5 +1,7 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
+
 /**
  * Measures each module's drive feedforward, {@code volts = kS*sgn(v) + kV*v + kA*a}.
  *
@@ -118,9 +120,9 @@ final class DriveFeedforwardProcedure implements Procedure {
     Timeline t = plan(ctx);
     if (ctx.env == TestEnvironment.FIELD && t.get(1).durationS() < 2.0) {
       return String.format(
-          "%.1f m of floor only allows a %.1f s ramp, too short to separate kS from kV. Give it"
-              + " at least 2.5 m.",
-          ctx.spaceForwardM, t.get(1).durationS());
+          "%.0f in of floor only allows a %.1f s ramp, too short to separate kS from kV. Give it"
+              + " at least 100 in of clear floor.",
+          Units.metersToInches(ctx.spaceForwardM), t.get(1).durationS());
     }
     return null;
   }
@@ -205,8 +207,8 @@ final class DriveFeedforwardProcedure implements Procedure {
       double traveled = Math.hypot(pose[0] - phaseStartX, pose[1] - phaseStartY);
       if (traveled > 0.85 * budgetM) {
         if (!cutShort) {
-          ctx.note(String.format("Phase '%s' cut short at %.2f m to stay inside the space.",
-              timeline.get(seg).label(), traveled));
+          ctx.note(String.format("Phase '%s' cut short at %.0f in to stay inside the space.",
+              timeline.get(seg).label(), Units.metersToInches(traveled)));
         }
         cutShort = true;
         volts = 0;

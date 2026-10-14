@@ -1,5 +1,7 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
+
 /**
  * Step response of the drive velocity loop, all four modules together.
  *
@@ -85,7 +87,8 @@ final class DriveStepProcedure implements Procedure {
     double hold = ctx.args.get("hold_s", 0.8, 0.3, 3);
     for (double v : profile) {
       if (Math.abs(v) > ctx.speedCapMps + 1e-6) {
-        return String.format("Speed %.2f m/s is over the %.2f m/s cap.", v, ctx.speedCapMps);
+        return String.format("Speed %.2f ft/s is over the %.2f ft/s cap.", Units.metersToFeet(v),
+            Units.metersToFeet(ctx.speedCapMps));
       }
     }
     if (ctx.env == TestEnvironment.FIELD) {
@@ -93,9 +96,9 @@ final class DriveStepProcedure implements Procedure {
       double have = spaceFor(ctx);
       if (needed > have) {
         return String.format(
-            "This run needs %.1f m of clear floor and you declared %.1f m. Lower the speed cap,"
+            "This run needs %.0f in of clear floor and you declared %.0f in. Lower the speed cap,"
                 + " shorten hold_s, or find more room.",
-            needed, have);
+            Units.metersToInches(needed), Units.metersToInches(have));
       }
     }
     return null;

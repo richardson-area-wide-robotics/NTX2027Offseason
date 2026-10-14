@@ -29,7 +29,10 @@ advisor judges, this explains.
 from __future__ import annotations
 
 from . import analysis as A
+from . import units as U
 
+# The units of a run's numbers (the "units" each module reports); the story's words read drive
+# speeds in ft/s.
 STEER_ERROR_UNITS = "°"
 DRIVE_ERROR_UNITS = "m/s"
 
@@ -196,7 +199,9 @@ def _moments(out, t, sp, y, err, p, d, ff, asked, applied, amps, vbus, limit, lo
         if not mt:
             continue
         t0 = t[a]
-        step_name = f"step {k} ({'+' if size > 0 else ''}{size:.3g}{units})"
+        # The words: a speed in ft/s, an angle as it is.
+        say, k_say = (" ft/s", U.FT_PER_M) if units == DRIVE_ERROR_UNITS else (units, 1.0)
+        step_name = f"step {k} ({'+' if size > 0 else ''}{size * k_say:.3g}{say})"
         out["_step"], out["_size"] = k, abs(size)
 
         if mt["dead_time"] and mt["dead_time"] > 0.004:
@@ -254,9 +259,11 @@ def _moments(out, t, sp, y, err, p, d, ff, asked, applied, amps, vbus, limit, lo
                 vb = vbus[ip] if A.finite(vbus[ip]) else 12.0
                 clipped = (f" That is more than the {vb:.1f} V it can give, so the controller can only "
                            "give all it has." if abs(p[ip]) > vb else "")
+                # kP is per m/s on drive, so the product quotes the error in the gain's unit.
+                times = "kP x error" if k_say == 1.0 else f"kP x {abs(err[ip]):.3g} m/s (kP is per m/s)"
                 _note(out, "controller", "point", "kP",
-                      f"{step_name}: the biggest error, {abs(err[ip]):.3g}{units}, so P pushes hardest: "
-                      f"kP x error = {p[ip]:+.2f} V.{clipped} P is a spring: the further from the "
+                      f"{step_name}: the biggest error, {abs(err[ip]) * k_say:.3g}{say}, so P pushes hardest: "
+                      f"{times} = {p[ip]:+.2f} V.{clipped} P is a spring: the further from the "
                       "target, the harder it pulls.", t=t[ip], y=p[ip], series="p")
 
         # D braking: D opposing P while the error closes.
@@ -287,7 +294,7 @@ def _moments(out, t, sp, y, err, p, d, ff, asked, applied, amps, vbus, limit, lo
         # Settling band and what is left over.
         band = mt["band"]
         _note(out, "response", "band", "settling_time",
-              f"{step_name}: the settling band is ±{band:.3g}{units}. "
+              f"{step_name}: the settling band is ±{band * k_say:.3g}{say}. "
               + (f"It stays inside after {mt['settling_time'] * 1000:.0f} ms." if mt["settled"]
                  else "It never settles inside it."),
               x0=t0, x1=t[b - 1], y0=r - band, y1=r + band)
@@ -305,7 +312,7 @@ def _moments(out, t, sp, y, err, p, d, ff, asked, applied, amps, vbus, limit, lo
                        "stays short means the feedforward is low: measure it (drive_ff) rather than "
                        "raising kP.")
             _note(out, "response", "bracket", "steady_state_error",
-                  f"{step_name}: {abs(sse):.3g}{units} left at the end. " + why,
+                  f"{step_name}: {abs(sse) * k_say:.3g}{say} left at the end. " + why,
                   t=t[b - 1], y0=r, y1=r - sse * sign)
 
         if loop == "drive":

@@ -250,7 +250,8 @@ final class PieceSenseProcedure implements Procedure {
     if (sys.kind.positional) {
       double p = sys.position.getAsDouble(), range = sys.max - sys.min;
       if (Double.isFinite(p) && (p < sys.min - SystemStepProcedure.OVERRUN * range || p > sys.max + SystemStepProcedure.OVERRUN * range)) {
-        return String.format(Locale.ROOT, "%s went past its limits (%.3f %s): stopped.", sys.name, p, sys.units);
+        return String.format(Locale.ROOT, "%s went past its limits (%.3f %s): stopped.", sys.name, sys.shown(p),
+            sys.shownUnits());
       }
     }
     return null;

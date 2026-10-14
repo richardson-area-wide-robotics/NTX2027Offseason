@@ -1,5 +1,6 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,7 +92,8 @@ final class ModuleWatch {
       raise(flag(m, Rule.SENSORS_DISAGREE), nowS, still && gap > 3, String.format("%.1f\u00b0", gap));
       boolean backwards = enabled && commanded && Double.isFinite(v[m]) && v[m] * vSp[m] < 0
           && Math.abs(v[m]) > 0.1;
-      raise(flag(m, Rule.BACKWARDS), nowS, backwards, String.format("%+.2f vs %+.2f m/s", v[m], vSp[m]));
+      raise(flag(m, Rule.BACKWARDS), nowS, backwards,
+          String.format("%+.2f vs %+.2f ft/s", Units.metersToFeet(v[m]), Units.metersToFeet(vSp[m])));
     }
   }
 

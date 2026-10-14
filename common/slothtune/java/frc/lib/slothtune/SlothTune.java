@@ -3,6 +3,7 @@ package frc.lib.slothtune;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
@@ -1485,13 +1486,13 @@ public final class SlothTune {
       double median = sorted.length == 0 ? Double.NaN : sorted[sorted.length / 2];
       ctx.meta("lift_mps_per_amp_s", median);
       if (carrying >= Math.max(2, (judged + 1) / 2)) {
-        finish(State.ABORTED, String.format("NOT on blocks: a short pulse sped the wheels up only %.2f m/s per"
+        finish(State.ABORTED, String.format("NOT on blocks: a short pulse sped the wheels up only %.2f ft/s per"
                 + " amp-second (wheels in the air reach over %.1f), so they are carrying weight: the robot is on"
                 + " the floor, or the wheels touch the blocks. Put it on blocks, or set On the floor.",
-            median, lim.liftMinMpsPerAmpS));
+            Units.metersToFeet(median), Units.metersToFeet(lim.liftMinMpsPerAmpS)));
         return;
       }
-      ctx.note(String.format("Lift check: wheels free (%.2f m/s per amp-second).", median));
+      ctx.note(String.format("Lift check: wheels free (%.2f ft/s per amp-second).", Units.metersToFeet(median)));
     }
     if (el >= lim.liftPulseS + lim.liftSettleS) {
       liftPassed = true;

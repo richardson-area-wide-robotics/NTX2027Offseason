@@ -15,7 +15,10 @@ Each ends with the change to slothtune.json it suggests, for the usual preview b
 from __future__ import annotations
 
 import math
+import re
 import statistics
+
+from . import units as U
 
 # The current must clear the empty motor by this much to be told apart reliably.
 MIN_MARGIN_A = 1.5
@@ -191,10 +194,14 @@ def _arm_report(doc, name, t, amps, phase, ch):
     weak = [round(centers[b], 2) for b in range(bins)
             if any(row[b] is not None and row[b] < 1.5 * threshold for row in deltas)]
     baseline = [[round(centers[b], 3), round(empty[b], 2)] for b in range(bins) if empty[b] is not None]
+    # The weak positions in words: the mechanism's units (its run's "system:" note), in the team's.
+    units = next((m.group(1) for m in (re.match(r"system: .+ \(\w+, (.*)\)$", str(n)) for n in doc.get("notes") or []) if m), "")
+    said, f_said = U.system_unit(units)
+    near = ", ".join(f"{w * f_said:.3g}" for w in weak) + (f" {said}" if said and weak else "")
     F = [_f("ok" if good >= 2 * MIN_MARGIN_A / 2 and not weak else "warn",
             f"A piece adds about {statistics.median(flat):.1f} A over the empty arm",
             f"The threshold is {threshold} A over the empty current at each position (saved with it)."
-            + (f" Near {', '.join(map(str, weak))} the difference is small (gravity pulls less there): it may "
+            + (f" Near {near} the difference is small (gravity pulls less there): it may "
                "not tell a piece apart at those positions." if weak else ""))]
     return {"summary": f"{name}: {threshold} A over the empty current at each position", "score": 100 if not weak else 70,
             "findings": F, "baseline": baseline, "deltas": deltas,

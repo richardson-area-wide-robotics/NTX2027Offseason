@@ -357,6 +357,14 @@ const Tune = (() => {
   }
 
   // ---------------------------------------------------------------- results
+  // A run's channels are in the robot's units (m/s, meters, rad/s); the graphs show the team's. A new
+  // array each time: the run itself is reused (compare, export) and must keep its own numbers.
+  const times = (a, k) => (a || []).map(v => v == null ? v : v * k);
+  // The unit a loop's error reads in, and the factor from the run's numbers: drive in ft/s, steer as it is.
+  const loopUnit = loop => loop === "drive" ? [" ft/s", U.FT_PER_M] : ["°", 1];
+  // A response marker (point, rise, band, bracket) sits at a y in the run's units, so it moves with the line.
+  const scaleNote = (a, k) => k === 1 ? a : Object.assign({}, a, ...["y", "y0", "y1"].filter(f => a[f] != null).map(f => ({ [f]: a[f] * k })));
+
   function modIdx(ch, suffix) {
     return Object.keys(ch).filter(k => /^m\d+\./.test(k) && k.endsWith("." + suffix)).map(k => +k.slice(1, k.indexOf("."))).sort();
   }
@@ -379,16 +387,17 @@ const Tune = (() => {
       if (!faded && sp.length) out.push({ x: t, y: ch[`m${sp[0]}.sp`], color: "--sp", dash: [5, 4], width: 1.4, label: "told", learn: "setpoint" });
       for (const i of sp) out.push(style({ x: t, y: ch[`m${i}.steer`], color: COLORS[i % 4], alpha: a, label: label(i) }, i));
     } else if (doc.test === "drive_step") {
-      if (!faded) out.push({ x: t, y: ch.sp, color: "--sp", dash: [5, 4], width: 1.4, label: "told", learn: "setpoint" });
-      for (const i of modIdx(ch, "v")) out.push(style({ x: t, y: ch[`m${i}.v`], color: COLORS[i % 4], alpha: a, label: label(i) }, i));
+      if (!faded) out.push({ x: t, y: times(ch.sp, U.FT_PER_M), color: "--sp", dash: [5, 4], width: 1.4, label: "told", learn: "setpoint" });
+      for (const i of modIdx(ch, "v")) out.push(style({ x: t, y: times(ch[`m${i}.v`], U.FT_PER_M), color: COLORS[i % 4], alpha: a, label: label(i) }, i));
     } else if (doc.test === "drive_ff") {
-      for (const i of modIdx(ch, "volts")) out.push({ x: ch[`m${i}.v`], y: ch[`m${i}.volts`], color: COLORS[i % 4], points: true, alpha: a, label: label(i) });
+      for (const i of modIdx(ch, "volts")) out.push({ x: times(ch[`m${i}.v`], U.FT_PER_M), y: ch[`m${i}.volts`], color: COLORS[i % 4], points: true, alpha: a, label: label(i) });
     } else if (doc.test === "spin") {
-      const h = ch.heading || [], rate = h.map((v, k) => k ? (v - h[k - 1]) / (t[k] - t[k - 1]) * Math.PI / 180 : NaN);
-      out.push({ x: t, y: ch.cmd_omega, color: "--sp", dash: [5, 4], alpha: a, label: faded ? null : "told rad/s" });
-      out.push({ x: t, y: rate, color: COLORS[0], alpha: a, label: faded ? null : "gyro rad/s" });
+      // The gyro's heading is in degrees and the command in rad/s: both shown in degrees a second.
+      const h = ch.heading || [], rate = h.map((v, k) => k ? (v - h[k - 1]) / (t[k] - t[k - 1]) : NaN);
+      out.push({ x: t, y: times(ch.cmd_omega, U.DEG_PER_RAD), color: "--sp", dash: [5, 4], alpha: a, label: faded ? null : "told °/s" });
+      out.push({ x: t, y: rate, color: COLORS[0], alpha: a, label: faded ? null : "gyro °/s" });
     } else if (doc.test === "straight") {
-      out.push({ x: ch.x || [], y: ch.y || [], color: COLORS[0], alpha: a, label: faded ? null : "odometry path (m)" });
+      out.push({ x: times(ch.x, U.IN_PER_M), y: times(ch.y, U.IN_PER_M), color: COLORS[0], alpha: a, label: faded ? null : "odometry path (in)" });
     } else if (doc.test === "slip") {
       for (const i of modIdx(ch, "amps")) out.push({ x: t, y: ch[`m${i}.amps`].map(Math.abs), color: COLORS[i % 4], alpha: a, label: label(i) });
       const cap = (doc.meta || {}).ceiling_a;
@@ -400,8 +409,8 @@ const Tune = (() => {
   }
 
   function axes(doc) {
-    return { steer_step: ["s", "degrees"], drive_step: ["s", "m/s"], drive_ff: ["m/s", "volts"], spin: ["s", "rad/s"],
-             straight: ["x (m)", "y (m)"], capture: ["s", "degrees"], slip: ["s", "amps"] }[doc.test] || ["s", ""];
+    return { steer_step: ["s", "degrees"], drive_step: ["s", "ft/s"], drive_ff: ["ft/s", "volts"], spin: ["s", "°/s"],
+             straight: ["x (in)", "y (in)"], capture: ["s", "degrees"], slip: ["s", "amps"] }[doc.test] || ["s", ""];
   }
 
   function explained() {
@@ -417,11 +426,13 @@ const Tune = (() => {
   }
 
   function readout(ex, x) {
-    const k = at(ex, x), u = ex.units;
+    const k = at(ex, x), [u, f] = loopUnit(ex.loop);
     const v = (a, d = 2) => fmt(ex[a][k], d);
+    // The setpoint, the wheel and the error in the team's units; the volts below as they are.
+    const q = (a, d = 2) => fmt(ex[a][k] == null ? NaN : ex[a][k] * f, d);
     return `<b>${fmt(ex.t[k], 3)} s</b> · ${esc(abbr(ex.module))}<br>
-      told ${v("sp", 2)}${u} · ${ex.loop === "steer" ? "wheel" : "wheel speed"} ${v("measured", 2)}${u}<br>
-      the loop sees ${v("seen", 2)}${u} · <b>error ${v("error", 2)}${u}</b><br>
+      told ${q("sp")}${u} · ${ex.loop === "steer" ? "wheel" : "wheel speed"} ${q("measured")}${u}<br>
+      the loop sees ${q("seen")}${u} · <b>error ${q("error")}${u}</b><br>
       <span class="c-p">P ${v("p")}</span> · <span class="c-i">I ${v("i")}</span> · <span class="c-d">D ${v("d")}</span>${ex.loop === "drive" ? ` · <span class="c-ff">FF ${v("ff")}</span>` : ""} V<br>
       asked <b>${v("asked")} V</b> · applied <b>${v("applied")} V</b> · battery ${v("battery", 1)} V`;
   }
@@ -436,14 +447,14 @@ const Tune = (() => {
     const s = seriesFor(current, false);
     if (compare && $("#cmp", root).checked && compare.test === current.test) s.unshift(...seriesFor(compare, true));
     const ex = explained();
-    const p = whatIf.pred;
+    const p = whatIf.pred, f = ex ? loopUnit(ex.loop)[1] : 1;
     if (ex && p && p.ok && whatIf.file === current._file && whatIf.index === ex.index) {
-      s.push({ x: p.t, y: p.predicted, color: "--accent", dash: [8, 3, 2, 3], width: 2.4, label: "what if", learn: "what_if" });
+      s.push({ x: p.t, y: times(p.predicted, f), color: "--accent", dash: [8, 3, 2, 3], width: 2.4, label: "what if", learn: "what_if" });
     }
     const [xl, yl] = axes(current);
     $("#cmp-wrap", root).hidden = !(compare && compare.test === current.test);
     Plot.draw($("#plot", root), { series: s, xrange: zoom, xlabel: xl, ylabel: yl,
-      annotations: ex ? notes(ex.response) : ((current.report || {}).annotations || []), readout: ex ? x => readout(ex, x) : null });
+      annotations: ex ? notes(ex.response).map(a => scaleNote(a, f)) : ((current.report || {}).annotations || []), readout: ex ? x => readout(ex, x) : null });
     $("#explain-head", root).hidden = !ex;
     $("#plot2wrap", root).hidden = !ex;
     $("#explain-hint", root).hidden = !ex;
@@ -537,14 +548,15 @@ const Tune = (() => {
     if (!p || !ex || whatIf.file !== current._file || whatIf.index !== ex.index) { q.textContent = ""; box.innerHTML = ""; return; }
     if (!p.ok) { q.textContent = ""; box.innerHTML = `<p class="hint">${esc(p.reason || p.error || "No prediction.")}</p>`; return; }
     q.innerHTML = `<span class="chip ${p.quality === "good" ? "good" : p.quality === "fair" ? "warn" : "bad"}">model ${esc(p.quality)}</span>`;
-    const S = p.summary, u = p.units;
+    // The prediction's numbers are in the run's units: what is left over reads like the graph.
+    const S = p.summary, [u, f] = loopUnit(p.loop || ex.loop);
     const row = (label, lk, f) => `<tr><td><span class="term" data-learn="${lk}">${label}</span></td>${["measured", "replay", "predicted"].map(k => `<td class="num">${f(S[k] || {})}</td>`).join("")}</tr>`;
     const ms = v => v == null ? "–" : fmt(v * 1000, 0) + " ms";
     box.innerHTML = `<table class="t"><thead><tr><th></th><th>This run</th><th>Model replay</th><th>Prediction</th></tr></thead><tbody>
       ${row("Rise", "rise_time", s => ms(s.rise_time))}
       ${row("Overshoot", "overshoot", s => s.overshoot_pct == null ? "–" : fmt(s.overshoot_pct, 1) + "%")}
       ${row("Settle", "settling_time", s => s.settled === false ? "never" : ms(s.settling_time))}
-      ${row("Left over", "steady_state_error", s => s.steady_state_error == null ? "–" : fmt(s.steady_state_error, 3) + u)}
+      ${row("Left over", "steady_state_error", s => s.steady_state_error == null ? "–" : fmt(s.steady_state_error * f, 3) + u)}
       ${row("Swings", "oscillation", s => s.oscillations == null ? "–" : s.oscillations)}</tbody></table>
       <p class="hint">${esc(p.note)} Learned: kS ${fmt(p.model.kS, 3)} V, kV ${fmt(p.model.kV, 4)}, kA ${fmt(p.model.kA, 5)}; the recording runs ${p.delay_ms} ms late.</p>`;
   }
@@ -565,14 +577,14 @@ const Tune = (() => {
     const sp = current.test === "steer_step" ? ch[`m${modIdx(ch, "sp")[0]}.sp`] : ch.sp;
     const t = ch.t || [];
     if (!sp) { box.innerHTML = ""; return; }
-    const segs = [], unit = current.test === "steer_step" ? "°" : " m/s";
+    const segs = [], [unit, f] = loopUnit(current.test === "steer_step" ? "steer" : "drive");
     let start = 0;
     for (let i = 1; i <= sp.length; i++) {
       if (i === sp.length || Math.abs(sp[i] - sp[i - 1]) > 1e-6) { segs.push([start, i - 1]); start = i; }
     }
     box.innerHTML = `<button class="btn small ${stepSel == null ? "on" : ""}" data-z="all" data-tip="tune.steps">Whole run</button>` +
       segs.slice(1).map(([a, b], k) => {
-        const d = sp[a] - sp[a - 1];
+        const d = (sp[a] - sp[a - 1]) * f;
         return `<button class="btn small ${stepSel === k + 1 ? "on" : ""}" data-k="${k + 1}" data-a="${t[a]}" data-b="${t[b]}" data-tip="tune.steps" data-quiet>Step ${k + 1}: ${d > 0 ? "+" : ""}${+d.toFixed(2)}${unit}</button>`;
       }).join("");
     $$("button", box).forEach(b => b.onclick = () => selectStep(b.dataset.z ? null : +b.dataset.k));
@@ -593,12 +605,15 @@ const Tune = (() => {
     const rep = (current && current.report) || {};
     const mods = rep.modules || {};
     const rows = [];
+    // A drive step's speeds come in m/s: the table reads in ft/s, like the graph.
+    const steer = current && current.test === "steer_step", f = steer ? 1 : U.FT_PER_M, u = steer ? "°" : "ft/s";
+    const n = v => v == null ? NaN : v * f;
     for (const [name, m] of Object.entries(mods)) {
       for (const s of (m.steps || [])) {
-        rows.push(`<tr><td>${abbr(name)}</td><td class="num">${fmt(s.from, 2)} → ${fmt(s.to, 2)}</td>
+        rows.push(`<tr><td>${abbr(name)}</td><td class="num">${fmt(n(s.from), 2)} → ${fmt(n(s.to), 2)}</td>
           <td class="num">${fmt(s.dead_time * 1000, 0)}</td><td class="num">${fmt(s.rise_time * 1000, 0)}</td>
           <td class="num">${fmt(s.overshoot_pct, 1)}</td><td class="num">${s.settled ? fmt(s.settling_time * 1000, 0) : "never"}</td>
-          <td class="num">${fmt(s.steady_state_error, 3)}</td><td class="num">${s.oscillations}</td>
+          <td class="num">${fmt(n(s.steady_state_error), 3)}</td><td class="num">${s.oscillations}</td>
           <td class="num">${s.saturation == null ? "–" : fmt(100 * s.saturation, 0)}</td></tr>`);
       }
       if (m.kV != null || m.kS != null) {
@@ -606,7 +621,6 @@ const Tune = (() => {
       }
     }
     const th = (label, lk) => `<th class="num"><span class="term" tabindex="0" data-learn="${lk}">${label}</span></th>`;
-    const u = current && current.test === "steer_step" ? "°" : "m/s";
     $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th class="num">Step (${u})</th>${th("Delay ms", "dead_time")}
       ${th("Rise ms", "rise_time")}${th("Overshoot %", "overshoot")}${th("Settle ms", "settling_time")}${th(`Left over (${u})`, "steady_state_error")}${th("Swings", "oscillation")}${th("Flat out %", "saturation")}</tr></thead>
       <tbody>${rows.join("")}</tbody></table>` : "";

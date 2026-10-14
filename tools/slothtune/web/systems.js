@@ -13,6 +13,16 @@ const Systems = (() => {
   const KIND = { FLYWHEEL: "flywheel", ROLLER: "roller", PIVOT: "pivot", ELEVATOR: "elevator" };
   const positional = s => s && (s.kind === "PIVOT" || s.kind === "ELEVATOR");
   const n4 = v => v == null || !Number.isFinite(+v) ? "–" : String(+(+v).toPrecision(4));
+  // A mechanism's numbers come in its own units (s.units): meters and radians show in inches and
+  // degrees ({label, k}: value * k), anything else as it is. A number typed here goes back as / k,
+  // so the robot and slothtune.json keep the mechanism's own units.
+  const unit = s => U.sys(s && s.units);
+  const by = (v, k) => v == null || v === "" || !Number.isFinite(+v) ? v : +v * k;
+  const shown = (v, k) => v == null || v === "" || !Number.isFinite(+v) ? "" : n4(+v * k);
+  // The typed physics: kept in kg·m², kg and meters, typed in lb·in², lb and inches.
+  const PH = { moi_kgm2: ["lb·in²", U.LB_PER_KG * U.IN_PER_M * U.IN_PER_M], load_kg: ["lb", U.LB_PER_KG],
+    spool_diameter_m: ["in", U.IN_PER_M], arm_length_m: ["in", U.IN_PER_M] };
+  const phIn = (typed, k) => shown(typed[k], PH[k][1]);
 
   root.innerHTML = `
     <div class="sys">
@@ -66,10 +76,10 @@ const Systems = (() => {
 
   // The live line: where it is, or how fast, and its goal.
   function paintNow() {
-    const s = current();
+    const s = current(), { label, k } = unit(s);
     $("#sys-now", root).textContent = !s ? "" : positional(s)
-      ? `${s.name}: at ${n4(s.position)} ${s.units} · goal ${n4(s.goal)} · ${n4(s.velocity)} ${s.units}/s`
-      : `${s.name}: ${n4(s.velocity)} ${s.units} · goal ${n4(s.goal)}`;
+      ? `${s.name}: at ${n4(by(s.position, k))} ${label} · goal ${n4(by(s.goal, k))} · ${n4(by(s.velocity, k))} ${label}/s`
+      : `${s.name}: ${n4(by(s.velocity, k))} ${label} · goal ${n4(by(s.goal, k))}`;
   }
 
   // The gains that apply to its kind: a wheel has no gravity, an elevator's is constant (kG), an
@@ -88,6 +98,7 @@ const Systems = (() => {
     if (!s) { box.innerHTML = ""; return; }
     const ph = (s.physics || {}), typed = val("physics") || {}, ff = s.feedforward || (s.plan && s.plan.feedforward) || null;
     const kindNow = (s.physics && s.physics.kind) || (KIND[s.kind] === "roller" ? "flywheel" : KIND[s.kind]);
+    const { label, k } = unit(s), rate = positional(s) ? "/s" : "";
     box.innerHTML = `
       <h3 data-tip="sys.physics">1. Its physics</h3>
       <div class="row"><input id="sys-link" placeholder="Paste its ReCalc or AMBcalc link" value="${esc(val("link") || "")}" style="flex:1">
@@ -97,21 +108,21 @@ const Systems = (() => {
           <label>Motor <select data-ph="motor">${(data.motors || []).map(m => `<option ${typed.motor === m ? "selected" : ""}>${esc(m)}</option>`).join("")}</select></label>
           <label>How many <input data-ph="count" type="number" min="1" value="${esc(typed.count ?? 1)}" style="width:4em"></label>
           <label>Ratio <input data-ph="ratio" type="number" step="any" value="${esc(typed.ratio ?? "")}" placeholder="50" style="width:5em"></label>
-          ${kindNow === "flywheel" ? `<label>Inertia kg·m² <input data-ph="moi_kgm2" type="number" step="any" value="${esc(typed.moi_kgm2 ?? "")}" style="width:6em"></label>`
-            : kindNow === "elevator" ? `<label>Load kg <input data-ph="load_kg" type="number" step="any" value="${esc(typed.load_kg ?? "")}" style="width:5em"></label>
-              <label>Spool diameter m <input data-ph="spool_diameter_m" type="number" step="any" value="${esc(typed.spool_diameter_m ?? "")}" style="width:5em"></label>`
-            : `<label>Arm length m <input data-ph="arm_length_m" type="number" step="any" value="${esc(typed.arm_length_m ?? "")}" style="width:5em"></label>
-              <label>Load kg <input data-ph="load_kg" type="number" step="any" value="${esc(typed.load_kg ?? "")}" style="width:5em"></label>`}
+          ${kindNow === "flywheel" ? `<label>Inertia lb·in² <input data-ph="moi_kgm2" type="number" step="any" value="${phIn(typed, "moi_kgm2")}" style="width:6em"></label>`
+            : kindNow === "elevator" ? `<label>Load lb <input data-ph="load_kg" type="number" step="any" value="${phIn(typed, "load_kg")}" style="width:6em"></label>
+              <label>Spool diameter in <input data-ph="spool_diameter_m" type="number" step="any" value="${phIn(typed, "spool_diameter_m")}" style="width:6em"></label>`
+            : `<label>Arm length in <input data-ph="arm_length_m" type="number" step="any" value="${phIn(typed, "arm_length_m")}" style="width:6em"></label>
+              <label>Load lb <input data-ph="load_kg" type="number" step="any" value="${phIn(typed, "load_kg")}" style="width:6em"></label>`}
         </div></details>
       <p class="small">${s.physics_error ? `<span class="bad-ink">${esc(s.physics_error)}</span>` : !s.physics ? `<span class="muted">No physics yet.</span>`
-        : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1))} ${esc(s.units)}${positional(s) ? "/s" : ""}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per ${s.kind === "ELEVATOR" ? "meter" : "radian"})` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
+        : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1) * k)} ${esc(label)}${rate}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per ${s.kind === "ELEVATOR" ? "meter" : "radian"})` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
       <label class="row small" data-tip="sys.scale">One ${s.kind === "ELEVATOR" ? "meter" : "radian"} of it${positional(s) ? "" : " per second"} is <input id="sys-scale" type="number" step="any" value="${n4(s.scale)}" style="width:6em"> ${esc(s.units)}</label>
       ${positional(s) ? `<h3 data-tip="sys.limits">2. Its limits</h3>
-        <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min)} to ${n4(s.max)} ${esc(s.units)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
+        <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min * k)} to ${n4(s.max * k)} ${esc(label)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
           <button class="btn small" id="sys-limits" data-tip="sys.limits-run">Set limits by hand…</button></div>` : ""}
       <h3 data-tip="sys.top">${positional(s) ? "3" : "2"}. Its top speed</h3>
-      <div class="row small"><label>Team's maximum <input id="sys-vmax" type="number" step="any" value="${esc(val("maxVelocity") ?? "")}" style="width:5em"> ${esc(s.units)}${positional(s) ? "/s" : ""}</label>
-        <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${esc(val("maxAccel") ?? "")}" style="width:5em"> ${esc(s.units)}/s${positional(s) ? "²" : ""}</label></div>
+      <div class="row small"><label>Team's maximum <input id="sys-vmax" type="number" step="any" value="${shown(val("maxVelocity"), k)}" style="width:6em"> ${esc(label)}${rate}</label>
+        <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${shown(val("maxAccel"), k)}" style="width:6em"> ${esc(label)}/s${positional(s) ? "²" : ""}</label></div>
       <div class="row"><button class="btn primary small" id="sys-save" data-tip="sys.save">Save to slothtune.json…</button></div>
       ${Object.keys(s.gains || {}).length ? `<div class="row" style="justify-content:space-between"><h3 data-tip="sys.gains">Its gains, live</h3>
           <span class="row small"><span class="muted">Live only: a value to keep goes into the code.</span>
@@ -130,14 +141,14 @@ const Systems = (() => {
     $("#sys-read", box).onclick = () => { edits.link = $("#sys-link", box).value.trim(); delete edits.physics; preview(); };
     $$("[data-ph]", box).forEach(i => i.onchange = () => {
       const p = Object.assign({ kind: kindNow }, val("physics") || {});
-      p[i.dataset.ph] = i.tagName === "SELECT" ? i.value : +i.value;
+      p[i.dataset.ph] = i.tagName === "SELECT" ? i.value : +i.value / ((PH[i.dataset.ph] || [])[1] || 1);
       edits.physics = p;
       edits.link = "";
       preview();
     });
     $("#sys-scale", box).onchange = e => { edits.unitsPerRadian = +e.target.value; preview(); };
-    $("#sys-vmax", box).onchange = e => { edits.maxVelocity = e.target.value === "" ? null : +e.target.value; preview(); };
-    $("#sys-amax", box).onchange = e => { edits.maxAccel = e.target.value === "" ? null : +e.target.value; };
+    $("#sys-vmax", box).onchange = e => { edits.maxVelocity = e.target.value === "" ? null : +e.target.value / k; preview(); };
+    $("#sys-amax", box).onchange = e => { edits.maxAccel = e.target.value === "" ? null : +e.target.value / k; };
     $("#sys-save", box).onclick = save;
     const lim = $("#sys-limits", box);
     if (lim) lim.onclick = setLimits;
@@ -210,7 +221,7 @@ const Systems = (() => {
     const box = $("#sys-test", root), s = current();
     if (!s) { box.innerHTML = ""; return; }
     if (view === "pieces") { paintPieces(box, s); return; }
-    const p = scaled(s), env = App.env();
+    const p = scaled(s), env = App.env(), { label, k } = unit(s), u = esc(label);
     const where = ["BLOCKS", "FIELD", "SIM"].includes(env);
     box.innerHTML = `
       ${viewSeg()}
@@ -218,8 +229,8 @@ const Systems = (() => {
         <div class="row"><div class="seg" id="sys-speed" role="group" aria-label="Test speed">${["half", "full"].map(k =>
           `<button data-speed="${k}" class="${speed === k ? "on" : ""}" aria-pressed="${speed === k}" data-tip="sys.speed-${k}">${k === "half" ? "Half speed" : "Full speed"}</button>`).join("")}</div>
         <button class="btn primary" id="sys-run" data-tip="sys.run" ${p.ok && App.connected() && where ? "" : "disabled"}>Run</button></div></div>
-      ${p.ok ? `<p class="small">${positional(s) ? `Moves between ${n4(p.a)} and ${n4(p.b)} ${esc(s.units)}` : `Spins up to ${n4(p.a)}, then ${n4(p.b)} ${esc(s.units)}, then down`},
-          no faster than <b>${n4(p.vmax)}</b> ${esc(s.units)}${positional(s) ? "/s" : ""}${speed === "half" ? " (half its planned speed)" : ""}, changing at most ${n4(p.amax)} per second${positional(s) ? " per second" : ""}.
+      ${p.ok ? `<p class="small">${positional(s) ? `Moves between ${n4(by(p.a, k))} and ${n4(by(p.b, k))} ${u}` : `Spins up to ${n4(by(p.a, k))}, then ${n4(by(p.b, k))} ${u}, then down`},
+          no faster than <b>${n4(by(p.vmax, k))}</b> ${u}${positional(s) ? "/s" : ""}${speed === "half" ? " (half its planned speed)" : ""}, changing at most ${n4(by(p.amax, k))}${u ? ` ${u}/s${positional(s) ? "²" : ""}` : ` per second${positional(s) ? " per second" : ""}`}.
           <span class="muted">${(p.why || []).map(esc).join("; ")}.</span></p>
         <p class="small muted">Robot enabled ${where ? "" : "<b class=\"warn-ink\">(set On blocks or On the floor first)</b> "}and the deadman held; someone watching it, hands clear. It stops at once if it leaves its limits or goes too fast.</p>`
         : `<p class="small warn-ink">Before it can be tested: ${(p.missing || ["its settings"]).map(esc).join("; ")}.</p>`}
@@ -252,11 +263,13 @@ const Systems = (() => {
     const out = $("#sys-report", root), cv = $("#sys-plot", root);
     if (!cv) return;
     if (!last) { Plot.draw(cv, { series: [] }); out.innerHTML = ""; return; }
-    const ch = last.channels || {}, s = current(), pos = positional(s);
-    Plot.draw(cv, { xlabel: "s", ylabel: s.units, series: [
-      { x: ch.t, y: ch.goal, color: "--muted", dash: [2, 3], width: 1, label: "headed for" },
-      { x: ch.t, y: ch.sp, color: "--sp", dash: [6, 4], width: 1.6, label: "goal", learn: "setpoint" },
-      { x: ch.t, y: pos ? ch.pos : ch.vel, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
+    const ch = last.channels || {}, s = current(), pos = positional(s), { label, k } = unit(s);
+    // New arrays in the team's units: the run keeps its own.
+    const show = a => (a || []).map(v => v == null ? v : v * k);
+    Plot.draw(cv, { xlabel: "s", ylabel: label, series: [
+      { x: ch.t, y: show(ch.goal), color: "--muted", dash: [2, 3], width: 1, label: "headed for" },
+      { x: ch.t, y: show(ch.sp), color: "--sp", dash: [6, 4], width: 1.6, label: "goal", learn: "setpoint" },
+      { x: ch.t, y: show(pos ? ch.pos : ch.vel), color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
     const rep = last.report || {};
     out.innerHTML = `<p><b>${esc(rep.summary || "")}</b>${rep.score != null ? ` · score ${rep.score}` : ""}</p>
       ${(rep.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")}
@@ -312,21 +325,21 @@ const Systems = (() => {
   }
 
   function calibrateWalk(s, p) {
-    const pos = positional(s), plan = scaled(s).ok ? scaled(s) : (s.plan || {});
+    const pos = positional(s), plan = scaled(s).ok ? scaled(s) : (s.plan || {}), { label, k } = unit(s);
     walk(`Calibrate ${esc(p.name)}`, [
       "The robot is enabled and someone holds the deadman for the whole run.",
       pos ? `${esc(s.name)}'s limits are set, and it is clear to sweep between them.` : "Hands stay clear of the rollers: feed each piece the way the game does (roll it in), never by hand into the rollers.",
       "You have the pieces ready, the same kind the robot will see in a match.",
       env() === "FIELD" ? "On the floor: a ground intake picks pieces off the carpet, as in a match." : "On blocks: for a ground intake, do it on the carpet too (Where: on the floor).",
     ], `<div class="row" style="gap:10px"><label class="small" data-tip="sys.piece-n">Pieces <input type="number" id="pc-n" value="3" min="1" max="10" style="width:4em"></label>
-      ${pos ? "" : `<label class="small" data-tip="sys.piece-speed">Runs at <input type="number" id="pc-goal" value="${n4(plan.a || 0)}" step="any" style="width:6em"> ${esc(s.units)}</label>`}</div>
+      ${pos ? "" : `<label class="small" data-tip="sys.piece-speed">Runs at <input type="number" id="pc-goal" value="${n4((plan.a || 0) * k)}" step="any" style="width:6em"> ${esc(label)}</label>`}</div>
       <p class="small">${pos ? "It sweeps slowly between its limits empty, then once with each piece: put a piece in when the banner says, take it out when it says."
         : "It runs empty, then for each piece it starts, the banner says <b>Feed piece 1 now</b>, and it stops so you can take it out. About 7 s a piece."}
        The tool then sets the threshold halfway between empty and a piece, and how long to ignore its spin-up.</p>`,
       m => {
         const n = Math.max(1, Math.min(10, +$("#pc-n", m).value || 3));
         return { test: "system_piece", args: Object.assign({ sensor: p.index, system: s.index, pieces: n },
-          pos ? { vmax: (plan.vmax || 0) * 0.5, amax: (plan.amax || 0) * 0.5 } : { goal: +$("#pc-goal", m).value || 0 }) };
+          pos ? { vmax: (plan.vmax || 0) * 0.5, amax: (plan.amax || 0) * 0.5 } : { goal: (+$("#pc-goal", m).value || 0) / k }) };
       });
   }
   const env = () => App.env();

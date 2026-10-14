@@ -107,7 +107,7 @@ class Lighting:
             self.state = "finished"
             self.result = None
             self.message = ("It didn't see tags in half the frames at any gain, so its old settings are back. Face the "
-                            "robot toward two or more tags 2 to 4 m away, with nothing in front of them, and try again.")
+                            "robot toward two or more tags 7 to 13 ft away, with nothing in front of them, and try again.")
             return
         self.cam.change_settings(self.unique, {"cameraGain": int(g)})
         chosen = next(t for t in self.trials if t["gain"] == g)
@@ -146,6 +146,6 @@ def mount_check(samples, min_samples=20):
     spread_cm, head_deg = round(r * 100, 1), round(head, 1)
     ok = spread_cm <= 3.0 and abs(head_deg) <= 1.5
     why = ("The vision pose stayed put as the robot turned: the mount is right." if ok else
-           f"As the robot turned, the vision pose wandered about {spread_cm} cm and its heading sat {head_deg}° off "
+           f"As the robot turned, the vision pose wandered about {spread_cm / 2.54:.1f} in and its heading sat {head_deg}° off "
            "the gyro's: the camera's mount is off. Measure it again (7. Camera positions).")
     return {"ok": ok, "samples": len(pts), "spread_cm": spread_cm, "heading_offset_deg": head_deg, "why": why}

@@ -24,6 +24,7 @@ from __future__ import annotations
 import math
 
 from . import analysis as A
+from . import units as U
 
 ES17_12 = {
     "name": "MK ES17-12", "nominal_v": 12.0, "ah_20h": 18.0, "ah_1c": 9.6, "ah_3c": 6.3,
@@ -191,7 +192,7 @@ def report(doc, kv=None, ks=None, max_speed=None, pairs=None, source=None):
         if f:
             amps = (f["v_rest"] - need) / f["r_ohm"]
             out["full_stick_until_a"] = amps
-            F.append({"level": "info", "title": f"Full stick ({max_speed:.1f} m/s) needs {need:.1f} V at the motors",
+            F.append({"level": "info", "title": f"Full stick ({U.speed(max_speed, 1)}) needs {need:.1f} V at the motors",
                       "why": (f"{who} holds that up to about {amps:.0f} A in total. Draw more (four drive motors "
                               "accelerating, a shooter spinning up) and full stick is slower than the code asks "
                               "until the current falls.") if amps > 0 else

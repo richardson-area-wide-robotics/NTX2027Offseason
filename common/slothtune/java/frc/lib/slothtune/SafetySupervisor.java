@@ -1,10 +1,13 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
+
 /**
  * Decides, every loop, whether a running test may continue.
  *
- * <p>Pure logic with no WPILib or hardware dependency, so every rule here is unit tested by
- * feeding it numbers. The harness gathers {@link Inputs} from the robot and acts on the
+ * <p>Pure logic with no hardware dependency (WPILib's Units only turns its numbers into the
+ * team's units for the sentences people read), so every rule here is unit tested by feeding it
+ * numbers. The harness gathers {@link Inputs} from the robot and acts on the
  * {@link Verdict}; nothing in here can move a motor.
  *
  * <p>The rules, and why each exists:
@@ -290,31 +293,32 @@ public final class SafetySupervisor {
       int m = carryingWheel(in);
       if (m >= 0) {
         return Verdict.abort(String.format("NOT on blocks: the %s wheel drew over %.0f A for %.2f s"
-                + " while its speed changed only %.2f m/s, so it is pushing weight (the robot's, on the"
+                + " while its speed changed only %.2f ft/s, so it is pushing weight (the robot's, on the"
                 + " floor) or rubbing on something. A wheel in the air spins up in a few hundredths of"
                 + " a second. Put the robot on blocks, or set On the floor.",
             m < in.moduleNames.length ? in.moduleNames[m] : "module " + m, limits.carryAmps,
-            limits.carryHoldS, Math.abs(Math.abs(in.wheelSpeedsMps[m]) - carryFromMps[m])));
+            limits.carryHoldS, Units.metersToFeet(Math.abs(Math.abs(in.wheelSpeedsMps[m]) - carryFromMps[m]))));
       }
     }
 
     if (in.env == TestEnvironment.FIELD) {
       if (!Double.isNaN(in.horizontalAccelMps2) && in.horizontalAccelMps2 > limits.impactMps2) {
         return Verdict.abort(
-            String.format("Impact: %.1f m/s^2. Check the robot and what it hit.", in.horizontalAccelMps2));
+            String.format("Impact: %.0f ft/s^2. Check the robot and what it hit.",
+                Units.metersToFeet(in.horizontalAccelMps2)));
       }
       if (test.movesChassis() && in.displacementM > test.spaceBudgetM()) {
         return Verdict.abort(
             String.format(
-                "Left the declared space: %.2f m from the start, budget %.2f m.",
-                in.displacementM, test.spaceBudgetM()));
+                "Left the declared space: %.1f in from the start, budget %.1f in.",
+                Units.metersToInches(in.displacementM), Units.metersToInches(test.spaceBudgetM())));
       }
       if (test.pushesWall()) {
         // Pushing at high current with the wheels still is the test; moving is the fault.
         if (in.displacementM > limits.wallTravelM) {
           return Verdict.abort(String.format(
-              "The robot moved %.2f m: it is not against a solid wall, or the wall gave way.",
-              in.displacementM));
+              "The robot moved %.1f in: it is not against a solid wall, or the wall gave way.",
+              Units.metersToInches(in.displacementM)));
         }
       } else {
         boolean stalled =
@@ -330,9 +334,9 @@ public final class SafetySupervisor {
         && in.maxWheelSpeedMps > test.speedCapMps() + limits.overspeedMarginMps) {
       return Verdict.abort(
           String.format(
-              "Wheel speed %.2f m/s is over the %.2f m/s cap. Something is not following its"
+              "Wheel speed %.2f ft/s is over the %.2f ft/s cap. Something is not following its"
                   + " command.",
-              in.maxWheelSpeedMps, test.speedCapMps()));
+              Units.metersToFeet(in.maxWheelSpeedMps), Units.metersToFeet(test.speedCapMps())));
     }
 
     boolean sagging = in.env != TestEnvironment.SIM && in.busVolts < limits.brownoutVolts;

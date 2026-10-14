@@ -182,7 +182,9 @@ const Parts = (() => {
         if (!on || !root.classList.contains("on") || !document.body.contains(lv)) { clearInterval(liveTimer); return; }
         const r = await App.api("/api/systems");
         const s = ((r && r.systems) || []).find(x => x.name === sel.which);
-        lv.textContent = s && s.position != null && isFinite(s.position) ? `${(+s.position).toPrecision(4)} ${s.units}` : "no reading (connected?)";
+        // In the team's units when the mechanism's are meters or radians (inches, degrees).
+        const su = U.sys(s && s.units);
+        lv.textContent = s && s.position != null && isFinite(s.position) ? `${+(s.position * su.k).toPrecision(4)} ${su.label}` : "no reading (connected?)";
       };
       tick();
       liveTimer = setInterval(tick, 500);

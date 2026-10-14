@@ -38,7 +38,7 @@ class SpinFfTest(unittest.TestCase):
     def test_an_assumed_mass_is_called_out_and_never_saved(self):
         r = report(source="assumed (set robotMassKg in slothtune.json)")
         moi = next(f for f in r["findings"] if f["title"].startswith("Moment of inertia"))
-        self.assertIn("from an assumed 55 kg", moi["title"])
+        self.assertIn("from an assumed 121 lb", moi["title"])   # 55 kg
         self.assertNotIn("action", moi, "a guessed mass gives a guessed MOI: weigh first")
         self.assertFalse(any((f.get("action") or {}).get("path") == ["robotMoiKgM2"] for f in r["findings"]))
 

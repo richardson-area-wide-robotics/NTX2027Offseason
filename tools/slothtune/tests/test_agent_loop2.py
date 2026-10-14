@@ -77,12 +77,67 @@ class CommandLineTest(unittest.TestCase):
         self.assertEqual((doc["ok"], doc["code"]), (False, "GAINS_REFUSED"))
 
 
+class TeamUnitsOnTheCommandLineTest(unittest.TestCase):
+    """A person types inches and ft/s; the robot and the report get meters and m/s."""
+
+    def test_env_sends_the_robot_meters(self):
+        sent = []
+
+        class Link:
+            def set_environment(self, *a):
+                sent.append(a)
+
+            def environment(self):
+                return {"active": "FIELD", "apriltags": False, "space_forward": 3.048, "space_side": 1.524,
+                        "speed_cap": 1.524}
+
+            def close(self):
+                pass
+        with mock.patch.object(cli, "open_link", return_value=Link()), mock.patch.object(cli.time, "sleep"):
+            code, doc = run_cli("env", "--mode", "FIELD", "--space", "120", "--side", "60", "--cap", "5", "--bumpers")
+        self.assertEqual(code, 0, doc)
+        mode, tags, space, side, cap = sent[0]
+        self.assertEqual((mode, tags), ("FIELD", None))
+        self.assertAlmostEqual(space, 3.048)
+        self.assertAlmostEqual(side, 1.524)
+        self.assertAlmostEqual(cap, 1.524)
+
+    def test_env_refuses_meters_typed_out_of_habit(self):
+        sent = []
+
+        class Link:
+            def set_environment(self, *a):
+                sent.append(a)
+
+            def close(self):
+                pass
+        with mock.patch.object(cli, "open_link", return_value=Link()):
+            code, doc = run_cli("env", "--mode", "FIELD", "--space", "3", "--side", "1.5", "--bumpers")
+        self.assertEqual((doc["ok"], doc["code"]), (False, "BAD_ARGS"))
+        self.assertIn("takes inches", doc["error"])
+        self.assertEqual(sent, [], "nothing sent to the robot")
+
+    def test_analyze_takes_the_tape_in_inches(self):
+        import tempfile
+        path = os.path.join(tempfile.mkdtemp(), "straight.json")
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(GradingTest().straight_doc(odo_m=2.0), fh)
+        code, doc = run_cli("analyze", path, "--tape-forward", "80")
+        self.assertAlmostEqual(doc["report"]["measured"]["tape_forward_m"], 2.032)
+        code, doc = run_cli("analyze", path, "--tape-forward", "2.03")
+        self.assertEqual((doc["ok"], doc["code"]), (False, "BAD_ARGS"))
+
+
 class StopCodeTest(unittest.TestCase):
     def test_the_sentences_the_review_found_mismapped(self):
         for text, code in (("Speed 1.50 m/s is over the 1.00 m/s cap.", "BAD_ARGS"),
                            ("Wheel speed 1.50 m/s is over the 1.00 m/s cap. Something", "OVERSPEED"),
                            ("Unknown module 'XX'", "BAD_ARGS"),
                            ("2.0 m of floor only allows a 1.5 s ramp, too short", "NO_SPACE"),
+                           # The same sentences in the team's units.
+                           ("Speed 4.92 ft/s is over the 3.28 ft/s cap.", "BAD_ARGS"),
+                           ("Wheel speed 4.92 ft/s is over the 3.28 ft/s cap. Something", "OVERSPEED"),
+                           ("79 in of floor only allows a 1.5 s ramp, too short", "NO_SPACE"),
                            ("Spinning needs 1.0 m clear on every side.", "NO_SPACE"),
                            ("'pdh_map' cannot run with the robot declared FIELD", "WRONG_PLACE"),
                            ("Busy: 'drive_step' is already running", "BUSY"),
@@ -125,7 +180,8 @@ class GradingTest(unittest.TestCase):
     def test_apriltags_at_both_ends_grade_the_straight_line(self):
         rep = advisor.analyze(self.straight_doc(odo_m=2.0, vision_m=2.1), {})
         self.assertAlmostEqual(rep["measured"]["vision_forward_m"], 2.1, places=6)
-        self.assertTrue(any("AprilTags say 2.100 m" in f["title"] for f in rep["findings"]), [f["title"] for f in rep["findings"]])
+        # 2.1 m, worded in inches.
+        self.assertTrue(any("AprilTags say 82.7 in" in f["title"] for f in rep["findings"]), [f["title"] for f in rep["findings"]])
 
     def test_without_tape_or_tags_nothing_measured_the_distance(self):
         rep = advisor.analyze(self.straight_doc(), {})

@@ -4,7 +4,7 @@ import os
 import re
 import unittest
 
-from slothtune import advisor, plant, ratios, revspecs as R, yagslcfg as Y
+from slothtune import advisor, plant, ratios, revspecs as R, units as U, yagslcfg as Y
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -85,6 +85,17 @@ class MaxSwerveTest(unittest.TestCase):
         self.assertAlmostEqual(R.MAXSWERVE["steer_ratio"], 46.42, places=2)
 
 
+def _lead(cell):
+    """A cell's first number: the team's unit."""
+    return float(re.match(r"[\d.]+", cell.replace(",", "")).group())
+
+
+def _si(cell):
+    """REV's own (metric) number: in the parentheses when the team's unit leads, else the first."""
+    m = re.search(r"\(([\d.]+)", cell)
+    return float(m.group(1)) if m else _lead(cell)
+
+
 class DocsTest(unittest.TestCase):
     def test_the_student_reference_names_every_part(self):
         text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
@@ -113,13 +124,19 @@ class DocsTest(unittest.TestCase):
         text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
         rows = self._table(text, "")
         order = ["neo", "neo2", "vortex", "neo550"]
-        first = lambda cell: float(re.match(r"[\d.]+", cell.replace(",", "")).group())  # noqa: E731
         for field, key, scale in (("Kv (rpm per volt)", "kv_rpm_per_v", 1), ("Free speed", "free_rpm", 1),
                                   ("Free current", "free_a", 1), ("Stall current", "stall_a", 1),
                                   ("Stall torque", "stall_nm", 1), ("Peak power", "peak_w", 1),
                                   ("Weight", "mass_kg", 1000)):
             for cell, k in zip(rows[field], order):
-                self.assertAlmostEqual(first(cell), R.MOTORS[k][key] * scale, places=3, msg=(field, k, cell))
+                self.assertAlmostEqual(_si(cell), R.MOTORS[k][key] * scale, places=3, msg=(field, k, cell))
+        # The team's units first (ft·lb, lb), each matching REV's metric number beside it.
+        for cell, k in zip(rows["Stall torque"], order):
+            self.assertIn("ft·lb (", cell)
+            self.assertAlmostEqual(_lead(cell), U.ftlb(R.MOTORS[k]["stall_nm"]), delta=0.006, msg=cell)
+        for cell, k in zip(rows["Weight"], order):
+            self.assertIn("lb (", cell)
+            self.assertAlmostEqual(_lead(cell), U.lb(R.MOTORS[k]["mass_kg"]), delta=0.006, msg=cell)
         self.assertEqual(rows["Part"], [R.MOTORS[k]["part"] for k in order])
 
     def test_the_maxswerve_table_matches_the_ratios_and_free_speeds(self):
@@ -130,8 +147,11 @@ class DocsTest(unittest.TestCase):
             short = name.split(":")[0].replace("MAXSwerve ", "")
             ratio_cell, _, _, neo, vortex = rows[short]
             self.assertAlmostEqual(float(ratio_cell.split(":")[0]), ratio, delta=0.005, msg=short)
-            self.assertAlmostEqual(float(neo.split()[0]), Y.free_speed_mps("neo", ratio, 3.0), delta=0.015, msg=short)
-            self.assertAlmostEqual(float(vortex.split()[0]), Y.free_speed_mps("vortex", ratio, 3.0), delta=0.015, msg=short)
+            for cell, motor in ((neo, "neo"), (vortex, "vortex")):
+                mps = Y.free_speed_mps(motor, ratio, 3.0)
+                self.assertIn("ft/s (", cell, "ft/s first, REV's m/s beside it")
+                self.assertAlmostEqual(_si(cell), mps, delta=0.015, msg=short)
+                self.assertAlmostEqual(_lead(cell), U.fps(mps), delta=0.06, msg=short)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ package frc.lib.slothtune;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.IOException;
@@ -81,7 +82,7 @@ public final class FieldLayouts {
           }
           continue;
         }
-        refused.add(t.ID + " (" + Math.round(d * 100) + " cm, " + Math.round(ang) + " deg)");
+        refused.add(t.ID + " (" + Math.round(Units.metersToInches(d)) + " in, " + Math.round(ang) + " deg)");
       }
       tags.add(t);
     }

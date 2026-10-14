@@ -350,7 +350,7 @@ SYMPTOMS = [
                   "confirm.",
                   {"type": "troubleshoot", "symptom": "robot_wrong_direction"}),
             check("Are the offsets right (wheels straight read 0° within a degree)?",
-                  "A degree of offset is about 1.7 cm of sideways drift per meter.", DISABLED,
+                  "A degree of offset is about 2 in of sideways drift per 10 ft.", DISABLED,
                   "An offset is out.", "Recapture offsets.", {"type": "guide", "step": "offsets"}),
             check("Does the Steering test on the floor show small-step error under 0.75°?",
                   "Carpet holds a soft steering loop a few degrees short.", FIELD,
@@ -533,7 +533,7 @@ SYMPTOMS = [
                   {"type": "guide", "step": "hand"}),
             check("Driving straight on the floor, do all four modules report the same distance "
                   "(within 3%)?",
-                  "Live view while driving straight for a few meters, or the module comparison in "
+                  "Live view while driving straight for 10 ft or so, or the module comparison in "
                   "a Feedforward or Spin run on the floor. On blocks this cannot be seen: the motor encoder "
                   "cannot see the gearbox, only the floor couples the wheels.",
                   FIELD,

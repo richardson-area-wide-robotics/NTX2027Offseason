@@ -98,7 +98,7 @@ class SolveTest(unittest.TestCase):
         cur = {"x": 0.30, "y": -0.12, "z": 0.52, "roll": 0, "pitch": -15, "yaw": 8}
         r = K.solve("front", plant.camera_sightings(FRONT, SPOTS, noise_m=0, noise_deg=0), cur)
         f = next(f for f in r["findings"] if "from what slothtune.json says" in f["title"])
-        self.assertIn("2.0 cm and 3.0 degrees", f["title"])
+        self.assertIn("0.79 in and 3.0 degrees", f["title"])   # 2.0 cm
 
 
 class LinkTest(unittest.TestCase):

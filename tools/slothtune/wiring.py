@@ -34,6 +34,8 @@ import math
 import os
 import re
 
+from . import units as U
+
 DEFAULT_SEGMENT_M = 0.5
 MAX_BUS_M = 40.0          # ISO 11898 high-speed CAN at 1 Mbit/s
 LONG_BUS_M = 20.0         # unusual on a robot; worth a look
@@ -609,11 +611,13 @@ def diagnose(m, snapshot, devices=None):
 
     for bus in m.get("buses", []):
         total, measured, segs = bus_length(bus)
+        # A cable run is worded in feet: hundreds of inches say less.
         if total > MAX_BUS_M:
-            F.append(_level("error", f"{bus['name']} is about {total:.0f} m long",
-                            f"Over the {MAX_BUS_M:.0f} m CAN allows at 1 Mbit/s.", {"bus": True}))
+            F.append(_level("error", f"{bus['name']} is about {U.inches(total) / 12:.0f} ft long",
+                            f"Over the {U.inches(MAX_BUS_M) / 12:.0f} ft (40 m) CAN allows at 1 Mbit/s.", {"bus": True}))
         elif total > LONG_BUS_M:
-            F.append(_level("warn", f"{bus['name']} is about {total:.0f} m long",
-                            "Within CAN's 40 m, but long for a robot: check for coiled spare cable.",
+            F.append(_level("warn", f"{bus['name']} is about {U.inches(total) / 12:.0f} ft long",
+                            f"Within the {U.inches(MAX_BUS_M) / 12:.0f} ft CAN allows, but long for a robot: check for "
+                            "coiled spare cable.",
                             {"bus": True}))
     return F

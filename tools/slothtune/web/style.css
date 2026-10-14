@@ -183,6 +183,28 @@ table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
 /* The frame's outline runs under the readouts: a halo in the panel's color keeps them legible. */
 .robot-svg .lbl, .robot-svg .val { paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
 .robot-svg .head-arrow { stroke: var(--accent); stroke-width: 3; fill: none; }
+/* Live, on the field: blue wall on the left, red on the right, the robot where it thinks it is. */
+#tab-live .live-head { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+#tab-live .live-head h2 { margin: 0; }
+.field-svg { width: 100%; height: auto; display: block; }
+/* The drawing is in picture pixels (100 a meter): strokes stay in screen pixels whatever its size. */
+.field-svg * { vector-effect: non-scaling-stroke; }
+.field-svg .fld { fill: #c9cdd2; }
+.field-svg .tag-id { font-size: 34px; }
+.field-svg .wall.blue { fill: #3b78d8; }
+.field-svg .wall.red { fill: #d8463b; }
+.field-svg .mid { stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.field-svg .tag-face { fill: var(--ink); }
+.field-svg .tag-dir { stroke: var(--muted); stroke-width: 1.5; }
+.field-svg .tag.seen .tag-face { fill: var(--ok); }
+.field-svg .tag.seen .tag-dir { stroke: var(--ok); stroke-width: 2.5; }
+.field-svg .ray { stroke: var(--ok); stroke-width: 1.2; stroke-dasharray: 3 3; opacity: .75; }
+.field-svg .tag-id { fill: var(--ok); font-weight: 700; font-family: var(--sans); paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+.field-svg .trail { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: .45; stroke-linejoin: round; stroke-linecap: round; }
+.field-svg .bot .body { fill: var(--ink); fill-opacity: .85; stroke: var(--accent); stroke-width: 2; }
+.field-svg .bot .nose { fill: none; stroke: var(--panel); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.field-svg .bot.ghost .body { fill: var(--sp); fill-opacity: .18; stroke: var(--sp); stroke-dasharray: 5 4; }
+.field-svg .bot.ghost .nose { stroke: var(--sp); }
 .mods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .mod { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13px; }
 .mod.flag { border-color: var(--bad); }
@@ -672,6 +694,7 @@ table.t td > select { padding-block: 1px; }
 @media (min-width: 901px) {
   /* Live: the robot drawing sized to the screen, not to its column. */
   #tab-live .robot-svg { width: min(100%, 520px, calc(var(--work-h) - 200px)); }
+  #tab-live .field-svg { max-height: calc(var(--work-h) - 200px); }
   /* Motors: the side column (recent changes, override, the guard's rules) scrolls by itself. */
   #motors-live > .motors-side { max-height: calc(var(--work-h) - 2px); overflow-y: auto; }
   /* Config: the robot's files in two columns; the findings and PathPlanner's lists in their own boxes. */

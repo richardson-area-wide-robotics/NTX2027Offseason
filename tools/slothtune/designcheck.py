@@ -29,6 +29,7 @@ import re
 from . import contract as C
 from . import designlinks as D
 from . import motorinv, revspecs
+from . import units as U
 
 # revspecs keys to the motor guard's MotorKind, for the team's current policy.
 _POLICY_KIND = {"neo": "NEO_V1_1", "neo2": "NEO_2_0", "vortex": "VORTEX", "neo550": "NEO_550"}
@@ -130,13 +131,13 @@ def _against_code(d, src, names):
         elif d.get("travel_m") and d.get("spool_diameter_m"):
             code_m = turns / ratio * math.pi * d["spool_diameter_m"] * (2 if d.get("cascade") else 1)
             if code_m > d["travel_m"] * 1.05 + 0.01:
-                F.append(_f("warn", f"The code moves it {code_m:.2f} m; the design travels {d['travel_m']:.2f} m",
+                F.append(_f("warn", f"The code moves it {U.length(code_m)}; the design travels {U.length(d['travel_m'])}",
                             f"Its targets run from {min(pos):g} to {max(pos):g} motor turns: at {ratio:g}:1 on a "
-                            f"{d['spool_diameter_m'] * 1000:.0f} mm spool{' (cascade)' if d.get('cascade') else ''} that is "
-                            f"{code_m:.2f} m. Past the design's travel it runs into its end. Check the targets, the "
+                            f"{U.length(d['spool_diameter_m'], 2)} spool{' (cascade)' if d.get('cascade') else ''} that is "
+                            f"{U.length(code_m)}. Past the design's travel it runs into its end. Check the targets, the "
                             "spool or the ratio."))
             else:
-                F.append(_f("ok", f"The code's targets fit the design's travel: {code_m:.2f} m of {d['travel_m']:.2f} m",
+                F.append(_f("ok", f"The code's targets fit the design's travel: {U.length(code_m)} of {U.length(d['travel_m'])}",
                             f"From {min(pos):g} to {max(pos):g} motor turns, at {ratio:g}:1."))
     vel = velocity_setpoints(src)
     if d.get("target_rpm") and ratio and vel and "velocityConversionFactor" not in src:
@@ -286,15 +287,15 @@ def check_drivetrain(d, project, summary=None):
         # stands in until then, marked assumed (yagslcfg.Project.mass).
         if "mass_kg" in (d.get("assumed") or []):
             F.append(_f("info", "The link doesn't set the robot's weight",
-                        f"The calculator fills in its own default ({d['mass_kg']:.0f} kg) when the weight isn't "
+                        f"The calculator fills in its own default ({U.mass(d['mass_kg'])}) when the weight isn't "
                         "changed, so the tool doesn't use it. Weigh the robot (Calibrate tab), and put the weight "
                         "in the calculator too."))
         elif "assumed" in src:
-            F.append(_f("info", f"The design weighs {d['mass_kg']:.1f} kg; the robot hasn't been weighed",
+            F.append(_f("info", f"The design weighs {U.mass(d['mass_kg'])}; the robot hasn't been weighed",
                         "Saved, the tool uses the design's mass until someone weighs the robot (Calibrate tab), "
                         "marked as assumed everywhere it shows."))
         elif abs(d["mass_kg"] - mass) / mass > 0.1:
-            F.append(_f("info", f"The design weighs {d['mass_kg']:.1f} kg; the robot weighs {mass:g} kg ({src})",
+            F.append(_f("info", f"The design weighs {U.mass(d['mass_kg'])}; the robot weighs {U.mass(mass)} ({src})",
                         "The design predicts more acceleration than the robot has, or less. Update the calculator."))
     cof, pp = d.get("cof"), (project.pathplanner or {}).get("wheelCOF")
     if cof and pp and abs(cof - float(pp)) > 0.05:

@@ -28,10 +28,13 @@ import sys
 import time
 
 from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor, motorinv,
-               netcheck, pdhports, plant, ppcheck, predict, rehearse, runs, wiring, yagslcfg)
+               netcheck, pdhports, plant, ppcheck, predict, rehearse, runs, units as U, wiring, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
+# The least floor (--space, --side) or straight-test distance (--tape-forward) a person would type,
+# inches: anything under it was typed in meters, as these flags took before they took inches.
+MIN_FLOOR_IN = 12
 
 
 # ---------------------------------------------------------------------------- output
@@ -188,11 +191,11 @@ def cmd_lint(args, out):
         s = result[p.name]["summary"]
         out.say(f"\n=== {p.name}  (team {p.team})")
         out.say(f"  drive {s['drive_motor']} {s['drive_gear']}:1 on {s['wheel_diameter_in']} in wheels,"
-                f" free speed {s['max_module_speed_mps']:.2f} m/s; steering {s['steer_motor']}"
+                f" free speed {U.speed(s['max_module_speed_mps'])}; steering {s['steer_motor']}"
                 f" {s['steer_gear']}:1")
         if s.get("traction_current_a"):
             out.say(f"  wheels slip at about {s['traction_current_a']:.0f} A per motor"
-                    f" ({s['mass_kg']:.0f} kg, {s['mass_source']})")
+                    f" ({U.mass(s['mass_kg'])}, {s['mass_source']})")
         for f in findings:
             out.say(f"\n  [{f['level'].upper()}] {f['title']}")
             out.say("    " + f["why"])
@@ -218,12 +221,13 @@ def cmd_status(args, out):
                 gains=_clean(lk.gains()), flags=flags)
         out.say(f"{info['name']} at {info['address']}  mode {live['mode']}  battery {live['bus']:.1f} V")
         out.say(f"environment {env['active']}  apriltags {'on' if env['apriltags'] else 'off'}"
-                f"  space {env['space_forward']:.1f} x {env['space_side']:.1f} m  cap {env['speed_cap']:.1f} m/s")
+                f"  space {U.inches(env['space_forward']):.0f} x {U.inches(env['space_side']):.0f} in"
+                f"  cap {U.speed(env['speed_cap'], 1)}")
         for line in info["startup_report"]:
             out.say("  startup: " + line)
         for i, n in enumerate(info["modules"]):
             out.say(f"  {n:11s} steer {live['steer'][i]:7.1f}° (sp {live['steer_sp'][i]:7.1f})"
-                    f"  speed {live['v'][i]:+5.2f} m/s  drive {live['drive_amps'][i]:4.1f} A"
+                    f"  speed {U.fps(live['v'][i]):+6.2f} ft/s  drive {live['drive_amps'][i]:4.1f} A"
                     f"  {live['faults'][i] if i < len(live['faults']) else ''}")
         for f in flags:
             out.say(f"  ! {f['text']} {f['detail']}  (troubleshoot: {f['symptom']})")
@@ -238,18 +242,28 @@ def cmd_env(args, out):
         return out.done(2)
     try:
         if args.mode and args.mode.upper() == "FIELD" and not (args.space and args.side):
-            return out.done(out.fail("FIELD needs --space and --side: meters of clear floor ahead "
+            return out.done(out.fail("FIELD needs --space and --side: inches of clear floor ahead "
                                      "and to each side. Measure them."))
         if args.mode and args.mode.upper() == "FIELD" and not args.bumpers:
             return out.done(out.fail("FIELD needs --bumpers: ask a person to check the bumpers are on "
                                      "before the robot goes on the floor."))
+        for flag, v in (("--space", args.space), ("--side", args.side)):
+            if v is not None and 0 < v < MIN_FLOOR_IN:
+                # Under a foot of floor is no test space: most likely meters, from before the
+                # flags took inches. Refused rather than sent as a cramped space.
+                return out.done(out.fail(f"{flag} {v:g} is under {MIN_FLOOR_IN} inches: {flag} takes inches "
+                                         f"({v:g} m would be {U.inches(v):.0f}).", code="BAD_ARGS"))
+        # The robot takes meters and m/s; a person types inches and ft/s.
         lk.set_environment(args.mode, None if args.tags is None else args.tags == "on",
-                           args.space, args.side, args.cap)
+                           None if args.space is None else U.m_from_in(args.space),
+                           None if args.side is None else U.m_from_in(args.side),
+                           None if args.cap is None else U.mps_from_fps(args.cap))
         time.sleep(0.3)
         env = lk.environment()
         out.put(environment=env)
         out.say(f"robot now says: {env['active']}, apriltags {'on' if env['apriltags'] else 'off'},"
-                f" space {env['space_forward']} x {env['space_side']} m, cap {env['speed_cap']} m/s")
+                f" space {U.inches(env['space_forward']):.0f} x {U.inches(env['space_side']):.0f} in,"
+                f" cap {U.speed(env['speed_cap'], 1)}")
         return out.done()
     finally:
         lk.close()
@@ -354,8 +368,15 @@ def cmd_analyze(args, out):
             project = None
     if getattr(args, "pod", None):
         doc = advisor.pod_doc(doc, args.pod)  # one pod, with its own gains
-    rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=args.tape_forward,
-                          measured_lateral_m=args.tape_lateral, **advisor.robot_context(project))
+    if args.tape_forward is not None and 0 < args.tape_forward < MIN_FLOOR_IN:
+        # The straight test drives feet, not inches: a number this small was typed in meters.
+        raise CliError(f"--tape-forward {args.tape_forward:g} is under {MIN_FLOOR_IN} inches: it takes "
+                       f"inches ({args.tape_forward:g} m would be {U.inches(args.tape_forward):.1f}).")
+    # Typed in inches; the report works in meters.
+    rep = advisor.analyze(doc, doc.get("gains"),
+                          measured_forward_m=None if args.tape_forward is None else U.m_from_in(args.tape_forward),
+                          measured_lateral_m=None if args.tape_lateral is None else U.m_from_in(args.tape_lateral),
+                          **advisor.robot_context(project))
     out.put(report=_clean(rep), run_file=doc["_file"])
     print_report(out, rep)
     return out.done()
@@ -427,7 +448,9 @@ def cmd_predict(args, out):
     out.say(f"{p['module']}: model {p['quality']} ({p['relative_error'] * 100:.1f}% replay error, recording "
             f"{p['delay_ms']} ms late). {p['note']}")
     rows = (("rise_time", "rise", 1000, "ms"), ("overshoot_pct", "overshoot", 1, "%"),
-            ("settling_time", "settle", 1000, "ms"), ("steady_state_error", "left over", 1, p["units"]),
+            ("settling_time", "settle", 1000, "ms"),
+            # The prediction is in the loop's own units (m/s for drive); a person reads ft/s.
+            ("steady_state_error", "left over", *((U.FT_PER_M, " ft/s") if p["units"] == "m/s" else (1, p["units"]))),
             ("oscillations", "swings", 1, ""))
     out.say(f"  {'':10s} {'this run':>10s} {'replay':>10s} {'predicted':>10s}")
     for key, label, scale, unit in rows:
@@ -1129,9 +1152,9 @@ def build_parser():
     s = sub.add_parser("env", help="tell the robot where it is")
     s.add_argument("--mode", choices=["BLOCKS", "FIELD", "UNSET", "blocks", "field", "unset"])
     s.add_argument("--tags", choices=["on", "off"], help="AprilTags present")
-    s.add_argument("--space", type=float, help="clear floor ahead, m")
-    s.add_argument("--side", type=float, help="clear floor to each side, m")
-    s.add_argument("--cap", type=float, help="speed cap for tests, m/s")
+    s.add_argument("--space", type=float, help="clear floor ahead, inches (e.g. 120)")
+    s.add_argument("--side", type=float, help="clear floor to each side, inches (e.g. 60)")
+    s.add_argument("--cap", type=float, help="speed cap for tests, ft/s (e.g. 3)")
     s.add_argument("--bumpers", action="store_true", help="a person checked the bumpers are on (FIELD needs it)")
     s.set_defaults(fn=cmd_env)
 
@@ -1151,8 +1174,8 @@ def build_parser():
 
     s = sub.add_parser("analyze", help="re-analyze a saved run")
     s.add_argument("run")
-    s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward m")
-    s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways m")
+    s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward, inches")
+    s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways, inches")
     s.add_argument("--pod", help="one pod only, judged against its own gains, e.g. frontleft")
     s.set_defaults(fn=cmd_analyze)
 

@@ -1,5 +1,7 @@
 package frc.lib.slothtune;
 
+import edu.wpi.first.math.util.Units;
+
 /**
  * Spins in place one way, then the other, through kinematics.
  *
@@ -61,7 +63,7 @@ final class SpinProcedure implements Procedure {
     if (ctx.env == TestEnvironment.FIELD) {
       double need = maxRadius(ctx.io) + 0.5;
       if (ctx.spaceForwardM < need || ctx.spaceSideM < need) {
-        return String.format("Spinning needs %.1f m clear on every side.", need);
+        return String.format("Spinning needs %.0f in clear on every side.", Units.metersToInches(need));
       }
     }
     return null;

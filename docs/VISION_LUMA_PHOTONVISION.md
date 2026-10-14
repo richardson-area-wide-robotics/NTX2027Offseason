@@ -33,8 +33,8 @@ carry on unchanged through 2027.
    (under 1 px is good) and the field of view against the Luma P1's 80° × 56°, and records it for
    the checklist. Refocusing the lens makes the calibration wrong: calibrate again after.
 4. AprilTag pipeline: family **36h11**, **3D mode** on, **Do Multi-Target Estimation** on, tag
-   size **0.1651 m** (6.5 in across the black square), and the field layout the event uses
-   (2026 welded or AndyMark; they differ by up to 3.6 cm).
+   size 6.5 in across the black square (PhotonVision takes it in meters: type **0.1651**), and
+   the field layout the event uses (2026 welded or AndyMark; they differ by up to 1.4 in).
 
 ## 2. Turn it on: a config change
 
@@ -61,27 +61,28 @@ The name must be exactly the one on the camera's PhotonVision page.
   moves the heading.
 
 Every pose passes the same `VisionGate` the tools use. It rejects frames older than 0.5 s, single
-tags beyond 4 m or with ambiguity over 0.2, multi-tag solves beyond 6 m, poses off the floor or off
-the field, and a single tag claiming a jump of more than 1.5 m. Each rejection says why.
+tags beyond 157 in (about 13 ft) or with ambiguity over 0.2, multi-tag solves beyond 236 in
+(about 20 ft), poses off the floor or off the field, and a single tag claiming a jump of more than
+59 in (about 5 ft). Each rejection says why.
 
 ## At a new field: Calibrate, 9. New field
 
 The lens doesn't change between fields; the light and the tags do. With the field's match lighting
 on:
 
-1. **Light**: the robot still, facing two or more tags 2 to 4 m away, **Tune the camera to this
-   light**. The exposure is set short enough that a fast turn (360°/s) smears a tag by no more
+1. **Light**: the robot still, facing two or more tags 80 to 160 in (7 to 13 ft) away, **Tune the
+   camera to this light**. The exposure is set short enough that a fast turn (360°/s) smears a tag by no more
    than about 6 pixels, worked out from the lens calibration, as PhotonVision advises: exposure as
    low as it can go, gain to make up the light. Then it tries the gain from 0 to 100, watching how
    often each frame sees the tags, keeps the lowest gain that sees them about as well as the best,
    and adds a step of margin. The settings stay on the camera; **Put the old settings back** undoes
    it. (The Luma P1 is black and white: there is no color or white balance to set.)
-2. **Tags**: the robot on the floor, bumpers on, 1 m clear, someone holding the deadman: **Sweep
+2. **Tags**: the robot on the floor, bumpers on, 40 in clear, someone holding the deadman: **Sweep
    here** spins it slowly in place, a full turn each way, while the field survey records every tag.
    Sweep at two or three spots, then **Work out where the tags are** (step 8 saves the layout).
 3. **Mount**: from the same sweeps. Spinning in place, the robot's center stays put, so its vision
    pose should too; one that swings round in a circle means the camera's mount is off by about the
-   circle's radius. Over 3 cm, or a heading 1.5° off the gyro's, measure the mount again (step 3
+   circle's radius. Over 1.2 in, or a heading 1.5° off the gyro's, measure the mount again (step 3
    below).
 
 ## 3. Measure where the camera sits
@@ -90,10 +91,12 @@ Calibrate tab, **7. Camera positions**: tape one tag flat on a wall, put the rob
 three or more measured spots, take a sighting at each, and **Work it out**. The spread between the
 spots says how far to trust the answer. Save, redeploy.
 
-To check the answer with a tape, measure to the middle of the lens. On a **Luma P1** (72.2 x 44.2 mm,
-four 5 mm holes 64 x 36 mm apart) the lens is centered across the case, 4 mm off the middle of the
-holes toward the edge away from the name, and its front is 3 mm out from the case, give or take
-1.5 mm as it screws in and out to focus ([Luma's drawing](https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf)).
+To check the answer with a tape, measure to the middle of the lens. On a **Luma P1** (2.84 x 1.74 in,
+four 5 mm holes 2.52 x 1.42 in apart) the lens is centered across the case, 0.16 in off the middle
+of the holes toward the edge away from the name, and its front is 0.12 in out from the case, give
+or take 0.06 in as it screws in and out to focus. Luma's drawing is in millimeters: 72.2 x 44.2
+case, holes 64 x 36 apart, lens 4 off center and 3 out, give or take 1.5
+([Luma's drawing](https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf)).
 
 ## 4. At an event: survey the field
 

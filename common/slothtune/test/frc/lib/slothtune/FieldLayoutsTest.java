@@ -29,7 +29,7 @@ class FieldLayoutsTest {
     assertEquals(3, Math.toDegrees(l.layout().getTagPose(2).orElseThrow().getRotation().getZ()), 1e-9);
     assertEquals(5.0, l.layout().getTagPose(3).orElseThrow().getX(), 1e-9, "50 cm: kept official");
     assertTrue(l.summary().contains("2 surveyed tags moved"), l.summary());
-    assertTrue(l.summary().contains("kept official for 3 (50 cm"), l.summary());
+    assertTrue(l.summary().contains("kept official for 3 (20 in"), l.summary());
   }
 
   @Test

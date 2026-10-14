@@ -76,7 +76,7 @@ final class StraightLineProcedure implements Procedure {
   public String validate(TestContext ctx) {
     pick(ctx);
     if (ctx.spaceForwardM < 1.5) {
-      return "A straight-line run needs at least 1.5 m of clear floor ahead.";
+      return "A straight-line run needs at least 60 in of clear floor ahead.";
     }
     return null;
   }

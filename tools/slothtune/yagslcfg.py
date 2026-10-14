@@ -24,6 +24,7 @@ import re
 from . import contract as C
 from .plant import MOTORS
 from . import revspecs
+from . import units as U
 
 G = 9.81
 PP_DEFAULT_MASS = 74.088  # what a new PathPlanner project starts with
@@ -336,7 +337,7 @@ class Project:
         length, width = 2 * (max(xs) + bumper), 2 * (max(ys) + bumper)
         mass, _ = self.mass()
         return mass * (length ** 2 + width ** 2) / 12, (
-            f"estimated as a {length:.2f} x {width:.2f} m slab (set robotMoiKgM2 in slothtune.json)")
+            f"estimated as a {U.inches(length):.0f} x {U.inches(width):.0f} in slab (set robotMoiKgM2 in slothtune.json)")
 
     def create_swerve_max_speed(self):
         """The maxSpeed literal passed to SwerveParser.createSwerveDrive, resolved if a constant."""
@@ -631,7 +632,7 @@ def lint(project):
         F.append(_f("info", "steer_p_soft", f"Steering kP {a_p:g} may be soft on carpet",
                     f"Carpet scrub holds a wheel still until kP times the error overcomes it. At kP "
                     f"{a_p:g}, small corrections can stop a few degrees short on the floor, and each "
-                    "degree is about 1.7 cm of sideways drift per meter. Measure it: run steer_step "
+                    "degree is about 2 in of sideways drift per 10 ft. Measure it: run steer_step "
                     "on the floor.", {"kind": "tune", "loop": "steer"}))
 
     # ---- current limits and traction
@@ -647,7 +648,7 @@ def lint(project):
             F.append(_f(
                 "info" if assumed else "warn", "drive_current_over_traction",
                 f"Drive current limit {d_lim:.0f} A may be above where the wheels slip (about {slip:.0f} A)",
-                f"An estimate from {mass:.0f} kg ({mass_src}) and a datasheet grip of {mu}: each wheel "
+                f"An estimate from {U.mass(mass)} ({mass_src}) and a datasheet grip of {mu}: each wheel "
                 f"should break loose near {slip:.0f} A. Above that, hard acceleration only spins the "
                 "wheels and odometry counts distance the robot never covered. Don't change the limit "
                 "from this estimate: the slip test measures it on your carpet and recommends the "
@@ -735,18 +736,19 @@ def lint(project):
         if ms > 1.3 * vmax:
             F.append(_f(
                 "error", "max_speed_unreal",
-                f"{where} gives YAGSL a max speed of {ms:g} m/s; the modules top out at {vmax:.2f}",
+                f"{where} gives YAGSL a max speed of {U.speed(ms)} ({ms:g} m/s in the code); the modules "
+                f"top out at {U.speed(vmax)}",
                 f"YAGSL desaturates to the real module speed, so nothing breaks outright, but "
-                f"anything that scales a stick by getMaximumChassisVelocity() asks for {ms:g} m/s: "
+                f"anything that scales a stick by getMaximumChassisVelocity() asks for {U.speed(ms)}: "
                 f"full speed arrives at about {100 * vmax / ms:.0f}% stick, so fine control is gone, "
                 "and when translation is saturated the desaturation shrinks rotation with it - the "
-                "robot will not turn while driving. Pass the real top speed (about "
-                f"{vmax * 0.95:.1f} m/s) to createSwerveDrive.",
+                "robot will not turn while driving. Pass the real top speed to createSwerveDrive: "
+                f"{vmax * 0.95:.1f}, in the m/s the code takes ({U.speed(vmax * 0.95, 1)}).",
                 {"kind": "manual", "file": where,
                  "instruction": f"change createSwerveDrive({literal}, ...) to createSwerveDrive({vmax * 0.95:.1f}, ...)"},
                 literal=literal, value=ms, module_free_speed=vmax))
         elif ms < 0.6 * vmax:
-            F.append(_f("info", "max_speed_low", f"Max speed {ms:g} m/s is well under {vmax:.2f}",
+            F.append(_f("info", "max_speed_low", f"Max speed {U.speed(ms)} is well under {U.speed(vmax)}",
                         "Deliberate speed limits are fine; just know this one is in effect."))
 
     # ---- CAN IDs

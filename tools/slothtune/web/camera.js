@@ -1,6 +1,6 @@
 // The camera from this laptop (Calibrate, 6. Camera lens): connect to its PhotonVision, see its
 // version against the robot code's PhotonLib, and calibrate the lens with the tool leading the
-// person who holds the board, pose by pose, in letters big enough to read from a few meters away.
+// person who holds the board, pose by pose, in letters big enough to read from a few feet away.
 // PhotonVision does the solving, as its own page does (photon.py talks to it the same way).
 "use strict";
 
@@ -19,7 +19,7 @@ const CameraUI = (() => {
     ["br", "far", "turned to the left"], ["c", "near", "tipped forward"], ["t", "near", "turned to the right"],
     ["b", "near", "turned to the left"], ["c", "mid", "turned and tipped (one corner away)"],
   ];
-  const DIST = { near: "close: the board fills about half the picture", mid: "about a meter away", far: "about two meters away" };
+  const DIST = { near: "close: the board fills about half the picture", mid: "about 3 ft away", far: "about 6 ft away" };
   const GRID = ["tl", "t", "tr", "l", "c", "r", "bl", "b", "br"];
 
   const defaultHost = () => (App.cameraHost || "");

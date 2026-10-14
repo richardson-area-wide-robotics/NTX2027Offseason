@@ -20,6 +20,7 @@ from __future__ import annotations
 import math
 
 from . import analysis as A
+from . import units as U
 
 IN = 0.0254
 WHEEL_SPREAD_WARN = 0.010     # one wheel this much off the others: worn or different tread
@@ -32,7 +33,7 @@ DIAMETER_REFUSE = 0.10
 LOCATION_EDIT_IN = 0.25       # tape this far from the config is worth a change
 MISALIGNED_DEG = 8.0
 CURVED_DEG = 3.0
-MIN_PUSH_M = 1.5
+MIN_PUSH_M = 60 * IN           # 5 ft
 SPIN_AGREE = 0.03
 
 
@@ -137,9 +138,9 @@ def wheel_sizes(capture, tape_m, configured_in, names=None):
     for r in rows:
         r["vs_average"] = r["diameter_in"] / avg - 1 if A.finite(r["diameter_in"]) else float("nan")
     if tape < MIN_PUSH_M:
-        F.append(_f("warn", f"A short push ({tape:.2f} m)",
-                    f"Measuring a 1% difference needs a push of at least {MIN_PUSH_M} m: a 2 cm "
-                    "tape error over 1 m is already 2%."))
+        F.append(_f("warn", f"A short push ({U.length(tape)})",
+                    f"Measuring a 1% difference needs a push of at least {U.length(MIN_PUSH_M, 0)}: a 1 in "
+                    "tape error over 50 in is already 2%."))
     if curved > CURVED_DEG:
         F.append(_f("warn", f"The push curved by {curved:.1f} degrees",
                     "The wheels on the outside of a curve roll further than those inside it. Push "
@@ -166,7 +167,7 @@ def wheel_sizes(capture, tape_m, configured_in, names=None):
     if abs(change) > DIAMETER_REFUSE:
         F.append(_f("error", f"The push says the wheels are {abs(change) * 100:.0f}% "
                              f"{'smaller' if change < 0 else 'bigger'} than configured: that is a measuring mistake",
-                    f"Worn tread is at most about 4% smaller. Check that {tape:.2f} m is how far the robot really "
+                    f"Worn tread is at most about 4% smaller. Check that {U.length(tape)} is how far the robot really "
                     "moved (measure from the same point on the frame at the start and the end), and push "
                     "again. Nothing will be saved from this push."))
     elif abs(change) > DIAMETER_EDIT:

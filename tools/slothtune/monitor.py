@@ -14,6 +14,7 @@ from __future__ import annotations
 import time
 
 from . import analysis as A
+from . import units as U
 
 RULES = {
     "steer_not_reaching": ("pod_wrong_direction",
@@ -133,12 +134,12 @@ class Monitor:
             self._raise("absolute_read_issue", name, now, 0.2, "", bool(issue[i] == 1))
             backwards = (enabled and moving_cmd and A.finite(v[i]) and v[i] * v_sp[i] < 0
                          and abs(v[i]) > 0.1)
-            self._raise("drive_backwards", name, now, 0.3, f"{v[i]:+.2f} vs {v_sp[i]:+.2f} m/s",
+            self._raise("drive_backwards", name, now, 0.3, f"{U.fps(v[i]):+.2f} vs {U.fps(v_sp[i]):+.2f} ft/s",
                         backwards)
             lag = (enabled and A.finite(v[i]) and A.finite(v_sp[i]) and abs(v_sp[i]) > 0.5
                    and not backwards and abs(v[i] - v_sp[i]) / abs(v_sp[i]) > 0.3)
             self._raise("drive_lagging", name, now, 1.0,
-                        f"{v[i]:.2f} of {v_sp[i]:.2f} m/s" if A.finite(v[i]) else "", lag)
+                        f"{U.fps(v[i]):.2f} of {U.fps(v_sp[i]):.2f} ft/s" if A.finite(v[i]) else "", lag)
             stall = (enabled and A.finite(amps[i]) and amps[i] > 0.85 * self.limit
                      and A.finite(v[i]) and abs(v[i]) < 0.15)
             self._raise("stall", name, now, 0.4, f"{amps[i]:.0f} A", stall)
@@ -179,7 +180,7 @@ class Monitor:
             for name in travel:
                 f = odd.get(name)
                 self._raise("drive_ratio_mismatch", name, now, 0.0,
-                            f"{(f['travel_ratio'] - 1) * 100:+.1f}% over {travel[name]:.1f} m" if f else "",
+                            f"{(f['travel_ratio'] - 1) * 100:+.1f}% over {U.inches(travel[name]):.0f} in" if f else "",
                             f is not None)
 
     def _motor_rules(self, motors, now):

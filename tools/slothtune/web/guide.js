@@ -90,7 +90,7 @@ const Guide = (() => {
             const steerWord = r => r.absolute.verdict !== "AGREES" ? r.absolute.verdict : r.motor.verdict !== "AGREES" ? "MOTOR " + r.motor.verdict
               : Math.abs(r.motor_per_module_deg - 1) >= 0.03 ? "RATIO" : "AGREES";
             const rows = Object.entries(v).map(([name, r]) => kind === "wheel"
-              ? `<div class="verdict"><span class="level ${r.drive.verdict === "AGREES" ? "ok" : "error"}" data-tip="guide.verdict">${r.drive.verdict}</span><b>${abbr(name)}</b> wheel: drive encoder moved ${fmt(r.drive.net, 3)} m</div>`
+              ? `<div class="verdict"><span class="level ${r.drive.verdict === "AGREES" ? "ok" : "error"}" data-tip="guide.verdict">${r.drive.verdict}</span><b>${abbr(name)}</b> wheel: drive encoder moved ${U.length(r.drive.net, 1)}</div>`
               : `<div class="verdict"><span class="level ${steerOk(r) ? "ok" : "error"}" data-tip="guide.verdict">${steerWord(r)}</span>
                  <b>${abbr(name)}</b> steering: absolute ${fmt(r.absolute.net, 1)}°, motor encoder ${r.motor.verdict} ${fmt(r.motor.net, 1)}°, motor per module ${fmt(r.motor_per_module_deg, 3)}</div>`);
             const ok = Object.values(v).every(r => kind === "wheel" ? r.drive.verdict === "AGREES" : steerOk(r));
@@ -112,7 +112,7 @@ const Guide = (() => {
       } },
 
     { id: "offsets", env: "DISABLED", learn: ["offset", "absolute_encoder", "bevel_gear", "straight_edge", "hold_still", "coast_mode", "redeploy"], title: "Set the wheel offsets", where: "Robot disabled, motors coasting",
-      why: "The offset tells the code where 'straight ahead' is for each module. One degree off is about 1.7 cm of sideways drift for every meter driven. Copied or rounded offsets are the most common swerve fault.",
+      why: "The offset tells the code where 'straight ahead' is for each module. One degree off is about 2 in of sideways drift for every 10 ft driven. Copied or rounded offsets are the most common swerve fault.",
       need: ["A straight-edge (a long level or a piece of aluminum extrusion)"],
       todo: ["Turn every module so its wheel points straight ahead with its bevel gear facing the robot's LEFT side. All four the same way.",
              "Hold a straight-edge against the front pair of wheels, then the back pair, so each pair lines up. Square the edge to the frame first: the same distance from the frame rail at both ends.",
@@ -171,10 +171,10 @@ const Guide = (() => {
       status: () => graded("steer_step", "BLOCKS", 80) },
 
     { id: "geometry", env: "DISABLED", learn: ["wheel_size", "gear_ratio", "coast_mode"], title: "Measure the robot: module positions and wheel sizes", where: "On the floor, robot disabled",
-      why: "Odometry turns wheel turns into distance with the wheel size, and robot turns into module speeds with the module positions. Measured once and then trusted for everything after - the feedforward's kV is in volts per meter a second, so the wheel size must be right before it is measured.",
-      need: ["A tape measure", "3 m of straight floor", "Robot disabled"],
+      why: "Odometry turns wheel turns into distance with the wheel size, and robot turns into module speeds with the module positions. Measured once and then trusted for everything after - the feedforward's kV is in volts per unit of wheel speed, so the wheel size must be right before it is measured.",
+      need: ["A tape measure", "10 ft of straight floor", "Robot disabled"],
       todo: ["Calibrate tab, Module positions: measure wheelbase and track width between wheel centers, compare, save.",
-             "Calibrate tab, Wheel sizes: record a 3 m push in coast, type the distance, measure, save.", "Redeploy, then come back and press Mark as done."],
+             "Calibrate tab, Wheel sizes: record a 10 ft push in coast, type the distance, measure, save.", "Redeploy, then come back and press Mark as done."],
       body: () => `<div class="row"><button class="btn primary" data-go="calibrate" data-tip="guide.calibrate">Open Calibrate</button>
         <button class="btn" id="g-geo-done" data-tip="guide.mark">${progress.geometry === "done" ? "Done ✓ (press to undo)" : "Mark as done"}</button></div>`,
       mount: box => {
@@ -198,10 +198,10 @@ const Guide = (() => {
       tune: "slip",
       status: () => graded("slip", "FIELD") },
 
-    { id: "ff", env: "FIELD", learn: ["feedforward", "kS", "kV", "kA", "r_squared"], title: "Measure the feedforward", where: "On the floor, about 3 m clear",
+    { id: "ff", env: "FIELD", learn: ["feedforward", "kS", "kV", "kA", "r_squared"], title: "Measure the feedforward", where: "On the floor, about 10 ft clear",
       why: "Out of the box YAGSL guesses the drive voltage from the motor datasheet, with nothing for friction and nothing for acceleration. Measured per module, the wheel is within a few percent of its target before the PID does anything.",
-      need: ["3 m or more of clear carpet ahead", "A fresh battery", "Someone holding the deadman for the whole run: the tester's joystick right bumper (port 1), or Hold to run on screen"],
-      todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back a few meters.", "Press Try this when it offers the measured feedforward (if it asks for something else first, do that): it applies them and opens Drive speed, the next step.",
+      need: ["10 ft or more of clear carpet ahead", "A fresh battery", "Someone holding the deadman for the whole run: the tester's joystick right bumper (port 1), or Hold to run on screen"],
+      todo: ["Open the tuner (Feedforward, Robot) and Run. The robot drives forward and back several feet.", "Press Try this when it offers the measured feedforward (if it asks for something else first, do that): it applies them and opens Drive speed, the next step.",
              "Then, in the Calibrate tab, weigh the robot and measure its moment of inertia: PathPlanner needs both.",
              "Once a season, and after any drive motor is swapped, run Feedforward on blocks too: each wheel spins free there, so the tool compares those runs to spot a motor getting weaker."],
       tune: "ff",
@@ -216,21 +216,21 @@ const Guide = (() => {
 
     { id: "spin", env: "FIELD", learn: ["swerve_module", "module_flip", "gyro"], title: "Spin check", where: "On the floor, clear all round",
       why: "Command, gyro and wheels must agree on how fast the robot turns. This finds an inverted gyro and module positions entered wrong.",
-      need: ["About 1 m clear all round", "Someone holding the deadman for the whole run: the tester's joystick right bumper (port 1), or Hold to run on screen"],
+      need: ["About 3 ft clear all round", "Someone holding the deadman for the whole run: the tester's joystick right bumper (port 1), or Hold to run on screen"],
       todo: ["Open the tuner (Spin, Robot) and Run.", "Fix anything it reports."],
       tune: "spin",
       status: () => graded("spin", "FIELD") },
 
-    { id: "straight", env: "FIELD", learn: ["wheel_size", "gear_ratio", "offset"], title: "Straight line", where: "On the floor, 3 m clear",
+    { id: "straight", env: "FIELD", learn: ["wheel_size", "gear_ratio", "offset"], title: "Straight line", where: "On the floor, 10 ft clear",
       why: "The acceptance test. With no heading correction, whatever the robot does is the drivetrain itself.",
       need: ["A tape measure and a tape mark at the start (AprilTags in view at both ends do it instead)", "Someone holding the deadman for the whole run: the tester's joystick right bumper (port 1), or Hold to run on screen"],
-      todo: ["Mark the floor at the robot's center.", "Open the tuner (Straight line, Robot) and Run. It stops at the far end.", "Measure from the start mark to the robot's center where it stopped, in meters, and enter it in Runs (Measured with a tape). This step ticks only once a tape (or AprilTags) measured the run."],
+      todo: ["Mark the floor at the robot's center.", "Open the tuner (Straight line, Robot) and Run. It stops at the far end.", "Measure from the start mark to the robot's center where it stopped, in inches, and enter it in Runs (Measured with a tape). This step ticks only once a tape (or AprilTags) measured the run."],
       tune: "straight",
       status: straightDone },
 
     { id: "sticks", env: "FIELD", learn: ["field_relative", "robot_mode"], title: "Drive it with the sticks", where: "On the floor, clear all round",
       why: "Every test so far drove the robot from the tools. The driver's sticks go through the robot code's own mapping, and a sign flipped there makes the robot drive backwards or turn the wrong way at the first match. The 2026 shop runbook called it the likeliest surprise of the day.",
-      need: ["About 2 m clear all round", "The driver's joystick in Driver Station port 0", "The robot enabled in Teleop, at low speed"],
+      need: ["About 6 ft clear all round", "The driver's joystick in Driver Station port 0", "The robot enabled in Teleop, at low speed"],
       todo: ["Stand behind the robot, facing the way it faces. Push the LEFT stick gently forward: the robot must drive away from you.",
              "Push the LEFT stick gently left: the robot must slide to your left, without turning.",
              "Push the RIGHT stick gently left: the robot must turn counter-clockwise (to its left), seen from above.",

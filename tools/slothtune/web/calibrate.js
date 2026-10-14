@@ -49,7 +49,7 @@
         <div data-faults="wheels"></div>
         ${HowTo.block(`<p class="small">Tread wears and compresses, and every distance odometry reports is wheel turns times the wheel size. With the motors coasting, a push makes each wheel roll freely over the same ground, so each one's count against a tape measure is its real size. Driving can't measure this: the speed loop makes every wheel report the speed it was asked for.</p>
         <ol class="small">
-          <li>Robot <b>on the floor and disabled</b>. Mark a start and an end <b>3 m</b> apart along a straight line.</li>
+          <li>Robot <b>on the floor and disabled</b>. Mark a start and an end <b>10 ft</b> (120 in) apart along a straight line.</li>
           <li>Point every wheel straight ahead.</li>
           <li>Press <b>Record the push</b> (20 s, motors coast), then push the robot slowly and straight from mark to mark. Push on the frame, near the middle, so it doesn't twist.</li>
           <li>Type how far one point of the robot really moved, then <b>Measure</b>.</li>
@@ -57,7 +57,7 @@
         <p class="small good-result"><b>A good result:</b> all four wheels within about 1% of each other, and close to the 3 in on the drawing. One wheel far off the others is worn tread, or it slipped during the push.</p>`)}
         <div class="row" style="flex-wrap:wrap">
           <button class="btn primary" id="cg-push" data-tip="cal.push">Record the push</button>
-          <label class="small" data-tip="cal.distance">Distance moved (m) <input type="number" id="cg-tape-m" step="0.005" min="0.5" placeholder="tape it" style="width:7em"></label>
+          <label class="small" data-tip="cal.distance">Distance moved (in) <input type="number" id="cg-tape-in" step="0.125" min="20" placeholder="tape it" style="width:7em"></label>
           <button class="btn" id="cg-measure" disabled data-tip="cal.measure">Measure</button>
           <span class="small muted" id="cg-push-state"></span>
         </div>
@@ -105,15 +105,15 @@
         <div data-faults="moi"></div>
         ${HowTo.block(`<p class="small">PathPlanner plans every auto from the robot's mass and its moment of inertia (how hard it is to start and stop turning). Weigh the robot with bumpers and battery. The moment of inertia can't be weighed: spinning the robot in place, with every wheel pushing along its circle, measures it against how hard the robot is to push in a straight line.</p>`, "What it's for")}
         <div class="row" style="flex-wrap:wrap">
-          <label class="small" data-tip="cal.mass">Mass with bumpers and battery (kg) <input type="number" id="mi-mass" step="0.1" min="10" max="80" style="width:7em"></label>
+          <label class="small" data-tip="cal.mass">Weight with bumpers and battery (lb) <input type="number" id="mi-mass" step="0.5" min="22" max="176" style="width:7em"></label>
           <button class="btn" id="mi-mass-save" data-tip="cal.mass-save">Save the mass…</button>
           <span class="small" id="mi-now"></span>
         </div>
         <div id="mi-assumed" class="callout warn" hidden></div>
         ${HowTo.steps({ steps: ["Weigh the robot with bumpers and battery; type it and <b>Save the mass</b>.",
           "Measure the feedforward on the floor first (Guide step 10, <b>Measure the feedforward</b>): this compares against it.",
-          "Robot on the floor, at least a meter clear all round. Press <b>Spin and measure</b> and hold the deadman for about 20 seconds while it spins each way, slowly, then briskly."],
-          good: "a fit the tool calls plausible: for a robot this size, a few kg·m². It saves the number for PathPlanner." })}
+          "Robot on the floor, at least 3 ft clear all round. Press <b>Spin and measure</b> and hold the deadman for about 20 seconds while it spins each way, slowly, then briskly."],
+          good: "a fit the tool calls plausible: for a robot this size, roughly 10,000 to 25,000 lb·in². It saves the number for PathPlanner." })}
         <div class="row"><button class="btn primary" id="mi-run" data-tip="cal.moi-run">Spin and measure</button></div>
         <div id="mi-out"></div>
         ${HowTo.nextLine("moi")}
@@ -157,7 +157,7 @@
           <h2 data-tip="cal.camera">7. Camera positions</h2>
           <button class="btn" id="cc-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        ${HowTo.block(`<p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses 3.5 cm at 2 m. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
+        ${HowTo.block(`<p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses about 1.5 in at 7 ft. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
         <ol class="small">
           <li>Tape one AprilTag <b>flat on a wall</b>, its center at a measured height. FRC tags are 6.5 in across the black square; PhotonVision's tag size must match.</li>
           <li>Put the robot with the camera's side facing the wall, <b>square to it</b>: both bumper corners the same distance from the wall.</li>
@@ -168,16 +168,16 @@
         <figure class="cam-lens-fig">
           <img src="img/parts/luma-p1.svg" alt="A Luma P1 from the lens side" width="274.36" height="167.96">
           <figcaption class="small">To check the answer with a tape, measure to the middle of the lens. On a <b>Luma P1</b> it is
-            centered across, 4 mm off the middle of the four holes toward the edge away from the name, and its front is 3 mm
-            out from the case (±1.5: it screws in and out to focus). From <a href="https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf" target="_blank" rel="noopener">Luma's drawing</a>.</figcaption>
+            centered across, 0.16 in (4 mm) off the middle of the four holes toward the edge away from the name, and its front is 0.12 in (3 mm)
+            out from the case (±0.06 in: it screws in and out to focus). From <a href="https://docs.luma.vision/p1/files/P1%20Assembly%20Public%20Drawing.pdf" target="_blank" rel="noopener">Luma's drawing</a>.</figcaption>
         </figure>`)}
         <div class="row" style="flex-wrap:wrap;gap:10px">
           <label class="small" data-tip="cal.cam">Camera <input id="cc-cam" value="front" style="width:8em"></label>
           <label class="small" data-tip="cal.tag">Tag ID <input type="number" id="cc-tag" value="1" min="0" style="width:5em"></label>
           <label class="small" data-tip="cal.side">Side facing the wall <select id="cc-side"><option>front</option><option>back</option><option>left</option><option>right</option></select></label>
-          <label class="small" data-tip="cal.wall">Wall to center (m) <input type="number" id="cc-d" step="0.005" style="width:6em"></label>
-          <label class="small" data-tip="cal.left">Tag left of center (m) <input type="number" id="cc-l" step="0.005" value="0" style="width:6em"></label>
-          <label class="small" data-tip="cal.height">Tag height (m) <input type="number" id="cc-h" step="0.005" style="width:6em"></label>
+          <label class="small" data-tip="cal.wall">Wall to center (in) <input type="number" id="cc-d" step="0.125" style="width:6em"></label>
+          <label class="small" data-tip="cal.left">Tag left of center (in) <input type="number" id="cc-l" step="0.125" value="0" style="width:6em"></label>
+          <label class="small" data-tip="cal.height">Tag height (in) <input type="number" id="cc-h" step="0.125" style="width:6em"></label>
           <button class="btn primary" id="cc-take" data-tip="cal.sight">Take a sighting</button>
         </div>
         <div id="cc-spots"></div>
@@ -190,14 +190,14 @@
           <h2 data-tip="cal.field">8. Field tags</h2>
           <button class="btn" id="fs-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
-        ${HowTo.block(`<p class="small">Tags on a real field are hung by people: a few centimeters off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
+        ${HowTo.block(`<p class="small">Tags on a real field are hung by people: an inch or two off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
         <ol class="small">
-          <li>On the field, robot disabled. Drive slowly (or push the robot) so the camera sees <b>two or more tags at once</b>, within about 4 m: in front of each hub face, the trenches, the outposts, the towers.</li>
+          <li>On the field, robot disabled. Drive slowly (or push the robot) so the camera sees <b>two or more tags at once</b>, within about 13 ft: in front of each hub face, the trenches, the outposts, the towers.</li>
           <li><b>Start recording</b>, cover every group of tags for a minute or two, then <b>Stop</b>.</li>
           <li><b>Work it out</b>. Only tags measured to have really moved are changed; the rest keep their official place.</li>
           <li><b>Save the surveyed layout</b>, redeploy, and upload <span class="mono">surveyed.json</span> to each camera in PhotonVision: the camera solves its multi-tag poses itself.</li>
         </ol>
-        <p class="small good-result"><b>A good result:</b> most tags where the field drawing puts them. Only tags measured to have moved by more than the noise change; a move over 30 cm is refused as a misread.</p>`)}
+        <p class="small good-result"><b>A good result:</b> most tags where the field drawing puts them. Only tags measured to have moved by more than the noise change; a move over about 12 in is refused as a misread.</p>`)}
         <div class="row" style="flex-wrap:wrap">
           <button class="btn primary" id="fs-start" data-tip="cal.fs-start">Start recording</button>
           <button class="btn" id="fs-stop" disabled data-tip="cal.fs-stop">Stop</button>
@@ -212,11 +212,11 @@
         <h2 data-tip="cal.newfield">9. New field</h2>
         ${HowTo.block(`<p class="small">At a new venue the lens is the same, but the light and the tags are not. With the field's match lighting on, do these three: the robot does the work, a person holds the deadman for the sweep.</p>
         <ol class="small">
-          <li><b>Light.</b> Robot still, facing two or more tags 2 to 4 m away. The tool sets the exposure short enough that a fast turn doesn't blur a tag, then tries the gain from low to high and keeps the lowest that sees the tags well, plus a margin. It stays on the camera; the old settings are kept to put back.</li>
-          <li><b>Tags.</b> Robot on the floor (Where: on the floor), bumpers on, 1 m clear all round, someone holding the deadman. <b>Sweep here</b> spins it slowly, a full turn each way, recording every tag it sees. Do it at two or three spots, then <b>Work out where the tags are</b> (step 8 saves the layout).</li>
+          <li><b>Light.</b> Robot still, facing two or more tags 6 to 13 ft away. The tool sets the exposure short enough that a fast turn doesn't blur a tag, then tries the gain from low to high and keeps the lowest that sees the tags well, plus a margin. It stays on the camera; the old settings are kept to put back.</li>
+          <li><b>Tags.</b> Robot on the floor (Where: on the floor), bumpers on, 3 ft clear all round, someone holding the deadman. <b>Sweep here</b> spins it slowly, a full turn each way, recording every tag it sees. Do it at two or three spots, then <b>Work out where the tags are</b> (step 8 saves the layout).</li>
           <li><b>Mount.</b> From the same sweeps: spinning in place, the vision pose should stay put. If it swings round, the camera's mount is off: measure it again in step 7.</li>
         </ol>
-        <p class="small good-result"><b>A good result:</b> tags seen in nearly every frame at a low gain, most tags where the field drawing puts them, and the vision pose within 3 cm while it spins.</p>`)}
+        <p class="small good-result"><b>A good result:</b> tags seen in nearly every frame at a low gain, most tags where the field drawing puts them, and the vision pose within about 1 in while it spins.</p>`)}
         <div class="nf-part"><h3 data-tip="cal.nf-light">1. Light</h3>
           <div class="row" style="flex-wrap:wrap"><button class="btn primary" id="nf-light" data-tip="cal.nf-light-go">Tune the camera to this light</button>
             <button class="btn" id="nf-light-stop" data-tip="cal.nf-light-stop" hidden>Stop</button>
@@ -269,9 +269,9 @@
     const out = $("#cg-wheel-out", root);
     wheels = r.ok ? r : null;
     if (!r.ok) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
-    out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up push of 3 m with one worn wheel and one wheel turned a little. Nothing here can be saved.</div>` : ""}
+    out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up push of about 10 ft with one worn wheel and one wheel turned a little. Nothing here can be saved.</div>` : ""}
       ${r.rows.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Module</th><th>Encoder said</th><th>Wheel angle</th><th>Real diameter</th><th>Against the average</th></tr></thead><tbody>
-        ${r.rows.map(x => `<tr><td>${esc(x.name)}</td><td class="num mono">${fmt(x.encoder_m, 3)} m</td><td class="num mono">${fmt(x.angle_deg, 1)}°</td>
+        ${r.rows.map(x => `<tr><td>${esc(x.name)}</td><td class="num mono">${U.length(x.encoder_m, 1)}</td><td class="num mono">${fmt(x.angle_deg, 1)}°</td>
           <td class="num mono">${fmt(x.diameter_in, 3)} in</td>
           <td class="num mono ${Math.abs(x.vs_average) > 0.01 ? "warn-ink" : ""}">${x.vs_average >= 0 ? "+" : ""}${fmt(x.vs_average * 100, 1)}%</td></tr>`).join("")}
       </tbody></table></div>
@@ -301,9 +301,10 @@
   };
   $("#cg-measure", root).onclick = async () => {
     if (!pushRun) return;
-    // No default: a distance nobody measured would become the wheel size.
-    if (!(+$("#cg-tape-m", root).value > 0)) { App.toast("Type how far the robot moved, measured with the tape."); $("#cg-tape-m", root).focus(); return; }
-    showWheels(await App.api("/api/geometry/wheels", { file: pushRun, tape_m: $("#cg-tape-m", root).value }));
+    // No default: a distance nobody measured would become the wheel size. Typed in inches, sent in meters.
+    const tapeIn = +$("#cg-tape-in", root).value;
+    if (!(tapeIn > 0)) { App.toast("Type how far the robot moved, in inches, measured with the tape."); $("#cg-tape-in", root).focus(); return; }
+    showWheels(await App.api("/api/geometry/wheels", { file: pushRun, tape_m: U.mFromIn(tapeIn) }));
   };
   $("#cg-wheel-practice", root).onclick = async () => showWheels(await App.api("/api/geometry/wheels", { practice: true }));
 
@@ -410,9 +411,9 @@
     const r = doc.report || doc, out = $("#mi-out", root);
     const a = (r.measured || {}).angular || {};
     const act = r.next && r.next.action;
-    out.innerHTML = `${doc.practice ? `<div class="callout info">Practice: a made-up robot of 55 kg whose moment of inertia is really 6.0 kg·m². Nothing here can be saved.</div>` : ""}
+    out.innerHTML = `${doc.practice ? `<div class="callout info">Practice: a made-up robot of 121 lb whose moment of inertia is really about 20,500 lb·in². Nothing here can be saved.</div>` : ""}
       <p><b>${esc(r.summary || "")}</b></p>
-      ${a.ok ? `<p class="small muted">Turning: kS ${fmt(a.kS, 3)} V, kV ${fmt(a.kV, 3)} V per rad/s, kA ${fmt(a.kA, 3)} V per rad/s² (R² ${fmt(a.r2, 3)}).</p>` : ""}
+      ${a.ok ? `<p class="small muted">Turning, in the code's units: kS ${fmt(a.kS, 3)} V, kV ${fmt(a.kV, 3)} V per rad/s, kA ${fmt(a.kA, 3)} V per rad/s² (R² ${fmt(a.r2, 3)}).</p>` : ""}
       ${findings(r.findings)}
       ${act && act.type === "config" && !doc.practice ? `<button class="btn primary" id="mi-save" data-tip="cal.save">Save to slothtune.json…</button>` : ""}`;
     const b = $("#mi-save", out);
@@ -422,7 +423,7 @@
   async function showMass() {
     const lint = App.lint || await App.api("/api/lint");
     const s = (lint && lint.summary) || {};
-    if (s.mass_kg) $("#mi-now", root).textContent = `Now: ${fmt(s.mass_kg, 1)} kg (${s.mass_source || ""})`;
+    if (s.mass_kg) $("#mi-now", root).textContent = `Now: ${U.mass(s.mass_kg)} (${s.mass_source || ""})`;
     const assumed = /assumed/.test(s.mass_source || "");
     $("#mi-assumed", root).hidden = !assumed;
     if (!assumed) return;
@@ -430,12 +431,14 @@
     // this tool's estimates use its own assumption. Say both, so nobody thinks the autos use ours.
     const pp = await App.api("/api/ppcheck");
     const row = ((pp && pp.rows) || []).find(x => x.key === "robotMass");
-    const theirs = row && row.pathplanner != null ? `PathPlanner plans every auto with ${fmt(row.pathplanner, 0)} kg${row.status === "unknown" ? " (its default)" : ""}, and this` : "This";
-    $("#mi-assumed", root).textContent = `Not weighed yet: ${theirs} tool assumes ${fmt(s.mass_kg, 0)} kg. Weigh the robot with bumpers and battery, and save it here.`;
+    const theirs = row && row.pathplanner != null ? `PathPlanner plans every auto with ${U.mass(row.pathplanner)}${row.status === "unknown" ? " (its default)" : ""}, and this` : "This";
+    $("#mi-assumed", root).textContent = `Not weighed yet: ${theirs} tool assumes ${U.mass(s.mass_kg)}. Weigh the robot with bumpers and battery, and save it here.`;
   }
   $("#mi-mass-save", root).onclick = async () => {
-    const kg = +$("#mi-mass", root).value;
-    if (!(kg >= 10 && kg <= 80)) { App.toast("Type the weighed mass in kilograms (10 to 80)."); return; }
+    // Typed in pounds; slothtune.json keeps kilograms (robotMassKg).
+    const lb = +$("#mi-mass", root).value;
+    if (!(lb >= 22 && lb <= 176)) { App.toast("Type the weighed robot in pounds (22 to 176)."); return; }
+    const kg = +U.kgFromLb(lb).toFixed(3);
     if (await App.previewAndSave({ kind: "edit", file: "slothtune.json", path: ["robotMassKg"], value: kg }, "Robot mass")) showMass();
   };
   $("#mi-run", root).onclick = async () => {
@@ -504,14 +507,18 @@
   };
 
   // ---------------------------------------------------------------- camera positions
-  const AXES = [{ k: "x", u: "m", d: 3 }, { k: "y", u: "m", d: 3 }, { k: "z", u: "m", d: 3 },
-    { k: "roll", u: "°", d: 1 }, { k: "pitch", u: "°", d: 1 }, { k: "yaw", u: "°", d: 1 }];
+  // The mount is kept in meters and degrees (slothtune.json); x, y and z read in inches. An inch
+  // figure gets a second decimal under an inch, where a tenth is a big share of it.
+  const inch = m => m == null || !isFinite(m) ? "–" : U.length(m, Math.abs(U.inches(m)) < 1 ? 2 : 1);
+  const cmIn = cm => cm == null || !isFinite(cm) ? "–" : fmt(cm / 2.54, Math.abs(cm / 2.54) < 1 ? 2 : 1);
+  const AXES = [{ k: "x", show: inch }, { k: "y", show: inch }, { k: "z", show: inch },
+    { k: "roll", show: v => fmt(v, 1) + " °" }, { k: "pitch", show: v => fmt(v, 1) + " °" }, { k: "yaw", show: v => fmt(v, 1) + " °" }];
 
   function paintSpots() {
     const box = $("#cc-spots", root);
     box.innerHTML = spots.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>#</th><th>Side</th><th>Wall to center</th><th>Tag left</th><th>Tag height</th><th>Tag</th><th>Sightings</th><th></th></tr></thead><tbody>
-      ${spots.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.side)}</td><td class="num mono">${fmt(s.distance_m, 3)} m</td><td class="num mono">${fmt(s.lateral_m, 3)} m</td>
-        <td class="num mono">${fmt(s.height_m, 3)} m</td><td class="num">${s.tag_id}</td><td class="num">${s.count ?? (s.samples || []).length}</td>
+      ${spots.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.side)}</td><td class="num mono">${inch(s.distance_m)}</td><td class="num mono">${inch(s.lateral_m)}</td>
+        <td class="num mono">${inch(s.height_m)}</td><td class="num">${s.tag_id}</td><td class="num">${s.count ?? (s.samples || []).length}</td>
         <td>${s.practice ? "" : `<button class="btn small" data-drop="${i}" data-tip="cal.drop" data-quiet aria-label="Remove spot ${i + 1}">Remove</button>`}</td></tr>`).join("")}
       </tbody></table></div>` : "";
     $$("[data-drop]", box).forEach(b => b.onclick = () => { spots.splice(+b.dataset.drop, 1); paintSpots(); });
@@ -524,10 +531,10 @@
     const res = r.result, cur = r.current, truth = r.true_mount;
     out.innerHTML = `${r.practice ? `<div class="callout info">Practice: three made-up spots of a camera whose real mount is known (last column). Nothing here can be saved.</div>` : ""}
       ${res ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th></th><th>Now in slothtune.json</th><th>Measured</th>${truth ? "<th>Really</th>" : ""}</tr></thead><tbody>
-        ${AXES.map(({ k, u, d }) => `<tr><td>${k}</td><td class="num mono">${cur && cur[k] != null ? fmt(cur[k], d) + " " + u : "–"}</td>
-          <td class="num mono"><b>${fmt(res[k], d)} ${u}</b></td>${truth ? `<td class="num mono">${fmt(truth[k], d)} ${u}</td>` : ""}</tr>`).join("")}
+        ${AXES.map(({ k, show }) => `<tr><td>${k}</td><td class="num mono">${cur && cur[k] != null ? show(cur[k]) : "–"}</td>
+          <td class="num mono"><b>${show(res[k])}</b></td>${truth ? `<td class="num mono">${show(truth[k])}</td>` : ""}</tr>`).join("")}
       </tbody></table></div>
-      <p class="small muted">From ${r.spread.spots} spot${r.spread.spots === 1 ? "" : "s"}; they agree within ${fmt(r.spread.cm, 1)} cm and ${fmt(r.spread.deg, 1)}°. Pitch is negative when the camera looks up.</p>` : ""}
+      <p class="small muted">From ${r.spread.spots} spot${r.spread.spots === 1 ? "" : "s"}; they agree within ${cmIn(r.spread.cm)} in and ${fmt(r.spread.deg, 1)}°. Pitch is negative when the camera looks up.</p>` : ""}
       ${findings(r.findings)}${r.edits && !r.practice ? saveButton("cc-save", r.edits) : ""}`;
     const b = $("#cc-save", out);
     if (b) b.onclick = async () => {
@@ -537,8 +544,9 @@
 
   $("#cc-take", root).onclick = async () => {
     spots = spots.filter(s => !s.practice);
-    const spot = { side: $("#cc-side", root).value, distance_m: +$("#cc-d", root).value, lateral_m: +$("#cc-l", root).value,
-      height_m: +$("#cc-h", root).value, tag_id: +$("#cc-tag", root).value };
+    // Typed in inches; the spot (and the solve) keeps meters.
+    const spot = { side: $("#cc-side", root).value, distance_m: U.mFromIn(+$("#cc-d", root).value), lateral_m: U.mFromIn(+$("#cc-l", root).value),
+      height_m: U.mFromIn(+$("#cc-h", root).value), tag_id: +$("#cc-tag", root).value };
     if (!(spot.distance_m > 0 && spot.height_m > 0)) { App.toast("Type the wall distance and the tag height first."); return; }
     $("#cc-take", root).disabled = true;
     try {
@@ -584,7 +592,7 @@
         if (len > MAXPX) { dx *= MAXPX / len; dy *= MAXPX / len; }   // a wild one still fits the map
         arrow = `<line x1="${X(o.x)}" y1="${Y(o.y)}" x2="${X(o.x) + dx}" y2="${Y(o.y) + dy}" class="fs-arrow ${cls}"></line>`;
       }
-      const tip = row ? `Tag ${id}: ${row.measured ? `${fmt(row.moved_cm, 1)} cm, ${fmt(row.turned_deg, 1)}° from official (±${fmt(row.sigma_cm, 1)} cm, ${row.views} views)` : "seen, not measured"}` : `Tag ${id}: not seen`;
+      const tip = row ? `Tag ${id}: ${row.measured ? `${cmIn(row.moved_cm)} in, ${fmt(row.turned_deg, 1)}° from official (±${cmIn(row.sigma_cm)} in, ${row.views} views)` : "seen, not measured"}` : `Tag ${id}: not seen`;
       return `<g class="fs-tag ${cls}"><title>${esc(tip)}</title>${arrow}
         <line x1="${X(o.x)}" y1="${Y(o.y)}" x2="${X(o.x) + nx}" y2="${Y(o.y) - ny}" class="fs-face"></line>
         <circle cx="${X(o.x)}" cy="${Y(o.y)}" r="5"></circle></g>`;
@@ -600,12 +608,12 @@
     const out = $("#fs-out", root);
     if (r.ok === false) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
     const moved = (r.rows || []).filter(x => x.measured && (x.significant || !x.trusted));
-    out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up drive on a field with three tags moved (4 cm, 2.7 cm, a 3° turn) and one on the wrong bracket. Nothing here can be saved.</div>` : ""}
+    out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up drive on a field with three tags moved (1.6 in, 1.1 in, a 3° turn) and one on the wrong bracket. Nothing here can be saved.</div>` : ""}
       ${r.official ? fieldMap(r) : ""}
-      ${moved.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Tag</th><th>Moved</th><th>x / y / z</th><th>Turned</th><th>±</th><th>Views</th><th></th></tr></thead><tbody>
-        ${moved.map(x => `<tr><td>${x.id}</td><td class="num mono">${fmt(x.moved_cm, 1)} cm</td>
-          <td class="num mono">${fmt(x.dx_cm, 1)} / ${fmt(x.dy_cm, 1)} / ${fmt(x.dz_cm, 1)}</td><td class="num mono">${fmt(x.turned_deg, 1)}°</td>
-          <td class="num mono small">${fmt(x.sigma_cm, 1)} cm, ${fmt(x.sigma_deg, 1)}°</td><td class="num">${x.views}</td>
+      ${moved.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Tag</th><th>Moved</th><th>x / y / z (in)</th><th>Turned</th><th>±</th><th>Views</th><th></th></tr></thead><tbody>
+        ${moved.map(x => `<tr><td>${x.id}</td><td class="num mono">${cmIn(x.moved_cm)} in</td>
+          <td class="num mono">${cmIn(x.dx_cm)} / ${cmIn(x.dy_cm)} / ${cmIn(x.dz_cm)}</td><td class="num mono">${fmt(x.turned_deg, 1)}°</td>
+          <td class="num mono small">${cmIn(x.sigma_cm)} in, ${fmt(x.sigma_deg, 1)}°</td><td class="num">${x.views}</td>
           <td>${x.trusted ? `<span class="chip warn">corrected</span>` : `<span class="chip bad">kept official</span>`}</td></tr>`).join("")}
       </tbody></table></div>` : ""}
       ${findings(r.findings)}
@@ -658,7 +666,7 @@
         `${esc(s.when)} ${s.outcome === "DONE" ? "done" : esc(s.outcome.toLowerCase())}`).join(", ")}. ${sv.sightings || 0} sightings of ${(sv.tags || []).length} tags, ${sv.views || 0} views with two or more.` : "";
     const m = r.mount;
     $("#nf-mount", root).innerHTML = !m ? `<span class="muted">After a sweep.</span>` : m.ok == null ? `<span class="level warn">warn</span> ${esc(m.why)}`
-      : `<span class="level ${m.ok ? "ok" : "error"}">${m.ok ? "ok" : "error"}</span> ${esc(m.why)} <span class="muted">(${m.samples} poses; ${m.spread_cm} cm, ${m.heading_offset_deg}°)</span>`;
+      : `<span class="level ${m.ok ? "ok" : "error"}">${m.ok ? "ok" : "error"}</span> ${esc(m.why)} <span class="muted">(${m.samples} poses; ${cmIn(m.spread_cm)} in, ${m.heading_offset_deg}°)</span>`;
     paintLight(r.lighting);
     if (m && m.ok != null) HowTo.mark("calibrate", "cal_newfield", m.ok, m.why);
   }

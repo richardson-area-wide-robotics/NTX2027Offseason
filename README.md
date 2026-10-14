@@ -79,7 +79,8 @@ The files in `src/main/deploy/swerve/` define a four-module swerve with these pa
 | Back left | 42 | 4 |
 | Back right | 22 | 21 |
 
-The robot starts at pose (2 m, 2 m) facing 0°.
+The robot starts at pose (79 in, 79 in) facing 0° (`new Translation2d(2, 2)` in `Drive.java`:
+WPILib poses are in meters).
 
 ## Vendor libraries
 
@@ -102,6 +103,10 @@ motors, and finding wiring faults: `py -3.12 tools/slothtune gui`. Start with
 [controls review](docs/CONTROLS_REVIEW.md), [vision setup](docs/VISION_LUMA_PHOTONVISION.md),
 the [brief for AI agents](docs/AGENT_TUNING.md), [notes for 2027](docs/MIGRATION_2027.md), [next year's gyro, the Canandgyro](docs/GYRO_CANANDGYRO.md) and
 [REV's numbers for our motors, controllers, swerve modules and battery](docs/REV_HARDWARE.md).
+
+Everything the tools say to a person is in the team's units: speed in ft/s, lengths in inches,
+weight in pounds, torque in foot-pounds, angles in degrees. The robot code, its config files and
+saved runs keep WPILib's meters, kilograms and radians, and gains stay in the code's own units.
 
 To show the tools and the drive team's dashboard to someone away from the robot, run Peashooter in
 the simulator and then `py -3.12 -m slothtune.preview.make` from `tools/`. It records the real app

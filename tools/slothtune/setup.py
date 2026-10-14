@@ -25,6 +25,8 @@ Every job has a status:
 import os
 import time
 
+from . import units as U
+
 STAMP = "%Y%m%d-%H%M%S"
 # The short names the tuner and the robot also take (web/app.js ABBR).
 ABBR = {"frontleft": "FL", "frontright": "FR", "backleft": "BL", "backright": "BR"}
@@ -128,7 +130,7 @@ def calibrate(ctx):
                          go={"tab": "calibrate", "panel": "cal-wheels"},
                          unblock={"guide": "offsets", "label": "Guide step 4: Set the wheel offsets"}))
     else:
-        jobs.append(_job("wheels", "2. Wheel sizes", "todo", "3 m of floor, a tape measure; robot disabled.",
+        jobs.append(_job("wheels", "2. Wheel sizes", "todo", "10 ft of floor, a tape measure; robot disabled.",
                          go={"tab": "calibrate", "panel": "cal-wheels"}))
 
     st = _mark_status(_mark(prog, "cal_spin"), "the gyro and the wheels disagree: recheck 1 and 2")
@@ -155,17 +157,17 @@ def calibrate(ctx):
 
     mass, moi = tune.get("robotMassKg"), tune.get("robotMoiKgM2")
     if mass and moi:
-        jobs.append(_job("moi", "5. Mass and moment of inertia", "done", f"{mass} kg, {moi} kg·m².",
+        jobs.append(_job("moi", "5. Mass and moment of inertia", "done", f"{U.mass(mass)}, {U.inertia(moi)}.",
                          go={"tab": "calibrate", "panel": "cal-moi"}))
     elif not mass:
         jobs.append(_job("moi", "5. Mass and moment of inertia", "todo", "Weigh the robot with bumpers and battery.",
                          go={"tab": "calibrate", "panel": "cal-moi"}))
     elif _runs(ctx, "drive_ff", "FIELD"):
-        jobs.append(_job("moi", "5. Mass and moment of inertia", "todo", f"Weighed ({mass} kg); now spin and measure.",
+        jobs.append(_job("moi", "5. Mass and moment of inertia", "todo", f"Weighed ({U.mass(mass)}); now spin and measure.",
                          go={"tab": "calibrate", "panel": "cal-moi"}))
     else:
         jobs.append(_job("moi", "5. Mass and moment of inertia", "later",
-                         f"Weighed ({mass} kg). The spin compares against the floor feedforward, so that first.",
+                         f"Weighed ({U.mass(mass)}). The spin compares against the floor feedforward, so that first.",
                          go={"tab": "calibrate", "panel": "cal-moi"},
                          unblock={"guide": "ff", "label": "Guide step 10: Measure the feedforward"}))
 
@@ -213,7 +215,7 @@ def calibrate(ctx):
                  "and inertia, and where each camera looks: odometry, PathPlanner and vision all start from these. "
                  "Measure in this order: each uses the ones before it. Every panel's Practice runs it on made-up "
                  "data with a known answer, to see what a good result looks like first.",
-                 ["A tape measure", "3 m of straight floor", "A scale", "The ChArUco board and a tag on a wall (for a camera)"],
+                 ["A tape measure", "10 ft of straight floor", "A scale", "The ChArUco board and a tag on a wall (for a camera)"],
                  jobs, {"tab": "controllers", "label": "Next: Joysticks"})
 
 
@@ -628,10 +630,10 @@ def part_plan(kind, which, ctx, started):
         return _system_plan(which, ctx, since, pmark)
     if kind == "wheels":
         jobs = [_from_mark(_mark(prog, "cal_wheels", since), "wheels", "Measure the wheel sizes",
-                           "A 3 m push in coast: new tread is bigger than worn.", {"tab": "calibrate", "panel": "cal-wheels"}),
+                           "A 10 ft push in coast: new tread is bigger than worn.", {"tab": "calibrate", "panel": "cal-wheels"}),
                 _straight_job(ctx, since)]
         return _plan("Wheels or tread", "Every distance odometry reports is wheel turns times the wheel size.",
-                     ["3 m of straight floor", "A tape measure"], jobs, {"guide": "", "label": "Back to the Guide"})
+                     ["10 ft of straight floor", "A tape measure"], jobs, {"guide": "", "label": "Back to the Guide"})
     raise ValueError(f"no such part: {kind}")
 
 

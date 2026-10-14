@@ -25,10 +25,10 @@
           <table class="t"><tbody>
             <tr><th scope="row">Drive</th><td>${esc(s.drive_motor)} at ${s.drive_gear}:1 on ${s.wheel_diameter_in} in wheels</td></tr>
             <tr><th scope="row">Steering</th><td>${esc(s.steer_motor)} at ${s.steer_gear}:1</td></tr>
-            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.topspeed">Module top speed</span></th><td class="mono">${fmt(s.max_module_speed_mps, 2)} m/s (from motor free speed)</td></tr>
-            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.maxspeed">Speed given to YAGSL</span></th><td class="mono">${s.create_swerve_max_speed.value == null ? "?" : s.create_swerve_max_speed.value} m/s <span class="muted">(${esc(s.create_swerve_max_speed.literal || "")})</span></td></tr>
-            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.kv">Nominal kV</span></th><td class="mono">${fmt(s.kv_nominal, 3)} V per m/s</td></tr>
-            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.slip">Wheels slip at</span></th><td class="mono">${fmt(s.traction_current_a, 0)} A per motor <span class="muted">(${fmt(s.mass_kg, 0)} kg, ${esc(s.mass_source)})</span></td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.topspeed">Module top speed</span></th><td class="mono">${U.speed(s.max_module_speed_mps)} (from motor free speed)</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.maxspeed">Speed given to YAGSL</span></th><td class="mono">${s.create_swerve_max_speed.value == null ? "?" : U.speed(s.create_swerve_max_speed.value)} <span class="muted">(${esc(s.create_swerve_max_speed.literal || "")})</span></td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.kv">Nominal kV</span></th><td class="mono">${fmt(s.kv_nominal, 3)} V per m/s <span class="muted">(the code's units)</span></td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.slip">Wheels slip at</span></th><td class="mono">${fmt(s.traction_current_a, 0)} A per motor <span class="muted">(${U.mass(s.mass_kg)}, ${esc(s.mass_source)})</span></td></tr>
             <tr><th scope="row">Current limits</th><td class="mono">drive ${esc((s.current_limit || {}).drive)} A · steer ${esc((s.current_limit || {}).angle)} A</td></tr>
             <tr><th scope="row">Ramp rates</th><td class="mono">drive ${esc((s.ramp || {}).drive)} s · steer ${esc((s.ramp || {}).angle)} s</td></tr>
             <tr><th scope="row">Libraries</th><td class="small">${Object.entries(s.vendordeps || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}</td></tr>
@@ -91,6 +91,15 @@
 
   // Anything fine is quiet so the rows that need work stand out.
   const STATUS = { differs: "bad", missing: "bad", unknown: "warn" };
+  // PathPlanner's settings.json keeps meters, m/s, kilograms and kg·m²; a row reads in the team's
+  // units (the file and the fix keep PathPlanner's). Wheel radius and module places to the
+  // thousandth of an inch, so two that differ never print the same.
+  const PP_UNIT = [[/^driveWheelRadius$/, v => U.length(v, 3)], [/Module[XY]$/, v => U.length(v, 3)],
+    [/^maxDriveSpeed$/, v => U.speed(v)], [/^robotMass$/, v => U.mass(v)], [/^robotMOI$/, v => U.inertia(v)]];
+  const ppVal = (key, v) => {
+    const hit = typeof v === "number" && isFinite(v) && PP_UNIT.find(([re]) => re.test(key));
+    return esc(hit ? hit[1](v) : String(v ?? "–"));
+  };
 
   async function paintPathPlanner() {
     const box = $("#pp-body", root);
@@ -100,18 +109,18 @@
     if (!r.used) { box.innerHTML = `<p class="hint">This robot doesn't use PathPlanner.</p>`; return; }
     const F = r.findings || [], cap = r.capabilities || {};
     box.innerHTML = `
-      ${HowTo.steps({ note: "PathPlanner keeps its own copy of the robot (<span class=\"mono\">deploy/pathplanner/settings.json</span>), which the robot loads at boot to plan every auto. Each row is a setting PathPlanner plans with, against where the truth lives.",
+      ${HowTo.steps({ note: "PathPlanner keeps its own copy of the robot (<span class=\"mono\">deploy/pathplanner/settings.json</span>), which the robot loads at boot to plan every auto. Each row is a setting PathPlanner plans with, against where the truth lives. The rows read in inches, ft/s and pounds; PathPlanner's own app shows the same numbers in meters and kilograms.",
         steps: ["Close the PathPlanner app first: it writes its own values back when it closes.",
           "Press <b>Make PathPlanner match the code</b> and check the diff.", "Rows marked <b>measure it</b> (mass, moment of inertia) come from Calibrate: measure them there, then come back."],
         good: "every row the same; the named commands each registered (\"Shoot B\" is kept on purpose)." })}
       <div class="pp-cols"><div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
-        ${(r.rows || []).slice().sort((a, b) => (a.status === "ok") - (b.status === "ok")).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${esc(String(x.pathplanner ?? "–"))}</td>
-          <td class="num mono">${esc(String(x.code ?? "–"))}</td><td class="small">${esc(x.source)}</td>
+        ${(r.rows || []).slice().sort((a, b) => (a.status === "ok") - (b.status === "ok")).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${ppVal(x.key, x.pathplanner)}</td>
+          <td class="num mono">${ppVal(x.key, x.code)}</td><td class="small">${esc(x.source)}</td>
           <td>${x.status === "ok" ? `<span class="muted small">✓ same</span>` : `<span class="chip ${STATUS[x.status] || ""}" ${x.status === "unknown" ? `data-tip="config.measure" data-quiet` : ""}>${esc(x.status === "unknown" ? "measure it" : x.status)}</span>`}</td></tr>`).join("")}
       </tbody></table></div><div class="stack">
       ${(r.fixes || []).length ? `<div class="row"><button class="btn primary" id="pp-fix" data-tip="config.ppfix">Make PathPlanner match the code…</button>
         <span class="small muted">Writes ${r.fixes.length} setting${r.fixes.length === 1 ? "" : "s"} in settings.json. Close the PathPlanner app first, or it writes its old values back.</span></div>` : ""}
-      <p class="small muted">What this robot can do, for the path limits: ${fmt(cap.max_speed, 2)} m/s, ${fmt(cap.max_accel, 1)} m/s² (limited by ${esc(cap.accel_limited_by || "")}), turning ${fmt(cap.max_ang_vel_deg, 0)} deg/s.</p>
+      <p class="small muted">What this robot can do, for the path limits: ${U.speed(cap.max_speed)}, ${U.accel(cap.max_accel)} (limited by ${esc(cap.accel_limited_by || "")}), turning ${fmt(cap.max_ang_vel_deg, 0)}°/s.</p>
       ${F.map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div>
         <div class="why">${Learn.link(f.why, 2)}</div></div>`).join("") || `<p><span class="level ok">ok</span> PathPlanner and the code agree.</p>`}</div></div>`;
     const fix = $("#pp-fix", box);

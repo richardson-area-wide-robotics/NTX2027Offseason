@@ -81,12 +81,14 @@
 
   function tape(file) {
     App.modal(`<h2>Where did it stop?</h2>
-      <p>Measure from the start mark to the robot's center where it stopped at the far end, in meters: along the direction it drove (forward) and across it (sideways, left positive).</p>
-      <div class="row"><label class="gain" data-tip="runs.tape.f">Forward (m)<input type="number" step="0.001" id="tp-f"></label>
-      <label class="gain" data-tip="runs.tape.l">Sideways (m)<input type="number" step="0.001" id="tp-l"></label></div>
+      <p>Measure from the start mark to the robot's center where it stopped at the far end, in inches: along the direction it drove (forward) and across it (sideways, left positive).</p>
+      <div class="row"><label class="gain" data-tip="runs.tape.f">Forward (in)<input type="number" step="0.125" id="tp-f"></label>
+      <label class="gain" data-tip="runs.tape.l">Sideways (in)<input type="number" step="0.125" id="tp-l"></label></div>
       <div class="row"><button class="btn primary" id="tp-go" data-tip="runs.tape.go">Analyze</button><button class="btn" onclick="App.closeModal()">Cancel</button></div>`, box => {
       $("#tp-go", box).onclick = async () => {
-        const rep = await App.api("/api/analyze", { file, tape_forward: +$("#tp-f", box).value || null, tape_lateral: +$("#tp-l", box).value || null });
+        // Typed in inches; the analysis takes meters.
+        const m = id => +$(id, box).value ? U.mFromIn(+$(id, box).value) : null;
+        const rep = await App.api("/api/analyze", { file, tape_forward: m("#tp-f"), tape_lateral: m("#tp-l") });
         const d = await App.api("/api/runs/" + encodeURIComponent(file));
         d._file = file; d.report = rep;
         App.closeModal();

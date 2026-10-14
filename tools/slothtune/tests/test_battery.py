@@ -78,7 +78,7 @@ class FromRunsTest(unittest.TestCase):
         self.assertEqual(b["status"], "practice")
         titles = " | ".join(f["title"] for f in rep["findings"])
         self.assertIn("Battery 7 sags 24 mV for every amp drawn (24 mΩ)", titles)
-        self.assertIn("Full stick (3.9 m/s) needs", titles)
+        self.assertIn("Full stick (12.8 ft/s) needs", titles)   # 3.9 m/s
         self.assertGreater(b["full_stick_v"], 9.0, "a NEO at 3.9 m/s needs most of the battery")
 
     def test_a_steady_battery_says_nothing(self):

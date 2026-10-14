@@ -17,8 +17,8 @@ yours, and nothing in the tools will stop you from breaking them:
    run button). On blocks too: "blocks" is only what someone told the tool. The CLI keeps the
    laptop's heartbeat alive; it never holds the deadman for anyone.
 2. **Only set the environment you were told.** `env --mode BLOCKS` only when a person says every
-   wheel is off the ground. `env --mode FIELD --space <m> --side <m> --bumpers` only with
-   distances a person measured, and only once a person has said the bumpers are on. Never guess, and never change the mode to make a refused test run.
+   wheel is off the ground. `env --mode FIELD --space <in> --side <in> --bumpers` only with
+   distances a person measured (in inches), and only once a person has said the bumpers are on. Never guess, and never change the mode to make a refused test run.
 3. **Never write to the repository without a person's OK.** `save gains`, `config` and `offsets`
    show a diff without `--yes`. Show that diff to a person and wait for an explicit yes before adding
    `--yes`. Never commit or push.
@@ -49,6 +49,27 @@ pushes against something (stall) or goes faster than asked; the battery starts b
 the floor (11.0 V on blocks) or sags below 7 V; a motor guard stage stops it. The refusal or
 abort reason comes back in the command's output: read it, act on it, and tell the person.
 
+## Units: the data is SI, people hear the team's units
+
+- **The data is in the robot's units (SI)**: every number in a run, a report's numeric fields
+  (`targets`, values in `findings` and `next.action`), NetworkTables values, the `--arg` keys and
+  every config file (`slothtune.json`, the YAGSL and PathPlanner files): meters, m/s, m/s²,
+  radians, rad/s, kilograms, newton-meters. Keep them that way in commands and files. (YAGSL's
+  own wheel diameter and module locations are inches: the file wins.)
+- **Everything you say to a person is in the team's units**: speed in ft/s (write "ft/s", never
+  "fps": that is a camera's frames per second), lengths and distances in inches, weight in pounds,
+  torque in foot-pounds (ft·lb), angles in degrees and turning rates in degrees per second.
+  Convert at the last step: 1 m/s = 3.281 ft/s, 1 m = 39.37 in, 1 kg = 2.205 lb,
+  1 N·m = 0.7376 ft·lb, 1 rad = 57.30°. Volts, amps, seconds, °C, RPM and motor rotations stay
+  as they are.
+- **A gain stays in the code's units** (drive kV in volts per m/s, steering kP in duty cycle per
+  degree): the number you say must be the number in the file.
+- The sentences the tools write for people (a report's `summary` and `why`, the robot's `message`
+  and notes) are already in the team's units: quote them as they are.
+- A number a person gives you (a tape measurement, the clear floor) comes in inches:
+  `env --space/--side` and `analyze --tape-forward` take inches as typed. Convert it to meters
+  only for an `--arg` or a config value.
+
 ## The commands
 
 Add `--json` to every command: each one then prints exactly one JSON object, strict JSON (no NaN:
@@ -65,13 +86,13 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `netcheck` | Whether this laptop reaches the robot and the internet at the same time (two networks, a VPN). It also checks the Driver Station's year and team number, this laptop's address, the firewall, the radios, and, once connected, the roboRIO image. Run it when `status` can't reach the robot, and tell the person what it says. Never change a network, firewall or radio setting yourself. |
 | `versions [--camera vX]` | Is each robot's software the newest for its year: every vendor library against the address it names for its newest, PhotonLib against PhotonVision's releases (never a next-year alpha), and the camera's PhotonVision against PhotonLib (they must match). Report; never update a library yourself. |
 | `dslog [file]` | What a Driver Station log recorded of the link (default: this laptop's newest session with a robot): drops and whether the robot was enabled, brownouts, trip time, packet loss, CPU, and which links the Driver Station's pings found bad. |
-| `env --mode BLOCKS` / `env --mode FIELD --space 3 --side 1.5 --bumpers` | Tells the robot where it is. |
+| `env --mode BLOCKS` / `env --mode FIELD --space 120 --side 60 --bumpers` | Tells the robot where it is. `--space` and `--side` are the clear floor ahead and to each side, in inches; `--cap` is the speed cap in ft/s. |
 | `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it (`run_file`), prints the report. The `--arg` keys are below; leave them out unless a report or a person asks. |
 | `gains show` / `gains set Steer/kP=0.015 --why "<finding title>" --from-run <run_file>` | Reads or changes live gains (lost at restart until saved). A pod's own PID is `Pod/<module>/Steer/kP` (and `kI`, `kD`, `IZone`; `Drive/...` likewise): it changes that pod only; the shared `Steer/kP` sets every pod. `analyze <run> --pod frontleft` reads a run for one pod with its own gains. Always give `--why`: it goes into the robot's match log with the change. Always give `--from-run` with the run whose report gave the values: it refuses another robot's run, the practice pod's, or one more than a day old. |
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
 | `config --file F --path a.b --value V` | Shows the diff of one config change (a report's `config` action); `--yes` writes. Only the robot's own config files. |
 | `runs [--test steer_step] [--robot Peashooter] [--show robot\|sim\|practice\|all]` | Saved runs, newest first: file, test, outcome, score and cost, gains. Real robot runs only unless `--show` says otherwise; a run that stopped part-way has no score. |
-| `analyze <run> [--tape-forward 2.52]` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. For a `straight` run, `--tape-forward` is the distance a person measured with a tape, in meters: the ground truth the wheel size is graded on. |
+| `analyze <run> [--tape-forward 99]` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. For a `straight` run, `--tape-forward` is the distance a person measured with a tape, in inches: the ground truth the wheel size is graded on. |
 | `offsets <run> --project P` | New absolute encoder offsets from a `capture` run with every wheel set straight (a person aligns them); `--yes` writes, with their OK. |
 | `watch [--seconds 30]` | Prints problems as the robot's monitor spots them (a dropout, a hot motor, a brownout) while people drive. |
 | `diagnose [symptom]` | The troubleshooter. |
@@ -99,7 +120,8 @@ part of it, so never run it without one), `system_hold` (tunes a hold current li
 `hold` by number, a piece in; the limit steps down from `start_a` while a person pulls the piece the
 same way each time, until it slips; then 1.5 times that is held for `heat_s` to see the motor warm).
 
-Their `--arg` keys (the robot clamps each to a safe range and says so):
+Their `--arg` keys (the robot clamps each to a safe range and says so). They go to the robot as
+typed, so they are in its units: m/s, meters, rad/s, as each key says:
 
 | Test | Keys |
 |---|---|
@@ -216,6 +238,6 @@ Follow the GUI's Guide tab order; each step depends on the ones before it:
 
 ## Telling the people what you are doing
 
-Before each test, say which test, where (blocks or floor), what will move, roughly how far and for
-how long. After each test, give the summary line, the score, and what you will change next. Keep
+Before each test, say which test, where (blocks or floor), what will move, roughly how far (in
+inches) and how fast (in ft/s), and for how long. After each test, give the summary line, the score, and what you will change next. Keep
 it short; they are watching a robot, not a screen.

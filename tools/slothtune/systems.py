@@ -18,6 +18,7 @@ import os
 import re
 
 from . import advisor, mechanics, wiring
+from . import units as U
 
 TWO_PI = 2 * math.pi
 
@@ -185,7 +186,8 @@ def plan(entry, registered):
         return {"ok": False, "missing": missing}
     team = entry.get("maxVelocity") or registered.get("max_velocity")
     p = mechanics.test_plan(mech, (lo, hi) if positional else None, k,
-                            team if isinstance(team, (int, float)) and math.isfinite(team) else None)
+                            team if isinstance(team, (int, float)) and math.isfinite(team) else None,
+                            units=registered.get("units") or "")
     p.update(ok=True, scale=k, feedforward=mechanics.feedforward(mech), kind=mech["kind"])
     return p
 
@@ -284,7 +286,8 @@ def step_report(doc, all_settings=None):
             if held and k:
                 mv = held[-1]
                 want = ff["kV"] * mv["goal"] / k
-                F.append(advisor.finding("info", f"Holding {mv['goal']:.0f} {units} took {mv['hold_volts']:.2f} V; "
+                said, f_said = U.system_unit(units)   # its speed, in the team's units
+                F.append(advisor.finding("info", f"Holding {mv['goal'] * f_said:.0f} {said} took {mv['hold_volts']:.2f} V; "
                                          f"the physics say {want:.2f} V",
                                          "Far apart means the physical data (ratio, inertia, motor) or the units are off, "
                                          "or friction the model leaves out."))
@@ -313,8 +316,9 @@ def limits_report(doc):
         F.append(advisor.finding("error", f"{name} didn't move", "Move it by hand all the way both ways while the "
                                  "readout runs. If it moved and the numbers didn't, the code reads the wrong encoder."))
     else:
-        summary = f"{name}: {lo:.4g} to {hi:.4g} {units}."
-        F.append(advisor.finding("ok", f"Limits {lo:.4g} to {hi:.4g} {units}",
+        said, f_said = U.system_unit(units)   # the words in the team's units; "limits" keeps the code's
+        summary = f"{name}: {lo * f_said:.4g} to {hi * f_said:.4g} {said}."
+        F.append(advisor.finding("ok", f"Limits {lo * f_said:.4g} to {hi * f_said:.4g} {said}",
                                  "Held for this session; save them so the robot keeps them after a restart."))
     return {"test": "system_limits", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
             "score": None, "next": None, "modules": {}, "limits": {"min": lo, "max": hi, "units": units, "name": name}}

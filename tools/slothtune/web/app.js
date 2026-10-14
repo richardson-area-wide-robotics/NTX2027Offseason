@@ -220,6 +220,9 @@ function openEnvironment(preset) {
   const env = App.state.environment || {};
   const sim = App.env() === "SIM";
   let mode = preset || (env.requested && env.requested !== "UNSET" ? env.requested : "BLOCKS");
+  // The robot keeps meters and m/s; a person types inches and ft/s.
+  const inches = m => m > 0 ? Math.round(U.inches(m)) : "";
+  const cap = +U.fps(env.speed_cap || 1.0).toFixed(1);
   App.modal(`<h2>Where is the robot?</h2>
     <p>This decides which tests may run and how the robot keeps everyone safe. ${sim ? "<b>Simulation is always SIM.</b>" : ""}</p>
     <div class="grid2">
@@ -230,9 +233,9 @@ function openEnvironment(preset) {
     </div>
     <div id="field-opts" class="stack">
       <div class="row">
-        <label class="gain" data-tip="env.ahead">Clear floor ahead (m)<input type="number" id="env-fwd" step="0.1" min="0" value="${env.space_forward || ""}"></label>
-        <label class="gain" data-tip="env.side">Clear to each side (m)<input type="number" id="env-side" step="0.1" min="0" value="${env.space_side || ""}"></label>
-        <label class="gain" data-tip="env.cap">Speed cap (m/s)<input type="number" id="env-cap" step="0.1" min="0.1" max="3" value="${env.speed_cap || 1.0}"></label>
+        <label class="gain" data-tip="env.ahead">Clear floor ahead (in)<input type="number" id="env-fwd" step="1" min="0" value="${inches(env.space_forward)}"></label>
+        <label class="gain" data-tip="env.side">Clear to each side (in)<input type="number" id="env-side" step="1" min="0" value="${inches(env.space_side)}"></label>
+        <label class="gain" data-tip="env.cap">Speed cap (ft/s)<input type="number" id="env-cap" step="0.1" min="0.3" max="9.8" value="${cap}"></label>
       </div>
       <p class="hint">Measure the space; do not guess. Tests are sized to fit inside it and the robot stops if it leaves it.</p>
     </div>
@@ -260,10 +263,11 @@ function openEnvironment(preset) {
     $$(".envopt", root).forEach(o => o.onclick = () => { mode = o.dataset.mode; sync(); });
     $("#env-cancel", root).onclick = () => App.closeModal();
     $("#env-save", root).onclick = async () => {
-      const body = { mode, apriltags: $("#env-tags", root).checked, speed_cap: +$("#env-cap", root).value || 1.0 };
+      const capFps = +$("#env-cap", root).value;
+      const body = { mode, apriltags: $("#env-tags", root).checked, speed_cap: capFps > 0 ? U.mpsFromFps(capFps) : 1.0 };
       if (mode === "FIELD") {
-        body.space_forward = +$("#env-fwd", root).value;
-        body.space_side = +$("#env-side", root).value;
+        body.space_forward = U.mFromIn(+$("#env-fwd", root).value);
+        body.space_side = U.mFromIn(+$("#env-side", root).value);
         body.bumpers = true;  // its box is ticked: Set waits for every check
       }
       const r = await App.api("/api/env", body);

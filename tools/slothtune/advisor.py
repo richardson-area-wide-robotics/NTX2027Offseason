@@ -36,6 +36,7 @@ from . import battery
 from . import explain
 from . import revspecs
 from . import ratios as R
+from . import units as U
 
 # What "tight" means, per loop. Steering numbers are for a MAXSwerve-class module (NEO 550 at
 # 46.42:1): about 1400 deg/s free speed at the module, so a 90 degree move cannot take much under
@@ -326,13 +327,14 @@ def steer_report(result, gains=None, current_limit=STEER_CURRENT_LIMIT_DEFAULT):
         if have_gains:
             if worst["os"] < 3:
                 new_kp = _clamp_ratio(kP * 1.5, kP)
-                lateral = math.tan(math.radians(min(nz(worst["sse"]), 20))) * 100
+                # Sideways drift over 10 ft of driving, inches: 120 in times the tangent.
+                lateral = math.tan(math.radians(min(nz(worst["sse"]), 20))) * 120
                 F.append(finding(
                     "warn", f"Small corrections stop {worst['sse']:.1f}° short",
                     "Friction (carpet scrub, mostly) holds the wheel until the error is big enough "
                     "for kP to push through it. Every degree of steering error is about "
-                    f"{math.tan(math.radians(1)) * 100:.1f} cm of sideways drift per meter driven, "
-                    f"so this one is about {lateral:.1f} cm per meter. Raise kP 50%.",
+                    f"{math.tan(math.radians(1)) * 120:.1f} in of sideways drift per 10 ft driven, "
+                    f"so this one is about {lateral:.1f} in per 10 ft. Raise kP 50%.",
                     gains_action(Steer__kP=new_kp)))
             elif kI == 0:
                 F.append(finding(
@@ -475,7 +477,9 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
         _grade("overshoot (%)", os_, DRIVE_TARGETS["overshoot_pct"]),
         _grade("steady speed error (fraction)", sse_frac, DRIVE_TARGETS["sse_frac"]),
         _grade("module-to-module spread (%)", spread, DRIVE_TARGETS["module_spread_pct"]),
-        _grade("speed jitter at constant command (m/s)", jitter, DRIVE_TARGETS["jitter_mps"]),
+        # A goal reads as its name, value and target, so this one is all in ft/s (the cost below
+        # and report["worst"] keep m/s).
+        _grade("speed jitter at constant command (ft/s)", U.fps(jitter), U.fps(DRIVE_TARGETS["jitter_mps"])),
     ]
     report["cost"] = round(
         (dead_t if A.finite(dead_t) else 0.2) / DRIVE_TARGETS["dead_time_s"]
@@ -537,7 +541,7 @@ def drive_report(result, gains=None, current_limit=DRIVE_CURRENT_LIMIT_DEFAULT, 
                 "loop and CAN. That is normal; tune the gains around it."))
     if jitter > DRIVE_TARGETS["jitter_mps"] and have and (kP > 0.15 or kD > 0):
         F.append(finding(
-            "warn", f"Speed buzzes ±{jitter:.2f} m/s while holding a constant command",
+            "warn", f"Speed buzzes ±{U.speed(jitter)} while holding a constant command",
             ("A NEO's built-in sensor counts 42 steps a turn, so the measured speed moves in coarse "
              "jumps. A large kP turns every jump into a voltage kick, and kD on a velocity loop "
              "multiplies them again - you hear it as a buzz and see it as heat. Set kD to 0 and "
@@ -797,10 +801,10 @@ def feedforward_report(result, gains=None, history=None, ctx=None):
         reached = max((abs(x) for i in mods for x in ch.get(f"m{i}.v", []) if A.finite(x)), default=0.0)
         if not blocks and top and reached < 0.4 * top:
             F.append(finding(
-                "info", f"kV was measured over 0 to {reached:.1f} m/s; full speed is about {top:.1f}",
+                "info", f"kV was measured over 0 to {U.speed(reached, 1)}; full speed is about {U.fps(top):.1f}",
                 "The ramp stops at the speed cap, so kV is a straight line stretched far past what was "
                 "measured. It is usually close, but for a kV that holds at full speed, set a higher speed "
-                "cap (2.5 m/s or more) with the space to match, and run this again.", learn="kV"))
+                "cap (8 ft/s or more) with the space to match, and run this again.", learn="kV"))
         ident_findings, ident = motor_identity_findings(kvs, ctx or {})
         F.extend(ident_findings)
         if ident:
@@ -952,9 +956,9 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
         # Wheels wear a few percent; 10% off is a measuring mistake (measured after the robot came
         # back, the wrong mark, feet for meters), never a wheel size to write into the files.
         F.append(finding(
-            "error", f"{truth.capitalize()} say{'s' if truth == 'the tape' else ''} {measured_forward_m:.3f} m but the robot went out {fwd:.3f} m",
+            "error", f"{truth.capitalize()} say{'s' if truth == 'the tape' else ''} {U.length(measured_forward_m)} but the robot went out {U.length(fwd)}",
             "That is too far apart to be the wheels. Measure from the start mark to the robot's center "
-            "where it stopped at the far end, in meters, and enter it again.",
+            "where it stopped at the far end, in inches, and enter it again.",
             {"type": "troubleshoot", "symptom": "auto_inaccurate"}))
         report["measured"]["tape_forward_m"] = measured_forward_m
         measured_forward_m = None
@@ -978,7 +982,7 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
                     {"type": "troubleshoot", "symptom": "gear_ratio"}))
         if A.finite(scale) and abs(1 - scale) > 0.01:
             F.append(finding(
-                "warn", f"Odometry says {fwd:.3f} m, {truth} say{'s' if truth == 'the tape' else ''} {measured_forward_m:.3f} m",
+                "warn", f"Odometry says {U.length(fwd)}, {truth} say{'s' if truth == 'the tape' else ''} {U.length(measured_forward_m)}",
                 f"Wheels are effectively {scale:.4f} times their configured size - tread wears and "
                 "compresses. Multiply the wheel diameter in physicalproperties.json by this, and the "
                 "PathPlanner wheel radius with it.",
@@ -986,11 +990,11 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
                  "path": ["conversionFactors", "drive", "diameter"], "value": f"x{scale:.4f}"}))
     if measured_lateral_m is not None:
         report["measured"]["tape_lateral_m"] = measured_lateral_m
-        report["targets"].append(_grade("sideways drift per meter (m)",
+        report["targets"].append(_grade("sideways drift (fraction of the distance)",
                                         abs(measured_lateral_m) / max(dist, 0.1), 0.01))
     if abs(dh) > 1.0:
         F.append(finding(
-            "warn", f"Heading changed {dh:.1f}° over {dist:.1f} m with no correction",
+            "warn", f"Heading changed {dh:.1f}° over {U.length(dist)} with no correction",
             "A robot drifting in heading on a straight command has a corner that is weaker or "
             "pointed differently from the others. Check the offsets with a straight-edge, compare "
             "modules in drive_ff, and only then turn on heading correction - it hides the cause.",
@@ -998,7 +1002,7 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
     if not F:
         F.append(finding("ok", "Straight and true", "Heading held without correction."))
     report["cost"] = round(abs(dh) + (abs(1 - report["measured"].get("wheel_scale", 1)) * 100), 3)
-    report["summary"] = f"Straight: {fwd:.2f} m by odometry, heading {dh:+.1f}°, lateral {lat:+.3f} m."
+    report["summary"] = f"Straight: {U.length(fwd)} by odometry, heading {dh:+.1f}°, lateral {U.length(lat, sign=True)}."
     return _finish(report)
 
 
@@ -1504,7 +1508,7 @@ def spin_ff_report(result, history=None, mass_kg=None, mass_source="", moi_estim
         more = "more" if scrub > 1 else "less"
         F.append(finding("warn", f"Turning took {abs(scrub - 1) * 100:.0f}% {more} voltage per wheel speed "
                                  "than driving straight",
-                         "Rolling along their tangents, the wheels should need the same voltage per m/s as "
+                         "Rolling along their tangents, the wheels should need the same voltage per ft/s as "
                          "driving straight. More means they scrub: modules not quite on their tangents, or "
                          "module positions in the config that don't match the robot (measure them in the "
                          "Calibrate tab). The MOI is still a fair estimate, but check that first.",
@@ -1519,26 +1523,27 @@ def spin_ff_report(result, history=None, mass_kg=None, mass_source="", moi_estim
     plausible = MOI_PLAUSIBLE[0] <= moi <= MOI_PLAUSIBLE[1]
     report["targets"].append(_grade("MOI plausible (1 = yes)", 1.0 if plausible else 0.0, 1.0,
                                     lower_is_better=False))
-    est = f" (the estimate was {moi_estimate:.2f})" if moi_estimate else ""
+    est = f" (the estimate was {U.inertia(moi_estimate)})" if moi_estimate else ""
     assumed = "assumed" in (mass_source or "")
-    report["summary"] = f"Moment of inertia {moi:.2f} kg·m²{est}, from {mass_kg:.0f} kg."
+    report["summary"] = f"Moment of inertia {U.inertia(moi)}{est}, from {U.mass(mass_kg)}."
     if not plausible:
-        F.append(finding("error", f"{moi:.2f} kg·m² is not a plausible moment of inertia",
-                         f"FRC robots come out between {MOI_PLAUSIBLE[0]} and {MOI_PLAUSIBLE[1]}. Check the "
+        F.append(finding("error", f"{U.inertia(moi)} is not a plausible moment of inertia",
+                         f"FRC robots come out between {U.inertia(MOI_PLAUSIBLE[0])} and {U.inertia(MOI_PLAUSIBLE[1])}. Check the "
                          "linear kA came from a floor drive_ff run on this robot, and the mass."))
         return _finish(report)
     if assumed:
         # The moment of inertia scales with the mass it was worked out from: a guessed mass gives a
         # guessed MOI, and saving it would put a guess into every auto PathPlanner plans.
-        F.append(finding("warn", f"Moment of inertia: {moi:.2f} kg·m²{est}, from an assumed {mass_kg:.0f} kg",
+        F.append(finding("warn", f"Moment of inertia: {U.inertia(moi)}{est}, from an assumed {U.mass(mass_kg)}",
                          "It scales with the mass, and nobody has weighed the robot yet. Weigh it with "
                          "bumpers and battery (Calibrate tab), save the mass, then re-open this run to "
                          "save the moment of inertia."))
         return _finish(report)
     F.append(finding("warn",
-                     f"Moment of inertia: {moi:.2f} kg·m²{est}",
+                     f"Moment of inertia: {U.inertia(moi)}{est}",
                      "PathPlanner uses it for how hard the robot can start and stop turning. Save it to "
-                     "slothtune.json, then copy it into PathPlanner (Settings, Robot Config, MOI).",
+                     "slothtune.json, then copy it into PathPlanner (Settings, Robot Config, MOI), which "
+                     f"takes it in kg·m²: {moi:.2f}.",
                      {"type": "config", "file": "slothtune.json", "path": ["robotMoiKgM2"],
                       "value": round(moi, 2)}))
     return _finish(report)

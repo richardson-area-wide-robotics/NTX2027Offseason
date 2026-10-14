@@ -253,16 +253,17 @@ final class SystemStepProcedure implements Procedure {
       double p = sys.position.getAsDouble(), range = sys.max - sys.min;
       if (Double.isFinite(p) && (p < sys.min - OVERRUN * range || p > sys.max + OVERRUN * range)) {
         return String.format(Locale.ROOT, "%s went past its limits (%.3f, limits %.3f to %.3f %s): stopped.",
-            sys.name, p, sys.min, sys.max, sys.units);
+            sys.name, sys.shown(p), sys.shown(sys.min), sys.shown(sys.max), sys.shownUnits());
       }
       if (Double.isFinite(v) && Math.abs(v) > SPEED_STOP * vmax) {
         return String.format(Locale.ROOT, "%s moved at %.3f %s/s, faster than the test allows (%.3f): stopped.",
-            sys.name, Math.abs(v), sys.units, vmax);
+            sys.name, sys.shown(Math.abs(v)), sys.shownUnits(), sys.shown(vmax));
       }
     } else {
       double top = Math.max(Math.abs(legs.get(0)[0]), Math.abs(legs.get(1)[0]));
       if (Double.isFinite(v) && Math.abs(v) > 1.25 * top + 0.05 * vmax) {
-        return String.format(Locale.ROOT, "%s reached %.0f %s, above the test's top speed: stopped.", sys.name, Math.abs(v), sys.units);
+        return String.format(Locale.ROOT, "%s reached %.0f %s, above the test's top speed: stopped.", sys.name,
+            sys.shown(Math.abs(v)), sys.shownUnits());
       }
     }
     return null;
@@ -271,7 +272,8 @@ final class SystemStepProcedure implements Procedure {
   @Override
   public String liveMessage(TestContext ctx, double t) {
     double now = sys.kind.positional ? sys.position.getAsDouble() : sys.velocity.getAsDouble();
-    return String.format(Locale.ROOT, "%s: heading for %.3f, goal now %.3f, at %.3f %s.", sys.name, target, sp, now, sys.units);
+    return String.format(Locale.ROOT, "%s: heading for %.3f, goal now %.3f, at %.3f %s.", sys.name, sys.shown(target),
+        sys.shown(sp), sys.shown(now), sys.shownUnits());
   }
 
   @Override
