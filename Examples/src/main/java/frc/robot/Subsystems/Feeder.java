@@ -18,6 +18,8 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.lib.slothtune.CurrentSensor;
+import frc.lib.slothtune.HoldCurrent;
 import frc.lib.slothtune.MotorKind;
 import frc.lib.slothtune.MotorWatcher;
 import frc.lib.slothtune.SlothTune;
@@ -57,6 +59,10 @@ public class Feeder extends SubsystemBase {
   private SparkFlexSim motorSim;
   private FlywheelSim rollerSim;
   private double goal = 0;
+  // 2024 held its note by the roller's current limit; while holding, the hold sets the power.
+  private boolean holding;
+  private CurrentSensor noteByCurrent;
+  private HoldCurrent hold;
 
   public Feeder() {
     SparkFlexConfig config = new SparkFlexConfig();
@@ -82,8 +88,13 @@ public class Feeder extends SubsystemBase {
 
   @Override
   public void periodic() {
-    if (goal == 0) motor.set(0);
-    else motor.getClosedLoopController().setSetpoint(goal, ControlType.kVelocity);
+    if (holding) {
+      // the hold set the power and the current limit; leave them
+    } else if (goal == 0) {
+      motor.set(0);
+    } else {
+      motor.getClosedLoopController().setSetpoint(goal, ControlType.kVelocity);
+    }
     Logger.recordOutput("Feeder/RPM", speed.getVelocity());
     Logger.recordOutput("Feeder/HasNote", hasNote());
   }
@@ -120,5 +131,22 @@ public class Feeder extends SubsystemBase {
         .subsystem(this)
         .motors("Feeder")
         .sparkGains(motor);
+    // A note sensed through the roller's own current, a second way beside the beam break; and held
+    // by a current limit, as in 2024. Both are calibrated on the Systems tab's Game pieces.
+    noteByCurrent = tune.currentSensor("Feeder has note", "Feeder");
+    hold = tune.holdCurrent("Feeder", power -> {
+      holding = power != 0;
+      motor.set(power);
+    }).subsystem(this);
+  }
+
+  /** A note, from the roller's current (false until the Systems tab has calibrated it). */
+  public boolean hasNoteByCurrent() {
+    return noteByCurrent != null && noteByCurrent.hasPiece();
+  }
+
+  /** Holds the note by the roller's current limit while scheduled, as 2024 did. */
+  public Command holdNote() {
+    return this.startEnd(() -> hold.on(), () -> hold.off());
   }
 }

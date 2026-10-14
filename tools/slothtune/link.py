@@ -528,6 +528,28 @@ class RobotLink:
         return "No answer from the robot about the gain change.", self.gains()
 
     # ------------------------------------------------------------------ systems
+    def pieces(self):
+        """Game-piece current sensors: ``[{"index", "name", "motor", "mode", "system", "amps",
+        "detected", "has_piece", "threshold"}]``."""
+        names = list(self.get("str[]", C.PIECE_NAMES))
+        info = list(self.get("str[]", C.PIECE_INFO))
+        v = list(self.get("double[]", C.PIECE_VALUES))
+        out = []
+        for i, n in enumerate(names):
+            motor, mode, system = ((info[i] if i < len(info) else "") + "||").split("|")[:3]
+            x = v[4 * i:4 * i + 4] + [float("nan")] * 4
+            out.append({"index": i, "name": n, "motor": motor, "mode": mode, "system": system, "amps": x[0],
+                        "detected": x[1] > 0.5, "has_piece": x[2] > 0.5, "threshold": x[3]})
+        return out
+
+    def holds(self):
+        """Holds: ``[{"index", "motor", "amps", "duty", "on", "tuned"}]``."""
+        names = list(self.get("str[]", C.HOLD_NAMES))
+        v = list(self.get("double[]", C.HOLD_VALUES))
+        return [{"index": i, "motor": n, "amps": (v + [0] * 4 * (i + 1))[4 * i], "duty": (v + [0] * 4 * (i + 1))[4 * i + 1],
+                 "on": (v + [0] * 4 * (i + 1))[4 * i + 2] > 0.5, "tuned": (v + [0] * 4 * (i + 1))[4 * i + 3] > 0.5}
+                for i, n in enumerate(names)]
+
     def systems(self):
         """Every mechanism the robot code registered (TunableSystem), with its live state, limits
         and gains: ``[{"index", "name", "kind", "units", "motors", "position", "velocity", "goal",

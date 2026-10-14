@@ -63,6 +63,11 @@ final class HoldProcedure implements Procedure {
     return env == TestEnvironment.BLOCKS || env == TestEnvironment.FIELD || env == TestEnvironment.SIM;
   }
 
+  /** Where the step-down starts unless told: the motor's limit, at most 30 A (about 35 s of steps). */
+  static double defaultStartA(HoldCurrent h) {
+    return h == null || h.motor == null ? 30 : Math.min(30, h.motor.baseLimitA());
+  }
+
   static HoldCurrent pickHold(TestContext ctx) {
     int i = (int) Math.round(ctx.args.get("hold", -1, -1, 63));
     return i >= 0 && i < ctx.holds.size() ? ctx.holds.get(i) : null;
@@ -77,7 +82,7 @@ final class HoldProcedure implements Procedure {
     if (h.motor == null) {
       return "The hold's motor (" + h.motorName + ") isn't watched by the motor guard: watch it first.";
     }
-    double s = ctx.args.get("start_a", h.motor.baseLimitA(), 1, 80);
+    double s = ctx.args.get("start_a", defaultStartA(h), 1, 80);
     if (s <= ctx.args.get("min_a", 2, 1, 40)) {
       return "Start above the lowest current.";
     }
@@ -86,7 +91,7 @@ final class HoldProcedure implements Procedure {
 
   @Override
   public double timeoutS(TestContext ctx) {
-    double s = ctx.args.get("start_a", 30, 1, 80), m = ctx.args.get("min_a", 2, 1, 40);
+    double s = ctx.args.get("start_a", defaultStartA(pickHold(ctx)), 1, 80), m = ctx.args.get("min_a", 2, 1, 40);
     double step = ctx.args.get("step_a", 2, 0.5, 10), steps = Math.ceil((s - m) / step) + 1;
     return SEAT_S + steps * ctx.args.get("step_s", 2.5, 1, 10) + ctx.args.get("heat_s", 10, 3, 60) + 10;
   }
@@ -99,7 +104,7 @@ final class HoldProcedure implements Procedure {
   @Override
   public void start(TestContext ctx) {
     hold = pickHold(ctx);
-    startA = ctx.args.get("start_a", hold.motor.baseLimitA(), 1, 80);
+    startA = ctx.args.get("start_a", defaultStartA(hold), 1, 80);
     stepA = ctx.args.get("step_a", 2, 0.5, 10);
     stepS = ctx.args.get("step_s", 2.5, 1, 10);
     minA = ctx.args.get("min_a", 2, 1, 40);
@@ -129,6 +134,7 @@ final class HoldProcedure implements Procedure {
     ctx.meta("heat_s", heatS);
     ctx.meta("duty", duty);
     ctx.meta("current_a", hold.currentA);
+    ctx.meta("warn_c", hold.motor.kind.warnC);
   }
 
   @Override

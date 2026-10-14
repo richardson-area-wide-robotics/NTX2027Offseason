@@ -4,6 +4,7 @@ This project runs only in the simulator. It is one robot carrying a mechanism of
 team has built since 2022. Each one is rebuilt the way this repo's robots are written:
 
 - the YAGSL swerve drive and Sloth Tune, copied from Peashooter;
+- the feeder's note sensed by its roller's current and held by a current limit, as in 2024 (`Feeder.tuneWith`), for the Systems tab's Game pieces;
 - REVLib 2026 SPARKs running their own loops;
 - AdvantageKit logging.
 

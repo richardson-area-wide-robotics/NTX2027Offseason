@@ -8,7 +8,7 @@ const Systems = (() => {
   const root = $("#tab-systems");
   // A mechanism's test runs at half its planned speed until someone picks full: the first runs
   // on the real robot go slowly (the walkthrough's half-speed step).
-  let data = null, pick = null, last = null, edits = {}, timer = null, speed = "half";
+  let data = null, pick = null, last = null, edits = {}, timer = null, speed = "half", view = "test", lastPiece = null;
   const FACTOR = { half: 0.5, full: 1 };
   const KIND = { FLYWHEEL: "flywheel", ROLLER: "roller", PIVOT: "pivot", ELEVATOR: "elevator" };
   const positional = s => s && (s.kind === "PIVOT" || s.kind === "ELEVATOR");
@@ -199,12 +199,21 @@ const Systems = (() => {
   }
 
   // ---------------------------------------------------------------- the test
+  // The test panel: the closed-loop test, or game pieces sensed by current and held by a limit.
+  const viewSeg = () => `<div class="seg" id="sys-view" role="group" aria-label="Show">${[["test", "Test it"], ["pieces", "Game pieces"]].map(([k, l]) =>
+    `<button data-view="${k}" class="${view === k ? "on" : ""}" aria-pressed="${view === k}" data-tip="sys.view-${k}">${l}</button>`).join("")}</div>`;
+  function wireView(box) {
+    $$("#sys-view [data-view]", box).forEach(b => b.onclick = () => { view = b.dataset.view; paintTest(); });
+  }
+
   function paintTest() {
     const box = $("#sys-test", root), s = current();
     if (!s) { box.innerHTML = ""; return; }
+    if (view === "pieces") { paintPieces(box, s); return; }
     const p = scaled(s), env = App.env();
     const where = ["BLOCKS", "FIELD", "SIM"].includes(env);
     box.innerHTML = `
+      ${viewSeg()}
       <div class="row" style="justify-content:space-between"><h3 data-tip="sys.test">${positional(s) ? "4" : "3"}. Test it</h3>
         <div class="row"><div class="seg" id="sys-speed" role="group" aria-label="Test speed">${["half", "full"].map(k =>
           `<button data-speed="${k}" class="${speed === k ? "on" : ""}" aria-pressed="${speed === k}" data-tip="sys.speed-${k}">${k === "half" ? "Half speed" : "Full speed"}</button>`).join("")}</div>
@@ -217,6 +226,7 @@ const Systems = (() => {
       <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The goal and what the mechanism did"></canvas></div>
       <div id="sys-report" class="small"></div>`;
     $("#sys-run", box).onclick = run;
+    wireView(box);
     $$("#sys-speed [data-speed]", box).forEach(b => b.onclick = () => { speed = b.dataset.speed; paintTest(); });
     drawRun();
   }
@@ -257,6 +267,100 @@ const Systems = (() => {
       App.toast((r.status || r.error) + " Run again to see it.", 7000);
       load();
     });
+  }
+
+  // ---------------------------------------------------------------- game pieces
+  // A current sensor on this mechanism's motor is calibrated with a set number of pieces; a hold is
+  // tuned like the slip test. Both are runs on the robot, a person helping, the deadman held.
+  function paintPieces(box, s) {
+    const P = ((data && data.pieces) || []).filter(p => p.system === s.name || s.motors.includes(p.motor));
+    const H = ((data && data.holds) || []).filter(h => h.system === s.name || s.motors.includes(h.motor));
+    const env = App.env(), ok = App.connected() && ["BLOCKS", "FIELD", "SIM"].includes(env);
+    box.innerHTML = `${viewSeg()}
+      <h3 data-tip="sys.pieces">Game pieces</h3>
+      ${!P.length && !H.length ? `<p class="small muted">The code registers no current sensor or hold on ${esc(s.name)}'s motors. In its subsystem:
+          <span class="mono">tune.currentSensor("${esc(s.name)} has piece", "${esc(s.motors[0] || "motor name")}")</span>, or
+          <span class="mono">tune.holdCurrent("${esc(s.motors[0] || "motor name")}", motor::set)</span>.</p>` : ""}
+      ${P.map(p => `<div class="pc-row"><div><b>${esc(p.name)}</b> <span class="small muted">${esc(p.motor)}, ${esc(p.mode === "aboveBaseline" ? "above its empty current" : p.mode)}</span>
+          <div class="small">now ${Number.isFinite(p.amps) ? p.amps.toFixed(1) : "–"} A · ${Number.isFinite(p.threshold) ? `threshold ${p.threshold.toFixed(1)} A` : `<span class="warn-ink">not calibrated: it never sees a piece</span>`}
+            ${p.has_piece ? ` · <span class="level ok">has a piece</span>` : ""}</div></div>
+        <button class="btn" data-cal="${p.index}" data-tip="sys.piece-cal" ${ok ? "" : "disabled"}>Calibrate with pieces…</button></div>`).join("")}
+      ${H.map(h => `<div class="pc-row"><div><b>Hold: ${esc(h.motor)}</b>
+          <div class="small">${h.amps.toFixed(0)} A at ${h.duty.toFixed(2)} power${h.tuned ? "" : ` · <span class="warn-ink">not tuned: half its limit</span>`}${h.on ? ` · <span class="level ok">holding</span>` : ""}</div></div>
+        <button class="btn" data-hold="${h.index}" data-tip="sys.hold-tune" ${ok ? "" : "disabled"}>Tune the hold current…</button></div>`).join("")}
+      ${ok ? "" : `<p class="small muted">Connect, and say where the robot is (on blocks, or on the floor for a ground intake), to run these.</p>`}
+      <div id="pc-report" class="small"></div>`;
+    wireView(box);
+    $$("[data-cal]", box).forEach(b => b.onclick = () => calibrateWalk(s, P.find(p => p.index === +b.dataset.cal)));
+    $$("[data-hold]", box).forEach(b => b.onclick = () => holdWalk(s, H.find(h => h.index === +b.dataset.hold)));
+    paintPieceReport();
+  }
+
+  function walk(title, checks, body, start) {
+    App.modal(`<h2>${title}</h2><ul class="checklist">${checks.map((t, k) => `<li><label class="row"><input type="checkbox" data-pc-check="${k}"> <span>${t}</span></label></li>`).join("")}</ul>
+      ${body}<div class="row" style="justify-content:flex-end"><button class="btn" id="pc-cancel" data-tip="autotune.cancel">Cancel</button>
+      <button class="btn primary" id="pc-go" data-tip="sys.piece-go" disabled>Start</button></div>`, m => {
+      const boxes = $$("[data-pc-check]", m);
+      // A roller needs its speed: Start waits for it too.
+      const ready = () => { const g = $("#pc-goal", m); $("#pc-go", m).disabled = !boxes.every(y => y.checked) || (g && !(Math.abs(+g.value) > 0)); };
+      boxes.forEach(x => x.onchange = ready);
+      const g = $("#pc-goal", m);
+      if (g) g.oninput = ready;
+      $("#pc-cancel", m).onclick = () => App.closeModal();
+      $("#pc-go", m).onclick = () => { const args = start(m); App.closeModal(); runPiece(args); };
+    });
+  }
+
+  function calibrateWalk(s, p) {
+    const pos = positional(s), plan = scaled(s).ok ? scaled(s) : (s.plan || {});
+    walk(`Calibrate ${esc(p.name)}`, [
+      "The robot is enabled and someone holds the deadman for the whole run.",
+      pos ? `${esc(s.name)}'s limits are set, and it is clear to sweep between them.` : "Hands stay clear of the rollers: feed each piece the way the game does (roll it in), never by hand into the rollers.",
+      "You have the pieces ready, the same kind the robot will see in a match.",
+      env() === "FIELD" ? "On the floor: a ground intake picks pieces off the carpet, as in a match." : "On blocks: for a ground intake, do it on the carpet too (Where: on the floor).",
+    ], `<div class="row" style="gap:10px"><label class="small" data-tip="sys.piece-n">Pieces <input type="number" id="pc-n" value="3" min="1" max="10" style="width:4em"></label>
+      ${pos ? "" : `<label class="small" data-tip="sys.piece-speed">Runs at <input type="number" id="pc-goal" value="${n4(plan.a || 0)}" step="any" style="width:6em"> ${esc(s.units)}</label>`}</div>
+      <p class="small">${pos ? "It sweeps slowly between its limits empty, then once with each piece: put a piece in when the banner says, take it out when it says."
+        : "It runs empty, then for each piece it starts, the banner says <b>Feed piece 1 now</b>, and it stops so you can take it out. About 7 s a piece."}
+       The tool then sets the threshold halfway between empty and a piece, and how long to ignore its spin-up.</p>`,
+      m => {
+        const n = Math.max(1, Math.min(10, +$("#pc-n", m).value || 3));
+        return { test: "system_piece", args: Object.assign({ sensor: p.index, system: s.index, pieces: n },
+          pos ? { vmax: (plan.vmax || 0) * 0.5, amax: (plan.amax || 0) * 0.5 } : { goal: +$("#pc-goal", m).value || 0 }) };
+      });
+  }
+  const env = () => App.env();
+
+  function holdWalk(s, h) {
+    walk(`Tune the hold current: ${esc(h.motor)}`, [
+      "A piece is in, held the way it is in a match.",
+      "The robot is enabled and someone holds the deadman for the whole run.",
+      "Someone pulls the piece out steadily when the banner says, the same way every time (a hand, or a spring scale at a set pull), hands clear of the rollers.",
+    ], `<p class="small">It holds at its limit (30 A at most) while the piece seats, then lowers the current every 2.5 s while you pull. When the roller turns, the piece is slipping: it then holds at 1.5 times that current for 10 s, with the pull let go, to see how warm the motor gets. Like the slip test for the drive.</p>`,
+      () => ({ test: "system_hold", args: { hold: h.index } }));
+  }
+
+  async function runPiece(r) {
+    try {
+      lastPiece = await App.runTest(r.test, "ALL", r.args);
+    } catch (e) {
+      lastPiece = { report: { summary: e.message, findings: [] } };   // a refusal shows where the result would
+    }
+    view = "pieces";
+    paintTest();
+  }
+
+  function paintPieceReport() {
+    const out = $("#pc-report", root);
+    if (!out || !lastPiece) return;
+    const rep = lastPiece.report || {};
+    const rows = (rep.pieces || []).map(p => `<tr><td>${p.piece}</td><td class="num">${p.peak_a == null ? "–" : p.peak_a.toFixed(1) + " A"}</td></tr>`).join("");
+    out.innerHTML = `<p><b>${esc(rep.summary || "")}</b></p>
+      ${rows ? `<table class="t small pc-table"><thead><tr><th>Piece</th><th class="num">Held current</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
+      ${(rep.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")}
+      ${(rep.save || []).length ? `<button class="btn primary" id="pc-save" data-tip="sys.piece-save">Save to slothtune.json…</button>` : ""}`;
+    const sv = $("#pc-save", out);
+    if (sv) sv.onclick = () => App.previewAndSave({ kind: "edits", edits: rep.save }, "Save the calibration");
   }
 
   Faults.mount($("#sys-faults", root), () => {

@@ -1691,6 +1691,11 @@ def _analyze_test(result, gains=None, **kw):
     if test == "system_limits":
         from . import systems
         return systems.limits_report(result)
+    if test in ("system_piece", "system_hold"):
+        from . import piecesense
+        rep = piecesense.calibration_report(result) if test == "system_piece" else piecesense.hold_report(result)
+        rep["save"] = [{"file": f, "path": list(p), "value": v} for f, p, v in piecesense.edits(rep.get("suggest"))]
+        return rep
     if test == "spin_ff":
         history = kw.get("history")
         if history is None and not result.get("practice"):

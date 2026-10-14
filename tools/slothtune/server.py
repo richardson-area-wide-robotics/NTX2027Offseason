@@ -1006,8 +1006,17 @@ def api_systems(_query=None):
         out.append(dict(r, settings=entry, physics=phys, physics_error=err, plan=systems.plan(entry, r),
                         feedforward=mechanics.feedforward(phys) if phys else None,
                         scale=systems.scale(entry, r.get("units"), phys)))
+    # Game pieces by current: each sensor and hold with the mechanism it belongs to (by name, or
+    # by its motor).
+    pieces = S.link.pieces() if connected else []
+    holds = S.link.holds() if connected else []
+    for p in pieces:
+        if not p["system"]:
+            p["system"] = next((r["name"] for r in reg if p["motor"] in r.get("motors", [])), "")
+    for h in holds:
+        h["system"] = next((r["name"] for r in reg if h["motor"] in r.get("motors", [])), "")
     return {"ok": True, "connected": connected, "groups": systems.groups(S.project, wiring._design(S.project), reg),
-            "systems": out, "motors": mechanics_motors()}
+            "systems": out, "motors": mechanics_motors(), "pieces": pieces, "holds": holds}
 
 
 def mechanics_motors():
