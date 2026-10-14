@@ -51,8 +51,7 @@ the VPN included, must use the school Wi-Fi.
 4. **Once per laptop**, as Administrator, run the fix it gives you:
 
    ```
-   powershell -ExecutionPolicy Bypass -File tools
-obot_preflight.ps1 -Team 1745 -Fix
+   powershell -ExecutionPolicy Bypass -File tools\robot_preflight.ps1 -Team 1745 -Fix
    ```
 
    The robot's radio hands out an internet gateway like any router. If Windows prefers the USB
@@ -69,6 +68,60 @@ connections": a mentor can turn that off in Group Policy (Network, Windows Conne
 
 At events the robot radio joins the field, so in the pit connect with an Ethernet cable through a
 USB Ethernet adapter instead; the same check and the same fix apply to it.
+
+## When the robot won't connect
+
+Press **Check the networks**. It's under Connect, after a failed Connect, and in Troubleshoot. Or
+run `py -3.12 tools/swervetune netcheck --project Peashooter`. It reads these and changes nothing:
+
+- **The Driver Station:**
+  - that it's installed;
+  - its year against the robot code's: 2026 code needs Driver Station 26.x;
+  - the team number set in it (Setup tab, the gear).
+- **This laptop's address:**
+  - Automatic (DHCP) from the radio is right at home and on the field.
+  - Set by hand, the Driver Station is `10.TE.AM.5` with mask `255.0.0.0`, or `255.255.255.0` with
+    gateway `10.TE.AM.4`. Never `.1` to `.4`, or `.20` and up.
+  - It names the leftovers: no address (`169.254.x`), the radio-setup address `192.168.69.2`, a
+    radio still on its factory team 1 (`10.0.1.x`), or another team's network.
+- **The firewall:**
+  - whether Windows Firewall lets the Driver Station in on the robot's kind of network (Public or
+    Private);
+  - any other firewall, such as an antivirus suite's.
+- **The radios:**
+  - whether the robot radio (`10.TE.AM.1`), the access point radio at home (`10.TE.AM.4`) and the
+    robot (`10.TE.AM.2`) answer;
+  - the robot radio's firmware.
+- **The robot's software, once connected:**
+  - the roboRIO image's year;
+  - whether GradleRIO will deploy to that image.
+
+A team number becomes an address as `10.TE.AM.x`: 1745 is `10.17.45.x`, and a test robot numbered
+17451 is `10.174.51.x`.
+
+Troubleshoot's **Connecting to the robot** symptoms take their answers from the same check:
+no communications, communications but no robot code, losing communication, and back from an event.
+
+### The radio (VH-109)
+
+- **After an event:** the event's kiosk programs the robot radio for the event's network. Back
+  home, it can't link to your access point radio until it is set again.
+  - Its **SYS** light blinks once a second when it can't reach `10.TE.AM.4`.
+  - SYS is solid when it's linked.
+- **Setting it:**
+  1. Run Ethernet from the laptop into the radio's **DS** port.
+  2. Open `http://radio.local/`. Or set the laptop to `192.168.69.2`, mask `255.255.255.0`, and
+     open `http://192.168.69.1/`.
+  3. Pick **Robot Radio Mode**. The access point radio at home is in **Access Point Mode** instead.
+  4. Enter the team number, and the same suffix and WPA keys on both radios, then press
+     **Configure**.
+  5. Set the laptop back to automatic.
+- **Factory setting:** a radio out of the box is team 1 (`10.0.1.1`).
+- **Firmware:**
+  - The radio's page shows its firmware at the bottom; no version shown means firmware before 1.2.0.
+  - Events have required 1.3.0 or newer since 2025.
+- **Power:** an access point radio refuses battery power: all its lights blink fast and its Wi-Fi
+  stays off. Power it from its wall adapter.
 
 ## Staying safe
 
@@ -101,7 +154,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 | **Systems** | The robot's other mechanisms, grouped by subsystem (from the code and the design file) with their motors and sensors. Each one the code registers, such as a shooter's flywheel or an intake's pivot, is set up and tested through its own control loop: its physics, its limits found by hand, the team's top speed, then a test that stays inside the limits and under that speed. See [Tuning a mechanism](#tuning-a-mechanism-the-systems-tab). |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, each camera's lens (PhotonVision, with the team's 9 x 11 in 8 x 8 ChArUco board, drawn), where the cameras sit, and where the field's AprilTags really are. Faults on the motors and gyro a measurement depends on show with it. |
 | **Joysticks** | Checks the drive team's joysticks, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
-| **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. **Robot messages** lists every error and warning the robot has reported since you connected (its console on a real robot, its alerts on any), each once with how often and how recently, so what keeps coming back stands out. |
+| **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. **Robot messages** lists every error and warning the robot has reported since you connected (its console on a real robot, its alerts on any), each once with how often and how recently, so what keeps coming back stands out. Its **Connecting to the robot** symptoms (no communications, no robot code, dropping out, back from an event) take their answers from **Check the networks**. |
 | **Config** | Checks the swerve config files for mistakes, with one-click fixes. |
 | **Runs** | Every saved test, and **Match logs**: what went wrong in a match and where to look. |
 

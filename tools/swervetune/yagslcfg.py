@@ -236,6 +236,7 @@ class Project:
             self.vendordeps[d.get("name", os.path.basename(f))] = d.get("version", "?")
         prefs = self._read_json(os.path.join(self.path, ".wpilib", "wpilib_preferences.json")) or {}
         self.team = prefs.get("teamNumber")
+        self.year = prefs.get("projectYear")
 
     @staticmethod
     def _read_json(path):

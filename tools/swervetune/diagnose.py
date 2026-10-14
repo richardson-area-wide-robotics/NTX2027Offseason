@@ -10,6 +10,8 @@ A check can carry automatic evidence the tool gathers itself:
 * ``lint``    - config findings from :mod:`yagslcfg` (no robot needed)
 * ``monitor`` - live telemetry rules from :mod:`monitor` (robot on, any mode)
 * ``test``    - a test to run, judged by :mod:`advisor`
+* ``net``     - the network check's findings (:mod:`station`): the Driver Station, this laptop's
+  address, the firewall and the radios. Its ``netcheck`` action runs that check.
 
 When evidence exists the tool pre-answers the question and shows why; the student confirms.
 Where only eyes can tell - which way the top of a tire moves - the check says exactly what to
@@ -20,6 +22,7 @@ from __future__ import annotations
 
 # Shorthand for the "where" of each check.
 DISABLED = "DISABLED"   # robot on, disabled: safest, nothing can move
+LAPTOP = "LAPTOP"       # at the Driver Station laptop: its settings, nothing on the robot
 BLOCKS = "BLOCKS"       # wheels in the air
 FIELD = "FIELD"         # on the floor, it moves
 
@@ -49,6 +52,11 @@ SEE_CAN = {"view": "can", "wires": "can", "focus": [_spot("rio_can", "One end: t
                                                     _spot("pdh_term", "The other end: TERM ON")]}
 SEE_FAULT = {"view": "controllers", "focus": [_spot("sparkmax", "SPARK MAX: its light blinks on a fault"),
                                               _spot("sparkflex", "SPARK Flex: the same light")]}
+SEE_RADIO = {"view": "radio", "focus": [_spot("radio", "The radio: PWR and SYS lights"),
+                                        _spot("radio_power", "Its power: tight")]}
+SEE_RIO_LINK = {"view": "rio", "focus": [_spot("rio_ethernet", "Ethernet to the radio's RIO port"),
+                                         _spot("rio_leds", "Its power and status lights")]}
+NETCHECK = {"type": "netcheck"}
 SEE_FEED = {"view": "controllers", "focus": [_spot("sparkmax", "Its V+ and V- leads"), _spot("sparkflex", "Its V+ and V- leads"),
                                              _spot("pdh", "Its PDH port and breaker (Wiring tab: which port)")]}
 
@@ -658,6 +666,151 @@ SYMPTOMS = [
                   "Tighten or replace the set screw / pinion.", None),
         ],
     },
+    {
+        "id": "no_comms",
+        "group": "connect",
+        "title": "The Driver Station shows no communications",
+        "looks_like": "The Driver Station's Communications light stays red: it can't reach the robot at all.",
+        "note": "Check the networks reads most of these for you: the Driver Station, this laptop's address, "
+                "the firewall and the radios.",
+        "checks": [
+            check("Is the Driver Station the same year as the robot code?",
+                  "Its Diagnostics tab shows its version: 26.x for 2026.", LAPTOP,
+                  "A Driver Station from another year can't run this robot.",
+                  "Install that year's FRC Game Tools, then its latest update.", NETCHECK, {"net": ["ds-version"]}),
+            check("Is the Driver Station set to this robot's team number?",
+                  "Setup tab (the gear): Team Number. Test robots have their own (17451, 17452).", LAPTOP,
+                  "It looks for the robot at another team's address (10.TE.AM.2).",
+                  "Set Team Number to this robot's.", NETCHECK, {"net": ["ds-team"]}),
+            check("Is this laptop on the robot's network?",
+                  "A cable into the radio's DS port, or Wi-Fi on the team's access point.", LAPTOP,
+                  "Nothing reaches the robot from another network.",
+                  "Join the robot's network: the radio's DS port, or the team's Wi-Fi.", NETCHECK,
+                  {"net": ["robot-adapter", "wifi-other-team"]}),
+            check("Does the laptop have a good address for this team?",
+                  "Automatic (DHCP) from the radio, or 10.TE.AM.5 with mask 255.0.0.0.", LAPTOP,
+                  "A leftover address (another team's, an old event's, 192.168.69.2 from setting up a radio) or "
+                  "none at all (169.254.x) can't reach the robot.",
+                  "Set the adapter to automatic: Settings, Network, the adapter, IP assignment: Automatic (DHCP).",
+                  NETCHECK, {"net": ["ip-config", "ip-none", "ip-setup", "ip-other-team", "ip-factory"]}),
+            check("Is the robot radio on and linked: PWR solid, SYS solid?",
+                  "SYS blinking once a second: it can't reach the access point (10.TE.AM.4). SYS off with PWR on: "
+                  "still booting, about a minute.", DISABLED,
+                  "The robot radio isn't linked. After an event it usually still has the kiosk's settings; "
+                  "otherwise its team number, suffix or key differs from the access point's.",
+                  "Set it again: Ethernet into its DS port, http://radio.local/, Robot Radio Mode, and the team "
+                  "number, suffix and keys the access point has.", NETCHECK, {"net": ["radio-link"]}, diagram=SEE_RADIO),
+            check("Is the radio set up for this team, with current firmware?",
+                  "The address a radio hands out tells its team (10.TE.AM.x); its page shows its firmware.", DISABLED,
+                  "A radio on its factory setting (team 1), set for another team, or on old firmware won't "
+                  "connect as it should.",
+                  "Configure it for your team at http://radio.local/ (Robot Radio Mode on the robot, Access Point "
+                  "Mode on the one at home), with firmware 1.3.0 or newer.", NETCHECK,
+                  {"net": ["ip-other-team", "ip-factory", "radio-firmware"]}),
+            check("Does the robot (10.TE.AM.2) answer?",
+                  "The roboRIO takes about 30 seconds to boot.", DISABLED,
+                  "The radio is up but the roboRIO isn't reachable: still booting, or the Ethernet cable between "
+                  "the radio's RIO port and the roboRIO is loose.",
+                  "Give it time to boot; reseat that cable at both ends.", NETCHECK, {"net": ["robot-ping"]},
+                  diagram=SEE_RIO_LINK),
+            check("Does the firewall let the Driver Station in?",
+                  "Windows Firewall needs a rule allowing it on the robot's kind of network; an antivirus firewall "
+                  "can block it too.", LAPTOP,
+                  "The robot's replies are blocked.",
+                  "Windows Security, Firewall, Allow an app through firewall: tick Driver Station for Private and "
+                  "Public. Allow it in any antivirus firewall too.", NETCHECK, {"net": ["fw-ds", "fw-other"]}),
+        ],
+    },
+    {
+        "id": "no_robot_code",
+        "group": "connect",
+        "title": "Communications, but no robot code",
+        "looks_like": "Communications is green but Robot Code stays red.",
+        "checks": [
+            check("Is the robot code deployed and running?",
+                  "When it runs, its NetworkTables port (5810) answers; a crash at startup shows in the robot's "
+                  "messages here and in the console (RioLog).", DISABLED,
+                  "There's no code on the roboRIO, or it crashed at startup.",
+                  "Deploy again (./gradlew deploy) and read the console for the error.", NETCHECK, {"net": ["nt4"]}),
+            check("Is the roboRIO's image the same year as the code?",
+                  "Once connected, Check the networks reads the image from the robot.", DISABLED,
+                  "Code for one year doesn't run on another year's image.",
+                  "Image the roboRIO with the roboRIO Imaging Tool from that year's FRC Game Tools.", NETCHECK,
+                  {"net": ["robot-image"]}),
+            check("Is the Driver Station the same year as the robot code?",
+                  "Its Diagnostics tab shows its version: 26.x for 2026.", LAPTOP,
+                  "A Driver Station from another year can't run this robot.",
+                  "Install that year's FRC Game Tools, then its latest update.", NETCHECK, {"net": ["ds-version"]}),
+            check("Does the firewall let the Driver Station in?",
+                  "The swerve tools connecting fine while the Driver Station shows no code points here.", LAPTOP,
+                  "The robot's status replies to the Driver Station are blocked.",
+                  "Windows Security, Firewall, Allow an app through firewall: tick Driver Station for Private and "
+                  "Public.", NETCHECK, {"net": ["fw-ds", "fw-other"]}),
+        ],
+    },
+    {
+        "id": "comms_drops",
+        "group": "connect",
+        "title": "The robot keeps losing communication",
+        "looks_like": "Communications goes red for a moment, the robot stops, then it comes back.",
+        "checks": [
+            check("Are the radio's power and Ethernet connections tight?",
+                  "Wiggle each one with the robot on and watch the radio's lights.", DISABLED,
+                  "A loose connection drops the link whenever the robot is bumped.",
+                  "Reseat and secure them, with strain relief on the cables.", None, diagram=SEE_RADIO),
+            check("Does the battery stay healthy under load?",
+                  "The Live view shows its voltage; brownouts show in the Driver Station's log.", FIELD,
+                  "A sagging battery browns the robot out.",
+                  "Charge or swap it.", {"type": "troubleshoot", "symptom": "brownout"}),
+            check("At home, is the laptop on a cable to the access point, not 2.4 GHz Wi-Fi?",
+                  "2.4 GHz is for checking things; it is slow in a busy building.", LAPTOP,
+                  "Busy 2.4 GHz Wi-Fi drops packets.",
+                  "Plug the laptop into the access point radio's network by Ethernet.", None),
+            check("Is Windows kept from pausing the network adapter?",
+                  "Device Manager, the adapter, Power Management: 'Allow the computer to turn off this device' "
+                  "unticked; the laptop plugged in.", LAPTOP,
+                  "Windows pauses the adapter to save power, and the link drops.",
+                  "Untick that box, and use the Best performance power mode while driving.", None),
+            check("Is the radio's firmware current?",
+                  "Its page shows the version; Check the networks reads it.", DISABLED,
+                  "Older firmware has known link problems; events require 1.3.0 or newer.",
+                  "Update it from Vivid-Hosting's releases on its page (about 3 minutes; don't cut its power).",
+                  NETCHECK, {"net": ["radio-firmware"]}),
+        ],
+    },
+    {
+        "id": "after_event",
+        "group": "connect",
+        "title": "Back from an event, it won't connect at home",
+        "looks_like": "It worked at the competition; at the shop the Driver Station can't reach it.",
+        "checks": [
+            check("Has the robot radio linked to the access point (SYS solid)?",
+                  "SYS blinking once a second means it can't reach the access point (10.TE.AM.4).", DISABLED,
+                  "The event's kiosk set the robot radio for the event's network, so it can't link to your access "
+                  "point.",
+                  "Ethernet into the robot radio's DS port, http://radio.local/ (or 192.168.69.1 with the laptop at "
+                  "192.168.69.2): Robot Radio Mode, your team number, and the suffix and keys your access point "
+                  "uses. Configure.", NETCHECK, {"net": ["radio-link"]}, diagram=SEE_RADIO),
+            check("Is the access point radio on its wall adapter, not a battery?",
+                  "All its lights blinking fast means it found battery power: its Wi-Fi stays off.", DISABLED,
+                  "An access point radio refuses to run its Wi-Fi on a battery.",
+                  "Power it from its wall adapter (PoE), then power cycle it.", None),
+            check("Is the laptop back on automatic (DHCP), or 10.TE.AM.5?",
+                  "Addresses set by hand at the event can stay behind.", LAPTOP,
+                  "A leftover address can't reach the robot at home.",
+                  "Set the adapter to automatic: Settings, Network, the adapter, IP assignment: Automatic (DHCP).",
+                  NETCHECK, {"net": ["ip-config", "ip-setup", "ip-other-team"]}),
+            check("Is the Driver Station still set to this robot's team number?",
+                  "Setup tab (the gear): Team Number.", LAPTOP,
+                  "It looks for another team's robot.",
+                  "Set Team Number to this robot's.", NETCHECK, {"net": ["ds-team"]}),
+            check("Is the radio's firmware what the event left it on, and current?",
+                  "Events update radios; a radio that skipped the kiosk may be older.", DISABLED,
+                  "Older firmware than the access point's can fail to link.",
+                  "Update both radios to the same current firmware (1.3.0 or newer).", NETCHECK,
+                  {"net": ["radio-firmware"]}),
+        ],
+    },
 ]
 
 BY_ID = {s["id"]: s for s in SYMPTOMS}
@@ -680,7 +833,7 @@ SETTLED_BY_CONFIG = {
 }
 
 
-def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
+def evaluate(symptom_id, lint_findings=(), monitor_flags=(), net=None):
     """Pre-answers what the evidence settles.
 
     Each check may get ``auto_answer = "no"`` when evidence shows the problem (the linter or the
@@ -691,6 +844,13 @@ def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
     sym = BY_ID[symptom_id]
     lint_ids = {f["id"] for f in lint_findings}
     flags = {f["rule"] for f in monitor_flags}
+    # The last network check: what failed, by id, with its title as the evidence; and what passed.
+    net_checks = (net or {}).get("checks") or []
+    net_bad = {}
+    for x in net_checks:
+        if x.get("level") == "fail":
+            net_bad.setdefault(x.get("id"), x.get("title"))
+    net_ok = {x.get("id") for x in net_checks if x.get("level") == "ok"} - set(net_bad)
     out = {k: v for k, v in sym.items() if k != "checks"}
     checks, first = [], None
     for i, c in enumerate(sym["checks"]):
@@ -698,6 +858,7 @@ def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
         auto = c.get("auto") or {}
         hits = [x for x in auto.get("lint", []) if x in lint_ids]
         hits += [x for x in auto.get("monitor", []) if x in flags]
+        hits += [net_bad[x] for x in auto.get("net", []) if x in net_bad]
         if auto:
             if hits:
                 c["auto_answer"] = "no"
@@ -707,6 +868,10 @@ def evaluate(symptom_id, lint_findings=(), monitor_flags=()):
             elif "lint" in auto and "monitor" not in auto and any(
                     symptom_id == sid and c["q"].startswith(prefix) for sid, prefix in SETTLED_BY_CONFIG):
                 c["suggest"] = "yes"
+            elif "net" in auto and any(x in net_ok for x in auto["net"]):
+                # The network check found this part fine. A suggestion: the person still answers.
+                c["suggest"] = "yes"
+                c["suggest_by"] = "net"
         checks.append(c)
     out["checks"] = checks
     out["first_failing"] = first

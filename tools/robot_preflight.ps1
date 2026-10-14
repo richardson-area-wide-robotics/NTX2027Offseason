@@ -35,7 +35,9 @@
   Set-NetIPInterface -InterfaceAlias "<name>" -AutomaticMetric Enabled
 
 .PARAMETER Json
-  Prints one JSON object instead of the report (the swerve tools' "Check the networks" uses it).
+  Prints one JSON object instead of the report (the swerve tools' "Check the networks" uses it),
+  with the facts the swerve tools judge: the Driver Station, each adapter's address, the firewall and
+  which radios answer.
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File tools\robot_preflight.ps1 -Team 1745
@@ -260,10 +262,83 @@ if ($null -eq $robotIdx) {
     }
 }
 
+# ---------------------------------------------------------------- facts for the swerve tools to judge
+# The Driver Station, each adapter's addressing, the firewall and the radios, read and never changed.
+# The swerve tools (swervetune/station.py) turn these into checks; -Json carries them as "facts".
+$facts = [ordered]@{}
+if ($Json) {
+    $dsExe = Join-Path ${env:ProgramFiles(x86)} 'FRC Driver Station\DriverStation.exe'
+    $ds = [ordered]@{ installed = [bool](Test-Path $dsExe); version = ""; running = $false; ini = $false; team = $null }
+    if ($ds.installed) { $ds.version = "$((Get-Item $dsExe).VersionInfo.FileVersion)" }
+    $ds.running = [bool](Get-Process -Name DriverStation -ErrorAction SilentlyContinue)
+    $ini = Join-Path $env:PUBLIC 'Documents\FRC\FRC DS Data Storage.ini'
+    if (Test-Path $ini) {
+        $ds.ini = $true
+        $m = Select-String -Path $ini -Pattern '^\s*team\s*_?number\s*=\s*"?(\d+)' | Select-Object -First 1
+        if ($m) { $ds.team = [int]$m.Matches[0].Groups[1].Value }
+    }
+    $facts.ds = $ds
+
+    # Each Wi-Fi adapter's network name, from netsh (Name, then its SSID; BSSID lines don't match).
+    $ssids = @{}; $cur = $null
+    foreach ($line in @(netsh wlan show interfaces 2>$null)) {
+        if ($line -match '^\s*Name\s*:\s*(.+?)\s*$') { $cur = $Matches[1] }
+        elseif ($cur -and $line -match '^\s*SSID\s*:\s*(.+?)\s*$') { $ssids[$cur] = $Matches[1] }
+    }
+    $adapters = @()
+    foreach ($a in @(Get-NetAdapter | Where-Object Status -eq 'Up')) {
+        $i = [int]$a.ifIndex
+        if (Is-Tunnel $st $i) { continue }
+        $ip = Get-NetIPAddress -InterfaceIndex $i -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne '127.0.0.1' } | Select-Object -First 1
+        $gw = (Get-NetRoute -InterfaceIndex $i -DestinationPrefix '0.0.0.0/0' | Select-Object -First 1).NextHop
+        $rec = [ordered]@{ name = $a.Name; wifi = [bool]($a.MediaType -eq 'Native 802.11'); ip = ""; prefix = 0
+                           dhcp = $false; gateway = "$gw"; ssid = "$($ssids[$a.Name])"; robot = [bool]($i -eq $robotIdx); radio_up = $null }
+        if ($ip) {
+            $rec.ip = $ip.IPAddress; $rec.prefix = [int]$ip.PrefixLength
+            $rec.dhcp = [bool]("$($st.ifs[$i].Dhcp)" -eq 'Enabled')
+            # Another team's subnet, the radio's factory one (team 1) or its setup address: is a radio there?
+            $o = $ip.IPAddress -split '\.'
+            if ($ip.IPAddress -like '10.*' -and $ip.IPAddress -notlike "$Subnet.*") { $rec.radio_up = Ping-Quiet "10.$($o[1]).$($o[2]).1" }
+            elseif ($ip.IPAddress -like '192.168.69.*') { $rec.radio_up = Ping-Quiet '192.168.69.1' }
+        }
+        $adapters += $rec
+    }
+    $facts.adapters = $adapters
+
+    $fw = [ordered]@{ profiles = [ordered]@{}; robot_profile = ""; ds_rules = @(); others = @() }
+    foreach ($p in @(Get-NetFirewallProfile)) { $fw.profiles["$($p.Name)"] = [bool]("$($p.Enabled)" -eq 'True') }
+    if ($null -ne $robotIdx) { $fw.robot_profile = "$((Get-NetConnectionProfile -InterfaceIndex $robotIdx).NetworkCategory)" }
+    foreach ($f in @(Get-NetFirewallApplicationFilter | Where-Object { $_.Program -like '*DriverStation.exe' })) {
+        $r = $f | Get-NetFirewallRule
+        if ($r) { $fw.ds_rules += [ordered]@{ name = "$($r.DisplayName)"; enabled = [bool]("$($r.Enabled)" -eq 'True')
+                                             direction = "$($r.Direction)"; action = "$($r.Action)"; profile = "$($r.Profile)" } }
+    }
+    # Other firewalls (antivirus suites) register here; Windows' own doesn't.
+    $fw.others = @(Get-CimInstance -Namespace root/SecurityCenter2 -ClassName FirewallProduct | ForEach-Object { "$($_.displayName)" })
+    $facts.firewall = $fw
+
+    # The radios, from the robot's network: the robot radio (.1), the access point radio at home (.4).
+    $reach = [ordered]@{ robot_radio = $null; ap_radio = $null; roborio = $null }
+    $page = ""
+    if ($null -ne $robotIdx -and $rip -like "$Subnet.*") {
+        $reach.robot_radio = [bool]$radioUp; $reach.roborio = [bool]$rioUp
+        $reach.ap_radio = Ping-Quiet "$Subnet.4"
+        if ($radioUp) {
+            try {
+                $w = Invoke-WebRequest -Uri "http://$Radio/" -UseBasicParsing -TimeoutSec 4
+                $page = (($w.Content -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
+                if ($page.Length -gt 3000) { $page = $page.Substring(0, 3000) }
+            } catch { }
+        }
+    }
+    $facts.reach = $reach
+    $facts.radio_page = $page
+}
+
 $ok = -not ($Checks | Where-Object { $_.level -eq 'fail' })
 if ($Json) {
     [ordered]@{ ok = [bool]$ok; team = $Team; subnet = "$Subnet.0/24"; robot_adapter = $(if ($null -ne $robotIdx) { $st.adapters[$robotIdx].Name } else { "" })
-                internet_adapter = $schoolName; vpn = $vpnName; fixed = $fixed; checks = @($Checks) } | ConvertTo-Json -Depth 5
+                internet_adapter = $schoolName; vpn = $vpnName; fixed = $fixed; checks = @($Checks); facts = $facts } | ConvertTo-Json -Depth 6
     exit 0
 }
 

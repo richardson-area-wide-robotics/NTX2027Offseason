@@ -29,6 +29,10 @@ public final class SwerveTuneTopics {
    */
   public static final String BOOT_ID = ROOT + "/BootId";
   public static final String ROBOT_NAME = ROOT + "/RobotName";
+  /** The roboRIO's image, e.g. {@code FRC_roboRIO2_2026_v2.0}; empty in the simulator. */
+  public static final String ROBOT_IMAGE = ROOT + "/RobotImage";
+  /** The WPILib the running code was built with, e.g. {@code 2026.2.1}. */
+  public static final String ROBOT_WPILIB = ROOT + "/RobotWpilib";
   /** Lines describing what {@code swervetune.json} changed at startup, and any problems. */
   public static final String STARTUP_REPORT = ROOT + "/StartupReport";
   /** YAGSL module names in kinematics order, e.g. {@code frontleft}. */

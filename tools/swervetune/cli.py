@@ -986,11 +986,13 @@ def cmd_setup(args, out):
 def cmd_netcheck(args, out):
     from . import link as L
 
-    team = args.team
-    if not team and args.project:
-        team = L.team_from_project(resolve_project(args.project).path)
+    team, year = args.team, None
+    proj = resolve_project(args.project) if args.project else None
+    if proj:
+        team = team or L.team_from_project(proj.path)
+        year = proj.year
     if team:
-        r = netcheck.run(team, args.adapter)
+        r = netcheck.run(team, args.adapter, year=year)
     else:
         # No robot named: try each robot's team in this repo, and report the one this laptop is on.
         robots = {}

@@ -59,6 +59,7 @@ class Session:
         self.project = None
         self.monitor = monitor.Monitor()
         self.flags = []
+        self.netcheck_last = None   # the last network check, for Troubleshoot's evidence
         self.last_poll = 0.0
         self.deadman_until = 0.0
         self.test_thread = None
@@ -251,8 +252,20 @@ def api_netcheck(body=None):
     """The robot and the internet (Claude, over a VPN) at the same time: tools/robot_preflight.ps1."""
     from . import link as L
 
+    from . import station
+
     team = L.team_from_project(S.project.path) if S.project else None
-    return netcheck.run(team or 1745, (body or {}).get("adapter") or None)
+    robot = None
+    if S.link and S.link.is_connected():
+        try:
+            info = S.link.robot_info()
+            robot = {"image": info.get("image"), "wpilib": info.get("wpilib")}
+        except Exception:  # noqa: BLE001 - a robot without the newer topics: no versions to compare
+            robot = None
+    r = netcheck.run(team or 1745, (body or {}).get("adapter") or None, year=getattr(S.project, "year", None),
+                     robot=robot, accepted=station.accepted_images(S.project) if S.project else [])
+    S.netcheck_last = r
+    return r
 
 
 def api_disconnect(_):
@@ -1448,13 +1461,13 @@ def api_handcheck(body):
 
 
 def api_symptoms(_):
-    return {"symptoms": [{"id": s["id"], "title": s["title"], "looks_like": s["looks_like"]}
-                         for s in diagnose.SYMPTOMS]}
+    return {"symptoms": [{"id": s["id"], "title": s["title"], "looks_like": s["looks_like"],
+                          "group": s.get("group", "robot")} for s in diagnose.SYMPTOMS]}
 
 
 def api_diagnose(sid):
     lint = yagslcfg.lint(S.project) if S.project else []
-    return diagnose.evaluate(sid, lint, S.flags)
+    return diagnose.evaluate(sid, lint, S.flags, S.netcheck_last)
 
 
 def api_practice(body):

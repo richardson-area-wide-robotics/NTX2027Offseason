@@ -11,7 +11,7 @@ const abbr = n => ABBR[n] || n;
 // One word for each place the robot can be, used by every screen (the robot's own names are
 // UNSET, BLOCKS, FIELD and SIM; "FIELD" means the shop floor, not the competition field).
 const WHERE = { UNSET: "Where: not set", BLOCKS: "On blocks", FIELD: "On the floor", SIM: "Simulator",
-  DISABLED: "Robot disabled", ANY: "Anywhere", PRACTICE: "Practice pod" };
+  DISABLED: "Robot disabled", ANY: "Anywhere", PRACTICE: "Practice pod", LAPTOP: "At the laptop" };
 const whereWord = k => WHERE[k] || k;
 const TEST_NAME = { steer_step: "Steering", drive_step: "Drive speed", drive_ff: "Feedforward", slip: "Slip current",
   spin: "Spin", straight: "Straight line", capture: "Sensor capture", pdh_map: "PDH port finder", motor_test: "Motor test",
@@ -168,20 +168,25 @@ $("#connect").onclick = async () => {
   else { App.toast("Connected."); await refreshLint(); }
 };
 
-// ------------------------------------------------------------------ the robot and the internet at once
-// The laptop's own Wi-Fi on the school network (with the VPN, for Claude) and a USB Wi-Fi adapter on
-// the robot's radio. tools/robot_preflight.ps1 does the checking; this shows what it found.
+// ------------------------------------------------------------------ the robot's network, and the internet
+// The Driver Station, this laptop's address, the firewall and the radios; and, for Claude, the
+// laptop's own Wi-Fi with the VPN beside a USB Wi-Fi adapter on the robot's radio.
+// tools/robot_preflight.ps1 reads it all (changing nothing) and swervetune/station.py judges it.
 async function checkNetworks() {
-  App.modal(`<h2>The robot and the internet</h2><p class="hint">Checking how this laptop reaches each…</p>`);
+  App.modal(`<h2>The robot's network</h2><p class="hint">Checking the Driver Station, this laptop, the firewall and the radios: about 15 seconds…</p>`);
   const r = await App.api("/api/netcheck", {});
   const word = { ok: "good", warn: "warn", fail: "bad", info: "info" };
-  App.modal(`<h2>The robot and the internet</h2>
+  const groups = [];
+  for (const c of r.checks || []) {
+    const g = c.group || "";
+    if (!groups.length || groups[groups.length - 1].name !== g) groups.push({ name: g, checks: [] });
+    groups[groups.length - 1].checks.push(c);
+  }
+  App.modal(`<h2>The robot's network</h2>
     ${r.error ? `<div class="callout warn">${esc(r.error)}</div>` : `
-    <p>${r.ok ? "Nothing blocking." : "Fix the red lines, then check again."}
-      The laptop's own Wi-Fi carries the internet (and the VPN, for Claude); the USB Wi-Fi adapter
-      carries only the robot.</p>
-    ${(r.checks || []).map(c => `<div class="finding"><div class="head"><span class="chip ${word[c.level] || ""}">${esc(c.level)}</span>
-      <span class="title">${esc(c.title)}</span></div><div class="why">${esc(c.why)}</div></div>`).join("")}
+    <p>${r.ok ? "Nothing blocking." : "Fix the red lines, then check again."}</p>
+    ${groups.map(g => `${g.name ? `<h3>${esc(g.name)}</h3>` : ""}${g.checks.map(c => `<div class="finding"><div class="head"><span class="chip ${word[c.level] || ""}">${esc(c.level)}</span>
+      <span class="title">${esc(c.title)}</span></div><div class="why">${esc(c.why)}</div></div>`).join("")}`).join("")}
     ${r.fix ? `<div class="callout warn"><b>One-time fix, as Administrator.</b> Open PowerShell as Administrator
       (right-click it, Run as administrator) and run:<pre class="diff">${esc(r.fix)}</pre>
       It sets the robot adapter's metric to 500, so it never carries the internet. Nothing else changes.</div>` : ""}`}

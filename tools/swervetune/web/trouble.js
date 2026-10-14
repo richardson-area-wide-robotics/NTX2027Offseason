@@ -22,10 +22,13 @@ const Trouble = (() => {
           <div class="seg" role="group" aria-label="Show">
             <button data-home="symptoms" class="${homeView === "symptoms" ? "on" : ""}" aria-pressed="${homeView === "symptoms"}" data-tip="trouble.list">Symptoms</button>
             <button data-home="msgs" class="${homeView === "msgs" ? "on" : ""}" aria-pressed="${homeView === "msgs"}" data-tip="trouble.msgs">Robot messages <span id="tr-msgs-count" class="chip"></span></button></div></div>
-        ${homeView === "symptoms" ? `<p class="hint">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p>`
+        ${homeView === "symptoms" ? `<p class="hint wide">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p>`
           : `<div class="row" style="justify-content:space-between"><p class="small muted" id="tr-msgs-src"></p>
               <button class="btn small" id="tr-msgs-clear" data-tip="trouble.msgs-clear" data-quiet>Clear the counts</button></div>`}</div>
-      ${homeView === "symptoms" ? `<div class="symptoms">${symptoms.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div>`
+      ${homeView === "symptoms" ? `<div class="panel sym-groups">${[["connect", "Connecting to the robot"], ["robot", "Driving, motors and mechanisms"]].map(([g, name]) => {
+          const S = symptoms.filter(s => (s.group || "robot") === g);
+          return S.length ? `<h3>${name}</h3><div class="symptoms">${S.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div>` : "";
+        }).join("")}</div>`
         : `<div class="panel tr-msgs"><div id="tr-msgs-list" class="tr-msgs-list"></div></div>`}</div>`;
     $$(".symptom", root).forEach(b => b.onclick = () => open(b.dataset.id));
     $$("[data-home]", root).forEach(b => b.onclick = () => { homeView = b.dataset.home; paintList(); });
@@ -79,7 +82,8 @@ const Trouble = (() => {
 
   function actionButton(a) {
     if (!a) return "";
-    let label = { guide: "Open that Guide step", troubleshoot: "Open that symptom", config: "Preview the file change" }[a.type] || "Do this";
+    let label = { guide: "Open that Guide step", troubleshoot: "Open that symptom", config: "Preview the file change",
+      netcheck: "Check the networks" }[a.type] || "Do this";
     if (a.type === "run" || a.type === "tune") {
       const where = a.env && a.env !== "ANY" ? ` (${whereWord(a.env).toLowerCase()})` : "";
       label = a.test === "capture" ? "Open Sensor health in the Guide" : `Open the ${LOOP_NAME[loopOf(a)]} tuner${where}`;
@@ -106,7 +110,9 @@ const Trouble = (() => {
           <div class="row" style="justify-content:space-between"><span class="q" id="tq-${i}">${a === "yes" ? `<span class="level ok">fine</span> ` : ""}${i + 1}. ${esc(k.q)}</span><span class="chip" data-tip="trouble.where" data-quiet>${esc(whereWord(k.where))}</span></div>
           ${a === "yes" ? "" : `<div class="hint">${Learn.link(k.how, 2)}</div>`}
           ${k.auto_answer === "no" ? `<div class="small"><span class="level error" data-tip="trouble.found" data-quiet>tool found</span> ${esc((k.evidence || []).join(", "))}</div>` : ""}
-          ${k.suggest === "yes" && a === null ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>config looks fine</span> the configuration check found nothing wrong here: press Yes if you agree</div>` : ""}
+          ${k.suggest === "yes" && a === null ? (k.suggest_by === "net"
+            ? `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>network check: fine</span> the network check found this part fine: press Yes if you agree</div>`
+            : `<div class="small"><span class="level ok" data-tip="trouble.found" data-quiet>config looks fine</span> the configuration check found nothing wrong here: press Yes if you agree</div>`) : ""}
           ${a === "no" ? `<div class="callout safety"><b>Cause:</b> ${esc(k.if_no)}<br><b>Fix:</b> ${esc(k.fix)}</div>
              <div class="row">${actionButton(k.action)}<button class="btn small" data-redo="${i}" data-tip="trouble.redo" data-quiet>I fixed it, check again</button></div>` : ""}
           ${i === at && a === null ? `<div class="row"><button class="btn small primary" data-yes="${i}" aria-describedby="tq-${i}" data-tip="trouble.yes" data-quiet>Yes</button>
@@ -144,6 +150,10 @@ const Trouble = (() => {
       Guide.go(a.step);
     } else if (a.type === "troubleshoot") {
       open(a.symptom);
+    } else if (a.type === "netcheck") {
+      // Its findings answer this symptom's checks: open it again once the check is done.
+      const id = current && current.id;
+      App.checkNetworks().then(() => { if (id) open(id); });
     } else if (a.type === "config") {
       App.previewAndSave({ kind: "edit", file: a.file, path: a.path, value: a.value }, "Change the robot's configuration");
     }

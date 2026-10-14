@@ -17,6 +17,11 @@ class HostsTest(unittest.TestCase):
     def test_a_short_team_number(self):
         self.assertEqual(L.candidate_hosts(254)[0], "10.2.54.2")
 
+    def test_never_this_laptops_own_address(self):
+        # Hyper-V's switch takes 172.26.0.1 on some laptops: with the simulator running, that would be it.
+        self.assertNotIn("172.26.0.1", L.candidate_hosts(1745, own={"172.26.0.1"}))
+        self.assertIn("172.26.0.1", L.candidate_hosts(1745, own=set()))
+
     def test_usb_and_systemcore_are_always_tried(self):
         self.assertIn("172.22.11.2", L.candidate_hosts(17451))
         self.assertIn("robot.local", L.candidate_hosts(None))

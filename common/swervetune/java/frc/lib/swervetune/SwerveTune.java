@@ -352,6 +352,10 @@ public final class SwerveTune {
     nt.getIntegerTopic(SwerveTuneTopics.PROTOCOL).publish().set(SwerveTuneTopics.PROTOCOL_VERSION);
     nt.getIntegerTopic(SwerveTuneTopics.BOOT_ID).publish().set(bootId);
     nt.getStringTopic(SwerveTuneTopics.ROBOT_NAME).publish().set(robotName);
+    // Versions, for the laptop's network check: a Driver Station, image and code from different years
+    // is one reason a robot won't run.
+    nt.getStringTopic(SwerveTuneTopics.ROBOT_IMAGE).publish().set(RobotImage.version());
+    nt.getStringTopic(SwerveTuneTopics.ROBOT_WPILIB).publish().set(edu.wpi.first.wpilibj.util.WPILibVersion.Version);
     String[] names = new String[io.moduleCount()];
     double[] locations = new double[2 * io.moduleCount()];
     for (int m = 0; m < io.moduleCount(); m++) {

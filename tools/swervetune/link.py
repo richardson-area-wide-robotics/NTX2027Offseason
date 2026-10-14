@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import socket
 import threading
 import time
 from dataclasses import dataclass, field
@@ -50,12 +51,22 @@ def team_from_project(project_dir):
         return None
 
 
-def candidate_hosts(team=None, host=None, sim=False):
+def own_addresses():
+    """This laptop's own IPv4 addresses: never a robot's."""
+    try:
+        return {ai[4][0] for ai in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET)}
+    except OSError:
+        return set()
+
+
+def candidate_hosts(team=None, host=None, sim=False, own=None):
     """Addresses to try, best first.
 
     A literal address beats mDNS: with a robot NIC and a VPN both up, mDNS answers from whichever
     interface replies first. Covers the roboRIO (2026) and SystemCore (2027): SystemCore keeps
     10.TE.AM.2 but its hostname is always ``robot`` and it adds its own USB and Wi-Fi addresses.
+    Any of those that is this laptop's own is skipped: Windows' Hyper-V switch takes 172.26.0.1 too,
+    and with the simulator running there "the robot" would quietly be the simulator.
     """
     if host:
         return [host]
@@ -66,7 +77,8 @@ def candidate_hosts(team=None, host=None, sim=False):
         te, am = divmod(int(team), 100)
         hosts += [f"10.{te}.{am}.2", f"roborio-{team}-frc.local"]
     hosts += ["172.22.11.2", "robot.local", "172.26.0.1", "172.27.0.1", "172.30.0.1"]
-    return hosts
+    mine = own_addresses() if own is None else set(own)
+    return [h for h in hosts if h not in mine]
 
 
 @dataclass
@@ -203,6 +215,8 @@ class RobotLink:
             "protocol": self.get("int", C.PROTOCOL),
             "boot_id": self.get("int", C.BOOT_ID),
             "name": self.get("str", C.ROBOT_NAME),
+            "image": self.get("str", C.ROBOT_IMAGE),
+            "wpilib": self.get("str", C.ROBOT_WPILIB),
             "modules": names,
             "locations": [locs[2 * i:2 * i + 2] for i in range(len(locs) // 2)],
             "max_module_speed": self.get("double", C.MAX_MODULE_SPEED),
