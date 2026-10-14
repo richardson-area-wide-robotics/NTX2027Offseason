@@ -281,6 +281,17 @@ def build(rec_dir=REC, site=SITE, web=WEB):
     for f in scripts:
         shutil.copy(os.path.join(web, f), os.path.join(site, f))
     shutil.copytree(os.path.join(web, "img"), os.path.join(site, "img"), dirs_exist_ok=True)
+    # The artifact host refuses an SVG with a DOCTYPE; a few of the part drawings carry SVG 1.1's,
+    # which the browser ignores anyway. The site's copies go without it (the tool's stay unchanged).
+    for d, _, fs in os.walk(os.path.join(site, "img")):
+        for f in fs:
+            if f.endswith(".svg"):
+                with open(os.path.join(d, f), encoding="utf-8") as fh:
+                    svg = fh.read()
+                bare = re.sub(r"<!DOCTYPE[^>]*>\s*", "", svg, flags=re.I)
+                if bare != svg:
+                    with open(os.path.join(d, f), "w", encoding="utf-8", newline="") as fh:
+                        fh.write(bare)
     for f in ("mock.js", "preview.js", "preview.css"):
         shutil.copy(os.path.join(HERE, f), os.path.join(site, f))
     with open(os.path.join(web, "style.css"), encoding="utf-8") as fh:
