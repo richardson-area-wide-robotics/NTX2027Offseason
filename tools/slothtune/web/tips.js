@@ -489,6 +489,7 @@ const TIPS = {
   // ---------------------------------------------------------------- wiring
   "wiring.title": ["The CAN chain and power feeds, with faults marked where they are.", "Red is missing now, amber had trouble, a dashed red line marks the suspect cable.", "can_bus"],
   "wiring.demo": ["Fakes a wiring fault on this map so you can practice finding it.", "The robot isn't touched; choose Live robot to go back.", "can_bus"],
+  "wiring.clear-sticky": ["Clears every sticky fault on the robot: each SPARK's, the gyro's, and the tool's counts of drop-outs, reboots and low supply.", "Do it after fixing what caused them, then watch for any that come back. The PDH keeps its own: REV Hardware Client clears those.", null],
   "wiring.edit": ["Sets the CAN order and each controller's PDH port by hand.", "The robot can't see cable order, so someone traces it once and saves it.", "can_bus"],
   "wiring.findings": ["Each wiring problem found, with what to do about it.", "One device missing points at its power; everything past one point missing points at that cable.", "can_bus"],
   "wiring.ohms": ["Checks the CAN terminators with a multimeter, robot off.", "About 60 Ω is right: two 120 Ω terminators side by side.", "can_termination"],

@@ -81,6 +81,21 @@ def candidate_hosts(team=None, host=None, sim=False, own=None):
     return [h for h in hosts if h not in mine]
 
 
+def motor_settings(text):
+    """A controller's settings as the robot publishes them, ``"kP=0.01;idle=brake"``, as a dict:
+    numbers as floats, the rest as text. Empty for none."""
+    out = {}
+    for part in (text or "").split(";"):
+        k, _, v = part.partition("=")
+        if not k or not v:
+            continue
+        try:
+            out[k] = float(v)
+        except ValueError:
+            out[k] = v
+    return out
+
+
 @dataclass
 class TestResult:
     """What came back from one test run."""
@@ -601,6 +616,8 @@ class RobotLink:
         cols.update({k: list(self.get("double[]", t)) for k, t in C.MOTOR_NUMBERS.items()})
         rows = [{k: (v[i] if i < len(v) else None) for k, v in cols.items()}
                 for i in range(len(cols["name"]))]
+        for r in rows:
+            r["settings"] = motor_settings(r.get("settings"))
         return {
             "guard_on": bool(self.get("bool", C.MOTORS_GUARD_ON, True)),
             "motors": rows,
@@ -624,6 +641,22 @@ class RobotLink:
                 return self.get("str", C.MOTORS_OVERRIDE_ACK_MESSAGE)
             time.sleep(0.02)
         return "No answer from the robot about the override."
+
+    def clear_sticky(self, timeout=3.0):
+        """Clears every sticky fault on the robot: each controller's, the gyro's, and the guard's
+        counts of drop-outs, reboots and low supply. Returns the robot's answer."""
+        self.put("int", C.MOTORS_CLEAR_BOOT_ID, self.get("int", C.BOOT_ID))
+        self.flush()
+        time.sleep(0.05)
+        seq = int(time.time() * 1000) % (2 ** 52)
+        self.put("int", C.MOTORS_CLEAR_SEQ, seq)
+        self.flush()
+        end = time.time() + timeout
+        while time.time() < end:
+            if self.get("int", C.MOTORS_CLEAR_ACK_SEQ) == seq:
+                return self.get("str", C.MOTORS_CLEAR_ACK_MESSAGE)
+            time.sleep(0.02)
+        return "No answer from the robot about clearing the sticky faults."
 
     # ------------------------------------------------------------------ simulation
     def sim_enable(self, on):

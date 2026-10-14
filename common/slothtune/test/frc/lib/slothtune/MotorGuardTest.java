@@ -367,6 +367,36 @@ class MotorGuardTest {
   // ------------------------------------------------------------------ wiring
 
   @Test
+  void clearStickyClearsEveryControllerAndTheGuardsOwnCounts() {
+    FakeMotorChannel c = new FakeMotorChannel(40);
+    c.sticky = "CAN";
+    Motor m = add("Intake", c, MotorKind.NEO_2_0, false);
+    run(0.5);
+    c.present = false;
+    run(1);
+    c.present = true;
+    run(0.5);
+    assertEquals(1, m.dropouts());
+    assertTrue(m.history().contains("CAN"), m.history());
+    assertEquals(1, guard.clearSticky());
+    assertEquals(1, c.clears);
+    assertEquals(0, m.dropouts());
+    run(0.1);
+    assertEquals("", m.history(), "nothing remembered once cleared");
+  }
+
+  @Test
+  void aControllersSettingsAndOutputPassThrough() {
+    FakeMotorChannel c = new FakeMotorChannel(40);
+    c.settingsText = "idle=brake;stallA=40;kP=0.01";
+    c.duty = 0.4;
+    Motor m = add("Shooter", c, MotorKind.NEO_2_0, false);
+    run(0.1);
+    assertEquals("idle=brake;stallA=40;kP=0.01", m.settings());
+    assertEquals(0.4, m.duty(), 1e-9);
+  }
+
+  @Test
   void aControllerThatDropsOffTheBusIsCountedAndJudgedOnNothingStale() {
     FakeMotorChannel c = new FakeMotorChannel(40);
     c.demandA = 60;

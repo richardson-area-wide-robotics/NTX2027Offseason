@@ -112,6 +112,19 @@ public final class MotorGuard {
 
     default void clearResetFlag() {}
 
+    /** Clears the faults the controller remembers (its sticky faults); false if it can't. */
+    default boolean clearStickyFaults() {
+      return false;
+    }
+
+    /**
+     * Its settings as it reported them at startup, "name=value;..." (see
+     * SlothTuneTopics.MOTORS_SETTINGS); empty when it can't say.
+     */
+    default String settings() {
+      return "";
+    }
+
     /** Whether the controller is warning of a low supply voltage right now. */
     default boolean brownoutWarning() {
       return false;
@@ -323,6 +336,16 @@ public final class MotorGuard {
       return channel.firmware();
     }
 
+    /** Its settings as it reported them at startup ("name=value;..."); empty when unknown. */
+    public String settings() {
+      return channel.settings();
+    }
+
+    /** Its output now, -1 to 1; NaN when unknown. */
+    public double duty() {
+      return duty;
+    }
+
     /** Supply voltage at the controller, volts; NaN if unknown. */
     public double busVolts() {
       return busVolts;
@@ -348,6 +371,25 @@ public final class MotorGuard {
   public static final double HYSTERESIS_C = 10;
   public static final double HYSTERESIS_HEAT = 0.10;
   public static final double MAX_OVERRIDE_S = 20;
+
+  /**
+   * Clears every sticky fault: each controller's own (the ones that can), and what the guard has
+   * counted since the code started (dropped off, rebooted, low supply). Returns how many
+   * controllers cleared theirs.
+   */
+  public int clearSticky() {
+    int n = 0;
+    for (Motor m : motors.values()) {
+      if (m.channel.clearStickyFaults()) {
+        n++;
+      }
+      m.history = "";
+      m.dropouts = 0;
+      m.resets = 0;
+      m.brownouts = 0;
+    }
+    return n;
+  }
   public static final int SHUTOFF_LIMIT_A = 2;
   static final double WARN_HEAT = 0.50;
   static final double DERATE_HEAT = 0.70;

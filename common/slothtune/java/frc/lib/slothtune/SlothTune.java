@@ -171,6 +171,11 @@ public final class SlothTune {
   private final StringArrayPublisher motorsReport;
   private final StringArrayPublisher motorsEvents;
   private long lastOverrideSeq;
+  private IntegerSubscriber clearSeq;
+  private IntegerSubscriber clearBootId;
+  private IntegerPublisher clearAckSeq;
+  private StringPublisher clearAckMessage;
+  private long lastClearSeq;
   private int publishedReportLines = -1;
   private DashboardAlerts dashboard;
   private double[] lastCan = new double[0];
@@ -327,6 +332,10 @@ public final class SlothTune {
     overrideSeconds = nt.getDoubleTopic(SlothTuneTopics.MOTORS_OVERRIDE_SECONDS).subscribe(0);
     overrideAckSeq = nt.getIntegerTopic(SlothTuneTopics.MOTORS_OVERRIDE_ACK_SEQ).publish();
     overrideAckMessage = nt.getStringTopic(SlothTuneTopics.MOTORS_OVERRIDE_ACK_MESSAGE).publish();
+    clearSeq = nt.getIntegerTopic(SlothTuneTopics.MOTORS_CLEAR_SEQ).subscribe(0);
+    clearBootId = nt.getIntegerTopic(SlothTuneTopics.MOTORS_CLEAR_BOOT_ID).subscribe(0);
+    clearAckSeq = nt.getIntegerTopic(SlothTuneTopics.MOTORS_CLEAR_ACK_SEQ).publish();
+    clearAckMessage = nt.getStringTopic(SlothTuneTopics.MOTORS_CLEAR_ACK_MESSAGE).publish();
     motorsReport = nt.getStringArrayTopic(SlothTuneTopics.MOTORS_REPORT).publish();
     motorsEvents = nt.getStringArrayTopic(SlothTuneTopics.MOTORS_EVENTS).publish();
     nt.getBooleanTopic(SlothTuneTopics.MOTORS_GUARD_ON).publish().set(config.motorGuard);
@@ -399,6 +408,7 @@ public final class SlothTune {
     lastCmdSeq = cmdSeq.get();
     lastAbortSeq = abortSeq.get();
     lastOverrideSeq = overrideSeq.get();
+    lastClearSeq = clearSeq.get();
     publishStatus(false);
   }
 
@@ -679,6 +689,27 @@ public final class SlothTune {
     overrideAckSeq.set(seq);
   }
 
+  /** The laptop's Clear sticky faults: every controller's, the gyro's, and the guard's counts. */
+  private void handleClearSticky() {
+    long seq = clearSeq.get();
+    if (seq == lastClearSeq) {
+      return;
+    }
+    lastClearSeq = seq;
+    String msg;
+    if (clearBootId.get() != bootId) {
+      msg = "Ignored: that was sent to an earlier boot of the robot.";
+    } else {
+      int n = guard.clearSticky();
+      boolean gyro = io.gyroClearStickyFaults().ok();
+      msg = String.format(Locale.ROOT, "Cleared the sticky faults on %d controller%s%s, and the counts of drop-outs, "
+          + "reboots and low supply. The PDH keeps its own: clear those in REV Hardware Client.",
+          n, n == 1 ? "" : "s", gyro ? " and the gyro" : "");
+    }
+    clearAckMessage.set(msg);
+    clearAckSeq.set(seq);
+  }
+
   private StringArrayPublisher liveStrings(String topic) {
     return liveStrings.computeIfAbsent(topic, k -> nt.getStringArrayTopic(k).publish());
   }
@@ -692,6 +723,8 @@ public final class SlothTune {
     String[] causes = new String[n];
     String[] flags = new String[n];
     String[] history = new String[n];
+    String[] settings = new String[n];
+    double[] duty = new double[n];
     double[] rpm = new double[n];
     double[] heat = new double[n];
     double[] temp = new double[n];
@@ -718,6 +751,8 @@ public final class SlothTune {
       causes[i] = m.cause();
       flags[i] = m.flags();
       history[i] = m.history();
+      settings[i] = m.settings();
+      duty[i] = m.duty();
       rpm[i] = m.rpm();
       heat[i] = 100 * m.heatFraction();
       temp[i] = m.tempC();
@@ -739,6 +774,8 @@ public final class SlothTune {
     liveStrings(SlothTuneTopics.MOTORS_CONTROLLERS).set(models);
     liveStrings(SlothTuneTopics.MOTORS_CODE_CONTROLLERS).set(classes);
     liveStrings(SlothTuneTopics.MOTORS_FIRMWARE).set(firmware);
+    liveStrings(SlothTuneTopics.MOTORS_SETTINGS).set(settings);
+    liveArray(SlothTuneTopics.MOTORS_DUTY).set(duty);
     liveArray(SlothTuneTopics.MOTORS_PRESENT).set(present);
     liveArray(SlothTuneTopics.MOTORS_DROPOUTS).set(drops);
     liveArray(SlothTuneTopics.MOTORS_RESETS).set(resets);
@@ -1028,6 +1065,7 @@ public final class SlothTune {
       publishLive(now);
       publishMotors();
       handleMotorOverride(now);
+      handleClearSticky();
       AkLogging.record(io, guard.motors(), state == State.RUNNING ? lastTest : "");
       handleSimEnable();
       // No gain changes during a match or a test, from any path: the laptop, an agent, AdvantageScope.

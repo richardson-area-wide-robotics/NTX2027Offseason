@@ -222,6 +222,16 @@ public final class SlothTuneTopics {
   /** Each controller's firmware version. */
   public static final String MOTORS_FIRMWARE = MOTORS + "Firmware";
 
+  /**
+   * Each controller's settings as it reported them at startup, "name=value;name=value": idle,
+   * inverted, stallA, freeA, secondaryA, rampS, openRampS, kP, kI, kD, iZone, kS, kV, kA, kG, kCos,
+   * mmCruise, mmAccel, mmError (MAXMotion), sensor, follows. Empty when it can't say.
+   */
+  public static final String MOTORS_SETTINGS = MOTORS + "Settings";
+
+  /** Each controller's output now, -1 to 1 (NaN when unknown). */
+  public static final String MOTORS_DUTY = MOTORS + "Duty";
+
   // ---------------------------------------------------------------- battery
 
   /**
@@ -290,6 +300,14 @@ public final class SlothTuneTopics {
   public static final String MOTORS_OVERRIDE_SECONDS = MOTORS + "Override/Seconds";
   public static final String MOTORS_OVERRIDE_ACK_SEQ = MOTORS + "Override/AckSeq";
   public static final String MOTORS_OVERRIDE_ACK_MESSAGE = MOTORS + "Override/AckMessage";
+  /**
+   * Bumped to clear every sticky fault: each controller's, the gyro's, and the counts the tool
+   * keeps (dropped off, rebooted, low supply). Ignored unless {@link #MOTORS_CLEAR_BOOT_ID} matches.
+   */
+  public static final String MOTORS_CLEAR_SEQ = MOTORS + "ClearSticky/Seq";
+  public static final String MOTORS_CLEAR_BOOT_ID = MOTORS + "ClearSticky/BootId";
+  public static final String MOTORS_CLEAR_ACK_SEQ = MOTORS + "ClearSticky/AckSeq";
+  public static final String MOTORS_CLEAR_ACK_MESSAGE = MOTORS + "ClearSticky/AckMessage";
   /** Vision observations so far, {@code {accepted, rejected}}. */
   public static final String LIVE_VISION_COUNTS = LIVE + "VisionCounts";
   /** Why the most recent rejected observation was rejected. */

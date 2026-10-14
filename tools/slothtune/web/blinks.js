@@ -27,10 +27,10 @@ const Blinks = (() => {
   const BRUSHED = "Every motor on these robots is brushless: set the motor type to brushless in the code before running it.";
   const sparkRows = flex => [
     { title: "Running", rows: [
-      row([L("cyan", "blink"), L("cyan")], "Brushless, brake mode. Blinking: nothing is commanding it, normal while the robot is disabled. Solid: enabled, output zero.", { id: "idle", s: "Brake mode. Blinking: idle, normal when disabled. Solid: enabled, at zero." }),
-      row([L("magenta", "blink"), L("magenta")], "Brushless, coast mode. Blinking: nothing commanding it. Solid: enabled, output zero.", { id: "idle", s: "Coast mode. Blinking: idle. Solid: enabled, at zero." }),
-      row([L("green", "blink"), L("green")], "Driving forward. Blinking: part power. Solid: full power.", { s: "Forward: part power, or full." }),
-      row([L("red", "blink"), L("red")], "Driving in reverse. Blinking: part power. Solid: full power.", { s: "Reverse: part power, or full." }),
+      row([L("cyan", "blink"), L("cyan")], "Brushless, brake mode. Blinking: nothing is commanding it, normal while the robot is disabled. Solid: enabled, output zero.", { id: "brake", s: "Brake mode. Blinking: idle, normal when disabled. Solid: enabled, at zero." }),
+      row([L("magenta", "blink"), L("magenta")], "Brushless, coast mode. Blinking: nothing commanding it. Solid: enabled, output zero.", { id: "coast", s: "Coast mode. Blinking: idle. Solid: enabled, at zero." }),
+      row([L("green", "blink"), L("green")], "Driving forward. Blinking: part power. Solid: full power.", { s: "Forward: part power, or full.", id: "fwd" }),
+      row([L("red", "blink"), L("red")], "Driving in reverse. Blinking: part power. Solid: full power.", { s: "Reverse: part power, or full.", id: "rev" }),
       row(L("green/white", "blink"), "Forward limit switch pressed: it won't drive forward.", { s: "Forward limit switch pressed.", d: "Nothing touching the switch? Check the switch and its wire." }),
       row(L("red/white", "blink"), "Reverse limit switch pressed: it won't drive in reverse.", { s: "Reverse limit switch pressed.", d: "Nothing touching the switch? Check the switch and its wire." }),
       row([L("blue", "blink"), L("blue")], "Brushed mode, brake. Blinking: nothing commanding it.", { s: "Brushed mode: wrong for a NEO.", d: BRUSHED }),
@@ -254,7 +254,24 @@ const Blinks = (() => {
     const f = String(ctx.flags || "");
     ["CAN fault", "sensor fault", "gate driver fault", "over temperature", "hardware fault", "CAN ID conflict", "CAN error"]
       .forEach(w => { if (f.includes(w)) ids.add(w); });
+    // A SPARK's faults as the robot words them: "faults: sensor (encoder or hall cable), CAN".
+    const at = f.indexOf("faults:");
+    if (at >= 0) {
+      const list = f.slice(at + 7);
+      if (/\bsensor \(|\bmotor type\b/.test(list)) ids.add("sensor fault");
+      if (/\bgate driver\b/.test(list)) ids.add("gate driver fault");
+      if (/(^|[\s,])CAN($|[\s,;])/.test(list)) ids.add("CAN fault");
+    }
     if (ctx.present === 0) ids.add("dark");
+    // A SPARK with nothing wrong: which way it drives now, else its idle mode (blinking disabled,
+    // solid enabled at zero).
+    if ((name === "SPARK MAX" || name === "SPARK Flex") && ctx.present === 1 && !ids.size) {
+      if (Number.isFinite(ctx.duty) && Math.abs(ctx.duty) > 0.02) ids.add(ctx.duty > 0 ? "fwd" : "rev");
+      else {
+        const idle = String(ctx.idle || "").replace(/^k/i, "").toLowerCase();
+        if (idle === "brake" || idle === "coast") ids.add(idle);
+      }
+    }
     ids.delete("");
     return ids;
   }
@@ -263,11 +280,14 @@ const Blinks = (() => {
    * One device's lights as a table: ``compact`` for a hover card (no what-to-do column), else
    * Troubleshoot's full table with what to do and where to go.
    */
-  function table(name, { compact = false, ctx = {} } = {}) {
+  function table(name, { compact = false, ctx = {}, only = false } = {}) {
     const d = DEVICES[name];
     if (!d) return "";
     const now = nowIds(name, ctx);
-    const rows = g => g.rows.map(r => {
+    // Connected and heard: only what it should be showing now. Not connected, not on the bus, or
+    // nothing to tell from: every code.
+    const just = only && now.size > 0;
+    const rows = g => g.rows.filter(r => !just || (r.id && now.has(r.id))).map(r => {
       const on = r.id && now.has(r.id);
       const go = r.go ? `<button class="btn small" data-light-go='${esc(JSON.stringify(r.go))}' data-tip="lights.go" data-quiet>${
         r.go.tab ? `Open ${esc(r.go.tab[0].toUpperCase() + r.go.tab.slice(1))}` : r.go.netcheck ? "Check the networks" : "Open that symptom"}</button>` : "";
@@ -276,7 +296,8 @@ const Blinks = (() => {
         ${compact ? "" : `<td>${r.d ? esc(r.d) : ""}${go ? `<div>${go}</div>` : ""}</td>`}</tr>`;
     }).join("");
     return `${d.caution ? `<p class="callout warn small lights-caution">${esc(d.caution)}</p>` : ""}<table class="t lights${compact ? " compact" : ""}">${compact ? "" : `<thead><tr><th>Light</th><th>What it means</th><th>What to do</th></tr></thead>`}
-      ${d.groups.map(g => `<tbody><tr class="lights-group"><th colspan="${compact ? 2 : 3}">${esc(g.title)}</th></tr>${rows(g)}</tbody>`).join("")}</table>`;
+      ${d.groups.map(g => { const R = rows(g); return R ? `<tbody><tr class="lights-group"><th colspan="${compact ? 2 : 3}">${esc(g.title)}</th></tr>${R}</tbody>` : ""; }).join("")}</table>
+      ${just ? `<p class="small muted lights-only">What it should be showing now. Every code: when the robot isn't connected or this isn't heard on the bus, or Troubleshoot, Status lights.</p>` : ""}`;
   }
   const source = name => {
     const s = (DEVICES[name] || {}).source;
@@ -295,9 +316,10 @@ const Blinks = (() => {
       document.body.appendChild(pop);
     }
     popFor = el;
-    const ctx = el._blinkCtx || {};
-    pop.innerHTML = `<div class="dcard-head"><b>${esc(name)}: its status light</b><span class="small muted">${esc(DEVICES[name].light)}</span></div>
-      ${table(name, { compact: true, ctx: { ...liveCtx(), ...ctx } })}<p class="dcard-credit">From ${source(name)}.</p>`;
+    const ctx = Object.assign({}, el._blinkCtx || {}, motorCtx(el.dataset.motor));
+    const only = showsNow(name, ctx);
+    pop.innerHTML = `<div class="dcard-head"><b>${esc(name)}: ${only ? "its status light now" : "its status light"}</b><span class="small muted">${esc(DEVICES[name].light)}</span></div>
+      ${table(name, { compact: true, ctx: { ...liveCtx(), ...ctx }, only })}<p class="dcard-credit">From ${source(name)}.</p>`;
     pop.hidden = false;
     const b = el.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
     let x = b.right + 10;
@@ -309,6 +331,24 @@ const Blinks = (() => {
     if (pop && (!el || popFor === el)) { pop.hidden = true; popFor = null; }
   }
   const liveMode = () => (App.connected() && App.live && App.live.live && App.live.live.mode) || null;
+  /** A watched motor's live state for its light: on the bus, faults, output, idle mode. */
+  function motorCtx(motor) {
+    const live = App.connected() && App.live && App.live.live;
+    const r = motor && live && (live.motors || []).find(x => x.name === motor);
+    return r ? { present: r.present, flags: r.flags, duty: r.duty, idle: (r.settings || {}).idle } : {};
+  }
+  /**
+   * Whether to show only what it should be showing now: connected, and a device on the CAN bus
+   * heard on it (the robot controller and signal light by the robot's mode, a gyro by its report).
+   */
+  function onlyNow(name, ctx = {}) {
+    if (!App.connected()) return false;
+    if (["roboRIO", "SystemCore", "RSL"].includes(name)) return !!liveMode();
+    if (name === "Canandgyro" || name === "navX") return ((liveCtx().gyro || [])[0]) === name;
+    return ctx.present === 1;
+  }
+  /** Whether a light's table shows only what it should be showing now: connected, heard, and its state says. */
+  const showsNow = (name, ctx = {}) => onlyNow(name, ctx) && nowIds(name, { ...liveCtx(), ...ctx }).size > 0;
   /** What the connected robot says, for marking rows: its mode and its gyro's report. */
   const liveCtx = () => ({ mode: liveMode(), gyro: (App.connected() && App.live && App.live.live && App.live.live.gyro) || [] });
   document.addEventListener("mouseover", e => { const el = e.target.closest && e.target.closest("[data-blink]"); if (el && el !== popFor) show(el); });
@@ -324,5 +364,5 @@ const Blinks = (() => {
     else if (g.tab) App.show(g.tab);
   }
 
-  return { DEVICES, ORDER, table, dot, words, source, nowIds, go, liveMode, liveCtx, has: name => !!DEVICES[name] };
+  return { DEVICES, ORDER, table, dot, words, source, nowIds, go, liveMode, liveCtx, onlyNow, showsNow, motorCtx, has: name => !!DEVICES[name] };
 })();

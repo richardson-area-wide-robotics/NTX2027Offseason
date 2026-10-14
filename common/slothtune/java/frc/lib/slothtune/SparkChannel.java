@@ -32,6 +32,7 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   private final int limitRpm;
   private final double positionFactor;
   private final String bootReport;
+  private final String settings;
   private final String model;
   private final String firmware;
 
@@ -71,6 +72,7 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
       spark.clearFaults();
     }
     this.bootReport = report;
+    this.settings = readSettings(a);
     this.model = simulation ? "" : detectModel(spark);
     String fw = "";
     if (!simulation) {
@@ -118,6 +120,80 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   /** Sticky faults it carried when the robot code started, before they were cleared. */
   public String bootReport() {
     return bootReport;
+  }
+
+  @Override
+  public String settings() {
+    return settings;
+  }
+
+  @Override
+  public boolean clearStickyFaults() {
+    if (!simulation) {
+      spark.clearFaults();
+    }
+    return true;
+  }
+
+  /**
+   * Its settings, asked once at startup (each is a parameter read over CAN): idle mode, inversion,
+   * current limits, ramp rate, slot 0's PID and feedforward, MAXMotion's cruise speed, acceleration
+   * and allowed error. A value it won't give, or a zero for an optional one, is left out.
+   */
+  static String readSettings(SparkBaseConfigAccessor a) {
+    if (a == null) {
+      return "";
+    }
+    java.util.Map<String, String> out = new java.util.LinkedHashMap<>();
+    // REV's names start with a k (kBrake): "brake", "coast".
+    put(out, "idle", () -> a.getIdleMode().name().replaceFirst("^k", "").toLowerCase(java.util.Locale.ROOT));
+    put(out, "inverted", () -> a.getInverted() ? "yes" : "no");
+    putNum(out, "stallA", () -> (double) a.getSmartCurrentLimit(), false);
+    putNum(out, "freeA", () -> (double) a.getSmartCurrentFreeLimit(), true);
+    putNum(out, "secondaryA", a::getSecondaryCurrentLimit, true);
+    putNum(out, "rampS", a::getClosedLoopRampRate, true);
+    putNum(out, "openRampS", a::getOpenLoopRampRate, true);
+    putNum(out, "kP", a.closedLoop::getP, false);
+    putNum(out, "kI", a.closedLoop::getI, false);
+    putNum(out, "kD", a.closedLoop::getD, false);
+    putNum(out, "iZone", a.closedLoop::getIZone, true);
+    putNum(out, "kS", a.closedLoop.feedForward::getkS, true);
+    putNum(out, "kV", a.closedLoop.feedForward::getkV, true);
+    putNum(out, "kA", a.closedLoop.feedForward::getkA, true);
+    putNum(out, "kG", a.closedLoop.feedForward::getkG, true);
+    putNum(out, "kCos", a.closedLoop.feedForward::getkCos, true);
+    putNum(out, "mmCruise", a.closedLoop.maxMotion::getCruiseVelocity, true);
+    putNum(out, "mmAccel", a.closedLoop.maxMotion::getMaxAcceleration, true);
+    putNum(out, "mmError", a.closedLoop.maxMotion::getAllowedProfileError, true);
+    put(out, "sensor", () -> a.closedLoop.getFeedbackSensor().name().replaceFirst("^k", ""));
+    putNum(out, "follows", () -> (double) a.getFollowerModeLeaderId(), true);
+    StringBuilder b = new StringBuilder();
+    out.forEach((k, v) -> b.append(b.length() == 0 ? "" : ";").append(k).append('=').append(v));
+    return b.toString();
+  }
+
+  private static void put(java.util.Map<String, String> out, String key, java.util.function.Supplier<String> get) {
+    try {
+      String v = get.get();
+      if (v != null && !v.isEmpty()) {
+        out.put(key, v.replace(";", ",").replace("=", ":"));
+      }
+    } catch (RuntimeException e) {
+      // This controller won't say: leave it out.
+    }
+  }
+
+  private static void putNum(java.util.Map<String, String> out, String key, java.util.function.DoubleSupplier get,
+      boolean skipZero) {
+    try {
+      double v = get.getAsDouble();
+      if (Double.isFinite(v) && !(skipZero && v == 0)) {
+        out.put(key, String.format(java.util.Locale.ROOT, "%.6g", v).replaceAll("(\\.\\d*?)0+(e|$)", "$1$2")
+            .replace(".e", "e").replaceAll("\\.$", ""));
+      }
+    } catch (RuntimeException e) {
+      // This controller won't say: leave it out.
+    }
   }
 
   @Override

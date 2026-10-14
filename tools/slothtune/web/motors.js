@@ -171,16 +171,16 @@
     inv = r;
     pending = {};
     // A controller's name: hover, focus or tap it for what its status light means.
-    const lit = s => {
+    const lit = (s, motor) => {
       const d = Blinks.ORDER.find(n => String(s || "").startsWith(n));
-      return d ? `<span class="lit" tabindex="0" data-blink="${esc(d)}">${esc(s)}</span>` : esc(s);
+      return d ? `<span class="lit" tabindex="0" data-blink="${esc(d)}"${motor ? ` data-motor="${esc(motor)}"` : ""}>${esc(s)}</span>` : esc(s);
     };
     const chip = s => s === "bad" ? `<span class="chip bad">check</span>` : s === "unknown" ? `<span class="chip warn">name it</span>` : `<span class="muted small">✓ ok</span>`;
     box.innerHTML = `
       ${r.connected ? "" : `<p class="hint">Not connected: "Robot says" fills in when the robot is.</p>`}
       <div class="tblwrap"><table class="t"><thead><tr><th>${t("motors.inv.name", "Name")}</th><th>${t("motors.inv.status", "Status")}</th><th class="num">${t("motors.inv.can", "CAN")}</th><th>${t("motors.inv.code", "Code creates")}</th><th>${t("motors.inv.robot", "Robot says")}</th><th>${t("motors.inv.fw", "Firmware")}</th><th>${t("motors.inv.motor", "Motor type")}</th><th>${t("motors.inv.from", "From")}</th><th>${t("motors.inv.set", "Set it")}</th></tr></thead><tbody>
         ${r.rows.map((x, i) => `<tr><td>${esc(x.name)}</td><td>${chip(x.status)}</td><td class="num">${x.can_id ?? "?"}</td>
-          <td>${lit(x.code_controller)}</td><td>${x.controller ? lit(x.controller) : `<span class="muted">–</span>`}</td>
+          <td>${lit(x.code_controller, x.name)}</td><td>${x.controller ? lit(x.controller, x.name) : `<span class="muted">–</span>`}</td>
           <td class="mono small">${esc(x.firmware || "")}</td>
           <td>${esc(x.motor || "?")}${x.measured ? ` <span class="small muted">(measures as ${esc(x.measured)})</span>` : ""}</td>
           <td class="small muted">${esc(x.motor_source)}</td>

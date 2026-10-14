@@ -20,6 +20,7 @@ const Wiring = (() => {
           <div class="row" style="flex-wrap:wrap">
             <label class="small" data-tip="wiring.demo">See a practice fault
               <select id="w-demo"><option value="">Live robot</option></select></label>
+            <button class="btn" id="w-clear" data-tip="wiring.clear-sticky">Clear sticky faults</button>
             <button class="btn" id="w-edit" data-tip="wiring.edit">Edit the map</button>
           </div>
         </div>
@@ -28,10 +29,12 @@ const Wiring = (() => {
         <div class="schematic-wrap"><svg id="w-svg" class="schematic" role="group" aria-label="CAN chain and power schematic, in cable order"></svg></div>
         <div id="w-card" class="dcard" role="tooltip" hidden></div>
         <div class="row small muted" style="flex-wrap:wrap;gap:14px">
-          <span><span class="swatch can-h"></span><span class="term" tabindex="0" data-learn="can_bus">CAN-H / CAN-L</span>: CAN-H in each bus's cable color, CAN-L green on every bus; numbered in cable order from the roboRIO</span>
+          <span><span class="swatch can-h"></span><span class="term" tabindex="0" data-learn="can_bus">CAN-H / CAN-L</span>: CAN-H in each bus's cable color, CAN-L green on every bus; numbered in cable order from the robot controller</span>
           <span><span class="swatch ok"></span>heard on the bus</span>
           <span><span class="swatch warn"></span>had trouble</span>
-          <span><span class="swatch bad"></span>missing now</span>
+          <span><span class="swatch bad"></span>missing, or a fault now</span>
+          <span><span class="fault-key bad">✕</span>a fault now</span>
+          <span><span class="fault-key warn">!</span>a sticky fault (Clear sticky faults clears it)</span>
           <span><span class="term" tabindex="0" data-learn="can_termination">Ω = terminator</span></span>
           <span>Point at a box (or Tab to it) to see what the part is; click it (or press Enter) for its place on the robot below.</span>
         </div>
@@ -224,9 +227,9 @@ const Wiring = (() => {
     const nodes = slots.map(({ name, i, bi }) => {
       const dev = data.devices[name] || {}, r = rows[name];
       let state = "unknown";
-      if (r) state = r.present === 0 ? "bad" : (r.dropouts || r.resets || r.brownouts) ? "warn" : "ok";
+      if (r) state = r.present === 0 || r.flags ? "bad" : (r.dropouts || r.resets || r.brownouts || r.history) ? "warn" : "ok";
       if (hl.devs.has(name)) state = hl.devs.get(name);
-      const word = { bad: "MISSING NOW", warn: "had trouble", ok: "heard", unknown: "" }[state] || "";
+      const word = { bad: r && r.present !== 0 && r.flags ? "FAULT NOW" : "MISSING NOW", warn: "had trouble", ok: "heard", unknown: "" }[state] || "";
       const port = m.pdhPorts[name];
       // What it is: what the controller says it is when the robot is connected, else what the code
       // created; the two disagreeing is a fault of its own (the Motors tab says how to fix it).
@@ -247,13 +250,14 @@ const Wiring = (() => {
       const sub = name === "roboRIO" ? "120 Ω built in" : name === "PDH"
         ? `CAN ${dev.can_id} · term ${m.pdh.terminationOn ? "ON" : "OFF"}`
         : `CAN ${dev.can_id ?? "?"} · PDH ${port ?? "?"}`;
-      return { name, i, bi, state, word, pic, sub, type, typeBad, ohm: name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn) };
+      const mark = r && (r.flags || r.present === 0) ? "bad" : r && (r.history || r.dropouts || r.resets || r.brownouts) ? "warn" : "";
+      return { name, i, bi, state, word, pic, sub, type, typeBad, mark, ohm: name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn) };
     });
     // The schematic repaints every second with the live data. Rebuilding it when nothing had changed
     // destroyed the box a person had tabbed to, and pressing Enter destroyed the box pressed.
     const key = JSON.stringify([W, focus, m.pdh.terminationOn, data.bus_colors, m.buses.map(b => [b.name, b.label]), data.termination,
       hl.segs.map(x => [x.a, x.b, x.f.title]),
-      nodes.map(n => [n.name, n.state, n.word, n.sub, n.type, !!n.pic, n.ohm])]);
+      nodes.map(n => [n.name, n.state, n.word, n.sub, n.type, !!n.pic, n.ohm, n.mark]), data.controller]);
     if (key !== svg._key) {
       svg._key = key;
       const had = svg.contains(document.activeElement) ? document.activeElement.getAttribute("data-name") : null;
@@ -296,10 +300,11 @@ const Wiring = (() => {
         el("text", { x: mx, y: my + 4, "text-anchor": "middle", class: "suspect-mark" }, g, "!");
       }
 
-      nodes.forEach(({ name, i, state, word, pic, sub, type, typeBad, ohm }, k) => {
+      nodes.forEach(({ name, i, state, word, pic, sub, type, typeBad, ohm, mark }, k) => {
         const p = slots[k];
+        const markWord = mark === "bad" ? ", a fault now" : mark === "warn" ? ", sticky faults" : "";
         const g = el("g", { class: "node " + state + (focus === name ? " focus" : ""), tabindex: 0, role: "button",
-          "data-name": name, "aria-pressed": String(focus === name), "aria-label": `${i}. ${name}${word ? ", " + word : ""}` }, svg);
+          "data-name": name, "aria-pressed": String(focus === name), "aria-label": `${i}. ${shown(name)}${word ? ", " + word : ""}${markWord}` }, svg);
         el("rect", { x: p.x - 4, y: p.y - 4, width: bw + 8, height: bh + 8, rx: 11, class: "ring" }, g);
         el("rect", { x: p.x, y: p.y, width: bw, height: bh, rx: 8, class: "box" }, g);
         if (pic) {
@@ -307,7 +312,7 @@ const Wiring = (() => {
           el("rect", { x: p.x + bw - 64, y: p.y + 6, width: 58, height: bh - 12, rx: 4, class: "art-tile" }, g);
           el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
         }
-        const label = `${i}. ${name}`, cut = multi ? 20 : 19;
+        const label = `${i}. ${shown(name)}`, cut = multi ? 20 : 19;
         const [y1, yt, y2, y3] = multi ? [17, 31, 45, 59] : [20, 37, 54, 72];
         el("text", { x: p.x + 10, y: p.y + y1, class: "nm" }, g, label.length > cut ? label.slice(0, cut - 1) + "…" : label);
         const tcut = pic ? 21 : 24;
@@ -315,6 +320,12 @@ const Wiring = (() => {
         el("text", { x: p.x + 10, y: p.y + y2, class: "sub" }, g, sub);
         if (word) el("text", { x: p.x + 10, y: p.y + y3, class: "state" }, g, word);
         if (ohm) el("text", { x: p.x + bw - (pic ? 80 : 20), y: p.y + y1, class: "ohm" }, g, "Ω");
+        if (mark) {
+          // Flashing on its corner: a red X for a fault now, an amber ! for one it remembers.
+          const b = el("g", { class: "fault-badge " + mark }, g);
+          el("circle", { cx: p.x + bw - 2, cy: p.y + 2, r: 10 }, b);
+          el("text", { x: p.x + bw - 2, y: p.y + 7, "text-anchor": "middle" }, b, mark === "bad" ? "✕" : "!");
+        }
         g.onclick = () => { focus = focus === name ? null : name; paint(); };
         // Its card on hover, and on keyboard focus too (not for a mouse click: that opens the details).
         g.onmouseenter = () => showCard(name, g);
@@ -558,6 +569,8 @@ const Wiring = (() => {
     if (name === "PDH") return "REV PDH";
     return FrcMap.pic(what) ? what : FrcMap.kindLabel(dev.model);
   }
+  /** A box's name as people say it: the robot controller is a SystemCore when the design says so. */
+  const shown = name => name === "roboRIO" ? partOf(name, {}) : name;
   const ordinal = n => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th");
 
   function cardHtml(name) {
@@ -579,8 +592,8 @@ const Wiring = (() => {
     const facts = [];
     if (dev.can_id != null) facts.push(["CAN ID", String(dev.can_id)]);
     // The robot controller is where a bus starts (place 0); the devices count from 1 after it.
-    if (bus) facts.push(["Bus", at === 0 ? `${swatchOf(bi)}${esc(labelOf(bus))}: it starts here${after ? `, then ${esc(after)}` : ""}`
-      : `${swatchOf(bi)}${esc(labelOf(bus))}, ${ordinal(at)} along it` + (before || after ? `: between ${esc(before || "the start")} and ${esc(after || "the far end")}` : "")]);
+    if (bus) facts.push(["Bus", at === 0 ? `${swatchOf(bi)}${esc(labelOf(bus))}: it starts here${after ? `, then ${esc(shown(after))}` : ""}`
+      : `${swatchOf(bi)}${esc(labelOf(bus))}, ${ordinal(at)} along it` + (before || after ? `: between ${esc(before ? shown(before) : "the start")} and ${esc(after ? shown(after) : "the far end")}` : "")]);
     if (port != null) facts.push(["Power", `PDH port ${port}${dd.breaker ? `, ${dd.breaker} A breaker` : ""}`]);
     else if (dev.kind === "controller") facts.push(["Power", `PDH port not set${dd.breaker ? ` (${dd.breaker} A breaker in the design)` : ""}`]);
     if (dd.subsystem) facts.push(["Part of", esc(dd.subsystem)]);
@@ -591,21 +604,51 @@ const Wiring = (() => {
     let health = "";
     if (r) {
       const bad = [r.present === 0 ? "off the CAN bus now" : null, r.flags || null].filter(Boolean);
-      const earlier = [r.history || null, r.dropouts ? `dropped off ${r.dropouts}×` : null, r.resets ? `rebooted ${r.resets}×` : null,
-        r.brownouts ? `low voltage ${r.brownouts}×` : null].filter(Boolean);
-      health = `<div class="small">${bad.length ? `<span class="bad-ink"><b>Now:</b> ${esc(bad.join("; "))}</span>` : `<span class="level ok">ok</span> heard on the bus`}
-        ${Number.isFinite(r.bus_volts) ? ` · ${fmt(r.bus_volts, 2)} V at the controller` : ""}
-        ${earlier.length ? `<div class="warn-ink"><b>Since the code started:</b> ${esc(earlier.join("; "))}</div>` : ""}</div>`;
+      const sticky = [r.history || null, r.dropouts ? `dropped off the bus ${r.dropouts}×` : null, r.resets ? `rebooted ${r.resets}×` : null,
+        r.brownouts ? `low supply voltage ${r.brownouts}×` : null].filter(Boolean);
+      health = `<div class="dcard-faults small"><h4>Faults</h4>
+        ${bad.length ? `<p class="bad-ink"><b>✕ Now:</b> ${esc(bad.join("; "))}</p>`
+          : `<p><span class="level ok">ok</span> heard on the bus, no faults now${Number.isFinite(r.bus_volts) ? ` · ${fmt(r.bus_volts, 2)} V at the controller` : ""}</p>`}
+        ${sticky.length ? `<p class="warn-ink"><b>! Sticky</b> (since the code started, or the last Clear sticky faults): ${esc(sticky.join("; "))}</p>`
+          : `<p class="muted">No sticky faults.</p>`}</div>`;
     }
-    return `<div class="dcard-main"><div class="dcard-head"><b>${esc(name)}</b><span class="small muted">${esc(type)}</span></div>
+    // Its settings as it reported them at startup: current limits, PID, feedforward, MAXMotion.
+    const st = (r && r.settings) || {}, nm = v => typeof v === "number" ? String(+v.toPrecision(4)) : esc(String(v));
+    const list = keys => keys.filter(([k]) => st[k] != null).map(([k, l]) => `${l} ${nm(st[k])}`).join(" · ");
+    const sets = [];
+    const lim = [st.stallA != null ? `${nm(st.stallA)} A` : null, st.freeA ? `${nm(st.freeA)} A at speed` : null,
+      st.secondaryA ? `secondary ${nm(st.secondaryA)} A` : null].filter(Boolean).join(" · ");
+    const guardNow = r && Number.isFinite(r.limit) && st.stallA != null && Math.round(r.limit) !== Math.round(st.stallA)
+      ? ` <span class="warn-ink">· ${nm(r.limit)} A now (the motor guard)</span>` : "";
+    if (lim || guardNow) sets.push(["Current limit", lim + guardNow]);
+    const mode = [st.idle ? String(st.idle).replace(/^k/i, "").toLowerCase() + " mode" : null, st.inverted === "yes" ? "inverted" : null, st.rampS ? `closed-loop ramp ${nm(st.rampS)} s` : null,
+      st.openRampS ? `open-loop ramp ${nm(st.openRampS)} s` : null].filter(Boolean).join(" · ");
+    if (mode) sets.push(["Mode", esc(mode)]);
+    for (const [title, keys] of [["PID", [["kP", "kP"], ["kI", "kI"], ["kD", "kD"], ["iZone", "I zone"]]],
+      ["Feedforward", [["kS", "kS"], ["kV", "kV"], ["kA", "kA"], ["kG", "kG"], ["kCos", "kCos"]]],
+      ["MAXMotion", [["mmCruise", "cruise"], ["mmAccel", "accel"], ["mmError", "allowed error"]]]]) {
+      const t = list(keys);
+      if (t) sets.push([title, t]);
+    }
+    if (st.follows) sets.push(["Follows", `CAN ID ${nm(st.follows)}`]);
+    const settingsHtml = name === "roboRIO" || name === "PDH" ? "" : `<div class="dcard-settings small"><h4>Its settings</h4>
+      ${sets.length ? `<dl class="dcard-facts">${sets.map(([k, v]) => `<dt>${k}</dt><dd class="mono">${v}</dd>`).join("")}</dl>
+        <p class="muted">As it reported them when the robot code started, in its own units (its conversion factors). A live change on the Tune or Systems tab shows there.</p>`
+        : `<p class="muted">${!App.connected() ? "Connect to read its PID, MAXMotion and current limits from it."
+          : r ? "It didn't report them: robot code from before this tool read them, or a controller that won't say."
+          : "The robot doesn't watch this one, so it can't read them."}</p>`}</div>`;
+    const lightCtx = { mode: Blinks.liveMode(), flags: r && r.flags, present: r && r.present, duty: r && r.duty, idle: st.idle };
+    const lightNow = !!light && Blinks.showsNow(light, lightCtx);
+    return `<div class="dcard-main"><div class="dcard-head"><b>${esc(shown(name))}</b><span class="small muted">${esc(type)}</span></div>
       ${pics.length ? `<div class="dcard-pics">${pics.map(p => `<figure><img src="${p.src}" alt="${esc(p.alt)}" width="${p.w}" height="${p.h}">
         <figcaption>${esc(p.cap)}</figcaption></figure>`).join("")}</div>` : ""}
       ${WHAT[live || ctl] ? `<p class="small">${esc(WHAT[live || ctl])}${motor && MOTOR[motor] ? ` This one drives a ${esc(motor)}: ${esc(MOTOR[motor])}.` : ""}</p>` : ""}
       <dl class="dcard-facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
       ${health}
+      ${settingsHtml}
       ${pics.length ? `<p class="dcard-credit">Drawings: FRC Control System Diagrams, by Team 3161, CC BY 4.0.</p>` : ""}</div>
-      ${light ? `<div class="dcard-lights"><h4>Its status light</h4><p class="small muted">${esc(Blinks.DEVICES[light].light)}</p>
-        ${Blinks.table(light, { compact: true, ctx: { mode: Blinks.liveMode(), flags: r && r.flags, present: r && r.present } })}
+      ${light ? `<div class="dcard-lights"><h4>${lightNow ? "Its status light now" : "Its status light"}</h4><p class="small muted">${esc(Blinks.DEVICES[light].light)}</p>
+        ${Blinks.table(light, { compact: true, ctx: lightCtx, only: lightNow })}
         <p class="dcard-credit">From ${Blinks.source(light)}. Troubleshoot, Status lights: what to do for each.</p></div>` : ""}`;
   }
 
@@ -881,6 +924,11 @@ const Wiring = (() => {
   }
 
   // ---------------------------------------------------------------- controls
+  $("#w-clear", root).onclick = async () => {
+    if (!App.connected()) { App.toast("Connect to the robot first: the faults are kept on the robot.", 6000); return; }
+    const r = await App.api("/api/motors/clear-sticky", {});
+    App.toast(r.message || r.error || "Done.", 9000);
+  };
   $("#w-edit", root).onclick = () => { if (data) openEditor(); };
   $("#wf-pulse", root).onclick = findByPulse;
   $("#wf-log", root).onclick = chooseLog;

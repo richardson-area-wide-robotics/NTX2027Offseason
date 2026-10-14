@@ -139,6 +139,9 @@ MOTORS_CAN_IDS = MOTORS + "CanIds"
 MOTORS_CONTROLLERS = MOTORS + "Controllers"            # what each controller says it is
 MOTORS_CODE_CONTROLLERS = MOTORS + "CodeControllers"   # what the code created it as
 MOTORS_FIRMWARE = MOTORS + "Firmware"
+# Each controller's settings read at startup, "name=value;..." (see motor_settings), and its output now.
+MOTORS_SETTINGS = MOTORS + "Settings"
+MOTORS_DUTY = MOTORS + "Duty"
 
 # Which battery is in: a "String Chooser" a dashboard shows as a drop-down; a client writes "selected".
 BATTERY_CHOOSER = "/SmartDashboard/Battery/"
@@ -188,6 +191,11 @@ MOTORS_OVERRIDE_NAME = MOTORS + "Override/Name"
 MOTORS_OVERRIDE_SECONDS = MOTORS + "Override/Seconds"
 MOTORS_OVERRIDE_ACK_SEQ = MOTORS + "Override/AckSeq"
 MOTORS_OVERRIDE_ACK_MESSAGE = MOTORS + "Override/AckMessage"
+# Clear every sticky fault (each controller's, the gyro's, the guard's counts), as the override is sent.
+MOTORS_CLEAR_SEQ = MOTORS + "ClearSticky/Seq"
+MOTORS_CLEAR_BOOT_ID = MOTORS + "ClearSticky/BootId"
+MOTORS_CLEAR_ACK_SEQ = MOTORS + "ClearSticky/AckSeq"
+MOTORS_CLEAR_ACK_MESSAGE = MOTORS + "ClearSticky/AckMessage"
 LIVE_VISION_COUNTS = LIVE + "VisionCounts"
 LIVE_VISION_LAST_REJECT = LIVE + "VisionLastReject"
 # Each camera's newest tags, 10 numbers a tag: ID, x y z (m) and quaternion w x y z of the tag in the
@@ -231,6 +239,7 @@ MOTOR_STRINGS = {
     "controller": MOTORS_CONTROLLERS,
     "code_controller": MOTORS_CODE_CONTROLLERS,
     "firmware": MOTORS_FIRMWARE,
+    "settings": MOTORS_SETTINGS,
 }
 MOTOR_NUMBERS = {
     "heat_pct": MOTORS_HEAT_PCT,
@@ -247,6 +256,7 @@ MOTOR_NUMBERS = {
     "brownouts": MOTORS_BROWNOUTS,
     "bus_volts": MOTORS_BUS_VOLTS,
     "can_id": MOTORS_CAN_IDS,
+    "duty": MOTORS_DUTY,
 }
 STAGES = ("OK", "WARN", "DERATE", "SHUTOFF")
 

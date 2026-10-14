@@ -100,6 +100,22 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
     return sticky;
   }
 
+  /** Times Clear sticky faults reached it; and its settings as a SPARK reports them. */
+  int clears;
+  String settingsText = "";
+
+  @Override
+  public boolean clearStickyFaults() {
+    sticky = "";
+    clears++;
+    return true;
+  }
+
+  @Override
+  public String settings() {
+    return settingsText;
+  }
+
   @Override
   public int configuredLimitA() {
     return configured;

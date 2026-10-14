@@ -1166,6 +1166,14 @@ def api_systems_physics(body):
             "plan": systems.plan(entry, registered), "scale": systems.scale(entry, registered.get("units"), phys)}
 
 
+def api_motors_clear_sticky(_body):
+    """Clears every sticky fault on the robot (the Wiring tab's button)."""
+    if not (S.link and S.link.is_connected()):
+        return {"ok": False, "error": "Connect to the robot first."}
+    msg = S.link.clear_sticky()
+    return {"ok": not msg.startswith(("No answer", "Ignored")), "message": msg}
+
+
 def api_systems_gains(body):
     if not (S.link and S.link.is_connected()):
         return {"ok": False, "error": "Connect to the robot first."}
@@ -2034,6 +2042,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
         "/api/autotune/start": api_autotune_start, "/api/autotune/continue": api_autotune_continue,
+        "/api/motors/clear-sticky": api_motors_clear_sticky,
         "/api/systems/autotune/start": api_sys_autotune_start, "/api/systems/autotune/continue": api_sys_autotune_continue,
         "/api/systems/autotune/stop": api_sys_autotune_stop,
         "/api/autotune/stop": api_autotune_stop, "/api/gyro/command": api_gyro_command,
