@@ -18,7 +18,7 @@
     const list = (r.runs || []).filter(x => filter === "all" || KIND(x) === filter);
     const logs = `<div class="panel runs-logs">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap"><h2 data-tip="runs.logs">Match logs</h2>
-        <div class="row" style="flex-wrap:wrap"><label class="row small" data-tip="runs.folder">Log folder <input id="lg-folder" placeholder="USB stick or AdvantageScope downloads" style="min-width:20em"></label>
+        <div class="row" style="flex-wrap:wrap"><label class="row small" data-tip="runs.folder">Log folder <input id="lg-folder" placeholder="USB stick or AdvantageScope downloads"></label>
         <button class="btn" id="lg-go" data-tip="runs.list">List logs</button></div></div>
       ${HowTo.block(`<p class="small">AdvantageKit writes one log per power-up: to the USB stick in the roboRIO (/U/logs) or, on a roboRIO 2 with no stick, to its SD card (/home/lvuser/logs; to download those, set AdvantageScope's roboRIO log folder to that path). A roboRIO 1 without a stick keeps no logs. Copy them here, or point at the folder AdvantageScope downloads to.</p>`, "Where the logs are")}
       <div id="lg-list"></div><div id="lg-report"></div></div>`;

@@ -27,11 +27,11 @@ const Systems = (() => {
   root.innerHTML = `
     <div class="sys">
       <div class="panel sys-bar">
-        <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <div class="row sys-bar-row">
           <div class="row"><h2 data-tip="sys.title">Systems</h2><div class="seg" id="sys-pick" role="group" aria-label="Mechanism"></div></div>
+          <p class="hint" id="sys-blurb">Each mechanism the robot code registers, tuned through its own control loop. Set it up top to bottom: physics, limits, top speed; then test it.</p>
           <div class="row"><span class="small mono" id="sys-now"></span>
             <button class="btn small" id="sys-walk" data-tip="sys.walk">First time on the real robot? Walk me through it</button></div></div>
-        <p class="hint" id="sys-blurb">Each mechanism the robot code registers, tuned through its own control loop. Set it up top to bottom: physics, limits, top speed; then test it.</p>
         <div id="sys-faults"></div>
       </div>
       <div class="sys-cols">
@@ -125,7 +125,7 @@ const Systems = (() => {
         <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${shown(val("maxAccel"), k)}" style="width:6em"> ${esc(label)}/s${positional(s) ? "²" : ""}</label></div>
       <div class="row"><button class="btn primary small" id="sys-save" data-tip="sys.save">Save to slothtune.json…</button></div>
       ${Object.keys(s.gains || {}).length ? `<div class="row" style="justify-content:space-between"><h3 data-tip="sys.gains">Its gains, live</h3>
-          <span class="row small"><span class="muted">Live only: a value to keep goes into the code.</span>
+          <span class="row small"><span class="muted">Live only: Auto-tune's Save (slothtune.json) or the code keeps a value.</span>
           <button class="btn small" id="sys-apply" data-tip="sys.apply">Apply live</button></span></div>
         <div class="gains sys-gains">${shownGains(s).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
     const ap = $("#sys-apply", box);
