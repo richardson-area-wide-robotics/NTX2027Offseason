@@ -27,6 +27,9 @@ public class Robot extends LoggedRobot {
     // already watched.
     shooter.watchMotors(tune::watchMotor);
     intake.watchMotors(tune::watchMotor);
+    // Mechanisms the Systems tab tunes, through each subsystem's own loop. The intake runs open
+    // loop, so it has nothing to tune.
+    shooter.tuneWith(tune);
     // Cameras: whatever swervetune.json's "vision" lists (none yet). Fitting one is a config change;
     // see docs/VISION_LUMA_PHOTONVISION.md.
     PhotonVisionSetup.install(tune);

@@ -77,6 +77,10 @@ class InCodeTest(unittest.TestCase):
     def test_what_peashooters_code_registers(self):
         self.assertEqual(SY.in_code(PEA), {"Intake pivot": "PIVOT", "Shooter": "FLYWHEEL"})
 
+    def test_black_team_registers_its_shooter(self):
+        # Its intake runs open loop: a subsystem with nothing to tune.
+        self.assertEqual(SY.in_code(yagslcfg.Project(os.path.join(REPO, "Black team"))), {"Shooter": "FLYWHEEL"})
+
     def test_a_system_runs_summary_names_its_mechanism(self):
         import json
         import tempfile

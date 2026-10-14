@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.lib.swervetune.MotorKind;
 import frc.lib.swervetune.MotorWatcher;
+import frc.lib.swervetune.SwerveTune;
+import frc.lib.swervetune.TunableSystem;
 
 public class Shooter extends SubsystemBase {
     private final SparkMax shooterMotor = new SparkMax(10, MotorType.kBrushless);
@@ -46,5 +48,20 @@ public class Shooter extends SubsystemBase {
     /** Lists this subsystem's motors for the motor guard (heat, stalls, failure). */
     public void watchMotors(MotorWatcher w) {
         w.watch("Shooter", shooterMotor, MotorKind.NEO_2_0);
+    }
+
+    /**
+     * The swerve tools' Systems tab: the shooter's speed in motor RPM, through the SPARK's own
+     * velocity loop, the one shootHub and shootCornerA use.
+     */
+    public void tuneWith(SwerveTune tune) {
+        tune.system("Shooter", TunableSystem.Kind.FLYWHEEL)
+            .units("RPM")
+            .velocity(() -> shooterMotor.getEncoder().getVelocity())
+            .goal(rpm -> shooterMotorPID.setSetpoint(rpm, SparkMax.ControlType.kVelocity))
+            .stop(() -> shooterMotor.set(0))
+            .subsystem(this)
+            .motors("Shooter")
+            .sparkGains(shooterMotor);
     }
 }
