@@ -32,6 +32,16 @@ class GroupsTest(unittest.TestCase):
         self.assertEqual(g["Intake"]["sensors"], ["Intake beam"])
         self.assertEqual(g["Arm"]["from"], ["design"])
 
+    def test_a_design_drafted_from_the_code_adds_no_groups(self):
+        from swervetune import design as D
+        design = D.from_code(PEA)
+        design["sensors"] = [{"name": "Tower beam", "subsystem": "Tower"}]
+        g = {x["name"]: x for x in SY.groups(PEA, design, [])}
+        self.assertEqual(sorted(g), ["Drive train", "Feeder", "Intake", "Shooter"])
+        self.assertEqual(sorted(g["Feeder"]["aka"]), ["Spindexter", "Tower"])
+        self.assertEqual(g["Feeder"]["sensors"], ["Tower beam"], "follows its design subsystem's motors")
+        self.assertEqual(g["Drive train"]["aka"], ["Drive"])
+
 
 class PlanTest(unittest.TestCase):
     def test_a_pivot_needs_physics_and_limits_first(self):

@@ -11,7 +11,7 @@
     "/api/motors/override", "/api/survey/start", "/api/controllers/save", "/api/sim", "/api/export", "/api/netcheck",
     "/api/camcal/sample", "/api/camcal/solve", "/api/survey/solve", "/api/geometry/tape",
     "/api/geometry/wheels", "/api/handcheck", "/api/controllers/step", "/api/controllers/robot", "/api/save/preview",
-    "/api/analyze", "/api/predict", "/api/designs/read", "/api/mark"];
+    "/api/analyze", "/api/predict", "/api/designs/read", "/api/mark", "/api/systems/gains"];
   let connected = true, li = 0;
   const started = new Set();  // part checklists started in this preview: "module:frontleft"
 
@@ -67,6 +67,11 @@
       if (hit) return json(hit.resp);
       const ex = [...new Set(rec.post.filter(p => p.path === path).map(p => `${p.body.ohms}${p.body.without ? " then " + p.body.without : " alone"}`))];
       return json({ level: "info", title: "Not recorded for this preview", why: "The preview answers these readings: " + ex.join("; ") + "." });
+    }
+    // A mechanism's physics: only the example's, worked out when it was recorded.
+    if (path === "/api/systems/physics") {
+      const hit = rec.post.find(p => p.path === path && JSON.stringify(p.body) === JSON.stringify(body));
+      return json(hit ? hit.resp : { ok: false, error: "This preview has only the example's physics worked out. In the real tool this works out what you enter." });
     }
     const same = rec.post.filter(p => p.path === url);
     const exact = same.find(p => JSON.stringify(p.body) === JSON.stringify(body));

@@ -50,22 +50,44 @@ def code_subsystems(project):
 
 def groups(project, design=None, registered=()):
     """Each group: its name, where it was found (code, design), its motors and sensors, and the
-    registered mechanisms in it (by a shared motor, or by name)."""
+    registered mechanisms in it (by a shared motor, or by name).
+
+    A design subsystem joins the code's subsystem of the same name, or the one that holds all its
+    motors: a design file drafted from the code calls the swerve motors "Drive" and a Feeder's
+    motors by their own names, and those are the code's Drive train and Feeder. The design's name
+    is kept in the group's ``aka``."""
     g = {}
 
     def grp(name):
-        return g.setdefault(name, {"name": name, "from": [], "motors": [], "sensors": [], "systems": []})
+        return g.setdefault(name, {"name": name, "from": [], "aka": [], "motors": [], "sensors": [], "systems": []})
 
-    for name, motors in code_subsystems(project).items():
+    code = code_subsystems(project)
+    for name, motors in code.items():
         e = grp(name)
         e["from"].append("code")
         e["motors"] += [m for m in motors if m not in e["motors"]]
+    by_lower = {n.lower(): n for n in code}
+    owner = {m: n for n, ms in code.items() for m in ms}
+    design_motors = {}
+    for d in (design or {}).get("motors") or []:
+        if d.get("subsystem") and d.get("name"):
+            design_motors.setdefault(d["subsystem"], []).append(d["name"])
+
+    def home(sub):
+        if sub.lower() in by_lower:
+            return by_lower[sub.lower()]
+        owners = {owner.get(m) for m in design_motors.get(sub) or []}
+        return owners.pop() if len(owners) == 1 and None not in owners else sub
+
     for kind in ("motors", "sensors"):
         for d in (design or {}).get(kind) or []:
             if d.get("subsystem") and d.get("name"):
-                e = grp(d["subsystem"])
+                name = home(d["subsystem"])
+                e = grp(name)
                 if "design" not in e["from"]:
                     e["from"].append("design")
+                if d["subsystem"] != name and d["subsystem"] not in e["aka"]:
+                    e["aka"].append(d["subsystem"])
                 if d["name"] not in e[kind]:
                     e[kind].append(d["name"])
     for s in registered:

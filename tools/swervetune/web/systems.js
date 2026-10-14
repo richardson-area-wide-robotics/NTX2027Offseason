@@ -9,7 +9,7 @@ const Systems = (() => {
   let data = null, pick = null, last = null, edits = {}, timer = null;
   const KIND = { FLYWHEEL: "flywheel", ROLLER: "roller", PIVOT: "pivot", ELEVATOR: "elevator" };
   const positional = s => s && (s.kind === "PIVOT" || s.kind === "ELEVATOR");
-  const n4 = v => v == null || !isFinite(v) ? "–" : String(+(+v).toPrecision(4));
+  const n4 = v => v == null || !Number.isFinite(+v) ? "–" : String(+(+v).toPrecision(4));
 
   root.innerHTML = `
     <div class="sys">
@@ -52,7 +52,7 @@ const Systems = (() => {
   function paintGroups() {
     const G = (data && data.groups) || [];
     $("#sys-groups", root).innerHTML = G.map(g => `<div class="sys-group${g.systems.includes(pick) ? " on" : ""}">
-        <b>${esc(g.name)}</b> <span class="muted">${g.from.join(" + ")}</span>
+        <b>${esc(g.name)}</b> <span class="muted">${g.from.join(" + ")}${(g.aka || []).length ? ` · the design file says ${g.aka.map(esc).join(", ")}` : ""}</span>
         <div>${g.motors.map(m => `<span class="chip">${esc(m)}</span>`).join(" ")}${g.sensors.map(s => ` <span class="chip info">${esc(s)}</span>`).join("")}</div>
         ${g.systems.length ? `<div class="muted">Tunable: ${g.systems.map(esc).join(", ")}</div>` : ""}</div>`).join("")
       || `<p class="hint">No subsystems found in the code.</p>`;
@@ -93,16 +93,16 @@ const Systems = (() => {
         : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1))} ${esc(s.units)}${positional(s) ? "/s" : ""}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per radian)` : ""}`}</p>
       <label class="row small" data-tip="sys.scale">One radian of it${positional(s) ? "" : " per second"} is <input id="sys-scale" type="number" step="any" value="${n4(s.scale)}" style="width:6em"> ${esc(s.units)}</label>
       ${positional(s) ? `<h3 data-tip="sys.limits">2. Its limits</h3>
-        <p class="small">${isFinite(s.min) && isFinite(s.max) ? `${n4(s.min)} to ${n4(s.max)} ${esc(s.units)} <span class="muted">(${esc(s.limits_from || "")})</span>` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</p>
-        <div class="row"><button class="btn small" id="sys-limits" data-tip="sys.limits-run">Set limits by hand…</button></div>` : ""}
+        <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min)} to ${n4(s.max)} ${esc(s.units)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
+          <button class="btn small" id="sys-limits" data-tip="sys.limits-run">Set limits by hand…</button></div>` : ""}
       <h3 data-tip="sys.top">${positional(s) ? "3" : "2"}. Its top speed</h3>
-      <div class="row small"><label>Team's maximum <input id="sys-vmax" type="number" step="any" value="${esc(val("maxVelocity") ?? "")}" style="width:6em"> ${esc(s.units)}${positional(s) ? "/s" : ""}</label>
-        <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${esc(val("maxAccel") ?? "")}" style="width:6em"></label></div>
+      <div class="row small"><label>Team's maximum <input id="sys-vmax" type="number" step="any" value="${esc(val("maxVelocity") ?? "")}" style="width:5em"> ${esc(s.units)}${positional(s) ? "/s" : ""}</label>
+        <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${esc(val("maxAccel") ?? "")}" style="width:5em"> ${esc(s.units)}/s${positional(s) ? "²" : ""}</label></div>
       <div class="row"><button class="btn primary small" id="sys-save" data-tip="sys.save">Save to swervetune.json…</button></div>
-      ${Object.keys(s.gains || {}).length ? `<h3 data-tip="sys.gains">Its gains, live</h3>
-        <div class="gains sys-gains">${Object.entries(s.gains).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>
-        <div class="row"><button class="btn small" id="sys-apply" data-tip="sys.apply">Apply live</button>
-          <span class="small muted">Live only: a value to keep goes into the code.</span></div>` : ""}`;
+      ${Object.keys(s.gains || {}).length ? `<div class="row" style="justify-content:space-between"><h3 data-tip="sys.gains">Its gains, live</h3>
+          <span class="row small"><span class="muted">Live only: a value to keep goes into the code.</span>
+          <button class="btn small" id="sys-apply" data-tip="sys.apply">Apply live</button></span></div>
+        <div class="gains sys-gains">${Object.entries(s.gains).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
     const ap = $("#sys-apply", box);
     if (ap) ap.onclick = async () => {
       const v = {};
@@ -148,7 +148,7 @@ const Systems = (() => {
     put("unitsPerRadian", edits.unitsPerRadian);
     put("maxVelocity", set.maxVelocity);
     put("maxAccel", set.maxAccel);
-    if (positional(s) && isFinite(s.min) && isFinite(s.max)) { put("min", s.min); put("max", s.max); }
+    if (positional(s) && Number.isFinite(s.min) && Number.isFinite(s.max)) { put("min", s.min); put("max", s.max); }
     if (!e.length) { App.toast("Nothing to save yet."); return; }
     if (await App.previewAndSave({ kind: "edits", edits: e }, `${s.name}: its settings`)) { edits = {}; load(); }
   }

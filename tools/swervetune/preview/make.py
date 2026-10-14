@@ -39,7 +39,7 @@ import urllib.request
 from datetime import datetime, timezone
 from html import escape as html_escape
 from http.server import ThreadingHTTPServer
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PKG = os.path.dirname(HERE)
@@ -88,12 +88,38 @@ def _q(path, **params):
 TERMINATION_EXAMPLES = (("60", "120"), ("120", "120"), ("120", "OL"), ("120", ""))
 
 
+def _recalc(page, **params):
+    return f"https://www.reca.lc/{page}?" + urlencode({k: json.dumps(v) for k, v in params.items()})
+
+
+# Made-up ReCalc designs for the Systems tab, used only for a mechanism the robot has no settings for
+# (the ribbon says so), so the tab shows one set up with its safe test.
+SYSTEMS_EXAMPLES = {
+    "Shooter": {"recalc": _recalc("flywheel", motor={"name": "NEO Vortex", "quantity": 2},
+                                  ratio={"magnitude": 1, "ratioType": "Reduction"}, shooterDiameter={"s": 4, "u": "in"},
+                                  shooterWeight={"s": 2, "u": "lb"}, shooterTargetSpeed={"s": 3950, "u": "rpm"})},
+    "Intake pivot": {"recalc": _recalc("arm", motor={"name": "NEO Vortex", "quantity": 1},
+                                       ratio={"magnitude": 45, "ratioType": "Reduction"}, armLength={"s": 12, "u": "in"},
+                                       load={"s": 8, "u": "lb"}, minAngle={"s": 0, "u": "deg"}, maxAngle={"s": 120, "u": "deg"})},
+}
+
+
 def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
     """Talks to the simulator through the tool's own server, as the page would, and keeps every answer."""
-    from .. import diagnose, progress, server, setup as SP
+    from .. import diagnose, progress, server, setup as SP, systems as SY
 
     # A scratch progress file: the recording never touches this laptop's real checklists.
     scratch = tempfile.mkdtemp(prefix="swervetune-preview-")
+    # The Systems examples, in memory only: the robot's swervetune.json is never written.
+    real_settings, used = SY.settings, []
+
+    def example_settings(project):
+        own = real_settings(project)
+        out = {k: dict(v) for k, v in SYSTEMS_EXAMPLES.items() if k not in own}
+        used[:] = sorted(out)
+        return dict(out, **own)
+
+    SY.settings = example_settings
     progress.PATH = os.path.join(scratch, "guide_progress.json")
     if marks:
         # Example checklist results for the preview (its ribbon says so), never this laptop's own.
@@ -163,6 +189,15 @@ def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
         for s in diagnose.SYMPTOMS:
             key = "/api/diagnose/" + quote(s["id"], safe="")
             rec["get"][key] = c.get(key)
+        # Each example mechanism's physics, asked as the page asks, so its Read it answers.
+        mechs = [s for s in (rec["get"].get("/api/systems") or {}).get("systems") or [] if s.get("name") in used]
+        for s in mechs:
+            post("/api/systems/physics", {"name": s["name"], "kind": s.get("kind"), "units": s.get("units"),
+                                          "settings": s.get("settings") or {}})
+        if mechs:
+            ex = " and ".join(s["name"] for s in mechs)
+            rec["note"] = ((note + " ") if note else "") + (
+                f"Systems shows made-up ReCalc designs for the {ex}, since {project_name} has none saved yet.")
         # A part's checklist once started, for Redo one part.
         for kind in SP.PARTS:
             sel = {"kind": kind, "which": which.get(kind, "")}
@@ -179,6 +214,7 @@ def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
                 json.dump(c.get("/api/runs/" + quote(f, safe="")), fh, separators=(",", ":"))
         c.post("/api/disconnect", {})
     finally:
+        SY.settings = real_settings
         httpd.shutdown()
         shutil.rmtree(scratch, ignore_errors=True)
     with open(os.path.join(REC, "rec.json"), "w", encoding="utf-8") as fh:
