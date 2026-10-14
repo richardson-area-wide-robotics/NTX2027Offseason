@@ -178,6 +178,17 @@ class RulesTest(unittest.TestCase):
         self.assertIn("shut itself down 2 times", titles)
         self.assertIn("CAN errors happening now", titles)
 
+    def test_each_controllers_own_faults_now_and_earlier(self):
+        f = self.find({"motors": rows(FR_steer={"flags": "faults: CAN"},
+                                      Shooter={"history": "faults since last cleared: sensor (encoder or hall cable)"})})
+        now = [x for x in f if x["title"] == "FR steer: faults: CAN"][0]
+        self.assertEqual((now["level"], now["where"]["devices"]), ("error", ["FR steer"]))
+        self.assertIn("CAN plugs", now["why"])
+        earlier = [x for x in f if x["title"].startswith("Shooter: faults since last cleared")][0]
+        self.assertEqual(earlier["level"], "warn")
+        gone = self.find({"motors": rows(FR_steer={"flags": "faults: CAN", "present": 0})})
+        self.assertFalse(any(x["title"] == "FR steer: faults: CAN" for x in gone), "off the bus says it already")
+
     def test_a_healthy_robot_has_nothing_to_say(self):
         self.assertEqual(self.find({"motors": rows(), "can": [0.3, 0, 0, 0, 0]}), [])
 

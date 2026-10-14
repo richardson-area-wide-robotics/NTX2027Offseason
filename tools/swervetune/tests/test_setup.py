@@ -50,6 +50,16 @@ class CalibrateTest(unittest.TestCase):
         self.assertEqual(jobs(p)["camera"], "skip", "no camera listed")
         self.assertEqual(jobs(p)["field"], "optional")
 
+    def test_each_camera_lens_is_calibrated_before_its_mount(self):
+        self.assertEqual(jobs(SP.calibrate(ctx()))["lens"], "skip", "no camera listed")
+        cams = {"vision": {"cameras": ["front", "back"]}}
+        p = SP.calibrate(ctx(tune=cams, prog={"cal_lens_front": mark()}))
+        lens = [j for j in p["jobs"] if j["id"] == "lens"][0]
+        self.assertEqual((lens["title"], lens["status"], lens["detail"]), ("6. Camera lens", "todo", "Not calibrated yet: back"))
+        self.assertEqual([j["title"] for j in p["jobs"]][-3:], ["6. Camera lens", "7. Camera positions", "8. Field tags"])
+        st = jobs(SP.calibrate(ctx(tune=cams, prog={"cal_lens_front": mark(), "cal_lens_back": mark("fail")})))
+        self.assertEqual(st["lens"], "attention", "a high mean error: recalibrate")
+
     def test_each_job_waits_for_what_it_needs(self):
         st = jobs(SP.calibrate(ctx()))
         self.assertEqual(st["wheels"], "later", "a crooked wheel measures short: offsets first")

@@ -464,6 +464,24 @@ def diagnose(m, snapshot, devices=None):
             "the Anderson connector, or the PDH's own input lugs - or a battery that sags badly.",
             {"devices": resets}, "Check the main power path from the battery to the PDH, tight and clean."))
 
+    # Each controller's own reports: what it says is wrong now, and what it latched since the robot
+    # code started (cleared then, so anything here happened since).
+    for r in snapshot.get("motors") or []:
+        n = r.get("name")
+        if not n:
+            continue
+        if r.get("flags") and r.get("present") != 0:
+            F.append(_level(
+                "error", f"{n}: {r['flags']}",
+                "The controller reports it now. A CAN fault points at its CAN plugs and the cable either side; "
+                "a sensor fault at its encoder cable; a gate driver fault at its motor leads.",
+                {"devices": [n]}))
+        if r.get("history"):
+            F.append(_level(
+                "warn", f"{n}: {r['history']}",
+                "Latched since the robot code started and not active now: it happened, and may again. Wiggle-test "
+                "that controller's plugs while watching for it.", {"devices": [n]}))
+
     for name, ohms in (snapshot.get("feed_r") or {}).items():
         if ohms is None:
             continue

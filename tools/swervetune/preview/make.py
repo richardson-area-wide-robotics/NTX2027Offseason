@@ -118,6 +118,11 @@ def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
             raise SystemExit("Could not connect to the simulator. Start the robot code first:\n"
                              f"    cd {project_name}\n    ./gradlew simulateJava -PheadlessSim\n({r.get('error')})")
         time.sleep(2)
+        # What the robot reports before a battery is picked (its "Which battery is in?" alert), so
+        # Troubleshoot's counts show a message that came and went.
+        for _ in range(3):
+            c.get("/api/live")
+            time.sleep(0.6)
         post("/api/battery/pick", {"id": "7"})
         # Wheels moving for the Live tab: one steering test on the simulated robot.
         post("/api/sim", {"on": True})

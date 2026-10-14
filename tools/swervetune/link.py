@@ -125,7 +125,7 @@ class RobotLink:
         # to the whole /SwerveTune tree up front keeps every value cached here, so the first read of
         # any topic is the robot's value, not a stale default.
         self._everything = ntcore.MultiSubscriber(
-            self.inst, [C.ROOT + "/", C.AK + "/PowerDistribution/", C.AK + "/SystemStats/"])
+            self.inst, [C.ROOT + "/", C.AK + "/PowerDistribution/", C.AK + "/SystemStats/", "/SmartDashboard/"])
         self._pubs = {}
         self._subs = {}
         self._hb_value = 0.0
@@ -319,6 +319,22 @@ class RobotLink:
             "battery_rest": self.get("double", C.BATTERY_REST_VOLTS),
             "battery_options": list(self.get("str[]", C.BATTERY_OPTIONS)),
         })
+        return out
+
+    def alerts(self):
+        """The robot's WPILib Alerts showing now, every group: ``[(level, text), ...]``. A group is a
+        table under /SmartDashboard whose ".type" is "Alerts", with string arrays of errors and
+        warnings (infos are left out)."""
+        out = []
+        try:
+            topics = _call(self.inst, "getTopics", "/SmartDashboard/")
+        except Exception:  # noqa: BLE001 - no topics yet
+            return out
+        for t in topics:
+            name = _call(t, "getName")
+            for suffix, level in (("/errors", "error"), ("/warnings", "warning")):
+                if name.endswith(suffix) and self.get("str", name[: -len(suffix)] + "/.type") == "Alerts":
+                    out.extend((level, str(x)) for x in self.get("str[]", name))
         return out
 
     def set_battery(self, battery_id, timeout=5.0):

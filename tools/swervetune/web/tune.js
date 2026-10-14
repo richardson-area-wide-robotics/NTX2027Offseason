@@ -84,6 +84,7 @@ const Tune = (() => {
             <label class="row small" data-tip="tune.pattern">Steps <select id="pattern"><option value="0">Standard</option><option value="1">Small (friction)</option><option value="2">Large (flat out)</option></select></label></div>
         </div>
         <p class="hint" id="blurb"></p>
+        <div id="tune-faults"></div>
       </div>
       <div class="tune-col tune-left">
         <div class="panel">
@@ -686,6 +687,16 @@ const Tune = (() => {
     await App.previewAndSave({ kind: "gains", keys: prefix }, "Save the gains the robot is running");
   }
 
+  // The faults on what this test runs: the steer motors (one module's, when one is picked), the drive
+  // motors, or all of them and the gyro for a chassis test. None for the practice pod.
+  const MODNAME = { FL: "front left", FR: "front right", BL: "back left", BR: "back right" };
+  function faultScope() {
+    if (target === "practice") return null;
+    if (loop === "steer") return { kind: "steer", module, quiet: true, what: module === "ALL" ? "the steer motors" : `the ${MODNAME[module] || module} steer motor` };
+    if (["drive", "ff", "slip"].includes(loop)) return { kind: "drive", quiet: true, what: "the drive motors" };
+    return { kind: "swerve", gyro: true, quiet: true, what: "the swerve motors and the gyro" };
+  }
+
   // ---------------------------------------------------------------- controls
   function setLoop(l) {
     loop = l;
@@ -747,6 +758,7 @@ const Tune = (() => {
   // On a phone the earlier-runs list starts closed, so the result isn't pushed below it.
   if (window.matchMedia && matchMedia("(max-width: 900px)").matches) $("#history-panel", root).open = false;
   setLoop("steer");
+  Faults.mount($("#tune-faults", root), faultScope);
   return {
     open(l, opts = {}) {
       if (opts.target) target = opts.target;

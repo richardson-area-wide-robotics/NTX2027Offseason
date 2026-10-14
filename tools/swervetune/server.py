@@ -32,7 +32,7 @@ from urllib.parse import parse_qsl, unquote, urlparse
 from . import setup as setup_plans
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
                designcheck, designlinks, logsummary, monitor, motorinv, netcheck, pdhports, plant, ppcheck, predict, progress,
-               rehearse, revspecs, runs, wiring, yagslcfg)
+               rehearse, revspecs, robotlog, runs, wiring, yagslcfg)
 
 # A fresh secret each run: only the page this run served can change anything (see Handler).
 TOKEN = secrets.token_urlsafe(18)
@@ -65,6 +65,10 @@ class Session:
         self.test_state = {"running": False}
         self.last_run = None
         self.connect_error = ""
+        # What the robot keeps reporting: its console (a real roboRIO) and its alerts, counted.
+        self.robotlog = robotlog.Tally()
+        self.console = None
+        self.alerts_at = 0.0
 
     # ------------------------------------------------------------------ browser presence
     def browser_alive(self):
@@ -129,6 +133,9 @@ class Session:
         return True
 
     def disconnect(self):
+        if self.console:
+            self.console.stop()
+            self.console = None
         if self.link:
             try:
                 self.link.close()
@@ -273,6 +280,7 @@ def api_live(_):
     names = S.link.robot_info()["modules"]
     S.flags = S.monitor.update(live, names, S.link.environment().get("active"))
     S.feed_sample(live, S.wiring_map())
+    _watch_robot_messages()
     return {"connected": S.link.is_connected(), "live": live, "flags": S.flags,
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],
@@ -813,6 +821,42 @@ def api_part_start(body):
     progress.change(S.project.name, lambda p: p.setdefault("parts", {}).__setitem__(
         key, {"started": setup_plans.stamp(), "marks": {}}))
     return api_part_plan({"kind": kind, "which": which})
+
+
+def _watch_robot_messages():
+    """Counts what the robot reports while the page is open: its alerts twice a second, and its
+    console, read in the background from a real roboRIO (the simulator has none to read)."""
+    now = time.monotonic()
+    if not (S.link and S.link.is_connected()) or now - S.alerts_at < 0.5:
+        return
+    S.alerts_at = now
+    try:
+        S.robotlog.alerts(S.link.alerts())
+    except Exception:  # noqa: BLE001 - the counts are a convenience; never break the live view
+        pass
+    if _in_sim():
+        return
+    host = S.link.connected_to()
+    if host and (S.console is None or S.console.host != host):
+        if S.console:
+            S.console.stop()
+        S.console = robotlog.ConsoleWatch(host, S.robotlog)
+
+
+def api_robotlog(_query=None):
+    """Each distinct error and warning the robot has reported since the counts were cleared, with
+    how often and how recently."""
+    connected = bool(S.link and S.link.is_connected())
+    console = ("the simulator has no console to read" if connected and _in_sim()
+               else S.console.state if S.console else "not connected")
+    return {"ok": True, "connected": connected, "console": console,
+            "since_s": round(time.time() - S.robotlog.since), "recent_s": robotlog.RECENT_S,
+            "messages": S.robotlog.summary()}
+
+
+def api_robotlog_clear(_body):
+    S.robotlog.clear()
+    return {"ok": True}
 
 
 def _in_sim():
@@ -1421,6 +1465,7 @@ def api_sim(body):
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
+       "/api/robotlog": api_robotlog,
        "/api/designs": api_designs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
@@ -1439,6 +1484,7 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/designs/read": api_design_read, "/api/sim": api_sim,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
         "/api/export": api_export, "/api/wiring/termination": api_wiring_termination,
+        "/api/robotlog/clear": api_robotlog_clear,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
         "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve,
         "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,

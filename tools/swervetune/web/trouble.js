@@ -12,13 +12,58 @@ const Trouble = (() => {
     paintList();
   }
 
+  // The first page shows the symptoms or the robot's messages, one at a time: side by side, neither
+  // fit a laptop screen. The switch carries the messages' count, red while an error keeps happening.
+  let homeView = "symptoms";
   function paintList() {
     root.innerHTML = `<div class="stack">
-      <div class="panel"><h2 data-tip="trouble.list">What is the robot doing?</h2>
-        <p class="hint">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p></div>
-      <div class="symptoms">${symptoms.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div></div>`;
+      <div class="panel"><div class="row" style="justify-content:space-between;flex-wrap:wrap">
+          <h2 data-tip="trouble.list">${homeView === "symptoms" ? "What is the robot doing?" : "What the robot keeps reporting"}</h2>
+          <div class="seg" role="group" aria-label="Show">
+            <button data-home="symptoms" class="${homeView === "symptoms" ? "on" : ""}" aria-pressed="${homeView === "symptoms"}" data-tip="trouble.list">Symptoms</button>
+            <button data-home="msgs" class="${homeView === "msgs" ? "on" : ""}" aria-pressed="${homeView === "msgs"}" data-tip="trouble.msgs">Robot messages <span id="tr-msgs-count" class="chip"></span></button></div></div>
+        ${homeView === "symptoms" ? `<p class="hint">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p>`
+          : `<div class="row" style="justify-content:space-between"><p class="small muted" id="tr-msgs-src"></p>
+              <button class="btn small" id="tr-msgs-clear" data-tip="trouble.msgs-clear" data-quiet>Clear the counts</button></div>`}</div>
+      ${homeView === "symptoms" ? `<div class="symptoms">${symptoms.map(s => `<button class="symptom" data-id="${esc(s.id)}" data-tip="trouble.sym.${esc(s.id)}" data-quiet><span class="t">${esc(s.title)}</span><span class="d">${esc(s.looks_like)}</span></button>`).join("")}</div>`
+        : `<div class="panel tr-msgs"><div id="tr-msgs-list" class="tr-msgs-list"></div></div>`}</div>`;
     $$(".symptom", root).forEach(b => b.onclick = () => open(b.dataset.id));
+    $$("[data-home]", root).forEach(b => b.onclick = () => { homeView = b.dataset.home; paintList(); });
+    const clear = $("#tr-msgs-clear", root);
+    if (clear) clear.onclick = async () => { await App.api("/api/robotlog/clear", {}); loadMessages(); };
+    loadMessages();
   }
+
+  // ---------------------------------------------------------------- what the robot keeps reporting
+  // Every error and warning the robot has reported, each once with how often and how recently: not a
+  // stream of lines, so what keeps coming back stands out.
+  const ago = s => s < 60 ? `${Math.round(s)} s ago` : s < 3600 ? `${Math.round(s / 60)} min ago` : `${(s / 3600).toFixed(1)} h ago`;
+  async function loadMessages() {
+    const r = await App.api("/api/robotlog");
+    if (!r || r.ok === false) return;
+    const M0 = r.messages || [], count = $("#tr-msgs-count", root);
+    if (count) {
+      const hot = M0.some(m => m.ongoing && m.level === "error");
+      count.textContent = M0.length;
+      count.className = "chip" + (hot ? " bad" : M0.some(m => m.ongoing) ? " warn" : "");
+      count.hidden = !M0.length;
+    }
+    const list = $("#tr-msgs-list", root);
+    if (!list) return;
+    const src = !r.connected ? "Connect to the robot: it counts what the robot reports from then on."
+      : `Since ${r.since_s < 90 ? "just now" : ago(r.since_s).replace(" ago", "") + " ago"}: the robot's alerts, and its console (${esc(r.console)}). "Still happening" means seen in the last minute.`;
+    const src_el = $("#tr-msgs-src", root);
+    if (src_el._t !== src) { src_el._t = src; src_el.innerHTML = src; }
+    const M = r.messages || [];
+    const html = !M.length ? (r.connected ? `<p><span class="level ok">ok</span> Nothing reported.</p>` : "")
+      : `<table class="t"><tbody>${M.map(m => `<tr class="${m.ongoing ? "ongoing" : ""}">
+          <td><span class="level ${m.level === "error" ? "error" : "warn"}">${m.level}</span></td>
+          <td><div class="tr-msg-text">${esc(m.text)}</div>
+            <div class="small muted">${m.where ? esc(m.where) + " · " : ""}${m.source === "alert" ? "alert" : "console"} · first ${ago(m.first_ago_s)}, last ${ago(m.last_ago_s)}</div></td>
+          <td class="num"><b>${m.count}×</b>${m.ongoing ? `<div><span class="chip ${m.level === "error" ? "bad" : "warn"}">still happening</span></div>` : `<div class="small muted">stopped</div>`}</td></tr>`).join("")}</tbody></table>`;
+    if (list._h !== html) { list._h = html; list.innerHTML = html; }
+  }
+  setInterval(() => { if (root.classList.contains("on") && !current) loadMessages(); }, 2000);
 
   async function open(id) {
     App.show("trouble");

@@ -12,9 +12,14 @@ carry on unchanged through 2027.
    PhotonVision page on port 5800.
 2. **Name the camera** on that page. The robot code must use exactly the same name: a mismatch
    fails silently, with no error and no poses.
-3. **Calibrate it** (Cameras, Calibration) at the resolution the pipeline will use, with a
-   ChArUco board, until the reprojection error is low. Pose estimation is only as good as this.
-   The Luma image ships uncalibrated.
+3. **Calibrate it** (Cameras, Calibration) at the resolution the pipeline will use, with the
+   team's ChArUco board: 9 x 11 in, 8 x 8 squares of 1 in, 0.75 in markers. In PhotonVision:
+   board type ChArUco, tag family 4x4, pattern spacing 1.00 in, marker size 0.75 in, board 8 x 8,
+   old OpenCV pattern off (check a square with a ruler; type what it measures). Take 12 or more
+   snapshots, the board flat, near and far and tilted every way, covering the whole picture,
+   never square-on. Keep going until the mean reprojection error is low (under about a pixel).
+   Pose estimation is only as good as this, and the Luma image ships uncalibrated. The Calibrate
+   tab's **6. Camera lens** draws the board and records the result.
 4. AprilTag pipeline: family **36h11**, **3D mode** on, **Do Multi-Target Estimation** on, tag
    size **0.1651 m** (6.5 in across the black square), and the field layout the event uses
    (2026 welded or AndyMark; they differ by up to 3.6 cm).
@@ -49,7 +54,7 @@ the field, and a single tag claiming a jump of more than 1.5 m. Each rejection s
 
 ## 3. Measure where the camera sits
 
-Calibrate tab, **Camera positions**: tape one tag flat on a wall, put the robot square to it at
+Calibrate tab, **7. Camera positions**: tape one tag flat on a wall, put the robot square to it at
 three or more measured spots, take a sighting at each, and **Work it out**. The spread between the
 spots says how far to trust the answer. Save, redeploy.
 

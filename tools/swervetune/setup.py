@@ -170,22 +170,35 @@ def calibrate(ctx):
                          unblock={"guide": "ff", "label": "Guide step 10: Measure the feedforward"}))
 
     cams = [str(c) for c in ((tune.get("vision") or {}).get("cameras") or [])]
+    # The lens first: a pose is only as good as the camera's calibration, and it ships with none.
     if not cams:
-        jobs.append(_job("camera", "6. Camera positions", "skip",
+        jobs.append(_job("lens", "6. Camera lens", "skip",
+                         "No camera listed in swervetune.json (\"vision\": {\"cameras\": [...]}).",
+                         go={"tab": "calibrate", "panel": "cal-lens"}))
+    else:
+        marks = {c: _mark(prog, f"cal_lens_{c}") for c in cams}
+        bad = [c for c, mk in marks.items() if mk and mk.get("result") != "pass"]
+        left = [c for c, mk in marks.items() if not mk]
+        jobs.append(_job("lens", "6. Camera lens", "attention" if bad else "todo" if left else "done",
+                         (f"Recalibrate: {', '.join(bad)}." if bad else ("Not calibrated yet: " + ", ".join(left)) if left
+                          else "Every camera calibrated."),
+                         go={"tab": "calibrate", "panel": "cal-lens"}))
+    if not cams:
+        jobs.append(_job("camera", "7. Camera positions", "skip",
                          "No camera listed in swervetune.json (\"vision\": {\"cameras\": [...]}).",
                          go={"tab": "calibrate", "panel": "cal-camera"}))
     else:
         left = [c for c in cams if not _mark(prog, f"cal_camera_{c}")]
-        jobs.append(_job("camera", "6. Camera positions", "todo" if left else "done",
+        jobs.append(_job("camera", "7. Camera positions", "todo" if left else "done",
                          ("Not measured yet: " + ", ".join(left)) if left else "Every camera measured.",
                          go={"tab": "calibrate", "panel": "cal-camera"}))
 
     if ctx.get("layout_saved"):
-        jobs.append(_job("field", "7. Field tags", "done",
+        jobs.append(_job("field", "8. Field tags", "done",
                          "A surveyed layout is saved. Upload it to each camera too (vision doc).",
                          go={"tab": "calibrate", "panel": "cal-field"}))
     else:
-        jobs.append(_job("field", "7. Field tags", "optional",
+        jobs.append(_job("field", "8. Field tags", "optional",
                          "On a field with tags, at an event or a practice field: needs a camera.",
                          go={"tab": "calibrate", "panel": "cal-field"}, optional=True))
 
@@ -194,7 +207,7 @@ def calibrate(ctx):
                  "and inertia, and where each camera looks: odometry, PathPlanner and vision all start from these. "
                  "Measure in this order: each uses the ones before it. Every panel's Practice runs it on made-up "
                  "data with a known answer, to see what a good result looks like first.",
-                 ["A tape measure", "3 m of straight floor", "A scale", "A tag on a wall (for a camera)"],
+                 ["A tape measure", "3 m of straight floor", "A scale", "The ChArUco board and a tag on a wall (for a camera)"],
                  jobs, {"tab": "controllers", "label": "Next: Controllers"})
 
 

@@ -46,6 +46,7 @@
           <h2 data-tip="cal.wheels">2. Wheel sizes</h2>
           <button class="btn" id="cg-wheel-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
+        <div data-faults="wheels"></div>
         ${HowTo.block(`<p class="small">Tread wears and compresses, and every distance odometry reports is wheel turns times the wheel size. With the motors coasting, a push makes each wheel roll freely over the same ground, so each one's count against a tape measure is its real size. Driving can't measure this: the speed loop makes every wheel report the speed it was asked for.</p>
         <ol class="small">
           <li>Robot <b>on the floor and disabled</b>. Mark a start and an end <b>3 m</b> apart along a straight line.</li>
@@ -65,6 +66,7 @@
       </div>
       <div class="panel" id="cal-spin">
         <h2 data-tip="cal.spin">3. Check with a spin</h2>
+        <div data-faults="spin"></div>
         ${HowTo.steps({ steps: ["After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune tab, or the Guide's Spin check).",
           "Press <b>Check the newest floor spin</b>: turning on the spot, the gyro's turn rate against the wheels' speeds says whether the two agree as a whole."],
           good: "the gyro and the wheels agree within a few percent. If they don't, recheck the module positions and wheel sizes before blaming the gyro." })}
@@ -77,6 +79,7 @@
           <h2 data-tip="cal.gyro">4. Gyro</h2>
           <button class="btn" id="gy-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
+        <div data-faults="gyro"></div>
         ${HowTo.block(`<p class="small">Where the gyro sits on the robot doesn't matter for localization: odometry uses only the heading, and every part of the robot turns by the same angle. What matters is how well it reads: does the heading creep while nothing moves, does a full turn read 360 degrees, and is it mounted level.</p>
         <ol class="small">
           <li><b>Standing still:</b> after the gyro has finished calibrating (the top bar), record a minute with nobody touching the robot.</li>
@@ -98,6 +101,7 @@
           <h2 data-tip="cal.moi">5. Mass and moment of inertia</h2>
           <button class="btn" id="mi-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
+        <div data-faults="moi"></div>
         ${HowTo.block(`<p class="small">PathPlanner plans every auto from the robot's mass and its moment of inertia (how hard it is to start and stop turning). Weigh the robot with bumpers and battery. The moment of inertia can't be weighed: spinning the robot in place, with every wheel pushing along its circle, measures it against how hard the robot is to push in a straight line.</p>`, "What it's for")}
         <div class="row" style="flex-wrap:wrap">
           <label class="small" data-tip="cal.mass">Mass with bumpers and battery (kg) <input type="number" id="mi-mass" step="0.1" min="10" max="80" style="width:7em"></label>
@@ -113,9 +117,42 @@
         <div id="mi-out"></div>
         ${HowTo.nextLine("moi")}
       </div>
+      <div class="panel" id="cal-lens">
+        <h2 data-tip="cal.lens">6. Camera lens</h2>
+        ${HowTo.block(`<p class="small">Every pose is only as good as the camera's lens calibration, and a Luma ships with none. PhotonVision measures the lens from pictures of the team's ChArUco board, at each resolution separately: calibrate at the one the AprilTag pipeline uses.</p>
+        <ol class="small">
+          <li>Find the board: the one drawn here. Check a square with a ruler: 1 inch.</li>
+          <li>Open the camera's PhotonVision page (port 5800), <b>Cameras</b>, <b>Calibration</b>. Pick the pipeline's resolution and set the board as in the table.</li>
+          <li>Lay the board <b>flat</b> and still. Take at least 12 snapshots: near and far, tilted every way, the board in every part of the picture including the corners. Never square-on to the lens. Only take one when the overlay lines up with the board.</li>
+          <li>Press <b>Calibrate</b>. Then record it here, with the resolution and the mean error PhotonVision shows.</li>
+        </ol>
+        <p class="small good-result"><b>A good result:</b> a low mean error, in pixels, and the snapshots spread over the whole picture. One snapshot far worse than the rest: delete it and calibrate again.</p>`)}
+        <div class="cal-lens">
+          <figure class="board-fig">${boardSvg()}
+            <figcaption class="small muted">The board: 9 × 11 in, 8 × 8 squares. Markers drawn for illustration; yours have their own patterns.</figcaption></figure>
+          <div>
+            <table class="t lens-set"><thead><tr><th>PhotonVision setting</th><th>Set to</th></tr></thead><tbody>
+              <tr><td>Board type</td><td class="mono">ChArUco</td></tr>
+              <tr><td>Tag family</td><td class="mono">4x4</td></tr>
+              <tr><td>Pattern spacing (a square)</td><td class="mono">1.00 in</td></tr>
+              <tr><td>Marker size</td><td class="mono">0.75 in</td></tr>
+              <tr><td>Board width × height</td><td class="mono">8 × 8</td></tr>
+              <tr><td>Old OpenCV pattern</td><td class="mono">off</td></tr></tbody></table>
+            <p class="small muted">If your ruler says a square isn't 1 in, type what it is as the pattern spacing, and the marker's own width as the marker size.</p>
+            <div class="row" style="flex-wrap:wrap;gap:10px">
+              <label class="small" data-tip="cal.cam">Camera <input id="cl-cam" value="front" style="width:7em"></label>
+              <label class="small" data-tip="cal.lens-res">Resolution <input id="cl-res" placeholder="1280x800" style="width:7em"></label>
+              <label class="small" data-tip="cal.lens-err">Mean error <input id="cl-err" inputmode="decimal" style="width:4em"> px</label>
+              <button class="btn primary" id="cl-done" data-tip="cal.lens-done">Record it</button>
+            </div>
+            <div id="cl-out" class="small"></div>
+          </div>
+        </div>
+        ${HowTo.nextLine("lens")}
+      </div>
       <div class="panel" id="cal-camera">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2 data-tip="cal.camera">6. Camera positions</h2>
+          <h2 data-tip="cal.camera">7. Camera positions</h2>
           <button class="btn" id="cc-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         ${HowTo.block(`<p class="small">Every vision pose passes through where the code thinks the camera is. A degree of tilt it doesn't know about moves poses 3.5 cm at 2 m. So measure the mount with the camera itself: one tag on a wall, the robot square to it at a few measured spots.</p>
@@ -142,7 +179,7 @@
       </div>
       <div class="panel" id="cal-field">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-          <h2 data-tip="cal.field">7. Field tags</h2>
+          <h2 data-tip="cal.field">8. Field tags</h2>
           <button class="btn" id="fs-practice" data-tip="cal.practice" data-quiet>Practice</button>
         </div>
         ${HowTo.block(`<p class="small">Tags on a real field are hung by people: a few centimeters off, a degree turned, now and then one on the wrong bracket. This measures where they really are, and the robot localizes with that instead. Measure the camera positions first.</p>
@@ -320,6 +357,63 @@
   };
   $("#mi-practice", root).onclick = async () => showInertia(await App.api("/api/practice", { loop: "spin_ff" }));
   App.on("tab", t => { if (t === "calibrate") showMass(); });
+
+  // The team's calibration board, drawn to scale so a person can tell they have the right one: a
+  // 9 x 11 in board, an 8 x 8 checkerboard of 1 in squares, a 0.75 in ArUco marker in each white
+  // square. The markers' patterns are illustrations; a real board's are its own.
+  // (A function, not a constant: the page's HTML above draws it before this line runs.)
+  function boardSvg() {
+    const B = { w: 9, h: 11, n: 8, sq: 1, marker: 0.75 }, ox = (B.w - B.n * B.sq) / 2, oy = ox;
+    let seed = 7;
+    const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+    let cells = "";
+    for (let r = 0; r < B.n; r++) {
+      for (let c = 0; c < B.n; c++) {
+        const x = ox + c * B.sq, y = oy + r * B.sq;
+        if ((r + c) % 2 === 0) { cells += `<rect x="${x}" y="${y}" width="${B.sq}" height="${B.sq}" fill="#000"/>`; continue; }
+        // A marker: a black border one cell wide around 4 x 4 cells of pattern.
+        const m = B.marker, mx = x + (B.sq - m) / 2, my = y + (B.sq - m) / 2, k = m / 6;
+        cells += `<rect x="${mx}" y="${my}" width="${m}" height="${m}" fill="#000"/>`;
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+          if (rnd() < 0.5) cells += `<rect x="${(mx + k * (j + 1)).toFixed(4)}" y="${(my + k * (i + 1)).toFixed(4)}" width="${k.toFixed(4)}" height="${k.toFixed(4)}" fill="#fff"/>`;
+        }
+      }
+    }
+    const g = oy + B.n * B.sq;
+    return `<svg class="board-svg" viewBox="-1.2 -1 ${B.w + 1.6} ${B.h + 1.6}" role="img"
+        aria-label="The calibration board: a 9 by 11 inch board with an 8 by 8 checkerboard of 1 inch squares, a small square marker in each white square, and its settings printed below">
+      <rect x="0" y="0" width="${B.w}" height="${B.h}" fill="#fff" stroke="#888" stroke-width="0.04" rx="0.15"/>
+      ${cells}
+      <text x="${B.w / 2}" y="${g + 0.8}" text-anchor="middle" font-size="0.42" fill="#000">ChArUco 8 x 8</text>
+      <text x="${B.w / 2}" y="${g + 1.4}" text-anchor="middle" font-size="0.32" fill="#333">1 in squares · 0.75 in markers · 4x4</text>
+      <g class="board-dim">
+        <line x1="0" y1="-0.45" x2="${B.w}" y2="-0.45"/><text x="${B.w / 2}" y="-0.6" text-anchor="middle">9 in</text>
+        <line x1="-0.45" y1="0" x2="-0.45" y2="${B.h}"/><text x="-0.6" y="${B.h / 2}" text-anchor="middle" transform="rotate(-90 -0.6 ${B.h / 2})">11 in</text>
+        <line x1="${ox}" y1="${g + 0.15}" x2="${ox + B.sq}" y2="${g + 0.15}"/>
+      </g>
+    </svg>`;
+  }
+
+  // The faults that would spoil each measurement: wheel sizes need the drive encoders, a spin and the
+  // inertia every swerve motor and the gyro, the gyro checks the gyro.
+  const FAULT_SCOPE = {
+    wheels: { kind: "drive", what: "the drive motors" },
+    spin: { kind: "swerve", gyro: true, what: "the swerve motors and the gyro" },
+    gyro: { gyro: true, what: "the gyro" },
+    moi: { kind: "swerve", gyro: true, what: "the swerve motors and the gyro" },
+  };
+  $$("[data-faults]", root).forEach(el => Faults.mount(el, FAULT_SCOPE[el.dataset.faults]));
+
+  // A lens calibration done in PhotonVision, recorded for the checklist. Below a pixel is good; a
+  // number well above it means snapshots that disagree.
+  $("#cl-done", root).onclick = async () => {
+    const cam = $("#cl-cam", root).value.trim(), res = $("#cl-res", root).value.trim(), err = parseFloat($("#cl-err", root).value);
+    if (!cam || !res || !Number.isFinite(err)) { App.toast("Type the camera, the resolution and the mean error first."); return; }
+    const ok = err <= 1.0;
+    await HowTo.mark("calibrate", "cal_lens_" + cam, ok, `${res}, mean error ${err} px${ok ? "" : ": over 1 px, take the snapshots again"}`);
+    $("#cl-out", root).innerHTML = ok ? `<span class="level ok">ok</span> Recorded: ${esc(cam)} at ${esc(res)}, ${esc(String(err))} px. Recalibrate if you change the resolution.`
+      : `<span class="level warn">warn</span> ${esc(String(err))} px is high: delete the snapshots that stand out, or take a fresh set, and calibrate again.`;
+  };
 
   // ---------------------------------------------------------------- camera positions
   const AXES = [{ k: "x", u: "m", d: 3 }, { k: "y", u: "m", d: 3 }, { k: "z", u: "m", d: 3 },

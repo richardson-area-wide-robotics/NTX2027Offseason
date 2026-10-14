@@ -723,3 +723,26 @@ table.t td > select { padding-block: 1px; }
   button.chip { min-height: 32px; }
   input[type=checkbox], input[type=radio] { width: 22px; height: 22px; }
 }
+
+/* Calibrate, 6. Camera lens: the board beside its settings. The board is a picture of a real
+   object, so it stays black on white in both themes. */
+.cal-lens { display: grid; grid-template-columns: minmax(170px, 250px) 1fr; gap: 16px; align-items: start; }
+.board-fig { margin: 0; }
+.board-svg { width: 100%; height: auto; max-height: 340px; display: block; }
+.board-dim line { stroke: var(--muted); stroke-width: 0.03; }
+.board-dim text { fill: var(--muted); font-size: 0.4px; font-family: var(--sans); }
+.lens-set { width: auto; margin-bottom: 6px; }
+
+/* Faults on the devices a job depends on (faults.js): one quiet line when there are none. */
+.fault-strip { margin: 4px 0 6px; }
+.fault-strip ul { margin: 2px 0 0; padding-left: 18px; }
+.fault-strip.bad { border-left: 3px solid var(--bad); padding-left: 8px; }
+.fault-strip:not(.ok):not(.bad) { border-left: 3px solid var(--warn); padding-left: 8px; }
+
+/* Troubleshoot's first page, its Robot messages view: the list scrolls inside its panel. */
+.tr-msgs { max-height: calc(var(--work-h) - 110px); overflow: auto; }
+.tr-msgs-list td { vertical-align: top; }
+.tr-msgs-list td:first-child, .tr-msgs-list td:last-child { width: 1%; white-space: nowrap; }
+.tr-msg-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.tr-msgs-list tr.ongoing .tr-msg-text { font-weight: 600; }
+#tune-faults:empty { display: none; }
