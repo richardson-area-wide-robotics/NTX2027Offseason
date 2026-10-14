@@ -112,7 +112,9 @@ controllers' status frames sped up, 2 s quiet: counts CAN errors and bus-offs; m
 result does not prove the termination, the meter check does), `system_limits` (a person moves a
 pivot or elevator by hand to both ends, robot disabled, its motors coasting: those are its limits),
 `system_step` (a registered mechanism's own closed loop, its goal moved along a path no faster than
-`vmax` nor `amax`; refuses a pivot or elevator without limits, stops it past them or too fast),
+`vmax` nor `amax`; refuses a pivot or elevator without limits, stops it past them or too fast; its
+report's `next` is one change to the mechanism's own `Name/k` gains, `options` the rest in order, `cost`
+lower is better; a pivot's or elevator's first leg, from wherever it was, isn't judged),
 `system_piece` (calibrates a game-piece current sensor: `sensor` and `system` by number and
 `pieces`; a roller runs while a person feeds that many pieces one at a time when the banner says,
 stopping between them; an arm or elevator sweeps empty, then once with each piece; a person is

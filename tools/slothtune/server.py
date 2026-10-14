@@ -66,6 +66,7 @@ class Session:
         self.test_state = {"running": False}
         self.last_run = None
         self.autotune = None        # the auto-tuner, while it runs and after (its result, to save)
+        self.sys_autotune = None    # a mechanism's auto-tuner (the Systems tab), the same way
         self.connect_error = ""
         # What the robot keeps reporting: its console (a real roboRIO) and its alerts, counted.
         self.robotlog = robotlog.Tally()
@@ -202,6 +203,11 @@ class Session:
         self.test_state = {"running": True, "test": test, "module": module, "state": "SENDING",
                            "message": "Sending to the robot...", "progress": 0.0}
         gains = self.link.gains()
+        if test.startswith("system_"):
+            # A mechanism's run keeps the mechanism's own gains ("Elevator/kP"): its report's next
+            # change, and the auto-tuner, work from them.
+            for s in self.link.systems():
+                gains.update({f"{s['name']}/{k}": g["value"] for k, g in (s.get("gains") or {}).items()})
 
         def on_status(st):
             self.test_state.update(state=st["state"], message=st["message"], progress=st["progress"])
@@ -475,6 +481,8 @@ def api_autotune_start(body):
         return {"ok": False, "error": "Pick steering or drive."}
     if S.autotune and S.autotune.state in ("running", "paused"):
         return {"ok": False, "error": "The auto-tuner is already running."}
+    if S.sys_autotune and S.sys_autotune.state in ("running", "paused"):
+        return {"ok": False, "error": "A mechanism's auto-tune is running: stop it first."}
     if body.get("target") == "practice":
         gains = dict(body.get("gains") or {})
         runner = autotune.PracticeRunner(gains, surface="floor" if body.get("surface") == "floor" else "blocks")
@@ -491,6 +499,57 @@ def api_autotune_start(body):
     S.autotune.target = "practice" if body.get("target") == "practice" else "robot"
     S.autotune.start()
     return {"ok": True, **S.autotune.to_json()}
+
+
+def api_sys_autotune_start(body):
+    """Starts the auto-tuner on one mechanism (the Systems tab): its step test with the tab's
+    arguments, a round at a time, while a person holds the deadman. ``practice`` runs a made-up
+    elevator or flywheel instead, for trying it out."""
+    from . import autotune
+
+    body = body or {}
+    name, args = str(body.get("system") or ""), body.get("args") or {}
+    if not name or not isinstance(args, dict):
+        return {"ok": False, "error": "Pick the mechanism to tune."}
+    for t in (S.autotune, S.sys_autotune):
+        if t and t.state in ("running", "paused"):
+            return {"ok": False, "error": "An auto-tune is already running: stop it first."}
+    rounds = int(body.get("rounds") or autotune.MAX_ROUNDS)
+    if body.get("practice"):
+        kind = "FLYWHEEL" if str(body.get("kind") or "").upper() in ("FLYWHEEL", "ROLLER") else "ELEVATOR"
+        runner = autotune.PracticeSystemRunner(name, kind, {k: float(v) for k, v in (body.get("gains") or {}).items()} or None)
+    else:
+        if not (S.link and S.link.is_connected()):
+            return {"ok": False, "error": "Connect to the robot first."}
+        if S.test_state.get("running"):
+            return {"ok": False, "error": "A test is running: let it finish first."}
+        if not any(s["name"] == name for s in S.link.systems()):
+            return {"ok": False, "error": f"The robot has no mechanism called {name}."}
+        runner = autotune.RobotSystemRunner(S, name, args)
+        if not runner.gains():
+            return {"ok": False, "error": f"{name} registers no gains for the tuner to change."}
+    S.sys_autotune = autotune.SystemTune(runner, name, max_rounds=rounds)
+    S.sys_autotune.target = "practice" if body.get("practice") else "robot"
+    S.sys_autotune.start()
+    return {"ok": True, **S.sys_autotune.to_json()}
+
+
+def api_sys_autotune(_):
+    t = S.sys_autotune
+    return {"ok": True, "state": "none"} if not t else {"ok": True, "target": getattr(t, "target", "robot"), **t.to_json()}
+
+
+def api_sys_autotune_continue(_):
+    if not S.sys_autotune or S.sys_autotune.state != "paused":
+        return {"ok": False, "error": "The auto-tuner isn't paused."}
+    S.sys_autotune.resume()
+    return {"ok": True}
+
+
+def api_sys_autotune_stop(_):
+    if S.sys_autotune:
+        S.sys_autotune.stop("Stopped.")
+    return {"ok": True}
 
 
 def api_autotune(_):
@@ -1958,6 +2017,7 @@ def api_sim(body):
 
 
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state, "/api/autotune": api_autotune,
+       "/api/systems/autotune": api_sys_autotune,
        "/api/camera/lighting": api_camera_lighting_state, "/api/newfield": api_newfield, "/api/field": api_field,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
@@ -1974,6 +2034,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
         "/api/autotune/start": api_autotune_start, "/api/autotune/continue": api_autotune_continue,
+        "/api/systems/autotune/start": api_sys_autotune_start, "/api/systems/autotune/continue": api_sys_autotune_continue,
+        "/api/systems/autotune/stop": api_sys_autotune_stop,
         "/api/autotune/stop": api_autotune_stop, "/api/gyro/command": api_gyro_command,
         "/api/camera/connect": api_camera_connect, "/api/camera/cal/start": api_camera_cal_start,
         "/api/camera/cal/snap": api_camera_cal_snap, "/api/camera/cal/finish": api_camera_cal_finish,

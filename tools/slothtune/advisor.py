@@ -1692,7 +1692,7 @@ def _analyze_test(result, gains=None, **kw):
         return wiring.can_load_report(result)
     if test == "system_step":
         from . import systems
-        return systems.step_report(result, kw.get("systems"))
+        return systems.step_report(result, kw.get("systems"), gains)
     if test == "system_limits":
         from . import systems
         return systems.limits_report(result)

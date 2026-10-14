@@ -228,15 +228,19 @@ const Systems = (() => {
       <div class="row" style="justify-content:space-between"><h3 data-tip="sys.test">${positional(s) ? "4" : "3"}. Test it</h3>
         <div class="row"><div class="seg" id="sys-speed" role="group" aria-label="Test speed">${["half", "full"].map(k =>
           `<button data-speed="${k}" class="${speed === k ? "on" : ""}" aria-pressed="${speed === k}" data-tip="sys.speed-${k}">${k === "half" ? "Half speed" : "Full speed"}</button>`).join("")}</div>
+        <button class="btn" id="sys-autotune" data-tip="sys.autotune" ${p.ok && Object.keys(s.gains || {}).length ? "" : "disabled"}>Auto-tune…</button>
         <button class="btn primary" id="sys-run" data-tip="sys.run" ${p.ok && App.connected() && where ? "" : "disabled"}>Run</button></div></div>
       ${p.ok ? `<p class="small">${positional(s) ? `Moves between ${n4(by(p.a, k))} and ${n4(by(p.b, k))} ${u}` : `Spins up to ${n4(by(p.a, k))}, then ${n4(by(p.b, k))} ${u}, then down`},
           no faster than <b>${n4(by(p.vmax, k))}</b> ${u}${positional(s) ? "/s" : ""}${speed === "half" ? " (half its planned speed)" : ""}, changing at most ${n4(by(p.amax, k))}${u ? ` ${u}/s${positional(s) ? "²" : ""}` : ` per second${positional(s) ? " per second" : ""}`}.
           <span class="muted">${(p.why || []).map(esc).join("; ")}.</span></p>
         <p class="small muted">Robot enabled ${where ? "" : "<b class=\"warn-ink\">(set On blocks or On the floor first)</b> "}and the deadman held; someone watching it, hands clear. It stops at once if it leaves its limits or goes too fast.</p>`
         : `<p class="small warn-ink">Before it can be tested: ${(p.missing || ["its settings"]).map(esc).join("; ")}.</p>`}
+      <div id="sys-at" class="small" hidden></div>
       <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The goal and what the mechanism did"></canvas></div>
       <div id="sys-report" class="small"></div>`;
     $("#sys-run", box).onclick = run;
+    $("#sys-autotune", box).onclick = () => openAutoTune(s, p);
+    if (tuneState && tuneState.system === s.name) paintTune(tuneState);
     wireView(box);
     $$("#sys-speed [data-speed]", box).forEach(b => b.onclick = () => { speed = b.dataset.speed; paintTest(); });
     drawRun();
@@ -281,6 +285,106 @@ const Systems = (() => {
       load();
     });
   }
+
+  // ---------------------------------------------------------------- auto-tune
+  // The mechanism's own gains, tuned round by round while a person holds the deadman (autotune.py
+  // SystemTune): its step test, the one change its report asks for, again, up to 8 rounds; at the end
+  // it goes back to its best round, and Save writes what it changed to slothtune.json.
+  let tuneState = null, tuneTimer = null;
+  const STATE_WORD = { running: "running", paused: "paused", finished: "finished", stopped: "stopped" };
+
+  function openAutoTune(s, p) {
+    const env = App.env(), robot = App.connected() && ["BLOCKS", "FIELD", "SIM"].includes(env);
+    const blocker = !App.connected() ? "Not connected: you can try it on a made-up mechanism, or connect to tune the real one."
+      : !robot ? "Say where the robot is first (On blocks or On the floor): every test refuses without it." : "";
+    const checks = [
+      ["clear", positional(s) ? `<b>${esc(s.name)} moves freely</b> between its limits, nothing and nobody in its way.`
+        : `<b>Nothing near ${esc(s.name)}</b> while it spins: no game pieces, hands clear.`],
+      ["holder", "<b>One person holds the deadman the whole time</b> and watches it, ready to let go."],
+      ["enabled", "The robot is <b>enabled</b> in the Driver Station (Teleop or Test), as for any test."],
+    ];
+    const args = { system: s.index, a: p.a, b: p.b, vmax: p.vmax, amax: p.amax, hold_s: 1, moves: 2 };
+    App.modal(`<h2>Auto-tune ${esc(s.name)}</h2>
+      ${blocker ? `<div class="callout warn">${esc(blocker)}</div>` : ""}
+      ${robot ? `<h3>Before you start: tick each one</h3>
+      <ul class="checklist">${checks.map(([k, t]) => `<li><label class="row"><input type="checkbox" data-sat-check="${k}"> <span>${t}</span></label></li>`).join("")}</ul>` : ""}
+      <h3>What happens</h3>
+      <ol class="small">
+        <li>It runs the test you see on this panel (${speed === "half" ? "half" : "full"} speed), reads the result and changes <b>one gain</b>: gravity (kG) or speed (kV) first, from the physics or from the run itself, then kP.</li>
+        <li>Again, round after round: up to 8. Each change at most doubles or halves a gain, and stays inside the range the code allows.</li>
+        <li>A change that makes it much worse is undone at once and not tried again. It stops when it meets every target, when the advice needs a person (a gain it doesn't have, a kP of 0), or when two rounds don't beat its best.</li>
+        ${robot ? `<li><b>Let go of the deadman at any time</b>: the round stops and it waits. Hold it again and press <b>Continue</b>.</li>
+        <li><b>ABORT</b> (or Esc) stops it for good.</li>` : ""}
+        <li>At the end it goes back to its best round's gains. <b>Nothing is written to a file</b> until you press Save, which writes them to slothtune.json; the robot sets them every time it starts.</li>
+      </ol>
+      <div class="row" style="justify-content:flex-end">
+        <button class="btn" id="sat-cancel" data-tip="autotune.cancel">Cancel</button>
+        <button class="btn" id="sat-practice" data-tip="sys.at-practice">Try on a made-up ${positional(s) ? "elevator" : "flywheel"}</button>
+        <button class="btn primary" id="sat-start" data-tip="sys.at-start" disabled>Start</button></div>`, m => {
+      const boxes = $$("[data-sat-check]", m);
+      const ready = () => { $("#sat-start", m).disabled = !robot || !boxes.every(b => b.checked); };
+      boxes.forEach(b => b.onchange = ready);
+      $("#sat-cancel", m).onclick = () => App.closeModal();
+      const go = async body => {
+        App.closeModal();
+        const r = await App.api("/api/systems/autotune/start", Object.assign({ system: s.name, args }, body));
+        if (!r.ok) { App.toast(r.error || "The auto-tuner didn't start.", 6000); return; }
+        tuneState = r;
+        paintTest();
+        pollTune();
+      };
+      $("#sat-start", m).onclick = () => go({});
+      $("#sat-practice", m).onclick = () => go({ practice: true, kind: s.kind });
+    });
+  }
+
+  function pollTune() {
+    clearTimeout(tuneTimer);
+    tuneTimer = setTimeout(async () => {
+      const r = await App.api("/api/systems/autotune");
+      if (r && r.state && r.state !== "none") {
+        tuneState = r;
+        if (current() && current().name === r.system) paintTune(r);
+      }
+      if (r && ["running", "paused"].includes(r.state)) pollTune();
+      else if (r && r.target !== "practice") { last = null; load(); }
+    }, 500);
+  }
+
+  function paintTune(r) {
+    const el = $("#sys-at", root);
+    if (!el) return;
+    el.hidden = false;
+    const live = ["running", "paused"].includes(r.state);
+    // The gains it changed: every round's value of each, so each round's change shows.
+    const keys = Object.keys((r.rounds[0] || {}).gains || {}).filter(k => new Set(r.rounds.map(x => x.gains[k])).size > 1
+      || (r.best && r.best.gains[k] !== (r.rounds[0] || {}).gains[k]));
+    const show = keys.length ? keys : Object.keys((r.rounds[0] || {}).gains || {}).filter(k => /\/kP$/.test(k));
+    const short = k => k.split("/").pop();
+    const changed = r.best ? Object.entries(r.best.gains).filter(([k, v]) => v !== ((r.rounds[0] || {}).gains || {})[k]) : [];
+    el.innerHTML = `<div class="at-panel sys-at-panel">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <b data-tip="sys.autotune">Auto-tune ${esc(r.system)}${r.target === "practice" ? " (made-up mechanism)" : ""}: ${STATE_WORD[r.state] || esc(r.state)}</b>
+        <span class="row">
+          ${r.state === "paused" ? `<button class="btn small primary" id="sat-continue" data-tip="autotune.continue">Continue</button>` : ""}
+          ${live ? `<button class="btn small" id="sat-stop" data-tip="autotune.stop">Stop</button>` : ""}
+          ${!live && changed.length && r.target !== "practice" ? `<button class="btn small primary" id="sat-save" data-tip="sys.at-save">Save to slothtune.json…</button>` : ""}
+          ${!live ? `<button class="btn small" id="sat-close" data-tip="sys.at-close">Close</button>` : ""}</span></div>
+      <p class="${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>
+      ${r.rounds.length ? `<table class="t"><thead><tr><th>Round</th>${show.map(k => `<th class="num">${esc(short(k))}</th>`).join("")}<th class="num" data-tip="sys.at-cost">Cost</th><th>Then</th></tr></thead><tbody>
+        ${r.rounds.map(x => `<tr class="${r.best && r.best.round === x.round ? "best" : ""}"><td>${x.round}${r.best && r.best.round === x.round ? " <span class=\"chip\">best</span>" : ""}</td>
+          ${show.map(k => `<td class="num mono">${n4(x.gains[k])}</td>`).join("")}<td class="num mono">${x.cost == null ? "–" : fmt(x.cost, 1)}</td>
+          <td>${esc(x.advice || "")}</td></tr>`).join("")}</tbody></table>` : ""}
+      ${r.reason && !live ? `<p><b>${r.status === "done" ? "Done" : "Stopped"}:</b> ${esc(r.reason)}</p>` : ""}</div>`;
+    const c = $("#sat-continue", el), st = $("#sat-stop", el), sv = $("#sat-save", el), cl = $("#sat-close", el);
+    if (c) c.onclick = async () => { await App.api("/api/systems/autotune/continue", {}); pollTune(); };
+    if (st) st.onclick = () => App.api("/api/systems/autotune/stop", {});
+    if (cl) cl.onclick = () => { tuneState = null; el.hidden = true; el.innerHTML = ""; };
+    if (sv) sv.onclick = () => App.previewAndSave({ kind: "edits", edits: changed.map(([k, v]) =>
+      ({ file: "slothtune.json", path: ["systems", r.system, "gains", short(k)], value: +Number(v).toPrecision(6) })) },
+      `${r.system}: its tuned gains`);
+  }
+  App.api("/api/systems/autotune").then(r => { if (r && r.state && r.state !== "none") { tuneState = r; if (["running", "paused"].includes(r.state)) pollTune(); } });
 
   // ---------------------------------------------------------------- game pieces
   // A current sensor on this mechanism's motor is calibrated with a set number of pieces; a hold is

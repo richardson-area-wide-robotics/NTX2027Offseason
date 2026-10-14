@@ -80,6 +80,9 @@ public final class SlothTune {
   private static final double SIM_SPACE_M = 8.0;
 
   private final DrivetrainIO io;
+  /** What slothtune.json changed at startup, and each mechanism's saved gains as it registers. */
+  private final List<String> startup = new ArrayList<>();
+  private StringArrayPublisher startupReport;
   private final NetworkTableInstance nt;
   private final RobotSignals signals;
   private final DoubleSupplier clock;
@@ -301,7 +304,7 @@ public final class SlothTune {
     procedures.put("system_piece", PieceSenseProcedure::new);
     procedures.put("system_hold", HoldProcedure::new);
 
-    List<String> startup = applyStartupConfig();
+    startup.addAll(applyStartupConfig());
 
     envMode = nt.getStringTopic(SlothTuneTopics.ENV_MODE).subscribe("UNSET");
     envTags = nt.getBooleanTopic(SlothTuneTopics.ENV_APRILTAGS).subscribe(false);
@@ -383,7 +386,8 @@ public final class SlothTune {
     nt.getDoubleArrayTopic(SlothTuneTopics.MODULE_LOCATIONS).publish().set(locations);
     nt.getDoubleTopic(SlothTuneTopics.MAX_MODULE_SPEED).publish().set(io.maxModuleSpeedMps());
     nt.getStringTopic(SlothTuneTopics.STEER_FEEDBACK).publish().set(io.steerFeedback());
-    nt.getStringArrayTopic(SlothTuneTopics.STARTUP_REPORT).publish().set(startup.toArray(new String[0]));
+    startupReport = nt.getStringArrayTopic(SlothTuneTopics.STARTUP_REPORT).publish();
+    startupReport.set(startup.toArray(new String[0]));
 
     gains = new LiveGains(nt, io, config, bootId);
     // The FPGA clock restarts only when the roboRIO powers up: early in it, this is a fresh power-on
@@ -502,11 +506,13 @@ public final class SlothTune {
   /**
    * Registers a mechanism for the Systems tab and returns it to describe: how to read it, how to
    * set its goal, its subsystem, its motors and gains (see {@link TunableSystem}). slothtune.json's
-   * {@code "systems"} entry of the same name gives its limits.
+   * {@code "systems"} entry of the same name gives its limits and its saved gains.
    */
   public TunableSystem system(String name, TunableSystem.Kind kind) {
     systems.removeIf(s -> s.name.equals(name));
     TunableSystem s = new TunableSystem(name, kind);
+    s.saved = config.systemGains.getOrDefault(name, Map.of());
+    s.report = this::startupLine;
     double[] lim = config.systems.get(name);
     if (lim != null) {
       if (Double.isFinite(lim[0]) && Double.isFinite(lim[1])) {
@@ -517,6 +523,14 @@ public final class SlothTune {
     }
     systems.add(s);
     return s;
+  }
+
+  /** A line for the startup report after startup: a mechanism's saved gains, as it registers. */
+  private void startupLine(String line) {
+    startup.add(line);
+    if (startupReport != null) {
+      startupReport.set(startup.toArray(new String[0]));
+    }
   }
 
   /**
@@ -885,7 +899,7 @@ public final class SlothTune {
           .message());
     }
     if (report.isEmpty()) {
-      report.add("slothtune.json changes nothing; YAGSL runs exactly as configured.");
+      report.add("slothtune.json changes nothing in the drive train; YAGSL runs exactly as configured.");
     }
     for (String line : report) {
       System.out.println("[slothtune] " + line);

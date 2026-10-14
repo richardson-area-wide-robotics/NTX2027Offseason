@@ -354,7 +354,10 @@ tune.system("Intake pivot", TunableSystem.Kind.PIVOT)
   - `sparkGains` lets the tab change the SPARK's closed-loop gains live: kP, kI, kD, kS, kV, kA
     and kG.
   - `gain(...)` adds any other gain.
-  - Live gains are never saved. A value to keep goes into the code.
+  - Live gains are never saved to the controller. After an auto-tune, **Save to slothtune.json…**
+    writes the gains it changed under the mechanism (`systems.<name>.gains`); the robot sets them
+    every time it starts, after the code's own values, and its startup report says so. One outside
+    the gain's range is skipped, and the report says that too.
 
 Set each mechanism up from top to bottom:
 
@@ -398,6 +401,24 @@ Set each mechanism up from top to bottom:
      volts that held it. If a flywheel settles short of its goal, the report suggests a kV from the
      physics, and its **Try kV** button applies it live.
    - **In the simulator,** the mechanism's physics aren't modeled, so only the sequence is checked.
+5. **Auto-tune it.** **Auto-tune…** beside **Run** tunes the mechanism's own gains, a round at a
+   time, while a person holds the deadman. Tick the checks (it moves freely, someone holds the
+   deadman, the robot is enabled) and press **Start**.
+   - **Each round** runs the same test as **Run**, then changes **one gain**: gravity (kG) or speed
+     (kV) first, from the physics or, with none entered, from the run's own volts and speeds; then
+     kP, down for overshoot or ringing, up for lag or settling short. No change more than doubles or
+     halves a gain, and every change stays inside the range the code allows.
+   - **A change that makes it much worse** (twice the best round's cost) is undone at once and not
+     tried again; the next idea is. A kV on code that holds a position in the SPARK's own loop is
+     the usual one: that loop is given no speed, so a kV only pushes the mechanism off.
+   - **It stops** when it meets every target, when the next step is a person's (a gain the code
+     doesn't register, a kP of 0), when two rounds don't beat its best, or after 8 rounds. It always
+     ends on its best round's gains.
+   - **Let go of the deadman** and the round stops and waits; hold it again and press **Continue**.
+     **ABORT** stops it for good.
+   - **Save to slothtune.json…** keeps what it changed (see Live gains above). Nothing is written
+     until then. **Try on a made-up elevator** (or flywheel) runs it on this laptop with nothing
+     moving, to see how it works.
 
 **Practice first.** The [Examples](../Examples/README.md) project is a simulated robot with an
 elevator, a shooter pivot, a two-joint arm, a two-wheel shooter and a feeder from past seasons.

@@ -49,6 +49,13 @@ public final class SlothTuneConfig {
    */
   public final Map<String, double[]> systems = new LinkedHashMap<>();
 
+  /**
+   * A system's saved gains, by its registered name: {@code {"kP": 6.0, ...}} from its entry's
+   * {@code "gains"}, which the Systems tab's Save writes (the auto-tuner's result). Each is applied
+   * as the code declares that gain ({@link TunableSystem#gain}); one outside its range is skipped.
+   */
+  public final Map<String, Map<String, Double>> systemGains = new LinkedHashMap<>();
+
   public boolean angularVelocityCompensationTeleop = false;
   public boolean angularVelocityCompensationAuto = false;
   public double angularVelocityCoefficient = 0.0;
@@ -295,6 +302,16 @@ public final class SlothTuneConfig {
       Map<String, Object> s = map(e.getValue());
       c.systems.put(e.getKey(), new double[] {num(s.get("min"), Double.NaN), num(s.get("max"), Double.NaN),
           num(s.get("maxVelocity"), Double.NaN), num(s.get("maxAccel"), Double.NaN)});
+      Map<String, Double> saved = new LinkedHashMap<>();
+      for (Map.Entry<String, Object> g : map(s.get("gains")).entrySet()) {
+        double v = num(g.getValue(), Double.NaN);
+        if (Double.isFinite(v)) {
+          saved.put(g.getKey(), v);
+        }
+      }
+      if (!saved.isEmpty()) {
+        c.systemGains.put(e.getKey(), saved);
+      }
     }
 
     Map<String, Object> avc = map(m.get("angularVelocityCompensation"));

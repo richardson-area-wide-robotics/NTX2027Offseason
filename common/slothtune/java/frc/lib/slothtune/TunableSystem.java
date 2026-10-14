@@ -77,6 +77,10 @@ public final class TunableSystem {
   String limitsFrom = "";
   /** The goal last set, for the laptop's live view; NaN until one is. */
   volatile double lastGoal = Double.NaN;
+  /** Gains saved in slothtune.json (the Systems tab's Save), applied as each is declared. */
+  Map<String, Double> saved = Map.of();
+  /** Where a line about a saved gain goes: the robot's startup report. */
+  Consumer<String> report = line -> {};
 
   TunableSystem(String name, Kind kind) {
     this.name = name;
@@ -128,16 +132,35 @@ public final class TunableSystem {
     return this;
   }
 
-  /** A gain the tool may change live (never saved to the controller): its value, setter and range. */
+  /**
+   * A gain the tool may change live (never saved to the controller): its value, setter and range.
+   * A value for it in slothtune.json's {@code systems.<name>.gains} (the Systems tab's Save) is set
+   * here, as the robot starts, and said in the startup report; one outside the range is skipped.
+   */
   public TunableSystem gain(String name, DoubleSupplier get, DoubleConsumer set, double min, double max) {
     gains.put(name, new Gain(name, get, set, min, max));
+    Double v = saved.get(name);
+    if (v != null) {
+      if ((Double.isNaN(min) || v >= min) && (Double.isNaN(max) || v <= max)) {
+        set.accept(v);
+        report.accept(String.format(Locale.ROOT, "%s: %s %s from slothtune.json", this.name, name, num(v)));
+      } else {
+        report.accept(String.format(Locale.ROOT, "%s: %s %s in slothtune.json is outside %s to %s, so not applied",
+            this.name, name, num(v), num(min), num(max)));
+      }
+    }
     return this;
+  }
+
+  private static String num(double v) {
+    return String.format(Locale.ROOT, "%.6g", v).replaceAll("(\\.\\d*?)0+(e|$)", "$1$2").replace(".e", "e")
+        .replaceAll("\\.$", "");
   }
 
   /**
    * The gains of a SPARK's own closed loop (slot 0): kP, kI, kD and its feedforward kS, kV, kA,
-   * kG. Read back from the controller, set live and never persisted: the team's code puts its own
-   * values back at the next restart, so a value to keep goes into the code.
+   * kG. Read back from the controller, set live and never persisted to it: at the next restart the
+   * code's own values come back, then any saved in slothtune.json (see {@link #gain}).
    */
   public TunableSystem sparkGains(SparkBase spark) {
     var a = (spark instanceof SparkFlex flex ? (SparkBaseConfigAccessor) flex.configAccessor

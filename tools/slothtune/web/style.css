@@ -897,6 +897,10 @@ table.lights.compact .lights-group th { padding-top: 5px; }
 .at-why { margin: 6px 0; padding-left: 18px; }
 .at-why li + li { margin-top: 2px; }
 .at-panel .warn-ink { font-weight: 600; }
+/* A mechanism's auto-tune, above its plot: one row a round, its best marked. */
+.sys-at-panel { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
+.sys-at-panel p { margin: 4px 0; }
+.sys-at-panel tr.best td { background: var(--seg-hover); }
 
 /* Tune drive train: a pod whose gains differ from the shared ones. */
 #podseg button.own::after { content: " \2022"; color: var(--warn); }

@@ -23,6 +23,10 @@ run, Stop, or when every pod is finished. Each pod finishes on its own when:
 Every change is the advisor's, which never more than doubles or halves a gain in one step. At the
 end each pod is put back on the gains it ran its best round with (lowest cost). Nothing is written
 to a file: the result is offered for Save gains, which previews the change as usual.
+
+:class:`SystemTune` does the same for one mechanism on the Systems tab: its step test, the one
+change its report asks for (:func:`systems.tune_next`) to its own gains, a round at a time, ending
+on its best round. Its Save writes the gains to slothtune.json, which the robot applies at startup.
 """
 
 from __future__ import annotations
@@ -30,7 +34,7 @@ from __future__ import annotations
 import threading
 import time
 
-from . import advisor, plant, rehearse
+from . import advisor, plant, rehearse, systems
 
 MAX_ROUNDS = 8
 STALL = 2
@@ -81,25 +85,19 @@ class Pod:
                 "best": self.best}
 
 
-class AutoTune:
-    """One tune of one loop. ``runner`` runs a test and applies gains (:class:`RobotRunner`, or
-    :class:`PracticeRunner` for practice and the tests)."""
+class _Loop:
+    """Starting, pausing on a let-go deadman, continuing and stopping: what every tuner shares.
+    ``runner.run(test)`` gives ``(document, outcome, why)``."""
 
-    def __init__(self, runner, loop, max_rounds=MAX_ROUNDS, log=None):
-        if loop not in TESTS:
-            raise ValueError("The auto-tuner tunes steer or drive.")
-        self.runner, self.loop, self.max_rounds, self.log = runner, loop, max_rounds, log
-        self.pods = [Pod(m) for m in runner.modules()]
+    def _init_loop(self, runner, max_rounds):
+        self.runner, self.max_rounds = runner, max_rounds
         self.round = 0
-        self.notes = []           # what it did beyond each pod's own changes
-        self.shared_seen = set()
         self.state = "ready"      # ready, running, paused, finished, stopped
         self.message = ""
         self._go = threading.Event()
         self._stop = False
         self.thread = None
 
-    # ------------------------------------------------------------------ control
     def start(self):
         self.state = "running"
         self.thread = threading.Thread(target=self._safe_run, name="slothtune-autotune", daemon=True)
@@ -116,25 +114,6 @@ class AutoTune:
         self.message = why
         self._go.set()
 
-    def to_json(self):
-        return {"loop": self.loop, "state": self.state, "message": self.message, "round": self.round, "notes": self.notes,
-                "max_rounds": self.max_rounds, "pods": [p.to_json() for p in self.pods],
-                "best_gains": self.best_gains()}
-
-    def mine(self, pod):
-        """The gain names this tune changes for a pod: its own PID for this loop (and, for drive, its
-        feedforward). Only these are recorded, put back and saved."""
-        return (f"Pod/{pod}/{LOOP_KEY[self.loop]}/",) + ((f"FF/{pod}/",) if self.loop == "drive" else ())
-
-    def best_gains(self):
-        """Each pod's own gains from its best round: what Save gains would write."""
-        out = {}
-        for p in self.pods:
-            if p.best:
-                out.update(p.best["gains"])
-        return out
-
-    # ------------------------------------------------------------------ the loop
     def _safe_run(self):
         try:
             self.run()
@@ -160,6 +139,39 @@ class AutoTune:
             self._go.wait()
         return None
 
+
+class AutoTune(_Loop):
+    """One tune of one loop. ``runner`` runs a test and applies gains (:class:`RobotRunner`, or
+    :class:`PracticeRunner` for practice and the tests)."""
+
+    def __init__(self, runner, loop, max_rounds=MAX_ROUNDS, log=None):
+        if loop not in TESTS:
+            raise ValueError("The auto-tuner tunes steer or drive.")
+        self._init_loop(runner, max_rounds)
+        self.loop, self.log = loop, log
+        self.pods = [Pod(m) for m in runner.modules()]
+        self.notes = []           # what it did beyond each pod's own changes
+        self.shared_seen = set()
+
+    def to_json(self):
+        return {"loop": self.loop, "state": self.state, "message": self.message, "round": self.round, "notes": self.notes,
+                "max_rounds": self.max_rounds, "pods": [p.to_json() for p in self.pods],
+                "best_gains": self.best_gains()}
+
+    def mine(self, pod):
+        """The gain names this tune changes for a pod: its own PID for this loop (and, for drive, its
+        feedforward). Only these are recorded, put back and saved."""
+        return (f"Pod/{pod}/{LOOP_KEY[self.loop]}/",) + ((f"FF/{pod}/",) if self.loop == "drive" else ())
+
+    def best_gains(self):
+        """Each pod's own gains from its best round: what Save gains would write."""
+        out = {}
+        for p in self.pods:
+            if p.best:
+                out.update(p.best["gains"])
+        return out
+
+    # ------------------------------------------------------------------ the loop
     def run(self):
         test = TESTS[self.loop]
         ff_done = False
@@ -394,6 +406,269 @@ class PracticeRunner:
 
     def context(self, loop):
         return {}
+
+
+# ---------------------------------------------------------------------------- one mechanism
+
+
+class SystemTune(_Loop):
+    """The auto-tuner for one mechanism: its step test each round, the first change its report
+    offers (to its own ``Name/k`` gains, kept inside the robot's allowed range), and at the end the
+    gains of its best round (lowest cost). A change that makes a round much worse than the best
+    (``WORSE`` times its cost) is backed out at once, and that change, that way, isn't tried again:
+    the next one the best round's report offered is. (A code that holds a position in the SPARK's
+    own loop gives it no speed, so a kV there only pushes it off: the physics are right, the code
+    can't use them.) It finishes when it meets every target; it stops for a person when nothing it
+    may try is left, the advice isn't a gain change, two rounds don't beat its best, or after
+    ``max_rounds``. ``runner`` is a :class:`RobotSystemRunner` or a :class:`PracticeSystemRunner`."""
+
+    WORSE = 2.0       # a step on the way (kG before kV) can cost more for a round; a wrong one costs far more
+
+    def __init__(self, runner, name, max_rounds=MAX_ROUNDS):
+        self._init_loop(runner, max_rounds)
+        self.name = name
+        self.rounds = []          # {round, gains, cost, score, advice, why, run}
+        self.best = None
+        self.status, self.reason = "tuning", ""
+        self.stalls = 0
+        self.seen = set()
+        self.banned = set()       # (gain, "set"/"up"/"down") that made it much worse
+        self.last = None          # the change made after the last round
+
+    def to_json(self):
+        return {"system": self.name, "state": self.state, "message": self.message, "round": self.round,
+                "max_rounds": self.max_rounds, "status": self.status, "reason": self.reason,
+                "rounds": self.rounds, "best": self.best, "best_gains": self.best_gains()}
+
+    def best_gains(self):
+        return dict(self.best["gains"]) if self.best else {}
+
+    def _clamp(self, values):
+        """The change kept inside the gains' allowed ranges, and to this mechanism's own gains."""
+        ranges = self.runner.ranges()
+        out = {}
+        for k, v in values.items():
+            if not k.startswith(self.name + "/"):
+                continue
+            lo, hi = ranges.get(k, (float("nan"), float("nan")))
+            if lo == lo and v < lo:
+                v = lo
+            if hi == hi and v > hi:
+                v = hi
+            out[k] = v
+        return out
+
+    def _finish(self, status, reason):
+        self.status, self.reason = status, reason
+
+    def run(self):
+        while not self._stop:
+            if self.round >= self.max_rounds:
+                self._finish("stopped", f"{self.max_rounds} rounds without meeting every target.")
+                break
+            gains = self.runner.gains()
+            doc = self._test("system_step", f"{self.name}'s step test")
+            if doc is None:
+                break
+            rep = self.runner.report(dict(doc, gains=gains))
+            cost = rep.get("cost")
+            options = rep.get("options") or ([rep["next"]] if rep.get("next") else [])
+            entry = {"round": self.round + 1, "gains": {k: v for k, v in gains.items() if k.startswith(self.name + "/")},
+                     "cost": cost, "score": rep.get("score"), "advice": None, "why": None,
+                     "summary": rep.get("summary"), "run": doc.get("_run"), "options": options}
+            self.rounds.append(entry)
+            self.round += 1
+            if cost is None:
+                self._finish("stopped", "Needs a person: " + (rep.get("summary") or "this run can't be judged."))
+                break
+            worse = self.best is not None and self.last and cost > self.WORSE * self.best["cost"] + 1
+            if worse:
+                # Back out at once, and don't try that change that way again: the best round's next offer.
+                self.banned.add(self.last)
+                gains = dict(self.runner.gains(), **self.best["gains"])
+                self.runner.apply({k: v for k, v in self.best["gains"].items() if self.runner.gains().get(k) != v},
+                                  f"Auto-tune {self.name}: round {self.round} was worse, back to round {self.best['round']}'s gains")
+                options = self.best["options"]
+                entry["advice"] = f"Much worse: back to round {self.best['round']}'s gains, and {self.last[0].split('/')[-1]} that way is off the list."
+            elif self.best is None or cost < self.best["cost"]:
+                self.best, self.stalls = entry, 0
+            else:
+                self.stalls += 1
+            if not worse and options and options[0]["action"]["type"] == "save":
+                entry["advice"] = options[0]["title"]
+                self._finish("done", "Meets every target.")
+                break
+            if self.stalls >= STALL:
+                self._finish("stopped", f"{STALL} rounds without beating its best: it goes back to round {self.best['round']}'s gains.")
+                break
+            nxt = next((o for o in options if o["action"]["type"] != "gains"
+                        or systems.change_key(o["action"]["values"], gains) not in self.banned), None)
+            if not worse:
+                entry["advice"], entry["why"] = (nxt["title"], nxt.get("why")) if nxt else (None, None)
+            if not nxt or nxt["action"]["type"] != "gains":
+                self._finish("stopped", "Needs a person: " + (nxt["title"] if nxt else "every change it could try made it worse."))
+                break
+            if worse:
+                entry["advice"] += f" Next: {nxt['title']}."
+            change = self._clamp(nxt["action"]["values"])
+            if not change or all(gains.get(k) == v for k, v in change.items()):
+                self._finish("stopped", f"Needs a person: {nxt['title']}, but the gain is already at the end of its range.")
+                break
+            key = tuple(sorted(change.items()))
+            if key in self.seen:
+                self._finish("stopped", "The same advice again, with nothing left to change.")
+                break
+            self.seen.add(key)
+            self.last = systems.change_key(change, gains)
+            self.runner.apply(change, f"Auto-tune {self.name}, round {self.round}")
+        if self.best:
+            now = self.runner.gains()
+            back = {k: v for k, v in self.best["gains"].items() if now.get(k) != v}
+            if back:
+                self.runner.apply(back, f"Auto-tune {self.name}: back on its best gains")
+        if self.state != "stopped":
+            self.state = "stopped" if self._stop else "finished"
+            if not self._stop:
+                self.message = (f"Finished: {self.reason} " if self.reason else "Finished. ") + (
+                    f"It is on round {self.best['round']}'s gains, its best; Save writes them to slothtune.json."
+                    if self.best else "")
+        if self._stop and self.status == "tuning":
+            self.status, self.reason = "stopped", self.message or "Stopped."
+
+
+class RobotSystemRunner:
+    """One mechanism on the connected robot, through the tool's session: its live gains (and their
+    allowed ranges) as the robot reports them, its step test with the Systems tab's arguments."""
+
+    def __init__(self, session, name, args):
+        self.s, self.name, self.args = session, name, dict(args)
+
+    def _system(self):
+        return next((x for x in self.s.link.systems() if x["name"] == self.name), None) or {}
+
+    def gains(self):
+        return {f"{self.name}/{k}": g["value"] for k, g in (self._system().get("gains") or {}).items()}
+
+    def ranges(self):
+        return {f"{self.name}/{k}": (g.get("min", float("nan")), g.get("max", float("nan")))
+                for k, g in (self._system().get("gains") or {}).items()}
+
+    def run(self, test):
+        res, doc, path = self.s.run_test_sync(test, "ALL", self.args)
+        if doc is not None and path:
+            doc = dict(doc, _run=path)
+        return doc, res.outcome if res.accepted else "REFUSED", res.message
+
+    def report(self, doc):
+        return advisor.analyze(doc, doc.get("gains"), **advisor.robot_context(self.s.project))
+
+    def apply(self, values, reason):
+        return self.s.link.set_system_gains(values)
+
+
+class PracticeSystemRunner:
+    """A made-up mechanism on its own gains, for the tests and practice: an elevator (meters, with
+    gravity) or a flywheel (rad/s) as a DC motor with friction and inertia, run through the same
+    step test the robot runs (a trapezoid move, then a hold, ``moves`` times). The controller sees
+    the mechanism ``delay_s`` late, as a real one's sensor and loop do, so too much kP rings.
+    ``position_only`` models code that gives its controller only a position (a SPARK in plain
+    position mode): its kV multiplies the position, not a speed."""
+
+    PLANTS = {"ELEVATOR": {"kS": 0.15, "kG": 0.45, "kV": 9.0, "kA": 0.35},
+              "FLYWHEEL": {"kS": 0.2, "kG": 0.0, "kV": 0.021, "kA": 0.004}}
+    ARGS = {"ELEVATOR": {"a": 0.2, "b": 0.8, "vmax": 0.6, "amax": 3.0, "hold_s": 1.0, "moves": 2},
+            "FLYWHEEL": {"a": 200.0, "b": 400.0, "vmax": 400.0, "amax": 800.0, "hold_s": 1.5, "moves": 2}}
+
+    def __init__(self, name="Elevator", kind="ELEVATOR", gains=None, args=None, ranges=(0.0, 1000.0), delay_s=0.03,
+                 position_only=False):
+        self.name, self.kind = name, kind
+        self.g = {f"{name}/{k}": float(v) for k, v in (gains or {"kP": 4.0, "kD": 0.0, "kS": 0.0, "kV": 0.0, "kG": 0.0}).items()}
+        self.args = dict(self.ARGS[kind], **(args or {}))
+        self.p = dict(self.PLANTS[kind])
+        self.lo, self.hi = ranges
+        self.delay = max(0, round(delay_s / 0.01))
+        self.position_only = position_only
+        self.runs = 0
+
+    def gains(self):
+        return dict(self.g)
+
+    def ranges(self):
+        return {k: (self.lo, self.hi) for k in self.g}
+
+    def apply(self, values, reason):
+        self.g.update(values)
+        return "Applied."
+
+    def report(self, doc):
+        return systems.step_report(doc, None, doc.get("gains"))
+
+    def _profile(self, x0, x1, vmax, amax, dt):
+        """A trapezoid move from x0 to x1: [(position, speed)] each dt."""
+        d, s = abs(x1 - x0), 1 if x1 >= x0 else -1
+        ta = vmax / amax
+        if amax * ta * ta > d:
+            ta = (d / amax) ** 0.5
+            vmax = amax * ta
+        tc = (d - amax * ta * ta) / vmax if vmax else 0.0
+        out, t, total = [], 0.0, 2 * ta + tc
+        while t < total:
+            if t < ta:
+                p, v = 0.5 * amax * t * t, amax * t
+            elif t < ta + tc:
+                p, v = 0.5 * amax * ta * ta + vmax * (t - ta), vmax
+            else:
+                r = total - t
+                p, v = d - 0.5 * amax * r * r, amax * r
+            out.append((x0 + s * p, s * v))
+            t += dt
+        out.append((x1, 0.0))
+        return out
+
+    def run(self, test):
+        self.runs += 1
+        name, a = self.name, self.args
+        g = lambda k: self.g.get(f"{name}/{k}", 0.0)   # noqa: E731
+        P, dt = self.p, 0.01
+        positional = self.kind == "ELEVATOR"
+        x = a["a"] if positional else 0.0
+        v = 0.0
+        t_ch, pos, vel, sp, goal, volts = [], [], [], [], [], []
+        targets = [a["b"] if i % 2 == 0 else a["a"] for i in range(int(a["moves"]))]
+        start = x if positional else 0.0
+        t = 0.0
+        seen = [(x, v)] * (self.delay + 1)    # what the controller sees: the mechanism, delay_s ago
+        ff_speed = (lambda p_, v_: p_) if self.position_only else (lambda p_, v_: v_)   # noqa: E731
+        for target in targets:
+            for p_sp, v_sp in self._profile(start, target, a["vmax"], a["amax"], dt) + [(target, 0.0)] * int(a["hold_s"] / dt):
+                xs, vs = seen[0]
+                if positional:
+                    u = g("kS") * (1 if v_sp > 0 else -1 if v_sp < 0 else 0) + g("kG") + g("kV") * ff_speed(p_sp, v_sp) \
+                        + g("kP") * (p_sp - xs) + g("kD") * (v_sp - vs)
+                else:
+                    u = g("kS") * (1 if p_sp > 0 else 0) + g("kV") * p_sp + g("kP") * (p_sp - vs)
+                u = max(-12.0, min(12.0, u))
+                fr = P["kS"] * (1 if v > 1e-6 else -1 if v < -1e-6 else 0)
+                acc = (u - P["kG"] - fr - P["kV"] * v) / P["kA"]
+                if abs(v) < 1e-6 and abs(u - P["kG"]) <= P["kS"]:
+                    acc = 0.0
+                v += acc * dt
+                x += v * dt
+                seen = seen[1:] + [(x, v)]
+                t_ch.append(round(t, 4))
+                pos.append(x)
+                vel.append(v)
+                sp.append(p_sp)
+                goal.append(target)
+                volts.append(u)
+                t += dt
+            start = target
+        units = "meters" if positional else "rad/s"
+        doc = {"test": "system_step", "outcome": "DONE", "env": "PRACTICE", "practice": True,
+               "channels": {"t": t_ch, "pos": pos if positional else vel, "vel": vel, "sp": sp, "goal": goal, "volts0": volts},
+               "notes": [f"system: {name} ({self.kind}, {units})"],
+               "meta": {"min": 0.0, "max": 1.0} if positional else {}}
+        return doc, "DONE", ""
 
 
 def wait(tune, timeout=600.0):
