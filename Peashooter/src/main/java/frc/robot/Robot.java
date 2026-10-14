@@ -12,9 +12,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.lib.swervetune.AkLogging;
-import frc.lib.swervetune.SwerveTune;
-import frc.lib.swervetune.photonvision.PhotonVisionSetup;
+import frc.lib.slothtune.AkLogging;
+import frc.lib.slothtune.SlothTune;
+import frc.lib.slothtune.photonvision.PhotonVisionSetup;
 import org.littletonrobotics.junction.LoggedRobot;
 import frc.robot.Subsystems.Feeder;
 import frc.robot.Subsystems.Intake;
@@ -28,7 +28,7 @@ public class Robot extends LoggedRobot {
   Shooter shooter = new Shooter();
   CommandXboxController controller = new CommandXboxController(0);
   // Swerve tuning and troubleshooting tools; see docs/SWERVE_TUNING_GUIDE.md.
-  SwerveTune tune = SwerveTune.install(drive.getSwerveDrive(), drive, "Peashooter");
+  SlothTune tune = SlothTune.install(drive.getSwerveDrive(), drive, "Peashooter");
   //CommandGenericHID controller = new CommandGenericHID(0);
 
   private Command autonomousCommand; 
@@ -43,7 +43,7 @@ public class Robot extends LoggedRobot {
     // Mechanisms the Systems tab tunes, through each subsystem's own loop.
     shooter.tuneWith(tune);
     intake.tuneWith(tune);
-    // Cameras: whatever swervetune.json's "vision" lists (none yet). Fitting one is a config change;
+    // Cameras: whatever slothtune.json's "vision" lists (none yet). Fitting one is a config change;
     // see docs/VISION_LUMA_PHOTONVISION.md.
     PhotonVisionSetup.install(tune);
     // Back button: hold off heat shutoffs for 20 s in a match (stalls still cut out).

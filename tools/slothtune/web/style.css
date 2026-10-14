@@ -1,0 +1,885 @@
+/* Sloth Tune, in AdvantageScope's design language (the app that reads AdvantageKit logs): neutral
+   grays, a gray sidebar beside a white viewer, joined pill segments for tabs and pickers, and its blue
+   (#446ce3) for focus, links and the main action. Semantic colors for state. */
+:root {
+  --bg: #e9e9e9; --panel: #ffffff; --ink: #222222; --muted: #5c5c5c; --rule: #dddddd;
+  --accent: #446ce3; --accent-ink: #ffffff;
+  --ok: #1f7a45; --ok-bg: #e0f1e7; --warn: #8a5a00; --warn-bg: #fbefd6;
+  --bad: #b0342b; --bad-bg: #f9e2df; --info: #3e5b8a; --info-bg: #e3eaf6;
+  --sp: #7a7a7a; --grid: #eeeeee;
+  /* --rule is the hairline for dividers; a control's edge needs 3:1, so it uses --edge (4.3:1 on the
+     panel, 3.5:1 on the sidebar gray). */
+  --edge: #7a7a7a;
+  /* AdvantageScope's segments: #eee, #ddd on hover; chosen #aaa with a #222 edge. */
+  --seg: #eeeeee; --seg-hover: #dddddd; --seg-on: #aaaaaa; --seg-on-edge: #222222; --seg-on-ink: #222222; --sel: #d4d4d4;
+  /* Text on a solid state fill (ABORT, a done step): 5.35-6.84:1 on --ok/--warn/--bad/--info/--accent. */
+  --on-state: #ffffff;
+  /* AdvantageScope's GraphColors, so a module is the same color here and there. FR is darkened in
+     light mode: AdvantageScope's #e5b31b is 1.95:1 on white, too faint for a line that means something. */
+  --s0: #2b66a2; --s1: #a87d00; --s2: #af2437; --s3: #80588e;
+  --mono: Consolas, "Cascadia Mono", "SF Mono", Menlo, monospace;
+  --sans: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+  /* Sizes (the same in both themes). app.js measures the header and the tab bar into --top-h and
+     --bar-h; the work area is what is left of the screen: 828 px on a 1920x1080 laptop at 100%. */
+  --top-h: 48px; --bar-h: 40px; --gap: 12px; --rail-w: 380px;
+  --work-h: calc(100dvh - var(--top-h) - var(--bar-h) - 2 * var(--gap));
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #292929; --panel: #222222; --ink: #eeeeee; --muted: #ababab; --rule: #3a3a3a;
+    --accent: #58a7ff; --accent-ink: #0d1b2a;
+    --ok: #6fd39a; --ok-bg: #173323; --warn: #f0bf5a; --warn-bg: #392d13;
+    --bad: #f2918a; --bad-bg: #431f1c; --info: #9db8ea; --info-bg: #1d2a42;
+    --sp: #8f8f8f; --grid: #333333;
+    --edge: #7d7d7d;      /* 3.9:1 on --panel */
+    --seg: #444444; --seg-hover: #555555; --seg-on: #888888; --seg-on-edge: #eeeeee; --seg-on-ink: #111111; --sel: #3d3d3d;
+    --on-state: #10161c;  /* 7.97-10.67:1 on the dark state fills (white was 1.7-2.3:1) */
+    --s0: #5b93d1; --s1: #e5b31b; --s2: #e0505f; --s3: #b48cc4;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--panel); color: var(--ink); font: 14px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+.mono, code, kbd { font-family: var(--mono); }
+kbd { border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--panel); }
+code { background: var(--bg); padding: 1px 4px; border-radius: 3px; font-size: .92em; }
+h2 { font-size: 18px; line-height: 1.35; margin: 0; }
+h3 { font-size: 15px; line-height: 1.35; margin: 0; }
+p { margin: 0; max-width: 78ch; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+
+/* ---------------------------------------------------------------- header */
+.top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px;
+  padding: 6px 16px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+/* Under 1700 px the name and the "Robot code" label give their room to the chips (the select keeps
+   its tip and its accessible name). */
+@media (max-width: 1700px) {
+  .brand { display: none; }
+  .field-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+.brand { font-weight: 700; font-size: 16px; letter-spacing: .02em; }
+.field { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.conn { display: flex; align-items: center; gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+.chip { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--rule); background: var(--seg);
+  border-radius: 999px; padding: 2px 10px; font-size: 12px; white-space: nowrap; }
+button.chip { cursor: pointer; font: inherit; font-size: 12px; }
+/* A tint alone is 1.10-1.24:1 against the header, so a state chip also gets an edge in its own color. */
+.chip.good { background: var(--ok-bg); color: var(--ok); border-color: currentColor; }
+.chip.warn { background: var(--warn-bg); color: var(--warn); border-color: currentColor; }
+.chip.bad { background: var(--bad-bg); color: var(--bad); border-color: currentColor; }
+.chip.info { background: var(--info-bg); color: var(--info); border-color: currentColor; }
+.chip.lead { font-size: 14px; font-weight: 600; padding: 3px 12px; }
+.chip.mono { font-variant-numeric: tabular-nums; }
+/* A chip that opens something says so. */
+button.chip:not(.learn-chip)::after { content: "\25BE" / ""; margin-left: 2px; }
+.btn { border: 1px solid var(--edge); background: var(--seg); color: var(--ink); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.btn:hover:not(:disabled) { background: var(--seg-hover); }
+.btn:active:not(:disabled) { background: var(--seg-on); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn.small { padding: 2px 8px; font-size: 12px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.abort { background: var(--bad); color: var(--on-state); border: 0; border-radius: 6px; padding: 7px 18px; font-weight: 800;
+  letter-spacing: .06em; cursor: pointer; }
+.btn[aria-pressed="true"] { background: var(--seg-on); border-color: var(--seg-on-edge); color: var(--seg-on-ink); }
+select, input[type=text], input[type=number], input:not([type]) { border: 1px solid var(--edge); background: var(--panel);
+  border-radius: 6px; padding: 4px 8px; }
+input[type=number] { width: 7.5em; font-family: var(--mono); }
+
+.banner { position: sticky; top: var(--top-h, 57px); z-index: 9; background: var(--info-bg); color: var(--ink); padding: 8px 16px;
+  display: grid; gap: 6px; border-bottom: 1px solid var(--rule); }
+.banner.waiting { background: var(--warn-bg); }
+.bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+.banner-hint { font-weight: 600; }
+.banner-hold { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+/* The deadman: big, and nothing a finger does (scroll, select, long-press menu) takes it away. */
+.hold { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  min-height: 48px; padding: 10px 22px; border-radius: 10px; border: 2px solid var(--ok); background: var(--panel);
+  color: var(--ink); font-weight: 800; letter-spacing: .02em; cursor: pointer; }
+.hold.held { background: var(--ok); color: var(--on-state); }
+
+.tabs { display: flex; align-items: center; gap: 0; padding: 5px 16px; background: var(--panel); border-bottom: 1px solid var(--rule); overflow-x: auto; }
+.tabs button { height: 30px; margin-left: -1px; padding: 0 12px; border: 1px solid var(--edge); background: var(--seg);
+  color: var(--ink); cursor: pointer; white-space: nowrap; font-weight: 500; }
+.tabs button:first-child { margin-left: 0; border-radius: 10px 0 0 10px; }
+.tabs button:last-child { border-radius: 0 10px 10px 0; }
+.tabs button:not(.on):hover { background: var(--seg-hover); }
+.tabs button.on { position: relative; z-index: 1; background: var(--seg-on); border-color: var(--seg-on-edge); color: var(--seg-on-ink); font-weight: 600; }
+/* The tabs and a running test's status, one bar that never changes height. */
+.bar2 { position: sticky; top: var(--top-h); z-index: 9; display: flex; flex-wrap: wrap; align-items: center;
+  gap: 0 16px; padding: 0 16px; background: var(--panel); border-bottom: 1px solid var(--rule); }
+@media (min-width: 601px) {
+  .bar2 > .tabs { padding: 0; background: none; border-bottom: 0; }
+  .bar2 > .banner { position: static; flex: 1 1 520px; min-width: 0; display: grid; align-items: center;
+    grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 28px 3px; gap: 2px 12px;
+    padding: 2px 4px 1px 10px; border: 1px solid var(--info); border-radius: 6px; }
+  /* The tint alone is 1.2:1 on the panel; the edge in the state's color is 6.9:1 (light) / 8.2:1 (dark). */
+  .bar2 > .banner.waiting { border-color: var(--warn); }
+  .bar2 > .banner .banner-text { font-size: 12px; line-height: 14px; overflow: hidden;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .bar2 > .banner .bar { grid-column: 1; height: 3px; }
+  .bar2 > .banner .banner-hold { grid-column: 2; grid-row: 1 / -1; flex-wrap: nowrap; gap: 10px; }
+  .bar2 > .banner .hold { min-height: 0; height: 30px; padding: 0 14px; border-radius: 6px; }
+  .bar2 > .banner .banner-hint { font-size: 12px; line-height: 14px; max-width: 270px; font-weight: 600; }
+}
+@media (min-width: 601px) and (pointer: coarse) { .bar2 > .banner .hold { height: auto; min-height: 44px; } }
+main { padding: var(--gap) 16px; max-width: 1920px; margin: 0 auto; }
+.tab { display: none; }
+.tab.on { display: block; }
+
+/* ---------------------------------------------------------------- layout pieces */
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.split { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .grid2, .split { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+.stack { display: grid; gap: 12px; min-width: 0; align-content: start; }
+/* Grid children default to min-width: auto and grow to fit a wide table; let them shrink so .tblwrap scrolls. */
+.panel > *, .stack > * { min-width: 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.hint { color: var(--muted); font-size: 13px; }
+.empty { color: var(--muted); padding: 24px; text-align: center; border: 1px dashed var(--rule); border-radius: 8px; }
+table.t { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.t th, table.t td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+table.t th { color: var(--muted); font-weight: 600; font-size: 12px; }
+table.t thead th { border-bottom-color: var(--ink); }
+table.t td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+table.t th.num { text-align: right; }
+table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
+.tblwrap { overflow-x: auto; }
+
+.level { font: 700 11px/1 var(--mono); text-transform: uppercase; padding: 3px 6px; border-radius: 3px; }
+.level.error { background: var(--bad-bg); color: var(--bad); }
+.level.warn { background: var(--warn-bg); color: var(--warn); }
+.level.info { background: var(--info-bg); color: var(--info); }
+.level.ok { background: var(--ok-bg); color: var(--ok); }
+.finding { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--rule); }
+.finding:first-child { border-top: 0; }
+.finding .head { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.finding .title { font-weight: 600; }
+.finding .why { color: var(--muted); }
+
+/* ---------------------------------------------------------------- live view */
+.robot-svg { width: 100%; max-width: 520px; aspect-ratio: 1; display: block; margin: 0 auto; }
+.robot-svg .frame { fill: none; stroke: var(--muted); stroke-width: 2; }
+.robot-svg .front { fill: var(--muted); font: 600 11px var(--sans); letter-spacing: .1em; }
+.robot-svg .pod-ring { fill: var(--panel); stroke: var(--rule); stroke-width: 1.5; }
+.robot-svg .pod-ring.flag { stroke: var(--bad); stroke-width: 3; }
+.robot-svg .wheel { fill: var(--ink); opacity: .85; }
+.robot-svg .ghost { stroke: var(--sp); stroke-width: 2; stroke-dasharray: 4 3; }
+.robot-svg .vel { stroke-width: 4; stroke-linecap: round; }
+.robot-svg .vel-case { stroke: var(--panel); stroke-width: 8; stroke-linecap: round; }
+.robot-svg .vel.ok { stroke: var(--ok); } .robot-svg .vel.lag { stroke: var(--warn); } .robot-svg .vel.bad { stroke: var(--bad); }
+.robot-svg .lbl { fill: var(--ink); font: 700 13px var(--sans); }
+.robot-svg .val { fill: var(--muted); font: 11px var(--mono); }
+/* The frame's outline runs under the readouts: a halo in the panel's color keeps them legible. */
+.robot-svg .lbl, .robot-svg .val { paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
+.robot-svg .head-arrow { stroke: var(--accent); stroke-width: 3; fill: none; }
+.mods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.mod { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13px; }
+.mod.flag { border-color: var(--bad); }
+.mod b { font-size: 14px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; font-family: var(--mono); font-size: 12px; }
+.kv span:nth-child(odd) { color: var(--muted); font-family: var(--sans); }
+.flags { display: grid; gap: 6px; }
+.flagrow { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: var(--bad-bg);
+  color: var(--bad); padding: 6px 10px; border-radius: 6px; }
+
+/* ---------------------------------------------------------------- tune */
+.gains { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 12px; }
+/* The value is what a student changes, so it is ink, not the label's muted gray. */
+.gain { display: grid; gap: 2px; font-size: 13px; color: var(--ink); }
+.gain input { width: 100%; font-size: 14px; }
+.gain input.changed { border-color: var(--warn); background: var(--warn-bg); }
+.gain .unit { font-size: 12px; color: var(--muted); }
+.gain input.changed + .unit::before { content: "edited, not applied yet · "; color: var(--warn); font-weight: 600; }
+canvas.plot { width: 100%; height: 320px; display: block; background: var(--panel); border-radius: 6px; }
+.steps { display: flex; flex-wrap: wrap; gap: 6px; }
+.steps button { font-family: var(--mono); font-size: 12px; }
+.steps button.on { background: var(--seg-on); color: var(--seg-on-ink); border-color: var(--seg-on-edge); }
+.targets { display: grid; gap: 3px; font-size: 13px; }
+.target { display: grid; grid-template-columns: 18px 1fr auto; gap: 6px; align-items: baseline; }
+.target .v { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.target.miss { color: var(--bad); font-weight: 600; }
+.target.miss .v { color: inherit; }
+.target.met { color: var(--muted); }
+/* The one next step, under the run's title: the loudest thing after ABORT. */
+.next-step { display: grid; gap: 8px; padding: 12px 14px 12px 18px; border: 1px solid var(--edge); border-radius: 8px; box-shadow: inset 4px 0 0 var(--accent); }
+.next-step .btn.primary { padding: 8px 18px; font-size: 15px; }
+.legend { display: flex; flex-wrap: wrap; gap: 2px 14px; margin: 4px 0 0; padding: 0; list-style: none; font-size: 13px; }
+.legend li { display: inline-flex; align-items: center; gap: 6px; min-height: 24px; }
+.legend svg { width: 24px; height: 10px; flex: none; }
+.legend .shade { width: 14px; height: 10px; border-radius: 2px; flex: none; }
+.linkbtn { border: 0; background: none; padding: 0; font: inherit; color: var(--accent); text-decoration: underline; cursor: pointer; }
+.nowrap { white-space: nowrap; }
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+#history tr[aria-current] td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+tr.stopped td { color: var(--muted); }
+details.panel > summary { cursor: pointer; list-style-position: inside; }
+details.panel > summary h3 { display: inline; }
+details > summary { cursor: pointer; font-weight: 600; }
+.practice-flag { background: var(--info-bg); color: var(--info); padding: 6px 10px; border-radius: 6px; font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; background: var(--seg); color: var(--ink); padding: 5px 12px; cursor: pointer; border-right: 1px solid var(--edge); }
+.seg button:not(.on):not(:disabled):hover { background: var(--seg-hover); }
+/* .seg clips the page's focus ring, so a segment draws its own inside. */
+.seg button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px var(--panel); }
+.seg button:disabled { color: var(--muted); cursor: not-allowed; }
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--seg-on); color: var(--seg-on-ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--seg-on-edge); }
+
+/* ---------------------------------------------------------------- guide */
+@media (max-width: 900px) { #gbody { order: -1; } }  /* phone: the step before the list */
+.need-where { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 6px; background: var(--bg); }
+.need-where.met { box-shadow: inset 4px 0 0 var(--ok); }
+.need-where.unmet { background: var(--warn-bg); box-shadow: inset 4px 0 0 var(--warn); }
+.callout { border-left: 3px solid var(--accent); background: var(--bg); padding: 8px 12px; margin: 0; border-radius: 0 6px 6px 0; }
+.callout.safety { border-left-color: var(--bad); }
+ol.do { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.verdicts { display: grid; gap: 4px; }
+.verdict { display: flex; gap: 8px; align-items: baseline; }
+
+/* ---------------------------------------------------------------- troubleshoot */
+.symptoms { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.symptom { text-align: left; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px;
+  cursor: pointer; display: grid; gap: 4px; align-content: start; }
+.symptom:hover { border-color: var(--accent); }
+.symptom .t { font-weight: 700; }
+.sym-groups h3 { margin: 0 0 4px; }
+.sym-groups h3:not(:first-child) { margin-top: 8px; }
+p.hint.wide { max-width: none; }
+.symptom .d { color: var(--muted); font-size: 13px; }
+.checks { display: grid; gap: 8px; }
+.check { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 6px; background: var(--panel); }
+.check.current { border-color: var(--accent); }
+.check.passed { border-color: var(--ok); }
+.check.failed { border-color: var(--bad); }
+.check .q { font-weight: 600; }
+
+/* ---------------------------------------------------------------- modal, toast */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 50; padding: 16px;
+  grid-template-columns: minmax(0, 1fr); }  /* a long diff line must scroll inside the box, not widen it past the screen */
+.modal-box { background: var(--panel); border-radius: 10px; max-width: 760px; width: 100%; min-width: 0; max-height: 90vh; overflow: auto;
+  padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+pre.diff { background: var(--bg); border-radius: 6px; padding: 10px; overflow-x: auto; font: 12px/1.45 var(--mono); margin: 0; }
+pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.diff .hdr { color: var(--muted); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg);
+  padding: 10px 16px; border-radius: 8px; z-index: 60; max-width: 90vw; }
+.envopt { display: grid; gap: 6px; border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; cursor: pointer; }
+.envopt.on { border-color: var(--accent); background: var(--bg); }
+/* Joysticks tab: the live sticks, triggers and buttons. */
+.ct-live { display: flex; gap: 14px; align-items: stretch; }
+#ct-svg { width: 100%; max-width: 420px; height: auto; display: block; }
+.ct-ring { fill: var(--bg); stroke: var(--rule); stroke-width: 2; }
+.ct-axis { stroke: var(--rule); stroke-width: 1; }
+.ct-code { fill: none; stroke: var(--warn); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.ct-rec { fill: none; stroke: var(--ok); stroke-width: 1.5; }
+.ct-trail { fill: none; stroke: var(--accent); stroke-width: 1.5; opacity: .45; }
+.ct-dot { fill: var(--accent); }
+.ct-label { fill: var(--muted); font-size: 12px; }
+.ct-key-rec { color: var(--ok); font-weight: 600; }
+.ct-trig { display: flex; gap: 10px; align-items: center; }
+.ct-trig > div { display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.ct-trig b { display: flex; align-items: flex-end; width: 18px; height: 124px; background: var(--bg);
+  border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
+.ct-trig i { display: block; width: 100%; height: 0; background: var(--accent); }
+.ct-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+/* A button seen is solid green with a check; one held now gets a ring. Neither is color alone. */
+.ct-buttons .chip.seen { background: var(--ok); color: var(--on-state); border-color: var(--ok); }
+.ct-buttons .chip.seen::before { content: "\2713"; }
+.ct-buttons .chip.seen .muted { color: inherit; }
+.ct-buttons .chip.down { box-shadow: 0 0 0 2px var(--accent); }
+.ct-zoom { fill: var(--bg); stroke: var(--edge); stroke-width: 1; }
+.ct-key-code { color: var(--warn); font-weight: 600; }
+/* The steps keep their numbers (a flex li drops the list marker). */
+.ct-steps { display: grid; gap: 8px; margin: 0 0 12px; padding-left: 0; list-style: none; counter-reset: ct; }
+.ct-steps li { display: flex; gap: 10px; align-items: center; counter-increment: ct; }
+.ct-steps li::before { content: counter(ct); flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 12px var(--mono); background: var(--rule); color: var(--ink); }
+/* Battery picker: big targets for a drive team at the cart. */
+.batt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin: 6px 0 12px; }
+.batt { display: grid; place-items: center; gap: 4px; min-height: 88px; padding: 10px 6px; border-radius: 10px;
+  border: 2px solid var(--rule); border-left-width: 8px; background: var(--panel); color: var(--ink); cursor: pointer; font: inherit; }
+/* The left edge is the battery's state: hover and "in now" never repaint it. */
+.batt:hover:not(:disabled) { border-top-color: var(--accent); border-right-color: var(--accent); border-bottom-color: var(--accent); }
+.batt:disabled { opacity: .55; cursor: not-allowed; }
+.batt.good { border-left-color: var(--ok); }
+.batt.practice { border-left-color: var(--warn); }
+.batt.retire { border-left-color: var(--bad); }
+.batt.on { box-shadow: inset 0 0 0 3px var(--accent); }
+.batt-in { font-size: 12px; font-weight: 700; color: var(--accent); }
+.batt-n.long { font-size: 18px; }  /* "Borrowed": a word, not a painted number, must fit the button */
+.batt-next { margin: 0; }
+.batt-n { font-size: 30px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.batt-s { font-size: 12px; color: var(--muted); }
+.batt-details { margin: 4px 0 12px; }
+.batt-details summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+.batt-spark { width: 70px; height: 22px; display: block; }
+.batt-spark polyline { fill: none; stroke: var(--accent); stroke-width: 1.6; }
+.batt-spark .lim { stroke: var(--ok); stroke-dasharray: 2 2; stroke-width: 1; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------------------------------------------------------------- motors */
+/* Motor rows: red rail = broken now; amber rail = happened earlier or heating. */
+table.t tr.flagged > td { background: var(--bad-bg); }
+table.t tr.flagged > td:first-child { box-shadow: inset 4px 0 0 var(--bad); }
+table.t tr.history > td:first-child { box-shadow: inset 4px 0 0 var(--warn); }
+.bad-ink { color: var(--bad); }
+/* Stage ladder: DERATE and SHUTOFF are solid, so they read apart from a WARN tint. */
+.chip.derate { background: var(--warn); color: var(--on-state); border-color: var(--warn); }
+.chip.shutoff { background: var(--bad); color: var(--on-state); border-color: var(--bad); }
+/* Heat bar: the % beside it; ticks under it at 50, 70 and 85%. */
+.heatcell { display: flex; align-items: center; gap: 8px; }
+.heat { position: relative; width: 110px; height: 12px; margin-bottom: 5px; background: var(--grid); border-radius: 3px; }
+.heat > div { height: 100%; border-radius: 3px; }
+.heat > div.good { background: var(--ok); }
+.heat > div.warn { background: var(--warn); }
+.heat > div.bad { background: var(--bad); }
+.heat::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 5px; pointer-events: none;
+  background: linear-gradient(to right, transparent 49.5%, var(--muted) 49.5% 50.5%, transparent 50.5% 69.5%,
+    var(--muted) 69.5% 70.5%, transparent 70.5% 84.5%, var(--muted) 84.5% 85.5%, transparent 85.5%); }
+.heat-pct { font: 12px/1 var(--mono); font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; }
+.callout.bad { background: var(--bad-bg); color: var(--bad); border-left-color: var(--bad); }
+.callout.warn { background: var(--warn-bg); border-left-color: var(--warn); }
+.callout.info { background: var(--info-bg); border-left-color: var(--info); }
+
+/* ---------------------------------------------------------------- learning */
+.term { text-decoration: underline dotted var(--accent); text-underline-offset: 3px; cursor: help; }
+.learn-tip { position: absolute; z-index: 50; max-width: 340px; background: var(--panel); color: var(--ink);
+  border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .18); font-size: 13px; line-height: 1.45; }
+/* With a mouse, a click on the card's text reaches the control beneath it; only its links take
+   clicks. A hover card often sits over the next control down, and it must never eat that click. On a
+   touch screen the card stays solid: a tap on it must not press something hidden beneath. */
+@media (hover: hover) {
+  .learn-tip { pointer-events: none; }
+  .learn-tip a, .learn-tip button, .learn-tip [data-lesson] { pointer-events: auto; }
+}
+.learn-title { font-weight: 700; margin-bottom: 2px; }
+.learn-what { font-weight: 600; }
+.learn-how { color: var(--muted); margin-top: 2px; }
+.term:focus-visible { outline-offset: 1px; }
+.tipline { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); font-weight: 400; letter-spacing: 0;
+  text-transform: none; white-space: normal; }
+.row > .tipline, .chips > .tipline, .learn-row > .tipline { flex-basis: 100%; margin-top: -4px; }
+th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px; }
+.learn-extra { margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--rule); }
+.learn-more { margin-top: 6px; border: 0; background: none; color: var(--accent); padding: 0; cursor: pointer; font-weight: 600; }
+.learn-drawer { position: fixed; z-index: 40; top: calc(var(--top-h, 0px) + var(--bar-h, 0px)); right: 0; bottom: 0; width: min(480px, 100vw); overflow-y: auto;
+  background: var(--panel); border-left: 1px solid var(--rule); padding: 16px; box-shadow: -8px 0 30px rgba(0, 0, 0, .15);
+  display: grid; gap: 10px; align-content: start; }
+.learn-drawer p { max-width: none; }
+.learn-short { font-weight: 600; }
+.learn-unit { border-top: 1px solid var(--rule); padding-top: 8px; display: grid; gap: 6px; }
+.learn-unit.locked h3 { color: var(--muted); }
+.learn-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.learn-row { flex-wrap: wrap; gap: 6px; }
+.chip.learn-chip { cursor: pointer; background: var(--info-bg); color: var(--info); border-color: transparent; }
+.plotwrap { position: relative; }
+.plot.short { height: 220px; }
+.plot-cursor { position: absolute; width: 1px; background: var(--accent); pointer-events: none; opacity: .7; }
+.plot-readout { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--rule);
+  border-radius: 6px; padding: 6px 8px; font: 12px/1.5 var(--mono); box-shadow: 0 4px 14px rgba(0, 0, 0, .12); white-space: nowrap; }
+.c-p { color: var(--s0); } .c-i { color: var(--s3); } .c-d { color: var(--s2); } .c-ff { color: var(--sp); }
+.wi-sliders { display: grid; gap: 6px; }
+.wi { display: grid; grid-template-columns: 4em 1fr 5em 6em; align-items: center; gap: 8px; }
+.wi input[type=range] { width: 100%; }
+.story { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.story li { line-height: 1.5; }
+@media (max-width: 640px) { .wi { grid-template-columns: 3.5em 1fr 4.5em; } .wi > :last-child { display: none; } }
+/* Six tests: a grid of separate buttons, so a wrapped row never ends on a dangling divider. */
+#loopseg { display: grid; grid-template-columns: repeat(auto-fill, minmax(8em, 1fr)); gap: 6px; border: 0; overflow: visible; }
+#loopseg button { border: 1px solid var(--edge); border-radius: 6px; }
+#loopseg button.on { border-color: var(--seg-on-edge); }
+
+/* ---------------------------------------------------------------- wiring */
+.schematic-wrap { overflow-x: auto; }
+.schematic { width: 100%; min-width: 600px; display: block; }
+.schematic .wire { stroke-width: 3; }
+.schematic .wire.can-h, .swatch.can-h { stroke: #e5b31b; background: #e5b31b; }
+.schematic .wire.can-l { stroke: #3b875a; }
+/* Under each CAN-H wire a thin edge, so a white or grey bus still shows on a light page. */
+.schematic .wire.can-case { stroke: var(--edge); stroke-width: 4.5px; }
+.schematic .bus-label { font: 600 13px var(--sans); fill: var(--ink); }
+.schematic .hint-text { font: 12px var(--sans); fill: var(--muted); }
+.schematic .term-ok { fill: var(--ok); font-weight: 600; }
+.schematic .term-bad { fill: var(--bad); font-weight: 700; }
+.schematic .term-none { fill: var(--muted); font-weight: 400; }
+.schematic .node { cursor: pointer; }
+.schematic .node .box { fill: var(--panel); stroke: var(--edge); stroke-width: 1.5; }
+.schematic .node.ok .box { fill: var(--ok-bg); stroke: var(--ok); }
+.schematic .node.warn .box { fill: var(--warn-bg); stroke: var(--warn); stroke-width: 2.5; }
+.schematic .node.bad .box { fill: var(--bad-bg); stroke: var(--bad); stroke-width: 3; }
+/* Focus and "marked" get their own ring outside the box, so they never repaint its state. */
+.schematic .node .ring { fill: none; stroke: none; }
+.schematic .node.focus .ring, .schematic .node:focus-visible .ring { stroke: var(--accent); stroke-width: 2.5; }
+.schematic .node:focus-visible { outline: none; }
+.schematic .state { font: 700 11px var(--sans); fill: var(--muted); }
+.schematic .node.bad .state { fill: var(--bad); }
+.schematic .node.warn .state { fill: var(--warn); }
+.schematic .nm { font: 600 13px var(--sans); fill: var(--ink); }
+.schematic .sub { font: 12px var(--mono); fill: var(--muted); }
+.schematic .dtype { font: 12px var(--sans); fill: var(--ink); }
+.schematic .dtype.bad { fill: var(--bad); font-weight: 700; }
+.schematic .ohm { font: 700 15px var(--sans); fill: var(--accent); }
+.schematic .suspect-line { stroke: var(--bad); stroke-width: 7; stroke-dasharray: 10 6; opacity: .85; }
+.schematic .suspect-dot { fill: var(--bad); }
+.schematic .suspect-mark { font: 800 15px var(--sans); fill: var(--on-state); }
+.schematic .warn-text { font: 600 12px var(--sans); fill: var(--bad); }
+.swatch { display: inline-block; width: 14px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: middle; border: 1px solid var(--rule); }
+.swatch.ok { background: var(--ok-bg); border-color: var(--ok); }
+.swatch.warn { background: var(--warn-bg); border-color: var(--warn); }
+.swatch.bad { background: var(--bad-bg); border-color: var(--bad); }
+.geo-diagram { width: 100%; max-width: 340px; display: block; margin: 0 auto; }
+.geo-diagram .frame { fill: none; stroke: var(--muted); stroke-width: 2; }
+.geo-diagram .wheel { fill: var(--ink); opacity: .75; }
+.geo-diagram .axle { fill: var(--accent); }
+.geo-diagram .dim { stroke: var(--accent); stroke-width: 2; }
+.geo-diagram .ext { stroke: var(--muted); stroke-dasharray: 3 3; }
+.geo-diagram .lbl { font: 600 12px var(--sans); fill: var(--ink); }
+.warn-ink { color: var(--warn); font-weight: 600; }
+.good-result { border-left: 3px solid var(--ok); padding-left: 8px; }
+details.design { border-top: 1px solid var(--rule); padding: 8px 0; }
+details.design > summary { cursor: pointer; }
+.fs-map { width: 100%; height: auto; display: block; margin: 8px 0 2px; }
+.fs-map .fs-field { fill: var(--bg); stroke: var(--muted); stroke-width: 1.5; }
+.fs-tag circle { stroke: var(--panel); stroke-width: 1.5; }
+.fs-map .fs-label { font: 600 10px var(--mono); fill: var(--ink); }
+.fs-tag .fs-face { stroke: var(--ink); stroke-width: 1.5; }
+.fs-tag.ok circle, .fs-key.ok::before { fill: var(--ok); background: var(--ok); }
+.fs-tag.moved circle, .fs-key.moved::before { fill: var(--warn); background: var(--warn); }
+.fs-tag.bad circle, .fs-key.bad::before { fill: var(--bad); background: var(--bad); }
+.fs-tag.lone circle, .fs-key.lone::before { fill: var(--info); background: var(--info); }
+.fs-tag.unseen circle, .fs-key.unseen::before { fill: var(--rule); background: var(--rule); }
+.fs-arrow { stroke-width: 2.5; stroke-linecap: round; }
+.fs-arrow.moved { stroke: var(--warn); }
+.fs-arrow.bad { stroke: var(--bad); }
+.fs-key { margin-left: 8px; white-space: nowrap; }
+.fs-key::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+.wiggle-step { border: 2px solid var(--rule); border-radius: 10px; padding: 12px 14px; margin: 8px 0; transition: border-color .2s, background .2s; }
+.wiggle-step.hot { border-color: var(--warn); background: var(--warn-bg); }
+.wiggle-step .warn-text { color: var(--bad); }
+.wiggle-text { font-size: 1.15em; margin: 4px 0 8px; }
+.wiggle-list li { margin: 4px 0; }
+.wiggle-list li.current { font-weight: 600; }
+.pdh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.pdh-port { border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px; display: grid; gap: 2px; min-width: 0; }
+.pdh-port.unmapped { border-style: dashed; }
+.pdh-port.unmapped .names { color: var(--muted); }
+.pdh-port .names { overflow-wrap: anywhere; }
+.pdh-bar { height: 5px; background: var(--grid); border-radius: 3px; overflow: hidden; }
+.pdh-bar > div { height: 100%; background: var(--accent); }
+ol.chain-edit { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+ol.chain-edit li { display: grid; grid-template-columns: 2em 1fr 5em auto; gap: 6px; align-items: center; }
+ol.chain-edit[style] { column-gap: 28px; }
+ol.chain-edit input { width: 5em; }
+
+/* ---------------------------------------------------------------- how-to, where to start, one part
+   Each tool's card lists its jobs in order and highlights the next; a panel's instructions fold
+   away under one switch; a panel whose job is done says what comes next. */
+.plan { border-left: 4px solid var(--accent); }
+.plan h2 { margin: 0; }
+.plan-jobs { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.plan-jobs li { display: grid; grid-template-columns: 7.5em minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; }
+.plan-jobs li .chip { justify-content: center; }
+.plan-jobs li.now { box-shadow: inset 4px 0 0 var(--accent); background: var(--panel); }
+.plan-t { min-width: 0; }
+details.howto { border: 1px dashed var(--rule); border-radius: 6px; padding: 2px 10px; }
+details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--accent); padding: 6px 0; }
+.howto-body { display: grid; gap: 6px; padding-bottom: 6px; }
+.howto-next { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 6px; background: var(--ok-bg); }
+.howto-switch input { width: 18px; height: 18px; }
+@keyframes plan-flash { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+.flash { animation: plan-flash 1.6s ease-out; }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; outline: 2px solid var(--accent); } }
+.part-kind { display: grid; gap: 6px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; }
+.part-kind.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.part-job { border-left: 3px solid var(--accent); }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; text-align: left; }
+
+/* ---------------------------------------------------------------- the robot as FIRST draws it
+   The drawing is white in both themes, so its caption and labels carry their own colors. */
+.frcmap { margin: 0; background: #fff; border: 1px solid var(--rule); border-radius: 8px; padding: 6px; display: grid; gap: 4px; }
+.frcmap svg { height: auto; display: block; margin-inline: auto; max-width: 100%; }
+.frcmap figcaption { color: #4a5663; padding: 0 4px; }
+.frcmap figcaption a { color: #0b5f69; }
+.frc-notours { fill: #fff; opacity: .84; }
+.frc-notours-t { fill: #4a5663; text-anchor: middle; dominant-baseline: middle; font-family: var(--sans); }
+.frc-dim { fill: #fff; opacity: .62; }
+.frc-ring { fill: none; }
+.frc-tag { text-anchor: middle; font-family: var(--sans); font-weight: 600; }
+.frc-can { stroke-width: 7px !important; filter: drop-shadow(0 0 5px #b8c400); }
+.frc-slot:empty { display: none; }
+
+/* Status chips that read apart: to do is firm, optional and not needed are dashed and quiet. */
+.chip.todo { border-color: var(--edge); font-weight: 600; color: var(--ink); }
+.chip.opt { border-style: dashed; color: var(--muted); }
+.sr-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.art-tile { fill: #fff; stroke: var(--rule); }
+.ctl-pics { display: flex; flex-wrap: wrap; gap: 16px; }
+.ctl-pics figure { margin: 0; display: grid; gap: 4px; justify-items: start; }
+.ctl-pics img { width: 160px; height: auto; background: #fff; border: 1px solid var(--rule); border-radius: 6px; padding: 4px; }
+.inv-art .ctl-pics img { width: auto; height: 64px; }
+@media (prefers-color-scheme: dark) {
+  /* The drawing stays white; take the glare off it. */
+  .frcmap { background: #e9edf1; }
+  .frcmap svg { filter: brightness(.92); }
+}
+
+/* ---------------------------------------------------------------- a tool: its jobs in a rail, one section beside it
+   The rail lists the jobs in order and, under them, the open section's how-to; the section gets the
+   rest of the width. Only the section being worked on shows, so each fits one laptop screen
+   (--work-h); one that outgrows it scrolls inside itself, never the page. */
+.jobs { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); gap: var(--gap); align-items: start; }
+.job-area { display: grid; gap: var(--gap); min-width: 0; }
+.job-area > .job-off { display: none; }             /* a class, not [hidden]: a tool's own hidden panels stay hidden */
+.job-area details.howto { display: none; }           /* shown in the rail, beside the section it is for */
+.job-area > * { max-height: var(--work-h); overflow-y: auto; }
+.rail-panel { position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); max-height: var(--work-h);
+  overflow-y: auto; align-content: start; gap: 6px; background: var(--bg); border-color: var(--bg); }
+.rail-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rail-chain { margin: 0; }
+.rail { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rail > li { display: grid; }
+.rail-group { margin: 4px 0 0; font-size: 12px; font-weight: 600; color: var(--muted); }
+.rail-item { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: center; width: 100%;
+  padding: 4px 8px; border: 1px solid transparent; border-radius: 6px; background: none; text-align: left;
+  cursor: pointer; color: var(--ink); font: inherit; }
+.rail-item:not(.on):hover { background: var(--seg-hover); }
+/* The open section: accent edge and rail, 5.96:1 (light) / 7.65:1 (dark) on the panel. */
+.rail-item.on { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
+.rail-item .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  font: 700 12px var(--sans); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--edge); }
+.rail-item.done .n { background: var(--ok); color: var(--on-state); box-shadow: none; }
+/* "Needs a fix" is amber, as in the Guide: red is for broken now and ABORT. */
+.rail-item.attention .n { background: var(--warn); color: var(--on-state); box-shadow: none; }
+.rail-item:is(.later, .optional, .skip, .locked) .n { box-shadow: none; border: 1.5px dashed var(--edge); }
+.rail-item.view .n { box-shadow: none; border: 1.5px solid var(--rule); border-radius: 4px; width: 14px; height: 14px; justify-self: center; }
+.rail-item .tt { font-weight: 600; }
+.rail-item:is(.later, .skip, .locked) .tt { color: var(--muted); }
+/* One line a job; the open job also says what it needs and what it waits for. */
+.rail-item .d { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); }
+.rail-item:not(.on) .d { display: none; }
+.rail-item .st { font-size: 12px; color: var(--muted); font-weight: 400; }
+.rail > li:not(:has(> .rail-item.on)) > .rail-first { display: none; }
+.rail-item .next-chip { padding: 0 6px; font-size: 11px; }
+.rail-item .away { color: var(--muted); }
+.rail-first { justify-self: start; margin: 2px 0 2px 38px; }
+.rail-about > summary { cursor: pointer; color: var(--muted); }
+.rail-foot { justify-content: space-between; }
+.rail-how { display: grid; gap: 6px; }
+@media (max-width: 900px) {
+  .jobs { grid-template-columns: minmax(0, 1fr); }
+  .rail-panel { position: static; max-height: none; }
+  .job-area > * { max-height: none; overflow: visible; }
+}
+
+/* Sections laid out to fit one screen: a list beside what to do about it. */
+#motors-live { grid-template-columns: minmax(0, 1fr) 480px; }
+.cfg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); column-gap: 24px; align-content: start; }
+.cfg-list > .finding { border-top: 0; border-bottom: 1px solid var(--rule); }
+.cfg-list > .finding[data-level="error"] { grid-column: 1 / -1; padding-left: 12px; box-shadow: inset 4px 0 0 var(--bad); }
+.pp-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 1200px) { #motors-live, .pp-cols { grid-template-columns: minmax(0, 1fr); } }
+table.t td > select { padding-block: 1px; }
+
+/* Runs: the saved runs scroll in their own box under a header that stays; the match logs beside them. */
+.runs2 { display: grid; grid-template-columns: minmax(0, 1fr) 560px; gap: var(--gap); align-items: start; }
+.runs2 > .panel { max-height: var(--work-h); min-height: 0; }
+.runs2 > .runs-saved { display: flex; flex-direction: column; }
+.runs2 > .runs-saved > .tblwrap { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.runs2 > .runs-logs { overflow-y: auto; }
+.runs2 table.t thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); box-shadow: inset 0 -1px 0 var(--rule); }
+#lg-list { max-height: 240px; overflow-y: auto; }
+@media (max-width: 1100px) { .runs2 { grid-template-columns: minmax(0, 1fr); } .runs2 > .panel { max-height: none; } }
+
+/* The Guide: the steps in the rail, the open step in two columns (what to do; what you need and why). */
+#gbody { max-height: var(--work-h); overflow-y: auto; }
+.g-cols { display: grid; grid-template-columns: minmax(0, 84ch) minmax(300px, 1fr); gap: 8px 28px; align-items: start; }
+.g-cols > div { display: grid; gap: 8px; min-width: 0; align-content: start; }
+@media (max-width: 1200px) { .g-cols { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 900px) { #gbody { max-height: none; overflow: visible; } }
+
+/* Tune: the whole loop on one screen. The test picker across the top; gains and Run on the left,
+   the plots in the middle, the next step and one pane (advice, what if, the story) on the right.
+   Only Earlier runs and the pane scroll, each inside itself. */
+.tune { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1fr); align-items: start;
+  grid-template-areas: "bar" "left" "plots" "right"; }
+.tune-bar { grid-area: bar; padding: 8px 14px; gap: 4px; }
+.tune-left { grid-area: left; }
+.tune-plots { grid-area: plots; }
+.tune-right { grid-area: right; }
+.tune-col { display: grid; gap: var(--gap); align-content: start; min-width: 0; }
+.tune-picks { gap: 8px 20px; }
+/* The six tests in one row across the top (the picker is a wrapping grid elsewhere). */
+@media (min-width: 901px) { .tune-picks > #loopseg { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: max-content; } }
+#tab-tune #blurb { max-width: none; }
+.panes { gap: 8px; }
+.panes > .pane:not(.sel) { display: none; }
+.pane { display: grid; gap: 8px; min-width: 0; align-content: start; }
+#paneseg button:disabled { opacity: .45; cursor: not-allowed; }
+.next-step { background: var(--panel); }
+@media (min-width: 901px) {
+  .tune { grid-template-columns: 340px minmax(0, 1fr); grid-template-areas: "bar bar" "left plots" "left right"; }
+}
+@media (min-width: 1280px) {
+  .tune { grid-template-columns: clamp(300px, 19vw, 360px) minmax(0, 1fr) clamp(400px, 27vw, 520px);
+    grid-template-areas: "bar bar bar" "left plots right"; }
+}
+@media (min-width: 1280px) and (min-height: 700px) {
+  .tune { height: var(--work-h); grid-template-rows: auto minmax(0, 1fr); align-items: stretch; }
+  .tune-col { min-height: 0; overflow-y: auto; }
+  .tune-left { grid-template-rows: auto minmax(0, 1fr); }
+  .tune-left > #history-panel[open] { min-height: 0; overflow-y: auto; }
+  .tune-right { grid-template-rows: auto minmax(0, 1fr); }
+  .tune-right > .panes { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+  .tune-right .pane { min-height: 0; overflow-y: auto; }
+  /* The two graphs share what the screen leaves them, 3:2 (about 245 and 163 px at 1920x1080). */
+  #tab-tune canvas.plot { height: max(150px, calc((var(--work-h) - 420px) * .6)); }
+  #tab-tune canvas.plot.short { height: max(100px, calc((var(--work-h) - 420px) * .4)); }
+  #tab-tune #run-view { gap: 6px; }
+}
+
+/* Troubleshoot: the checks, and one drawing beside them for the check being answered. */
+.tr-view { display: grid; gap: var(--gap); }
+.tr2 { display: grid; gap: var(--gap); grid-template-columns: minmax(0, 1fr); align-items: start; }
+.tr2.has-map { grid-template-columns: minmax(480px, 1fr) minmax(0, 1.25fr); }
+.tr-where { --frc-h: calc(var(--work-h) - 260px); position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); }
+@media (max-width: 900px) { .tr2.has-map { grid-template-columns: minmax(0, 1fr); } .tr-where { position: static; } }
+
+/* Bring-up: the bus colors (CTRE's cable: this color with green), the checklists, a shaft. */
+.bus-swatch { display: inline-block; width: 14px; height: 10px; margin-right: 4px; vertical-align: middle; border-radius: 2px;
+  background: linear-gradient(90deg, var(--c) 50%, #2e9e44 50%); box-shadow: inset 0 0 0 1px var(--edge); }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.br-shaft { display: grid; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.br-motors { max-height: calc(var(--work-h) - 120px); overflow: auto; }
+
+/* ---------------------------------------------------------------- laptops at 125% (about 1536 x 740)
+   The same one-screen rule with less room: a narrower rail, and long lists scroll in their own box. */
+@media (max-width: 1700px) {
+  :root { --rail-w: 300px; }
+  #tab-tune .steps button { padding: 1px 6px; font-size: 11px; }
+  #tab-tune .tune-plots > .panel { padding: 10px 12px; }
+}
+@media (min-width: 901px) {
+  /* Live: the robot drawing sized to the screen, not to its column. */
+  #tab-live .robot-svg { width: min(100%, 520px, calc(var(--work-h) - 200px)); }
+  /* Motors: the side column (recent changes, override, the guard's rules) scrolls by itself. */
+  #motors-live > .motors-side { max-height: calc(var(--work-h) - 2px); overflow-y: auto; }
+  /* Config: the robot's files in two columns; the findings and PathPlanner's lists in their own boxes. */
+  #cfg-files { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  #cfg-files > :first-child { grid-row: span 2; }
+  #cfg-findings .cfg-list { max-height: calc(var(--work-h) - 90px); overflow-y: auto; }
+  .pp-cols > * { max-height: calc(var(--work-h) - 90px); overflow-y: auto; }
+  /* Wiring: the PDH drawing sized to the section. */
+  #w-pdh-map { --frc-h: calc(var(--work-h) - 150px); }
+  /* Troubleshoot: compact cards (the full text is in each card's tip); the checks scroll in their box. */
+  .symptom { padding: 7px 11px; gap: 2px; }
+  .symptoms { grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 6px; }
+  .symptom .d { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 12px; }
+  .tr-view { max-height: var(--work-h); grid-template-rows: auto minmax(0, 1fr); }
+  .tr2 { min-height: 0; }
+  .tr2 > * { min-height: 0; max-height: calc(var(--work-h) - 150px); overflow-y: auto; }
+  .tr-where { position: static; }
+  .lights-box { max-height: calc(var(--work-h) - 290px); }
+  /* Tune: two gains to a row in the narrow left column. */
+  .tune-left .gains { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* The motor inventory: the controller and motor pictures sit in the heading row, small. */
+  .inv-art .ctl-pics { gap: 4px; align-items: flex-end; }
+  .inv-art .ctl-pics figure { justify-items: center; gap: 2px; }
+  .inv-art .ctl-pics figure.ctl { margin-left: 10px; }
+  .inv-art .ctl-pics img { width: auto; height: 46px; padding: 2px; }
+  .inv-art .ctl-credit { margin: 0; }
+  #inv-body .tblwrap { max-height: calc(var(--work-h) - 150px); overflow: auto; }
+  #inv-body table.t thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); }
+}
+
+/* ---------------------------------------------------------------- phones and touch screens
+   Last in the file, so these win over the base rules above them. */
+/* Phones: the header wrapped to four rows (29% of the screen) with ABORT alone on the last one. ABORT
+   is pinned to the bottom corner instead (#abort-pin, outside the header), under the thumb and above
+   every drawer, dialog and toast, and the title goes so the header stays short. */
+.abort.pin { display: none; }
+@media (max-width: 600px) {
+  .plan-jobs li { grid-template-columns: 5.5em minmax(0, 1fr) auto; gap: 6px; padding: 5px 4px; }
+  .frc-notours-t { display: none; }
+  .brand, #abort { display: none; }
+  .top { gap: 6px 10px; padding: 8px 12px; }
+  .abort.pin { display: block; position: fixed; right: 16px; bottom: max(16px, env(safe-area-inset-bottom)); z-index: 70;
+    padding: 16px 24px; font-size: 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, .35); }
+  main { padding-bottom: 96px; }  /* the last row of a page scrolls clear of ABORT */
+  .toast { bottom: 88px; }
+  /* Connected, the header's chips wrapped it to a third of the screen. It scrolls away with the page
+     instead: ABORT is pinned anyway, and the test banner (with Hold to run) takes the top. The chips
+     sit in one row that scrolls sideways. */
+  .top { position: static; }
+  .bar2 { display: contents; }
+  .banner { top: 0; }
+  .learn-drawer { top: 0; }
+  .chips { flex: 1 1 100%; order: 5; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .chips::-webkit-scrollbar { display: none; }
+}
+/* Touch screens: 44 px for anything pressed with a finger. Chips share the header, so they get 32 px. */
+@media (pointer: coarse) {
+  .btn, .abort, .tabs button, .seg button, select, input[type=text], input[type=number], input:not([type]) { min-height: 44px; }
+  .btn.small { min-height: 36px; }
+  button.chip { min-height: 32px; }
+  input[type=checkbox], input[type=radio] { width: 22px; height: 22px; }
+}
+
+/* Calibrate, 6. Camera lens: the board beside its settings. The board is a picture of a real
+   object, so it stays black on white in both themes. */
+.cal-lens { display: grid; grid-template-columns: minmax(170px, 250px) 1fr; gap: 16px; align-items: start; }
+/* 7. Camera positions: where a Luma P1's lens is, on white like every part drawing. */
+.cam-lens-fig { margin: 6px 0 0; display: grid; gap: 4px; }
+.cam-lens-fig img { width: 150px; height: auto; background: #fff; border-radius: 6px; padding: 4px; }
+.cam-lens-fig figcaption { margin: 0; }
+.board-fig { margin: 0; }
+.board-svg { width: 100%; height: auto; max-height: 340px; display: block; }
+.board-dim line { stroke: var(--muted); stroke-width: 0.03; }
+.board-dim text { fill: var(--muted); font-size: 0.4px; font-family: var(--sans); }
+.lens-set { width: auto; margin-bottom: 6px; }
+
+/* Faults on the devices a job depends on (faults.js): one quiet line when there are none. */
+.fault-strip { margin: 4px 0 6px; }
+.fault-strip ul { margin: 2px 0 0; padding-left: 18px; }
+.fault-strip.bad { border-left: 3px solid var(--bad); padding-left: 8px; }
+.fault-strip:not(.ok):not(.bad) { border-left: 3px solid var(--warn); padding-left: 8px; }
+
+/* Troubleshoot's first page, its Robot messages view: the list scrolls inside its panel. */
+.tr-msgs { max-height: calc(var(--work-h) - 110px); overflow: auto; }
+.tr-msgs-list td { vertical-align: top; }
+.tr-msgs-list td:first-child, .tr-msgs-list td:last-child { width: 1%; white-space: nowrap; }
+.tr-msg-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.tr-msgs-list tr.ongoing .tr-msg-text { font-weight: 600; }
+#tune-faults:empty { display: none; }
+
+/* Wiring: a device's card, on hover or keyboard focus. */
+.dcard { position: fixed; z-index: 30; width: 330px; max-height: calc(100vh - 16px); overflow: auto; background: var(--panel);
+  color: var(--ink); border: 1px solid var(--edge); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .25); padding: 10px 12px; pointer-events: none; }
+.dcard-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+/* The part's drawing and its motor's, on white (the drawings are dark parts on nothing). A fixed
+   height, so the card knows its size before they load and is placed on screen once. */
+.dcard-pics { display: flex; justify-content: center; align-items: flex-end; gap: 8px; background: #fff; border-radius: 6px; padding: 6px; margin: 4px 0 6px; }
+.dcard-pics figure { margin: 0; display: grid; justify-items: center; gap: 2px; min-width: 0; }
+.dcard-pics img { height: 84px; width: auto; max-width: 100%; object-fit: contain; }
+.dcard-pics figcaption { font-size: 10px; color: #3a3f45; }
+.dcard p { margin: 4px 0; }
+.dcard-facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 6px 0; font-size: 12px; }
+.dcard-facts dt { color: var(--muted); }
+.dcard-facts dd { margin: 0; }
+.dcard-credit { font-size: 10px; color: var(--muted); }
+/* A card with the device's status light: the facts and the light side by side. */
+.dcard.wide { width: 720px; display: grid; grid-template-columns: 290px 1fr; gap: 14px; }
+.dcard-lights h4 { margin: 0 0 2px; font-size: 13px; }
+.dcard-lights > p { margin: 0 0 4px; }
+.lights-card { width: 470px; }
+@media (max-width: 760px) { .dcard.wide { width: calc(100vw - 16px); grid-template-columns: 1fr; } .lights-card { width: calc(100vw - 16px); } }
+
+/* Status lights (blinks.js): a dot that blinks the way the real light does, with its words beside it. */
+.led { display: inline-block; flex: none; width: 13px; height: 13px; border-radius: 50%; background: var(--a);
+       box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35), 0 0 5px var(--a); }
+.led.off { background: #26292d; box-shadow: inset 0 0 0 1.5px #7b8188; }
+.led + .led { margin-left: -3px; }
+.led.blink { animation: led-blink 1s steps(1, end) infinite; }
+.led.alt { animation: led-alt 1s steps(1, end) infinite; }
+.led.slow { animation-duration: 2s; }
+.led.fast { animation-duration: .3s; }
+.led.count2 { animation: led-count2 2.4s steps(1, end) infinite; }
+.led.count3 { animation: led-count3 2.6s steps(1, end) infinite; }
+.led.count4 { animation: led-count4 2.8s steps(1, end) infinite; }
+@keyframes led-blink { 50% { opacity: .15; } }
+@keyframes led-alt { 50% { background: var(--b); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .35), 0 0 5px var(--b); } }
+@keyframes led-count2 { 0% { opacity: 1; } 9% { opacity: .15; } 18% { opacity: 1; } 27% { opacity: .15; } }
+@keyframes led-count3 { 0% { opacity: 1; } 8% { opacity: .15; } 16% { opacity: 1; } 24% { opacity: .15; } 32% { opacity: 1; } 40% { opacity: .15; } }
+@keyframes led-count4 { 0% { opacity: 1; } 7% { opacity: .15; } 14% { opacity: 1; } 21% { opacity: .15; } 28% { opacity: 1; } 35% { opacity: .15; } 42% { opacity: 1; } 49% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) {
+  /* Still: two colors half and half, a blinking light as a ring. The words say the pattern. */
+  .led.blink, .led.alt { animation: none; }
+  .led.alt { background: linear-gradient(90deg, var(--a) 50%, var(--b) 50%); }
+  .led.blink { background: transparent; box-shadow: inset 0 0 0 3px var(--a); }
+}
+.led-look { display: flex; align-items: center; gap: 6px; }
+.led-look + .led-look { margin-top: 3px; }
+table.lights td { vertical-align: top; }
+table.lights td.led-cell { white-space: nowrap; }
+table.lights td.led-cell .chip { margin-top: 3px; }
+table.lights tr.now td { background: var(--warn-bg); }
+table.lights .lights-group th { text-align: left; font-size: 12px; color: var(--muted); padding: 8px 6px 2px; border-bottom: 1px solid var(--rule); }
+table.lights.compact { font-size: 11.5px; table-layout: fixed; width: 100%; }
+table.lights.compact td { padding: 2px 6px 2px 0; }
+table.lights.compact td.led-cell { width: 50%; white-space: normal; }
+table.lights.compact .lights-group th { padding-top: 5px; }
+.lit { border-bottom: 1px dotted var(--muted); cursor: help; }
+.lights-caution { margin: 0 0 6px; }
+/* Calibrate, 6 and 9: the camera's connection, the guided calibration, and the new field. */
+.cm-box { display: grid; gap: 6px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.nf-part { border-top: 1px solid var(--rule); padding-top: 6px; margin-top: 6px; }
+.nf-part h3 { margin: 0 0 4px; font-size: 14px; }
+.nf-part tr.now td { background: var(--ok-bg); }
+.nf-part table { max-width: 560px; }
+.modal-box:has(.cal-guide) { width: min(1200px, 96vw); max-width: none; }
+.cal-guide { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.cal-guide .cg-view img { width: 100%; height: auto; background: #111; border-radius: 6px; }
+.cal-guide .cg-big { font-size: 22px; line-height: 1.35; margin: 6px 0; }
+.cal-guide .cg-now { font-weight: 700; min-height: 1.4em; }
+.cal-guide .cg-count { font-size: 16px; margin: 0 0 6px; }
+.cg-grid { display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 22px); gap: 3px; margin: 4px 0 8px; }
+.cg-grid span { border: 1px solid var(--rule); border-radius: 3px; background: var(--panel); }
+.cg-grid span.on { background: var(--accent); border-color: var(--accent); }
+@media (max-width: 900px) { .cal-guide { grid-template-columns: 1fr; } }
+
+/* Calibrate, 4. Gyro: the robot's own gyro, and a Canandgyro's buttons and report rates. */
+.cg-box { display: grid; gap: 6px; margin-bottom: 6px; }
+.cg-rates summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.cg-rates table { max-width: 420px; }
+/* Troubleshoot's Status lights: the devices, then the chosen one's table, which scrolls in its box. */
+.lights-devs { flex-wrap: wrap; gap: 6px; }
+.lights-dev { display: inline-flex; align-items: center; gap: 6px; }
+.lights-dev img { height: 22px; width: auto; background: #fff; border-radius: 3px; padding: 1px; }
+.lights-dev.on { border-color: var(--seg-on-edge); background: var(--seg-on); color: var(--seg-on-ink); }
+.lights-box { overflow: auto; }
+/* The auto-tuner: its checklist before it starts, and its panel on the Tune tab. */
+.checklist { list-style: none; padding: 0; margin: 4px 0 8px; display: grid; gap: 6px; }
+.checklist label { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 8px; }
+.checklist label > span { flex: 1 1 auto; min-width: 0; }
+.checklist input { margin-top: 2px; flex: none; }
+.at-panel table.at-pods td { vertical-align: top; }
+.at-why { margin: 6px 0; padding-left: 18px; }
+.at-why li + li { margin-top: 2px; }
+.at-panel .warn-ink { font-weight: 600; }
+
+/* Tune drive train: a pod whose gains differ from the shared ones. */
+#podseg button.own::after { content: " \2022"; color: var(--warn); }
+#podcmp p { margin: 4px 0; }
+
+/* Systems: the mechanism picker on top; subsystems, setup and the test side by side. */
+.sys { display: grid; gap: var(--gap); }
+.sys-cols { display: grid; grid-template-columns: minmax(200px, 240px) minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--gap); align-items: start; }
+.sys-group { padding: 6px 0; border-top: 1px solid var(--rule); }
+.sys-group.on { box-shadow: inset 3px 0 0 var(--accent); padding-left: 8px; }
+.sys-group .chip { margin: 2px 2px 0 0; }
+.sys-setup h3, .sys-test h3 { margin: 8px 0 4px; }
+.sys-setup h3:first-child { margin-top: 0; }
+.sys-typed label { display: flex; gap: 4px; align-items: center; }
+.sys-gains { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 6px 8px; }
+.sys-gains input { width: 100%; font-size: 12px; padding-left: 4px; padding-right: 2px; }
+@media (max-width: 1100px) { .sys-cols { grid-template-columns: 1fr; } }
+/* One screen: the bar on top, the three columns share what's left, and a column that outgrows it
+   scrolls inside itself, never the page. */
+@media (min-width: 1101px) and (min-height: 700px) {
+  .sys { height: var(--work-h); grid-template-rows: auto minmax(0, 1fr); }
+  .sys-cols { min-height: 0; height: 100%; }
+  .sys-cols > .panel { max-height: 100%; overflow-y: auto; }
+}
+
+/* Redo one part: the parts list and the checklist each fit the screen, scrolling inside themselves. */
+@media (min-height: 700px) {
+  .parts-split > .panel { max-height: var(--work-h); overflow-y: auto; }
+}

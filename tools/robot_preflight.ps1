@@ -35,8 +35,8 @@
   Set-NetIPInterface -InterfaceAlias "<name>" -AutomaticMetric Enabled
 
 .PARAMETER Json
-  Prints one JSON object instead of the report (the swerve tools' "Check the networks" uses it),
-  with the facts the swerve tools judge: the Driver Station, each adapter's address, the firewall and
+  Prints one JSON object instead of the report (Sloth Tune's "Check the networks" uses it),
+  with the facts Sloth Tune judges: the Driver Station, each adapter's address, the firewall and
   which radios answer.
 
 .EXAMPLE
@@ -253,18 +253,18 @@ if ($null -eq $robotIdx) {
         Add-Check "robot-ping" "fail" "Neither the radio nor the robot answers" "Check the robot is on and '$rname' joined its network. If the routes above are right and it still fails, a VPN kill switch is dropping the packets: turn it off (see the VPN check)."
     }
     if ($rioUp) {
-        if (Test-Tcp $RoboRio 5810) { Add-Check "nt4" "ok" "Robot code is running (NetworkTables port 5810 open)" "The swerve tools can connect." }
+        if (Test-Tcp $RoboRio 5810) { Add-Check "nt4" "ok" "Robot code is running (NetworkTables port 5810 open)" "Sloth Tune can connect." }
         else { Add-Check "nt4" "warn" "NetworkTables port 5810 is closed" "Normal while the robot code is starting or not deployed." }
     }
     $prof = Get-NetConnectionProfile -InterfaceIndex $robotIdx
     if ($prof -and $prof.NetworkCategory -eq 'Public') {
-        Add-Check "firewall" "info" "Windows calls the robot's network Public" "If the Driver Station shows communications but no robot code while the swerve tools connect fine, Windows Firewall is blocking the Driver Station on Public networks: allow it there (FRC's own troubleshooting does the same)."
+        Add-Check "firewall" "info" "Windows calls the robot's network Public" "If the Driver Station shows communications but no robot code while Sloth Tune connect fine, Windows Firewall is blocking the Driver Station on Public networks: allow it there (FRC's own troubleshooting does the same)."
     }
 }
 
-# ---------------------------------------------------------------- facts for the swerve tools to judge
+# ---------------------------------------------------------------- facts for Sloth Tune to judge
 # The Driver Station, each adapter's addressing, the firewall and the radios, read and never changed.
-# The swerve tools (swervetune/station.py) turn these into checks; -Json carries them as "facts".
+# Sloth Tune (slothtune/station.py) turns these into checks; -Json carries them as "facts".
 $facts = [ordered]@{}
 if ($Json) {
     $dsExe = Join-Path ${env:ProgramFiles(x86)} 'FRC Driver Station\DriverStation.exe'

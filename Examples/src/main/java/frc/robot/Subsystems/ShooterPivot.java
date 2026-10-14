@@ -22,10 +22,10 @@ import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.swervetune.MotorKind;
-import frc.lib.swervetune.MotorWatcher;
-import frc.lib.swervetune.SwerveTune;
-import frc.lib.swervetune.TunableSystem;
+import frc.lib.slothtune.MotorKind;
+import frc.lib.slothtune.MotorWatcher;
+import frc.lib.slothtune.SlothTune;
+import frc.lib.slothtune.TunableSystem;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -179,7 +179,7 @@ public class ShooterPivot extends SubsystemBase {
   }
 
   /** The Systems tab: its angle in degrees from the absolute encoder, through its own loop. */
-  public void tuneWith(SwerveTune tune) {
+  public void tuneWith(SlothTune tune) {
     tune.system("Shooter pivot", TunableSystem.Kind.PIVOT)
         .units("degrees")
         .position(angle::getPosition)

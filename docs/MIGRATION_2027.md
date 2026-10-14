@@ -1,4 +1,4 @@
-# Moving the swerve tools to 2027 (WPILib 2027, SystemCore, REVLib 2027)
+# Moving Sloth Tune to 2027 (WPILib 2027, SystemCore, REVLib 2027)
 
 Written October 2026, against **WPILib 2027 alpha 7**. REVLib's public changelog has no 2027
 release yet (its latest is 2026.0.5), and YAGSL and AdvantageKit are still on 2026. Don't port
@@ -13,20 +13,20 @@ is in a single file. These are the files that change, counted from what each one
 
 | What changes in 2027 | Library files that change | Robot code that changes |
 |---|---|---|
-| `DriverStation` splits into `MatchState` and `RobotState` | `RobotSignals.Wpilib` for every read; `reportWarning`/`reportError` calls in `SwerveTune`, `AkLogging`, `FieldLayouts` and `PhotonVisionSetup` if those move | Any subsystem reading the match state |
-| Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2`, and `SwerveTune.install`, which builds it | All of it: both `Robot.java`, every subsystem, the controller bindings, PathPlanner's `NamedCommands` |
-| REVLib's 2027 API | `SparkChannel`, `YagslDrivetrainIO`, `MotorWatcher`, and `SwerveTune`'s `watchMotor` overloads | Every subsystem that builds a `SparkMax` or `SparkFlex` (Peashooter's Shooter, Intake and Feeder; Black team's Shooter and Intake) |
-| YAGSL, the module hardware | `DrivetrainIO` / `YagslDrivetrainIO`, and `SwerveTune.install`, which takes a `SwerveDrive` | Each `Drive.java`, and the JSON files (see YAGSL below) |
+| `DriverStation` splits into `MatchState` and `RobotState` | `RobotSignals.Wpilib` for every read; `reportWarning`/`reportError` calls in `SlothTune`, `AkLogging`, `FieldLayouts` and `PhotonVisionSetup` if those move | Any subsystem reading the match state |
+| Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2`, and `SlothTune.install`, which builds it | All of it: both `Robot.java`, every subsystem, the controller bindings, PathPlanner's `NamedCommands` |
+| REVLib's 2027 API | `SparkChannel`, `YagslDrivetrainIO`, `MotorWatcher`, and `SlothTune`'s `watchMotor` overloads | Every subsystem that builds a `SparkMax` or `SparkFlex` (Peashooter's Shooter, Intake and Feeder; Black team's Shooter and Intake) |
+| YAGSL, the module hardware | `DrivetrainIO` / `YagslDrivetrainIO`, and `SlothTune.install`, which takes a `SwerveDrive` | Each `Drive.java`, and the JSON files (see YAGSL below) |
 | Gyros: no SPI on SystemCore | `YagslDrivetrainIO` (it reads the navX and the Canandgyro directly) | `swervedrive.json`'s IMU; the navX comes off, and the Canandgyro (Boron) goes on: [GYRO_CANANDGYRO.md](GYRO_CANANDGYRO.md). ReduxLib 2027 moves it to `com.reduxrobotics.canandgyro` with a `CANPort`; YAGSL 2027 calls it `canandgyro_can` |
 | Alerts | `DashboardAlerts` | None |
-| WPILib's JSON library (Jackson to Avaje Jsonb) | None: `MiniJson` reads `swervetune.json` with neither | None |
+| WPILib's JSON library (Jackson to Avaje Jsonb) | None: `MiniJson` reads `slothtune.json` with neither | None |
 | Camera libraries (PhotonLib's estimator API) | `PhotonVisionSource` and `PhotonVisionSetup` only; `VisionSource` keeps PhotonLib out of the rest | `vendordeps/photonlib.json` in each robot |
 | AdvantageKit | `AkLogging` only | `extends LoggedRobot` in each `Robot` |
 | pyntcore's method names (camelCase to snake_case) | `link.py`'s `_call` tries both | None |
 | SystemCore's addresses (hostname `robot`, USB and Wi-Fi addresses) | `link.py`'s `candidate_hosts` already tries them | None |
 
 `Sampler`, `SafetySupervisor`, `MotorGuard`'s logic, `VisionGate` and `VisionTrust` touch no WPILib
-API at all. In the library that is about a dozen files of 41 (39 in `swervetune`, 2 in its
+API at all. In the library that is about a dozen files of 41 (39 in `slothtune`, 2 in its
 PhotonVision adapter); in the robot projects, nearly every file.
 
 Three more, outside that table:
@@ -72,7 +72,7 @@ Three more, outside that table:
    without the SmartDashboard class, so it keeps working. Elastic's 2027 alphas read a chooser
    from `selected/tune` and `selected/value` instead of `selected` and `active` (2026); move
    `BatteryPicker` to whatever WPILib 2027's chooser publishes, and regenerate the drive team's
-   layout (`tools/swervetune/elastic.py`).
+   layout (`tools/slothtune/elastic.py`).
 8. **`Command.schedule()` is deprecated** (Peashooter's `Robot.java` uses it for autonomous).
 9. **Raw integer timestamps become nanoseconds** (`RobotController.getTime`, `getFPGATime`,
    `nt::Now`). DataLog files and NetworkTables still use microseconds, so the log tools
@@ -121,7 +121,7 @@ before trusting either.
 ### The laptop tools
 
 - Python 3.12 and `pyntcore`; on 2027 pyntcore the snake_case names are handled. Re-run the
-  Python tests (`py -3.12 -m unittest discover -s swervetune/tests` from `tools/`) against the
+  Python tests (`py -3.12 -m unittest discover -s slothtune/tests` from `tools/`) against the
   2027 package.
 - The CI "tools" job pins `robotpy-wpiutil<2027`; move the pin when the 2027 packages are
   released.

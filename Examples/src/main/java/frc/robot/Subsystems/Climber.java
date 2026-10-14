@@ -9,8 +9,8 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.swervetune.MotorKind;
-import frc.lib.swervetune.MotorWatcher;
+import frc.lib.slothtune.MotorKind;
+import frc.lib.slothtune.MotorWatcher;
 
 /**
  * A winch climber, from 2025 Reefscape (DeepClimbSubsystem): two NEO Vortexes, the second

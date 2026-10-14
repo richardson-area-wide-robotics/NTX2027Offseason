@@ -79,9 +79,9 @@ dependencies {
 // projects compile the same copy rather than each carrying its own. See ../common/README.md.
 sourceSets {
     // The PhotonVision adapter needs PhotonLib (vendordeps/photonlib.json, pinned to the 2026
-    // release the cameras run). With no camera listed in swervetune.json it does nothing.
-    main { java { srcDir '../common/swervetune/java'; srcDir '../common/swervetune-photonvision/java' } }
-    test { java { srcDir '../common/swervetune/test' } }
+    // release the cameras run). With no camera listed in slothtune.json it does nothing.
+    main { java { srcDir '../common/slothtune/java'; srcDir '../common/slothtune-photonvision/java' } }
+    test { java { srcDir '../common/slothtune/test' } }
 }
 
 test {
@@ -91,7 +91,7 @@ test {
 
 // Simulation configuration (e.g. environment variables).
 // ./gradlew simulateJava -PheadlessSim runs with no window, for scripts and AI agents that
-// enable the robot themselves (tools/swervetune sim on).
+// enable the robot themselves (tools/slothtune sim on).
 wpi.sim.addGui().defaultEnabled = !project.hasProperty('headlessSim')
 wpi.sim.addDriverstation()
 

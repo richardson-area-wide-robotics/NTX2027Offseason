@@ -11,7 +11,7 @@ Offseason robot code for FRC Team 1745 (Richardson Area Wide Robotics). This rep
 ## Team numbers
 
 Each robot's team number is in its project's `.wpilib/wpilib_preferences.json`. `./gradlew deploy`
-and the swerve tools use it to find the robot, so the robot's radio and the Driver Station must be set
+and Sloth Tune uses it to find the robot, so the robot's radio and the Driver Station must be set
 to the same number.
 
 | Robot | Team number |
@@ -94,19 +94,19 @@ The robot starts at pose (2 m, 2 m) facing 0°.
 
 `main` is protected. Branch, open a pull request, get a green build and an approval, then merge — [CONTRIBUTING.md](CONTRIBUTING.md) walks through it.
 
-## Swerve tools
+## Sloth Tune
 
-`tools/swervetune` is a browser app for tuning and checking both robots' swerve drives, watching the
-motors, and finding wiring faults: `py -3.12 tools/swervetune gui`. Start with
+`tools/slothtune` is a browser app for tuning and checking both robots' swerve drives, watching the
+motors, and finding wiring faults: `py -3.12 tools/slothtune gui`. Start with
 [`docs/SWERVE_TUNING_GUIDE.md`](docs/SWERVE_TUNING_GUIDE.md). Also in `docs/`: the
 [controls review](docs/CONTROLS_REVIEW.md), [vision setup](docs/VISION_LUMA_PHOTONVISION.md),
 the [brief for AI agents](docs/AGENT_TUNING.md), [notes for 2027](docs/MIGRATION_2027.md), [next year's gyro, the Canandgyro](docs/GYRO_CANANDGYRO.md) and
 [REV's numbers for our motors, controllers, swerve modules and battery](docs/REV_HARDWARE.md).
 
 To show the tools and the drive team's dashboard to someone away from the robot, run Peashooter in
-the simulator and then `py -3.12 -m swervetune.preview.make` from `tools/`. It records the real app
-and builds a clickable copy in `tools/swervetune/preview/site/` that runs in any browser, with no
-robot needed ([how it works](tools/swervetune/preview/make.py)).
+the simulator and then `py -3.12 -m slothtune.preview.make` from `tools/`. It records the real app
+and builds a clickable copy in `tools/slothtune/preview/site/` that runs in any browser, with no
+robot needed ([how it works](tools/slothtune/preview/make.py)).
 
 ## CI
 

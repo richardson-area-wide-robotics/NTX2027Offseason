@@ -26,7 +26,7 @@ defaults (74 kg, 6.883 kg·m²), so PathPlanner plans accelerations and turns fr
 Auto" also runs "Shoot B", which the code never registers, so PathPlanner skips it without a word
 (kept by name, decision 16).
 
-**Do:** weigh the robot with bumpers and battery and put `robotMassKg` in `swervetune.json`; run
+**Do:** weigh the robot with bumpers and battery and put `robotMassKg` in `slothtune.json`; run
 spin_ff for the moment of inertia; then the PathPlanner check offers both edits.
 
 ### 2. Peashooter's sticks may be reversed (check on blocks)
@@ -90,7 +90,7 @@ recommends a limit just under it.
 Both robots steer on the NEO 550's own encoder, copied once from the absolute encoder at startup.
 A bad read, or a skipped gear tooth, leaves a module pointed wrong until the next reboot.
 
-**Do:** turn on `encoderAutoSync` in `swervetune.json` (re-copies when the two disagree by more than
+**Do:** turn on `encoderAutoSync` in `slothtune.json` (re-copies when the two disagree by more than
 a degree, while still), or steer on the absolute encoder. Test either on blocks.
 
 ### 7. Offsets look copied
@@ -126,7 +126,7 @@ are wrong by the end of it, so the path curves. YAGSL corrects this in teleop (d
 dt 0.02 s) but not in autonomous, and angular velocity compensation, which covers the measurement
 lag, is off with a coefficient of 0.
 
-**Do:** turn discretization on for autonomous too (`chassisDiscretization` in `swervetune.json`);
+**Do:** turn discretization on for autonomous too (`chassisDiscretization` in `slothtune.json`);
 measure the angular velocity coefficient with a drive-and-spin before enabling it.
 
 ### 10. Heading drifts with no rotation command

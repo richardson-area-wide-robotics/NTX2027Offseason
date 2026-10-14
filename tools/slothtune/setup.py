@@ -1,0 +1,969 @@
+"""Where to start and what to do next: in each calibration and configuration tool, and for one part.
+
+Two kinds of checklist, both worked out from evidence, never from a click alone: the robot's
+files, the runs saved on this laptop, the progress marks the tools record when a measurement
+checks out, and the live robot.
+
+* A **tool plan** (Calibrate, Config, Motors, Wiring, Joysticks) lists that tool's jobs in the
+  order they depend on each other.
+* A **part plan** redoes one part without the whole path: a module that was replaced or acts
+  up, a motor, the gyro, a camera, a new field, new wheels. It counts only what was done to that
+  part since the person started it, and its steps link into the same tools, set to that part.
+
+Every job has a status:
+
+    done       measured or set, and it checked out
+    attention  measured, and something needs fixing
+    todo       not done yet
+    later      waits for something else first (``unblock`` says what)
+    optional   worth doing, not needed
+    skip       doesn't apply to this robot (no camera listed)
+
+``next`` is the first todo or attention job. With none left, ``after`` says where to go next.
+"""
+
+import os
+import time
+
+STAMP = "%Y%m%d-%H%M%S"
+# The short names the tuner and the robot also take (web/app.js ABBR).
+ABBR = {"frontleft": "FL", "frontright": "FR", "backleft": "BL", "backright": "BR"}
+WORK = ("attention", "todo")
+
+
+def stamp(t=None):
+    return time.strftime(STAMP, time.localtime(t))
+
+
+def _job(jid, title, status, detail="", go=None, how=None, unblock=None, optional=False):
+    j = {"id": jid, "title": title, "status": status, "detail": detail}
+    if go:
+        j["go"] = go
+    if how:
+        j["how"] = how
+    if unblock:
+        j["unblock"] = unblock
+    if optional:
+        j["optional"] = True
+    return j
+
+
+def _plan(title, what, bring, jobs, after):
+    nxt = next((j for j in jobs if j["status"] in WORK), None)
+    # Counted: every job that applies, an optional one only once it is done.
+    counted = [j for j in jobs if j["status"] != "skip" and not (j.get("optional") and j["status"] != "done")]
+    done = sum(1 for j in counted if j["status"] == "done")
+    return {"title": title, "what": what, "bring": bring, "jobs": jobs, "next": nxt,
+            "after": None if nxt else after, "done": done, "of": len(counted)}
+
+
+def _mark(prog, key, since=None):
+    """A tool's progress mark ``{"result", "when", ...}``, or None (or older than ``since``)."""
+    m = (prog or {}).get(key)
+    if not isinstance(m, dict) or not m.get("when"):
+        return None
+    if since and str(m["when"]) < str(since):
+        return None
+    return m
+
+
+def _mark_status(m, fail_detail="measured: it needs a fix"):
+    if not m:
+        return None
+    return ("done", m.get("detail") or f"Done {_when(m['when'])}") if m.get("result") == "pass" \
+        else ("attention", m.get("detail") or fail_detail)
+
+
+def _when(s):
+    s = str(s or "")
+    return f"{s[4:6]}/{s[6:8]} {s[9:11]}:{s[11:13]}" if len(s) >= 13 else s
+
+
+def _runs(ctx, test=None, env=None, module=None, since=None):
+    """This robot's real runs, newest first, that finished. The simulator's never count."""
+    out = []
+    for r in ctx.get("runs") or []:
+        if r.get("practice") or r.get("outcome") != "DONE" or r.get("env") == "SIM":
+            continue
+        if ctx.get("robot") and r.get("robot") not in (None, ctx["robot"]):
+            continue
+        if test and r.get("test") != test:
+            continue
+        if env and r.get("env") != env:
+            continue
+        if module is not None and (r.get("module") or "ALL") not in (module, ABBR.get(module, module), "ALL"):
+            continue
+        if since and str(r.get("saved") or "") < str(since):
+            continue
+        out.append(r)
+    return out
+
+
+def _tune(ctx):
+    p = ctx.get("project")
+    return ((p.data.get("slothtune.json") or {}) if p else {}) or {}
+
+
+def _guide_done(prog, key, ok=("pass", "verified", "done")):
+    return (prog or {}).get(key) in ok
+
+
+# ---------------------------------------------------------------------------- tools
+
+
+def calibrate(ctx):
+    prog, tune = ctx.get("prog") or {}, _tune(ctx)
+    jobs = []
+    offsets_ok = _guide_done(prog, "offsets", ("verified", "written"))
+
+    st = _mark_status(_mark(prog, "cal_positions"), "the tape differs from the files: save the new positions")
+    jobs.append(_job("positions", "1. Module positions", *(st or ("todo", "A tape measure; the robot anywhere.")),
+                     go={"tab": "calibrate", "panel": "cal-positions"}))
+
+    st = _mark_status(_mark(prog, "cal_wheels"), "measured: save the wheel size")
+    if st:
+        jobs.append(_job("wheels", "2. Wheel sizes", *st, go={"tab": "calibrate", "panel": "cal-wheels"}))
+    elif not offsets_ok:
+        jobs.append(_job("wheels", "2. Wheel sizes", "later", "A crooked wheel measures short: set the offsets first.",
+                         go={"tab": "calibrate", "panel": "cal-wheels"},
+                         unblock={"guide": "offsets", "label": "Guide step 4: Set the wheel offsets"}))
+    else:
+        jobs.append(_job("wheels", "2. Wheel sizes", "todo", "3 m of floor, a tape measure; robot disabled.",
+                         go={"tab": "calibrate", "panel": "cal-wheels"}))
+
+    st = _mark_status(_mark(prog, "cal_spin"), "the gyro and the wheels disagree: recheck 1 and 2")
+    if st:
+        jobs.append(_job("spin", "3. Check with a spin", *st, go={"tab": "calibrate", "panel": "cal-spin"}))
+    elif _runs(ctx, "spin", "FIELD"):
+        jobs.append(_job("spin", "3. Check with a spin", "todo", "A floor spin is saved: check it.",
+                         go={"tab": "calibrate", "panel": "cal-spin"}))
+    else:
+        jobs.append(_job("spin", "3. Check with a spin", "later", "Needs a Spin run on the floor first.",
+                         go={"tab": "calibrate", "panel": "cal-spin"},
+                         unblock={"guide": "spin", "label": "Guide step 12: Spin check"}))
+
+    still, turns = _mark(prog, "cal_gyro_still"), _mark(prog, "cal_gyro_turns")
+    if still and turns:
+        bad = [m for m in (still, turns) if m.get("result") != "pass"]
+        jobs.append(_job("gyro", "4. Gyro", "attention" if bad else "done",
+                         "; ".join(m.get("detail", "") for m in bad) or "Drift and full turns check out.",
+                         go={"tab": "calibrate", "panel": "cal-gyro"}))
+    else:
+        left = [w for w, m in (("a minute standing still", still), ("full turns", turns)) if not m]
+        jobs.append(_job("gyro", "4. Gyro", "attention" if (still or turns) and (still or turns).get("result") != "pass" else "todo",
+                         "Still to do: " + " and ".join(left) + ".", go={"tab": "calibrate", "panel": "cal-gyro"}))
+
+    mass, moi = tune.get("robotMassKg"), tune.get("robotMoiKgM2")
+    if mass and moi:
+        jobs.append(_job("moi", "5. Mass and moment of inertia", "done", f"{mass} kg, {moi} kg·m².",
+                         go={"tab": "calibrate", "panel": "cal-moi"}))
+    elif not mass:
+        jobs.append(_job("moi", "5. Mass and moment of inertia", "todo", "Weigh the robot with bumpers and battery.",
+                         go={"tab": "calibrate", "panel": "cal-moi"}))
+    elif _runs(ctx, "drive_ff", "FIELD"):
+        jobs.append(_job("moi", "5. Mass and moment of inertia", "todo", f"Weighed ({mass} kg); now spin and measure.",
+                         go={"tab": "calibrate", "panel": "cal-moi"}))
+    else:
+        jobs.append(_job("moi", "5. Mass and moment of inertia", "later",
+                         f"Weighed ({mass} kg). The spin compares against the floor feedforward, so that first.",
+                         go={"tab": "calibrate", "panel": "cal-moi"},
+                         unblock={"guide": "ff", "label": "Guide step 10: Measure the feedforward"}))
+
+    cams = [str(c) for c in ((tune.get("vision") or {}).get("cameras") or [])]
+    # The lens first: a pose is only as good as the camera's calibration, and it ships with none.
+    if not cams:
+        jobs.append(_job("lens", "6. Camera lens", "skip",
+                         "No camera listed in slothtune.json (\"vision\": {\"cameras\": [...]}).",
+                         go={"tab": "calibrate", "panel": "cal-lens"}))
+    else:
+        marks = {c: _mark(prog, f"cal_lens_{c}") for c in cams}
+        bad = [c for c, mk in marks.items() if mk and mk.get("result") != "pass"]
+        left = [c for c, mk in marks.items() if not mk]
+        jobs.append(_job("lens", "6. Camera lens", "attention" if bad else "todo" if left else "done",
+                         (f"Recalibrate: {', '.join(bad)}." if bad else ("Not calibrated yet: " + ", ".join(left)) if left
+                          else "Every camera calibrated."),
+                         go={"tab": "calibrate", "panel": "cal-lens"}))
+    if not cams:
+        jobs.append(_job("camera", "7. Camera positions", "skip",
+                         "No camera listed in slothtune.json (\"vision\": {\"cameras\": [...]}).",
+                         go={"tab": "calibrate", "panel": "cal-camera"}))
+    else:
+        left = [c for c in cams if not _mark(prog, f"cal_camera_{c}")]
+        jobs.append(_job("camera", "7. Camera positions", "todo" if left else "done",
+                         ("Not measured yet: " + ", ".join(left)) if left else "Every camera measured.",
+                         go={"tab": "calibrate", "panel": "cal-camera"}))
+
+    if ctx.get("layout_saved"):
+        jobs.append(_job("field", "8. Field tags", "done",
+                         "A surveyed layout is saved. Upload it to each camera too (vision doc).",
+                         go={"tab": "calibrate", "panel": "cal-field"}))
+    else:
+        jobs.append(_job("field", "8. Field tags", "optional",
+                         "On a field with tags, at an event or a practice field: needs a camera.",
+                         go={"tab": "calibrate", "panel": "cal-field"}, optional=True))
+
+    nf = _mark(prog, "cal_newfield")
+    jobs.append(_job("newfield", "9. New field", ("done" if nf.get("result") == "pass" else "attention") if nf else "optional",
+                     (nf.get("detail") or "Swept.") if nf else
+                     "At each new venue: the camera tuned to its light, its tags swept, the mount checked. Needs a camera.",
+                     go={"tab": "calibrate", "panel": "cal-newfield"}, optional=not nf))
+
+    return _plan("Calibrate: measure the robot itself",
+                 "Where the modules sit, how big the wheels are, how well the gyro reads, the robot's mass "
+                 "and inertia, and where each camera looks: odometry, PathPlanner and vision all start from these. "
+                 "Measure in this order: each uses the ones before it. Every panel's Practice runs it on made-up "
+                 "data with a known answer, to see what a good result looks like first.",
+                 ["A tape measure", "3 m of straight floor", "A scale", "The ChArUco board and a tag on a wall (for a camera)"],
+                 jobs, {"tab": "controllers", "label": "Next: Joysticks"})
+
+
+def config(ctx):
+    p = ctx.get("project")
+    if not p:
+        return _plan("Config", "What the robot's files say.", [],
+                     [_job("project", "Pick the robot", "todo", "Pick the robot project at the top of the page.")], None)
+    lint = ctx.get("lint") or []
+    own = [f for f in lint if not str(f.get("id", "")).startswith("pathplanner")]
+    errors = [f for f in own if f.get("level") == "error"]
+    warns = [f for f in own if f.get("level") == "warn"]
+    jobs = [_job("errors", "Fix what doesn't add up", "attention" if errors else "done",
+                 f"{len(errors)} error{'s' if len(errors) != 1 else ''} in the files: each says how to fix it."
+                 if errors else "No errors in the swerve files.", go={"tab": "config", "panel": "cfg-findings"}),
+            _job("warnings", "Read the warnings", "optional",
+                 f"{len(warns)} to read. Most are settled by the Guide's tests; none stop a test." if warns
+                 else "None.", go={"tab": "config", "panel": "cfg-findings"}, optional=True)]
+
+    pp = ctx.get("pp")
+    if not pp or not pp.get("used"):
+        jobs.append(_job("pathplanner", "PathPlanner matches the code", "skip", "This robot doesn't use PathPlanner.",
+                         go={"tab": "config", "panel": "pp-panel"}))
+    else:
+        rows = pp.get("rows") or []
+        differs = [r for r in rows if r.get("status") in ("differs", "missing")]
+        unknown = [r for r in rows if r.get("status") == "unknown"]
+        pp_err = [f for f in pp.get("findings") or [] if f.get("level") == "error"]
+        if differs or pp_err:
+            jobs.append(_job("pathplanner", "PathPlanner matches the code", "attention",
+                             f"{len(differs)} setting{'s' if len(differs) != 1 else ''} differ"
+                             + (f", {len(pp_err)} error{'s' if len(pp_err) != 1 else ''}" if pp_err else "")
+                             + ": Make PathPlanner match the code.", go={"tab": "config", "panel": "pp-panel"}))
+        elif unknown:
+            jobs.append(_job("pathplanner", "PathPlanner matches the code", "later",
+                             "Matches, except " + ", ".join(r.get("key", "") for r in unknown)
+                             + ": measured in Calibrate, then sent here.", go={"tab": "config", "panel": "pp-panel"},
+                             unblock={"tab": "calibrate", "panel": "cal-moi", "label": "Calibrate 5: Mass and moment of inertia"}))
+        else:
+            jobs.append(_job("pathplanner", "PathPlanner matches the code", "done", "Every setting matches.",
+                             go={"tab": "config", "panel": "pp-panel"}))
+
+    tune = _tune(ctx)
+    batteries = tune.get("batteries") or []
+    if not batteries:
+        jobs.append(_job("batteries", "Number the batteries", "todo",
+                         "Write a number on each battery (a paint marker), then list them: Edit the battery list.",
+                         go={"battery": 1}))
+    elif ctx.get("battery_grades_stale"):
+        jobs.append(_job("batteries", "Number the batteries", "attention",
+                         f"{len(batteries)} listed. Newer grades to send to the robot, so Elastic shows them.",
+                         go={"battery": 1}))
+    else:
+        jobs.append(_job("batteries", "Number the batteries", "done", f"{len(batteries)} listed.", go={"battery": 1}))
+
+    designs = [k for k, v in (tune.get("designs") or {}).items() if v]
+    jobs.append(_job("designs", "Mechanism designs", "optional",
+                     (f"{len(designs)} saved: " + ", ".join(designs)) if designs
+                     else "Paste a ReCalc or AMBcalc link for each mechanism you designed.",
+                     go={"tab": "config", "panel": "dl-panel"}, optional=True))
+    return _plan("Config: what the files say",
+                 "The robot's swerve files checked against physics and each other, PathPlanner checked against "
+                 "the code, the battery list, and mechanism designs.",
+                 ["Nothing: no robot needed"], jobs, {"tab": "motors", "label": "Next: Motors"})
+
+
+def motors(ctx):
+    connected = bool(ctx.get("connected"))
+    inv = ctx.get("inventory") or {"rows": [], "findings": []}
+    rows = inv.get("rows") or []
+    bad = [f for f in inv.get("findings") or [] if f.get("level") in ("error", "warn")]
+    unnamed = [r["name"] for r in rows if not r.get("motor")]
+    jobs = [_job("connect", "Connect to the robot", "done" if connected else "todo",
+                 "Connected." if connected else "Connect at the top of the page (robot on, laptop on its network).")]
+    if bad:
+        jobs.append(_job("inventory", "Every motor named, with its type", "attention",
+                         f"{len(bad)} to fix: the code, the files and the controllers disagree.", go={"tab": "motors", "panel": "motor-inventory"}))
+    elif unnamed:
+        jobs.append(_job("inventory", "Every motor named, with its type", "todo",
+                         "Not named: " + ", ".join(unnamed[:6]) + ("…" if len(unnamed) > 6 else ""),
+                         go={"tab": "motors", "panel": "motor-inventory"}))
+    else:
+        jobs.append(_job("inventory", "Every motor named, with its type", "done", f"{len(rows)} controllers.",
+                         go={"tab": "motors", "panel": "motor-inventory"}))
+    if not connected:
+        jobs.append(_job("live", "Every controller heard, firmware current", "later",
+                         "Needs the robot: the controllers say what they are and which firmware they run.",
+                         unblock={"connect": 1, "label": "Connect to the robot"}))
+    else:
+        # Only motors the robot watches report in; one it doesn't watch is never "missing".
+        missing = [r.get("name") for r in ctx.get("live_motors") or [] if not r.get("present", 1)]
+        old = [f for f in inv.get("findings") or [] if "firmware" in f.get("title", "").lower()]
+        jobs.append(_job("live", "Every controller heard, firmware current", "attention" if (missing or old) else "done",
+                         ("Not heard: " + ", ".join(missing[:6]) + ". " if missing else "")
+                         + (f"{len(old)} on old firmware: update with REV Hardware Client." if old else "")
+                         or "All heard, firmware current.", go={"tab": "motors", "panel": "motor-inventory"}))
+    return _plan("Motors: what each motor is",
+                 "Every motor the code creates, with its controller, its type and its firmware, and the guard "
+                 "that protects them from heat and stalls.",
+                 ["The robot, powered and connected", "REV Hardware Client 2, for firmware"],
+                 jobs, {"tab": "wiring", "label": "Next: Wiring"})
+
+
+def wiring(ctx):
+    prog, m = ctx.get("prog") or {}, ctx.get("wiring_map") or {}
+    controllers = ctx.get("controllers") or []
+    jobs = []
+    # One check per bus; a one-bus robot's older single check still counts.
+    names = [b.get("name") for b in (m.get("buses") or [])] or [None]
+    marks = [_mark(prog, f"wire_ohms:{n}") or (_mark(prog, "wire_ohms") if len(names) == 1 else None) for n in names]
+    failed = [n for n, mk in zip(names, marks) if mk and mk.get("result") != "pass"]
+    passed = sum(1 for mk in marks if mk and mk.get("result") == "pass")
+    called = {b.get("name"): b.get("label") for b in ((ctx.get("design") or {}).get("canBuses") or [])}
+    called.update({b.get("name"): b.get("label") for b in (m.get("buses") or []) if b.get("label")})
+    if failed:
+        st = ("attention", f"{', '.join(str(called.get(n) or n) for n in failed)}: the readings say a terminator is missing or not working.")
+    elif passed == len(names):
+        st = ("done", "Every bus measured about 60 ohms." if len(names) > 1 else "About 60 ohms: both terminators work.")
+    elif len(names) > 1:
+        st = ("todo", f"{passed} of {len(names)} buses measured. Robot off; a multimeter at each bus's far end.")
+    else:
+        st = ("todo", "Robot off; a multimeter at the far end, terminator in, then out.")
+    jobs.append(_job("ohms", "Termination check", *st, go={"tab": "wiring", "panel": "w-ohms-panel"}))
+    ports = m.get("pdhPorts") or {}
+    mapped = [c for c in controllers if c in ports]
+    jobs.append(_job("pdh", "Find the PDH ports", "done" if controllers and len(mapped) == len(controllers) else "todo",
+                     f"{len(mapped)} of {len(controllers)} motors mapped.", go={"tab": "wiring", "panel": "w-find"}))
+    buses = m.get("buses") or []
+    confirmed = bool(buses) and all(b.get("orderConfirmed") for b in buses)
+    jobs.append(_job("order", "Confirm the CAN cable order", "done" if confirmed else "todo",
+                     "Checked on the robot." if confirmed
+                     else "Follow the yellow-green cable from the roboRIO; Edit the map." if len(buses) < 2
+                     else f"Follow each of the {len(buses)} buses' cables from the controller, by color; Edit the map.",
+                     go={"tab": "wiring", "panel": "w-edit"}))
+    st = _mark_status(_mark(prog, "wire_wiggle"), "something dropped when a plug moved: see the result")
+    jobs.append(_job("wiggle", "Wiggle test", *(st or ("todo", "Robot on and disabled; about five minutes.")),
+                     go={"tab": "wiring", "panel": "w-wiggle"}))
+    jobs.append(_job("saved", "Save the map and redeploy", "done" if ctx.get("wiring_saved") else "todo",
+                     "Saved in the robot project; redeploy after each change so alerts name ports."
+                     if ctx.get("wiring_saved") else "Edit the map, then Save; redeploy so Robot Health names ports.",
+                     go={"tab": "wiring", "panel": "w-edit"}))
+    return _plan("Wiring: the CAN chain and the power feeds",
+                 "Which PDH port feeds each motor and the order of the CAN cable, so a fault names the plug to check.",
+                 ["A multimeter", "The robot on blocks (for the PDH ports)"], jobs,
+                 {"tab": "calibrate", "label": "Next: Calibrate"})
+
+
+def controllers_plan(ctx):
+    hist = ctx.get("controller_history") or []
+    latest = {}
+    for e in hist:
+        latest[str(e.get("label", "")).strip().lower()] = e
+    code_db = ctx.get("code_deadband")
+
+    def find(*words):
+        hits = [e for k, e in latest.items() if any(w in k for w in words)]
+        return max(hits, key=lambda e: str(e.get("when", ""))) if hits else None
+
+    jobs = []
+    for jid, title, words, detail in (
+            ("driver", "Check the driver's joystick", ("driv",), "Port 0: the sticks that drive."),
+            ("tester", "Check the tester's joystick", ("test", "dead", "operat"),
+             "Port 1: its right bumper is the deadman for every test.")):
+        e = find(*words)
+        if not e:
+            jobs.append(_job(jid, title, "todo", detail + " Name it so when you save the check.",
+                             go={"tab": "controllers", "panel": "ct-steps"}))
+        else:
+            verdict = e.get("verdict")
+            jobs.append(_job(jid, title, "attention" if verdict == "error" else "done",
+                             f"{e.get('label')}, {_when(e.get('when'))}: " + ("; ".join(e.get("problems") or []) or "good"),
+                             go={"tab": "controllers", "panel": "ct-steps"}))
+    needs = [e for e in latest.values() if e.get("recommended_deadband") and code_db
+             and e["recommended_deadband"] > code_db + 1e-9]
+    jobs.append(_job("deadband", "The code's deadband covers every joystick", "attention" if needs else
+                     ("done" if latest else "later"),
+                     ("Needs more than the code's " + str(code_db) + ": "
+                      + ", ".join(f"{e.get('label')} {e['recommended_deadband']}" for e in needs)) if needs
+                     else ("Every checked joystick rests inside it." if latest else "Check a joystick first."),
+                     go={"tab": "controllers", "panel": "ct-history"}))
+    jobs.append(_job("spares", "Check the spares", "optional", "Before an event, so a swap mid-event is safe.",
+                     go={"tab": "controllers", "panel": "ct-steps"}, optional=True))
+    return _plan("Joysticks: the drivers' sticks and buttons",
+                 "Drift, dead zones, reach and buttons, for each Xbox joystick, against the deadband the code uses.",
+                 ["Each joystick, with a USB cable"], jobs, {"guide": "", "label": "Back to the Guide"})
+
+
+def is_swerve(name):
+    """A swerve motor: the Guide brings these up, wheel by wheel."""
+    return name.endswith((" drive", " steer"))
+
+
+def mechanism_motors(design):
+    """The design's motors bring-up runs one at a time: not the swerve's, and not a follower (it is
+    checked by running its leader)."""
+    return [m for m in (design or {}).get("motors") or []
+            if m.get("name") and not is_swerve(m["name"]) and not m.get("follows")]
+
+
+def shafts(design):
+    """``{shaft: [motor, ...]}`` for every shaft two or more designed motors share."""
+    out = {}
+    for m in (design or {}).get("motors") or []:
+        if m.get("shaft"):
+            out.setdefault(m["shaft"], []).append(m)
+    return {k: v for k, v in out.items() if len(v) > 1}
+
+
+def bringup(ctx):
+    """A freshly built robot, handed over by the mechanical and electrical teams, brought up against
+    its design file: the file, the code against it, the robot off, the first power-on, each motor and
+    each shared shaft, the drivetrain, then a signed-off report."""
+    d, prog = ctx.get("design"), ctx.get("prog") or {}
+    connected = bool(ctx.get("connected"))
+    errors = [f for f in ctx.get("design_check") or [] if f["level"] == "error"]
+    jobs = []
+    go = lambda panel: {"tab": "bringup", "panel": panel}  # noqa: E731
+    if not d:
+        jobs.append(_job("design", "The design file", "todo",
+                         "None yet: draft one from the code, or import the design team's spreadsheet.", go=go("br-design")))
+    else:
+        jobs.append(_job("design", "The design file", "attention" if errors else "done",
+                         f"{len(errors)} to fix in it." if errors else
+                         f"{len(d.get('motors') or [])} motors, {len(d.get('sensors') or [])} sensors, "
+                         f"{len(d.get('canBuses') or [])} CAN bus(es).", go=go("br-design")))
+    if not d:
+        jobs.append(_job("code", "The code matches the design", "later", "Needs the design file.",
+                         go=go("br-code"), unblock={"tab": "bringup", "panel": "br-design", "label": "The design file"}))
+    else:
+        cmp_ = ctx.get("design_compare") or []
+        bad = [f for f in cmp_ if f["level"] == "error"]
+        jobs.append(_job("code", "The code matches the design", "attention" if bad else "done",
+                         f"{len(bad)} disagree: fix the code or the design." if bad else
+                         (f"{len(cmp_)} to read." if cmp_ else "Every motor, ID, follower and port agrees."), go=go("br-code")))
+    st = _mark_status(_mark(prog, "bu_handover"), "Something to fix before power-on.")
+    jobs.append(_job("handover", "Hand-over check, robot off", st[0] if st else "todo",
+                     st[1] if st else "Breakers, the CAN terminators, the battery and main breaker, the radio.", go=go("br-handover")))
+    # First power-on: what the Motors and Wiring tools already check, linked from here.
+    mplan = motors(ctx)
+    live = next((j for j in mplan["jobs"] if j["id"] == "live"), None)
+    jobs.append(_job("heard", "First power-on: every controller heard", live["status"] if live else "todo",
+                     (live or {}).get("detail", ""), go={"tab": "motors", "panel": "motor-inventory"},
+                     unblock=(live or {}).get("unblock")))
+    wplan = wiring(ctx)
+    order = next((j for j in wplan["jobs"] if j["id"] == "order"), None)
+    if order:
+        jobs.append(_job("can", "The CAN cable in the designed order", order["status"], order.get("detail", ""),
+                         go=order.get("go"), unblock=order.get("unblock")))
+    sensors = (d or {}).get("sensors") or []
+    if d and not sensors:
+        jobs.append(_job("sensors", "Every sensor reads", "skip", "No sensors in the design.", go=go("br-sensors")))
+    else:
+        st = _mark_status(_mark(prog, "bu_sensors"), "A sensor didn't read: check its port and wiring.")
+        jobs.append(_job("sensors", "Every sensor reads", st[0] if st else ("todo" if d else "later"),
+                         st[1] if st else (f"{len(sensors)} sensors: start the live readout, then trip each by hand." if d else "Needs the design file."), go=go("br-sensors"),
+                         unblock=None if d else {"tab": "bringup", "panel": "br-design", "label": "The design file"}))
+    mech = mechanism_motors(d)
+    if d and not mech:
+        jobs.append(_job("motors", "Each mechanism motor turns the right way", "skip", "No mechanism motors in the design.", go=go("br-motors")))
+    else:
+        marks = {m["name"]: _mark(prog, "bu_motor:" + m["name"]) for m in mech}
+        passed = [n for n, mk in marks.items() if mk and mk.get("result") == "pass"]
+        failed = [n for n, mk in marks.items() if mk and mk.get("result") != "pass"]
+        status = "later" if not d or not connected else "attention" if failed else "done" if len(passed) == len(mech) else "todo"
+        detail = ("Needs the design file and the robot, on blocks." if status == "later" else
+                  "Wrong: " + ", ".join(failed[:4]) if failed else f"{len(passed)} of {len(mech)} checked.")
+        jobs.append(_job("motors", "Each mechanism motor turns the right way", status, detail, go=go("br-motors"),
+                         unblock=None if d and connected else ({"connect": 1, "label": "Connect to the robot"} if d else
+                                                               {"tab": "bringup", "panel": "br-design", "label": "The design file"})))
+    sh = shafts(d)
+    if not d:
+        jobs.append(_job("shafts", "Motors on one shaft turn together", "later", "Needs the design file.", go=go("br-shafts"),
+                         unblock={"tab": "bringup", "panel": "br-design", "label": "The design file"}))
+    elif not sh:
+        jobs.append(_job("shafts", "Motors on one shaft turn together", "skip", "No shared shafts in the design.", go=go("br-shafts")))
+    elif sh:
+        marks = {k: _mark(prog, "bu_shaft:" + k) for k in sh}
+        passed = [k for k, mk in marks.items() if mk and mk.get("result") == "pass"]
+        failed = [k for k, mk in marks.items() if mk and mk.get("result") != "pass"]
+        status = "later" if not connected else "attention" if failed else "done" if len(passed) == len(sh) else "todo"
+        jobs.append(_job("shafts", "Motors on one shaft turn together", status,
+                         "Needs the robot, on blocks." if status == "later" else
+                         "They fight: " + ", ".join(failed) if failed else f"{len(passed)} of {len(sh)} shafts checked.",
+                         go=go("br-shafts"), unblock=None if connected else {"connect": 1, "label": "Connect to the robot"}))
+    dirs, sticks = prog.get("directions"), prog.get("sticks")
+    jobs.append(_job("drivetrain", "The drivetrain: the Guide's path", "done" if dirs == "pass" and sticks == "pass"
+                     else "attention" if "fail" in (dirs, sticks) else "todo",
+                     "Every wheel drives the right way, and it drives with the sticks." if dirs == "pass" and sticks == "pass"
+                     else "Wheel directions on blocks, then the sticks on the floor, in the Guide.", go={"guide": "directions"}))
+    st = _mark_status(_mark(prog, "bu_signoff"))
+    jobs.append(_job("signoff", "Sign off: the bring-up report", st[0] if st else "todo",
+                     st[1] if st else "Write what was checked, by whom and when, into the robot's folder.", go=go("br-signoff")))
+    return _plan("Bring-up: a new robot against its design",
+                 "A robot just handed over by the mechanical and electrical teams, checked against its design file "
+                 "before it is tuned: the code, the robot off, the first power-on, then one motor at a time.",
+                 ["The design file (CAN IDs, ports, the ReCalc/AMBcalc designs)", "A multimeter", "Blocks under the frame",
+                  "The mechanical and electrical leads"], jobs, {"tab": "config", "label": "Next: Config"})
+
+
+TOOLS = {"bringup": bringup, "calibrate": calibrate, "config": config, "motors": motors, "wiring": wiring,
+         "controllers": controllers_plan}
+# The order a new robot goes through them (each one's "after" points at the next).
+CHAIN = ["bringup", "config", "motors", "wiring", "calibrate", "controllers"]
+
+
+def with_order(tab, ctx, plans=None):
+    """A tool's plan, with where it sits in the order and the first earlier tool still to finish."""
+    plans = plans if plans is not None else {}
+    plan = plans.get(tab) or TOOLS[tab](ctx)
+    i = CHAIN.index(tab) if tab in CHAIN else -1
+    earlier = None
+    for t in CHAIN[:max(i, 0)]:
+        # Bring-up is for a new robot: it comes first only once the team has started it (a design
+        # file), never as a nag on a robot that was brought up long ago.
+        if t == "bringup" and not ctx.get("design"):
+            continue
+        p = plans.get(t) or TOOLS[t](ctx)
+        n = sum(1 for j in p["jobs"] if j["status"] in WORK)
+        if n:
+            earlier = {"tab": t, "count": n}
+            break
+    plan["order"] = {"chain": CHAIN, "index": i, "earlier": earlier}
+    return plan
+
+
+# ---------------------------------------------------------------------------- one part
+
+PARTS = {
+    "module": {"title": "A swerve module", "when": "Replaced, rebuilt, or acting up",
+               "pick": "module"},
+    "motor": {"title": "A motor or controller", "when": "Replaced, or its CAN ID or firmware changed",
+              "pick": "motor"},
+    "gyro": {"title": "The gyro", "when": "Moved, replaced, or reading oddly", "pick": None},
+    "camera": {"title": "A camera", "when": "Moved, bumped, replaced, or added", "pick": "camera"},
+    "field": {"title": "A new field or event", "when": "Setting up on a field you haven't surveyed", "pick": None},
+    "wheels": {"title": "Wheels or tread", "when": "New wheels or tread on any module", "pick": None},
+    "system": {"title": "A mechanism, on the real robot", "when": "Its first run on the real robot, or after it was rebuilt",
+               "pick": "system"},
+}
+
+
+def part_key(kind, which=""):
+    return f"{kind}:{which}" if which else kind
+
+
+def _module_motors(module):
+    return [f"{module} drive", f"{module} steer"]
+
+
+def part_plan(kind, which, ctx, started):
+    """The checklist for redoing one part. ``started`` is when the person began: only evidence
+    from then on counts, since the part changed."""
+    prog = ctx.get("prog") or {}
+    pm = ((prog.get("parts") or {}).get(part_key(kind, which)) or {}).get("marks") or {}
+    since = started
+
+    def pmark(key):
+        m = pm.get(key)
+        return m if isinstance(m, dict) and str(m.get("when", "")) >= str(since) else None
+
+    if kind == "module":
+        return _module_plan(which, ctx, since, pmark)
+    if kind == "motor":
+        return _motor_plan(which, ctx, since, pmark)
+    if kind == "gyro":
+        st = _mark_status(pmark("hand_gyro"), "it reads counter-clockwise as negative: flip invertedIMU")
+        jobs = [_health_job(ctx, since, "gyro"),
+                _job("hand_gyro", "Turn it by hand: counter-clockwise reads positive",
+                     *(st or ("todo", "Robot disabled, on the floor: turn the whole robot a quarter turn.")),
+                     go={"part_action": "hand_gyro"}),
+                _from_mark(_mark(prog, "cal_gyro_still", since), "still", "The gyro standing still",
+                           "Record a minute with nobody touching the robot.", {"tab": "calibrate", "panel": "cal-gyro"}),
+                _from_mark(_mark(prog, "cal_gyro_turns", since), "turns", "Full turns read 360° each",
+                           "Turn the robot five times by hand or with the sticks.", {"tab": "calibrate", "panel": "cal-gyro"}),
+                _spin_job(ctx, since, optional=True)]
+        return _plan("The gyro", "A moved or new gyro: is it calibrated, does it drift, does a full turn read 360°.",
+                     ["The robot on the floor", "A tape line on the floor"], jobs, {"guide": "", "label": "Back to the Guide"})
+    if kind == "camera":
+        cams = [str(c) for c in ((_tune(ctx).get("vision") or {}).get("cameras") or [])]
+        listed = which in cams
+        jobs = [_job("listed", f"{which or 'The camera'} is listed for the robot", "done" if listed else "todo",
+                     "In slothtune.json." if listed else
+                     f"Add \"{which}\" (its PhotonVision name) to \"vision\": {{\"cameras\": [...]}} in slothtune.json, then redeploy.",
+                     go={"tab": "config", "panel": "cfg-findings"}),
+                _from_mark(_mark(prog, f"cal_camera_{which}", since), "position", "Measure where it sits",
+                           "One tag on a wall; three spots or more.", {"tab": "calibrate", "panel": "cal-camera", "camera": which}),
+                _job("field", "On a new field too? Survey it", "optional", "Pick \"A new field or event\" after this.",
+                     go={"part": "field"}, optional=True)]
+        return _plan(f"Camera: {which}", "Every vision pose passes through where the code thinks this camera is.",
+                     ["A tag on a wall", "A tape measure"], jobs, {"guide": "", "label": "Back to the Guide"})
+    if kind == "field":
+        vf = (_tune(ctx).get("vision") or {}).get("field")
+        fm = pmark("field_type")
+        jobs = [_job("type", "Say which field it is: welded or AndyMark",
+                     "done" if fm else "todo",
+                     f"{(fm or {}).get('detail') or vf or 'welded'}." if fm else
+                     f"Now {vf or 'welded (the default)'}. The event's documents say which; the survey can tell too.",
+                     how=["Read the event's field documents (welded or AndyMark).", "Pick it here and save."]),
+                _job("survey", "Survey the tags", "done" if ctx.get("layout_mtime", "") >= since and ctx.get("layout_saved") else "todo",
+                     "Drive past every group of tags, then Work it out and save.",
+                     go={"tab": "calibrate", "panel": "cal-field"}),
+                _job("upload", "Upload surveyed.json to each camera", "done" if pmark("upload") else "todo",
+                     "PhotonVision's page, Settings, AprilTag field layout: the camera solves its multi-tag poses itself.",
+                     how=["Open each camera's PhotonVision page.", "Settings, AprilTag field layout: upload "
+                          "src/main/deploy/apriltags/surveyed.json.", "Then press Done here."]),
+                _job("cameras", "A camera knocked in transit? Measure it again", "optional",
+                     "Pick \"A camera\" for it.", go={"part": "camera"}, optional=True)]
+        return _plan("A new field or event", "Tags on a real field sit where people hung them: measure where.",
+                     ["The robot on the field, a camera fitted", "The event's field documents"], jobs,
+                     {"guide": "", "label": "Back to the Guide"})
+    if kind == "system":
+        return _system_plan(which, ctx, since, pmark)
+    if kind == "wheels":
+        jobs = [_from_mark(_mark(prog, "cal_wheels", since), "wheels", "Measure the wheel sizes",
+                           "A 3 m push in coast: new tread is bigger than worn.", {"tab": "calibrate", "panel": "cal-wheels"}),
+                _straight_job(ctx, since)]
+        return _plan("Wheels or tread", "Every distance odometry reports is wheel turns times the wheel size.",
+                     ["3 m of straight floor", "A tape measure"], jobs, {"guide": "", "label": "Back to the Guide"})
+    raise ValueError(f"no such part: {kind}")
+
+
+def _from_mark(m, jid, title, todo, go):
+    st = _mark_status(m)
+    return _job(jid, title, *(st or ("todo", todo)), go=go)
+
+
+def _health_job(ctx, since, part):
+    # The Guide's health run marks it (cal_health): a hand-check or offset capture isn't a health check.
+    st = _mark_status(_mark(ctx.get("prog") or {}, "cal_health", since), "the health check found a problem")
+    return _job("health", "Sensor health capture", *(st or ("todo", "Robot disabled, three seconds still.")),
+                go={"guide": "health"})
+
+
+def _spin_job(ctx, since, optional=False):
+    spins = _runs(ctx, "spin", "FIELD", since=since)
+    status = "done" if spins and (spins[0].get("score") or 0) >= 100 else ("attention" if spins else
+                                                                          ("optional" if optional else "todo"))
+    return _job("spin", "Spin check on the floor", status, "Gyro, wheels and command agree on the turn rate.",
+                go={"tune": "spin"}, optional=optional)
+
+
+def _straight_job(ctx, since):
+    # Graded on a tape or AprilTags (the Guide's record of it); heading alone proves no size.
+    r = ((ctx.get("prog") or {}).get("runs") or {}).get("straight/FIELD") or {}
+    if not r or str(r.get("saved") or "") < str(since):
+        return _job("straight", "Straight line, measured with a tape", "optional", "Confirms the new size on the floor.",
+                    go={"tune": "straight"}, optional=True)
+    if r.get("needs_truth"):
+        return _job("straight", "Straight line, measured with a tape", "todo",
+                    "Run, but nothing measured it: enter the tape in Runs.", go={"tune": "straight"})
+    return _job("straight", "Straight line, measured with a tape", "done" if (r.get("score") or 0) >= 100 else "attention",
+                f"Scored {r.get('score')}.", go={"tune": "straight"})
+
+
+def _module_plan(module, ctx, since, pmark):
+    live = {r.get("name"): r for r in ctx.get("live_motors") or []}
+    names = _module_motors(module)
+    jobs = []
+    if not ctx.get("connected"):
+        jobs.append(_job("heard", "Both its controllers heard on the CAN bus", "todo",
+                         "Connect to the robot. A new module's SPARKs need their CAN IDs set first (REV Hardware Client).",
+                         how=["Set each new SPARK's CAN ID to the old one's (Config shows them), with REV Hardware Client.",
+                              "Update its firmware there too.", "Connect at the top of the page."]))
+    else:
+        gone = [n for n in names if n not in live or not live[n].get("present", 1)]
+        jobs.append(_job("heard", "Both its controllers heard on the CAN bus", "attention" if gone else "done",
+                         ("Not heard: " + ", ".join(gone) + ". Check the CAN ID, the plugs and its breaker.") if gone
+                         else "Both heard.", go={"tab": "motors", "panel": "motor-inventory"}))
+    jobs.append(_health_job(ctx, since, module))
+    for jid, title, todo in (("hand_wheel", "Hand check: roll its wheel", "Robot disabled. Roll the wheel so its top moves forward."),
+                             ("hand_steer", "Hand check: turn it", "Turn the module counter-clockwise, seen from above.")):
+        st = _mark_status(pmark(jid), "the sensors disagree: see the result")
+        jobs.append(_job(jid, title, *(st or ("todo", todo)), go={"part_action": jid}))
+    st = _mark_status(pmark("offset"), "the offset wasn't saved")
+    jobs.append(_job("offset", "Its offset", *(st or ("todo", "Wheel straight ahead, bevel gear to the left; capture, save, redeploy.")),
+                     go={"part_action": "offset"}))
+    st = _mark_status(pmark("direction"), "it rolled backwards: see Troubleshoot, wheel backwards")
+    jobs.append(_job("direction", "On blocks: it drives the right way", *(st or ("todo", "On blocks, deadman held; watch its tire.")),
+                     go={"part_action": "direction"}))
+    steer = _runs(ctx, "steer_step", "BLOCKS", module=module, since=since)
+    jobs.append(_job("steer", "Steering on blocks", "done" if steer and (steer[0].get("score") or 0) >= 80
+                     else ("attention" if steer else "todo"),
+                     (f"Scored {steer[0].get('score')}." if steer else "Same gains as the others: it should score as they do."),
+                     go={"tune": "steer", "module": module}))
+    ff = _runs(ctx, "drive_ff", module=module, since=since)
+    jobs.append(_job("ff", "Feedforward against the other three", "done" if ff else "todo",
+                     "Its kV within a few percent of the others: a big gap is friction or a wrong ratio."
+                     if not ff else f"Measured {_when(ff[0]['saved'])}: compare its row in the result.",
+                     go={"tune": "ff"}))
+    jobs.append(_job("floor", "Steering on the floor", "done" if _runs(ctx, "steer_step", "FIELD", module=module, since=since)
+                     else "optional", "If it still acts up on carpet.", go={"tune": "steer", "module": module}, optional=True))
+    return _plan(f"Module: {module}", "A replaced or misbehaving module, checked on its own: the rest keep their settings.",
+                 ["Blocks", "The robot connected", "REV Hardware Client (a new module)"], jobs,
+                 {"guide": "", "label": "Back to the Guide"})
+
+
+def _motor_plan(name, ctx, since, pmark):
+    inv = {r["name"]: r for r in (ctx.get("inventory") or {}).get("rows") or []}
+    row = inv.get(name) or {}
+    live = {r.get("name"): r for r in ctx.get("live_motors") or []}
+    jobs = []
+    if not ctx.get("connected"):
+        jobs.append(_job("heard", "Heard on the CAN bus, with its CAN ID", "todo",
+                         f"Set the new controller's CAN ID to {row.get('can_id', '?')} with REV Hardware Client, then connect."))
+    else:
+        r = live.get(name)
+        ok = r and r.get("present", 1)
+        jobs.append(_job("heard", "Heard on the CAN bus, with its CAN ID", "done" if ok else "attention",
+                         "Heard." if ok else f"Not heard: check CAN ID {row.get('can_id', '?')}, its plugs and breaker.",
+                         go={"tab": "motors", "panel": "motor-inventory"}))
+    jobs.append(_job("type", "Its type matches the code", "attention" if row.get("status") == "bad" else
+                     ("done" if row.get("motor") else "todo"),
+                     f"{row.get('motor') or 'Not named'} on a {row.get('code_controller') or '?'}.",
+                     go={"tab": "motors", "panel": "motor-inventory"}))
+    ports = ((ctx.get("wiring_map") or {}).get("pdhPorts") or {})
+    jobs.append(_job("pdh", "Its PDH port", "done" if name in ports else "optional",
+                     f"Port {ports[name]}." if name in ports else "If it moved to another port: Find the PDH ports.",
+                     go={"tab": "wiring", "panel": "w-find"}, optional=name not in ports))
+    module = name.rsplit(" ", 1)[0] if name.endswith((" drive", " steer")) else ""
+    if module:
+        jobs.append(_job("module", f"Then check {module} as a module", "todo",
+                         "Direction, offset (steering) and feedforward all depend on it.", go={"part": "module", "which": module}))
+    return _plan(f"Motor: {name}", "A replaced motor or controller: heard, named, powered.",
+                 ["The robot connected", "REV Hardware Client"], jobs, {"guide": "", "label": "Back to the Guide"})
+
+
+# A mechanism's first real runs go at half its planned speed; "full" is at least 90% of it.
+HALF, FULL = 0.55, 0.9
+
+
+def _system_runs(ctx, test, name, since):
+    """This robot's real runs of a system test on one mechanism, newest first, finished or not:
+    a run the robot stopped (past a limit, too fast) is evidence too."""
+    out = []
+    for r in ctx.get("runs") or []:
+        if r.get("test") != test or r.get("system") != name or r.get("env") in ("SIM", None) or r.get("practice"):
+            continue
+        if ctx.get("robot") and r.get("robot") not in (None, ctx["robot"]):
+            continue
+        if since and str(r.get("saved") or "") < str(since):
+            continue
+        out.append(r)
+    return out
+
+
+def _system_plan(name, ctx, since, pmark):
+    """A mechanism's first time on the real robot, safely: registered and heard, its physics, its
+    limits by hand and which way it reads, its limits and a low top speed saved, then a half-speed
+    run, then its planned speed, then the gains into the code. Nothing moves fast until the limits
+    are known and a slow run has gone cleanly."""
+    from . import systems as SY
+    live = {s["name"]: s for s in ctx.get("systems") or []}
+    sysd = live.get(name) or {"name": name, "kind": (ctx.get("systems_in_code") or {}).get(name, ""), "motors": []}
+    kind = str(sysd.get("kind") or "").upper()
+    positional = kind in ("PIVOT", "ELEVATOR")
+    units = sysd.get("units") or "its units"
+    entry = (SY.settings(ctx.get("project")) or {}).get(name) or {}
+    sim = ctx.get("env") == "SIM"
+    go = {"tab": "systems", "system": name}
+    jobs = []
+
+    if not ctx.get("connected") or sim:
+        jobs.append(_job("code", "The real robot connected, its code registering it", "todo",
+                         "Connect to the real robot: the simulator never counts here." if sim else "Connect to the robot.",
+                         how=["Deploy the robot code that registers it (tune.system(...) in its subsystem).",
+                              "Connect at the top of the page, to the robot, not the simulator."]))
+    elif name not in live:
+        jobs.append(_job("code", "The real robot connected, its code registering it", "attention",
+                         f"The robot code doesn't register {name}: add tune.system(\"{name}\", ...) to its subsystem and redeploy.",
+                         how=["See the guide's \"Tuning a mechanism\" for the few lines it takes."]))
+    else:
+        jobs.append(_job("code", "The real robot connected, its code registering it", "done",
+                         f"{name}: a {kind.lower()} in {units}."))
+
+    motors = {r.get("name"): r for r in ctx.get("live_motors") or []}
+    mine = sysd.get("motors") or []
+    if not ctx.get("connected") or sim or not mine:
+        jobs.append(_job("heard", "Its motors heard, with no faults", "later" if not mine else "todo",
+                         "Once the robot is connected and the code names its motors." if not mine else "Connect to the robot.",
+                         unblock="code" if not mine else None, go=go))
+    else:
+        gone = [m for m in mine if m not in motors or not motors[m].get("present", 1)]
+        bad = [m for m in mine if m in motors and (motors[m].get("flags") or "").strip()]
+        jobs.append(_job("heard", "Its motors heard, with no faults", "attention" if gone or bad else "done",
+                         "; ".join(x for x in (("Not heard: " + ", ".join(gone)) if gone else "",
+                                               ("Faults now: " + ", ".join(bad)) if bad else "") if x) + "."
+                         if gone or bad else "All heard, no faults now.", go=go,
+                         how=["Robot disabled. The faults strip at the top of the Systems tab shows each of its motors.",
+                              "A motor not heard: its CAN ID, its plugs, its breaker."]))
+
+    sims = [r for r in ctx.get("runs") or [] if r.get("test") == "system_step" and r.get("system") == name and r.get("env") == "SIM"]
+    jobs.append(_job("sim", "Its test in the simulator first", "done" if sims else "optional",
+                     "The sequence ran in the simulator." if sims else
+                     "Checks the sequence and the limits before the real robot: run it with the simulator connected.",
+                     go=go, optional=True))
+
+    try:
+        mech = SY.physics(entry, kind or None)
+        perr = None
+    except ValueError as e:
+        mech, perr = None, str(e)
+    jobs.append(_job("physics", "Its physics: a ReCalc or AMBcalc link", "attention" if perr else ("done" if mech else "todo"),
+                     f"The link doesn't read: {perr}" if perr else
+                     (f"{mech['count']} × {mech['motor']} through {mech['ratio']:g}:1." if mech else
+                      "Paste its ReCalc or AMBcalc link in the Systems tab (or type the AMB spreadsheet's numbers)."),
+                     go=go, how=["They set how fast a safe test may go: nothing is tested without them."]))
+
+    if positional:
+        lim = _system_runs(ctx, "system_limits", name, since)
+        moved = [r for r in lim if r.get("outcome") == "DONE" and isinstance(r.get("min"), (int, float))
+                 and isinstance(r.get("max"), (int, float)) and r["max"] > r["min"]]
+        jobs.append(_job("limits", "Its limits: moved by hand to both ends", "done" if moved else ("attention" if lim else "todo"),
+                         f"{moved[0]['min']:.4g} to {moved[0]['max']:.4g} {units}." if moved else
+                         ("The last try didn't move it: move it all the way to each end." if lim else
+                          "Robot disabled, its motors coasting: move it slowly to each hard stop."),
+                         go=dict(go, action="limits"),
+                         how=["Robot disabled. Set limits by hand: its motors coast so it moves freely.",
+                              "Move it slowly to its bottom (stowed) end, then all the way to its top end. Mind fingers at the hard stops.",
+                              "Then press Done, and save the limits."]))
+        st = _mark_status(pmark("direction"), "it reads backwards: invert its encoder in the code first")
+        jobs.append(_job("direction", "Toward its top end, its reading goes up", *(st or (
+            ("todo" if moved else "later"), "Robot disabled: move it toward its top end, with its live reading in this step.")),
+            unblock=None if moved else "limits", go={"part_action": "direction"},
+            how=["Robot disabled. Move it by hand toward its top (deployed, raised) end and watch its reading.",
+                 "It must go up. If it goes down, the code's encoder is inverted: fix that before any test."]))
+
+    # The team's maximum is a ceiling the robot enforces from startup; the first, half-speed runs
+    # come from the test itself, so going faster never needs a redeploy.
+    cap = entry.get("maxVelocity")
+    has_cap = isinstance(cap, (int, float)) and cap > 0
+    saved_lim = not positional or all(isinstance(entry.get(k), (int, float)) for k in ("min", "max"))
+    robot_has = has_cap and isinstance(sysd.get("max_velocity"), (int, float)) and abs(sysd["max_velocity"] - cap) < 1e-6 \
+        and (not positional or sysd.get("limits_from") == "slothtune.json")
+    plan = SY.plan(entry, sysd) if mech else {"ok": False}
+    if saved_lim and has_cap and robot_has:
+        st, detail = "done", f"On the robot: top speed {cap:.4g}{' and its limits' if positional else ''}."
+    elif saved_lim and has_cap:
+        st, detail = "todo", "Saved: redeploy, so the robot enforces them from startup."
+    else:
+        st, detail = "todo", ("Save its limits and the team's maximum" if positional else "Save the team's maximum") + (
+            f": its planned top speed is {plan['vmax']:.4g}." if plan.get("ok") else ".")
+    jobs.append(_job("saved", "Its limits and top speed saved, and redeployed" if positional else "Its top speed saved, and redeployed",
+                     st, detail, go=go,
+                     how=["The team's maximum is the fastest anyone may test it: the robot stops it past that, or past a limit.",
+                          "Save to slothtune.json, then redeploy so the robot enforces them from startup."]))
+
+    env = ctx.get("env")
+    jobs.append(_job("where", "The robot on blocks, the mechanism's path clear", "done" if env in ("BLOCKS", "FIELD") else "todo",
+                     ("On blocks." if env == "BLOCKS" else "On the floor, bumpers on.") if env in ("BLOCKS", "FIELD") else
+                     "Set Where at the top: On blocks.",
+                     how=["Robot on blocks or its cart: its wheels can't drive it anywhere.",
+                          "Nothing and nobody in the mechanism's path; cables and hands clear; safety glasses on.",
+                          "Someone at the Driver Station, ready to disable. The deadman holder watches the mechanism."]))
+
+    steps = _system_runs(ctx, "system_step", name, since)
+    planned = plan.get("vmax") if plan.get("ok") else None
+
+    def at(r, lo, hi):
+        v = r.get("vmax")
+        return isinstance(v, (int, float)) and planned and lo * planned <= v <= hi * planned
+
+    slow = [r for r in steps if planned and at(r, 0, HALF)]
+    slow_ok = [r for r in slow if r.get("outcome") == "DONE"]
+    jobs.append(_job("slow", "First run: half speed", "done" if slow_ok else ("attention" if slow else "todo"),
+                     f"Ran cleanly at {slow_ok[0]['vmax']:.4g}." if slow_ok else
+                     (f"Stopped: {slow[0].get('message') or slow[0].get('outcome')}." if slow else
+                      "Half speed in the Systems tab's test, robot enabled, deadman held."),
+                     go=dict(go, speed="half"),
+                     how=["Robot enabled, deadman held, someone watching it. Half speed is the Systems tab's default.",
+                          "Let go of the deadman, or press ABORT, if anything looks wrong."]))
+    full = [r for r in steps if planned and at(r, FULL, 10)]
+    good = [r for r in full if r.get("outcome") == "DONE" and (r.get("score") is None or r.get("score") >= 80)]
+    jobs.append(_job("full", "Then its planned speed", "done" if good else ("attention" if full else ("todo" if slow_ok else "later")),
+                     f"Scored {good[0].get('score')}." if good and good[0].get("score") is not None else
+                     ("Ran at its planned speed." if good else
+                      (f"{full[0].get('message') or 'See its report'}: its gains need a look." if full else
+                       "After a clean half-speed run.")),
+                     unblock=None if slow_ok or full else "slow", go=dict(go, speed="full"),
+                     how=["Full speed in the Systems tab's test. Read the report: it says what to change.",
+                          "Try a gain live, run again, and keep what tracks best."]))
+    st = _mark_status(pmark("code_gains"), "")
+    jobs.append(_job("code_gains", "The gains that worked, in the code", *(st or (("todo" if good else "later"),
+                     "Live gains are lost at restart: put them in the subsystem's code and redeploy.")),
+                     unblock=None if good else "full", go={"part_action": "code_gains"},
+                     how=["Copy the gains that worked into the subsystem's code (or its config), and redeploy.",
+                          "Run once more at its planned speed to check the code has them."]))
+    what = (f"{name}'s first time on the real robot, step by step: nothing moves fast until its limits are known "
+            "and a half-speed run has gone cleanly." if positional else
+            f"{name}'s first time on the real robot, step by step: a half-speed run before its planned speed.")
+    return _plan(f"Mechanism: {name}", what,
+                 ["The robot on blocks or its cart", "Its ReCalc or AMBcalc link", "Someone at the Driver Station to disable",
+                  "Safety glasses"], jobs, {"tab": "systems", "label": "Back to Systems"})
+
+
+# ---------------------------------------------------------------------------- the server's evidence
+
+
+def gather(project, *, link=None, battery_grades_stale=False, measured=None):
+    """Everything the plans read, from the project, this laptop and the robot. Whether the battery
+    grades the robot has are older than the laptop's comes from the server, which keeps them."""
+    from . import motorinv, ppcheck, progress, runs, wiring, yagslcfg
+    ctx = {"project": project, "robot": project.name if project else None,
+           "prog": progress.load(project.name) if project else {},
+           "runs": runs.list_runs(400)}
+    connected = bool(link and link.is_connected())
+    ctx["connected"] = connected
+    live = []
+    if connected:
+        try:
+            live = link.motors().get("motors") or []
+        except Exception:  # noqa: BLE001 - a robot without the motor guard has no rows
+            live = []
+    ctx["live_motors"] = live
+    ctx["systems"], ctx["env"] = [], None
+    if connected:
+        try:
+            ctx["systems"] = link.systems()
+            ctx["env"] = link.environment().get("active")
+        except Exception:  # noqa: BLE001 - a robot without the Systems board has none
+            pass
+    if not project:
+        return ctx
+    from . import systems as SY
+    ctx["systems_in_code"] = SY.in_code(project)
+    ctx["lint"] = yagslcfg.lint(project)
+    try:
+        ctx["pp"] = ppcheck.check(project)
+    except Exception:  # noqa: BLE001 - no PathPlanner folder
+        ctx["pp"] = None
+    # The drive motors as the latest drive_ff measured them, as the Motors table shows.
+    ctx["inventory"] = motorinv.table(project, live, measured)
+    m = wiring.load_map(project)
+    ctx["wiring_map"] = m
+    ctx["wiring_saved"] = os.path.exists(wiring.map_path(project))
+    ctx["controllers"] = [d["name"] for d in wiring.discover(project) if d["kind"] == "controller"]
+    lay = os.path.join(project.path, "src", "main", "deploy", "apriltags", "surveyed.json")
+    ctx["layout_saved"] = os.path.exists(lay)
+    ctx["layout_mtime"] = stamp(os.path.getmtime(lay)) if os.path.exists(lay) else ""
+    ctx["controller_history"] = runs.controller_log()[-200:]
+    from . import controllers
+    dbs = [d["value"] for d in controllers.code_deadbands(project) if d.get("value")]
+    ctx["code_deadband"] = min(dbs) if dbs else None
+    ctx["battery_grades_stale"] = bool(battery_grades_stale)
+    from . import design
+    try:
+        ctx["design"] = design.load(project)
+    except (OSError, ValueError) as e:
+        ctx["design"] = None
+        ctx["design_error"] = str(e)
+    if ctx["design"]:
+        ctx["design_check"] = design.check(ctx["design"])
+        ctx["design_compare"] = design.compare(project, ctx["design"])
+    return ctx

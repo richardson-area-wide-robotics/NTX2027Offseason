@@ -10,10 +10,10 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.swervetune.MotorKind;
-import frc.lib.swervetune.MotorWatcher;
-import frc.lib.swervetune.SwerveTune;
-import frc.lib.swervetune.TunableSystem;
+import frc.lib.slothtune.MotorKind;
+import frc.lib.slothtune.MotorWatcher;
+import frc.lib.slothtune.SlothTune;
+import frc.lib.slothtune.TunableSystem;
 
 public class Shooter extends SubsystemBase{
 // ids 10, 11
@@ -54,10 +54,10 @@ SparkClosedLoopController leaderPID = leader.getClosedLoopController();
     }
 
     /**
-     * The swerve tools' Systems tab: the flywheel's speed in RPM, set through its own closed loop
+     * Sloth Tune's Systems tab: the flywheel's speed in RPM, set through its own closed loop
      * on the leader SPARK (the follower follows). Its gains change live there, never saved.
      */
-    public void tuneWith(SwerveTune tune) {
+    public void tuneWith(SlothTune tune) {
         tune.system("Shooter", TunableSystem.Kind.FLYWHEEL)
             .units("RPM")
             .velocity(() -> leader.getEncoder().getVelocity())

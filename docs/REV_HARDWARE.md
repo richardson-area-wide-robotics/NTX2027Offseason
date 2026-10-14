@@ -4,7 +4,7 @@ The motors, motor controllers, swerve modules and battery on Peashooter and Blac
 numbers their makers publish and where each comes from. Collected 2026-10-12 from
 [docs.revrobotics.com](https://docs.revrobotics.com/brushless), REV's product pages and datasheets,
 REV's release notes, and MK Battery's datasheet. The tools read the same numbers from
-`tools/swervetune/revspecs.py`; a test keeps the two, the practice pod and the robot code in step.
+`tools/slothtune/revspecs.py`; a test keeps the two, the practice pod and the robot code in step.
 
 The robots run **YAGSL**, not REV's MAXSwerve Java template. Nothing here comes from the template,
 and its constants (max speed, slew rates) don't apply to our code.

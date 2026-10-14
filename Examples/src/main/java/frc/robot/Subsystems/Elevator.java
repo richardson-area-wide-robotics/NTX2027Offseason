@@ -19,10 +19,10 @@ import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.swervetune.MotorKind;
-import frc.lib.swervetune.MotorWatcher;
-import frc.lib.swervetune.SwerveTune;
-import frc.lib.swervetune.TunableSystem;
+import frc.lib.slothtune.MotorKind;
+import frc.lib.slothtune.MotorWatcher;
+import frc.lib.slothtune.SlothTune;
+import frc.lib.slothtune.TunableSystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -64,7 +64,7 @@ public class Elevator extends SubsystemBase {
   private static final double TOLERANCE = 0.01;
 
   // Gains. kG is what the assumed physics give (a ReCalc link with the same numbers is in
-  // swervetune.json); kP corrects what is left. 2025 had kP 0.1 per motor rotation and nothing else.
+  // slothtune.json); kP corrects what is left. 2025 had kP 0.1 per motor rotation and nothing else.
   private static final double kP = 8.0;
   private static final double kD = 0.0;
   private static final double kG = 0.40;   // volts to hold the carriage up
@@ -159,7 +159,7 @@ public class Elevator extends SubsystemBase {
   }
 
   /** The Systems tab: its height in meters, set through target, which periodic() sends to the SPARK. */
-  public void tuneWith(SwerveTune tune) {
+  public void tuneWith(SlothTune tune) {
     tune.system("Elevator", TunableSystem.Kind.ELEVATOR)
         .units("meters")
         .position(encoder::getPosition)

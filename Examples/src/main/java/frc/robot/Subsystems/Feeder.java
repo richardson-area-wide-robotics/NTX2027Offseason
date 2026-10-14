@@ -18,10 +18,10 @@ import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.swervetune.MotorKind;
-import frc.lib.swervetune.MotorWatcher;
-import frc.lib.swervetune.SwerveTune;
-import frc.lib.swervetune.TunableSystem;
+import frc.lib.slothtune.MotorKind;
+import frc.lib.slothtune.MotorWatcher;
+import frc.lib.slothtune.SlothTune;
+import frc.lib.slothtune.TunableSystem;
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -111,7 +111,7 @@ public class Feeder extends SubsystemBase {
   }
 
   /** The Systems tab: the roller's speed in motor RPM. */
-  public void tuneWith(SwerveTune tune) {
+  public void tuneWith(SlothTune tune) {
     tune.system("Feeder", TunableSystem.Kind.ROLLER)
         .units("RPM")
         .velocity(speed::getVelocity)

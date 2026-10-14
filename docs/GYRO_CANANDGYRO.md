@@ -4,7 +4,7 @@ Both robots use a navX on the roboRIO's MXP port today. SystemCore, the 2027 rob
 no MXP or SPI port, so next season's gyro is the **Redux Robotics Canandgyro**, sold as the
 **Boron**. Its library is ReduxLib (`vendordeps/ReduxLib-2026.1.2.json`, already in both robots),
 and its setup tool is Redux's **Alchemist**. This page covers fitting it, setting it up, calibrating
-it, and what the swerve tools do with it.
+it, and what Sloth Tune does with it.
 
 ## What it is
 
@@ -108,11 +108,11 @@ ones that have gone, so you can see which come back.
 
 ## Report rates (how often it sends each reading)
 
-Set in `swervetune.json`, applied by the robot code at every startup after YAGSL's reset, and not
+Set in `slothtune.json`, applied by the robot code at every startup after YAGSL's reset, and not
 saved on the gyro (so its flash isn't worn by writing them every boot). The Calibrate tab's
 **Canandgyro report rates** shows and saves them; each one explains itself on hover.
 
-| Reading | `swervetune.json` key | Ours (ms) | Redux default (ms) | Why ours |
+| Reading | `slothtune.json` key | Ours (ms) | Redux default (ms) | Why ours |
 |---|---|---|---|---|
 | Yaw | `canandgyro.yawFramePeriodMs` | 10 | 10 | Redux's default |
 | Angular position | `canandgyro.angularPositionFramePeriodMs` | 10 | 20 | YAGSL's heading comes from this: half the delay |

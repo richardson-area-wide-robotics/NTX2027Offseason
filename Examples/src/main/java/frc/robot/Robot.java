@@ -3,8 +3,8 @@ package frc.robot;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.lib.swervetune.AkLogging;
-import frc.lib.swervetune.SwerveTune;
+import frc.lib.slothtune.AkLogging;
+import frc.lib.slothtune.SlothTune;
 import frc.robot.Subsystems.Climber;
 import frc.robot.Subsystems.Elevator;
 import frc.robot.Subsystems.Feeder;
@@ -15,7 +15,7 @@ import org.littletonrobotics.junction.LoggedRobot;
 
 /**
  * Mechanisms from past seasons, rebuilt the way this repo's robots are written (YAGSL swerve,
- * REVLib 2026 SPARKs, AdvantageKit logging, the swerve tools), on one simulated robot. Each
+ * REVLib 2026 SPARKs, AdvantageKit logging, Sloth Tune), on one simulated robot. Each
  * subsystem says which season it came from and what changed; see README.md. Every mechanism with a
  * loop is registered with the Systems tab, and moves under WPILib's physics in the simulator.
  */
@@ -28,10 +28,10 @@ public class Robot extends LoggedRobot {
   Shooter shooter = new Shooter();
   Feeder feeder = new Feeder();
   Climber climber = new Climber();
-  // Port 0 drives, port 1 is the tester's deadman (swervetune.json), port 2 runs the mechanisms.
+  // Port 0 drives, port 1 is the tester's deadman (slothtune.json), port 2 runs the mechanisms.
   CommandXboxController driver = new CommandXboxController(0);
   CommandXboxController operator = new CommandXboxController(2);
-  SwerveTune tune = SwerveTune.install(drive.getSwerveDrive(), drive, "Examples");
+  SlothTune tune = SlothTune.install(drive.getSwerveDrive(), drive, "Examples");
 
   public Robot() {
     AkLogging.start("Examples");

@@ -1,7 +1,7 @@
 # Checking a robot's network
 
-Use this when the Driver Station can't reach a robot, and the first time on each robot to check the
-swerve tools read the real hardware right.
+Use this when the Driver Station can't reach a robot, and the first time on each robot to check that
+Sloth Tune reads the real hardware right.
 
 **What it is:** **Check the networks** reads the Driver Station, this laptop's address, the
 firewall, the radios and, once connected, the robot. It changes nothing.
@@ -41,7 +41,7 @@ firewall, the radios and, once connected, the robot. It changes nothing.
 4. **Start the tools and check.** From the repository folder:
 
    ```
-   py -3.12 tools/swervetune gui
+   py -3.12 tools/slothtune gui
    ```
 
    - Pick the robot's project (Peashooter or Black team).
@@ -53,7 +53,7 @@ firewall, the radios and, once connected, the robot. It changes nothing.
    - Pick **Robot (team number)** and press **Connect**.
    - On the **Troubleshoot** tab, press **Check the networks** again. Connected, it also reads the
      roboRIO's image.
-7. **Save it.** Press **Save a copy to send**. The file goes in `tools/swervetune/reports/`, named
+7. **Save it.** Press **Save a copy to send**. The file goes in `tools/slothtune/reports/`, named
    after the robot and the time.
 8. **Read the radio's firmware.** Open `http://10.TE.AM.1/` (for Peashooter, `http://10.17.45.1/`)
    in a browser. Write down the firmware version at the bottom of its page, or that none is shown.
@@ -61,7 +61,7 @@ firewall, the radios and, once connected, the robot. It changes nothing.
 Without the app, step 4 can run in a terminal instead. It saves the file too:
 
 ```
-py -3.12 tools/swervetune netcheck --project Peashooter --save
+py -3.12 tools/slothtune netcheck --project Peashooter --save
 ```
 
 ## What the red lines mean
@@ -89,7 +89,7 @@ robot** symptoms walk through the same causes one question at a time.
 
 For each robot, send:
 
-1. **The saved file** from step 7: `tools/swervetune/reports/netcheck-<robot>-<time>.json`.
+1. **The saved file** from step 7: `tools/slothtune/reports/netcheck-<robot>-<time>.json`.
 2. **What the SYS light did** (step 1).
 3. **The firmware version** the radio's page shows, or "none shown" (step 8).
 4. **Anything the check got wrong:** a red line for something that was fine, or nothing said about

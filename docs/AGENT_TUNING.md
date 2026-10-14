@@ -1,7 +1,7 @@
 # Tuning the swerve with an AI agent
 
-This is the brief for an AI agent running the swerve tools (`tools/swervetune`). `py -3.12
-tools/swervetune brief` prints it. Read all of it before your first command.
+This is the brief for an AI agent running Sloth Tune (`tools/slothtune`). `py -3.12
+tools/slothtune brief` prints it. Read all of it before your first command.
 
 The tools do the measuring and the judging. Your job is to run the loop they define, one change at
 a time, and to keep the people at the robot informed and in control.

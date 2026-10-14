@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sloth Tune</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%230b6e7a'/%3E%3Crect x='6' y='3' width='4' height='10' rx='1' fill='%23fff'/%3E%3C/svg%3E">
+</head>
+<body>
+<header class="top">
+  <div class="brand">Sloth Tune</div>
+  <label class="field" data-tip="header.project"><span class="field-t">Robot code</span>
+    <select id="project"></select>
+  </label>
+  <div class="conn">
+    <select id="target" aria-label="Connect to" data-tip="header.target">
+      <option value="robot">Robot (team number)</option>
+      <option value="sim">Simulator on this laptop</option>
+      <option value="host">Address…</option>
+    </select>
+    <input id="host" placeholder="10.17.45.2" aria-label="Robot address" hidden>
+    <button id="connect" class="btn primary" data-tip="header.connect">Connect</button>
+  </div>
+  <!-- The two chips every test depends on lead; the rest show only once a robot is connected.
+       data-chip holds a chip's own classes, which the 10-per-second repaint keeps. -->
+  <div class="chips">
+    <span id="mode-chip" class="chip lead" data-chip="lead" data-tip="header.mode">Not connected</span>
+    <button id="env-chip" class="chip lead" data-chip="lead" data-tip="header.env" hidden>Where: not set</button>
+    <span id="bus-chip" class="chip mono" data-chip="mono" data-tip="header.bus" hidden>Voltage –</span>
+    <button id="battery-chip" class="chip" data-tip="header.battery" hidden>Battery –</button>
+    <button id="tags-chip" class="chip" data-tip="header.tags" hidden>AprilTags off</button>
+    <span id="deadman-chip" class="chip" data-tip="header.deadman" hidden>Deadman: not held</span>
+    <button id="motors-chip" class="chip" data-tip="header.motors" hidden>Motors OK</button>
+  </div>
+  <button id="explain" class="btn" aria-pressed="false" data-tip="header.explain">Explain: off</button>
+  <button id="lessons" class="btn" data-tip="header.lessons">Lessons</button>
+  <button id="abort" class="abort" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
+</header>
+<!-- Phones only: the same ABORT, pinned under the thumb. It sits outside the header because the
+     sticky header is its own stacking context, which the drawer and dialogs would cover. -->
+<button id="abort-pin" class="abort pin" data-tip="header.abort" aria-keyshortcuts="Escape">ABORT</button>
+
+<div class="bar2">
+<nav class="tabs" aria-label="Screens">
+  <button data-tab="bringup" data-tip="tab.bringup">Bring-up</button>
+  <button data-tab="guide" class="on" aria-current="page" data-tip="tab.guide">Guide</button>
+  <button data-tab="live" data-tip="tab.live">Live</button>
+  <button data-tab="motors" data-tip="tab.motors">Motors</button>
+  <button data-tab="wiring" data-tip="tab.wiring">Wiring</button>
+  <button data-tab="tune" data-tip="tab.tune">Tune drive train</button>
+  <button data-tab="systems" data-tip="tab.systems">Systems</button>
+  <button data-tab="calibrate" data-tip="tab.calibrate">Calibrate</button>
+  <button data-tab="controllers" data-tip="tab.controllers">Joysticks</button>
+  <button data-tab="trouble" data-tip="tab.trouble">Troubleshoot</button>
+  <button data-tab="config" data-tip="tab.config">Config</button>
+  <button data-tab="runs" data-tip="tab.runs">Runs</button>
+</nav>
+<div id="banner" class="banner" hidden>
+  <div class="banner-text" role="status" data-tip="banner.status"><b id="banner-state"></b> <span id="banner-msg"></span></div>
+  <div class="bar"><div id="banner-bar"></div></div>
+  <!-- The deadman: the tester's joystick bumper, or this button held by mouse or touch. Never a
+       key: on the Driver Station laptop, SPACE is the Driver Station's E-STOP. -->
+  <div id="banner-hold" class="banner-hold" hidden>
+    <button id="hold" class="hold" data-tip="banner.hold">Hold to run</button>
+    <span class="banner-hint">Or hold the tester's joystick right bumper (Driver Station port 1). Let go to stop.</span>
+  </div>
+</div>
+</div>
+
+<main>
+  <section id="tab-bringup" class="tab"></section>
+  <section id="tab-guide" class="tab on"></section>
+  <section id="tab-live" class="tab"></section>
+  <section id="tab-motors" class="tab"></section>
+  <section id="tab-wiring" class="tab"></section>
+  <section id="tab-tune" class="tab"></section>
+  <section id="tab-systems" class="tab"></section>
+  <section id="tab-calibrate" class="tab"></section>
+  <section id="tab-controllers" class="tab"></section>
+  <section id="tab-trouble" class="tab"></section>
+  <section id="tab-config" class="tab"></section>
+  <section id="tab-runs" class="tab"></section>
+</main>
+
+<div id="modal" class="modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true">
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="plot.js"></script>
+<script src="app.js"></script>
+<script src="tips.js"></script>
+<script src="learn.js"></script>
+<script src="howto.js"></script>
+<script src="faults.js"></script>
+<script src="frcmap.js"></script>
+<script src="blinks.js"></script>
+<script src="battery.js"></script>
+<script src="live.js"></script>
+<script src="motors.js"></script>
+<script src="wiring.js"></script>
+<script src="autotune.js"></script>
+<script src="tune.js"></script>
+<script src="systems.js"></script>
+<script src="camera.js"></script>
+<script src="calibrate.js"></script>
+<script src="controllers.js"></script>
+<script src="parts.js"></script>
+<script src="guide.js"></script>
+<script src="trouble.js"></script>
+<script src="config.js"></script>
+<script src="runs.js"></script>
+<script src="bringup.js"></script>
+</body>
+</html>

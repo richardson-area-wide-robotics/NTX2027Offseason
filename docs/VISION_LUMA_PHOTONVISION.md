@@ -1,9 +1,9 @@
 # Vision: a Luma P1 or P2 with PhotonVision
 
-Neither robot has a camera fitted yet. This is how to add one so the swerve tools, and the
+Neither robot has a camera fitted yet. This is how to add one so Sloth Tune, and the
 robot's own pose estimate, can use it. The Luma P1 and P2 run PhotonVision, so everything below is
 PhotonVision; the swerve library itself never talks to a camera library (see `VisionSource`):
-only the small adapter in `common/swervetune-photonvision` does, which is what lets the library
+only the small adapter in `common/slothtune-photonvision` does, which is what lets the library
 carry on unchanged through 2027.
 
 ## 1. The camera
@@ -41,7 +41,7 @@ carry on unchanged through 2027.
 Both robots already build with PhotonLib (`vendordeps/photonlib.json`, pinned to **v2026.3.4**,
 the 2026 release; keep it the same version as the camera's PhotonVision, and don't take a 2027
 alpha) and call `PhotonVisionSetup.install(tune)` in `Robot`. With no camera listed, that does
-nothing. To fit one, list it in `src/main/deploy/swerve/swervetune.json` and redeploy:
+nothing. To fit one, list it in `src/main/deploy/swerve/slothtune.json` and redeploy:
 
 ```json
 "vision": {"cameras": ["front"], "feedPoseEstimator": false}
@@ -112,7 +112,7 @@ their official place. Save, redeploy. The Driver Station prints which tags were 
 Two things use a field's tag layout, and the survey has to reach both:
 
 - **The robot** (the single-tag poses, and the gates): it loads the official layout named by
-  `"vision": {"field": "welded"}` or `"andymark"` in `swervetune.json`, then moves each tag the survey
+  `"vision": {"field": "welded"}` or `"andymark"` in `slothtune.json`, then moves each tag the survey
   measured. Saving the survey in the Calibrate tab writes both.
 - **Each camera** (the multi-tag poses, solved on the camera itself): PhotonVision uses the layout
   loaded in its own web page, not the robot's. Upload `src/main/deploy/apriltags/surveyed.json` to every

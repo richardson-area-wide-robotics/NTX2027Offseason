@@ -3,7 +3,7 @@
 This project runs only in the simulator. It is one robot carrying a mechanism of each kind the
 team has built since 2022. Each one is rebuilt the way this repo's robots are written:
 
-- the YAGSL swerve drive and the swerve tools, copied from Peashooter;
+- the YAGSL swerve drive and Sloth Tune, copied from Peashooter;
 - REVLib 2026 SPARKs running their own loops;
 - AdvantageKit logging.
 
@@ -20,7 +20,7 @@ cd Examples
 ./gradlew simulateJava
 ```
 
-Then, from the repository folder, run `py -3.12 tools/swervetune gui`. Pick **Examples** and
+Then, from the repository folder, run `py -3.12 tools/slothtune gui`. Pick **Examples** and
 **Simulator on this laptop**, press **Connect**, and open the **Systems** tab.
 
 In the simulator the test report says what it saw: tracking, overshoot, settling. It never scores
@@ -63,7 +63,7 @@ Every subsystem's comment says what changed for 2027. In short:
 
 **The physical numbers are assumed.** None of the past code had gear ratios, drum sizes, masses
 or arm lengths. The simulator still needs some, so each subsystem has assumed values, marked as
-assumed. `src/main/deploy/swerve/swervetune.json` carries a ReCalc link for each mechanism with
+assumed. `src/main/deploy/swerve/slothtune.json` carries a ReCalc link for each mechanism with
 the same numbers. Measure the real mechanism before using any of them on a robot.
 
 ## What the simulator taught us (REVLib 2026.0.5)

@@ -12,10 +12,10 @@ import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.swervetune.MotorKind;
-import frc.lib.swervetune.MotorWatcher;
-import frc.lib.swervetune.SwerveTune;
-import frc.lib.swervetune.TunableSystem;
+import frc.lib.slothtune.MotorKind;
+import frc.lib.slothtune.MotorWatcher;
+import frc.lib.slothtune.SlothTune;
+import frc.lib.slothtune.TunableSystem;
 
 public class Intake extends SubsystemBase {
 
@@ -108,10 +108,10 @@ public class Intake extends SubsystemBase {
   }
 
   /**
-   * The swerve tools' Systems tab: the pivot's position in motor rotations (0 up, about 17.8
+   * Sloth Tune's Systems tab: the pivot's position in motor rotations (0 up, about 17.8
    * down), set through targetPosition, which periodic() sends to the SPARK's own position loop.
    */
-  public void tuneWith(SwerveTune tune) {
+  public void tuneWith(SlothTune tune) {
     tune.system("Intake pivot", TunableSystem.Kind.PIVOT)
         .units("motor rotations")
         .position(moveEncoder::getPosition)

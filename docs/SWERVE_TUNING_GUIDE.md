@@ -1,4 +1,4 @@
-# The swerve tools
+# Sloth Tune
 
 A browser app on the laptop that tunes and checks our YAGSL swerve drives (Peashooter and Black
 team), keeps the motors from cooking themselves, and helps find wiring faults. It teaches as it
@@ -23,7 +23,7 @@ you can learn it at home.
 From the repository folder:
 
 ```
-py -3.12 tools/swervetune gui
+py -3.12 tools/slothtune gui
 ```
 
 Your browser opens at `http://127.0.0.1:5806/`. Pick the **robot code** (Peashooter, Black
@@ -46,7 +46,7 @@ the VPN included, must use the school Wi-Fi.
    (it shows as "Wi-Fi 2" or similar) and join the robot's network with it. Not the other way
    round: the school Wi-Fi stays on the laptop's own adapter.
 3. In the app, press **Check the networks** (under Connect, or after a failed Connect), or run
-   `py -3.12 tools/swervetune netcheck`. It says which network carries the robot, which carries
+   `py -3.12 tools/slothtune netcheck`. It says which network carries the robot, which carries
    Claude, and what to change.
 4. **Once per laptop**, as Administrator, run the fix it gives you:
 
@@ -72,7 +72,7 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 ## When the robot won't connect
 
 Press **Check the networks**. It's under Connect, after a failed Connect, and in Troubleshoot. Or
-run `py -3.12 tools/swervetune netcheck --project Peashooter`. It reads these and changes nothing:
+run `py -3.12 tools/slothtune netcheck --project Peashooter`. It reads these and changes nothing:
 
 - **The Driver Station:**
   - that it's installed;
@@ -100,7 +100,7 @@ run `py -3.12 tools/swervetune netcheck --project Peashooter`. It reads these an
   - This reads each drop and whether the robot was enabled at the time, each brownout and the
     lowest battery voltage, trip time, packet loss, the roboRIO's CPU, and which links the Driver
     Station's own pings found bad.
-  - To read any session's log: `py -3.12 tools/swervetune dslog "C:\Users\Public\Documents\FRC\Log Files\<session>.dslog"`.
+  - To read any session's log: `py -3.12 tools/slothtune dslog "C:\Users\Public\Documents\FRC\Log Files\<session>.dslog"`.
 
 A team number becomes an address as `10.TE.AM.x`: 1745 is `10.17.45.x`, and a test robot numbered
 17451 is `10.174.51.x`.
@@ -159,7 +159,7 @@ no communications, communications but no robot code, losing communication, and b
 | **Live** | Every module's angle and speed, what was asked against what happened. |
 | **Motors** | Each motor's heat, current and health. Warns before a motor overheats, and stops one that's stalled or failing. |
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. Every device, the PDH's ports and each finding are shown on FIRST's own control-system drawing (WPILib's REV layout, CC BY 4.0), with the part in question outlined and the parts our robots don't use, such as pneumatics, faded. Troubleshoot's power and CAN checks use the same drawing. Each CAN bus is drawn in its cable color with its name (Drive train, Intake); the termination check takes two meter readings per bus to tell a missing terminator from one that isn't working or a broken cable; and each controller's faults, now and since the code started, are in Where to look. |
-| **Tune drive train** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. **Each pod** first: one pod's steer motor, then its drive motor, each with that pod's own gains (saved to swervetune.json's `podGains` only where they differ from pidfproperties.json); **Use on every pod** when they all want the same. Then **Whole drive train**: all pods together on the shared gains, feedforward, slip current, spin and straight line. Faults on the motors being tuned show above it. |
+| **Tune drive train** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. **Each pod** first: one pod's steer motor, then its drive motor, each with that pod's own gains (saved to slothtune.json's `podGains` only where they differ from pidfproperties.json); **Use on every pod** when they all want the same. Then **Whole drive train**: all pods together on the shared gains, feedforward, slip current, spin and straight line. Faults on the motors being tuned show above it. |
 | **Systems** | The robot's other mechanisms, grouped by subsystem (from the code and the design file) with their motors and sensors. Each one the code registers, such as a shooter's flywheel or an intake's pivot, is set up and tested through its own control loop: its physics, its limits found by hand, the team's top speed, then a test that stays inside the limits and under that speed. See [Tuning a mechanism](#tuning-a-mechanism-the-systems-tab). |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, each camera's lens (PhotonVision, with the team's 9 x 11 in 8 x 8 ChArUco board, drawn), where the cameras sit, and where the field's AprilTags really are. Faults on the motors and gyro a measurement depends on show with it. |
 | **Joysticks** | Checks the drive team's joysticks, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
@@ -183,7 +183,7 @@ are told apart.
 1. **The design file.** *Draft from the code*, or *Import a spreadsheet (CSV)* from the design
    team, then go through it with the mechanical and electrical leads and fill in what the code
    can't know (breakers, gear ratios, which way is positive). The command line does the same:
-   `py -3.12 tools/swervetune design --project Peashooter`.
+   `py -3.12 tools/slothtune design --project Peashooter`.
 2. **The code against the design.** CAN IDs, a SPARK MAX created for a SPARK Flex, a follower set
    the wrong way, a port: fix whichever one is wrong.
 3. **Robot off:** breakers, terminators (about 60 ohm across CAN-H and CAN-L), battery, radio.
@@ -243,7 +243,7 @@ card points to the next tool or back to the Guide.
 
 Every panel's instructions sit in a **How to do it** block. The **How-to instructions** switch on
 any card shows or folds all of them; leave it on while learning. The `setup` command gives an AI
-agent the same cards (`swervetune setup --project Peashooter`).
+agent the same cards (`slothtune setup --project Peashooter`).
 
 ## Redo one part
 
@@ -268,11 +268,11 @@ one written).
 
 The same live gains are in AdvantageScope too. Connect it with the **NetworkTables 4
 (AdvantageKit)** live source, turn on tuning mode (the slider icon), and open the **Tuning,
-SwerveTune** table: type a new value and press Enter. The robot checks it against the same limits
+SlothTune** table: type a new value and press Enter. The robot checks it against the same limits
 as the app, and puts the field back to what is really running if it refuses (`Status`, in the same
 table, says why). Edits wait while a test is running and are refused with the FMS attached. The
 app and AdvantageScope always show the same values, and every change goes into the match log.
-`"advantageScopeTuning": true` in `swervetune.json` turns this on; both robots have it on.
+`"advantageScopeTuning": true` in `slothtune.json` turns this on; both robots have it on.
 
 ## Keeping PathPlanner in step
 
@@ -282,7 +282,7 @@ where the truth lives (the YAGSL files, `MAX_SPEED` in `Drive.java`, and the mas
 inertia measured in the Calibrate tab), checks each path's speed and acceleration limits against
 what the robot can do, and checks every named command an auto uses is registered in the code.
 **Make PathPlanner match the code** writes the settings with a diff preview; close the PathPlanner
-app first, or it writes its old values back. The same check runs as `py -3.12 tools/swervetune
+app first, or it writes its old values back. The same check runs as `py -3.12 tools/slothtune
 ppcheck`, and on every pull request as the suggested "PathPlanner matches the code" check.
 
 ## Mechanism designs from ReCalc and AMBcalc
@@ -304,7 +304,7 @@ attaches the motors whose names start with that name, and checks the design agai
 It fills in only what a design should decide: a drivetrain's gearing when it is one REV sells, the
 robot's mass until it is weighed, and the motor type of a mechanism motor nobody has named yet.
 Never the drive current limit: the slip test measures that. Saved designs keep only the link, in
-`swervetune.json` under `"designs"`.
+`slothtune.json` under `"designs"`.
 
 ## Tuning a mechanism (the Systems tab)
 
@@ -315,7 +315,7 @@ beam break from the design file. The drive train is tuned on **Tune drive train*
 
 A mechanism can be tuned once its subsystem registers it. The subsystem keeps its own control loop
 and only tells the tool how to read the mechanism and how to set its goal, so what gets tuned is
-what runs in a match. Register it after `SwerveTune.install`, as Peashooter's `Intake.tuneWith`
+what runs in a match. Register it after `SlothTune.install`, as Peashooter's `Intake.tuneWith`
 does:
 
 ```java
@@ -366,7 +366,7 @@ Set each mechanism up from top to bottom:
    the mechanism's motors coasting. A person slowly moves it to each hard stop, and those two
    positions become its minimum and maximum. No test runs without them.
 3. **Its top speed.** Set the team's maximum speed and acceleration for testing it.
-   **Save to swervetune.json…** writes the physics, limits and maximums, showing the diff first.
+   **Save to slothtune.json…** writes the physics, limits and maximums, showing the diff first.
    Redeploy so the robot enforces them from startup.
 4. **Test it.**
    - **Before you run:** the robot is enabled, the deadman is held, and someone is watching with
@@ -411,7 +411,7 @@ only what was done since you started it. The simulator never counts. The steps:
 9. A run at its planned speed that scores well.
 10. The gains that worked are in the code.
 
-Faults on the mechanism's motors show at the top of the tab. The settings live in `swervetune.json`
+Faults on the mechanism's motors show at the top of the tab. The settings live in `slothtune.json`
 under `"systems"`, one entry per mechanism:
 
 ```json
@@ -451,14 +451,14 @@ drops below about 6.8 V the roboRIO browns out and cuts the motors.
    keep it out of matches if better ones are charged) or **retire**.
 
 **On the Driver Station laptop**, load the drive team's Elastic layout (Elastic: File >
-Open Layout, `tools/swervetune/elastic/drive-team-layout.json`), and again whenever that file changes. One tab with the Battery drop-down,
+Open Layout, `tools/slothtune/elastic/drive-team-layout.json`), and again whenever that file changes. One tab with the Battery drop-down,
 a **Battery check** line ("Battery 7: 12.84 V at rest, charged") and the robot's health alerts. See
 [At the cart](#at-the-cart-the-drive-teams-checklist) below.
 
 Picking takes two seconds and is the whole job. Every wheel test and every match log you open
 then measures that battery, and **How each battery is doing** in the picker shows each one over
 the season. A loose Anderson connector or main-breaker bolt looks exactly like a tired battery, so
-check those before retiring one. The list of numbers lives in `swervetune.json` (`"batteries"`);
+check those before retiring one. The list of numbers lives in `slothtune.json` (`"batteries"`);
 **Edit the battery list** changes it.
 
 ## At the cart: the drive team's checklist
@@ -526,7 +526,7 @@ the folder. It lists brownouts, CAN dropouts, controllers that rebooted, breaker
 motors that overheated, each with the time in the match, and the place on the wiring map to check.
 It also measures the battery that was picked, so a match counts toward that battery's history.
 
-AdvantageScope layouts for both robots are in `tools/swervetune/advantagescope/`.
+AdvantageScope layouts for both robots are in `tools/slothtune/advantagescope/`.
 
 ## On the robot
 
@@ -561,7 +561,7 @@ mode.
 
 ## For AI agents
 
-`py -3.12 tools/swervetune --help` lists the command line, and `py -3.12 tools/swervetune brief`
+`py -3.12 tools/slothtune --help` lists the command line, and `py -3.12 tools/slothtune brief`
 prints the rules an agent follows (`docs/AGENT_TUNING.md`).
 
 ## When the tools themselves misbehave
