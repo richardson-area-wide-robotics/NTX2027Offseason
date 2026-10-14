@@ -95,9 +95,60 @@ def discover(project):
     return out
 
 
+def _design(project):
+    """The robot's design file, or None (imported here: design.py imports this module)."""
+    from . import design
+    try:
+        return design.load(project)
+    except (OSError, ValueError):
+        return None
+
+
+def _design_bus(design, name):
+    """Which of the design's CAN buses a device is on, by its name; None if the design doesn't say."""
+    for m in (design or {}).get("motors") or []:
+        if m.get("name") == name:
+            return (m.get("motor") or {}).get("canbus")
+    return None
+
+
+def bus_colors(m, design=None):
+    """Each bus's cable color, by name: the map's own, else the design's bus of the same name, else
+    the design's bus in the same place, else yellow then the next unused. CAN-L is green on all."""
+    from .design import BUS_COLORS
+    dbuses = (design or {}).get("canBuses") or []
+    by_name = {b.get("name"): b.get("color") for b in dbuses}
+    out, used = [], set()
+    for i, b in enumerate(m.get("buses") or []):
+        c = b.get("color") or by_name.get(b.get("name")) or (dbuses[i].get("color") if i < len(dbuses) else None)
+        if c not in BUS_COLORS or c in used:
+            c = next((k for k in BUS_COLORS if k not in used), "yellow")
+        out.append(c)
+        used.add(c)
+    return out
+
+
 def default_map(project):
     devices = [d for d in discover(project) if d["can_id"] is not None]
     devices.sort(key=lambda d: d["can_id"])
+    design = _design(project)
+    dbuses = (design or {}).get("canBuses") or []
+    if len(dbuses) > 1:
+        # Several buses (a SystemCore robot): one chain each, every device on its designed bus.
+        first = dbuses[0].get("name")
+        buses = []
+        for b in dbuses:
+            on = [d["name"] for d in devices if (_design_bus(design, d["name"]) or first) == b.get("name")]
+            pdh_bus = ((design.get("pdh") or {}).get("canbus") or first) == b.get("name")
+            buses.append({"name": b.get("name"), "color": b.get("color"), "chain": ["roboRIO"] + on + (["PDH"] if pdh_bus else []),
+                          "orderConfirmed": False, "segmentLengthsM": {}})
+        return {
+            "_readme": "The robot's wiring for the swerve tools' Wiring tab: one entry per CAN bus, each with its "
+                       "cable color (CAN-H; CAN-L is green on every bus). 'chain' is the order devices sit along "
+                       "that bus from the robot controller to the far end; check it on the robot and set "
+                       "orderConfirmed. pdhPorts: which PDH port feeds each controller.",
+            "pdh": {"model": "REV PDH", "canId": 1, "terminationOn": True},
+            "buses": buses, "pdhPorts": {}, "extraDevices": []}
     return {
         "_readme": "The robot's wiring for the swerve tools' Wiring tab. 'chain' is the order devices "
                    "sit along the CAN cable from the roboRIO to the far end; check it on the robot and "
@@ -108,6 +159,7 @@ def default_map(project):
             "chain": ["roboRIO"] + [d["name"] for d in devices] + ["PDH"],
             "orderConfirmed": False,
             "segmentLengthsM": {},
+            "color": (dbuses[0].get("color") if dbuses else None) or "yellow",
         }],
         "pdhPorts": {},
         "extraDevices": [],
@@ -127,11 +179,15 @@ def load_map(project):
     else:
         m = default_map(project)
     known = {name for bus in m["buses"] for name in bus["chain"]}
+    design = _design(project)
     for d in discover(project):
         if d["can_id"] is not None and d["name"] not in known:
-            chain = m["buses"][0]["chain"]
+            # On its designed bus when the design says which; else the first.
+            want = _design_bus(design, d["name"])
+            bus = next((b for b in m["buses"] if want and b.get("name") == want), m["buses"][0])
+            chain = bus["chain"]
             chain.insert(len(chain) - 1 if chain and chain[-1] == "PDH" else len(chain), d["name"])
-            m["buses"][0]["orderConfirmed"] = False
+            bus["orderConfirmed"] = False
     return m
 
 
@@ -171,7 +227,7 @@ def bus_length(bus):
 def termination_verdict(ohms):
     """What a multimeter reading across CAN-H and CAN-L, robot powered off, means."""
     if ohms is None or not math.isfinite(ohms):
-        return _level("info", "No reading", "Measure between CAN-H (yellow) and CAN-L (green) with every "
+        return _level("info", "No reading", "Measure between CAN-H (yellow, or the bus's color) and CAN-L (green) with every "
                       "device unpowered: powered devices make the reading meaningless.")
     if ohms < 30:
         return _level("error", f"{ohms:.0f} ohms: too low",

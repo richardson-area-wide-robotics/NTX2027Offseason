@@ -242,7 +242,7 @@ const Learn = (() => {
     thermal_override: { title: "Thermal override", short: "For the end of a match: hold a heat shutoff at half current for up to 20 s. Never lifts a stall cut.",
       body: ["Sometimes losing the motor costs more than the motor. The override holds a heat SHUTOFF at DERATE instead, for at most 20 s, and never past a sensor 10 °C over shutoff or a 95% heat estimate."] },
 
-    can_bus: { title: "The CAN bus", short: "One pair of twisted wires (yellow CAN-H, green CAN-L) daisy-chained through every controller. Every device hears every message.",
+    can_bus: { title: "The CAN bus", short: "One pair of twisted wires (CAN-H yellow, or the bus's own color when there are several buses; CAN-L always green) daisy-chained through every controller. Every device hears every message.",
       body: ["Each controller has a CAN ID and two CAN connections joined inside it, so the cable passes straight through - even when the controller has no power. The chain runs from the roboRIO to the far end, usually the PDH.",
         "That pass-through is the key to finding faults. One device missing while its neighbors are heard means that device (its power, or the controller). Everything past one point missing together means the cable or a plug at that point.",
         "CAN has no idea of position, so the order along the cable can't be read from the robot: someone checks it by eye once, and the map remembers it."] },

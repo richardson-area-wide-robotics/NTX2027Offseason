@@ -959,8 +959,11 @@ def api_wiring(query=None):
                 "feed_r": S.feed_resistances()}
     else:
         snap = {}
+    from . import design as D
     return {"ok": True, "map": m, "devices": wiring.devices_by_name(S.project, m),
             "lengths": [wiring.bus_length(b) for b in m["buses"]], "snapshot": snap,
+            # Each bus's cable color (CAN-H; CAN-L is green on all), and the colors CTRE's cable comes in.
+            "bus_colors": wiring.bus_colors(m, wiring._design(S.project)), "palette": D.BUS_COLORS,
             "findings": wiring.diagnose(m, snap), "demos": DEMOS, "demo": demo if demo in DEMOS else None,
             "path": os.path.relpath(wiring.map_path(S.project), S.project.path)}
 
@@ -1212,7 +1215,7 @@ def api_wiring_wiggle(query=None):
         return {"ok": False, "error": "Pick a robot project first."}
     m = S.wiring_map()
     chain = m["buses"][0]["chain"]
-    devices = chain[1:-1]
+    devices = [n for n in chain if n not in ("roboRIO", "PDH")]
     q = query or {}
     st = S.__dict__.get("_wiggle")
     if q.get("reset") or not st or st["chain"] != chain:

@@ -75,7 +75,7 @@ const HowTo = (() => {
     if (!secs.length) return;
     secs.forEach(keyOf);
     if (typeof sec === "string") sec = secs.find(s => keyOf(s) === sec);
-    if (!sec || !secs.includes(sec)) sec = secs[0];
+    if (!sec || !secs.includes(sec) || sec.hidden) sec = secs[0];
     secs.forEach(s => s.classList.toggle("job-off", s !== sec));
     try { localStorage.setItem("swervetune.section." + tab, keyOf(sec)); } catch (e) { /* storage blocked */ }
     let first = true;
@@ -126,7 +126,8 @@ const HowTo = (() => {
     secs.forEach(keyOf);
     const inTool = j => j && j.go && j.go.tab === tab && j.go.panel ? sectionOf(document.getElementById(j.go.panel)) : null;
     const owned = new Set(p.jobs.map(inTool).filter(Boolean));
-    const others = secs.filter(s => !owned.has(s) && labelOf(s));
+    // A hidden section (the Wiring map's editor while closed) is no place to go.
+    const others = secs.filter(s => !owned.has(s) && !s.hidden && labelOf(s));
     const head = !p.done ? "Where to start" : p.next ? "What to do next" : "Done here";
     const parts = { calibrate: "camera", motors: "motor", wiring: "motor" }[tab];
     const ord = p.order || {};

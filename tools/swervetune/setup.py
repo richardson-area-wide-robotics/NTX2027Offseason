@@ -312,7 +312,9 @@ def wiring(ctx):
     buses = m.get("buses") or []
     confirmed = bool(buses) and all(b.get("orderConfirmed") for b in buses)
     jobs.append(_job("order", "Confirm the CAN cable order", "done" if confirmed else "todo",
-                     "Checked on the robot." if confirmed else "Follow the yellow-green cable from the roboRIO; Edit the map.",
+                     "Checked on the robot." if confirmed
+                     else "Follow the yellow-green cable from the roboRIO; Edit the map." if len(buses) < 2
+                     else f"Follow each of the {len(buses)} buses' cables from the controller, by color; Edit the map.",
                      go={"tab": "wiring", "panel": "w-edit"}))
     st = _mark_status(_mark(prog, "wire_wiggle"), "something dropped when a plug moved: see the result")
     jobs.append(_job("wiggle", "Wiggle test", *(st or ("todo", "Robot on and disabled; about five minutes.")),

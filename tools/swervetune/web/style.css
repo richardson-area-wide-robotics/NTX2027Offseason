@@ -401,6 +401,10 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .schematic .wire { stroke-width: 3; }
 .schematic .wire.can-h, .swatch.can-h { stroke: #e5b31b; background: #e5b31b; }
 .schematic .wire.can-l { stroke: #3b875a; }
+/* Under each CAN-H wire a thin edge, so a white or grey bus still shows on a light page. */
+.schematic .wire.can-case { stroke: var(--edge); stroke-width: 4.5px; }
+.schematic .bus-label { font: 600 13px var(--sans); fill: var(--ink); }
+.schematic .hint-text { font: 12px var(--sans); fill: var(--muted); }
 .schematic .node { cursor: pointer; }
 .schematic .node .box { fill: var(--panel); stroke: var(--edge); stroke-width: 1.5; }
 .schematic .node.ok .box { fill: var(--ok-bg); stroke: var(--ok); }
@@ -465,6 +469,7 @@ details.design > summary { cursor: pointer; }
 .pdh-bar > div { height: 100%; background: var(--accent); }
 ol.chain-edit { margin: 8px 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 ol.chain-edit li { display: grid; grid-template-columns: 2em 1fr 5em auto; gap: 6px; align-items: center; }
+ol.chain-edit[style] { column-gap: 28px; }
 ol.chain-edit input { width: 5em; }
 
 /* ---------------------------------------------------------------- how-to, where to start, one part

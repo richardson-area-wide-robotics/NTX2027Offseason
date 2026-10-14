@@ -46,6 +46,46 @@ class DiscoveryTest(unittest.TestCase):
         self.assertEqual(W.bus_length(m["buses"][0]), (8.0, 0, 16))
 
 
+class BusesTest(unittest.TestCase):
+    """Several CAN buses (SystemCore): each its own chain, CAN-H in its cable color, CAN-L green."""
+
+    TWO = {"canBuses": [{"name": "rio", "color": "yellow"}, {"name": "mech", "color": "orange"}],
+           "pdh": {"canbus": "rio"},
+           "motors": [{"name": "Spindexter", "motor": {"type": "sparkflex_vortex", "id": 14, "canbus": "mech"}}]}
+
+    def test_each_bus_keeps_its_own_color_and_two_never_share_one(self):
+        m = {"buses": [{"name": "rio"}, {"name": "mech", "color": "purple"}, {"name": "extra", "color": "purple"}]}
+        self.assertEqual(W.bus_colors(m, self.TWO), ["yellow", "purple", "orange"],
+                         "the design names the first; the map's own color wins; a clash takes the next free one")
+        self.assertEqual(W.bus_colors({"buses": [{"name": "x", "color": "green"}]}), ["yellow"],
+                         "green is CAN-L on every bus, never a bus's color")
+
+    def test_a_new_map_has_one_chain_per_designed_bus(self):
+        from unittest import mock
+        with mock.patch.object(W, "_design", return_value=self.TWO):
+            m = W.default_map(PEA)
+        rio, mech = m["buses"]
+        self.assertEqual((rio["name"], rio["color"], mech["name"], mech["color"]), ("rio", "yellow", "mech", "orange"))
+        self.assertEqual(mech["chain"], ["roboRIO", "Spindexter"], "a device on its designed bus, no PDH there")
+        self.assertEqual((rio["chain"][0], rio["chain"][-1]), ("roboRIO", "PDH"))
+        self.assertNotIn("Spindexter", rio["chain"])
+
+    def test_a_device_new_to_the_code_joins_its_designed_bus(self):
+        from unittest import mock
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.object(W, "_design", return_value=self.TWO), \
+                mock.patch.object(W, "map_path", return_value=os.path.join(tmp, "wiring.json")):
+            m = W.default_map(PEA)
+            m["buses"][1]["chain"] = ["roboRIO"]
+            m["buses"][1]["orderConfirmed"] = True
+            with open(os.path.join(tmp, "wiring.json"), "w", encoding="utf-8") as f:
+                json.dump(m, f)
+            back = W.load_map(PEA)
+        self.assertEqual(back["buses"][1]["chain"], ["roboRIO", "Spindexter"])
+        self.assertFalse(back["buses"][1]["orderConfirmed"], "its place on the bus needs checking")
+
+
 class RulesTest(unittest.TestCase):
     def find(self, snapshot, m=None):
         return W.diagnose(m or a_map(), snapshot)
