@@ -54,9 +54,14 @@ Three more, outside that table:
 4. **CAN devices take a `CANPort`** instead of an integer bus. SystemCore has several CAN buses:
    - each robot's subsystems need their bus;
    - `RobotSignals.canStatus()` reads one bus, and must become one per bus;
-   - `DashboardAlerts` and the Wiring tab judge one bus. `wiring.json` already holds a list of
-     buses, but `wiring.diagnose`, the schematic and the post-match summary only read the first.
+   - `DashboardAlerts` judges one bus's health. The Wiring tab already maps, draws and checks
+     every bus in `wiring.json` (each in its CTRE cable color, CAN-L green); what it lacks is a
+     per-bus utilization and error count from the robot, so publish one per bus.
 5. **`Alert` moved to wpiutil** (`DashboardAlerts`).
+   **Sensor ports:** bring-up's live sensor readout opens the design file's sensors with
+   `DigitalInput`, `AnalogInput`, `DutyCycleEncoder` and `Encoder` (`Sensors.Wpilib`). SystemCore's
+   ports are configured differently: rewrite that one class, and the port ranges the design check
+   uses (`design.RIO_PORTS` covers only the roboRIO).
 6. **The AprilTag library is now a vendordep**, and `AprilTagFields` became part of `Fields`
    (`PhotonVisionSetup`, which picks the welded or AndyMark layout; `FieldLayouts` and
    `PhotonVisionSource` take a layout object and don't name the enum).

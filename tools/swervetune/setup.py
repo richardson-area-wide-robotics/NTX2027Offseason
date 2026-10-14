@@ -436,7 +436,7 @@ def bringup(ctx):
     else:
         st = _mark_status(_mark(prog, "bu_sensors"), "A sensor didn't read: check its port and wiring.")
         jobs.append(_job("sensors", "Every sensor reads", st[0] if st else ("todo" if d else "later"),
-                         st[1] if st else (f"{len(sensors)} to toggle by hand and watch." if d else "Needs the design file."), go=go("br-sensors"),
+                         st[1] if st else (f"{len(sensors)} sensors: start the live readout, then trip each by hand." if d else "Needs the design file."), go=go("br-sensors"),
                          unblock=None if d else {"tab": "bringup", "panel": "br-design", "label": "The design file"}))
     mech = mechanism_motors(d)
     if d and not mech:

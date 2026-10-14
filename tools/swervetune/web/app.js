@@ -15,7 +15,7 @@ const WHERE = { UNSET: "Where: not set", BLOCKS: "On blocks", FIELD: "On the flo
 const whereWord = k => WHERE[k] || k;
 const TEST_NAME = { steer_step: "Steering", drive_step: "Drive speed", drive_ff: "Feedforward", slip: "Slip current",
   spin: "Spin", straight: "Straight line", capture: "Sensor capture", pdh_map: "PDH port finder", motor_test: "Motor test",
-  moi: "Moment of inertia", controller: "Controller check", spin_ff: "Spin feedforward" };
+  moi: "Moment of inertia", controller: "Controller check", spin_ff: "Spin feedforward", sensors: "Sensor readout" };
 const testName = k => TEST_NAME[k] || k;
 
 const App = {
@@ -26,6 +26,18 @@ const App = {
 
   // This run's token, from the page the tool served: every change sends it back (server.py).
   token: (document.querySelector('meta[name="swervetune-token"]') || {}).content || "",
+
+  // The robot's sensor readout line, "Sensors now: Intake beam = true (changed) · Arm = 0.532 turns",
+  // as {name: {value, changed}}; null for any other line.
+  sensorLine(msg) {
+    if (!msg || !msg.startsWith("Sensors now: ")) return null;
+    const out = {};
+    for (const part of msg.slice(13).split(" \u00b7 ")) {
+      const m = /^(.*) = (.*?)( \(changed\))?$/.exec(part);
+      if (m) out[m[1]] = { value: m[2], changed: !!m[3] };
+    }
+    return out;
+  },
 
   async api(path, body) {
     const opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json", "X-SwerveTune-Token": this.token }, body: JSON.stringify(body) };
@@ -326,7 +338,10 @@ function paintHeader() {
     // Written only when it changes: it is a live region, and this repaints ten times a second.
     const say = (el, text) => { if (el.textContent !== text) el.textContent = text; };
     say($("#banner-state"), testName(status.test || t.test || "test") + " · " + (status.state || t.state || ""));
-    say($("#banner-msg"), status.message || t.message || "");
+    // The sensor readout's line names every sensor: the banner says only how far it has got.
+    const msg = status.message || t.message || "", sl = App.sensorLine(msg);
+    const seen = sl ? Object.values(sl) : [];
+    say($("#banner-msg"), sl ? `${seen.filter(x => x.changed).length} of ${seen.length} sensors changed so far. Trip each one by hand; Stop on the Bring-up tab when done.` : msg);
     $("#banner-bar").style.width = Math.round(100 * (status.progress || t.progress || 0)) + "%";
     // Only a test that moves a motor needs the deadman: not a capture, a hand check or a controller check.
     const MOVES = ["drive_step", "drive_ff", "steer_step", "slip", "spin", "spin_ff", "straight", "pdh_map", "motor_test"];

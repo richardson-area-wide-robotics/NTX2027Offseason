@@ -146,6 +146,9 @@ public final class SwerveTune {
   private boolean robotCodePaused;
   private final Map<String, StringArrayPublisher> liveStrings = new HashMap<>();
   private final List<String> drivetrainMotors = new ArrayList<>();
+  private final List<Sensors.Registered> sensors = new ArrayList<>();
+  private List<Sensors.Designed> designedSensors = List.of();
+  private Sensors.Opener sensorPorts;
   private final IntegerSubscriber overrideSeq;
   private final IntegerSubscriber overrideBootId;
   private final StringSubscriber overrideName;
@@ -234,6 +237,10 @@ public final class SwerveTune {
     // The Wiring tab's map, if one has been saved and deployed: alerts then name PDH ports and CAN
     // neighbors.
     tune.dashboard.setWiring(WiringMap.load(Filesystem.getDeployDirectory().toPath().resolve("wiring.json")));
+    // Bring-up's sensor readout: the design file's sensors, opened from their ports while it runs.
+    tune.designedSensors = Sensors.loadDesign(
+        Filesystem.getDeployDirectory().toPath().resolve("design").resolve("devices.json"));
+    tune.sensorPorts = new Sensors.Wpilib();
     tune.guard.setAlertSink(text -> {
       System.out.println("[swervetune] motors: " + text);
       DriverStation.reportWarning("[motors] " + text, false);
@@ -273,6 +280,7 @@ public final class SwerveTune {
     procedures.put("spin_ff", SpinFeedforwardProcedure::new);
     procedures.put("controller", ControllerProcedure::new);
     procedures.put("motor_test", MotorTestProcedure::new);
+    procedures.put("sensors", SensorProcedure::new);
 
     List<String> startup = applyStartupConfig();
 
@@ -442,6 +450,34 @@ public final class SwerveTune {
     if (config.motorGuard) {
       watch(name, new SparkChannel(spark, simulation), kind, true, true);
     }
+  }
+
+  /**
+   * Shows a switch-like sensor (a beam break, a limit switch) in bring-up's live sensor readout, as
+   * the code reads it. Call once per sensor at startup:
+   *
+   * <pre>
+   *   tune.watchSensor("Intake beam", intakeBeam::get);
+   * </pre>
+   *
+   * <p>The readout reads it from its own thread: pass the sensor's own read, not a field the robot
+   * loop copies it into. A sensor the code reads must be registered to be seen: its port is taken,
+   * so the readout can't open it.
+   *
+   * @param name as the design file names it, so the two are one sensor
+   */
+  public void watchSensor(String name, java.util.function.BooleanSupplier read) {
+    addSensor(new Sensors.Registered(name, true, () -> read.getAsBoolean() ? 1 : 0));
+  }
+
+  /** As {@link #watchSensor(String, java.util.function.BooleanSupplier)}, for a number: an encoder, a distance. */
+  public void watchSensor(String name, DoubleSupplier read) {
+    addSensor(new Sensors.Registered(name, false, read));
+  }
+
+  private void addSensor(Sensors.Registered s) {
+    sensors.removeIf(x -> x.name().equals(s.name()));
+    sensors.add(s);
   }
 
   /** The team's current policy for the drive motors, from swervetune.json's inventory. */
@@ -983,6 +1019,9 @@ public final class SwerveTune {
     c.pdhCurrents = pdhSource;
     c.signals = signals;
     c.motors = guard.motors();
+    c.sensors = List.copyOf(sensors);
+    c.designedSensors = designedSensors;
+    c.sensorPorts = sensorPorts;
     String why = p.validate(c);
     if (why != null) {
       ack(seq, false, why);
@@ -1008,6 +1047,9 @@ public final class SwerveTune {
     ctx.pdhCurrents = pdhSource;
     ctx.signals = signals;
     ctx.motors = c.motors;
+    ctx.sensors = c.sensors;
+    ctx.designedSensors = c.designedSensors;
+    ctx.sensorPorts = c.sensorPorts;
     proc = p;
     profile = prof;
     activeSeq = seq;

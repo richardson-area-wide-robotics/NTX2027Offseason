@@ -1,6 +1,9 @@
 """Robot bring-up: a freshly built robot, handed over by the mechanical and electrical teams, brought
 up against its design file (design.py) one motor at a time.
 
+``sensors_report`` reads a ``sensors`` run (SensorProcedure): every sensor's value while a person
+trips each by hand, and whether it changed.
+
 ``motor_test_report`` reads a ``motor_test`` run (MotorTestProcedure on the robot): which motors were
 run, held at zero or only watched, and for each whether it turned, how far, at what current, and on
 which PDH channel. Against the design file it says whether every motor on a shared shaft turned the
@@ -132,6 +135,69 @@ def motor_test_report(doc, design=None):
     bad = any(f["level"] == "error" for f in F)
     return {"test": "motor_test", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
             "score": None if sim else (0 if bad else 100), "next": None, "modules": {}, "motors": rows, "ask": ask}
+
+
+# ---------------------------------------------------------------------------- sensors
+
+
+def sensor_rows(doc):
+    """Each sensor of a ``sensors`` run (SensorProcedure), from its notes and meta: name, how it was
+    read, why it couldn't be, and whether it changed (the robot counts that from every sample)."""
+    meta = doc.get("meta") or {}
+    ch = doc.get("channels") or {}
+    out = []
+    for note in doc.get("notes") or []:
+        head, _, problem = note.partition(": not read: ")
+        m = re.match(r"sensor (\d+): (.+) \(([^()]*)\)$", head)
+        if not m:
+            continue
+        i = int(m.group(1))
+        xs = [x for x in (ch.get(f"s{i}") or []) if x == x]
+        changed = meta.get(f"s{i}.changed")
+        if changed is None:  # an older robot: judge from the recording
+            changed = 1 if xs and max(xs) - min(xs) > 1e-9 else 0
+        out.append({"index": i, "name": m.group(2), "how": m.group(3), "problem": problem or None,
+                    "changed": bool(changed) and not problem, "changes": int(meta.get(f"s{i}.changes", 0) or 0),
+                    "min": meta.get(f"s{i}.min", min(xs) if xs else None), "max": meta.get(f"s{i}.max", max(xs) if xs else None),
+                    "registered": m.group(3).startswith("registered")})
+    return out
+
+
+def sensors_report(doc, design=None):
+    """Which sensors changed while a person tripped them by hand, which couldn't be read, and which the
+    design file and the code disagree on."""
+    rows = sensor_rows(doc)
+    sim = doc.get("env") == "SIM"
+    designed = {s.get("name"): s for s in ((design or {}).get("sensors") or []) if s.get("name")}
+    F = []
+    for r in rows:
+        d = designed.get(r["name"]) or {}
+        where = f"{d.get('type')} {', '.join(str(p) for p in ([d.get('port')] if not isinstance(d.get('port'), list) else d.get('port')))}" if d else r["how"]
+        if r["problem"]:
+            F.append(advisor.finding("warn", f"{r['name']} couldn't be read", r["problem"][0].upper() + r["problem"][1:] + "."))
+        elif not r["changed"] and not sim:
+            F.append(advisor.finding("warn", f"{r['name']} never changed",
+                                     f"Trip it while the readout runs: block the beam, press the switch, turn the encoder. If it "
+                                     f"still doesn't change, check its plug, its power, and that it is on the port the design "
+                                     f"says ({where})."))
+    seen = {r["name"] for r in rows}
+    missing = [n for n in designed if n not in seen]
+    if missing:
+        F.append(advisor.finding("info", f"Not in the readout: {', '.join(missing)}",
+                                 "The robot doesn't know them: deploy the code with the design file (it lives in "
+                                 "deploy/design), or register them in the code with watchSensor."))
+    extra = [r["name"] for r in rows if r["registered"] and design is not None and r["name"] not in designed]
+    if extra:
+        F.append(advisor.finding("info", f"The code reads {', '.join(extra)}; the design file doesn't list it",
+                                 "Add it to the design file, by the name the code registers it under."))
+    readable = [r for r in rows if not r["problem"]]
+    changed = [r for r in readable if r["changed"]]
+    summary = ("Simulator: the ports never change on their own, so only the readout itself was checked." if sim else
+               f"{len(changed)} of {len(rows)} sensors changed" + (f"; {len(rows) - len(readable)} couldn't be read" if len(readable) < len(rows) else "")
+               + "." if rows else "No sensors were read.")
+    return {"test": "sensors", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
+            "score": None if sim or not rows else round(100 * len(changed) / len(rows)), "next": None, "modules": {},
+            "sensors": rows}
 
 
 # ---------------------------------------------------------------------------- the sign-off report

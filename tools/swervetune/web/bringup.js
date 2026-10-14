@@ -58,8 +58,11 @@ const Bringup = (() => {
       </div>
       <div class="panel" id="br-sensors">
         <h2 data-tip="br.sensors">Every sensor reads</h2>
-        ${HowTo.steps({ need: "The robot on and disabled; AdvantageScope or the Driver Station dashboard showing the sensors.",
-          steps: ["Trip each one by hand (block the beam, press the switch, turn the encoder) and watch its value change.", "Tick it only when it changes the way the design says."] })}
+        ${HowTo.steps({ need: "The robot on and disabled, connected.",
+          steps: ["<b>Start the live readout</b>: each sensor's value, as the robot reads it.",
+            "Trip each one by hand (block the beam, press the switch, turn the encoder). It is ticked the moment it changes.",
+            "Untick any that changed the wrong way (the design's <b>Means</b> says which way is which), then <b>Stop</b>."],
+          good: "every sensor ticked, each changing the way its design says." })}
         <div id="br-sensors-body"></div>
         ${HowTo.nextLine("sensors")}
       </div>
@@ -155,20 +158,93 @@ const Bringup = (() => {
   }
 
   // ---------------------------------------------------------------- sensors
+  // The robot's live readout (its "sensors" test): each sensor's value as the robot reads it, ticked
+  // the moment it changes. A tick is the person's to take back: one that changed the wrong way.
+  let reading = false, live = {}, sensorRep = null;
+  const ticked = new Set(), autoTicked = new Set();
+
+  function sensorRows(d) {
+    const S = ((d && d.sensors) || []).map(s => Object.assign({}, s));
+    const names = new Set(S.map(s => s.name));
+    // A sensor the code registers that the design doesn't list is still read: shown, and flagged.
+    Object.keys(live).filter(n => !names.has(n)).forEach(n => S.push({ name: n, extra: true }));
+    return S;
+  }
+
   function paintSensors(d) {
-    const S = (d && d.sensors) || [];
-    $("#br-sensors-body", root).innerHTML = !S.length ? `<p class="hint">${d ? "No sensors in the design." : "Needs the design file."}</p>` :
-      `<div class="tblwrap"><table class="t"><thead><tr><th>Sensor</th><th>Port</th><th>Means</th><th>Reads right</th></tr></thead><tbody>
-        ${S.map((s, i) => `<tr><td><b>${esc(s.name)}</b> <span class="small muted">${esc(s.subsystem || "")}</span></td>
-          <td class="mono">${esc(s.type)} ${esc([].concat(s.port).join(", "))}</td><td class="small">${esc(s.means || "")}</td>
-          <td><input type="checkbox" data-sn="${i}" aria-label="${esc(s.name)} reads right"></td></tr>`).join("")}</tbody></table></div>
-      <div class="row"><button class="btn primary" id="br-sn-ok" data-tip="br.sn-ok" disabled>Every sensor reads right</button>
-        <button class="btn" id="br-sn-bad" data-tip="br.sn-bad">One doesn't…</button></div>`;
-    const boxes = $$("[data-sn]", root), ok = $("#br-sn-ok", root);
-    if (!ok) return;
-    boxes.forEach(b => b.onchange = () => { ok.disabled = !boxes.every(x => x.checked); });
-    ok.onclick = () => HowTo.mark("bringup", "bu_sensors", true, `${boxes.length} sensors read right.`).then(load);
-    $("#br-sn-bad", root).onclick = () => note("Which sensor, and what did it do?", t => HowTo.mark("bringup", "bu_sensors", false, t).then(load));
+    const box = $("#br-sensors-body", root), S = sensorRows(d), can = App.connected();
+    if (!S.length) { box.innerHTML = `<p class="hint">${d ? "No sensors in the design." : "Needs the design file."}</p>`; return; }
+    box.innerHTML = `<div class="tblwrap br-sensors"><table class="t"><thead><tr><th>Sensor</th><th>Port</th><th>Means</th><th>Now</th><th>Reads right</th></tr></thead><tbody>
+        ${S.map(s => `<tr data-sname="${esc(s.name)}"><td><b>${esc(s.name)}</b> <span class="small muted">${s.extra ? "in the code, not in the design" : esc(s.subsystem || "")}</span></td>
+          <td class="mono">${s.extra ? "" : `${esc(s.type)} ${esc([].concat(s.port).join(", "))}`}</td><td class="small">${esc(s.means || "")}</td>
+          <td class="small" data-now></td>
+          <td><input type="checkbox" data-sn="${esc(s.name)}" ${ticked.has(s.name) ? "checked" : ""} aria-label="${esc(s.name)} reads right"></td></tr>`).join("")}</tbody></table></div>
+      <div class="row">
+        <button class="btn primary" id="br-sn-live" data-tip="br.sn-live" ${can && !reading ? "" : "disabled"} ${reading ? "hidden" : ""}>Start the live readout</button>
+        <button class="btn primary" id="br-sn-stop" data-tip="br.sn-stop" ${reading ? "" : "hidden"}>Stop</button>
+        <button class="btn" id="br-sn-ok" data-tip="br.sn-ok" disabled>Every sensor reads right</button>
+        <button class="btn" id="br-sn-bad" data-tip="br.sn-bad">One doesn't…</button>
+        ${can ? "" : `<span class="small muted">Connect to the robot to read them.</span>`}</div>
+      <div id="br-sn-out">${verdict(sensorRep)}</div>`;
+    const boxes = $$("[data-sn]", box), ok = $("#br-sn-ok", box);
+    const allTicked = () => { ok.disabled = !boxes.every(x => x.checked); };
+    boxes.forEach(b => b.onchange = () => { (b.checked ? ticked.add(b.dataset.sn) : ticked.delete(b.dataset.sn)); allTicked(); });
+    allTicked();
+    paintLive();
+    ok.onclick = () => HowTo.mark("bringup", "bu_sensors", true, `${boxes.length} sensors read right${sensorRep ? ` (${sensorRep.summary})` : ""}.`).then(load);
+    $("#br-sn-bad", box).onclick = () => note("Which sensor, and what did it do?", t => HowTo.mark("bringup", "bu_sensors", false, t).then(load));
+    $("#br-sn-stop", box).onclick = () => App.api("/api/stop", {});
+    $("#br-sn-live", box).onclick = () => readSensors(d);
+  }
+
+  // Ten times a second while the readout runs: only the values and ticks change, never the table
+  // (rebuilding it would take a person's focus and their tick).
+  function paintLive() {
+    const box = $("#br-sensors-body", root);
+    for (const tr of $$("tr[data-sname]", box)) {
+      const n = tr.dataset.sname, v = live[n], cell = $("[data-now]", tr);
+      const html = !v ? `<span class="muted">${reading ? "not read" : "–"}</span>`
+        : `<span class="mono${reading ? "" : " muted"}">${esc(v.value)}</span>${v.value === "can't read" ? ` <span class="chip warn">can't read</span>` : v.changed ? ` <span class="chip good">changed</span>` : ""}`;
+      if (cell._html !== html) { cell._html = html; cell.innerHTML = html; }
+      // Ticked once, the first time it changes; after that the person's tick is theirs.
+      if (v && v.changed && !autoTicked.has(n)) {
+        autoTicked.add(n);
+        const cb = $("[data-sn]", tr);
+        cb.checked = true;
+        cb.dispatchEvent(new Event("change"));
+      }
+    }
+  }
+
+  async function readSensors(d) {
+    if (!App.connected()) { App.toast("Connect to the robot first."); return; }
+    reading = true;
+    live = {};
+    sensorRep = null;
+    autoTicked.clear();
+    paintSensors(d);
+    const poll = setInterval(() => {
+      const msg = ((App.live || {}).status || {}).message || (App.state.status || {}).message || "";
+      const line = App.sensorLine(msg);
+      if (!line) return;
+      const fresh = Object.keys(line).some(n => !(n in live));
+      live = line;
+      if (fresh) paintSensors(d); else paintLive();
+    }, 100);
+    try {
+      const doc = await App.runTest("sensors", "ALL", { duration_s: 300 });
+      sensorRep = doc.report || null;
+      // The robot counted every sample: a beam blocked between two of these polls still counts.
+      for (const r of (sensorRep && sensorRep.sensors) || []) {
+        live[r.name] = Object.assign({}, live[r.name] || { value: r.problem ? "can't read" : "–" }, { changed: r.changed });
+      }
+    } catch (e) {
+      App.toast(e.message, 6000);
+    } finally {
+      clearInterval(poll);
+      reading = false;
+      paintSensors(d);
+    }
   }
 
   // ---------------------------------------------------------------- one motor

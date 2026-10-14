@@ -120,8 +120,12 @@ are told apart.
 2. **The code against the design.** CAN IDs, a SPARK MAX created for a SPARK Flex, a follower set
    the wrong way, a port: fix whichever one is wrong.
 3. **Robot off:** breakers, terminators (about 60 ohm across CAN-H and CAN-L), battery, radio.
-4. **First power-on:** every controller heard (Motors), the CAN cable in order (Wiring), each
-   sensor tripped by hand.
+4. **First power-on:** every controller heard (Motors), the CAN cable in order (Wiring), then
+   every sensor: **Start the live readout** shows each sensor's value as the robot reads it, and
+   ticks each one the moment it changes, while someone trips them by hand (block the beam, press
+   the switch, turn the encoder). The robot reads the sensors the code registers
+   (`tune.watchSensor("Intake beam", beam::get)`) and opens the design file's others from their
+   ports for the readout only; a port the code already uses needs registering to be seen.
 5. **Each mechanism motor alone**, on blocks with the deadman held: it runs at 8% for 0.6 s with
    the robot's own code paused, and you say which way it went. Its encoder always agrees with
    the code, so only a person can tell if that is the right way.

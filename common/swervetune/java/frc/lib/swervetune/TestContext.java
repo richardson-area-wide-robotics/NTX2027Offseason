@@ -44,6 +44,12 @@ public final class TestContext {
   public RobotSignals signals;
   /** Every motor the motor guard watches, in its order (the laptop's motor list), for bring-up. */
   public List<MotorGuard.Motor> motors = List.of();
+  /** Sensors the robot code registered with {@link SwerveTune#watchSensor}, for bring-up. */
+  public List<Sensors.Registered> sensors = List.of();
+  /** Sensors in the deployed design file, for bring-up's readout. */
+  public List<Sensors.Designed> designedSensors = List.of();
+  /** Opens a designed sensor's ports for the readout; null where none can be opened. */
+  public Sensors.Opener sensorPorts;
 
   private final Map<String, Double> meta = new LinkedHashMap<>();
   private final List<String> notes = new ArrayList<>();

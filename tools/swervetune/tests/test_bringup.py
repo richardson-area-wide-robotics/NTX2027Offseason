@@ -85,6 +85,63 @@ class MotorTestReportTest(unittest.TestCase):
         self.assertTrue(any("turns against" in t for t in titles(rep)))
 
 
+def sensors_run(rows, env="UNSET"):
+    """A sensors run: ``rows`` is [(name, how, changes or None if it couldn't be read, problem)]."""
+    notes, meta, ch = [], {"count": len(rows), "duration_s": 60}, {"t": [0.02 * k for k in range(6)]}
+    for i, (name, how, changes, problem) in enumerate(rows):
+        notes.append(f"sensor {i}: {name} ({how})" + (f": not read: {problem}" if problem else ""))
+        if problem:
+            ch[f"s{i}"] = [float("nan")] * 6
+            meta[f"s{i}.changed"] = 0
+            continue
+        ch[f"s{i}"] = [1.0, 1.0, 0.0 if changes else 1.0, 1.0, 1.0, 1.0]
+        meta.update({f"s{i}.changes": changes, f"s{i}.changed": 1 if changes else 0})
+    return {"test": "sensors", "env": env, "outcome": "DONE", "notes": notes, "meta": meta, "channels": ch}
+
+
+DESIGN_SENSORS = {"motors": [], "sensors": [
+    {"name": "Intake beam", "type": "digital", "port": 0, "means": "false when a game piece blocks it"},
+    {"name": "Climber bottom", "type": "digital", "port": 3},
+    {"name": "Arm absolute", "type": "dutycycle", "port": 1},
+    {"name": "Turret", "type": "encoder", "port": [4, 5]}]}
+
+
+class SensorsReportTest(unittest.TestCase):
+    def report(self, **kw):
+        return bringup.sensors_report(sensors_run([
+            ("Intake beam", "registered by the robot code, a switch", 2, None),
+            ("Arm absolute", "dutycycle 1, opened for the readout", 0, None),
+            ("Climber bottom (rear)", "digital 3", None, "the robot code already uses this port; register the sensor with watchSensor to see it here"),
+            ("Shooter beam", "registered by the robot code, a switch", 1, None)], **kw), DESIGN_SENSORS)
+
+    def test_what_changed_what_didnt_and_what_couldnt_be_read(self):
+        rep = self.report()
+        rows = {r["name"]: r for r in rep["sensors"]}
+        self.assertTrue(rows["Intake beam"]["changed"])
+        self.assertEqual(rows["Intake beam"]["changes"], 2)
+        self.assertFalse(rows["Arm absolute"]["changed"])
+        self.assertEqual(rows["Climber bottom (rear)"]["how"], "digital 3", "a name with brackets still reads")
+        self.assertEqual(rep["summary"], "2 of 4 sensors changed; 1 couldn't be read.")
+        self.assertEqual(rep["score"], 50)
+        self.assertIn("Arm absolute never changed", titles(rep, "warn"))
+        self.assertIn("Climber bottom (rear) couldn't be read", titles(rep, "warn"))
+
+    def test_the_design_and_the_code_disagree_on_which_sensors(self):
+        t = titles(self.report(), "info")
+        self.assertTrue(any(x.startswith("Not in the readout: Climber bottom, Turret") for x in t), t)
+        self.assertIn("The code reads Shooter beam; the design file doesn't list it", t)
+
+    def test_the_simulator_only_checks_the_readout(self):
+        rep = self.report(env="SIM")
+        self.assertIsNone(rep["score"])
+        self.assertFalse(any("never changed" in x for x in titles(rep)), "the simulator's ports never change")
+
+    def test_the_advisor_routes_it(self):
+        rep = advisor.analyze(sensors_run([("Intake beam", "digital 0, opened for the readout", 1, None)]), design=DESIGN_SENSORS)
+        self.assertEqual(rep["test"], "sensors")
+        self.assertEqual(rep["score"], 100)
+
+
 class ReportTest(unittest.TestCase):
     def test_the_report_is_written_from_the_evidence(self):
         import os
