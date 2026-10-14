@@ -39,7 +39,7 @@ class DesignCheckTest(unittest.TestCase):
         F = D.check(design([motor("A", "sparkmax_neo", 10), motor("B", "sparkflex_vortex", 10)]))
         self.assertTrue(any("both use CAN ID 10" in t for t in titles(F, "error")), "a MAX and a Flex share REV's ID space")
         F = D.check(design([motor("A", cid=10), motor("B", cid=10, bus="b2")], controller="systemcore",
-                           buses=({"name": "rio", "color": "yellow"}, {"name": "b2", "color": "orange"})))
+                           buses=({"name": "rio", "color": "yellow"}, {"name": "b2", "color": "white"})))
         self.assertFalse(any("both use" in t for t in titles(F)), "the same ID on another bus is fine")
 
     def test_bus_colors_are_ctre_cable_colors_one_each(self):
@@ -47,7 +47,7 @@ class DesignCheckTest(unittest.TestCase):
                            buses=({"name": "rio", "color": "yellow"}, {"name": "b2", "color": "yellow"}, {"name": "b3", "color": "red"})))
         self.assertTrue(any("both yellow" in t for t in titles(F, "error")))
         self.assertTrue(any("'red' is not a CAN cable color" in t for t in titles(F, "error")))
-        F = D.check(design([motor("A")], buses=({"name": "rio", "color": "yellow"}, {"name": "b2", "color": "orange"})))
+        F = D.check(design([motor("A")], buses=({"name": "rio", "color": "yellow"}, {"name": "b2", "color": "white"})))
         self.assertTrue(any("2 CAN buses on a roboRIO" in t for t in titles(F, "warn")))
 
     def test_a_shared_shaft_needs_two_motors_and_their_ratios(self):
@@ -128,10 +128,10 @@ class DesignImportTest(unittest.TestCase):
 
     def test_buses_have_their_own_names_and_colors(self):
         csv = self.CSV + "".join(r + chr(10) for r in ("rio,Drive train,bus,yellow,,,,,,,,,,,,,,",
-                                                         "mech,Intake,bus,orange,,,,,,,,,,,,,,"))
+                                                         "mech,Intake,bus,white,,,,,,,,,,,,,,"))
         d = D.from_csv(csv, controller="systemcore")
         self.assertEqual(d["canBuses"], [{"name": "rio", "label": "Drive train", "color": "yellow"},
-                                         {"name": "mech", "label": "Intake", "color": "orange"}])
+                                         {"name": "mech", "label": "Intake", "color": "white"}])
         d["canBuses"][1]["label"] = "drive train"
         self.assertTrue(any("both called" in t for t in titles(D.check(d), "warn")))
 

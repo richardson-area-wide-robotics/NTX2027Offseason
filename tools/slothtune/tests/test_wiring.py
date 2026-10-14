@@ -60,13 +60,13 @@ class DiscoveryTest(unittest.TestCase):
 class BusesTest(unittest.TestCase):
     """Several CAN buses (SystemCore): each its own chain, CAN-H in its cable color, CAN-L green."""
 
-    TWO = {"canBuses": [{"name": "rio", "color": "yellow"}, {"name": "mech", "color": "orange"}],
+    TWO = {"canBuses": [{"name": "rio", "color": "yellow"}, {"name": "mech", "color": "white"}],
            "pdh": {"canbus": "rio"},
            "motors": [{"name": "Spindexter", "motor": {"type": "sparkflex_vortex", "id": 14, "canbus": "mech"}}]}
 
     def test_each_bus_keeps_its_own_color_and_two_never_share_one(self):
         m = {"buses": [{"name": "rio"}, {"name": "mech", "color": "purple"}, {"name": "extra", "color": "purple"}]}
-        self.assertEqual(W.bus_colors(m, self.TWO), ["yellow", "purple", "orange"],
+        self.assertEqual(W.bus_colors(m, self.TWO), ["yellow", "purple", "white"],
                          "the design names the first; the map's own color wins; a clash takes the next free one")
         self.assertEqual(W.bus_colors({"buses": [{"name": "x", "color": "green"}]}), ["yellow"],
                          "green is CAN-L on every bus, never a bus's color")
@@ -76,7 +76,7 @@ class BusesTest(unittest.TestCase):
         with mock.patch.object(W, "_design", return_value=self.TWO):
             m = W.default_map(PEA)
         rio, mech = m["buses"]
-        self.assertEqual((rio["name"], rio["color"], mech["name"], mech["color"]), ("rio", "yellow", "mech", "orange"))
+        self.assertEqual((rio["name"], rio["color"], mech["name"], mech["color"]), ("rio", "yellow", "mech", "white"))
         self.assertEqual(mech["chain"], ["roboRIO", "Spindexter"], "a device on its designed bus, no PDH there")
         self.assertEqual((rio["chain"][0], rio["chain"][-1]), ("roboRIO", "PDH"))
         self.assertNotIn("Spindexter", rio["chain"])
@@ -84,7 +84,7 @@ class BusesTest(unittest.TestCase):
     def test_each_bus_carries_what_people_call_it(self):
         from unittest import mock
         two = {**self.TWO, "canBuses": [{"name": "rio", "label": "Drive train", "color": "yellow"},
-                                        {"name": "mech", "label": "Intake", "color": "orange"}]}
+                                        {"name": "mech", "label": "Intake", "color": "white"}]}
         with mock.patch.object(W, "_design", return_value=two):
             m = W.default_map(PEA)
         self.assertEqual([b["label"] for b in m["buses"]], ["Drive train", "Intake"])

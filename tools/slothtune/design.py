@@ -28,8 +28,8 @@ from . import motorinv, wiring
 VERSION = 1
 CONTROLLERS = ("roborio", "roborio2", "systemcore")
 # CTRE's CAN cable: each comes as this color with green (CAN-L). Hex values for drawing a bus.
-BUS_COLORS = {"yellow": "#e5d300", "orange": "#f28c28", "brown": "#8b5a2b", "lightblue": "#6ec6f0",
-              "purple": "#8e5bb5", "grey": "#9aa0a6", "white": "#ffffff", "pink": "#f48fb1"}
+# The team's CAN cables, in the order buses take them: each color is CAN-H, with green as CAN-L.
+BUS_COLORS = {"yellow": "#e5d300", "white": "#ffffff", "lightblue": "#6ec6f0", "purple": "#8e5bb5"}
 CONTROLLER_TYPES = ("sparkmax", "sparkflex", "talonfx", "talonfxs")
 MOTOR_SUFFIXES = {"neo": "NEO V1.1", "neo2": "NEO 2.0", "neo550": "NEO 550", "vortex": "NEO Vortex",
                   "krakenx60": "Kraken X60", "krakenx44": "Kraken X44", "falcon500": "Falcon 500", "minion": "Minion"}

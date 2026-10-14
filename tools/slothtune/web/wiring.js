@@ -475,7 +475,7 @@ const Wiring = (() => {
         <label class="row" data-tip="wiring.bus-label">Called <input id="we-label" value="${esc(bus.label || "")}" placeholder="Drive train" style="width:9em"></label>
         <label class="row" data-tip="wiring.bus-name">In the code <input id="we-name" value="${esc(bus.name)}" style="width:7em"></label>
         <label class="row" data-tip="wiring.bus-color">Cable <select id="we-color">${Object.keys(palette).map(c =>
-          `<option value="${c}" ${colorNow(bus, editBus) === c ? "selected" : ""} ${taken.includes(c) ? "disabled" : ""}>${c} / green</option>`).join("")}</select></label>
+          `<option value="${c}" ${colorNow(bus, editBus) === c ? "selected" : ""} ${taken.includes(c) ? "disabled" : ""}>${c === "lightblue" ? "light blue" : c} / green</option>`).join("")}</select></label>
         <button class="btn small" id="we-add" data-tip="wiring.bus-add" ${editing.buses.length >= Object.keys(palette).length ? "disabled" : ""}>Add a bus</button>
       </div>
       <p class="small">Follow the CAN cable on the robot from the roboRIO and put the devices in the order you meet them. Then type the PDH port feeding each controller (it is printed next to each breaker).</p>
@@ -504,7 +504,7 @@ const Wiring = (() => {
     $("#we-color", box).onchange = e => { bus.color = e.target.value; };
     $("#we-add", box).onclick = () => {
       const used = editing.buses.map((b, i) => colorNow(b, i));
-      editing.buses.push({ name: "bus" + (editing.buses.length + 1), label: "", color: Object.keys(palette).find(c => !used.includes(c)) || "orange",
+      editing.buses.push({ name: "bus" + (editing.buses.length + 1), label: "", color: Object.keys(palette).find(c => !used.includes(c)) || "yellow",
         chain: ["roboRIO"], orderConfirmed: false, segmentLengthsM: {} });
       editBus = editing.buses.length - 1;
       paintEditor();

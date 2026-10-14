@@ -185,7 +185,7 @@ const TIPS = {
     "A SystemCore robot has several buses.", null],
   "wiring.bus-name": ["The bus's name as the code and the design file call it, e.g. rio.", "Keep it the same in both; what people call it goes in Called.", null],
   "wiring.bus-color": ["The color of this bus's cable: CAN-H is this color, CAN-L is green on every bus.",
-    "Each bus its own color, so nobody plugs a device into the wrong one.", null],
+    "The team's cables: yellow, white, light blue and purple, each with green. Each bus its own, so nobody plugs a device into the wrong one.", null],
   "wiring.bus-add": ["Adds another CAN bus to the map.",
     "Then move its devices to it and put them in cable order.", null],
   "wiring.bus-move": ["Moves this device to another CAN bus.",

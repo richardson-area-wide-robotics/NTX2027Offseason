@@ -178,7 +178,8 @@ before the Guide. It checks the robot against its **design file**
 `"canbus"`), with its PDH port and breaker, inversion, brake or coast, current limit, gear ratio,
 which way is positive, and which motors share a shaft; every sensor on its port; each CAN bus by
 its cable color (CTRE's cable: a color with green, green is CAN-L), so a SystemCore robot's buses
-are told apart.
+are told apart. The team's four, in the order buses take them: yellow, white, light blue and
+purple, each with green.
 
 1. **The design file.** *Draft from the code*, or *Import a spreadsheet (CSV)* from the design
    team, then go through it with the mechanical and electrical leads and fill in what the code

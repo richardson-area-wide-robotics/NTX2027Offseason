@@ -359,7 +359,7 @@ const Bringup = (() => {
         <td><input data-bl="${i}" value="${esc(b.label || "")}" placeholder="Drive train" aria-label="What people call bus ${i + 1}"></td>
         <td><input data-bn="${i}" value="${esc(b.name || "")}" style="width:7em" aria-label="Bus ${i + 1} in the code"></td>
         <td><select data-bc="${i}" aria-label="Bus ${i + 1} cable color">${colors.map(c => `<option value="${c}" ${b.color === c ? "selected" : ""}
-          ${B.some((x, j) => j !== i && x.color === c) ? "disabled" : ""}>${c} / green</option>`).join("")}</select></td></tr>`).join("");
+          ${B.some((x, j) => j !== i && x.color === c) ? "disabled" : ""}>${c === "lightblue" ? "light blue" : c} / green</option>`).join("")}</select></td></tr>`).join("");
       $$("[data-bl]", m).forEach(x => x.onchange = () => { B[+x.dataset.bl].label = x.value.trim(); });
       $$("[data-bn]", m).forEach(x => x.onchange = () => { B[+x.dataset.bn].name = x.value.trim() || B[+x.dataset.bn].name; });
       $$("[data-bc]", m).forEach(x => x.onchange = () => { B[+x.dataset.bc].color = x.value; paintRows(m); });
