@@ -24,8 +24,8 @@ ORDER = re.findall(r'"([^"]+)"', re.search(r"const ORDER = \[([^\]]+)\]", SRC).g
 
 class BlinksTest(unittest.TestCase):
     def test_the_devices_were_read(self):
-        self.assertGreaterEqual(len(DEVICES), 7)
-        for d in ("SPARK MAX", "SPARK Flex", "roboRIO", "RSL", "VH-109 radio", "REV PDH", "Canandgyro"):
+        self.assertGreaterEqual(len(DEVICES), 9)
+        for d in ("SPARK MAX", "SPARK Flex", "roboRIO", "SystemCore", "RSL", "VH-109 radio", "REV PDH", "navX", "Canandgyro"):
             self.assertIn(d, DEVICES)
 
     def test_the_picker_lists_every_device_once(self):
@@ -47,7 +47,14 @@ class BlinksTest(unittest.TestCase):
 
     def test_each_device_names_its_makers_page(self):
         for url in re.findall(r'url: "([^"]+)"', SRC):
-            self.assertRegex(url, r"^https://docs\.(revrobotics\.com|wpilib\.org|reduxrobotics\.com)/")
+            self.assertRegex(url, r"^https://(docs\.(revrobotics\.com|wpilib\.org|reduxrobotics\.com)|www\.kauailabs\.com|"
+                                  r"downloads\.limelightvision\.io)/")
+
+    def test_an_unsettled_source_says_so(self):
+        # SystemCore's lights come from an alpha specification: its card must say so wherever it shows.
+        sc = SRC[SRC.index('"SystemCore": {'):SRC.index('"RSL": {')]
+        self.assertIn("caution:", sc)
+        self.assertIn("subject to change", sc)
 
     def test_the_fault_words_are_the_robot_codes(self):
         # "Should show now" matches a controller's fault report by these words.

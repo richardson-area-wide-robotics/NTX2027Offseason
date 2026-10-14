@@ -817,6 +817,7 @@ table.lights.compact td { padding: 2px 6px 2px 0; }
 table.lights.compact td.led-cell { width: 50%; white-space: normal; }
 table.lights.compact .lights-group th { padding-top: 5px; }
 .lit { border-bottom: 1px dotted var(--muted); cursor: help; }
+.lights-caution { margin: 0 0 6px; }
 /* Troubleshoot's Status lights: the devices, then the chosen one's table, which scrolls in its box. */
 .lights-devs { flex-wrap: wrap; gap: 6px; }
 .lights-dev { display: inline-flex; align-items: center; gap: 6px; }

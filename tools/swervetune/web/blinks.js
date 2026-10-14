@@ -63,6 +63,9 @@ const Blinks = (() => {
   const REV_FLEX = { title: "REV: SPARK Flex status LED", url: "https://docs.revrobotics.com/brushless/spark-flex/status-led" };
   const WPILIB = { title: "WPILib: status light quick reference", url: "https://docs.wpilib.org/en/stable/docs/hardware/hardware-basics/status-lights-ref.html" };
   const REDUX = { title: "Redux Robotics: Canandgyro LED codes", url: "https://docs.reduxrobotics.com/canandgyro/led-codes/" };
+  const KAUAI = { title: "Kauai Labs: navX-sensor LED test procedure", url: "https://www.kauailabs.com/support/navx-mxp/kb/faq.php?id=50" };
+  const LIMELIGHT = { title: "Limelight: SystemCore specifications (alpha)", url: "https://downloads.limelightvision.io/documents/systemcore_specifications_june15_2025_alpha.pdf" };
+  const NAMES = ["CAL", "S1", "S2"];
   const AT_HOME = "At home that is the access point radio (10.TE.AM.4).";
   const BATTERY = "A radio set up as the access point turns its Wi-Fi off when it sees a robot battery: power it from its own supply.";
 
@@ -99,11 +102,30 @@ const Blinks = (() => {
         row(L("amber", "blink"), "RSL: does what the robot signal light does (see RSL).", { s: "RSL: as the robot signal light." }),
       ] },
     ] },
+    "SystemCore": { pic: "SystemCore", light: "Power, Mode and Status lights, and a small screen showing its addresses, faults and team number.", source: LIMELIGHT,
+      caution: "From Limelight's alpha specification (June 2025, revised October 2025), marked subject to change: the lights may differ on the robots we get. WPILib has no SystemCore light reference yet.",
+      groups: [
+      { title: "Power", rows: [
+        row(L("green"), "Power is good."),
+        row(L(null), "No power, or the power connected backwards.", { d: "Check its power wiring and the polarity." }),
+      ] },
+      { title: "Mode", rows: [
+        row(L("yellow"), "On, disabled.", { id: "DISABLED" }),
+        row(L("yellow", "blink"), "On and ENABLED: the robot can move.", { id: "enabled" }),
+        row(L(null), "No power."),
+      ] },
+      { title: "Status", rows: [
+        row(L(null), "No faults."),
+        row(L("red"), "A hardware fault not yet cleared, brownout protection on, or a display fault.",
+          { s: "A fault: read its screen.", d: "Read the fault on its screen. A power-rail overcurrent clears when it is power cycled." }),
+        row(L("red", "blink"), "A fault in its display.", { s: "Display fault." }),
+      ] },
+    ] },
     "RSL": { pic: null, light: "The robot signal light: the orange light on the robot that everyone can see.", source: WPILIB, groups: [
       { title: "The light", rows: [
         row(L("orange"), "Robot on, disabled.", { id: "DISABLED" }),
         row(L("orange", "blink"), "Robot on and ENABLED: it can move. Stay clear.", { id: "enabled" }),
-        row(L(null), "Robot off, the roboRIO not powered, or the light not wired right.", { d: "Robot on and still off: check the light's wires at the roboRIO's RSL header." }),
+        row(L(null), "Robot off, the robot controller not powered, or the light not wired right.", { d: "Robot on and still off: check the light's wires at the robot controller's RSL port." }),
       ] },
     ] },
     "VH-109 radio": { pic: null, light: "Four lights on the end: Power, SYS, 2.4 GHz and 6 GHz.", source: WPILIB, groups: [
@@ -146,6 +168,31 @@ const Blinks = (() => {
         row(L("red", "blink"), "A fault earlier (sticky): its breaker tripped.", { d: "Check that channel's breaker." }),
       ] },
     ] },
+    "navX": { pic: null, light: "Four lights on the board: 3.3V (red), CAL (orange), and S1 and S2 (green).", source: KAUAI, groups: [
+      { title: "Power", rows: [
+        row(L("red"), "3.3V on: it has power."),
+        row(L(null), "3.3V off: no power.", { d: "On the MXP port: if the roboRIO's Power light is red too, two MXP pins are shorted. Look for a ground pin touching a power or signal pin; the navX's lid prevents it." }),
+      ] },
+      { title: "CAL, S1 and S2 together", rows: [
+        row([L("orange"), L("green"), L("green")], "For about a second after it starts: a light check. Normal.", { n: NAMES, s: "Starting up: a light check." }),
+        row([L("orange", "fast"), L(null), L("green")], "Self-test. Staying like this: it isn't still or flat, or a sensor failed.",
+          { n: NAMES, s: "Self-test: hold it still and flat.", d: "Hold the robot still with the navX flat, top up. Still like this after several seconds: a sensor chip is faulty." }),
+        row([L("orange", "fast"), L(null), L(null)], "Self-test failed: it can't talk to a sensor chip on its own board.",
+          { n: NAMES, s: "Self-test failed: hardware.", d: "A hardware fault: replace the navX." }),
+        row([L("orange", "slow"), L("green"), L("green")], "The gyro is calibrating.",
+          { n: NAMES, s: "Calibrating: keep it still.", d: "Keep the robot still and flat until CAL goes off: about a second on a navX2, up to about 15 s on an older navX.", id: "calibrating" }),
+        row([L(null), L("green"), L("green")], "Working normally.", { n: NAMES, s: "Working." }),
+        row([L("green", "blink"), L("green", "blink")], "S1 and S2 blinking in turn: sometimes a self-test failure.", { n: ["S1", "S2"], s: "Sometimes a self-test failure." }),
+        row(L(null), "S1 off while it runs: no signals from its sensor chips.", { n: ["S1"], s: "No signals from its sensors.", d: "A hardware fault." }),
+        row(L(null), "S2 off after it has started: its processor can't talk to its sensor chips.", { n: ["S2"], s: "Can't reach its sensors.", d: "A hardware fault." }),
+      ] },
+      { title: "CAL, after its CAL button (OmniMount)", rows: [
+        row(L("orange", "blink"), "Held 5 s: flashes for a second, then off. OmniMount setup accepted.", { n: ["CAL"], s: "OmniMount setup accepted.", d: "Press RESET to start OmniMount calibration." }),
+        row(L("orange", "slow"), "OmniMount calibrating, about 15 s.", { n: ["CAL"], s: "OmniMount calibrating.", d: "Hold still, with one board axis pointing straight up." }),
+        row(L("orange", "fast"), "OmniMount error: it's moving, or no board axis points straight up.", { n: ["CAL"], s: "OmniMount: moving, or tilted.", d: "Fix both; CAL changes to a slow flash." }),
+        row(L("orange", "blink"), "Held 10 s: a brief flash. Factory gyro recalibration requested.", { n: ["CAL"], s: "Factory recalibration asked for.", d: "Press RESET, then hold it still and level." }),
+      ] },
+    ] },
     "Canandgyro": { pic: null, light: "One light on the case.", source: REDUX, groups: [
       { title: "The light", rows: [
         row(L("green", "slow"), "Working, and sees the roboRIO on the CAN bus."),
@@ -158,7 +205,7 @@ const Blinks = (() => {
       ] },
     ] },
   };
-  const ORDER = ["SPARK MAX", "SPARK Flex", "roboRIO", "RSL", "VH-109 radio", "REV PDH", "Canandgyro"];
+  const ORDER = ["SPARK MAX", "SPARK Flex", "roboRIO", "SystemCore", "RSL", "VH-109 radio", "REV PDH", "navX", "Canandgyro"];
 
   /** A light drawn as a dot that blinks like the real one (still, half and half, for reduced motion). */
   function dot(l) {
@@ -173,8 +220,10 @@ const Blinks = (() => {
     const c = l.c.map((x, i) => i ? x : x[0].toUpperCase() + x.slice(1)).join(" and ");
     return l.c.length > 1 ? `${c}, in turn${TURN[l.p] || ""}` : `${c}, ${WORD[l.p]}`;
   }
-  const look = r => r.looks.map(l => `<span class="led-look">${dot(l)}<span>${esc(words(l))}</span></span>`).join("");
+  const named = (r, i, w) => r.n && r.n[i] ? `${r.n[i]}: ${w[0].toLowerCase()}${w.slice(1)}` : w;
+  const look = r => r.looks.map((l, i) => `<span class="led-look">${dot(l)}<span>${esc(named(r, i, words(l)))}</span></span>`).join("");
   function shortWords(r) {
+    if (r.n) return r.looks.map((l, i) => `${r.n[i]} ${l.p === "off" ? "off" : l.p === "solid" ? "on" : SHORT[l.p]}`).join(", ");
     const name = l => l.p === "off" ? "Off" : l.c.map((x, i) => i ? x : x[0].toUpperCase() + x.slice(1)).join("/");
     const same = r.looks.every(l => name(l) === name(r.looks[0]));
     const pat = l => l.p === "off" ? "" : l.c.length > 1 ? "in turn" + (TURN[l.p] || "").replace("slowly", "slow") : SHORT[l.p];
@@ -195,7 +244,7 @@ const Blinks = (() => {
       if (mode === "ESTOP") ids.add("estop");
       else if (["DISABLED", "AUTO", "TELEOP", "TEST"].includes(mode)) ids.add(mode);
     }
-    if (name === "RSL" && mode) ids.add(mode === "DISABLED" ? "DISABLED" : ["AUTO", "TELEOP", "TEST"].includes(mode) ? "enabled" : "");
+    if ((name === "RSL" || name === "SystemCore") && mode) ids.add(mode === "DISABLED" ? "DISABLED" : ["AUTO", "TELEOP", "TEST"].includes(mode) ? "enabled" : "");
     const f = String(ctx.flags || "");
     ["CAN fault", "sensor fault", "gate driver fault", "over temperature", "hardware fault", "CAN ID conflict"]
       .forEach(w => { if (f.includes(w)) ids.add(w); });
@@ -220,7 +269,7 @@ const Blinks = (() => {
         <td>${esc(compact ? r.s || r.m : r.m)}</td>
         ${compact ? "" : `<td>${r.d ? esc(r.d) : ""}${go ? `<div>${go}</div>` : ""}</td>`}</tr>`;
     }).join("");
-    return `<table class="t lights${compact ? " compact" : ""}">${compact ? "" : `<thead><tr><th>Light</th><th>What it means</th><th>What to do</th></tr></thead>`}
+    return `${d.caution ? `<p class="callout warn small lights-caution">${esc(d.caution)}</p>` : ""}<table class="t lights${compact ? " compact" : ""}">${compact ? "" : `<thead><tr><th>Light</th><th>What it means</th><th>What to do</th></tr></thead>`}
       ${d.groups.map(g => `<tbody><tr class="lights-group"><th colspan="${compact ? 2 : 3}">${esc(g.title)}</th></tr>${rows(g)}</tbody>`).join("")}</table>`;
   }
   const source = name => {

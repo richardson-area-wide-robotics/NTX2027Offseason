@@ -568,8 +568,8 @@ const Wiring = (() => {
     const pics = [part, ...(part === "SPARK Flex" ? [] : MOTOR_PICS[motor] || [])]
       .map(k => FrcMap.pic(k) && { ...FrcMap.pic(k), cap: k }).filter(Boolean);
     // Its status light, every color and pattern; marked where its faults say it should be now.
-    // (A SystemCore's lights are its own; none are described yet.)
-    const light = part === "SystemCore" ? null : Blinks.has(live || ctl) ? live || ctl : Blinks.has(part) ? part : null;
+    // The robot controller's lights are the design's controller's (a SystemCore's are its own).
+    const light = name === "roboRIO" ? part : Blinks.has(live || ctl) ? live || ctl : Blinks.has(part) ? part : null;
     const bi = m.buses.findIndex(b => b.chain.includes(name)), bus = m.buses[bi];
     const at = bus ? bus.chain.indexOf(name) : -1;
     const before = at > 0 ? bus.chain[at - 1] : null, after = bus && at >= 0 && at < bus.chain.length - 1 ? bus.chain[at + 1] : null;
