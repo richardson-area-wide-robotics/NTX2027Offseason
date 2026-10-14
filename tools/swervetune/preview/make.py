@@ -37,6 +37,7 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from html import escape as html_escape
 from http.server import ThreadingHTTPServer
 from urllib.parse import quote
 
@@ -82,18 +83,26 @@ def _q(path, **params):
     return path + "?" + "&".join(f"{k}={quote(str(v), safe='')}" for k, v in params.items())
 
 
-def record(project_name, *, seconds=14.0, say=print):
+# Example multimeter readings at each bus's far end, terminator in then out: what the termination
+# check says to each is recorded, so the preview answers them.
+TERMINATION_EXAMPLES = (("60", "120"), ("120", "120"), ("120", "OL"), ("120", ""))
+
+
+def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
     """Talks to the simulator through the tool's own server, as the page would, and keeps every answer."""
     from .. import diagnose, progress, server, setup as SP
 
     # A scratch progress file: the recording never touches this laptop's real checklists.
     scratch = tempfile.mkdtemp(prefix="swervetune-preview-")
     progress.PATH = os.path.join(scratch, "guide_progress.json")
+    if marks:
+        # Example checklist results for the preview (its ribbon says so), never this laptop's own.
+        progress.update(project_name, marks)
     httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.Handler)
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
     c = _Client(f"http://127.0.0.1:{httpd.server_address[1]}", server.TOKEN)
     rec = {"get": {}, "post": [], "live": [], "state": [], "started": {},
-           "recorded": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+           "recorded": datetime.now(timezone.utc).isoformat(timespec="seconds"), "note": note}
 
     def post(path, body):
         r = c.post(path, body)
@@ -143,6 +152,9 @@ def record(project_name, *, seconds=14.0, say=print):
                     rec["get"][key] = c.get(key)
             else:
                 rec["get"][path] = c.get(path)
+        for bus in (rec["get"].get("/api/wiring") or {}).get("map", {}).get("buses") or []:
+            for a, b in TERMINATION_EXAMPLES:
+                post("/api/wiring/termination", {"ohms": a, "without": b, "bus": bus.get("name")})
         for s in diagnose.SYMPTOMS:
             key = "/api/diagnose/" + quote(s["id"], safe="")
             rec["get"][key] = c.get(key)
@@ -238,7 +250,7 @@ def build(rec_dir=REC, site=SITE, web=WEB):
     ribbon = f"""<div class="pv-ribbon">
   <span class="pv-tag">Preview</span>
   <span class="pv-note">Recorded from the real tool, connected to {project}'s robot code in the simulator, {_when(rec["recorded"])}.
-    The robot replays the steering test it ran. Buttons that would move the robot or save a file say so instead.</span>
+    The robot replays the steering test it ran. Buttons that would move the robot or save a file say so instead.{(" " + html_escape(rec["note"])) if rec.get("note") else ""}</span>
   <span class="pv-seg" role="group" aria-label="Show">
     <button data-pv="tools" aria-pressed="true">Swerve Tools (laptop)</button>
     <button data-pv="elastic" aria-pressed="false">Elastic (Driver Station)</button>
@@ -276,9 +288,15 @@ def main(argv=None):
     ap.add_argument("--project", default="Peashooter", help="robot project folder (default Peashooter)")
     ap.add_argument("--no-record", action="store_true", help="rebuild the site from the last recording")
     ap.add_argument("--seconds", type=float, default=14.0, help="how long to record the live view")
+    ap.add_argument("--note", default="", help="a sentence for the ribbon, e.g. what in it is an example")
+    ap.add_argument("--marks", help="a JSON file of example checklist marks to record with")
     a = ap.parse_args(argv)
     if not a.no_record:
-        record(a.project, seconds=a.seconds)
+        marks = None
+        if a.marks:
+            with open(a.marks, encoding="utf-8") as fh:
+                marks = json.load(fh)
+        record(a.project, seconds=a.seconds, note=a.note, marks=marks)
     elif not os.path.exists(os.path.join(REC, "rec.json")):
         sys.exit("No recording yet: run without --no-record, with the simulator running.")
     files = build()

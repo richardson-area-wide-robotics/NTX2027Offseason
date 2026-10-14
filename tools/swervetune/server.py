@@ -960,10 +960,16 @@ def api_wiring(query=None):
     else:
         snap = {}
     from . import design as D
+    prog = progress.load(S.project.name) or {}
+    design = wiring._design(S.project)
     return {"ok": True, "map": m, "devices": wiring.devices_by_name(S.project, m),
             "lengths": [wiring.bus_length(b) for b in m["buses"]], "snapshot": snap,
             # Each bus's cable color (CAN-H; CAN-L is green on all), and the colors CTRE's cable comes in.
-            "bus_colors": wiring.bus_colors(m, wiring._design(S.project)), "palette": D.BUS_COLORS,
+            "bus_colors": wiring.bus_colors(m, design), "palette": D.BUS_COLORS,
+            "bus_labels": wiring.bus_labels(m, design),
+            # Each bus's termination check, as last recorded (robot off, a multimeter).
+            "termination": {b.get("name"): prog.get("wire_ohms:" + str(b.get("name")))
+                            or (prog.get("wire_ohms") if len(m["buses"]) == 1 else None) for b in m["buses"]},
             "findings": wiring.diagnose(m, snap), "demos": DEMOS, "demo": demo if demo in DEMOS else None,
             "path": os.path.relpath(wiring.map_path(S.project), S.project.path)}
 
@@ -1270,11 +1276,13 @@ def api_wiring_pdhfind(query=None):
 
 
 def api_wiring_termination(body):
-    try:
-        ohms = float(body.get("ohms"))
-    except (TypeError, ValueError):
-        ohms = None
-    return wiring.termination_verdict(ohms)
+    """A bus's termination from one or two multimeter readings at its far end (with its terminator
+    in, then out); "OL" is open."""
+    b = body or {}
+    bus = None
+    if S.project and b.get("bus"):
+        bus = next((x for x in S.wiring_map().get("buses") or [] if x.get("name") == b.get("bus")), None)
+    return wiring.termination_pair(wiring.parse_ohms(b.get("ohms")), wiring.parse_ohms(b.get("without")), bus)
 
 
 def api_export(body):

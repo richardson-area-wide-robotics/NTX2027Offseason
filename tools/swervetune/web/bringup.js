@@ -112,8 +112,11 @@ const Bringup = (() => {
     $("#br-design-body", root).innerHTML = data.error ? `<div class="callout bad">${esc(data.error)}</div>` : !d
       ? `<p>No design file yet (<span class="mono">${esc(data.path)}</span>). Draft one from the code, or import the design team's spreadsheet.</p>`
       : `<p class="small"><span class="mono">${esc(data.path)}</span> · ${esc(d.controller || "")} ·
-           ${(d.canBuses || []).map(b => `${swatch(b.color)}${esc(b.name)} (${esc(b.color)}/green)`).join(" · ")} ·
+           ${(d.canBuses || []).map(b => `${swatch(b.color)}${b.label ? `<b>${esc(b.label)}</b> ` : ""}${esc(b.name)} (${esc(b.color)}/green)`).join(" · ")}
+           <button class="btn small" id="br-buses" data-tip="br.buses">Edit buses…</button> ·
            ${(d.motors || []).length} motors · ${(d.sensors || []).length} sensors</p>${findings(data.check)}`;
+    const eb = $("#br-buses", root);
+    if (eb) eb.onclick = () => editBuses(d);
     $("#br-code-body", root).innerHTML = d ? findings(data.compare) : `<p class="hint">Needs the design file.</p>`;
     paintHandover(d);
     paintSensors(d);
@@ -129,7 +132,7 @@ const Bringup = (() => {
       if (p.port != null) items.push(`PDH port ${p.port}: ${p.breaker ? p.breaker + " A breaker" : "a breaker (size not in the design)"} for ${m.name}`);
     });
     ((d && d.canBuses) || [{ name: "the CAN bus", color: "yellow" }]).forEach(b =>
-      items.push(`${b.name}: ${b.color}/green cable, every plug latched, a 120 Ω terminator at each end (about 60 Ω across CAN-H and CAN-L, robot off)`));
+      items.push(`${b.label ? `${b.label} (${b.name})` : b.name}: ${b.color}/green cable, every plug latched, a 120 Ω terminator at each end (Wiring's termination check: about 60 Ω with the far one in, 120 with it out)`));
     items.push("Battery strapped down, main breaker bolts tight, the Anderson connector locked");
     items.push("Radio powered and its Ethernet to the robot controller seated");
     items.push("No wire where a mechanism moves; every motor's leads strain-relieved");
@@ -341,6 +344,54 @@ const Bringup = (() => {
       if (!doc) return;
       const bad = ((doc.report || {}).findings || []).find(f => f.level === "error");
       await done(k, !bad && doc.outcome === "DONE", bad ? bad.title : doc.outcome !== "DONE" ? doc.message || "Stopped." : "Together they turned freely at low current.");
+    });
+  }
+
+  // ---------------------------------------------------------------- the CAN buses
+  // Each bus: what people call it (Drive train, Intake), the name the code uses, and its cable color.
+  // A bus renamed in the code is renamed on every motor that names it too.
+  function editBuses(d) {
+    const B = (d.canBuses || []).map(b => Object.assign({ was: b.name }, b));
+    const colors = Object.keys(data.colors || {});
+    const paintRows = m => {
+      $("#bb-rows", m).innerHTML = B.map((b, i) => `<tr>
+        <td><span class="bus-swatch" style="--c:${esc((data.colors || {})[b.color] || "#999")}" aria-hidden="true"></span></td>
+        <td><input data-bl="${i}" value="${esc(b.label || "")}" placeholder="Drive train" aria-label="What people call bus ${i + 1}"></td>
+        <td><input data-bn="${i}" value="${esc(b.name || "")}" style="width:7em" aria-label="Bus ${i + 1} in the code"></td>
+        <td><select data-bc="${i}" aria-label="Bus ${i + 1} cable color">${colors.map(c => `<option value="${c}" ${b.color === c ? "selected" : ""}
+          ${B.some((x, j) => j !== i && x.color === c) ? "disabled" : ""}>${c} / green</option>`).join("")}</select></td></tr>`).join("");
+      $$("[data-bl]", m).forEach(x => x.onchange = () => { B[+x.dataset.bl].label = x.value.trim(); });
+      $$("[data-bn]", m).forEach(x => x.onchange = () => { B[+x.dataset.bn].name = x.value.trim() || B[+x.dataset.bn].name; });
+      $$("[data-bc]", m).forEach(x => x.onchange = () => { B[+x.dataset.bc].color = x.value; paintRows(m); });
+      $("#bb-add", m).disabled = B.length >= colors.length;
+    };
+    App.modal(`<h2>CAN buses</h2>
+      <p class="small">What people call each bus, the name the code uses for it (YAGSL's <span class="mono">"canbus"</span>), and its cable color: CAN-H is that color, CAN-L green on every bus.</p>
+      <table class="t"><thead><tr><th></th><th>Called</th><th>In the code</th><th>Cable</th></tr></thead><tbody id="bb-rows"></tbody></table>
+      <div class="row"><button class="btn" id="bb-add" data-tip="br.bus-add">Add a bus</button>
+        <button class="btn primary" id="bb-save">Save to the design file…</button><button class="btn" id="bb-x">Cancel</button></div>`, m => {
+      paintRows(m);
+      $("#bb-add", m).onclick = () => {
+        const free = colors.find(c => !B.some(b => b.color === c));
+        B.push({ name: "bus" + (B.length + 1), label: "", color: free });
+        paintRows(m);
+      };
+      $("#bb-x", m).onclick = () => App.closeModal();
+      $("#bb-save", m).onclick = () => {
+        const renamed = Object.fromEntries(B.filter(b => b.was && b.was !== b.name).map(b => [b.was, b.name]));
+        const nd = JSON.parse(JSON.stringify(d));
+        // Whatever else a bus carried (its terminated ends) stays with it.
+        nd.canBuses = B.map(b => {
+          const out = Object.assign({}, (d.canBuses || []).find(x => x.name === b.was), { name: b.name, color: b.color });
+          if (b.label) out.label = b.label; else delete out.label;
+          return out;
+        });
+        for (const x of [...(nd.motors || []).map(mm => mm.motor || {}), nd.pdh || {}]) {
+          if (x.canbus in renamed) x.canbus = renamed[x.canbus];
+        }
+        App.closeModal();
+        save(nd, "The design file's CAN buses");
+      };
     });
   }
 

@@ -114,6 +114,20 @@ class OtherToolsTest(unittest.TestCase):
         self.assertEqual((st["ohms"], st["pdh"], st["order"], st["saved"]), ("done", "todo", "done", "done"))
         self.assertIn("1 of 2", [j for j in p["jobs"] if j["id"] == "pdh"][0]["detail"])
 
+    def test_termination_is_checked_on_every_bus(self):
+        two = {"buses": [{"name": "rio", "chain": []}, {"name": "mech", "chain": []}], "pdhPorts": {}}
+        def ohms(prog):
+            j = [x for x in SP.wiring(ctx(controllers=[], wiring_map=two, prog=prog))["jobs"] if x["id"] == "ohms"][0]
+            return j["status"], j["detail"]
+        st, detail = ohms({"wire_ohms:rio": mark()})
+        self.assertEqual(st, "todo")
+        self.assertIn("1 of 2", detail)
+        self.assertEqual(ohms({"wire_ohms:rio": mark(), "wire_ohms:mech": mark()})[0], "done")
+        st, detail = ohms({"wire_ohms:rio": mark(), "wire_ohms:mech": mark("fail")})
+        self.assertEqual(st, "attention")
+        self.assertIn("mech", detail)
+        self.assertEqual(ohms({"wire_ohms": mark()})[0], "todo", "an older single check can't say which bus")
+
     def test_controllers_by_their_names_and_the_deadband(self):
         hist = [{"label": "Driver", "when": LATE, "verdict": "good", "recommended_deadband": 0.12, "problems": []},
                 {"label": "Operator", "when": LATE, "verdict": "error", "problems": ["button 3 bounces"]}]

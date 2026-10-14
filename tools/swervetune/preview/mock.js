@@ -9,7 +9,7 @@
   // Actions that would drive the robot, change its settings or write a file.
   const REFUSE = ["/api/test", "/api/gains", "/api/save/apply", "/api/offsets", "/api/env", "/api/abort", "/api/stop",
     "/api/motors/override", "/api/survey/start", "/api/controllers/save", "/api/sim", "/api/export", "/api/netcheck",
-    "/api/wiring/termination", "/api/camcal/sample", "/api/camcal/solve", "/api/survey/solve", "/api/geometry/tape",
+    "/api/camcal/sample", "/api/camcal/solve", "/api/survey/solve", "/api/geometry/tape",
     "/api/geometry/wheels", "/api/handcheck", "/api/controllers/step", "/api/controllers/robot", "/api/save/preview",
     "/api/analyze", "/api/predict", "/api/designs/read", "/api/mark"];
   let connected = true, li = 0;
@@ -60,6 +60,14 @@
     if (path === "/api/parts/stop") { started.delete(body.kind + ":" + (body.which || "")); return json({ ok: true }); }
     if (path === "/api/parts/mark") return json({ ok: false, error: NOPE });
     if (REFUSE.includes(path)) return json({ ok: false, error: NOPE });
+    // The termination check answers the example readings recorded for each bus; other numbers say which.
+    if (path === "/api/wiring/termination") {
+      const norm = v => String(v == null ? "" : v).trim().toUpperCase();
+      const hit = rec.post.find(p => p.path === path && p.body.bus === body.bus && norm(p.body.ohms) === norm(body.ohms) && norm(p.body.without) === norm(body.without));
+      if (hit) return json(hit.resp);
+      const ex = [...new Set(rec.post.filter(p => p.path === path).map(p => `${p.body.ohms}${p.body.without ? " then " + p.body.without : " alone"}`))];
+      return json({ level: "info", title: "Not recorded for this preview", why: "The preview answers these readings: " + ex.join("; ") + "." });
+    }
     const same = rec.post.filter(p => p.path === url);
     const exact = same.find(p => JSON.stringify(p.body) === JSON.stringify(body));
     if (exact || same.length) return json((exact || same[same.length - 1]).resp);

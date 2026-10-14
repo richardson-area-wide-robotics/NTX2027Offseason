@@ -249,6 +249,7 @@ const Learn = (() => {
     can_termination: { title: "CAN termination", short: "A 120 ohm resistor at each end of the CAN chain stops signals echoing back. Exactly two: about 60 ohms measured across the bus, power off.",
       body: ["A fast signal reaching the open end of a wire bounces back and garbles the next bits. A 120 ohm terminator at each end soaks it up. The roboRIO has one built in; the PDH has one you switch on.",
         "With every device powered off, a multimeter across CAN-H and CAN-L reads both in parallel: about 60 ohms. 120 means one end is missing (or the cable is broken between you and it); 40 means one too many; near zero is a short.",
+        "To tell a missing terminator from one that is fitted but not working, measure at the far end twice: with its terminator in, then out. 60 then 120: both work. 120 then 120: the far one does nothing (a switch not fully across, a terminator not seated). 120 then OL: the far one works and the cable back to the robot controller is broken.",
         "Bad termination shows up as CAN errors and, at worst, the bus shutting itself down (bus-off)."] },
     power_path: { title: "The power path", short: "Battery, main breaker, PDH, a breaker per port, then the leads to each controller. Every joint adds a little resistance; a bad one adds a lot.",
       body: ["Current flows from the battery through the main breaker to the PDH, out through a port's breaker and along two leads to the controller, and back. Every crimp, Wago and screw terminal on the way is a small resistor.",

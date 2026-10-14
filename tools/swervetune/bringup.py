@@ -242,7 +242,8 @@ def report(project, ctx, signed=None):
         L.append(f"| {j['title']} | {j['status']} | {(j.get('detail') or '').replace('|', '/')} |")
     L += ["", "## The design file", ""]
     if d:
-        buses = ", ".join(f"{b.get('name')} ({b.get('color')}/green)" for b in d.get("canBuses") or [])
+        buses = ", ".join((f"{b['label']}: " if b.get("label") else "") + f"{b.get('name')} ({b.get('color')}/green)"
+                          for b in d.get("canBuses") or [])
         L += [f"`{os.path.relpath(D.path(project), project.path).replace(os.sep, '/')}`: controller {d.get('controller')}, "
               f"CAN {buses}, {len(d.get('motors') or [])} motors, {len(d.get('sensors') or [])} sensors.", ""]
         left = [f for f in (ctx.get("design_check") or []) + (ctx.get("design_compare") or [])]

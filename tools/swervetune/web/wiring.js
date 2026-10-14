@@ -49,10 +49,15 @@ const Wiring = (() => {
           <div class="panel" id="w-ohms-panel">
             <h3 data-tip="wiring.ohms"><span class="term" tabindex="0" data-learn="can_termination">Termination check</span></h3>
             ${HowTo.steps({ need: "A multimeter. The robot <b>off</b>: a powered device makes the reading meaningless.",
-              steps: ["Multimeter on ohms.", "Probes on CAN-H (the bus's color: yellow on the roboRIO's) and CAN-L (green) at any free CAN plug. With several buses, check each.", "Type the reading and press <b>Check</b>."],
-              good: "about 60 Ω: the two terminators, one at each end of the chain." })}
+              steps: ["Multimeter on ohms. At the bus's far end (named below), probes on CAN-H (the bus's color) and CAN-L (green).",
+                "Read it with the far terminator in. Then take it out (the PDH's TERM switch OFF, or unplug the terminator) and read again; type OL if the meter shows OL.",
+                "Put the terminator back, then press <b>Check</b>. With several buses, check each."],
+              good: "about 60 Ω, then about 120 Ω: both terminators work." })}
             <div id="w-ohms-map" class="frc-slot"></div>
-            <div class="row"><label class="row small" data-tip="wiring.ohms-in">Measured <input type="number" id="w-ohms" step="0.1" style="width:6em"> Ω</label><button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
+            <div id="w-ohms-bus"></div>
+            <div class="row"><label class="row small" data-tip="wiring.ohms-in">Terminator in <input id="w-ohms" inputmode="decimal" style="width:5em"> Ω</label>
+              <label class="row small" data-tip="wiring.ohms-out">Out <input id="w-ohms2" inputmode="decimal" style="width:5em"> Ω</label>
+              <button class="btn" id="w-ohms-go" data-tip="wiring.ohms-go">Check</button></div>
             <div id="w-ohms-out" class="small"></div>
             ${HowTo.nextLine("ohms")}
           </div>
@@ -100,6 +105,8 @@ const Wiring = (() => {
     const d = await App.api("/api/wiring" + q);
     if (d.ok === false) { $("#w-meta", root).textContent = d.error; return; }
     data = d;
+    // A map saved before its buses had labels takes the design file's.
+    (data.map.buses || []).forEach((b, i) => { if (!b.label && (data.bus_labels || [])[i]) b.label = data.bus_labels[i]; });
     paint();
   }
 
@@ -128,6 +135,38 @@ const Wiring = (() => {
     return e;
   }
 
+  // The drawing fits what its section has left (a live alert above it takes some): taller than that,
+  // it shrinks, down to 70%, rather than scroll. Checked every repaint, as alerts come and go.
+  function fitDrawing(svg, H) {
+    svg._H = H;
+    svg.style.height = H + "px";
+    const wrap = svg.parentElement, sec = svg.closest(".job-area > *");
+    if (!sec || sec.classList.contains("job-off")) return;
+    const over = Math.max(wrap.scrollHeight - wrap.clientHeight, sec.scrollHeight - sec.clientHeight);
+    if (over > 1) svg.style.height = Math.max(Math.round(H * 0.7), H - over) + "px";
+  }
+
+  // What people call a bus ("Drive train"), else the name the code uses.
+  const labelOf = b => (b && (b.label || b.name)) || "CAN bus";
+  // A bus's termination check, as last recorded: not checked, good, or a problem.
+  function termOf(b) {
+    const mk = (data.termination || {})[b.name];
+    if (!mk) return { state: "none", short: "termination not checked" };
+    return mk.result === "pass" ? { state: "ok", short: "terminators checked" }
+      : { state: "bad", short: "terminator problem", detail: mk.detail };
+  }
+  const termChip = b => {
+    const t = termOf(b);
+    return `<span class="chip ${t.state === "ok" ? "good" : t.state === "bad" ? "bad" : "warn"}" data-tip="wiring.term-state">${esc(t.short)}</span>`;
+  };
+  // The far end of a bus, where its second terminator sits and where to measure.
+  function farEnd(b) {
+    const chain = (b && b.chain) || [];
+    if (chain[chain.length - 1] === "PDH") return "the PDH: probe its CAN terminals; the terminator is its TERM switch";
+    const last = [...chain].reverse().find(n => n !== "roboRIO" && n !== "PDH");
+    return last ? `the free CAN plug after ${last}: the terminator plugs in there` : "the bus's far end";
+  }
+
   // A bus's cable color: the CAN-H wire; CAN-L is green on every bus.
   const busColor = bi => (data.palette || {})[(data.bus_colors || [])[bi]] || "#e5b31b";
   const swatchOf = bi => `<span class="bus-swatch" style="--c:${esc(busColor(bi))}" aria-hidden="true"></span>`;
@@ -139,8 +178,9 @@ const Wiring = (() => {
     const count = b => b.chain.filter(n => n !== "roboRIO" && n !== "PDH").length;
     const L = bi => data.lengths[bi] || [0, 0, 0];
     const busLine = m.buses.length === 1
-      ? `${count(m.buses[0])} devices on ${esc(m.buses[0].name)} · bus about ${fmt(L(0)[0], 1)} m (${L(0)[1]} of ${L(0)[2]} segments measured; CAN allows 40 m)`
-      : m.buses.map((b, bi) => `${swatchOf(bi)}${esc(b.name)}: ${count(b)} devices, about ${fmt(L(bi)[0], 1)} m`).join(" · ")
+      ? `${count(m.buses[0])} devices on ${esc(labelOf(m.buses[0]))} · bus about ${fmt(L(0)[0], 1)} m (${L(0)[1]} of ${L(0)[2]} segments measured; CAN allows 40 m)`
+        + ` · ${termChip(m.buses[0])}`
+      : m.buses.map((b, bi) => `${swatchOf(bi)}${esc(labelOf(b))}: ${count(b)} devices, about ${fmt(L(bi)[0], 1)} m`).join(" · ")
         + ` (${m.buses.reduce((a, b, bi) => a + L(bi)[1], 0)} of ${m.buses.reduce((a, b, bi) => a + L(bi)[2], 0)} segments measured; CAN allows 40 m on each bus)`;
     const confirmed = m.buses.every(b => b.orderConfirmed);
     $("#w-meta", root).innerHTML = `${esc(data.path)} · ${busLine} ·
@@ -154,11 +194,11 @@ const Wiring = (() => {
     // Several buses draw smaller boxes, without the part's picture, so every bus fits on one screen.
     const multi = m.buses.length > 1;
     const W = Math.max(640, svg.clientWidth || 900), pad = 26, padY = multi ? 6 : pad;
-    const [bw, bh, gx, gy] = multi ? [168, 58, 30, 34] : [196, 76, 36, 54];
+    const [bw, bh, gx, gy] = multi ? [152, 52, 22, 26] : [196, 76, 36, 54];
     const perRow = Math.max(2, Math.floor((W - 2 * pad + gx) / (bw + gx)));
     // Each bus its own snake of boxes (so the cable stays one line), one bus under the next, with its
     // name and cable color above it when there is more than one.
-    const labelH = multi ? 24 : 0;
+    const labelH = multi ? 22 : 0;
     const slots = [], busTop = [];
     let y0 = padY;
     m.buses.forEach((b, bi) => {
@@ -197,14 +237,14 @@ const Wiring = (() => {
     });
     // The schematic repaints every second with the live data. Rebuilding it when nothing had changed
     // destroyed the box a person had tabbed to, and pressing Enter destroyed the box pressed.
-    const key = JSON.stringify([W, focus, m.pdh.terminationOn, data.bus_colors, m.buses.map(b => b.name), hl.segs.map(x => [x.a, x.b, x.f.title]),
+    const key = JSON.stringify([W, focus, m.pdh.terminationOn, data.bus_colors, m.buses.map(b => [b.name, b.label]), data.termination,
+      hl.segs.map(x => [x.a, x.b, x.f.title]),
       nodes.map(n => [n.name, n.state, n.word, n.sub, !!n.pic, n.ohm])]);
     if (key !== svg._key) {
       svg._key = key;
       const had = svg.contains(document.activeElement) ? document.activeElement.getAttribute("data-name") : null;
       svg.innerHTML = "";
       svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-      svg.style.height = H + "px";
 
       if (multi) {
         // Each bus's name over its two wires: its own color, and green.
@@ -213,7 +253,11 @@ const Wiring = (() => {
           el("line", { x1: pad, y1: y + 9, x2: pad + 26, y2: y + 9, class: "wire can-case" }, svg);
           el("line", { x1: pad, y1: y + 9, x2: pad + 26, y2: y + 9, class: "wire can-h", style: `stroke:${busColor(bi)}` }, svg);
           el("line", { x1: pad, y1: y + 15, x2: pad + 26, y2: y + 15, class: "wire can-l" }, svg);
-          el("text", { x: pad + 34, y: y + 17, class: "bus-label" }, svg, `${b.name}: ${(data.bus_colors || [])[bi] || ""} and green`);
+          const t = el("text", { x: pad + 34, y: y + 17, class: "bus-label" }, svg,
+            `${labelOf(b)}${b.label && b.label !== b.name ? ` (${b.name})` : ""}: ${(data.bus_colors || [])[bi] || ""} and green`);
+          // Its termination check, after the name.
+          const tm = termOf(b), ts = el("tspan", { class: "term-" + tm.state, dx: 10 }, t, "· " + tm.short);
+          ts.setAttribute("data-tip", "wiring.term-state");
         });
       }
       // The cable: CAN-H in the bus's color over a thin edge (a white or grey cable still shows on a
@@ -249,8 +293,8 @@ const Wiring = (() => {
           el("rect", { x: p.x + bw - 64, y: p.y + 6, width: 58, height: bh - 12, rx: 4, class: "art-tile" }, g);
           el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
         }
-        const label = `${i}. ${name}`, cut = multi ? 21 : 19;
-        const [y1, y2, y3] = multi ? [20, 37, 52] : [22, 42, 62];
+        const label = `${i}. ${name}`, cut = multi ? 20 : 19;
+        const [y1, y2, y3] = multi ? [18, 33, 47] : [22, 42, 62];
         el("text", { x: p.x + 10, y: p.y + y1, class: "nm" }, g, label.length > cut ? label.slice(0, cut - 1) + "…" : label);
         el("text", { x: p.x + 10, y: p.y + y2, class: "sub" }, g, sub);
         if (word) el("text", { x: p.x + 10, y: p.y + y3, class: "state" }, g, word);
@@ -276,6 +320,7 @@ const Wiring = (() => {
         if (back) back.focus({ preventScroll: true });
       }
     }
+    fitDrawing(svg, H);
     const det = $("#w-detail", root);
     det.hidden = !focus || !details[focus];
     if (focus && details[focus]) {
@@ -290,6 +335,7 @@ const Wiring = (() => {
       else FrcMap.render(slot, deviceView(focus));
     }
     paintPdh(rows);
+    paintOhmsBus();
     paintFindings();
   }
 
@@ -401,9 +447,10 @@ const Wiring = (() => {
     box.hidden = false;
     box.innerHTML = `<h3>Edit the map</h3>
       ${editing.buses.length > 1 ? `<div class="seg" style="width:max-content" role="group" aria-label="Bus">${editing.buses.map((b, i) =>
-        `<button data-bus="${i}" class="${i === editBus ? "on" : ""}" aria-pressed="${i === editBus}" data-tip="wiring.bus-pick">${esc(b.name)}</button>`).join("")}</div>` : ""}
+        `<button data-bus="${i}" class="${i === editBus ? "on" : ""}" aria-pressed="${i === editBus}" data-tip="wiring.bus-pick">${esc(labelOf(b))}</button>`).join("")}</div>` : ""}
       <div class="row small">
-        <label class="row" data-tip="wiring.bus-name">Bus <input id="we-name" value="${esc(bus.name)}" style="width:10em"></label>
+        <label class="row" data-tip="wiring.bus-label">Called <input id="we-label" value="${esc(bus.label || "")}" placeholder="Drive train" style="width:9em"></label>
+        <label class="row" data-tip="wiring.bus-name">In the code <input id="we-name" value="${esc(bus.name)}" style="width:7em"></label>
         <label class="row" data-tip="wiring.bus-color">Cable <select id="we-color">${Object.keys(palette).map(c =>
           `<option value="${c}" ${colorNow(bus, editBus) === c ? "selected" : ""} ${taken.includes(c) ? "disabled" : ""}>${c} / green</option>`).join("")}</select></label>
         <button class="btn small" id="we-add" data-tip="wiring.bus-add" ${editing.buses.length >= Object.keys(palette).length ? "disabled" : ""}>Add a bus</button>
@@ -418,7 +465,7 @@ const Wiring = (() => {
         ${n === "roboRIO" || n === "PDH" ? "<span></span><span></span>" : `<input type="number" min="0" max="23" placeholder="PDH" data-port="${esc(n)}" value="${editing.pdhPorts[n] ?? ""}" aria-label="PDH port for ${esc(n)}">
         <span><button class="btn small" data-up="${i}" ${i <= 1 ? "disabled" : ""} aria-label="Move up">↑</button><button class="btn small" data-down="${i}" ${i >= chain.length - 1 || chain[i + 1] === "PDH" ? "disabled" : ""} aria-label="Move down">↓</button>
           ${editing.buses.length > 1 ? `<select data-move="${esc(n)}" aria-label="Bus for ${esc(n)}" data-tip="wiring.bus-move">${editing.buses.map((b, j) =>
-            `<option value="${j}" ${j === editBus ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select>` : ""}</span>`}
+            `<option value="${j}" ${j === editBus ? "selected" : ""}>${esc(labelOf(b))}</option>`).join("")}</select>` : ""}</span>`}
       </li>`).join("")}</ol>
       <div class="row"><button class="btn primary" id="we-save">Save to the robot project…</button><button class="btn" id="we-cancel">Cancel</button></div>
       <p class="small muted">Saved and redeployed, the map goes to the robot too: Robot Health alerts then name each motor's PDH port, and, once the order is checked, the plugs either side of it on the CAN cable.</p>`;
@@ -430,10 +477,11 @@ const Wiring = (() => {
     $("#we-ok", box).onchange = e => { bus.orderConfirmed = e.target.checked; };
     $$("[data-bus]", box).forEach(b => b.onclick = () => { editBus = +b.dataset.bus; paintEditor(); });
     $("#we-name", box).onchange = e => { bus.name = e.target.value.trim() || bus.name; paintEditor(); };
+    $("#we-label", box).onchange = e => { bus.label = e.target.value.trim(); paintEditor(); };
     $("#we-color", box).onchange = e => { bus.color = e.target.value; };
     $("#we-add", box).onclick = () => {
       const used = editing.buses.map((b, i) => colorNow(b, i));
-      editing.buses.push({ name: "bus " + (editing.buses.length + 1), color: Object.keys(palette).find(c => !used.includes(c)) || "orange",
+      editing.buses.push({ name: "bus" + (editing.buses.length + 1), label: "", color: Object.keys(palette).find(c => !used.includes(c)) || "orange",
         chain: ["roboRIO"], orderConfirmed: false, segmentLengthsM: {} });
       editBus = editing.buses.length - 1;
       paintEditor();
@@ -718,10 +766,31 @@ const Wiring = (() => {
   $("#ww-start", root).onclick = () => startWiggle(false);
   $("#ww-practice", root).onclick = () => startWiggle(true);
   $("#w-demo", root).onchange = e => { demo = e.target.value; logAt = null; refresh(); };
+  // Which bus the termination check is on, and where its far end is. Built only when the buses or
+  // their results change: the tab repaints every second.
+  let ohmsBus = 0;
+  function paintOhmsBus() {
+    const box = $("#w-ohms-bus", root), B = (data && data.map && data.map.buses) || [];
+    if (ohmsBus >= B.length) ohmsBus = 0;
+    const key = JSON.stringify([ohmsBus, B.map(b => [b.name, b.label, b.chain[b.chain.length - 1]]), data && data.termination]);
+    if (box._key === key) return;
+    box._key = key;
+    const b = B[ohmsBus];
+    box.innerHTML = !b ? "" : `${B.length > 1 ? `<div class="seg" style="width:max-content" role="group" aria-label="Bus to check">${B.map((x, i) =>
+        `<button data-ob="${i}" class="${i === ohmsBus ? "on" : ""}" aria-pressed="${i === ohmsBus}" data-tip="wiring.ohms-bus">${esc(labelOf(x))}</button>`).join("")}</div>` : ""}
+      <p class="small">${B.length > 1 ? `<b>${esc(labelOf(b))}</b>: ` : ""}measure at ${esc(farEnd(b))}. ${termChip(b)}</p>`;
+    $$("[data-ob]", box).forEach(x => x.onclick = () => { ohmsBus = +x.dataset.ob; $("#w-ohms-out", root).innerHTML = ""; paintOhmsBus(); });
+  }
+
   $("#w-ohms-go", root).onclick = async () => {
-    const v = await App.api("/api/wiring/termination", { ohms: $("#w-ohms", root).value });
+    const b = ((data && data.map && data.map.buses) || [])[ohmsBus];
+    const v = await App.api("/api/wiring/termination", { ohms: $("#w-ohms", root).value, without: $("#w-ohms2", root).value, bus: b && b.name });
     $("#w-ohms-out", root).innerHTML = `<div class="finding"><div class="head"><span class="level ${v.level}">${v.level}</span><span class="title">${esc(v.title)}</span></div><div class="why">${Learn.link(v.why, 3)}</div></div>`;
-    if (v.level !== "info") HowTo.mark("wiring", "wire_ohms", v.level === "ok", v.title);
+    // Recorded per bus; readings that don't add up, or none, record nothing.
+    if (v.level !== "info" && v.kind !== "odd" && b) {
+      await HowTo.mark("wiring", "wire_ohms:" + b.name, v.level === "ok", v.title);
+      refresh();
+    }
   };
 
   App.on("tab", async t => {
@@ -731,8 +800,8 @@ const Wiring = (() => {
       ohmsDrawn = true;
       FrcMap.render($("#w-ohms-map", root), { view: "can", wires: "can", alt: "Where the CAN bus is terminated and where to measure it",
         focus: [{ part: "rio_can", state: "here", label: "One end: the roboRIO, 120 Ω inside" },
-          { part: "pdh_can", state: "here", label: "Probe CAN-H and CAN-L at any free plug" },
-          { part: "pdh_term", state: "here", label: "The other end: TERM ON" }] });
+          { part: "pdh_can", state: "here", label: "Measure here, at the far end" },
+          { part: "pdh_term", state: "here", label: "The far terminator: TERM ON, then OFF" }] });
     }
     await refresh();
     if (data && data.demos && $("#w-demo", root).options.length === 1) {
@@ -742,6 +811,9 @@ const Wiring = (() => {
     timer = setInterval(refresh, 1000);
   });
   window.addEventListener("resize", () => { if (data && root.classList.contains("on")) paint(); });
+  // Its section opened from the rail: fit at once, not at the next repaint.
+  new ResizeObserver(() => { const svg = $("#w-svg", root); if (svg._H) fitDrawing(svg, svg._H); })
+    .observe($("#w-svg", root).closest(".job-area > *"));
   return {
     /** Shows the map as it was at a moment in a match log. */
     showLog(path, t) { logAt = { path, t }; App.show("wiring"); },

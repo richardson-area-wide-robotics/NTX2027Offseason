@@ -302,9 +302,22 @@ def wiring(ctx):
     prog, m = ctx.get("prog") or {}, ctx.get("wiring_map") or {}
     controllers = ctx.get("controllers") or []
     jobs = []
-    st = _mark_status(_mark(prog, "wire_ohms"), "the reading is wrong: see the check's advice")
-    jobs.append(_job("ohms", "Termination check", *(st or ("todo", "Robot off; a multimeter across CAN-H and CAN-L.")),
-                     go={"tab": "wiring", "panel": "w-ohms-panel"}))
+    # One check per bus; a one-bus robot's older single check still counts.
+    names = [b.get("name") for b in (m.get("buses") or [])] or [None]
+    marks = [_mark(prog, f"wire_ohms:{n}") or (_mark(prog, "wire_ohms") if len(names) == 1 else None) for n in names]
+    failed = [n for n, mk in zip(names, marks) if mk and mk.get("result") != "pass"]
+    passed = sum(1 for mk in marks if mk and mk.get("result") == "pass")
+    called = {b.get("name"): b.get("label") for b in ((ctx.get("design") or {}).get("canBuses") or [])}
+    called.update({b.get("name"): b.get("label") for b in (m.get("buses") or []) if b.get("label")})
+    if failed:
+        st = ("attention", f"{', '.join(str(called.get(n) or n) for n in failed)}: the readings say a terminator is missing or not working.")
+    elif passed == len(names):
+        st = ("done", "Every bus measured about 60 ohms." if len(names) > 1 else "About 60 ohms: both terminators work.")
+    elif len(names) > 1:
+        st = ("todo", f"{passed} of {len(names)} buses measured. Robot off; a multimeter at each bus's far end.")
+    else:
+        st = ("todo", "Robot off; a multimeter at the far end, terminator in, then out.")
+    jobs.append(_job("ohms", "Termination check", *st, go={"tab": "wiring", "panel": "w-ohms-panel"}))
     ports = m.get("pdhPorts") or {}
     mapped = [c for c in controllers if c in ports]
     jobs.append(_job("pdh", "Find the PDH ports", "done" if controllers and len(mapped) == len(controllers) else "todo",

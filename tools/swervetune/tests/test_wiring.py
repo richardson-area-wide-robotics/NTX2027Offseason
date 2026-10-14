@@ -70,6 +70,17 @@ class BusesTest(unittest.TestCase):
         self.assertEqual((rio["chain"][0], rio["chain"][-1]), ("roboRIO", "PDH"))
         self.assertNotIn("Spindexter", rio["chain"])
 
+    def test_each_bus_carries_what_people_call_it(self):
+        from unittest import mock
+        two = {**self.TWO, "canBuses": [{"name": "rio", "label": "Drive train", "color": "yellow"},
+                                        {"name": "mech", "label": "Intake", "color": "orange"}]}
+        with mock.patch.object(W, "_design", return_value=two):
+            m = W.default_map(PEA)
+        self.assertEqual([b["label"] for b in m["buses"]], ["Drive train", "Intake"])
+        self.assertEqual(W.bus_labels({"buses": [{"name": "mech"}, {"name": "rio", "label": "Swerve"}]}, two),
+                         ["Intake", "Swerve"], "an older map takes the design's label; its own wins")
+        self.assertEqual(W.bus_label({"name": "rio"}), "rio")
+
     def test_a_device_new_to_the_code_joins_its_designed_bus(self):
         from unittest import mock
         import json
@@ -84,6 +95,51 @@ class BusesTest(unittest.TestCase):
             back = W.load_map(PEA)
         self.assertEqual(back["buses"][1]["chain"], ["roboRIO", "Spindexter"])
         self.assertFalse(back["buses"][1]["orderConfirmed"], "its place on the bus needs checking")
+
+
+class TerminationTest(unittest.TestCase):
+    """Two readings at a bus's far end, robot off: terminator in, then out."""
+
+    PDH_END = {"chain": ["roboRIO", "FL drive", "PDH"]}
+    PLUG_END = {"chain": ["roboRIO", "Intake", "Tower"]}
+
+    def kind(self, a, b=None, bus=None):
+        return W.termination_pair(W.parse_ohms(a), W.parse_ohms(b), bus or self.PDH_END)
+
+    def test_both_terminators_work(self):
+        v = self.kind("60.2", "119")
+        self.assertEqual((v["level"], v["kind"]), ("ok", "ok"))
+
+    def test_a_far_terminator_fitted_but_not_working(self):
+        v = self.kind("121", "120")
+        self.assertEqual((v["level"], v["kind"]), ("error", "far_dead"))
+        self.assertIn("isn't working", v["title"])
+        self.assertIn("TERM switch", v["why"], "it names the PDH's switch at a PDH end")
+        self.assertIn("after Tower", self.kind("121", "120", self.PLUG_END)["why"], "and a plug-in one after the last device")
+
+    def test_a_broken_cable_is_not_a_missing_terminator(self):
+        v = self.kind("120", "OL")
+        self.assertEqual((v["level"], v["kind"]), ("error", "broken"))
+        self.assertIn("broken", v["title"])
+
+    def test_other_pairs(self):
+        self.assertEqual(self.kind("OL", "ol")["kind"], "open")
+        self.assertEqual(self.kind("60", "60")["kind"], "far_dead", "another terminator stands in for the dead one")
+        self.assertEqual(self.kind("40", "60")["kind"], "extra")
+        self.assertEqual(self.kind("2", "OL")["kind"], "short")
+        self.assertEqual(self.kind("120", "60")["kind"], "odd", "taking a terminator out never lowers it")
+
+    def test_one_reading_says_how_to_tell_missing_from_broken(self):
+        v = self.kind("119 Ω")
+        self.assertEqual((v["level"], v["kind"]), ("error", "one"))
+        self.assertIn("second reading", v["why"])
+        self.assertEqual(self.kind("")["kind"], "none")
+
+    def test_a_reading_as_typed(self):
+        self.assertEqual(W.parse_ohms("OL"), float("inf"))
+        self.assertEqual(W.parse_ohms(" 59.9 ohms"), 59.9)
+        self.assertIsNone(W.parse_ohms("abc"))
+        self.assertIsNone(W.parse_ohms(None))
 
 
 class RulesTest(unittest.TestCase):

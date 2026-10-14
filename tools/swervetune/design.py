@@ -100,6 +100,13 @@ def check(design):
             F.append(_f("error", f"CAN buses {colors[c]} and {name} are both {c}",
                         "Each bus gets its own cable color, so nobody plugs a device into the wrong bus."))
         colors.setdefault(c, name)
+    labels = {}
+    for name, b in B.items():
+        lab = (b.get("label") or "").strip().lower()
+        if lab and lab in labels:
+            F.append(_f("warn", f"CAN buses {labels[lab]} and {name} are both called {b.get('label')!r}",
+                        "Give each bus its own label (Drive train, Intake, ...), so a person can say which one."))
+        labels.setdefault(lab, name)
     if ctl.startswith("roborio") and len(B) > 1:
         F.append(_f("warn", f"{len(B)} CAN buses on a roboRIO", "A roboRIO has one CAN bus; a second needs a CANivore. Check the list."))
 
@@ -384,13 +391,18 @@ def _num(v, cast=float):
 
 def from_csv(text_, *, robot="", controller="roborio2", buses_=None):
     """A design file from a spreadsheet saved as CSV: one row per motor (kind ``motor``) or sensor (kind
-    ``digital``, ``analog``, ``dutycycle``, ``encoder`` or ``pwm``), columns as ``CSV_COLUMNS``."""
-    motors, sensors = [], []
+    ``digital``, ``analog``, ``dutycycle``, ``encoder`` or ``pwm``), columns as ``CSV_COLUMNS``. A row of
+    kind ``bus`` lists a CAN bus: ``name`` as the code calls it, ``type`` its cable color, ``subsystem``
+    what people call it (Drive train, Intake)."""
+    motors, sensors, bus_rows = [], [], []
     for row in csv.DictReader(io.StringIO(text_)):
         r = {k.strip().lower(): (v or "").strip() for k, v in row.items() if k}
         if not r.get("name"):
             continue
         kind = (r.get("kind") or "motor").lower()
+        if kind == "bus":
+            bus_rows.append({"name": r["name"], "label": r.get("subsystem", ""), "color": (r.get("type") or "").lower()})
+            continue
         if kind == "motor":
             motors.append({"name": r["name"], "subsystem": r.get("subsystem", ""),
                            "motor": {"type": r.get("type", ""), "id": _num(r.get("id"), int), "canbus": r.get("canbus") or "rio"},
@@ -407,6 +419,6 @@ def from_csv(text_, *, robot="", controller="roborio2", buses_=None):
     names = sorted({(m["motor"]["canbus"]) for m in motors} or {"rio"})
     colors = list(BUS_COLORS)
     return {"version": VERSION, "robot": robot, "controller": controller,
-            "canBuses": buses_ or [{"name": n, "color": colors[i % len(colors)]} for i, n in enumerate(names)],
+            "canBuses": buses_ or bus_rows or [{"name": n, "color": colors[i % len(colors)]} for i, n in enumerate(names)],
             "pdh": {"type": "rev_pdh", "id": 1, "canbus": names[0]},
             "motors": motors, "sensors": sensors}

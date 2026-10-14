@@ -126,6 +126,15 @@ class DesignImportTest(unittest.TestCase):
            "Beam break,Intake,digital,,,,,,,,,,,,,,0,a game piece is in\n"
            "Arm encoder,Arm,encoder,,,,,,,,,,,,,,\"1, 2\",\n")
 
+    def test_buses_have_their_own_names_and_colors(self):
+        csv = self.CSV + "".join(r + chr(10) for r in ("rio,Drive train,bus,yellow,,,,,,,,,,,,,,",
+                                                         "mech,Intake,bus,orange,,,,,,,,,,,,,,"))
+        d = D.from_csv(csv, controller="systemcore")
+        self.assertEqual(d["canBuses"], [{"name": "rio", "label": "Drive train", "color": "yellow"},
+                                         {"name": "mech", "label": "Intake", "color": "orange"}])
+        d["canBuses"][1]["label"] = "drive train"
+        self.assertTrue(any("both called" in t for t in titles(D.check(d), "warn")))
+
     def test_a_spreadsheet_becomes_a_design_file(self):
         d = D.from_csv(self.CSV, robot="Test")
         self.assertEqual(len(d["motors"]), 2)

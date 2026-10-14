@@ -128,6 +128,12 @@ def bus_colors(m, design=None):
     return out
 
 
+def bus_labels(m, design=None):
+    """Each bus's label (Drive train, Intake): the map's own, else the design's bus of the same name."""
+    by_name = {b.get("name"): b.get("label") for b in ((design or {}).get("canBuses") or [])}
+    return [b.get("label") or by_name.get(b.get("name")) or "" for b in m.get("buses") or []]
+
+
 def default_map(project):
     devices = [d for d in discover(project) if d["can_id"] is not None]
     devices.sort(key=lambda d: d["can_id"])
@@ -140,8 +146,8 @@ def default_map(project):
         for b in dbuses:
             on = [d["name"] for d in devices if (_design_bus(design, d["name"]) or first) == b.get("name")]
             pdh_bus = ((design.get("pdh") or {}).get("canbus") or first) == b.get("name")
-            buses.append({"name": b.get("name"), "color": b.get("color"), "chain": ["roboRIO"] + on + (["PDH"] if pdh_bus else []),
-                          "orderConfirmed": False, "segmentLengthsM": {}})
+            buses.append({"name": b.get("name"), "label": b.get("label") or "", "color": b.get("color"),
+                          "chain": ["roboRIO"] + on + (["PDH"] if pdh_bus else []), "orderConfirmed": False, "segmentLengthsM": {}})
         return {
             "_readme": "The robot's wiring for the swerve tools' Wiring tab: one entry per CAN bus, each with its "
                        "cable color (CAN-H; CAN-L is green on every bus). 'chain' is the order devices sit along "
@@ -160,6 +166,7 @@ def default_map(project):
             "orderConfirmed": False,
             "segmentLengthsM": {},
             "color": (dbuses[0].get("color") if dbuses else None) or "yellow",
+            "label": (dbuses[0].get("label") if dbuses else None) or "",
         }],
         "pdhPorts": {},
         "extraDevices": [],
@@ -249,6 +256,101 @@ def termination_verdict(ohms):
     return _level("error", f"{ohms:.0f} ohms: open",
                   "No terminator reached: a broken CAN wire right where you measured, or both ends "
                   "unterminated.")
+
+
+def parse_ohms(text):
+    """A multimeter reading as typed: a number of ohms; "OL" (or "open") is no connection at all,
+    infinite; blank is no reading."""
+    t = str(text if text is not None else "").strip().lower().replace("ω", "").replace("ohms", "").strip()
+    if not t:
+        return None
+    if t in ("ol", "o.l", "o.l.", "open", "inf"):
+        return math.inf  # the meter's "out of range": no connection at all
+    try:
+        v = float(t)
+    except ValueError:
+        return None
+    return v if v >= 0 else None
+
+
+def _band(ohms):
+    """short, three (about 40), two (about 60), one (about 120), or open."""
+    if ohms is None:
+        return None
+    if ohms < 30:
+        return "short"
+    if ohms < 50:
+        return "three"
+    if ohms <= 75:
+        return "two"
+    if ohms <= 160:
+        return "one"
+    return "open"
+
+
+def far_end(bus):
+    """Where a bus's far terminator is, in words: the PDH's switch, or a plug-in terminator."""
+    chain = (bus or {}).get("chain") or []
+    if chain and chain[-1] == "PDH":
+        return "the PDH (its TERM switch)"
+    last = next((n for n in reversed(chain) if n not in ("roboRIO", "PDH")), None)
+    return f"the terminator plugged in after {last}" if last else "the far end of the bus"
+
+
+def termination_pair(with_ohms, without_ohms=None, bus=None):
+    """Two readings at a bus's far end, robot off: with its terminator in (the PDH's TERM switch ON,
+    or the plug-in terminator fitted), then without it. Together they tell a missing terminator from
+    one fitted but not working, and both from a broken cable. One reading alone says only how many
+    terminators the meter sees."""
+    far = far_end(bus)
+    a, b = _band(with_ohms), _band(without_ohms)
+    if a is None:
+        return dict(termination_verdict(None), kind="none")
+    if b is None:
+        v = dict(termination_verdict(with_ohms), kind={"two": "ok", "one": "one", "open": "open", "three": "extra", "short": "short"}[a])
+        if a == "one":
+            v["why"] += (f" To tell which: take the second reading at {far} with its terminator out. Same 120: that "
+                         "terminator isn't working. OL: it works, and the cable to the robot controller is broken.")
+        return v
+    fmt = lambda x: "OL" if x == math.inf else f"{x:.0f}"
+    pair = f"{fmt(with_ohms)} then {fmt(without_ohms)} ohms"
+    if a == "two" and b == "one":
+        return _level("ok", f"{pair}: both terminators work",
+                      f"In: both ends, side by side. Out: only the robot controller's end. Put {far} back in.") | {"kind": "ok"}
+    if a == "one" and b == "one":
+        return _level("error", f"{pair}: the far terminator isn't working",
+                      f"Removing {far} changed nothing, so it was never in the circuit: a TERM switch not "
+                      "fully across, a terminator not seated or on the wrong plug, or a broken resistor. Reseat or "
+                      "replace it and measure again.") | {"kind": "far_dead"}
+    if a == "one" and b == "open":
+        return _level("error", f"{pair}: the cable is broken between here and the robot controller",
+                      f"{far[0].upper() + far[1:]} works (120 with it, nothing without), but the robot controller's "
+                      "terminator never reaches this point. A CAN wire is open somewhere along the bus, or a plug "
+                      "isn't latched. Wiggle-test the plugs, or measure at each plug toward the controller: where "
+                      "it reads 60 again, the break is just past it.") | {"kind": "broken"}
+    if a == "open" and b == "open":
+        return _level("error", f"{pair}: no terminator reaches this point",
+                      f"Both ends missing, or the meter isn't on CAN-H and CAN-L. Check the probes, then {far} and "
+                      "the cable.") | {"kind": "open"}
+    if a == "two" and b == "two":
+        return _level("error", f"{pair}: the far terminator isn't working, and another one is on",
+                      f"Removing {far} changed nothing, yet the meter still sees two terminators: a device in the "
+                      "middle of the bus has termination on (or a second terminator is fitted), and the one at the "
+                      "far end isn't doing anything. Only the two ends may terminate.") | {"kind": "far_dead"}
+    if a == "three" and b == "two":
+        return _level("warn", f"{pair}: one terminator too many, in the middle",
+                      f"{far[0].upper() + far[1:]} works, but a third terminator is on somewhere in the middle: a "
+                      "device with termination switched on. Switch it off.") | {"kind": "extra"}
+    if a == "short" or b == "short":
+        return dict(termination_verdict(min(x for x in (with_ohms, without_ohms) if x is not None)), kind="short")
+    return _level("warn", f"{pair}: these don't add up",
+                  "Taking a 120 ohm terminator out should raise the reading (60 to 120, or 120 to OL). Check the "
+                  "probes are on CAN-H and CAN-L, every device is off, and measure both again.") | {"kind": "odd"}
+
+
+def bus_label(bus):
+    """What people call a bus ("Drive train"), else the name the code uses."""
+    return (bus or {}).get("label") or (bus or {}).get("name") or "CAN bus"
 
 
 def feed_resistance(samples):

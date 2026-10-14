@@ -405,6 +405,9 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .schematic .wire.can-case { stroke: var(--edge); stroke-width: 4.5px; }
 .schematic .bus-label { font: 600 13px var(--sans); fill: var(--ink); }
 .schematic .hint-text { font: 12px var(--sans); fill: var(--muted); }
+.schematic .term-ok { fill: var(--ok); font-weight: 600; }
+.schematic .term-bad { fill: var(--bad); font-weight: 700; }
+.schematic .term-none { fill: var(--muted); font-weight: 400; }
 .schematic .node { cursor: pointer; }
 .schematic .node .box { fill: var(--panel); stroke: var(--edge); stroke-width: 1.5; }
 .schematic .node.ok .box { fill: var(--ok-bg); stroke: var(--ok); }
