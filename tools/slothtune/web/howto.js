@@ -1,8 +1,8 @@
 // How-to instructions, "where to start" and "what to do next", for every calibration and
-// configuration tool. Each tool is a rail and one section: the rail lists the tool's jobs in order
-// with what the robot's files, the saved runs and the robot itself say is done (server: setup.py),
-// marks the next one, and under them shows the open section's how-to instructions; beside it, only
-// the section being worked on shows, so every job fits one laptop screen. One switch shows or hides
+// configuration tool. Each tool is a rail, one section, and that section's how-to: the rail lists
+// the tool's jobs in order with what the robot's files, the saved runs and the robot itself say is
+// done (server: setup.py) and marks the next one; beside it only the section being worked on shows,
+// so every job fits one laptop screen; beside that, its how-to instructions, in their own column. One switch shows or hides
 // the instructions everywhere (remembered on this laptop); when a job checks out, its section says
 // what comes next, right where the person is looking.
 "use strict";
@@ -23,12 +23,14 @@ const HowTo = (() => {
     try { localStorage.setItem(KEY, on ? "on" : "off"); } catch (e) { /* storage blocked: this page only */ }
     apply(document);
     $$("[data-howto-switch]").forEach(c => { c.checked = on; });
+    $$(".job-side").forEach(s => { s.hidden = !on || !s._src; });
   }
 
   /** A panel's instructions, folded away when the switch is off (each one can still be opened). In a
-   *  tool with a rail they show in the rail, beside the section they are for. */
-  function block(html, label = "How to do it") {
-    return `<details class="howto" ${shown() ? "open" : ""}><summary data-tip="howto.block">${esc(label)}</summary><div class="howto-body">${html}</div></details>`;
+   *  tool with a rail they show in the column beside the section they are for; ``inline`` keeps
+   *  them where they are (a panel's own note, in a side column already). */
+  function block(html, label = "How to do it", { inline = false } = {}) {
+    return `<details class="howto${inline ? " inline" : ""}" data-label="${esc(label)}" ${shown() ? "open" : ""}><summary data-tip="howto.block">${esc(label)}</summary><div class="howto-body">${html}</div></details>`;
   }
 
   /** Steps, a good result and what you need, in the house layout. */
@@ -92,17 +94,24 @@ const HowTo = (() => {
     }
   }
 
-  // The open section's instructions, shown in the rail under the jobs (the section's own copy is
-  // hidden there, so the section's width goes to its controls and results).
+  // The open section's instructions, in their own column beside it (an <aside> after the section;
+  // the section's own copy is hidden, so its width goes to its controls and results).
   function copyHowTo(wrap, sec) {
-    const box = wrap && $(".rail-how", wrap);
-    if (!box) return;
-    const html = sec ? [...sec.querySelectorAll("details.howto")].map(d => d.outerHTML).join("") : "";
-    if (box._src === html) return;
-    box._src = html;
-    box.innerHTML = html;
-    $$("details.howto", box).forEach(d => { d.open = shown(); });
-    box.hidden = !html;
+    if (!wrap) return;
+    let side = $(":scope > .job-side", wrap);
+    if (!side) {
+      side = document.createElement("aside");
+      side.className = "panel job-side";
+      side.setAttribute("aria-label", "How to do it");
+      wrap.append(side);
+    }
+    const html = sec ? [...sec.querySelectorAll("details.howto:not(.inline)")].map(d =>
+      `<section><h3>${esc(d.dataset.label || "How to do it")}</h3><div class="howto-body">${$(".howto-body", d).innerHTML}</div></section>`).join("") : "";
+    if (side._src !== html) {
+      side._src = html;
+      side.innerHTML = html;
+    }
+    side.hidden = !html || !shown();
   }
 
   function railItem(attrs, cls, mark, title, sub, extra = "") {
@@ -155,8 +164,7 @@ const HowTo = (() => {
       <details class="rail-about"><summary class="small" data-tip="howto.about">What this tool is for</summary>
         <p class="small">${esc(p.what)}</p>${(p.bring || []).length ? `<p class="small muted"><b>Bring:</b> ${p.bring.map(esc).join(" · ")}</p>` : ""}</details>
       <div class="row rail-foot">${parts ? `<button class="btn small" data-parts="${parts}" data-tip="howto.parts">Redo one part</button>` : ""}
-        <label class="row small howto-switch" data-tip="howto.switch"><input type="checkbox" data-howto-switch ${shown() ? "checked" : ""}> How-to</label></div>
-      <div class="rail-how" hidden></div>`;
+        <label class="row small howto-switch" data-tip="howto.switch"><input type="checkbox" data-howto-switch ${shown() ? "checked" : ""}> How-to</label></div>`;
     // Each rail item knows its section: a job in this tool selects it; a job elsewhere goes there.
     $$("[data-rail-job]", box).forEach(b => {
       const j = p.jobs.find(x => x.id === b.dataset.railJob);

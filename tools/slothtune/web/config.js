@@ -66,7 +66,7 @@
     <div class="panel" id="dl-panel"><h2 data-tip="config.designs">Mechanism designs</h2>
       ${HowTo.steps({ note: `Designed a mechanism in <a href="https://www.reca.lc/" target="_blank" rel="noopener">ReCalc</a> or
         <a href="https://ambcalc.com/" target="_blank" rel="noopener">AMBcalc</a>? The link holds the whole design: the tool reads it, attaches it to the motors it is for, and checks it against the code and the robot.`,
-        steps: ["In the calculator, press Copy Link (or copy the address bar).", "Paste it below and press <b>Read it</b>.",
+        steps: ["In the calculator, press Copy Link (or copy the address bar).", "Paste it into the link box and press <b>Read it</b>.",
           "Name the mechanism and tick its motors if the tool guessed wrong.", "<b>Save the design</b>; tick a number only if you want it written too."],
         good: "no errors under <b>Checked against the robot</b>. After a practice match, check the saved designs against its log." })}
       <div class="row"><label class="row small" data-tip="config.dl-url" style="flex:1">Design link

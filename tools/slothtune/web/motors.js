@@ -36,7 +36,7 @@
           ${HowTo.block(`<p class="small">For the end of a match, when losing a motor costs more than the motor. A motor the guard
             cut off for heat runs at half power instead, for up to <span id="ovr-max">20</span> s. Never lifts a stall cut, and never
             holds off a motor already 10 °C past its shutoff or at 95% heat: past those it is being destroyed.
-            The driver's Back button does the same for every motor: a short buzz when it took, a long one when a motor stays off.</p>`, "How it works")}
+            The driver's Back button does the same for every motor: a short buzz when it took, a long one when a motor stays off.</p>`, "How it works", { inline: true })}
           <div id="ovr-now" class="callout warn" hidden></div>
           <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:8px">
             <label class="row small" data-tip="motors.ovr-name">Motor <select id="ovr-name"><option value="ALL">Every motor</option></select></label>

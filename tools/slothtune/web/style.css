@@ -596,14 +596,24 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
   .frcmap svg { filter: brightness(.92); }
 }
 
-/* ---------------------------------------------------------------- a tool: its jobs in a rail, one section beside it
-   The rail lists the jobs in order and, under them, the open section's how-to; the section gets the
-   rest of the width. Only the section being worked on shows, so each fits one laptop screen
+/* ---------------------------------------------------------------- a tool: its jobs in a rail, one section, its how-to
+   Three columns: the rail lists the jobs in order (navigation only); the open section gets the
+   middle; its how-to has its own column (--side-w) on the right, not drawn when it has none or the
+   How-to switch is off. Only the section being worked on shows, so each fits one laptop screen
    (--work-h); one that outgrows it scrolls inside itself, never the page. */
 .jobs { display: grid; grid-template-columns: var(--rail-w) minmax(0, 1fr); gap: var(--gap); align-items: start; }
 .job-area { display: grid; gap: var(--gap); min-width: 0; }
 .job-area > .job-off { display: none; }             /* a class, not [hidden]: a tool's own hidden panels stay hidden */
-.job-area details.howto { display: none; }           /* shown in the rail, beside the section it is for */
+.job-area details.howto:not(.inline) { display: none; }   /* shown in .job-side, beside the section it is for */
+.job-side { position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); max-height: var(--work-h);
+  overflow-y: auto; display: grid; gap: 12px; align-content: start; }
+.job-side h3 { margin: 0 0 4px; }
+.job-side ol { padding-left: 20px; }
+@media (min-width: 1280px) {
+  .jobs:has(> .job-side:not([hidden])) { grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--side-w); }
+}
+/* Narrower, the how-to goes under the section, not under the rail. */
+@media (min-width: 901px) and (max-width: 1279px) { .job-side { grid-column: 2; position: static; max-height: none; } }
 .job-area > * { max-height: var(--work-h); overflow-y: auto; }
 .rail-panel { position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); max-height: var(--work-h);
   overflow-y: auto; align-content: start; gap: 6px; background: var(--bg); border-color: var(--bg); }
@@ -637,10 +647,10 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .rail-first { justify-self: start; margin: 2px 0 2px 38px; }
 .rail-about > summary { cursor: pointer; color: var(--muted); }
 .rail-foot { justify-content: space-between; }
-.rail-how { display: grid; gap: 6px; }
 @media (max-width: 900px) {
   .jobs { grid-template-columns: minmax(0, 1fr); }
   .rail-panel { position: static; max-height: none; }
+  .job-side { position: static; max-height: none; }
   .job-area > * { max-height: none; overflow: visible; }
 }
 

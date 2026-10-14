@@ -53,7 +53,7 @@ const Wiring = (() => {
           <div class="panel" id="w-ohms-panel">
             <h3 data-tip="wiring.ohms"><span class="term" tabindex="0" data-learn="can_termination">Termination check</span></h3>
             ${HowTo.steps({ need: "A multimeter. The robot <b>off</b>: a powered device makes the reading meaningless.",
-              steps: ["Multimeter on ohms. At the bus's far end (named below), probes on CAN-H (the bus's color) and CAN-L (green).",
+              steps: ["Multimeter on ohms. At the bus's far end (named in the termination check), probes on CAN-H (the bus's color) and CAN-L (green).",
                 "Read it with the far terminator in. Then take it out (the PDH's TERM switch OFF, or unplug the terminator) and read again; type OL if the meter shows OL.",
                 "Put the terminator back, then press <b>Check</b>. With several buses, check each."],
               good: "about 60 Ω, then about 120 Ω: both terminators work." })}

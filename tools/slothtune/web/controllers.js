@@ -36,7 +36,7 @@
       ${HowTo.steps({ note: "No robot needed: the Driver Station reads the same joystick the same way. Do this for every joystick at the start of an event.",
         steps: ["Plug the joystick into this laptop with USB and press any button on it.",
           "Say which one it is (Driver, Operator, Spare 1): its saved checks are kept under that name.",
-          "Run the steps on the right in order: rest, sticks, return to center, triggers, buttons.",
+          "Run the Steps in order: rest, sticks, return to center, triggers, buttons.",
           "Read the report, then <b>Save the check</b>."],
         good: "drift inside the code's deadband, full reach every way, and no stuck or bouncing button." })}
       <div class="row" style="flex-wrap:wrap;gap:12px">
