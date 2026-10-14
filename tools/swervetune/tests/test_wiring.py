@@ -38,6 +38,17 @@ class DiscoveryTest(unittest.TestCase):
         self.assertEqual(black["Intake"], 9, "a CAN_ID constant is resolved")
         self.assertEqual(len(black), 10)
 
+    def test_each_device_says_what_it_is(self):
+        self.assertEqual(W.device_type("sparkflex_vortex"), "SPARK Flex · NEO Vortex")
+        self.assertEqual(W.device_type("sparkmax_neo550"), "SPARK MAX · NEO 550")
+        self.assertEqual(W.device_type("SparkMax"), "SPARK MAX", "a Java class name too")
+        self.assertEqual(W.device_type("pigeon2"), "Pigeon 2")
+        self.assertEqual(W.device_type("something else"), "something else")
+        devs = W.devices_by_name(PEA, W.default_map(PEA))
+        self.assertEqual((devs["Spindexter"]["type"], devs["Tower"]["type"]), ("SPARK MAX", "SPARK Flex"))
+        self.assertEqual(devs["frontleft steer"]["type"], "SPARK MAX · NEO 550")
+        self.assertEqual(devs["PDH"]["type"], "REV PDH")
+
     def test_a_fresh_map_is_unconfirmed_and_ends_at_the_terminators(self):
         m = W.default_map(PEA)
         chain = m["buses"][0]["chain"]

@@ -196,7 +196,7 @@ def spin_check(spin_report_measured, configured_over_real=1.0):
     gw = (spin_report_measured or {}).get("gyro_over_wheels")
     if gw is None or not A.finite(gw) or gw <= 0:
         return {"findings": [_f("info", "No spin on the floor to check against",
-                                "Run the spin test on the floor (Tune tab) after updating the positions.")]}
+                                "Run the spin test on the floor (Tune drive train) after updating the positions.")]}
     # Wheels read v = w_true * r_true * s with s = configured/real diameter, and are judged against
     # r_cfg: gyro/wheels = r_cfg / (r_true * s).
     radius_ratio = 1 / (gw * configured_over_real)

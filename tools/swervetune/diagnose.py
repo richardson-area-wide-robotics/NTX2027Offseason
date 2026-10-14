@@ -98,7 +98,7 @@ SYMPTOMS = [
                   {"type": "guide", "step": "hand"},
                   {"lint": ["angle_inversion_mixed"]}),
             check("Does the Steering test on blocks move the RIGHT module, and does it reach each target?",
-                  "Tune tab, Steering, pick FL only, run on blocks. Watch which physical module "
+                  "Tune drive train, Steering, pick FL only, run on blocks. Watch which physical module "
                   "turns.",
                   BLOCKS,
                   "Another module turned (CAN IDs swapped between module files), or it ran away "
@@ -134,7 +134,7 @@ SYMPTOMS = [
                   {"lint": ["drive_inversion_mixed"]}),
             check("On blocks, with all wheels pointed forward and driving slowly forward, does the "
                   "TOP of every tire roll toward the front of the robot?",
-                  "Tune tab, Drive speed, run it on blocks and watch the tops of the tires. That "
+                  "Tune drive train, Drive speed, run it on blocks and watch the tops of the tires. That "
                   "is the direction the robot would go.",
                   BLOCKS,
                   "That wheel would push the robot backwards.",
@@ -218,7 +218,7 @@ SYMPTOMS = [
                   "the navX calibrates; check it is mounted solidly.",
                   {"type": "run", "test": "capture", "env": "ANY", "args": {"duration_s": 30}}),
             check("Does the spin test show gyro, wheels and command agreeing?",
-                  "Tune tab, Spin, on the floor.",
+                  "Tune drive train, Spin, on the floor.",
                   FIELD,
                   "Module locations in the config do not match the robot, or the gyro scale is "
                   "off.",
@@ -241,7 +241,7 @@ SYMPTOMS = [
                   {"type": "tune", "loop": "steer"},
                   {"lint": ["steer_ramp"]}),
             check("Does the Steering test show under 10% overshoot and no ringing?",
-                  "Tune tab, Steering, on blocks then on the floor.",
+                  "Tune drive train, Steering, on blocks then on the floor.",
                   BLOCKS,
                   "Steering gains are too aggressive for this module.",
                   "Follow the tuner's advice: add kD (about kP x 5 on a SPARK), or lower kP.",
@@ -281,7 +281,7 @@ SYMPTOMS = [
                   "Every steering correction is slew-limited.", "Set it to 0.",
                   {"type": "tune", "loop": "steer"}, {"lint": ["steer_ramp"]}),
             check("Does the Steering test ON THE FLOOR meet the rise-time target?",
-                  "Tune tab, Steering, floor (the robot does not drive; wheels turn in place).",
+                  "Tune drive train, Steering, floor (the robot does not drive; wheels turn in place).",
                   FIELD,
                   "Steering kP is soft for carpet, or the current limit is the ceiling.",
                   "Follow the tuner: it says whether kP or the current limit is the lever.",
@@ -353,7 +353,7 @@ SYMPTOMS = [
                   "Measure the per-module feedforward (the Feedforward test); a big difference is mechanical.",
                   {"type": "run", "test": "drive_step", "env": FIELD}),
             check("Does the straight-line test hold heading within 1° with no correction?",
-                  "Tune tab, Straight; tape-measure where it stops if there are no AprilTags.",
+                  "Tune drive train, Straight; tape-measure where it stops if there are no AprilTags.",
                   FIELD,
                   "The drivetrain itself is not straight.",
                   "Work back up this list. Turn on heading correction only once the cause is "

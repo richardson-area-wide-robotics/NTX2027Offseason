@@ -67,7 +67,7 @@
       <div class="panel" id="cal-spin">
         <h2 data-tip="cal.spin">3. Check with a spin</h2>
         <div data-faults="spin"></div>
-        ${HowTo.steps({ steps: ["After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune tab, or the Guide's Spin check).",
+        ${HowTo.steps({ steps: ["After the positions and wheel sizes are in, run the <b>Spin</b> test on the floor (Tune drive train, or the Guide's Spin check).",
           "Press <b>Check the newest floor spin</b>: turning on the spot, the gyro's turn rate against the wheels' speeds says whether the two agree as a whole."],
           good: "the gyro and the wheels agree within a few percent. If they don't, recheck the module positions and wheel sizes before blaming the gyro." })}
         <div class="row"><button class="btn" id="cg-spin" data-tip="cal.spin-check">Check the newest floor spin</button></div>

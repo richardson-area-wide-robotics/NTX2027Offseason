@@ -1011,6 +1011,11 @@ def api_wiring(query=None):
             # Each bus's cable color (CAN-H; CAN-L is green on all), and the colors CTRE's cable comes in.
             "bus_colors": wiring.bus_colors(m, design), "palette": D.BUS_COLORS,
             "bus_labels": wiring.bus_labels(m, design),
+            # From the design file, for a device's hover card: its subsystem and breaker.
+            "design_devices": {x.get("name"): {"subsystem": x.get("subsystem") or "",
+                                               "breaker": (x.get("pdh") or {}).get("breaker"),
+                                               "positive": x.get("positive") or ""}
+                               for x in (design or {}).get("motors") or [] if x.get("name")},
             # Each bus's termination check, as last recorded (robot off, a multimeter).
             "termination": {b.get("name"): prog.get("wire_ohms:" + str(b.get("name")))
                             or (prog.get("wire_ohms") if len(m["buses"]) == 1 else None) for b in m["buses"]},

@@ -1,4 +1,4 @@
-// Controllers tab: check the drive team's controllers in the pit - drift, deadband, reach, triggers,
+// Joysticks tab (internally "controllers"): check the drive team's controllers in the pit - drift, deadband, reach, triggers,
 // buttons - from a controller plugged into this laptop. No robot needed.
 "use strict";
 

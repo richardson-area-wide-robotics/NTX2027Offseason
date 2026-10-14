@@ -96,9 +96,9 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 | **Live** | Every module's angle and speed, what was asked against what happened. |
 | **Motors** | Each motor's heat, current and health. Warns before a motor overheats, and stops one that's stalled or failing. |
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. Every device, the PDH's ports and each finding are shown on FIRST's own control-system drawing (WPILib's REV layout, CC BY 4.0), with the part in question outlined and the parts our robots don't use, such as pneumatics, faded. Troubleshoot's power and CAN checks use the same drawing. Each CAN bus is drawn in its cable color with its name (Drive train, Intake); the termination check takes two meter readings per bus to tell a missing terminator from one that isn't working or a broken cable; and each controller's faults, now and since the code started, are in Where to look. |
-| **Tune** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. Faults on the motors being tuned show above it. |
+| **Tune drive train** | The test-and-adjust loop for each controller, with annotated graphs: what the controller saw, what it did, and what a change would do. Faults on the motors being tuned show above it. |
 | **Calibrate** | Measuring the robot itself: module positions, wheel sizes, the gyro, mass and moment of inertia, each camera's lens (PhotonVision, with the team's 9 x 11 in 8 x 8 ChArUco board, drawn), where the cameras sit, and where the field's AprilTags really are. Faults on the motors and gyro a measurement depends on show with it. |
-| **Controllers** | Checks the drive team's controllers, no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
+| **Joysticks** | Checks the drive team's joysticks (game controllers), no robot needed: stick drift against the code's deadband, reach, triggers, and buttons that bounce. |
 | **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. **Robot messages** lists every error and warning the robot has reported since you connected (its console on a real robot, its alerts on any), each once with how often and how recently, so what keeps coming back stands out. |
 | **Config** | Checks the swerve config files for mistakes, with one-click fixes. |
 | **Runs** | Every saved test, and **Match logs**: what went wrong in a match and where to look. |
@@ -306,7 +306,7 @@ open the Battery tab, press **Send the grades to the robot**, and redeploy. Do i
 
 ## The drive team's controllers
 
-Plug a controller into the laptop with USB, open **Controllers**, press any button on it, and name
+Plug a controller into the laptop with USB, open **Joysticks**, press any button on it, and name
 it (Driver, Operator, Spare 1). Then run the five steps; it takes about a minute:
 
 1. **Hands off**: where each stick rests when nobody touches it.

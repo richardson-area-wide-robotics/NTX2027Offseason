@@ -11,7 +11,7 @@ const HowTo = (() => {
   const KEY = "swervetune.howto";
   const WORD = { done: "done", attention: "needs a fix", todo: "to do", later: "later", optional: "optional", skip: "not needed" };
   const MARK = { done: "✓", attention: "!" };
-  const NAME = { bringup: "Bring-up", config: "Config", motors: "Motors", wiring: "Wiring", calibrate: "Calibrate", controllers: "Controllers" };
+  const NAME = { bringup: "Bring-up", config: "Config", motors: "Motors", wiring: "Wiring", calibrate: "Calibrate", controllers: "Joysticks" };
   const plans = {};   // tab -> the last plan shown
   const seqs = {};    // tab -> the newest paint asked for: a slow answer never paints over it
 

@@ -80,11 +80,11 @@ class CalibrateTest(unittest.TestCase):
                          ("done", "attention", "attention", "done", "todo"))
         self.assertEqual(p["next"]["id"], "wheels", "the first job needing work, in order")
 
-    def test_everything_done_points_on_to_the_controllers(self):
+    def test_everything_done_points_on_to_the_joysticks(self):
         p = SP.calibrate(ctx(prog={"cal_positions": mark(), "cal_wheels": mark(), "cal_spin": mark(), "cal_gyro_still": mark(),
                                    "cal_gyro_turns": mark()}, tune={"robotMassKg": 52, "robotMoiKgM2": 5.1}))
         self.assertIsNone(p["next"])
-        self.assertEqual(p["after"], {"tab": "controllers", "label": "Next: Controllers"}, "the tools run in order")
+        self.assertEqual(p["after"], {"tab": "controllers", "label": "Next: Joysticks"}, "the tools run in order")
         self.assertEqual((p["done"], p["of"]), (5, 5), "the skipped camera and optional field don't count")
 
     def test_the_order_names_an_earlier_tool_with_jobs_left(self):

@@ -202,14 +202,37 @@ def map_text(m):
     return json.dumps(m, indent=2) + "\n"
 
 
+# What a device is, in the words on its label: YAGSL's types ("sparkflex_vortex"), the code's Java
+# classes ("SparkMax") and gyro/encoder types.
+CONTROLLER_NAMES = {"sparkmax": "SPARK MAX", "sparkflex": "SPARK Flex", "talonfx": "Talon FX", "talonfxs": "Talon FXS",
+                    "talonsrx": "Talon SRX", "victorspx": "Victor SPX", "cancoder": "CANcoder", "canandmag": "Canandmag",
+                    "pigeon2": "Pigeon 2", "pigeon": "Pigeon", "navx": "NavX", "navx_spi": "NavX", "navx_mxp_spi": "NavX",
+                    "adis16470": "ADIS16470", "adxrs450": "ADXRS450", "analytical": "roboRIO's own", "canandgyro": "Canandgyro",
+                    "thrifty": "Thrifty encoder", "attached": "on the motor controller", "cancoder_v6": "CANcoder"}
+MOTOR_NAMES = {"neo": "NEO", "neo2": "NEO 2.0", "neo550": "NEO 550", "vortex": "NEO Vortex", "krakenx60": "Kraken X60",
+               "krakenx44": "Kraken X44", "falcon500": "Falcon 500", "minion": "Minion"}
+
+
+def device_type(model):
+    """``"SPARK Flex · NEO Vortex"`` for ``sparkflex_vortex``, ``"SPARK MAX"`` for ``SparkMax``."""
+    t = str(model or "").strip()
+    key = t.lower().replace(" ", "")
+    ctl, _, motor = key.partition("_")
+    if ctl in CONTROLLER_NAMES and (not motor or motor in MOTOR_NAMES):
+        return CONTROLLER_NAMES[ctl] + (f" · {MOTOR_NAMES[motor]}" if motor else "")
+    return CONTROLLER_NAMES.get(key, t)
+
+
 def devices_by_name(project, m):
-    found = {d["name"]: d for d in discover(project)}
+    found = {d["name"]: dict(d) for d in discover(project)}
     for d in m.get("extraDevices", []):
-        found[d["name"]] = d
-    found["roboRIO"] = {"name": "roboRIO", "kind": "roborio", "can_id": None, "model": "roboRIO",
+        found[d["name"]] = dict(d)
+    for d in found.values():
+        d["type"] = device_type(d.get("model"))
+    found["roboRIO"] = {"name": "roboRIO", "kind": "roborio", "can_id": None, "model": "roboRIO", "type": "roboRIO",
                         "source": "built in: 120 ohm terminator"}
     pdh = m.get("pdh", {})
-    found["PDH"] = {"name": "PDH", "kind": "pdh", "can_id": pdh.get("canId", 1),
+    found["PDH"] = {"name": "PDH", "kind": "pdh", "can_id": pdh.get("canId", 1), "type": pdh.get("model", "REV PDH"),
                     "model": pdh.get("model", "REV PDH"), "source": "power distribution"}
     return found
 

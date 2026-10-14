@@ -4,7 +4,7 @@ Two kinds of checklist, both worked out from evidence, never from a click alone:
 files, the runs saved on this laptop, the progress marks the tools record when a measurement
 checks out, and the live robot.
 
-* A **tool plan** (Calibrate, Config, Motors, Wiring, Controllers) lists that tool's jobs in the
+* A **tool plan** (Calibrate, Config, Motors, Wiring, Joysticks) lists that tool's jobs in the
   order they depend on each other.
 * A **part plan** redoes one part without the whole path: a module that was replaced or acts
   up, a motor, the gyro, a camera, a new field, new wheels. It counts only what was done to that
@@ -208,7 +208,7 @@ def calibrate(ctx):
                  "Measure in this order: each uses the ones before it. Every panel's Practice runs it on made-up "
                  "data with a known answer, to see what a good result looks like first.",
                  ["A tape measure", "3 m of straight floor", "A scale", "The ChArUco board and a tag on a wall (for a camera)"],
-                 jobs, {"tab": "controllers", "label": "Next: Controllers"})
+                 jobs, {"tab": "controllers", "label": "Next: Joysticks"})
 
 
 def config(ctx):
@@ -390,7 +390,7 @@ def controllers_plan(ctx):
                      go={"tab": "controllers", "panel": "ct-history"}))
     jobs.append(_job("spares", "Check the spares", "optional", "Before an event, so a swap mid-event is safe.",
                      go={"tab": "controllers", "panel": "ct-steps"}, optional=True))
-    return _plan("Controllers: the drivers' sticks and buttons",
+    return _plan("Joysticks: the drivers' sticks and buttons",
                  "Drift, dead zones, reach and buttons, for each Xbox controller, against the deadband the code uses.",
                  ["Each controller, with a USB cable"], jobs, {"guide": "", "label": "Back to the Guide"})
 

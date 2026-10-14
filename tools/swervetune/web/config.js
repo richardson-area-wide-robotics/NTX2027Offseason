@@ -44,7 +44,7 @@
           <tr><th></th><th class="num">${Learn.term("kP", "kP")}</th><th class="num">${Learn.term("kI", "kI")}</th><th class="num">${Learn.term("kD", "kD")}</th><th class="num">${Learn.term("iZone", "IZone")}</th><th class="num">${Learn.term("feedforward", "FF")}</th></tr>
           ${["angle", "drive"].map(k => { const p = (L.pidf || {})[k] || {}; return `<tr><th scope="row">${k === "angle" ? "Steering" : "Drive"}</th>
             <td class="num">${p.p}</td><td class="num">${p.i}</td><td class="num">${p.d}</td><td class="num">${p.iz}</td><td class="num">${p.f}</td></tr>`; }).join("")}
-        </table><p class="hint">Units are the SPARK's: output (duty cycle) per degree for steering, per m/s for drive; kD is per 1 ms controller step. YAGSL never sends FF to a SPARK: the real feedforward is measured per module on the Tune tab.</p></div>
+        </table><p class="hint">Units are the SPARK's: output (duty cycle) per degree for steering, per m/s for drive; kD is per 1 ms controller step. YAGSL never sends FF to a SPARK: the real feedforward is measured per module in Tune drive train.</p></div>
       </div>
       <div class="panel" id="cfg-findings"><h2 data-tip="config.findings">What does not add up</h2>
         ${HowTo.steps({ steps: ["<b>Errors</b> first: each says what is wrong, why it matters, and how to fix it.",

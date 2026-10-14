@@ -26,13 +26,14 @@ const Wiring = (() => {
         <p class="hint" id="w-meta"></p>
         <div id="w-banner"></div>
         <div class="schematic-wrap"><svg id="w-svg" class="schematic" role="group" aria-label="CAN chain and power schematic, in cable order"></svg></div>
+        <div id="w-card" class="dcard" role="tooltip" hidden></div>
         <div class="row small muted" style="flex-wrap:wrap;gap:14px">
           <span><span class="swatch can-h"></span><span class="term" tabindex="0" data-learn="can_bus">CAN-H / CAN-L</span>: CAN-H in each bus's cable color, CAN-L green on every bus; numbered in cable order from the roboRIO</span>
           <span><span class="swatch ok"></span>heard on the bus</span>
           <span><span class="swatch warn"></span>had trouble</span>
           <span><span class="swatch bad"></span>missing now</span>
           <span><span class="term" tabindex="0" data-learn="can_termination">Ω = terminator</span></span>
-          <span>Click a box (or Tab to it and press Enter) to see its details below.</span>
+          <span>Point at a box (or Tab to it) to see what the part is; click it (or press Enter) for its place on the robot below.</span>
         </div>
         <div id="w-detail" class="callout" hidden></div>
         <div id="w-detail-map" class="frc-slot"></div>
@@ -194,7 +195,7 @@ const Wiring = (() => {
     // Several buses draw smaller boxes, without the part's picture, so every bus fits on one screen.
     const multi = m.buses.length > 1;
     const W = Math.max(640, svg.clientWidth || 900), pad = 26, padY = multi ? 6 : pad;
-    const [bw, bh, gx, gy] = multi ? [152, 52, 22, 26] : [196, 76, 36, 54];
+    const [bw, bh, gx, gy] = multi ? [152, 64, 22, 26] : [196, 84, 36, 50];
     const perRow = Math.max(2, Math.floor((W - 2 * pad + gx) / (bw + gx)));
     // Each bus its own snake of boxes (so the cable stays one line), one bus under the next, with its
     // name and cable color above it when there is more than one.
@@ -222,7 +223,12 @@ const Wiring = (() => {
       if (hl.devs.has(name)) state = hl.devs.get(name);
       const word = { bad: "MISSING NOW", warn: "had trouble", ok: "heard", unknown: "" }[state] || "";
       const port = m.pdhPorts[name];
-      details[name] = [dev.model, dev.can_id != null ? "CAN ID " + dev.can_id : null,
+      // What it is: what the controller says it is when the robot is connected, else what the code
+      // created; the two disagreeing is a fault of its own (the Motors tab says how to fix it).
+      const live = r && r.controller, coded = name === "roboRIO" ? "" : dev.type || dev.model || "";
+      const type = live && coded && !coded.startsWith(live) ? `${live} (code: ${coded.split(" · ")[0]})` : (live && !coded ? live : coded);
+      const typeBad = !!(live && coded && !coded.startsWith(live));
+      details[name] = [type || dev.model, dev.can_id != null ? "CAN ID " + dev.can_id : null,
         port != null ? "PDH port " + port : (dev.kind === "controller" ? "PDH port not set" : null), dev.source,
         r ? `heard on the bus: ${r.present ? "yes" : "NO"}; dropped out ${r.dropouts || 0}×; rebooted ${r.resets || 0}×; low supply ${r.brownouts || 0}×` : null,
         r && Number.isFinite(r.bus_volts) ? `supply at the controller ${fmt(r.bus_volts, 2)} V` : null].filter(Boolean);
@@ -233,13 +239,13 @@ const Wiring = (() => {
       const sub = name === "roboRIO" ? "120 Ω built in" : name === "PDH"
         ? `CAN ${dev.can_id} · term ${m.pdh.terminationOn ? "ON" : "OFF"}`
         : `CAN ${dev.can_id ?? "?"} · PDH ${port ?? "?"}`;
-      return { name, i, bi, state, word, pic, sub, ohm: name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn) };
+      return { name, i, bi, state, word, pic, sub, type, typeBad, ohm: name === "roboRIO" || (name === "PDH" && m.pdh.terminationOn) };
     });
     // The schematic repaints every second with the live data. Rebuilding it when nothing had changed
     // destroyed the box a person had tabbed to, and pressing Enter destroyed the box pressed.
     const key = JSON.stringify([W, focus, m.pdh.terminationOn, data.bus_colors, m.buses.map(b => [b.name, b.label]), data.termination,
       hl.segs.map(x => [x.a, x.b, x.f.title]),
-      nodes.map(n => [n.name, n.state, n.word, n.sub, !!n.pic, n.ohm])]);
+      nodes.map(n => [n.name, n.state, n.word, n.sub, n.type, !!n.pic, n.ohm])]);
     if (key !== svg._key) {
       svg._key = key;
       const had = svg.contains(document.activeElement) ? document.activeElement.getAttribute("data-name") : null;
@@ -282,7 +288,7 @@ const Wiring = (() => {
         el("text", { x: mx, y: my + 4, "text-anchor": "middle", class: "suspect-mark" }, g, "!");
       }
 
-      nodes.forEach(({ name, i, state, word, pic, sub, ohm }, k) => {
+      nodes.forEach(({ name, i, state, word, pic, sub, type, typeBad, ohm }, k) => {
         const p = slots[k];
         const g = el("g", { class: "node " + state + (focus === name ? " focus" : ""), tabindex: 0, role: "button",
           "data-name": name, "aria-pressed": String(focus === name), "aria-label": `${i}. ${name}${word ? ", " + word : ""}` }, svg);
@@ -294,14 +300,21 @@ const Wiring = (() => {
           el("image", { href: pic, x: p.x + bw - 62, y: p.y + 8, width: 54, height: bh - 16, preserveAspectRatio: "xMidYMid meet", class: "art" }, g);
         }
         const label = `${i}. ${name}`, cut = multi ? 20 : 19;
-        const [y1, y2, y3] = multi ? [18, 33, 47] : [22, 42, 62];
+        const [y1, yt, y2, y3] = multi ? [17, 31, 45, 59] : [20, 37, 54, 72];
         el("text", { x: p.x + 10, y: p.y + y1, class: "nm" }, g, label.length > cut ? label.slice(0, cut - 1) + "…" : label);
+        const tcut = pic ? 21 : 24;
+        if (type) el("text", { x: p.x + 10, y: p.y + yt, class: "dtype" + (typeBad ? " bad" : "") }, g, type.length > tcut ? type.slice(0, tcut - 1) + "…" : type);
         el("text", { x: p.x + 10, y: p.y + y2, class: "sub" }, g, sub);
         if (word) el("text", { x: p.x + 10, y: p.y + y3, class: "state" }, g, word);
         if (ohm) el("text", { x: p.x + bw - (pic ? 80 : 20), y: p.y + y1, class: "ohm" }, g, "Ω");
         g.onclick = () => { focus = focus === name ? null : name; paint(); };
+        // Its card on hover, and on keyboard focus too (not for a mouse click: that opens the details).
+        g.onmouseenter = () => showCard(name, g);
+        g.onmouseleave = hideCard;
+        g.onfocus = () => { if (g.matches(":focus-visible")) showCard(name, g); };
+        g.onblur = hideCard;
         // Enter opens it. Not Space: on the Driver Station laptop Space is the E-STOP.
-        g.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); g.onclick(); } };
+        g.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); g.onclick(); } if (e.key === "Escape") hideCard(); };
       });
       const pdhSlot = slots.find(x => x.name === "PDH");
       if (!m.pdh.terminationOn && pdhSlot) {
@@ -319,8 +332,12 @@ const Wiring = (() => {
         const back = [...svg.querySelectorAll("[data-name]")].find(x => x.getAttribute("data-name") === had);
         if (back) back.focus({ preventScroll: true });
       }
+      // And an open card follows its box into the new drawing.
+      if (hoverName) hoverEl = [...svg.querySelectorAll("[data-name]")].find(x => x.getAttribute("data-name") === hoverName) || null;
     }
     fitDrawing(svg, H);
+    // An open card shows the newest health each second.
+    if (hoverName) { if (hoverEl && hoverEl.isConnected) showCard(hoverName, hoverEl); else hideCard(); }
     const det = $("#w-detail", root);
     det.hidden = !focus || !details[focus];
     if (focus && details[focus]) {
@@ -504,6 +521,84 @@ const Wiring = (() => {
       }
     };
   }
+
+  // ---------------------------------------------------------------- a device's card
+  // Hovering a box (or tabbing to it) shows what the part is, with FIRST's drawing of it, and
+  // everything known about this one: where it sits, what feeds it, how it is doing.
+  const WHAT = {
+    "SPARK MAX": "REV's motor controller for one brushless motor. Battery power comes in from a PDH port; commands and its own reports go over the CAN bus; a small cable from the motor tells it the motor's position and speed.",
+    "SPARK Flex": "REV's motor controller that bolts straight onto the back of a NEO Vortex (or onto a dock for other motors). Power from a PDH port, commands over the CAN bus.",
+    "Talon FX": "CTRE's motor controller, built into the Kraken and Falcon motors. Power from a PDH port, commands over the CAN bus.",
+    "REV PDH": "The Power Distribution Hub: it takes the battery's power and splits it to numbered ports, each through its own breaker. On the CAN bus it reports every port's current, and its TERM switch is the bus's far terminator.",
+    "roboRIO": "The robot controller: it runs the robot code. One end of the CAN bus, with a 120 Ω terminator built in.",
+    "Pigeon 2": "CTRE's gyro: which way the robot faces, for field-relative driving and odometry.",
+    "CANcoder": "CTRE's absolute encoder: the wheel's steering angle, even straight after power-on.",
+    "NavX": "A gyro on the roboRIO's MXP port: which way the robot faces.",
+  };
+  const MOTOR = {
+    "NEO 550": "a small brushless motor; it overheats quickly above 20 A, so its current limit is low",
+    "NEO Vortex": "REV's larger brushless motor; the SPARK Flex mounts on its back",
+    "NEO": "REV's brushless motor (V1.1 or 2.0)",
+    "Kraken X60": "WCP's brushless motor with a Talon FX inside",
+  };
+  const ART = { "SPARK MAX": "sparkmax", "SPARK Flex": "sparkflex", "REV PDH": "pdh_top", "roboRIO": "rio" };
+  const ordinal = n => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th");
+
+  function cardHtml(name) {
+    const m = data.map, dev = data.devices[name] || {}, r = rowsByName()[name], dd = (data.design_devices || {})[name] || {};
+    const type = name === "roboRIO" ? "roboRIO" : (dev.type || dev.model || "");
+    const [ctl, motor] = type.split(" · ");
+    const live = r && r.controller;
+    const art = ART[live || ctl] || FrcMap.kind(dev.model);
+    const pic = art && FrcMap.thumbCached(art);
+    if (art && !pic) FrcMap.thumb(art).then(() => { if (hoverName === name) showCard(name, hoverEl); });
+    const bi = m.buses.findIndex(b => b.chain.includes(name)), bus = m.buses[bi];
+    const at = bus ? bus.chain.indexOf(name) : -1;
+    const before = at > 0 ? bus.chain[at - 1] : null, after = bus && at >= 0 && at < bus.chain.length - 1 ? bus.chain[at + 1] : null;
+    const port = m.pdhPorts[name];
+    const facts = [];
+    if (dev.can_id != null) facts.push(["CAN ID", String(dev.can_id)]);
+    if (bus) facts.push(["Bus", `${swatchOf(bi)}${esc(labelOf(bus))}, ${ordinal(at)} along it` + (before || after ? `: between ${esc(before || "the start")} and ${esc(after || "the far end")}` : "")]);
+    if (port != null) facts.push(["Power", `PDH port ${port}${dd.breaker ? `, ${dd.breaker} A breaker` : ""}`]);
+    else if (dev.kind === "controller") facts.push(["Power", `PDH port not set${dd.breaker ? ` (${dd.breaker} A breaker in the design)` : ""}`]);
+    if (dd.subsystem) facts.push(["Part of", esc(dd.subsystem)]);
+    if (dd.positive) facts.push(["Positive is", esc(dd.positive)]);
+    if (live && ctl && !ctl.startsWith(live)) facts.push(["Code mismatch", `<span class="bad-ink">it says it is a ${esc(live)}; the code created a ${esc(ctl)}</span>`]);
+    if (r && r.firmware) facts.push(["Firmware", esc(r.firmware)]);
+    if (dev.source) facts.push(["In the code", `<span class="mono">${esc(dev.source)}</span>`]);
+    let health = "";
+    if (r) {
+      const bad = [r.present === 0 ? "off the CAN bus now" : null, r.flags || null].filter(Boolean);
+      const earlier = [r.history || null, r.dropouts ? `dropped off ${r.dropouts}×` : null, r.resets ? `rebooted ${r.resets}×` : null,
+        r.brownouts ? `low voltage ${r.brownouts}×` : null].filter(Boolean);
+      health = `<div class="small">${bad.length ? `<span class="bad-ink"><b>Now:</b> ${esc(bad.join("; "))}</span>` : `<span class="level ok">ok</span> heard on the bus`}
+        ${Number.isFinite(r.bus_volts) ? ` · ${fmt(r.bus_volts, 2)} V at the controller` : ""}
+        ${earlier.length ? `<div class="warn-ink"><b>Since the code started:</b> ${esc(earlier.join("; "))}</div>` : ""}</div>`;
+    }
+    return `<div class="dcard-head"><b>${esc(name)}</b><span class="small muted">${esc(type)}</span></div>
+      ${pic ? `<img class="dcard-pic" src="${pic}" alt="FIRST's drawing of a ${esc(live || ctl)}">` : ""}
+      ${WHAT[live || ctl] ? `<p class="small">${esc(WHAT[live || ctl])}${motor && MOTOR[motor] ? ` This one drives a ${esc(motor)}: ${esc(MOTOR[motor])}.` : ""}</p>` : ""}
+      <dl class="dcard-facts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("")}</dl>
+      ${health}
+      ${pic ? `<p class="dcard-credit">Drawing: FRC Control System - REV, by Team 3161 for WPILib, CC BY 4.0.</p>` : ""}`;
+  }
+
+  let hoverName = null, hoverEl = null;
+  function showCard(name, g) {
+    const card = $("#w-card", root);
+    hoverName = name;
+    hoverEl = g;
+    card.innerHTML = cardHtml(name);
+    card.hidden = false;
+    // Beside the box, on whichever side has room, kept on screen.
+    const b = g.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+    let x = b.right + 10;
+    if (x + w > innerWidth - 8) x = Math.max(8, b.left - w - 10);
+    const y = Math.min(Math.max(8, b.top), innerHeight - h - 8);
+    card.style.left = x + "px";
+    card.style.top = y + "px";
+  }
+  function hideCard() { hoverName = null; hoverEl = null; $("#w-card", root).hidden = true; }
 
   // ---------------------------------------------------------------- finding PDH ports
   const STATUS = { found: "found", none: "nothing rose", unclear: "unclear", together: "ran together", idle: "never ran" };

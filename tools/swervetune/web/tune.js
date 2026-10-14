@@ -1,4 +1,4 @@
-// Tune tab: run a test, see it, read the advice, try the suggestion, compare, save.
+// Tune drive train tab: run a test, see it, read the advice, try the suggestion, compare, save.
 "use strict";
 
 const Tune = (() => {

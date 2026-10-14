@@ -422,6 +422,8 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .schematic .node.warn .state { fill: var(--warn); }
 .schematic .nm { font: 600 13px var(--sans); fill: var(--ink); }
 .schematic .sub { font: 12px var(--mono); fill: var(--muted); }
+.schematic .dtype { font: 12px var(--sans); fill: var(--ink); }
+.schematic .dtype.bad { fill: var(--bad); font-weight: 700; }
 .schematic .ohm { font: 700 15px var(--sans); fill: var(--accent); }
 .schematic .suspect-line { stroke: var(--bad); stroke-width: 7; stroke-dasharray: 10 6; opacity: .85; }
 .schematic .suspect-dot { fill: var(--bad); }
@@ -746,3 +748,14 @@ table.t td > select { padding-block: 1px; }
 .tr-msg-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .tr-msgs-list tr.ongoing .tr-msg-text { font-weight: 600; }
 #tune-faults:empty { display: none; }
+
+/* Wiring: a device's card, on hover or keyboard focus. */
+.dcard { position: fixed; z-index: 30; width: 330px; max-height: calc(100vh - 16px); overflow: auto; background: var(--panel);
+  color: var(--ink); border: 1px solid var(--edge); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .25); padding: 10px 12px; pointer-events: none; }
+.dcard-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.dcard-pic { display: block; width: 100%; max-height: 150px; object-fit: contain; background: #fff; border-radius: 6px; margin: 4px 0 6px; }
+.dcard p { margin: 4px 0; }
+.dcard-facts { display: grid; grid-template-columns: max-content 1fr; gap: 2px 10px; margin: 6px 0; font-size: 12px; }
+.dcard-facts dt { color: var(--muted); }
+.dcard-facts dd { margin: 0; }
+.dcard-credit { font-size: 10px; color: var(--muted); }
