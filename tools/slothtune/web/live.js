@@ -7,7 +7,7 @@
     <div class="grid2">
       <div class="panel">
         <h2 data-tip="live.above">From above</h2>
-        <p class="hint">Front is up. Dark bar: the wheel. Gray dashes: where it was told to point. Line from the center: speed, green on target, amber behind, red the wrong way.</p>
+        <p class="hint">Front is up. Black wheel: where it points. Faint wheel: where it was told to point. Arrows: how fast, full length at top speed; green on target, amber behind, red the wrong way. The faint arrow: the speed it was told.</p>
         <div id="live-empty" class="empty">Not connected. Connect to a robot or the simulator to see every module live.
           <div class="row" style="justify-content:center;margin-top:10px"><button class="btn primary" data-connect>Connect</button>
           <button class="btn" data-netcheck data-tip="net.check">Check the networks</button></div></div>
@@ -53,15 +53,18 @@
     pods = locations.map(([x, y], i) => {
       const g = el("g", { transform: `translate(${-y * k} ${-x * k})` }, svg);
       const ring = el("circle", { r: 34, class: "pod-ring", "data-tip": "live.ring" }, g);
-      const ghost = el("line", { x1: 0, y1: 26, x2: 0, y2: -26, class: "ghost", "data-tip": "live.ghost" }, g);
+      // The setpoint as a ghost: a faint wheel where it was told to point, and a faint arrow for the
+      // speed it was told; the black wheel and the solid arrow are what it really does.
+      const ghost = el("rect", { x: -7, y: -22, width: 14, height: 44, rx: 3, class: "ghost-wheel", "data-tip": "live.ghost" }, g);
+      const ghostVel = el("path", { d: "", class: "ghost-vel", "data-tip": "live.ghost-speed" }, g);
       const wheel = el("rect", { x: -7, y: -22, width: 14, height: 44, rx: 3, class: "wheel", "data-tip": "live.wheel" }, g);
-      // The speed line sits on a casing in the panel color, so it reads against the dark wheel.
-      const velCase = el("line", { x1: 0, y1: 0, x2: 0, y2: 0, class: "vel-case" }, g);
-      const vel = el("line", { x1: 0, y1: 0, x2: 0, y2: 0, class: "vel ok", "data-tip": "live.speed" }, g);
+      // The speed arrow sits on a casing in the panel color, so it reads against the dark wheel.
+      const velCase = el("path", { d: "", class: "vel-case" }, g);
+      const vel = el("path", { d: "", class: "vel ok", "data-tip": "live.speed" }, g);
       const lbl = el("text", { x: 0, y: (x > 0 ? -44 : 56), "text-anchor": "middle", class: "lbl" }, g);
       lbl.textContent = abbr(names[i]);
       const val = el("text", { x: 0, y: (x > 0 ? 54 : -42), "text-anchor": "middle", class: "val" }, g);
-      return { ring, ghost, wheel, velCase, vel, val };
+      return { ring, ghost, ghostVel, wheel, velCase, vel, val };
     });
     pods.head = head;
     built = true;
@@ -69,24 +72,40 @@
 
   // Direction (deg, CCW from forward) to a screen-space rotation for an element drawn pointing up.
   const rot = deg => -deg;
+  // An arrow up the wheel, as long as the speed is against the top speed (pointing back when negative).
+  const ARROW = 70;
+  function arrow(len) {
+    if (!Number.isFinite(len) || Math.abs(len) < 2) return "";
+    const s = Math.sign(len), tip = -len, head = Math.min(9, Math.abs(len) / 2);
+    return `M 0 0 L 0 ${tip} M -6 ${tip + s * head} L 0 ${tip} L 6 ${tip + s * head}`;
+  }
+  // The robot's top module speed: from the robot, else the config check, else a NEO-ish 4.5 m/s.
+  function topSpeed() {
+    const r = (App.state && App.state.robot) || {}, lint = (App.lint && App.lint.summary) || {};
+    return [r.max_module_speed, lint.max_module_speed_mps].find(v => Number.isFinite(v) && v > 0.5) || 4.5;
+  }
 
   function paint(L) {
     const live = L.live, n = (live.steer || []).length;
     if (!built || pods.length !== n) build(L.locations, L.names);
     const flagged = new Set((L.flags || []).map(f => f.module));
     const speedWord = [];
-    const vmax = Math.max(1, ...(live.v_sp || []).map(Math.abs), ...(live.v || []).map(Math.abs));
+    // Against the top speed, not the fastest wheel now: the arrows grow as the robot speeds up.
+    const vmax = Math.max(topSpeed(), ...(live.v_sp || []).map(Math.abs), ...(live.v || []).map(Math.abs));
     for (let i = 0; i < n; i++) {
       const p = pods[i];
       const a = live.steer[i], sp = live.steer_sp[i], v = live.v[i], vsp = live.v_sp[i];
       p.wheel.setAttribute("transform", `rotate(${rot(a)})`);
       p.ghost.setAttribute("transform", `rotate(${rot(isFinite(sp) ? sp : a)})`);
       p.ghost.style.display = isFinite(sp) ? "" : "none";
-      const len = Math.min(1, Math.abs(v) / vmax) * 60 * Math.sign(v || 0);
+      const len = Math.min(1, Math.abs(v) / vmax) * ARROW * Math.sign(v || 0);
       for (const line of [p.velCase, p.vel]) {
-        line.setAttribute("y2", String(-len));
+        line.setAttribute("d", arrow(len));
         line.setAttribute("transform", `rotate(${rot(a)})`);
       }
+      const lenSp = isFinite(vsp) ? Math.min(1, Math.abs(vsp) / vmax) * ARROW * Math.sign(vsp || 0) : NaN;
+      p.ghostVel.setAttribute("d", arrow(lenSp));
+      p.ghostVel.setAttribute("transform", `rotate(${rot(isFinite(sp) ? sp : a)})`);
       let cls = "ok";
       if (isFinite(vsp) && Math.abs(vsp) > 0.1) {
         if (v * vsp < 0) cls = "bad";

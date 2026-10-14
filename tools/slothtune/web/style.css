@@ -172,9 +172,11 @@ table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
 .robot-svg .pod-ring { fill: var(--panel); stroke: var(--rule); stroke-width: 1.5; }
 .robot-svg .pod-ring.flag { stroke: var(--bad); stroke-width: 3; }
 .robot-svg .wheel { fill: var(--ink); opacity: .85; }
-.robot-svg .ghost { stroke: var(--sp); stroke-width: 2; stroke-dasharray: 4 3; }
-.robot-svg .vel { stroke-width: 4; stroke-linecap: round; }
-.robot-svg .vel-case { stroke: var(--panel); stroke-width: 8; stroke-linecap: round; }
+/* The setpoint as a ghost wheel and arrow under the real ones. */
+.robot-svg .ghost-wheel { fill: var(--sp); fill-opacity: .18; stroke: var(--sp); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.robot-svg .ghost-vel { fill: none; stroke: var(--sp); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 4; opacity: .8; }
+.robot-svg .vel { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.robot-svg .vel-case { fill: none; stroke: var(--panel); stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
 .robot-svg .vel.ok { stroke: var(--ok); } .robot-svg .vel.lag { stroke: var(--warn); } .robot-svg .vel.bad { stroke: var(--bad); }
 .robot-svg .lbl { fill: var(--ink); font: 700 13px var(--sans); }
 .robot-svg .val { fill: var(--muted); font: 11px var(--mono); }

@@ -309,8 +309,9 @@ const TIPS = {
   // ---------------------------------------------------------------- live
   "live.above": ["The robot from above, with every wheel where it really points.", "Front is up. A wheel that doesn't cover its gray dashes is behind or broken.", "swerve_module"],
   "live.wheel": ["Where this wheel really points.", "Read from the absolute encoder on the module itself.", "absolute_encoder"],
-  "live.ghost": ["Where the code told this wheel to point.", "Hidden under the wheel when it's on target; showing when the wheel is behind.", "setpoint"],
-  "live.speed": ["How fast this wheel spins: green on target, amber more than 25% behind, red the wrong way.", "Red usually means a motor or sensor is inverted.", "inversion"],
+  "live.ghost": ["The faint wheel: where the code told this wheel to point.", "Hidden under the black wheel when it's on target; showing beside it when the wheel is behind.", "setpoint"],
+  "live.ghost-speed": ["The faint arrow: how fast the code told this wheel to go.", "Full length is the robot's top speed; the solid arrow over it is how fast it really goes.", "setpoint"],
+  "live.speed": ["How fast this wheel spins, full length at top speed: green on target, amber more than 25% behind, red the wrong way.", "Red usually means a motor or sensor is inverted.", "inversion"],
   "live.ring": ["A red ring means this module has a problem listed under What looks wrong.", "Its Troubleshoot button walks you to the cause.", null],
   "live.heading": ["Which way the gyro says the robot faces.", "Counter-clockwise is positive, so turning left makes the number go up.", "gyro"],
   "live.pose": ["Where the robot thinks it is: x forward and y left of where it started, from the wheels and gyro, plus cameras if on.", "Slipping wheels or a wrong wheel size make it drift.", "odometry"],
