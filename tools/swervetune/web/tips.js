@@ -192,6 +192,7 @@ const TIPS = {
     "It goes to that bus's far end: check its place in the order there.", null],
   "battery.next": ["The battery to put in next: a healthy one that has been off the robot longest.",
     "It's the likeliest to be charged and cool. The tool only knows when a battery was on the robot in a test or a match log, so it can't see the charger: check the charge before a match.", "battery"],
+  "net.save": ["Saves this check to a file, to send to whoever is helping.", "Every result, and what it read: no passwords. It goes in tools/swervetune/reports/.", null],
   "net.check": ["Checks the Driver Station, this laptop's address, the firewall and the radios, and that this laptop reaches the robot and the internet at the same time.",
     "The laptop's own Wi-Fi carries the internet (and the VPN, for Claude); a USB Wi-Fi adapter carries only the robot. It finds which network each goes out on, and what to change if one is wrong.", null],
   "guide.step.sticks": ["Step 14: drive with the driver's sticks and check each one moves the robot the right way.", "The tests drive the robot from the tools; this checks the robot code's own stick mapping.", "field_relative"],

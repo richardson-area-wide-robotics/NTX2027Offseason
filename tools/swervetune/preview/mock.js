@@ -11,7 +11,7 @@
     "/api/motors/override", "/api/survey/start", "/api/controllers/save", "/api/sim", "/api/export", "/api/netcheck",
     "/api/camcal/sample", "/api/camcal/solve", "/api/survey/solve", "/api/geometry/tape",
     "/api/geometry/wheels", "/api/handcheck", "/api/controllers/step", "/api/controllers/robot", "/api/save/preview",
-    "/api/analyze", "/api/predict", "/api/designs/read", "/api/mark", "/api/systems/gains"];
+    "/api/analyze", "/api/predict", "/api/designs/read", "/api/mark", "/api/systems/gains", "/api/netcheck/save"];
   let connected = true, li = 0;
   const started = new Set();  // part checklists started in this preview: "module:frontleft"
 

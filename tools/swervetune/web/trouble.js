@@ -19,9 +19,10 @@ const Trouble = (() => {
     root.innerHTML = `<div class="stack">
       <div class="panel"><div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h2 data-tip="trouble.list">${homeView === "symptoms" ? "What is the robot doing?" : "What the robot keeps reporting"}</h2>
+          <div class="row"><button class="btn" id="tr-net" data-tip="net.check">Check the networks</button>
           <div class="seg" role="group" aria-label="Show">
             <button data-home="symptoms" class="${homeView === "symptoms" ? "on" : ""}" aria-pressed="${homeView === "symptoms"}" data-tip="trouble.list">Symptoms</button>
-            <button data-home="msgs" class="${homeView === "msgs" ? "on" : ""}" aria-pressed="${homeView === "msgs"}" data-tip="trouble.msgs">Robot messages <span id="tr-msgs-count" class="chip"></span></button></div></div>
+            <button data-home="msgs" class="${homeView === "msgs" ? "on" : ""}" aria-pressed="${homeView === "msgs"}" data-tip="trouble.msgs">Robot messages <span id="tr-msgs-count" class="chip"></span></button></div></div></div>
         ${homeView === "symptoms" ? `<p class="hint wide">Pick the closest. Then answer one yes/no question at a time: <b>yes means that part is fine</b>, and the first <b>no</b> is usually the cause. The questions go cheapest and most likely first; nothing needs the robot moving until the motionless checks pass.</p>`
           : `<div class="row" style="justify-content:space-between"><p class="small muted" id="tr-msgs-src"></p>
               <button class="btn small" id="tr-msgs-clear" data-tip="trouble.msgs-clear" data-quiet>Clear the counts</button></div>`}</div>
@@ -31,6 +32,7 @@ const Trouble = (() => {
         }).join("")}</div>`
         : `<div class="panel tr-msgs"><div id="tr-msgs-list" class="tr-msgs-list"></div></div>`}</div>`;
     $$(".symptom", root).forEach(b => b.onclick = () => open(b.dataset.id));
+    $("#tr-net", root).onclick = () => App.checkNetworks();
     $$("[data-home]", root).forEach(b => b.onclick = () => { homeView = b.dataset.home; paintList(); });
     const clear = $("#tr-msgs-clear", root);
     if (clear) clear.onclick = async () => { await App.api("/api/robotlog/clear", {}); loadMessages(); };

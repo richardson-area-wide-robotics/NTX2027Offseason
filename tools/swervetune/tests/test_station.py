@@ -169,6 +169,28 @@ class NetcheckTest(unittest.TestCase):
         self.assertLess(ids.index("radio-link"), ids.index("robot-image"))
 
 
+class SaveTest(unittest.TestCase):
+    def test_a_saved_check_carries_no_passwords(self):
+        import os
+        import tempfile
+        result = {"ok": False, "checks": [{"id": "radio-link", "level": "fail", "title": "x", "why": "y"}],
+                  "facts": {"radio_page": "Firmware Version 1.3.2 WPA Key: hunter22 Password=abc123"}}
+        with tempfile.TemporaryDirectory() as d:
+            path = netcheck.save(result, "Black team", 9990, folder=d)
+            self.assertTrue(os.path.basename(path).startswith("netcheck-black-team-"))
+            doc = json.load(open(path, encoding="utf-8"))
+        self.assertEqual((doc["robot"], doc["team"], doc["checks"][0]["id"]), ("Black team", 9990, "radio-link"))
+        self.assertNotIn("hunter22", doc["facts"]["radio_page"])
+        self.assertNotIn("abc123", doc["facts"]["radio_page"])
+        self.assertIn("1.3.2", doc["facts"]["radio_page"])
+        self.assertIn("UTC)", doc["saved"], "local time first, UTC after it")
+
+    def test_an_unread_team_number_names_the_settings_entries(self):
+        c = by_id(ST.driver_station({"installed": True, "version": "26.0", "ini": True, "team": None,
+                                     "ini_keys": ["Team Num", "DashboardCmdLine"]}, TEAM, YEAR))["ds-team"]
+        self.assertIn("Team Num", c["why"])
+
+
 class TroubleshootTest(unittest.TestCase):
     def test_the_network_check_answers_communications_symptoms(self):
         net = {"checks": [{"id": "radio-link", "level": "fail", "title": "The access point radio answers; the robot radio doesn't"},

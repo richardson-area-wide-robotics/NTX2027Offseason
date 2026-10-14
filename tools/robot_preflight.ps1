@@ -268,7 +268,7 @@ if ($null -eq $robotIdx) {
 $facts = [ordered]@{}
 if ($Json) {
     $dsExe = Join-Path ${env:ProgramFiles(x86)} 'FRC Driver Station\DriverStation.exe'
-    $ds = [ordered]@{ installed = [bool](Test-Path $dsExe); version = ""; running = $false; ini = $false; team = $null }
+    $ds = [ordered]@{ installed = [bool](Test-Path $dsExe); version = ""; running = $false; ini = $false; team = $null; ini_keys = @() }
     if ($ds.installed) { $ds.version = "$((Get-Item $dsExe).VersionInfo.FileVersion)" }
     $ds.running = [bool](Get-Process -Name DriverStation -ErrorAction SilentlyContinue)
     $ini = Join-Path $env:PUBLIC 'Documents\FRC\FRC DS Data Storage.ini'
@@ -276,6 +276,8 @@ if ($Json) {
         $ds.ini = $true
         $m = Select-String -Path $ini -Pattern '^\s*team\s*_?number\s*=\s*"?(\d+)' | Select-Object -First 1
         if ($m) { $ds.team = [int]$m.Matches[0].Groups[1].Value }
+        # The settings' names only, never their values: which one holds the team number.
+        $ds.ini_keys = @(Get-Content $ini | ForEach-Object { if ($_ -match '^\s*([^=\[;#]+?)\s*=') { $Matches[1] } })
     }
     $facts.ds = $ds
 
@@ -326,8 +328,10 @@ if ($Json) {
         if ($radioUp) {
             try {
                 $w = Invoke-WebRequest -Uri "http://$Radio/" -UseBasicParsing -TimeoutSec 4
-                $page = (($w.Content -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
-                if ($page.Length -gt 3000) { $page = $page.Substring(0, 3000) }
+                $text = (($w.Content -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
+                # Only the words around its firmware version: the rest of the page can show its keys.
+                $v = [regex]::Match($text, '(?i).{0,40}(firmware|version).{0,60}')
+                $page = if ($v.Success) { $v.Value -replace '(?i)(key|pass\w*|psk|sae)\s*[:=]?\s*\S+', '$1 [hidden]' } else { '(page read; no version on it)' }
             } catch { }
         }
     }

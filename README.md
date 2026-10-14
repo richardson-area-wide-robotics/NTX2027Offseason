@@ -1,12 +1,26 @@
 # NTX 2027 Offseason
 
-Offseason robot code for FRC Team 7525 (Richardson Area Wide Robotics). This repo holds three WPILib Java projects. Each one is a YAGSL swerve drive that runs in simulation.
+Offseason robot code for FRC Team 1745 (Richardson Area Wide Robotics). This repo holds three WPILib Java projects. Each one is a YAGSL swerve drive that runs in simulation.
 
 | Project | Description |
 | --- | --- |
 | [`Black team/`](Black%20team/) | Swerve drive project for the Black team. Also includes the CTRE Phoenix 6 vendordep. |
 | [`Peashooter/`](Peashooter/) | Swerve drive project for Peashooter. |
 | [`Examples/`](Examples/) | Simulator only: mechanisms from past seasons (an elevator, a shooter pivot, a two-joint arm, a two-wheel shooter, a feeder, a climber), rebuilt the way these robots are written, to practice tuning in the Systems tab. |
+
+## Team numbers
+
+Each robot's team number is in its project's `.wpilib/wpilib_preferences.json`. `./gradlew deploy`
+and the swerve tools use it to find the robot, so the robot's radio and the Driver Station must be set
+to the same number.
+
+| Robot | Team number |
+| --- | --- |
+| Peashooter | 1745 |
+| Black team | 9990, the number it was given at competition |
+| Test robots | 17451, 17452 and so on |
+
+When a robot won't connect, see [Checking a robot's network](docs/NETWORK_CHECK.md).
 
 Right now the robot code in Black team and Peashooter is the same. The assignment for each one is in its own readme ([Black team](Black%20team/readme.md), [Peashooter](Peashooter/README.md)).
 
@@ -22,7 +36,7 @@ Every project builds on its own with Gradle. Open a project folder (for example 
 ```bash
 ./gradlew build          # compile and run tests
 ./gradlew simulateJava   # launch the robot in the simulator GUI
-./gradlew deploy         # deploy to the roboRIO (team 7525)
+./gradlew deploy         # deploy to the roboRIO (the project's team number, above)
 ```
 
 On Windows, use `gradlew.bat` in place of `./gradlew`. In VS Code you can also run **WPILib: Simulate Robot Code** or **WPILib: Deploy Robot Code** from the command palette.

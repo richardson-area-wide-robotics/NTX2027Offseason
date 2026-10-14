@@ -11,12 +11,17 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPT = os.path.join(os.path.dirname(HERE), "robot_preflight.ps1")
+# Saved checks, to send to whoever is helping: this laptop's network details, so never committed.
+REPORTS = os.path.join(HERE, "reports")
+_SECRET = re.compile(r"(?i)(key|pass\w*|psk|sae)\s*[:=]?\s*\S+")
 
 
 def fix_command(team):
@@ -63,3 +68,25 @@ def run(team, robot_adapter=None, timeout=60, runner=subprocess.run, year=None, 
     out["fix"] = fix_command(team) if any(c.get("id") == "robot-metric" and c.get("level") in ("fail", "warn")
                                           for c in checks) else None
     return out
+
+
+def save(result, robot, team, folder=None):
+    """Writes a network check to ``reports/netcheck-<robot>-<time>.json`` and returns its path:
+    every check, and the facts it read (no passwords: the radio's page is cut to its firmware line,
+    and anything there that looks like a key is hidden again here)."""
+    folder = folder or REPORTS
+    os.makedirs(folder, exist_ok=True)
+    now = time.time()
+    local = time.strftime("%Y-%m-%d %I:%M %p", time.localtime(now)).replace(" 0", " ")
+    zone = time.strftime("%Z", time.localtime(now))
+    utc = time.strftime("%H:%M", time.gmtime(now))
+    facts = json.loads(json.dumps((result or {}).get("facts") or {}))
+    if facts.get("radio_page"):
+        facts["radio_page"] = _SECRET.sub(lambda m: m.group(1) + " [hidden]", facts["radio_page"])
+    doc = {"robot": robot, "team": team, "saved": f"{local} {zone} ({utc} UTC)", "ok": (result or {}).get("ok"),
+           "checks": (result or {}).get("checks") or [], "facts": facts}
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", str(robot or "robot")).strip("-").lower() or "robot"
+    path = os.path.join(folder, f"netcheck-{slug}-{time.strftime('%Y%m%d-%H%M%S', time.localtime(now))}.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2)
+    return path

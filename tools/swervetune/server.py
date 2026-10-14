@@ -268,6 +268,19 @@ def api_netcheck(body=None):
     return r
 
 
+def api_netcheck_save(_body=None):
+    """The last network check, saved to send: reports/netcheck-<robot>-<time>.json."""
+    from . import link as L
+
+    if not S.netcheck_last or S.netcheck_last.get("error"):
+        return {"ok": False, "error": "Check the networks first."}
+    team = L.team_from_project(S.project.path) if S.project else None
+    path = netcheck.save(S.netcheck_last, S.project.name if S.project else "robot", team)
+    # From the repository folder, as docs/NETWORK_CHECK.md gives it.
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return {"ok": True, "path": os.path.relpath(path, repo).replace(os.sep, "/")}
+
+
 def api_disconnect(_):
     S.disconnect()
     return {"ok": True}
@@ -1554,7 +1567,7 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/controllers/code": api_controllers_code, "/api/controllers/history": api_controllers_history,
        "/api/setup": api_setup, "/api/parts": api_parts, "/api/parts/plan": api_part_plan,
        "/api/bringup": api_bringup}
-POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netcheck": api_netcheck,
+POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netcheck": api_netcheck, "/api/netcheck/save": api_netcheck_save,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,

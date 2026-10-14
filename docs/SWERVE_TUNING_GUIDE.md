@@ -99,6 +99,9 @@ run `py -3.12 tools/swervetune netcheck --project Peashooter`. It reads these an
 A team number becomes an address as `10.TE.AM.x`: 1745 is `10.17.45.x`, and a test robot numbered
 17451 is `10.174.51.x`.
 
+Step by step for each robot, what each red line means, and how to send the results to whoever is
+helping: [Checking a robot's network](NETWORK_CHECK.md).
+
 Troubleshoot's **Connecting to the robot** symptoms take their answers from the same check:
 no communications, communications but no robot code, losing communication, and back from an event.
 

@@ -82,8 +82,9 @@ def driver_station(ds, team, year):
         out.append(_check("ds-team", DS, "warn", "The Driver Station hasn't been set up on this laptop",
                           f"Open it once and set Team Number to {team} (the Setup tab, the gear)."))
     elif ds.get("team") is None:
+        keys = ", ".join(k for k in ds.get("ini_keys") or [] if "team" in str(k).lower()) or "none with 'team' in the name"
         out.append(_check("ds-team", DS, "warn", "The Driver Station's team number couldn't be read",
-                          f"Check it says {team} (the Setup tab, the gear)."))
+                          f"Check it says {team} (the Setup tab, the gear). Its settings file's team entries: {keys}."))
     elif int(ds["team"]) != int(team):
         out.append(_check("ds-team", DS, "fail", f"The Driver Station is set to team {ds['team']}; this robot is {team}",
                           f"It looks for the robot at {subnet(ds['team'])}.2. Set Team Number to {team} (the Setup "

@@ -191,8 +191,14 @@ async function checkNetworks() {
       (right-click it, Run as administrator) and run:<pre class="diff">${esc(r.fix)}</pre>
       It sets the robot adapter's metric to 500, so it never carries the internet. Nothing else changes.</div>` : ""}`}
     <div class="row"><button class="btn" id="nc-again" data-tip="net.check">Check again</button>
+      ${r.error ? "" : `<button class="btn" id="nc-save" data-tip="net.save">Save a copy to send</button>`}
       <button class="btn" onclick="App.closeModal()">Close</button></div>`, root => {
     $("#nc-again", root).onclick = checkNetworks;
+    const sv = $("#nc-save", root);
+    if (sv) sv.onclick = async () => {
+      const s = await App.api("/api/netcheck/save", {});
+      App.toast(s.ok ? `Saved: ${s.path}. Send that file to whoever is helping.` : s.error, 8000);
+    };
   });
 }
 App.checkNetworks = checkNetworks;

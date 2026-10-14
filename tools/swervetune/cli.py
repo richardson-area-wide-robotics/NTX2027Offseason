@@ -988,6 +988,7 @@ def cmd_netcheck(args, out):
 
     team, year = args.team, None
     proj = resolve_project(args.project) if args.project else None
+    name = proj.name if proj else (args.project or "robot")
     if proj:
         team = team or L.team_from_project(proj.path)
         year = proj.year
@@ -995,24 +996,27 @@ def cmd_netcheck(args, out):
         r = netcheck.run(team, args.adapter, year=year)
     else:
         # No robot named: try each robot's team in this repo, and report the one this laptop is on.
+        # Projects sharing a number are named together; Examples (simulator only) last.
         robots = {}
-        for p in yagslcfg.find_projects(REPO):
+        for p in sorted(yagslcfg.find_projects(REPO), key=lambda d: os.path.basename(d) == "Examples"):
             t = L.team_from_project(p)
             if t:
-                robots.setdefault(t, os.path.basename(p))
-        robots = robots or {1745: "robot"}
+                robots.setdefault(t, []).append(os.path.basename(p))
+        robots = {t: " / ".join(n) for t, n in robots.items()} or {1745: "robot"}
         for t in robots:
             r = netcheck.run(t, args.adapter)
             if r.get("robot_adapter") or r.get("error"):
+                name, team = robots[t].split(" / ")[0], t
                 break
         else:
             for c in r.get("checks", []):
                 if c.get("id") == "robot-adapter":
                     c["title"] = "No adapter on a robot's network yet (" + ", ".join(
-                        f"{name} 10.{t // 100}.{t % 100}.x" for t, name in robots.items()) + ")"
+                        f"{n} 10.{t // 100}.{t % 100}.x" for t, n in robots.items()) + ")"
     if r.get("error"):
         return out.done(out.fail(r["error"], code="BAD_ARGS"))
-    out.put(**{k: r.get(k) for k in ("ok", "team", "robot_adapter", "internet_adapter", "vpn", "checks", "fix")})
+    saved = netcheck.save(r, name, team or r.get("team")) if args.save else None
+    out.put(**{k: r.get(k) for k in ("ok", "team", "robot_adapter", "internet_adapter", "vpn", "checks", "fix")}, saved=saved)
     for c in r["checks"]:
         out.say(f"  [{c['level'].upper():4s}] {c['title']}")
         out.say(f"         {c['why']}")
@@ -1210,6 +1214,7 @@ def build_parser():
 
     s = sub.add_parser("netcheck", help="the robot and the internet (Claude, over a VPN) at the same time")
     s.add_argument("--adapter", help="the network adapter on the robot's Wi-Fi, if it can't be found")
+    s.add_argument("--save", action="store_true", help="also save it to tools/swervetune/reports/, to send")
     s.set_defaults(fn=cmd_netcheck)
     s = sub.add_parser("setup", help="where to start and what to do next: each tool's checklist, or one part's")
     s.add_argument("--tab", help="one tool: bringup, config, motors, wiring, calibrate or controllers")
