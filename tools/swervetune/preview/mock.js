@@ -42,8 +42,13 @@
       }
       if (path === "/api/parts/plan") {
         const q = new URLSearchParams(url.split("?")[1] || ""), key = q.get("kind") + ":" + (q.get("which") || "");
-        const mine = Object.keys(rec.started || {}).find(k => k.split(":")[0] === q.get("kind"));
-        if (started.has(key) && mine) return json(Object.assign({}, rec.started[mine], q.get("which") ? { title: rec.started[mine].title.replace(/:.*/, ": " + q.get("which")) } : {}));
+        const mine = key in (rec.started || {}) ? key : Object.keys(rec.started || {}).find(k => k.split(":")[0] === q.get("kind"));
+        if (started.has(key) && mine) return json(Object.assign({}, rec.started[mine], q.get("which") && mine !== key ? { title: rec.started[mine].title.replace(/:.*/, ": " + q.get("which")) } : {}));
+        // Another choice of the same part than the ones recorded: that part's answer, never another part's.
+        if (!(url in rec.get)) {
+          const same = Object.keys(rec.get).find(k => k.split("?")[0] === path && new URLSearchParams(k.split("?")[1] || "").get("kind") === q.get("kind"));
+          if (same) return json(rec.get[same]);
+        }
       }
       if (url in rec.get) return json(rec.get[url]);
       // Another module, motor or camera than the one recorded: the recorded one's answer.

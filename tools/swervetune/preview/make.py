@@ -169,6 +169,10 @@ def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
         # Every GET the server has, with the parameters the page sends.
         names = server.S.project.module_names() if server.S.project else ["frontleft"]
         which = {"module": names[0], "motor": names[0] + " drive", "camera": "front", "gyro": ""}
+        # Each part's choices to record: one of most, every mechanism the code registers.
+        picks = {kind: [which.get(kind, "")] for kind in SP.PARTS}
+        if "system" in picks and server.S.project:
+            picks["system"] = sorted(SY.in_code(server.S.project)) or [""]
         for path in sorted(server.GET):
             # The live pair is recorded above; a match log's summary needs a log file to read.
             if path in ("/api/live", "/api/state", "/api/logsummary"):
@@ -178,9 +182,10 @@ def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
                     key = _q(path, tab=tab)
                     rec["get"][key] = c.get(key)
             elif path == "/api/parts/plan":
-                for kind in SP.PARTS:
-                    key = _q(path, kind=kind, which=which.get(kind, ""))
-                    rec["get"][key] = c.get(key)
+                for kind, choices in picks.items():
+                    for w in choices:
+                        key = _q(path, kind=kind, which=w)
+                        rec["get"][key] = c.get(key)
             else:
                 rec["get"][path] = c.get(path)
         for bus in (rec["get"].get("/api/wiring") or {}).get("map", {}).get("buses") or []:
@@ -199,11 +204,12 @@ def record(project_name, *, seconds=14.0, say=print, note="", marks=None):
             rec["note"] = ((note + " ") if note else "") + (
                 f"Systems shows made-up ReCalc designs for the {ex}, since {project_name} has none saved yet.")
         # A part's checklist once started, for Redo one part.
-        for kind in SP.PARTS:
-            sel = {"kind": kind, "which": which.get(kind, "")}
-            c.post("/api/parts/start", sel)
-            rec["started"][f"{kind}:{sel['which']}"] = c.get(_q("/api/parts/plan", **sel))
-            c.post("/api/parts/stop", sel)
+        for kind, choices in picks.items():
+            for w in choices:
+                sel = {"kind": kind, "which": w}
+                c.post("/api/parts/start", sel)
+                rec["started"][f"{kind}:{w}"] = c.get(_q("/api/parts/plan", **sel))
+                c.post("/api/parts/stop", sel)
         # The saved runs the Runs tab lists, newest first, so a row opens.
         os.makedirs(os.path.join(REC, "runs"), exist_ok=True)
         for f in os.listdir(os.path.join(REC, "runs")):
