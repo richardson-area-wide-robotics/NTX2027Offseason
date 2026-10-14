@@ -215,7 +215,7 @@ function openEnvironment(preset) {
       <div class="envopt" data-mode="BLOCKS" data-tip="env.blocks"><b>On blocks</b>
         <span class="hint">Frame on blocks, all four wheels clear of the floor. Wheels spin only while someone holds the deadman; the robot must not move. If it turns, or a wheel works like it carries weight, the test stops.</span></div>
       <div class="envopt" data-mode="FIELD" data-tip="env.field"><b>On the floor</b>
-        <span class="hint">It will really drive. Every motion test needs the deadman held, fits in the space below, and stops on impact or any stick.</span></div>
+        <span class="hint">It will really drive. Bumpers on first. Every motion test needs the deadman held, fits in the space below, and stops on impact or any stick.</span></div>
     </div>
     <div id="field-opts" class="stack">
       <div class="row">
@@ -227,24 +227,33 @@ function openEnvironment(preset) {
     </div>
     <label class="row" data-tip="env.tags"><input type="checkbox" id="env-tags" ${env.apriltags ? "checked" : ""}> AprilTags are on this field
       <span class="hint">${env.vision_available ? "Robot code has a vision source." : "Robot code has no vision source yet; tests use the gyro and a tape measure."}</span></label>
-    <label class="row" data-tip="env.confirm"><input type="checkbox" id="env-confirm"> <span id="env-confirm-text"></span></label>
+    <div id="env-checks" class="stack"></div>
     <div class="row"><button class="btn primary" id="env-save" disabled data-tip="env.set">Set</button>
       <button class="btn" id="env-cancel">Cancel</button></div>`, root => {
+    // Each check is its own box, ticked by a person: Set waits for every one.
+    const CHECKS = {
+      FIELD: `<label class="row" data-tip="env.bumpers"><input type="checkbox" class="env-check"> The bumpers are on.</label>
+        <label class="row" data-tip="env.confirm"><input type="checkbox" class="env-check"> People are clear of the robot's path.</label>
+        <label class="row" data-tip="env.confirm"><input type="checkbox" class="env-check"> The person holding the deadman can see the robot.</label>`,
+      BLOCKS: `<label class="row" data-tip="env.confirm"><input type="checkbox" class="env-check"> All four wheels are off the floor and free to spin, hands are clear of them, and the person holding the deadman can see them.</label>`,
+    };
     const sync = () => {
       $$(".envopt", root).forEach(o => o.classList.toggle("on", o.dataset.mode === mode));
       $("#field-opts", root).hidden = mode !== "FIELD";
-      $("#env-confirm-text", root).textContent = mode === "FIELD"
-        ? "People are clear of the robot's path, and the person holding the deadman can see the robot."
-        : "All four wheels are off the floor and free to spin, hands are clear of them, and the person holding the deadman can see them.";
+      $("#env-checks", root).innerHTML = CHECKS[mode] || "";
+      $("#env-save", root).disabled = true;
+      $$(".env-check", root).forEach(c => c.onchange = () => {
+        $("#env-save", root).disabled = !$$(".env-check", root).every(x => x.checked);
+      });
     };
     $$(".envopt", root).forEach(o => o.onclick = () => { mode = o.dataset.mode; sync(); });
-    $("#env-confirm", root).onchange = e => { $("#env-save", root).disabled = !e.target.checked; };
     $("#env-cancel", root).onclick = () => App.closeModal();
     $("#env-save", root).onclick = async () => {
       const body = { mode, apriltags: $("#env-tags", root).checked, speed_cap: +$("#env-cap", root).value || 1.0 };
       if (mode === "FIELD") {
         body.space_forward = +$("#env-fwd", root).value;
         body.space_side = +$("#env-side", root).value;
+        body.bumpers = true;  // its box is ticked: Set waits for every check
       }
       const r = await App.api("/api/env", body);
       if (!r.ok) { App.toast(r.error); return; }

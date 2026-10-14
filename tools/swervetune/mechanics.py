@@ -1,7 +1,8 @@
 """A mechanism's physics, and the safe test that follows from it.
 
-The physical data comes from the design team's calculator: a ReCalc share link (reca.lc, whose URL
-carries every input as JSON) or the same numbers typed in from the AMB Design Spreadsheet. From it,
+The physical data comes from the design team's calculator: a ReCalc (reca.lc) or AMBcalc
+(ambcalc.com) share link, read by :mod:`designlinks`, or the same numbers typed in from the AMB
+Design Spreadsheet. From it,
 the way ReCalc does it (both build WPILib's ``Models``: ``SingleJointedArmFromPhysicalConstants``
 and ``FlywheelFromPhysicalConstants``; see ReCalc's wpilib/patches/wpilibc/wasm/feedforward_gains.h):
 
@@ -19,9 +20,7 @@ against gravity, and goals inside the limits a person found by moving the mechan
 
 from __future__ import annotations
 
-import json
 import math
-from urllib.parse import parse_qs, urlparse
 
 G_ACCEL = 9.80665
 VOLTS = 12.0
@@ -44,72 +43,81 @@ MOTORS = {
     "775pro": (0.71, 134, 0.7, 18730),
 }
 
-# Units a ReCalc measurement may carry, to SI.
-_UNITS = {
-    "lb": 0.45359237, "lbs": 0.45359237, "kg": 1.0, "g": 0.001,
-    "in": 0.0254, "ft": 0.3048, "m": 1.0, "mm": 0.001, "cm": 0.01,
-    "deg": math.pi / 180, "rad": 1.0,
-    "A": 1.0, "V": 1.0, "Ohm": 1.0, "ms": 0.001, "s": 1.0,
-    "rpm": 2 * math.pi / 60, "rad/s": 1.0, "deg/s": math.pi / 180,
-    "in2*lbs": 0.45359237 * 0.0254 ** 2, "lbs*in2": 0.45359237 * 0.0254 ** 2, "lb*in^2": 0.45359237 * 0.0254 ** 2,
-    "kg*m^2": 1.0, "kg*m2": 1.0,
-}
+# Other names the calculators give these motors (AMBcalc's "NEO 1.1", "Kraken X60 FOC").
+_ALIASES = {"neo1.1": "NEO", "neov1.1": "NEO", "neo11": "NEO", "vortex": "NEO Vortex", "neovortex": "NEO Vortex",
+            "kraken": "Kraken X60", "krakenx60foc": "Kraken X60 (FOC)", "falcon500foc": "Falcon 500 (FOC)",
+            "krakenx44foc": "Kraken X44 (FOC)", "pulsar": "Thrifty Pulsar", "775": "775pro"}
 
 
-def _si(m):
-    """``{"s": 24, "u": "in"}`` -> 0.6096; None if not a measurement this knows."""
-    if not isinstance(m, dict) or not isinstance(m.get("s"), (int, float)):
-        return None
-    f = _UNITS.get(str(m.get("u", "")))
-    return None if f is None else m["s"] * f
+def _key(name):
+    return "".join(c for c in str(name or "").lower() if c.isalnum() or c == ".")
 
 
-def _ratio(r):
-    """``{"magnitude": 100, "ratioType": "Reduction"}`` -> motor turns per mechanism turn."""
-    if not isinstance(r, dict) or not r.get("magnitude"):
-        return None
-    mag = float(r["magnitude"])
-    return mag if r.get("ratioType", "Reduction") == "Reduction" else 1.0 / mag
+def motor_name(name):
+    """A calculator's motor name to this table's, or None for a motor it doesn't have."""
+    k = _key(name)
+    return next((m for m in MOTORS if _key(m) == k), None) or _ALIASES.get(k)
 
 
-def from_recalc(url):
-    """A ReCalc share link's mechanism: ``{"kind", "motor", "count", "ratio", ...}`` in SI, with
-    ``"source"`` the link. Raises ValueError for a link this can't read."""
-    u = urlparse(url.strip())
-    page = u.path.strip("/").split("/")[-1].lower()
-    if "reca.lc" not in u.netloc and page not in ("arm", "flywheel", "linear"):
-        raise ValueError("not a ReCalc link (reca.lc/arm, /flywheel or /linear)")
-    q = {k: v[-1] for k, v in parse_qs(u.query).items()}
+# A registered system's kind to the physics it needs: a roller is a wheel, like a flywheel.
+_FOR_KIND = {"PIVOT": "pivot", "ELEVATOR": "elevator", "FLYWHEEL": "flywheel", "ROLLER": "flywheel"}
 
-    def j(k):
-        try:
-            return json.loads(q[k]) if k in q else None
-        except ValueError:
-            return None
 
-    motor = j("motor") or {}
-    out = {"motor": motor.get("name"), "count": int(motor.get("quantity") or 1), "ratio": _ratio(j("ratio")),
-           "efficiency": float(q.get("efficiency", 100)) / 100 if q.get("efficiency") else 1.0, "source": url.strip()}
-    if out["motor"] not in MOTORS:
-        raise ValueError(f"motor {out['motor']!r} is not in ReCalc's table here")
-    if page == "arm":
-        out.update(kind="pivot", arm_length_m=_si(j("armLength")), load_kg=_si(j("load")),
-                   min_angle_rad=_si(j("minAngle")), max_angle_rad=_si(j("maxAngle")))
-    elif page == "flywheel":
-        d, w = _si(j("shooterDiameter")), _si(j("shooterWeight"))
-        moi = _si(j("customShooterMoi")) if j("useCustomShooterMoi") else (w * (d / 2) ** 2 / 2 if d and w else None)
-        if j("flywheelEnabled"):
-            fd, fw = _si(j("flywheelDiameter")), _si(j("flywheelWeight"))
-            extra = _si(j("customFlywheelMoi")) if j("useCustomFlywheelMoi") else (fw * (fd / 2) ** 2 / 2 if fd and fw else 0)
-            moi = (moi or 0) + (extra or 0)
-        out.update(kind="flywheel", moi_kgm2=moi, target_rad_s=_si(j("shooterTargetSpeed")))
-    elif page == "linear":
-        out.update(kind="elevator", load_kg=_si(j("load")), spool_diameter_m=_si(j("spoolDiameter")),
-                   travel_m=_si(j("travelDistance")))
+def from_link(url, kind=None):
+    """A ReCalc or AMBcalc share link's mechanism, read by :mod:`designlinks`: ``{"kind", "motor",
+    "count", "ratio", ...}`` in SI, with ``"source"`` the link and ``"notes"`` on anything assumed.
+
+    ``kind`` is how the code registered it (PIVOT, ELEVATOR, FLYWHEEL, ROLLER). AMBcalc's mechanism
+    page is a motor turning a radius against a load, which is an arm or an elevator's spool
+    depending on that; a calculator page of the wrong kind is refused. Raises ValueError for a link
+    this can't read."""
+    from . import designlinks
+    d = designlinks.parse(url)
+    want = _FOR_KIND.get(str(kind or "").upper())
+    named = (d.get("motor") or {}).get("name")
+    motor = motor_name(named)
+    if d["kind"] in ("motor", "gearing", "drivetrain"):
+        raise ValueError(f"that is {d['source']}'s {d['calculator']} page; link the mechanism's own page")
+    if not motor:
+        raise ValueError(f"motor {named!r} isn't in the motor table here")
+    if not d.get("ratio"):
+        raise ValueError(" ".join(["the link has no gear ratio."] + list(d.get("notes") or [])))
+    out = {"motor": motor, "count": int((d.get("motor") or {}).get("count") or 1), "ratio": float(d["ratio"]),
+           "efficiency": d.get("efficiency") or 1.0, "source": str(url).strip(), "calculator": d["source"],
+           "notes": list(d.get("notes") or [])}
+    mass, k = d.get("mass_kg"), d["kind"]
+    if k == "arm":
+        lo, hi = d.get("angles_deg") or (None, None)
+        out.update(kind="pivot", arm_length_m=d.get("arm_length_m"), load_kg=mass,
+                   min_angle_rad=math.radians(lo) if lo is not None else None,
+                   max_angle_rad=math.radians(hi) if hi is not None else None)
+    elif k in ("elevator", "linear"):
+        out.update(kind="elevator", load_kg=mass, spool_diameter_m=d.get("spool_diameter_m"), travel_m=d.get("travel_m"))
+    elif k == "flywheel":
+        rpm = d.get("target_rpm")
+        out.update(kind="flywheel", moi_kgm2=d.get("moi_kgm2"), target_rad_s=rpm * 2 * math.pi / 60 if rpm else None)
+    elif k == "roller":
+        out.update(kind="flywheel", moi_kgm2=None, target_rad_s=None)
+    elif k == "mechanism":
+        # AMBcalc: a radius and a load force; the startup page adds the mass it spins up.
+        if not want:
+            raise ValueError("AMBcalc's mechanism page fits an arm, an elevator or a wheel: register the system first")
+        r, f = d.get("radius_m"), d.get("load_n")
+        load = mass if mass else (f / G_ACCEL if f else None)
+        for field in d.get("assumed") or []:
+            out["notes"].append({"radius_m": "AMBcalc's default 1 in radius", "load_n": "AMBcalc's default 50 lbf load",
+                                 "mass_kg": "AMBcalc's default 10 lb mass"}.get(field, field) + " (the link doesn't set it).")
+        if want == "pivot":
+            out.update(kind="pivot", arm_length_m=r, load_kg=load)
+        elif want == "elevator":
+            out.update(kind="elevator", load_kg=load, spool_diameter_m=2 * r if r else None)
+        else:
+            out.update(kind="flywheel", moi_kgm2=mass * r ** 2 / 2 if mass and r else None, target_rad_s=None)
     else:
-        raise ValueError(f"ReCalc's {page or 'home'} page is not a mechanism")
-    if not out["ratio"]:
-        raise ValueError("the link has no gear ratio")
+        raise ValueError(f"{d['source']}'s {d['calculator']} page is not a mechanism")
+    if want and out["kind"] != want:
+        an = lambda w: ("an " if w[:1] in "aeiou" else "a ") + w  # noqa: E731
+        raise ValueError(f"that is {an(out['kind'])} design, but the code registers this as {an(str(kind).lower())}")
     return out
 
 

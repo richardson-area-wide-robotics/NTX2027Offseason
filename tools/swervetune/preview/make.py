@@ -95,10 +95,10 @@ def _recalc(page, **params):
 # Made-up ReCalc designs for the Systems tab, used only for a mechanism the robot has no settings for
 # (the ribbon says so), so the tab shows one set up with its safe test.
 SYSTEMS_EXAMPLES = {
-    "Shooter": {"recalc": _recalc("flywheel", motor={"name": "NEO Vortex", "quantity": 2},
+    "Shooter": {"link": _recalc("flywheel", motor={"name": "NEO Vortex", "quantity": 2},
                                   ratio={"magnitude": 1, "ratioType": "Reduction"}, shooterDiameter={"s": 4, "u": "in"},
                                   shooterWeight={"s": 2, "u": "lb"}, shooterTargetSpeed={"s": 3950, "u": "rpm"})},
-    "Intake pivot": {"recalc": _recalc("arm", motor={"name": "NEO Vortex", "quantity": 1},
+    "Intake pivot": {"link": _recalc("arm", motor={"name": "NEO Vortex", "quantity": 1},
                                        ratio={"magnitude": 45, "ratioType": "Reduction"}, armLength={"s": 12, "u": "in"},
                                        load={"s": 8, "u": "lb"}, minAngle={"s": 0, "u": "deg"}, maxAngle={"s": 120, "u": "deg"})},
 }

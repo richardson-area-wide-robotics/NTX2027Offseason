@@ -240,6 +240,9 @@ def cmd_env(args, out):
         if args.mode and args.mode.upper() == "FIELD" and not (args.space and args.side):
             return out.done(out.fail("FIELD needs --space and --side: meters of clear floor ahead "
                                      "and to each side. Measure them."))
+        if args.mode and args.mode.upper() == "FIELD" and not args.bumpers:
+            return out.done(out.fail("FIELD needs --bumpers: ask a person to check the bumpers are on "
+                                     "before the robot goes on the floor."))
         lk.set_environment(args.mode, None if args.tags is None else args.tags == "on",
                            args.space, args.side, args.cap)
         time.sleep(0.3)
@@ -1071,6 +1074,7 @@ def build_parser():
     s.add_argument("--space", type=float, help="clear floor ahead, m")
     s.add_argument("--side", type=float, help="clear floor to each side, m")
     s.add_argument("--cap", type=float, help="speed cap for tests, m/s")
+    s.add_argument("--bumpers", action="store_true", help="a person checked the bumpers are on (FIELD needs it)")
     s.set_defaults(fn=cmd_env)
 
     s = sub.add_parser("run", help="run a test on the robot and analyze it")

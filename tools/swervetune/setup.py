@@ -544,6 +544,8 @@ PARTS = {
     "camera": {"title": "A camera", "when": "Moved, bumped, replaced, or added", "pick": "camera"},
     "field": {"title": "A new field or event", "when": "Setting up on a field you haven't surveyed", "pick": None},
     "wheels": {"title": "Wheels or tread", "when": "New wheels or tread on any module", "pick": None},
+    "system": {"title": "A mechanism, on the real robot", "when": "Its first run on the real robot, or after it was rebuilt",
+               "pick": "system"},
 }
 
 
@@ -616,6 +618,8 @@ def part_plan(kind, which, ctx, started):
         return _plan("A new field or event", "Tags on a real field sit where people hung them: measure where.",
                      ["The robot on the field, a camera fitted", "The event's field documents"], jobs,
                      {"guide": "", "label": "Back to the Guide"})
+    if kind == "system":
+        return _system_plan(which, ctx, since, pmark)
     if kind == "wheels":
         jobs = [_from_mark(_mark(prog, "cal_wheels", since), "wheels", "Measure the wheel sizes",
                            "A 3 m push in coast: new tread is bigger than worn.", {"tab": "calibrate", "panel": "cal-wheels"}),
@@ -730,6 +734,174 @@ def _motor_plan(name, ctx, since, pmark):
                  ["The robot connected", "REV Hardware Client"], jobs, {"guide": "", "label": "Back to the Guide"})
 
 
+# A mechanism's first real runs go at half its planned speed; "full" is at least 90% of it.
+HALF, FULL = 0.55, 0.9
+
+
+def _system_runs(ctx, test, name, since):
+    """This robot's real runs of a system test on one mechanism, newest first, finished or not:
+    a run the robot stopped (past a limit, too fast) is evidence too."""
+    out = []
+    for r in ctx.get("runs") or []:
+        if r.get("test") != test or r.get("system") != name or r.get("env") in ("SIM", None) or r.get("practice"):
+            continue
+        if ctx.get("robot") and r.get("robot") not in (None, ctx["robot"]):
+            continue
+        if since and str(r.get("saved") or "") < str(since):
+            continue
+        out.append(r)
+    return out
+
+
+def _system_plan(name, ctx, since, pmark):
+    """A mechanism's first time on the real robot, safely: registered and heard, its physics, its
+    limits by hand and which way it reads, its limits and a low top speed saved, then a half-speed
+    run, then its planned speed, then the gains into the code. Nothing moves fast until the limits
+    are known and a slow run has gone cleanly."""
+    from . import systems as SY
+    live = {s["name"]: s for s in ctx.get("systems") or []}
+    sysd = live.get(name) or {"name": name, "kind": (ctx.get("systems_in_code") or {}).get(name, ""), "motors": []}
+    kind = str(sysd.get("kind") or "").upper()
+    positional = kind in ("PIVOT", "ELEVATOR")
+    units = sysd.get("units") or "its units"
+    entry = (SY.settings(ctx.get("project")) or {}).get(name) or {}
+    sim = ctx.get("env") == "SIM"
+    go = {"tab": "systems", "system": name}
+    jobs = []
+
+    if not ctx.get("connected") or sim:
+        jobs.append(_job("code", "The real robot connected, its code registering it", "todo",
+                         "Connect to the real robot: the simulator never counts here." if sim else "Connect to the robot.",
+                         how=["Deploy the robot code that registers it (tune.system(...) in its subsystem).",
+                              "Connect at the top of the page, to the robot, not the simulator."]))
+    elif name not in live:
+        jobs.append(_job("code", "The real robot connected, its code registering it", "attention",
+                         f"The robot code doesn't register {name}: add tune.system(\"{name}\", ...) to its subsystem and redeploy.",
+                         how=["See the guide's \"Tuning a mechanism\" for the few lines it takes."]))
+    else:
+        jobs.append(_job("code", "The real robot connected, its code registering it", "done",
+                         f"{name}: a {kind.lower()} in {units}."))
+
+    motors = {r.get("name"): r for r in ctx.get("live_motors") or []}
+    mine = sysd.get("motors") or []
+    if not ctx.get("connected") or sim or not mine:
+        jobs.append(_job("heard", "Its motors heard, with no faults", "later" if not mine else "todo",
+                         "Once the robot is connected and the code names its motors." if not mine else "Connect to the robot.",
+                         unblock="code" if not mine else None, go=go))
+    else:
+        gone = [m for m in mine if m not in motors or not motors[m].get("present", 1)]
+        bad = [m for m in mine if m in motors and (motors[m].get("flags") or "").strip()]
+        jobs.append(_job("heard", "Its motors heard, with no faults", "attention" if gone or bad else "done",
+                         "; ".join(x for x in (("Not heard: " + ", ".join(gone)) if gone else "",
+                                               ("Faults now: " + ", ".join(bad)) if bad else "") if x) + "."
+                         if gone or bad else "All heard, no faults now.", go=go,
+                         how=["Robot disabled. The faults strip at the top of the Systems tab shows each of its motors.",
+                              "A motor not heard: its CAN ID, its plugs, its breaker."]))
+
+    sims = [r for r in ctx.get("runs") or [] if r.get("test") == "system_step" and r.get("system") == name and r.get("env") == "SIM"]
+    jobs.append(_job("sim", "Its test in the simulator first", "done" if sims else "optional",
+                     "The sequence ran in the simulator." if sims else
+                     "Checks the sequence and the limits before the real robot: run it with the simulator connected.",
+                     go=go, optional=True))
+
+    try:
+        mech = SY.physics(entry, kind or None)
+        perr = None
+    except ValueError as e:
+        mech, perr = None, str(e)
+    jobs.append(_job("physics", "Its physics: a ReCalc or AMBcalc link", "attention" if perr else ("done" if mech else "todo"),
+                     f"The link doesn't read: {perr}" if perr else
+                     (f"{mech['count']} × {mech['motor']} through {mech['ratio']:g}:1." if mech else
+                      "Paste its ReCalc or AMBcalc link in the Systems tab (or type the AMB spreadsheet's numbers)."),
+                     go=go, how=["They set how fast a safe test may go: nothing is tested without them."]))
+
+    if positional:
+        lim = _system_runs(ctx, "system_limits", name, since)
+        moved = [r for r in lim if r.get("outcome") == "DONE" and isinstance(r.get("min"), (int, float))
+                 and isinstance(r.get("max"), (int, float)) and r["max"] > r["min"]]
+        jobs.append(_job("limits", "Its limits: moved by hand to both ends", "done" if moved else ("attention" if lim else "todo"),
+                         f"{moved[0]['min']:.4g} to {moved[0]['max']:.4g} {units}." if moved else
+                         ("The last try didn't move it: move it all the way to each end." if lim else
+                          "Robot disabled, its motors coasting: move it slowly to each hard stop."),
+                         go=dict(go, action="limits"),
+                         how=["Robot disabled. Set limits by hand: its motors coast so it moves freely.",
+                              "Move it slowly to its bottom (stowed) end, then all the way to its top end. Mind fingers at the hard stops.",
+                              "Then press Done, and save the limits."]))
+        st = _mark_status(pmark("direction"), "it reads backwards: invert its encoder in the code first")
+        jobs.append(_job("direction", "Toward its top end, its reading goes up", *(st or (
+            ("todo" if moved else "later"), "Robot disabled: move it toward its top end, with its live reading in this step.")),
+            unblock=None if moved else "limits", go={"part_action": "direction"},
+            how=["Robot disabled. Move it by hand toward its top (deployed, raised) end and watch its reading.",
+                 "It must go up. If it goes down, the code's encoder is inverted: fix that before any test."]))
+
+    # The team's maximum is a ceiling the robot enforces from startup; the first, half-speed runs
+    # come from the test itself, so going faster never needs a redeploy.
+    cap = entry.get("maxVelocity")
+    has_cap = isinstance(cap, (int, float)) and cap > 0
+    saved_lim = not positional or all(isinstance(entry.get(k), (int, float)) for k in ("min", "max"))
+    robot_has = has_cap and isinstance(sysd.get("max_velocity"), (int, float)) and abs(sysd["max_velocity"] - cap) < 1e-6 \
+        and (not positional or sysd.get("limits_from") == "swervetune.json")
+    plan = SY.plan(entry, sysd) if mech else {"ok": False}
+    if saved_lim and has_cap and robot_has:
+        st, detail = "done", f"On the robot: top speed {cap:.4g}{' and its limits' if positional else ''}."
+    elif saved_lim and has_cap:
+        st, detail = "todo", "Saved: redeploy, so the robot enforces them from startup."
+    else:
+        st, detail = "todo", ("Save its limits and the team's maximum" if positional else "Save the team's maximum") + (
+            f": its planned top speed is {plan['vmax']:.4g}." if plan.get("ok") else ".")
+    jobs.append(_job("saved", "Its limits and top speed saved, and redeployed" if positional else "Its top speed saved, and redeployed",
+                     st, detail, go=go,
+                     how=["The team's maximum is the fastest anyone may test it: the robot stops it past that, or past a limit.",
+                          "Save to swervetune.json, then redeploy so the robot enforces them from startup."]))
+
+    env = ctx.get("env")
+    jobs.append(_job("where", "The robot on blocks, the mechanism's path clear", "done" if env in ("BLOCKS", "FIELD") else "todo",
+                     ("On blocks." if env == "BLOCKS" else "On the floor, bumpers on.") if env in ("BLOCKS", "FIELD") else
+                     "Set Where at the top: On blocks.",
+                     how=["Robot on blocks or its cart: its wheels can't drive it anywhere.",
+                          "Nothing and nobody in the mechanism's path; cables and hands clear; safety glasses on.",
+                          "Someone at the Driver Station, ready to disable. The deadman holder watches the mechanism."]))
+
+    steps = _system_runs(ctx, "system_step", name, since)
+    planned = plan.get("vmax") if plan.get("ok") else None
+
+    def at(r, lo, hi):
+        v = r.get("vmax")
+        return isinstance(v, (int, float)) and planned and lo * planned <= v <= hi * planned
+
+    slow = [r for r in steps if planned and at(r, 0, HALF)]
+    slow_ok = [r for r in slow if r.get("outcome") == "DONE"]
+    jobs.append(_job("slow", "First run: half speed", "done" if slow_ok else ("attention" if slow else "todo"),
+                     f"Ran cleanly at {slow_ok[0]['vmax']:.4g}." if slow_ok else
+                     (f"Stopped: {slow[0].get('message') or slow[0].get('outcome')}." if slow else
+                      "Half speed in the Systems tab's test, robot enabled, deadman held."),
+                     go=dict(go, speed="half"),
+                     how=["Robot enabled, deadman held, someone watching it. Half speed is the Systems tab's default.",
+                          "Let go of the deadman, or press ABORT, if anything looks wrong."]))
+    full = [r for r in steps if planned and at(r, FULL, 10)]
+    good = [r for r in full if r.get("outcome") == "DONE" and (r.get("score") is None or r.get("score") >= 80)]
+    jobs.append(_job("full", "Then its planned speed", "done" if good else ("attention" if full else ("todo" if slow_ok else "later")),
+                     f"Scored {good[0].get('score')}." if good and good[0].get("score") is not None else
+                     ("Ran at its planned speed." if good else
+                      (f"{full[0].get('message') or 'See its report'}: its gains need a look." if full else
+                       "After a clean half-speed run.")),
+                     unblock=None if slow_ok or full else "slow", go=dict(go, speed="full"),
+                     how=["Full speed in the Systems tab's test. Read the report: it says what to change.",
+                          "Try a gain live, run again, and keep what tracks best."]))
+    st = _mark_status(pmark("code_gains"), "")
+    jobs.append(_job("code_gains", "The gains that worked, in the code", *(st or (("todo" if good else "later"),
+                     "Live gains are lost at restart: put them in the subsystem's code and redeploy.")),
+                     unblock=None if good else "full", go={"part_action": "code_gains"},
+                     how=["Copy the gains that worked into the subsystem's code (or its config), and redeploy.",
+                          "Run once more at its planned speed to check the code has them."]))
+    what = (f"{name}'s first time on the real robot, step by step: nothing moves fast until its limits are known "
+            "and a half-speed run has gone cleanly." if positional else
+            f"{name}'s first time on the real robot, step by step: a half-speed run before its planned speed.")
+    return _plan(f"Mechanism: {name}", what,
+                 ["The robot on blocks or its cart", "Its ReCalc or AMBcalc link", "Someone at the Driver Station to disable",
+                  "Safety glasses"], jobs, {"tab": "systems", "label": "Back to Systems"})
+
+
 # ---------------------------------------------------------------------------- the server's evidence
 
 
@@ -749,8 +921,17 @@ def gather(project, *, link=None, battery_grades_stale=False, measured=None):
         except Exception:  # noqa: BLE001 - a robot without the motor guard has no rows
             live = []
     ctx["live_motors"] = live
+    ctx["systems"], ctx["env"] = [], None
+    if connected:
+        try:
+            ctx["systems"] = link.systems()
+            ctx["env"] = link.environment().get("active")
+        except Exception:  # noqa: BLE001 - a robot without the Systems board has none
+            pass
     if not project:
         return ctx
+    from . import systems as SY
+    ctx["systems_in_code"] = SY.in_code(project)
     ctx["lint"] = yagslcfg.lint(project)
     try:
         ctx["pp"] = ppcheck.check(project)

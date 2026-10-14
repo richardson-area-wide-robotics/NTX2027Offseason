@@ -48,7 +48,8 @@ _SPEED = {"in/s": 0.0254, "ft/s": 0.3048, "mph": 0.44704, "m/s": 1.0, "kph": 1 /
 _TIME = {"s": 1.0, "ms": 0.001, "min": 60.0, "hr": 3600.0}
 _ANGLE_DEG = {"deg": 1.0, "rad": 180 / math.pi}
 _ROT_RPM = {"rpm": 1.0, "deg/s": 1 / 6, "rotation/s": 60.0, "rad/s": 60 / (2 * math.pi)}
-_MOI = {"in2*lbs": 0.0254 ** 2 * 0.45359237, "lbs*in2": 0.0254 ** 2 * 0.45359237, "kg*m2": 1.0}
+_MOI = {"in2*lbs": 0.0254 ** 2 * 0.45359237, "lbs*in2": 0.0254 ** 2 * 0.45359237, "lb*in^2": 0.0254 ** 2 * 0.45359237,
+        "kg*m2": 1.0, "kg*m^2": 1.0}
 _PLAIN = {"A": 1.0, "V": 1.0, "Ohm": 1.0, "ohm": 1.0}
 _TABLES = {"length": _LENGTH, "mass": _MASS, "speed": _SPEED, "time": _TIME, "angle": _ANGLE_DEG,
            "rpm": _ROT_RPM, "moi": _MOI, "plain": _PLAIN}
@@ -189,9 +190,19 @@ def _recalc(page, query, url):
             r = _measure(p.get("shooterRadius"), "length")
             d_m = 2 * r if r is not None else None
         target = _measure(p.get("shooterTargetSpeed"), "rpm")
+        mass = _measure(p.get("shooterWeight"), "mass")
+        # Its moment of inertia: the page's custom one, else a solid wheel's, plus the extra
+        # flywheel when one is switched on.
+        moi = (_measure(p.get("customShooterMoi"), "moi") if _bool(p.get("useCustomShooterMoi", "false"))
+               else mass * (d_m / 2) ** 2 / 2 if mass and d_m else None)
+        if _bool(p.get("flywheelEnabled", "false")):
+            fd, fw = _measure(p.get("flywheelDiameter"), "length"), _measure(p.get("flywheelWeight"), "mass")
+            extra = (_measure(p.get("customFlywheelMoi"), "moi") if _bool(p.get("useCustomFlywheelMoi", "false"))
+                     else fw * (fd / 2) ** 2 / 2 if fw and fd else None)
+            moi = (moi or 0) + (extra or 0) or None
         return _design("ReCalc", "flywheel", "flywheel", url,
                        ratio=_rc_ratio(_first(p, "ratio", "motorRatio")), wheel_diameter_m=d_m,
-                       mass_kg=_measure(p.get("shooterWeight"), "mass"), target_rpm=target, **common)
+                       mass_kg=mass, moi_kgm2=moi, target_rpm=target, **common)
     if page == "intake":
         return _design("ReCalc", "intake", "roller", url, ratio=_rc_ratio(p.get("ratio")),
                        wheel_diameter_m=_measure(p.get("rollerDiameter"), "length"),
@@ -348,7 +359,9 @@ def _amb(page, query, url):
                 notes.append(why[0].upper() + why[1:] + ".")
         return _design("AMBcalc", "mechanism", "mechanism", url, title=title, motor=motor, ratio=ratio,
                        efficiency=eff, voltage=volts, radius_m=_si(st, "radius", 0.0254),
-                       load_n=_si(st, "load", 4.448), notes=notes)
+                       load_n=_si(st, "load", 4.448), notes=notes,
+                       # The page's own 1 in radius and 50 lbf load when a link doesn't change them.
+                       assumed=[f for f, k in (("radius_m", "radius"), ("load_n", "load")) if k not in st["__given"]])
     if page == "startup":
         lim = _num(st.get("maxI"))
         return _design("AMBcalc", "startup", "mechanism", url, title=title, motor=motor,

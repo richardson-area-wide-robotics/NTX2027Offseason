@@ -223,6 +223,7 @@ const HowTo = (() => {
       if (g.guide) Guide.go(g.guide); else { App.show("guide"); Guide.refresh(); }
       return;
     }
+    if (g.tab === "systems" && g.system) { App.show("systems"); Systems.focus(g.system, g); return; }
     if (g.tab) {
       App.show(g.tab);
       if (g.camera) { const c = $("#cc-cam"); if (c) c.value = g.camera; }

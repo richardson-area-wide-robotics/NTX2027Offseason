@@ -78,7 +78,8 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
   stops. No key does it: on the Driver Station laptop, SPACE is the E-STOP. Whoever holds it
   stands where they can see the wheels.
 - **Tell it where the robot is.** "On blocks" means every wheel is off the ground. "On the
-  floor" needs the clear distance ahead and to each side, measured. Before a blocks test that drives
+  floor" needs the bumpers on, the clear distance ahead and to each side, measured, and a person
+  ticking each check: bumpers on, people clear of its path, the deadman holder able to see it. Before a blocks test that drives
   the wheels, they get a short kick (a quarter second): a wheel in the air spins up fast for little
   current, one carrying the robot doesn't, and then the test stops before it starts. If the robot
   turns while it's supposed to be on blocks, it stops too.
@@ -192,6 +193,7 @@ that part, and leaves the rest of the robot's settings and results alone:
 | A camera (moved, bumped, replaced) | Listed for the robot, its position measured again |
 | A new field or event | Welded or AndyMark, the tag survey, the survey uploaded to each camera |
 | Wheels or tread | Wheel sizes, then a straight line on a tape |
+| A mechanism (its first time on the real robot, or rebuilt) | Registered and heard, its physics, its limits by hand and which way it reads, its limits and top speed saved, a half-speed run, its planned speed, the gains in the code |
 
 Starting a part stamps the time: only what is done from then on counts for it, because the part
 changed. Its steps run on that part alone (the tuner opens on that module; its offset is the only
@@ -282,10 +284,14 @@ tune.system("Intake pivot", TunableSystem.Kind.PIVOT)
 Set each mechanism up from top to bottom:
 
 1. **Its physics.**
-   - Paste its ReCalc share link, which holds the whole design (nothing is fetched). Or type the
-     numbers from the AMB spreadsheet: motor, count and ratio, then the arm length and load, the
-     spool diameter and load, or the flywheel's moment of inertia. Only a ReCalc link carries a
-     flywheel's target speed.
+   - Paste its ReCalc or AMBcalc share link, which holds the whole design (nothing is fetched).
+     ReCalc's arm, linear, flywheel and intake pages each fit one kind. AMBcalc's mechanism and
+     startup pages are a motor turning a radius against a load, which is an arm or an elevator's
+     spool, depending on how the code registers it. A note says when the link leaves AMBcalc's own
+     1 in radius or 50 lbf load in place.
+   - Or type the numbers from the AMB spreadsheet: motor, count and ratio, then the arm length and
+     load, the spool diameter and load, or the flywheel's moment of inertia. Only a ReCalc link
+     carries a flywheel's target speed.
    - From these it works out the free speed and the feedforward (kS, kV, kA and kG), using
      WPILib's motor models.
    - If the units don't say how they relate to the mechanism, fill in **One radian of it is**. The
@@ -300,6 +306,9 @@ Set each mechanism up from top to bottom:
 4. **Test it.**
    - **Before you run:** the robot is enabled, the deadman is held, and someone is watching with
      hands clear.
+   - **Half speed first.** The test starts at **Half speed**: half its planned top speed (a
+     flywheel's goals are halved too). Pick **Full speed** after a clean half-speed run on the
+     real robot.
    - **A pivot or elevator** moves between 30% and 70% of its travel. Its top speed is a quarter of
      its free speed. Its acceleration is a quarter of what full voltage gives, less what holding it
      up takes.
@@ -315,18 +324,38 @@ Set each mechanism up from top to bottom:
      physics, and its **Try kV** button applies it live.
    - **In the simulator,** the mechanism's physics aren't modeled, so only the sequence is checked.
 
+**First time on the real robot? Walk me through it** opens the mechanism's checklist, which works
+like the Guide's **Redo one part**. Each step ticks itself off from what the robot shows, counting
+only what was done since you started it. The simulator never counts. The steps:
+
+1. The real robot is connected and its code registers the mechanism.
+2. Its motors are heard, with no faults.
+3. Optional: its test in the simulator.
+4. Its physics.
+5. For a pivot or elevator:
+   - its limits, moved by hand;
+   - toward its top end, its reading goes up. A person watches the live reading and says so; if it
+     goes down, the encoder is inverted in the code.
+6. Its limits and top speed are saved, and redeployed.
+7. The robot is on blocks and the mechanism's path is clear.
+8. A clean half-speed run.
+9. A run at its planned speed that scores well.
+10. The gains that worked are in the code.
+
 Faults on the mechanism's motors show at the top of the tab. The settings live in `swervetune.json`
 under `"systems"`, one entry per mechanism:
 
 ```json
 "systems": {
   "Intake pivot": {"min": 0.0, "max": 17.8, "maxVelocity": 20, "maxAccel": 60,
-                   "recalc": "https://www.reca.lc/arm?..."}
+                   "link": "https://www.reca.lc/arm?..."}
 }
 ```
 
 The robot reads `min`, `max`, `maxVelocity` and `maxAccel`, and enforces them. The laptop also reads
-`recalc`, or `physics` for the typed-in numbers, and `unitsPerRadian`.
+`link` (the ReCalc or AMBcalc link), or `physics` for the typed-in numbers, and `unitsPerRadian`.
+`maxVelocity` is the team's ceiling, the fastest anyone may test it. The half-speed first runs come
+from the test itself, so going faster never needs a redeploy.
 
 ## Saving what you find
 

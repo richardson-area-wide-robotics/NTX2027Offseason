@@ -6,7 +6,10 @@
 
 const Systems = (() => {
   const root = $("#tab-systems");
-  let data = null, pick = null, last = null, edits = {}, timer = null;
+  // A mechanism's test runs at half its planned speed until someone picks full: the first runs
+  // on the real robot go slowly (the walkthrough's half-speed step).
+  let data = null, pick = null, last = null, edits = {}, timer = null, speed = "half";
+  const FACTOR = { half: 0.5, full: 1 };
   const KIND = { FLYWHEEL: "flywheel", ROLLER: "roller", PIVOT: "pivot", ELEVATOR: "elevator" };
   const positional = s => s && (s.kind === "PIVOT" || s.kind === "ELEVATOR");
   const n4 = v => v == null || !Number.isFinite(+v) ? "–" : String(+(+v).toPrecision(4));
@@ -16,7 +19,8 @@ const Systems = (() => {
       <div class="panel sys-bar">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <div class="row"><h2 data-tip="sys.title">Systems</h2><div class="seg" id="sys-pick" role="group" aria-label="Mechanism"></div></div>
-          <span class="small mono" id="sys-now"></span></div>
+          <div class="row"><span class="small mono" id="sys-now"></span>
+            <button class="btn small" id="sys-walk" data-tip="sys.walk">First time on the real robot? Walk me through it</button></div></div>
         <p class="hint" id="sys-blurb">Each mechanism the robot code registers, tuned through its own control loop. Set it up top to bottom: physics, limits, top speed; then test it.</p>
         <div id="sys-faults"></div>
       </div>
@@ -26,6 +30,8 @@ const Systems = (() => {
         <div class="panel sys-test" id="sys-test"></div>
       </div>
     </div>`;
+
+  $("#sys-walk", root).onclick = () => { if (pick) Parts.open("system", pick); else App.toast("Pick a mechanism first."); };
 
   async function load() {
     data = await App.api("/api/systems");
@@ -46,7 +52,7 @@ const Systems = (() => {
     $("#sys-pick", root).innerHTML = S.map(s => `<button data-sys="${esc(s.name)}" class="${s.name === pick ? "on" : ""}" aria-pressed="${s.name === pick}"
       data-tip="sys.pick">${esc(s.name)}${s.name.toLowerCase().includes(KIND[s.kind] || "~") ? "" : ` <span class="muted small">${KIND[s.kind] || ""}</span>`}</button>`).join("")
       || `<span class="small muted">${data && data.connected ? "The robot code registers no mechanism yet: see the guide for tune.system(...)." : "Connect to the robot to see its mechanisms."}</span>`;
-    $$("#sys-pick [data-sys]", root).forEach(b => b.onclick = () => { pick = b.dataset.sys; edits = {}; last = null; paintPick(); paintGroups(); paintSetup(); paintTest(); });
+    $$("#sys-pick [data-sys]", root).forEach(b => b.onclick = () => { pick = b.dataset.sys; edits = {}; last = null; speed = "half"; paintPick(); paintGroups(); paintSetup(); paintTest(); });
   }
 
   function paintGroups() {
@@ -76,7 +82,7 @@ const Systems = (() => {
     const kindNow = (s.physics && s.physics.kind) || (KIND[s.kind] === "roller" ? "flywheel" : KIND[s.kind]);
     box.innerHTML = `
       <h3 data-tip="sys.physics">1. Its physics</h3>
-      <div class="row"><input id="sys-recalc" placeholder="Paste its ReCalc link (reca.lc/arm, /flywheel, /linear)" value="${esc(val("recalc") || "")}" style="flex:1">
+      <div class="row"><input id="sys-link" placeholder="Paste its ReCalc or AMBcalc link" value="${esc(val("link") || "")}" style="flex:1">
         <button class="btn small" id="sys-read" data-tip="sys.read">Read it</button></div>
       <details ${typed.motor ? "open" : ""}><summary class="small">Or type the numbers (from the AMB spreadsheet)</summary>
         <div class="row small sys-typed">
@@ -90,7 +96,7 @@ const Systems = (() => {
               <label>Load kg <input data-ph="load_kg" type="number" step="any" value="${esc(typed.load_kg ?? "")}" style="width:5em"></label>`}
         </div></details>
       <p class="small">${s.physics_error ? `<span class="bad-ink">${esc(s.physics_error)}</span>` : !s.physics ? `<span class="muted">No physics yet.</span>`
-        : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1))} ${esc(s.units)}${positional(s) ? "/s" : ""}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per radian)` : ""}`}</p>
+        : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1))} ${esc(s.units)}${positional(s) ? "/s" : ""}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per radian)` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
       <label class="row small" data-tip="sys.scale">One radian of it${positional(s) ? "" : " per second"} is <input id="sys-scale" type="number" step="any" value="${n4(s.scale)}" style="width:6em"> ${esc(s.units)}</label>
       ${positional(s) ? `<h3 data-tip="sys.limits">2. Its limits</h3>
         <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min)} to ${n4(s.max)} ${esc(s.units)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
@@ -112,13 +118,13 @@ const Systems = (() => {
       App.toast(r.status || r.error, 6000);
       load();
     };
-    $("#sys-recalc", box).onchange = e => { edits.recalc = e.target.value.trim(); };
-    $("#sys-read", box).onclick = () => { edits.recalc = $("#sys-recalc", box).value.trim(); delete edits.physics; preview(); };
+    $("#sys-link", box).onchange = e => { edits.link = e.target.value.trim(); };
+    $("#sys-read", box).onclick = () => { edits.link = $("#sys-link", box).value.trim(); delete edits.physics; preview(); };
     $$("[data-ph]", box).forEach(i => i.onchange = () => {
       const p = Object.assign({ kind: kindNow }, val("physics") || {});
       p[i.dataset.ph] = i.tagName === "SELECT" ? i.value : +i.value;
       edits.physics = p;
-      edits.recalc = "";
+      edits.link = "";
       preview();
     });
     $("#sys-scale", box).onchange = e => { edits.unitsPerRadian = +e.target.value; preview(); };
@@ -143,8 +149,8 @@ const Systems = (() => {
   async function save() {
     const s = current(), set = Object.assign({}, s.settings, edits), e = [];
     const put = (k, v) => { if (v !== undefined && v !== null && v !== "") e.push({ file: "swervetune.json", path: ["systems", s.name, k], value: v }); };
-    put("recalc", set.recalc);
-    put("physics", set.recalc ? undefined : set.physics);
+    put("link", set.link);
+    put("physics", set.link ? undefined : set.physics);
     put("unitsPerRadian", edits.unitsPerRadian);
     put("maxVelocity", set.maxVelocity);
     put("maxAccel", set.maxAccel);
@@ -188,24 +194,34 @@ const Systems = (() => {
   function paintTest() {
     const box = $("#sys-test", root), s = current();
     if (!s) { box.innerHTML = ""; return; }
-    const p = s.plan || {}, env = App.env();
+    const p = scaled(s), env = App.env();
     const where = ["BLOCKS", "FIELD", "SIM"].includes(env);
     box.innerHTML = `
       <div class="row" style="justify-content:space-between"><h3 data-tip="sys.test">${positional(s) ? "4" : "3"}. Test it</h3>
-        <button class="btn primary" id="sys-run" data-tip="sys.run" ${p.ok && App.connected() && where ? "" : "disabled"}>Run</button></div>
+        <div class="row"><div class="seg" id="sys-speed" role="group" aria-label="Test speed">${["half", "full"].map(k =>
+          `<button data-speed="${k}" class="${speed === k ? "on" : ""}" aria-pressed="${speed === k}" data-tip="sys.speed-${k}">${k === "half" ? "Half speed" : "Full speed"}</button>`).join("")}</div>
+        <button class="btn primary" id="sys-run" data-tip="sys.run" ${p.ok && App.connected() && where ? "" : "disabled"}>Run</button></div></div>
       ${p.ok ? `<p class="small">${positional(s) ? `Moves between ${n4(p.a)} and ${n4(p.b)} ${esc(s.units)}` : `Spins up to ${n4(p.a)}, then ${n4(p.b)} ${esc(s.units)}, then down`},
-          no faster than <b>${n4(p.vmax)}</b> ${esc(s.units)}${positional(s) ? "/s" : ""}, changing at most ${n4(p.amax)} per second${positional(s) ? " per second" : ""}.
+          no faster than <b>${n4(p.vmax)}</b> ${esc(s.units)}${positional(s) ? "/s" : ""}${speed === "half" ? " (half its planned speed)" : ""}, changing at most ${n4(p.amax)} per second${positional(s) ? " per second" : ""}.
           <span class="muted">${(p.why || []).map(esc).join("; ")}.</span></p>
         <p class="small muted">Robot enabled ${where ? "" : "<b class=\"warn-ink\">(set On blocks or On the floor first)</b> "}and the deadman held; someone watching it, hands clear. It stops at once if it leaves its limits or goes too fast.</p>`
         : `<p class="small warn-ink">Before it can be tested: ${(p.missing || ["its settings"]).map(esc).join("; ")}.</p>`}
       <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The goal and what the mechanism did"></canvas></div>
       <div id="sys-report" class="small"></div>`;
     $("#sys-run", box).onclick = run;
+    $$("#sys-speed [data-speed]", box).forEach(b => b.onclick = () => { speed = b.dataset.speed; paintTest(); });
     drawRun();
   }
 
+  // The plan at the chosen speed: a flywheel's goals are speeds too, a pivot's stay where they are.
+  function scaled(s) {
+    const p = s.plan || {}, f = FACTOR[speed];
+    if (!p.ok || f === 1) return p;
+    return Object.assign({}, p, { vmax: p.vmax * f, amax: p.amax * f }, positional(s) ? {} : { a: p.a * f, b: p.b * f });
+  }
+
   async function run() {
-    const s = current(), p = s.plan;
+    const s = current(), p = scaled(s);
     $("#sys-run", root).disabled = true;
     try {
       last = await App.runTest("system_step", "ALL", { system: s.index, a: p.a, b: p.b, vmax: p.vmax, amax: p.amax, hold_s: 1, moves: 2 });
@@ -255,5 +271,13 @@ const Systems = (() => {
       }
     }, 1000);
   });
-  return { load };
+  /** Opens on one mechanism, at a speed: the walkthrough's steps land here. */
+  function focus(name, o) {
+    o = o || {};
+    if (name && name !== pick) { pick = name; edits = {}; last = null; }
+    if (o.speed) speed = o.speed;
+    load();
+  }
+
+  return { load, focus };
 })();

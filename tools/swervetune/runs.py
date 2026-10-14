@@ -81,6 +81,12 @@ def _summary(f):
              "practice": d.get("practice", False), "score": rep.get("score"),
              "cost": rep.get("cost"), "summary": rep.get("summary"),
              "robot": (d.get("robot") or {}).get("name"), "gains": d.get("gains") or {}}
+        if str(d.get("test") or "").startswith("system_"):
+            # Which mechanism, and how fast or how far it went: the Systems walkthrough reads these.
+            m = next((re.match(r"system: (.+) \((\w*)", n) for n in d.get("notes") or [] if str(n).startswith("system: ")), None)
+            meta = d.get("meta") or {}
+            s.update(system=m.group(1) if m else None, message=d.get("message"),
+                     vmax=meta.get("vmax"), min=meta.get("min"), max=meta.get("max"))
     _SUMMARIES[f] = (key, s)
     return s
 

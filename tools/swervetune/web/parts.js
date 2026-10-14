@@ -10,6 +10,8 @@ const Parts = (() => {
   const CHIP = { done: "good", attention: "bad", todo: "todo", later: "info", optional: "opt", skip: "opt" };
   // What the person sees between paints: a step's result, and a question waiting for an answer.
   let on = false, sel = null, cat = null, plan = null, picked = null, result = {}, asking = null, seq = 0, focusNext = false;
+  let liveTimer = null;  // a mechanism's live reading, while its direction step is shown
+  let showJob = false;   // a step was picked: bring its panel, with its buttons, into view
 
   function choose(kind, which) {
     // Another part: nothing from the last one carries over.
@@ -36,6 +38,7 @@ const Parts = (() => {
   async function paint() {
     // A slow answer must never paint over a newer one, or over the Guide once the person left.
     const my = ++seq;
+    clearInterval(liveTimer);
     const c = await App.api("/api/parts");
     if (sel && !sel.which) {
       // A part that needs a pick gets the first choice, as its select shows.
@@ -58,7 +61,7 @@ const Parts = (() => {
         ${act.length ? `<div class="small">${act.map(a => `<button class="linkish" data-open="${esc(a.kind)}" data-which="${esc(a.which)}" data-tip="parts.open" data-quiet>${esc(a.which || a.title)}: ${a.done} of ${a.of} done</button>`).join(" · ")}</div>` : ""}
       </div>`;
     };
-    root.innerHTML = `<div class="split">
+    root.innerHTML = `<div class="split parts-split">
       <div class="panel"><h3 data-tip="parts.title">Redo one part</h3>
         <p class="small">Already set up, and one thing changed? Check only that part: the rest of the robot keeps its settings, and only what you do from now on counts for it.</p>
         <div class="stack">${cat.kinds.map(kindRow).join("")}</div>
@@ -76,6 +79,12 @@ const Parts = (() => {
     $$("[data-pick]", root).forEach(s => s.onchange = () => { choose(s.dataset.pick, s.value); focusNext = true; paint(); });
     $$("[data-open]", root).forEach(b => b.onclick = () => { choose(b.dataset.open, b.dataset.which); focusNext = true; paint(); });
     mount();
+    // A picked step's panel can be below a long checklist: scroll it into view inside its panel.
+    if (showJob) {
+      showJob = false;
+      const pj = $(".part-job", root);
+      if (pj) pj.scrollIntoView({ block: "nearest" });
+    }
     // The new content can be a screen away on a phone: take the person to it.
     if (focusNext) {
       focusNext = false;
@@ -98,10 +107,11 @@ const Parts = (() => {
     const k = cat.kinds.find(x => x.kind === sel.kind) || {};
     if (!plan || !plan.started) {
       // Not started: the checklist as it would be, nothing counted yet.
+      // Start first: a long checklist scrolls, and its button must not scroll away.
       return `<h2 tabindex="-1">${esc((plan && plan.title) || k.title)}</h2><p>${esc(k.when)}.</p>
-        ${plan && plan.jobs ? jobsList(plan.jobs, null, false) : ""}
-        <p class="small">Starting stamps the time: only what you do from now on counts for this part, because it changed. Starting moves nothing.</p>
-        <div class="row"><button class="btn primary" id="p-start" data-tip="parts.start">Start this checklist</button></div>`;
+        <div class="row"><button class="btn primary" id="p-start" data-tip="parts.start">Start this checklist</button>
+          <span class="small">Starting stamps the time: only what you do from now on counts for this part, because it changed. Starting moves nothing.</span></div>
+        ${plan && plan.jobs ? jobsList(plan.jobs, null, false) : ""}`;
     }
     const job = plan.jobs.find(j => j.id === picked) || plan.next || plan.jobs[0];
     picked = job ? job.id : null;
@@ -141,8 +151,14 @@ const Parts = (() => {
       <button class="btn primary" data-act="hand_gyro" data-tip="parts.record-gyro">Record (20 s)</button>`;
     if (kind === "field" && job.id === "type") return `<div class="row"><label class="small" data-tip="parts.field">This field is <select id="p-field"><option value="welded">Welded</option><option value="andymark">AndyMark</option></select></label>
       <button class="btn primary" data-act="type" data-tip="parts.field-save">Save it</button></div>`;
+    if (kind === "system" && job.id === "direction") return `<p class="small">Robot disabled. Move <b>${esc(sel.which)}</b> by hand toward its top (deployed, raised) end and watch its reading: <b class="mono" id="p-sys-live">…</b></p>
+      <div class="row"><button class="btn primary" data-act="sys_dir_up" data-tip="parts.sys-up">It goes up</button>
+        <button class="btn" data-act="sys_dir_down" data-tip="parts.sys-down">It goes down</button></div>`;
+    if (kind === "system" && job.id === "code_gains") return `<p class="small">Put the gains that worked into <b>${esc(sel.which)}</b>'s subsystem code, redeploy, and run it once more at full speed.</p>
+      <button class="btn primary" data-act="sys_code" data-tip="parts.sys-code">Done: in the code and redeployed</button>`;
     if (kind === "field" && job.id === "upload") return `<button class="btn primary" data-act="upload" data-tip="parts.upload">Done: uploaded to every camera</button>`;
-    if (job.go) return `<button class="btn primary" data-go-part data-tip="parts.go">${g.tune ? `Open the tuner${g.module ? ` on ${esc(g.module)}` : ""}` : g.guide ? "Open it in the Guide" : g.part ? "Open that part" : "Go there"}</button>`;
+    if (job.go) return `<button class="btn primary" data-go-part data-tip="parts.go">${g.tune ? `Open the tuner${g.module ? ` on ${esc(g.module)}` : ""}` : g.guide ? "Open it in the Guide" : g.part ? "Open that part"
+      : g.tab === "systems" ? `Open it in Systems${g.speed ? `, at ${g.speed} speed` : ""}` : "Go there"}</button>`;
     return "";
   }
 
@@ -154,11 +170,23 @@ const Parts = (() => {
     if (b("#p-close")) b("#p-close").onclick = stop;
     const sw = $("[data-howto-switch]", $("#p-body", root));
     if (sw) sw.onchange = e => HowTo.set(e.target.checked);
-    $$("[data-job]", root).forEach(x => x.onclick = () => { picked = x.dataset.job; focusNext = true; paint(); });
+    $$("[data-job]", root).forEach(x => x.onclick = () => { picked = x.dataset.job; showJob = true; paint(); });
     const gp = $("[data-go-part]", root);
     const job = plan && plan.jobs ? plan.jobs.find(j => j.id === picked) : null;
     if (gp && job) gp.onclick = () => HowTo.go(job.go);
     $$("[data-act]", root).forEach(x => x.onclick = () => act(x.dataset.act));
+    // The mechanism's reading, live, while someone moves it by hand.
+    const lv = $("#p-sys-live", root);
+    if (lv) {
+      const tick = async () => {
+        if (!on || !root.classList.contains("on") || !document.body.contains(lv)) { clearInterval(liveTimer); return; }
+        const r = await App.api("/api/systems");
+        const s = ((r && r.systems) || []).find(x => x.name === sel.which);
+        lv.textContent = s && s.position != null && isFinite(s.position) ? `${(+s.position).toPrecision(4)} ${s.units}` : "no reading (connected?)";
+      };
+      tick();
+      liveTimer = setInterval(tick, 500);
+    }
     // A question waiting for the person (the direction check): wired on every paint, so a repaint
     // from the run that asked it can't leave dead buttons.
     $$("[data-dir]", root).forEach(x => x.onclick = async () => {
@@ -212,7 +240,12 @@ const Parts = (() => {
   async function act(what) {
     const m = sel.which;
     try {
-      if (what === "hand_wheel" || what === "hand_steer") {
+      if (what === "sys_dir_up" || what === "sys_dir_down") {
+        const up = what === "sys_dir_up";
+        await markStep("direction", up, up ? "Its reading goes up toward its top end." : "It reads backwards: invert its encoder in the code before any test.");
+      } else if (what === "sys_code") {
+        await markStep("code_gains", true, "In the code and redeployed.");
+      } else if (what === "hand_wheel" || what === "hand_steer") {
         const kind = what === "hand_wheel" ? "wheel" : "steer";
         App.toast(kind === "wheel" ? `Recording: roll ${m}'s wheel forward now.` : `Recording: turn ${m} counter-clockwise now.`, 6000);
         const doc = await App.runTest("capture", "ALL", { duration_s: 20, coast: 1 });

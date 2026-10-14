@@ -301,6 +301,8 @@ def api_env(body):
     mode = body.get("mode")
     if mode == "FIELD" and not (body.get("space_forward") and body.get("space_side")):
         return {"ok": False, "error": "Measure the clear floor ahead and to each side first."}
+    if mode == "FIELD" and not body.get("bumpers"):
+        return {"ok": False, "error": "Put the bumpers on before the robot goes on the floor."}
     S.link.set_environment(mode, body.get("apriltags"), body.get("space_forward"),
                            body.get("space_side"), body.get("speed_cap"))
     time.sleep(0.25)
@@ -780,7 +782,10 @@ def api_parts(_query=None):
     tune = S.project.data.get("swervetune.json") or {}
     picks = {"module": S.project.module_names(),
              "motor": [d["name"] for d in wiring.discover(S.project) if d["kind"] == "controller"],
-             "camera": [str(c) for c in (tune.get("vision") or {}).get("cameras") or []] or ["front"]}
+             "camera": [str(c) for c in (tune.get("vision") or {}).get("cameras") or []] or ["front"],
+             # The mechanisms the robot registers, else the ones its code registers.
+             "system": [s["name"] for s in (S.link.systems() if S.link and S.link.is_connected() else [])]
+             or sorted(systems.in_code(S.project))}
     kinds = [{"kind": k, "title": v["title"], "when": v["when"], "choices": picks.get(v["pick"]) if v["pick"] else None}
              for k, v in setup_plans.PARTS.items()]
     active = []
@@ -869,7 +874,7 @@ def api_systems(_query=None):
     for r in reg:
         entry = cfg.get(r["name"]) or {}
         try:
-            phys, err = systems.physics(entry), None
+            phys, err = systems.physics(entry, r.get("kind")), None
         except ValueError as e:
             phys, err = None, str(e)
         from . import mechanics
@@ -886,14 +891,14 @@ def mechanics_motors():
 
 
 def api_systems_physics(body):
-    """A mechanism's physics and safe test from a ReCalc link or typed numbers, before saving."""
+    """A mechanism's physics and safe test from a ReCalc or AMBcalc link or typed numbers, before saving."""
     b = body or {}
     entry = {k: v for k, v in (b.get("settings") or {}).items() if v not in (None, "")}
     registered = next((r for r in (S.link.systems() if S.link and S.link.is_connected() else [])
                        if r["name"] == b.get("name")), {"name": b.get("name"), "kind": b.get("kind", ""),
                                                          "units": b.get("units", "")})
     try:
-        phys = systems.physics(entry)
+        phys = systems.physics(entry, registered.get("kind"))
     except ValueError as e:
         return {"ok": False, "error": str(e)}
     from . import mechanics

@@ -17,8 +17,8 @@ yours, and nothing in the tools will stop you from breaking them:
    run button). On blocks too: "blocks" is only what someone told the tool. The CLI keeps the
    laptop's heartbeat alive; it never holds the deadman for anyone.
 2. **Only set the environment you were told.** `env --mode BLOCKS` only when a person says every
-   wheel is off the ground. `env --mode FIELD --space <m> --side <m>` only with distances a
-   person measured. Never guess, and never change the mode to make a refused test run.
+   wheel is off the ground. `env --mode FIELD --space <m> --side <m> --bumpers` only with
+   distances a person measured, and only once a person has said the bumpers are on. Never guess, and never change the mode to make a refused test run.
 3. **Never write to the repository without a person's OK.** `save gains`, `config` and `offsets`
    show a diff without `--yes`. Show that diff to a person and wait for an explicit yes before adding
    `--yes`. Never commit or push.
@@ -63,7 +63,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `ppcheck --project Peashooter` | Whether PathPlanner's settings describe the same robot as the code. Exits 1 on an error; report it, never edit PathPlanner's files. |
 | `status` | Robot, environment, live modules, problems. |
 | `netcheck` | Whether this laptop reaches the robot and the internet at the same time (two networks, a VPN). Run it when `status` can't reach the robot, and tell the person what it says; never change a network setting yourself. |
-| `env --mode BLOCKS` / `env --mode FIELD --space 3 --side 1.5` | Tells the robot where it is. |
+| `env --mode BLOCKS` / `env --mode FIELD --space 3 --side 1.5 --bumpers` | Tells the robot where it is. |
 | `run <test> [--module FL] [--arg key=value]` | Runs one test, saves it (`run_file`), prints the report. The `--arg` keys are below; leave them out unless a report or a person asks. |
 | `gains show` / `gains set Steer/kP=0.015 --why "<finding title>" --from-run <run_file>` | Reads or changes live gains (lost at restart until saved). A pod's own PID is `Pod/<module>/Steer/kP` (and `kI`, `kD`, `IZone`; `Drive/...` likewise): it changes that pod only; the shared `Steer/kP` sets every pod. `analyze <run> --pod frontleft` reads a run for one pod with its own gains. Always give `--why`: it goes into the robot's match log with the change. Always give `--from-run` with the run whose report gave the values: it refuses another robot's run, the practice pod's, or one more than a day old. |
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
@@ -155,7 +155,7 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `ENV_UNSET`, `ENV_CHANGED` | Ask a person where the robot is; never set it to make a test run. |
 | `NO_HEARTBEAT`, `NOT_CONNECTED` | The laptop lost the robot. Reconnect; tell the person. |
 | `GYRO` | The gyro isn't reporting or is calibrating. Wait, then ask a person. |
-| `NO_SPACE` | A person must measure the clear floor (`env --mode FIELD --space --side`). |
+| `NO_SPACE` | A person must measure the clear floor and put the bumpers on (`env --mode FIELD --space --side --bumpers`). |
 | `DEADMAN`, `DRIVER_INPUT`, `ABORTED_BY_PERSON` | A person let go, drove, or aborted: ask why before anything else. |
 | `DRIVETRAIN_TAKEN` | Another command (a drive button) took the drivetrain mid-test: ask the people to keep drive buttons alone, then rerun. |
 | `NOT_ON_BLOCKS`, `IMPACT`, `GEOFENCE`, `NO_WALL`, `STALL`, `OVERSPEED` | Something physical: a person looks at the robot first. |

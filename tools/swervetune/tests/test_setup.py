@@ -187,8 +187,84 @@ class PartTest(unittest.TestCase):
                 plan = fn(c)
                 self.assertTrue(plan["jobs"], robot)
             for kind in SP.PARTS:
-                which = {"module": p.module_names()[0], "motor": p.module_names()[0] + " drive", "camera": "front"}.get(kind, "")
+                which = {"module": p.module_names()[0], "motor": p.module_names()[0] + " drive", "camera": "front",
+                         "system": "Shooter"}.get(kind, "")
                 self.assertTrue(SP.part_plan(kind, which, c, START)["jobs"], (robot, kind))
+
+
+# A mechanism's first run on the real robot (the walkthrough): Peashooter's Intake pivot.
+from swervetune.tests.test_mechanics import ARM  # noqa: E402
+
+PIVOT_LIVE = {"name": "Intake pivot", "kind": "PIVOT", "units": "motor rotations", "motors": ["Intake pivot"],
+              "min": 0.0, "max": 17.8, "max_velocity": 10.0, "max_accel": 50.0, "limits_from": "swervetune.json"}
+PIVOT_TUNE = {"systems": {"Intake pivot": {"link": ARM, "min": 0.0, "max": 17.8, "maxVelocity": 10.0}}}
+
+
+def srun(test, saved, env="BLOCKS", outcome="DONE", **kw):
+    r = {"test": test, "env": env, "saved": saved, "module": "ALL", "outcome": outcome, "practice": False,
+         "score": 100, "robot": "Robot", "system": "Intake pivot"}
+    r.update(kw)
+    return r
+
+
+class SystemPartTest(unittest.TestCase):
+    def live(self, runs=(), marks=None, **kw):
+        prog = {"parts": {"system:Intake pivot": {"started": START, "marks": marks or {}}}}
+        c = ctx(tune=kw.pop("tune", PIVOT_TUNE), connected=True, env="BLOCKS", systems=[PIVOT_LIVE], prog=prog,
+                live_motors=[{"name": "Intake pivot", "present": 1, "flags": ""}], runs=list(runs))
+        c.update(kw)
+        return SP.part_plan("system", "Intake pivot", c, START)
+
+    def test_from_its_limits_to_its_planned_speed(self):
+        # Its planned top speed: a quarter of its free speed, capped at the team's 10 motor rotations/s.
+        st = jobs(self.live([srun("system_limits", LATE, min=0.1, max=17.7)]))
+        first = ("code", "heard", "physics", "limits", "saved", "where")
+        self.assertEqual({k: st[k] for k in first}, dict.fromkeys(first, "done"))
+        self.assertEqual((st["direction"], st["slow"], st["full"], st["code_gains"]), ("todo", "todo", "later", "later"))
+        self.assertEqual(st["sim"], "optional")
+        runs = [srun("system_limits", LATE, min=0.1, max=17.7), srun("system_step", LATE, vmax=5.0),
+                srun("system_step", LATE, vmax=10.0, score=90)]
+        st = jobs(self.live(runs, marks={"direction": mark()}))
+        self.assertEqual((st["direction"], st["slow"], st["full"], st["code_gains"]), ("done", "done", "done", "todo"))
+        st = jobs(self.live(runs, marks={"direction": mark(), "code_gains": mark()}))
+        self.assertEqual(st["code_gains"], "done")
+
+    def test_a_run_the_robot_stopped_needs_a_look(self):
+        p = self.live([srun("system_step", LATE, vmax=5.0, outcome="PAST_LIMITS", message="It went past its limit.")])
+        self.assertEqual(jobs(p)["slow"], "attention")
+        self.assertIn("past its limit", [j for j in p["jobs"] if j["id"] == "slow"][0]["detail"])
+        self.assertEqual(jobs(self.live([srun("system_step", LATE, vmax=10.0, score=40)]))["full"], "attention")
+
+    def test_only_the_real_robot_and_only_since_the_start(self):
+        st = jobs(self.live([srun("system_limits", EARLY, min=0.1, max=17.7), srun("system_step", LATE, env="SIM", vmax=5.0)]))
+        self.assertEqual(st["limits"], "todo", "found before it was rebuilt")
+        self.assertEqual(st["slow"], "todo", "the simulator never counts")
+        self.assertEqual(st["sim"], "done", "but it checked the sequence")
+        self.assertEqual(jobs(self.live(env="SIM"))["code"], "todo")
+        self.assertEqual(jobs(self.live(connected=False))["code"], "todo")
+
+    def test_what_still_needs_doing(self):
+        st = jobs(self.live(systems=[], live_motors=[]))
+        self.assertEqual(st["code"], "attention", "connected, but the code doesn't register it")
+        st = jobs(self.live(live_motors=[{"name": "Intake pivot", "present": 1, "flags": "kMotorFault"}]))
+        self.assertEqual(st["heard"], "attention")
+        p = self.live(tune={"systems": {"Intake pivot": {"link": ARM, "min": 0.0, "max": 17.8}}})
+        saved = [j for j in p["jobs"] if j["id"] == "saved"][0]
+        self.assertEqual(saved["status"], "todo")
+        self.assertIn("planned top speed", saved["detail"])
+        moved = dict(PIVOT_LIVE, max_velocity=8.0)
+        self.assertIn("redeploy", [j for j in self.live(systems=[moved])["jobs"] if j["id"] == "saved"][0]["detail"])
+        self.assertEqual(jobs(self.live(tune={}))["physics"], "todo")
+
+    def test_a_flywheel_has_no_limits_steps(self):
+        fly = {"name": "Shooter", "kind": "FLYWHEEL", "units": "RPM", "motors": ["Shooter leader"], "max_velocity": 4000.0,
+               "limits_from": ""}
+        c = ctx(connected=True, env="BLOCKS", systems=[fly], live_motors=[{"name": "Shooter leader", "present": 1}],
+                tune={"systems": {"Shooter": {"maxVelocity": 4000.0}}})
+        st = jobs(SP.part_plan("system", "Shooter", c, START))
+        self.assertNotIn("limits", st)
+        self.assertNotIn("direction", st)
+        self.assertEqual(st["saved"], "done")
 
 
 def design(motors, sensors=()):
@@ -253,6 +329,25 @@ class ServerTest(unittest.TestCase):
         self.proj = mock.patch.object(server.S, "project", Y.Project(os.path.join(REPO, "Peashooter")))
         self.proj.start()
         self.addCleanup(self.proj.stop)
+
+    def test_the_floor_needs_bumpers(self):
+        class Link:
+            def set_environment(self, *a):
+                self.set = a
+
+            def environment(self):
+                return {"active": "FIELD"}
+
+        with mock.patch.object(server.S, "link", Link()), mock.patch.object(server.time, "sleep"):
+            r = server.api_env({"mode": "FIELD", "space_forward": 3, "space_side": 1.5})
+            self.assertFalse(r["ok"])
+            self.assertIn("bumpers", r["error"])
+            self.assertTrue(server.api_env({"mode": "FIELD", "space_forward": 3, "space_side": 1.5, "bumpers": True})["ok"])
+            self.assertTrue(server.api_env({"mode": "BLOCKS"})["ok"], "blocks never asks")
+
+    def test_mechanism_choices_come_from_the_code_before_connecting(self):
+        kinds = {k["kind"]: k for k in server.api_parts()["kinds"]}
+        self.assertEqual(kinds["system"]["choices"], ["Intake pivot", "Shooter"])
 
     def test_start_mark_and_stop_a_part(self):
         self.assertIsNone(server.api_part_plan({"kind": "module", "which": "frontleft"})["started"])

@@ -265,13 +265,13 @@ const Guide = (() => {
   const PLACE = { connect: "Laptop", health: "Robot disabled", hand: "Robot disabled", offsets: "Robot disabled",
     directions: "On blocks", "steer-blocks": "On blocks", profile: "Finish", commit: "Finish" };
   const SAFETY = {
-    FIELD: "the robot moves. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot. Disable it before anyone walks up to it; enable only when everyone is clear.",
+    FIELD: "the robot moves. Bumpers on before it goes on the floor. Clear the space, set On the floor with real measurements, and give the deadman to someone watching the robot. Disable it before anyone walks up to it; enable only when everyone is clear.",
     BLOCKS: "the wheels spin while the deadman is held, starting with a short kick that checks they are off the floor. All four must be clear of the floor, and hands, hair and cables clear of every wheel. Disable before anyone touches a wheel.",
   };
   // A step whose risk differs from its place's: steering on carpet turns the wheels, not the robot.
   const SAFETY_STEP = {
-    "steer-floor": "the wheels turn on the carpet; the robot stays put but can twitch. Feet clear of the wheels, deadman held, and disable before anyone touches it.",
-    sticks: "the robot drives from the driver's sticks, with no deadman: everyone clear, gentle pushes, and someone at the Driver Station ready to disable.",
+    "steer-floor": "the wheels turn on the carpet; the robot stays put but can twitch. Bumpers on, feet clear of the wheels, deadman held, and disable before anyone touches it.",
+    sticks: "the robot drives from the driver's sticks, with no deadman: bumpers on, everyone clear, gentle pushes, and someone at the Driver Station ready to disable.",
   };
 
   // Saves marks a person or a measurement set. In the simulator nothing is ticked: it teaches the

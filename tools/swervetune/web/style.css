@@ -783,3 +783,8 @@ table.t td > select { padding-block: 1px; }
   .sys-cols { min-height: 0; height: 100%; }
   .sys-cols > .panel { max-height: 100%; overflow-y: auto; }
 }
+
+/* Redo one part: the parts list and the checklist each fit the screen, scrolling inside themselves. */
+@media (min-height: 700px) {
+  .parts-split > .panel { max-height: var(--work-h); overflow-y: auto; }
+}

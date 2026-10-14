@@ -6,7 +6,7 @@ limits and safe test, and what a test of it showed.
 * **Tunable mechanisms**: what the robot code registers (``TunableSystem``), with its live state.
 * **Settings**, in swervetune.json's ``"systems"``, one entry per mechanism: ``min``, ``max`` (its
   limits, found by moving it by hand), ``maxVelocity``, ``maxAccel`` (the team's caps: the robot
-  enforces these four), ``recalc`` (its ReCalc link) or ``physics`` (the same numbers typed in from
+  enforces these four), ``link`` (its ReCalc or AMBcalc link) or ``physics`` (the same numbers typed in from
   the AMB spreadsheet), and ``unitsPerRadian`` (its units per radian of the mechanism, or for a
   flywheel per rad/s) when the units don't say.
 """
@@ -45,6 +45,16 @@ def code_subsystems(project):
     for cls in [c for c, ms in out.items() if not ms and re.search(r"drive|swerve", c, re.I)]:
         if "Drive train" in out:
             del out[cls]
+    return out
+
+
+def in_code(project):
+    """``{name: kind}`` for each mechanism the robot code registers, read from its source
+    (``tune.system("Shooter", TunableSystem.Kind.FLYWHEEL)``): what it will register once it runs."""
+    out = {}
+    for src in (getattr(project, "java", None) or {}).values():
+        for m in re.finditer(r'\.system\(\s*"([^"]+)"\s*,\s*(?:TunableSystem\.)?Kind\.(\w+)', src):
+            out[m.group(1)] = m.group(2)
     return out
 
 
@@ -105,11 +115,12 @@ def settings(project):
     return ((project.data.get("swervetune.json") or {}).get("systems") or {}) if project else {}
 
 
-def physics(entry):
-    """The mechanism's physics from its ReCalc link or typed-in numbers; None without either."""
+def physics(entry, kind=None):
+    """The mechanism's physics from its ReCalc or AMBcalc link, or typed-in numbers; None without
+    either. ``kind`` is how the code registered it, which an AMBcalc mechanism link needs."""
     entry = entry or {}
-    if entry.get("recalc"):
-        return mechanics.from_recalc(entry["recalc"])
+    if entry.get("link"):
+        return mechanics.from_link(entry["link"], kind)
     p = entry.get("physics")
     if isinstance(p, dict) and p.get("motor") in mechanics.MOTORS and p.get("ratio"):
         return dict(p)
@@ -143,11 +154,11 @@ def plan(entry, registered):
     entry = entry or {}
     missing = []
     try:
-        mech = physics(entry)
+        mech = physics(entry, registered.get("kind"))
     except ValueError as e:
-        return {"ok": False, "missing": [f"its ReCalc link doesn't read: {e}"]}
+        return {"ok": False, "missing": [f"its calculator link doesn't read: {e}"]}
     if not mech:
-        missing.append("its physics: a ReCalc link, or the numbers from the AMB spreadsheet")
+        missing.append("its physics: a ReCalc or AMBcalc link, or the numbers from the AMB spreadsheet")
     positional = registered.get("kind") in ("PIVOT", "ELEVATOR")
     lo, hi = registered.get("min"), registered.get("max")
     has_limits = all(isinstance(x, (int, float)) and math.isfinite(x) for x in (lo, hi)) and hi > lo
