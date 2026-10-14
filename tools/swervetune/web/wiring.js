@@ -560,7 +560,7 @@ const Wiring = (() => {
 
   function cardHtml(name) {
     const m = data.map, dev = data.devices[name] || {}, r = rowsByName()[name], dd = (data.design_devices || {})[name] || {};
-    const type = name === "roboRIO" ? "roboRIO" : (dev.type || dev.model || "");
+    const type = name === "roboRIO" ? partOf(name, dev) : (dev.type || dev.model || "");
     const [ctl, motor] = type.split(" · ");
     const live = r && r.controller;
     // The part's drawing and its motor's beside it; a SPARK Flex is drawn docked on its Vortex already.
@@ -568,7 +568,8 @@ const Wiring = (() => {
     const pics = [part, ...(part === "SPARK Flex" ? [] : MOTOR_PICS[motor] || [])]
       .map(k => FrcMap.pic(k) && { ...FrcMap.pic(k), cap: k }).filter(Boolean);
     // Its status light, every color and pattern; marked where its faults say it should be now.
-    const light = Blinks.has(live || ctl) ? live || ctl : Blinks.has(part) ? part : null;
+    // (A SystemCore's lights are its own; none are described yet.)
+    const light = part === "SystemCore" ? null : Blinks.has(live || ctl) ? live || ctl : Blinks.has(part) ? part : null;
     const bi = m.buses.findIndex(b => b.chain.includes(name)), bus = m.buses[bi];
     const at = bus ? bus.chain.indexOf(name) : -1;
     const before = at > 0 ? bus.chain[at - 1] : null, after = bus && at >= 0 && at < bus.chain.length - 1 ? bus.chain[at + 1] : null;
