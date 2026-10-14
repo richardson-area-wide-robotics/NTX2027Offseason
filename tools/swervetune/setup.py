@@ -202,6 +202,12 @@ def calibrate(ctx):
                          "On a field with tags, at an event or a practice field: needs a camera.",
                          go={"tab": "calibrate", "panel": "cal-field"}, optional=True))
 
+    nf = _mark(prog, "cal_newfield")
+    jobs.append(_job("newfield", "9. New field", ("done" if nf.get("result") == "pass" else "attention") if nf else "optional",
+                     (nf.get("detail") or "Swept.") if nf else
+                     "At each new venue: the camera tuned to its light, its tags swept, the mount checked. Needs a camera.",
+                     go={"tab": "calibrate", "panel": "cal-newfield"}, optional=not nf))
+
     return _plan("Calibrate: measure the robot itself",
                  "Where the modules sit, how big the wheels are, how well the gyro reads, the robot's mass "
                  "and inertia, and where each camera looks: odometry, PathPlanner and vision all start from these. "

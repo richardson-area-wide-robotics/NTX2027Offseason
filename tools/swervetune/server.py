@@ -1328,13 +1328,17 @@ def api_camcal_sample(body):
 SURVEY = {"running": False, "sightings": [], "keys": set(), "thread": None}
 
 
-def api_survey_start(_):
-    """Starts recording every camera's tags until stopped."""
+def api_survey_start(body=None):
+    """Starts recording every camera's tags until stopped (``keep``: added to what was recorded before,
+    as the new-field sweep does at each spot)."""
     if not S.link or not S.link.is_connected():
         return {"ok": False, "error": "Connect to the robot first (or try Practice)."}
     if SURVEY["running"]:
         return {"ok": True}
-    SURVEY.update(running=True, sightings=[], keys=set())
+    if (body or {}).get("keep"):
+        SURVEY.update(running=True)
+    else:
+        SURVEY.update(running=True, sightings=[], keys=set())
 
     def work():
         while SURVEY["running"]:
@@ -1365,6 +1369,224 @@ def api_survey_state(_query=None):
         frames.setdefault((x["camera"], x["t"]), set()).add(x["tag"])
     return {"ok": True, "running": SURVEY["running"], "sightings": len(s),
             "views": sum(1 for v in frames.values() if len(v) >= 2), "tags": sorted({x["tag"] for x in s})}
+
+
+# ---------------------------------------------------------------------------- the camera itself
+# The laptop talks to the camera's PhotonVision directly (photon.py): its version, a guided lens
+# calibration, and tuning it to a venue's lights. The robot code can't: PhotonLib only switches
+# pipelines.
+CAMERA = {"photon": None, "lighting": None}
+NEWFIELD = {"sweeps": [], "samples": [], "running": False, "message": ""}
+
+
+def _camera(body=None, connect=False):
+    """The connected camera, (re)connecting to ``body["host"]`` ("10.17.45.11", or "host:port")."""
+    from . import photon
+
+    host = ((body or {}).get("host") or "").strip()
+    p = CAMERA["photon"]
+    if host:
+        h, _, port = host.partition(":")
+        port = int(port) if port.isdigit() else photon.PORT
+        if connect or not (p and p.alive and p.host == h and p.port == port):
+            if p:
+                p.close()
+            p = CAMERA["photon"] = photon.Photon(h, port, timeout=4.0).connect()
+    if not (p and p.alive):
+        raise ConnectionError("Connect to the camera first.")
+    return p
+
+
+def _camera_info(p):
+    from . import photon, versions
+
+    out = {"ok": True, "host": p.host, "port": p.port, **p.hardware(), "cameras": []}
+    for c in p.cameras:
+        cur = c.get("currentPipelineSettings") or {}
+        out["cameras"].append({
+            "unique": c.get("uniqueName"), "nickname": c.get("nickname"), "connected": c.get("isConnected"),
+            "modes": photon.Photon.modes(c), "pipeline": c.get("currentPipelineIndex"),
+            "mode": cur.get("cameraVideoModeIndex"),
+            "settings": {k: cur.get(k) for k in ("cameraAutoExposure", "cameraExposureRaw", "cameraGain", "cameraBrightness")},
+            "calibrations": [photon.summarize_calibration(x) for x in c.get("calibrations") or []],
+            "stream": f"http://{p.host}:{c.get('inputStreamPort') or 1181}/stream.mjpg"})
+    # The camera's PhotonVision must be the robot code's PhotonLib version (PhotonLib refuses a mismatch).
+    lib = None
+    if S.project:
+        lib = next((d["version"] for d in versions.local(S.project.path) if d["name"].lower() == "photonlib"), None)
+    cam = p.version()
+    out["photonlib"] = lib
+    out["match"] = bool(lib and cam and versions.vkey(cam)[:3] == versions.vkey(lib)[:3])
+    return out
+
+
+def api_camera_connect(body):
+    try:
+        return _camera_info(_camera(body, connect=True))
+    except (OSError, ConnectionError) as e:
+        return {"ok": False, "error": f"No PhotonVision at {(body or {}).get('host')}: {e}. Is the camera on, on the "
+                                      "robot's network, and is that its address (its page is on port 5800)?"}
+
+
+def api_camera_cal_start(body):
+    try:
+        p = _camera(body)
+        p.start_calibration(body["camera"], int(body.get("mode", 1)), float(body.get("square_in") or 1.0),
+                            float(body.get("marker_in") or 0.75))
+        return {"ok": True}
+    except (OSError, ConnectionError, KeyError, ValueError) as e:
+        return {"ok": False, "error": str(e)}
+
+
+def api_camera_cal_snap(body):
+    try:
+        return {"ok": True, **_camera(body).snapshot(body["camera"])}
+    except (OSError, ConnectionError, KeyError) as e:
+        return {"ok": False, "error": str(e)}
+
+
+def api_camera_cal_finish(body):
+    """Has PhotonVision solve the calibration, then reads it back: mean error and field of view."""
+    from . import photon
+
+    try:
+        p = _camera(body)
+        ok, msg = p.finish_calibration(body["camera"])
+        if not ok:
+            return {"ok": False, "error": f"PhotonVision couldn't solve it ({msg}): take more snapshots, the board "
+                                          "flat and tilted, all over the picture."}
+        # Its new calibration comes with fresh settings: connect again to read them.
+        p = _camera({"host": f"{p.host}:{p.port}"}, connect=True)
+        cam = p.camera(body["camera"]) or {}
+        w, h = body.get("width"), body.get("height")
+        cals = [photon.summarize_calibration(x) for x in cam.get("calibrations") or []]
+        mine = next((c for c in cals if (c["width"], c["height"]) == (w, h)), cals[-1] if cals else None)
+        return {"ok": True, "message": msg, "calibration": mine}
+    except (OSError, ConnectionError, KeyError) as e:
+        return {"ok": False, "error": str(e)}
+
+
+def api_camera_cal_cancel(body):
+    try:
+        _camera(body).finish_calibration(body["camera"], timeout=30)
+    except (OSError, ConnectionError, KeyError):
+        pass
+    return {"ok": True}
+
+
+def api_camera_lighting(body):
+    """Starts tuning the camera's exposure and gain to the light it sees now (newfield.Lighting)."""
+    from . import newfield, photon
+
+    try:
+        p = _camera(body)
+    except (OSError, ConnectionError) as e:
+        return {"ok": False, "error": str(e)}
+    cam = p.camera(body.get("camera"))
+    if not cam:
+        return {"ok": False, "error": "Pick the camera."}
+    cur = cam.get("currentPipelineSettings") or {}
+    mode = next((m for m in photon.Photon.modes(cam) if m["index"] == cur.get("cameraVideoModeIndex")), None)
+    cal = next((photon.summarize_calibration(c) for c in cam.get("calibrations") or []
+                if mode and ((c.get("resolution") or {}).get("width"), (c.get("resolution") or {}).get("height"))
+                == (mode["width"], mode["height"])), None)
+    if not cal or not cal.get("fx"):
+        return {"ok": False, "error": "Calibrate the lens at the resolution the pipeline uses first (6. Camera lens): "
+                                      "the exposure is worked out from it."}
+    if CAMERA["lighting"] and CAMERA["lighting"].state == "running":
+        return {"ok": False, "error": "It's already tuning."}
+    CAMERA["lighting"] = newfield.Lighting(p, cam["uniqueName"], cal["fx"])
+    CAMERA["lighting"].start()
+    return {"ok": True, **CAMERA["lighting"].to_json()}
+
+
+def api_camera_lighting_state(_query=None):
+    job = CAMERA["lighting"]
+    return {"ok": True, **job.to_json()} if job else {"ok": True, "state": "none"}
+
+
+def api_camera_lighting_stop(_):
+    if CAMERA["lighting"]:
+        CAMERA["lighting"].stop()
+    return {"ok": True}
+
+
+def api_camera_lighting_restore(_):
+    if CAMERA["lighting"]:
+        CAMERA["lighting"].restore()
+        CAMERA["lighting"].message = "The camera is back on the settings it had before."
+    return {"ok": True}
+
+
+def api_newfield_sweep(_body=None):
+    """The robot spins slowly in place, a full turn each way, while the survey records every tag and
+    the vision poses are kept for the mount check. A person holds the deadman, as for any test."""
+    from . import newfield
+
+    if not (S.link and S.link.is_connected()):
+        return {"ok": False, "error": "Connect to the robot first."}
+    if S.test_state.get("running") or NEWFIELD["running"]:
+        return {"ok": False, "error": "A test is running."}
+    NEWFIELD.update(running=True, message="Spinning slowly: hold the deadman. A full turn each way.")
+    api_survey_start({"keep": True})
+
+    def work():
+        samples, stop = [], threading.Event()
+
+        def poses():
+            last = None
+            while not stop.is_set():
+                try:
+                    L = S.link.live()
+                    v = tuple(L.get("vision_pose") or ())
+                    if len(v) >= 3 and v != last:
+                        samples.append((list(L.get("pose") or []), list(v)))
+                        last = v
+                except Exception:  # noqa: BLE001 - a dropped sample is fine
+                    pass
+                time.sleep(0.05)
+
+        th = threading.Thread(target=poses, daemon=True)
+        th.start()
+        try:
+            res, _doc, run = S.run_test_sync("spin", "ALL", dict(newfield.SWEEP))
+            outcome = res.outcome if res.accepted else "REFUSED"
+            msg = res.message
+        except Exception as e:  # noqa: BLE001
+            outcome, msg, run = "ERROR", str(e), None
+        stop.set()
+        th.join(1.0)
+        SURVEY["running"] = False
+        NEWFIELD["samples"] += samples
+        NEWFIELD["sweeps"].append({"outcome": outcome, "message": msg, "run": run, "poses": len(samples),
+                                   "when": time.strftime("%H:%M")})
+        NEWFIELD.update(running=False, message=("Swept. Move the robot to another spot and sweep again (two or three "
+                                                "spots), then work out where the tags are." if outcome == "DONE"
+                                                else f"The sweep ended {outcome.lower()}: {msg}"))
+
+    threading.Thread(target=work, name="swervetune-sweep", daemon=True).start()
+    return {"ok": True}
+
+
+def api_newfield(_query=None):
+    from . import newfield
+
+    from . import link as L
+
+    survey = api_survey_state()
+    team = L.team_from_project(S.project.path) if S.project else None
+    return {"ok": True, "running": NEWFIELD["running"], "message": NEWFIELD["message"], "sweeps": NEWFIELD["sweeps"],
+            # The team's convention for the camera's address (docs/VISION_LUMA_PHOTONVISION.md).
+            "default_host": f"10.{team // 100}.{team % 100}.11" if team else "",
+            "survey": {k: survey[k] for k in ("sightings", "views", "tags")},
+            "mount": newfield.mount_check(NEWFIELD["samples"]) if NEWFIELD["sweeps"] else None,
+            "lighting": api_camera_lighting_state()}
+
+
+def api_newfield_reset(_):
+    NEWFIELD.update(sweeps=[], samples=[], message="")
+    SURVEY.update(sightings=[], keys=set())
+    return {"ok": True}
 
 
 PRACTICE_SURVEY = {5: (0.04, 0.0, 0.0, 0, 0, 0), 26: (0.0, 0.0, 0.0, 0, 0, 3.0),
@@ -1657,6 +1879,7 @@ def api_sim(body):
 
 
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state, "/api/autotune": api_autotune,
+       "/api/camera/lighting": api_camera_lighting_state, "/api/newfield": api_newfield,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/robotlog": api_robotlog, "/api/systems": api_systems,
@@ -1673,6 +1896,11 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
         "/api/autotune/start": api_autotune_start, "/api/autotune/continue": api_autotune_continue,
         "/api/autotune/stop": api_autotune_stop, "/api/gyro/command": api_gyro_command,
+        "/api/camera/connect": api_camera_connect, "/api/camera/cal/start": api_camera_cal_start,
+        "/api/camera/cal/snap": api_camera_cal_snap, "/api/camera/cal/finish": api_camera_cal_finish,
+        "/api/camera/cal/cancel": api_camera_cal_cancel, "/api/camera/lighting": api_camera_lighting,
+        "/api/camera/lighting/stop": api_camera_lighting_stop, "/api/camera/lighting/restore": api_camera_lighting_restore,
+        "/api/newfield/sweep": api_newfield_sweep, "/api/newfield/reset": api_newfield_reset,
         "/api/gains": api_gains, "/api/save/preview": api_save_preview,
         "/api/save/apply": api_save_apply, "/api/analyze": api_analyze,
         "/api/offsets": api_offsets, "/api/handcheck": api_handcheck,

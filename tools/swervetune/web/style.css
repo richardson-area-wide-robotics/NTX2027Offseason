@@ -818,6 +818,23 @@ table.lights.compact td.led-cell { width: 50%; white-space: normal; }
 table.lights.compact .lights-group th { padding-top: 5px; }
 .lit { border-bottom: 1px dotted var(--muted); cursor: help; }
 .lights-caution { margin: 0 0 6px; }
+/* Calibrate, 6 and 9: the camera's connection, the guided calibration, and the new field. */
+.cm-box { display: grid; gap: 6px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.nf-part { border-top: 1px solid var(--rule); padding-top: 6px; margin-top: 6px; }
+.nf-part h3 { margin: 0 0 4px; font-size: 14px; }
+.nf-part tr.now td { background: var(--ok-bg); }
+.nf-part table { max-width: 560px; }
+.modal-box:has(.cal-guide) { width: min(1200px, 96vw); max-width: none; }
+.cal-guide { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.cal-guide .cg-view img { width: 100%; height: auto; background: #111; border-radius: 6px; }
+.cal-guide .cg-big { font-size: 22px; line-height: 1.35; margin: 6px 0; }
+.cal-guide .cg-now { font-weight: 700; min-height: 1.4em; }
+.cal-guide .cg-count { font-size: 16px; margin: 0 0 6px; }
+.cg-grid { display: grid; grid-template-columns: repeat(3, 34px); grid-template-rows: repeat(3, 22px); gap: 3px; margin: 4px 0 8px; }
+.cg-grid span { border: 1px solid var(--rule); border-radius: 3px; background: var(--panel); }
+.cg-grid span.on { background: var(--accent); border-color: var(--accent); }
+@media (max-width: 900px) { .cal-guide { grid-template-columns: 1fr; } }
+
 /* Calibrate, 4. Gyro: the robot's own gyro, and a Canandgyro's buttons and report rates. */
 .cg-box { display: grid; gap: 6px; margin-bottom: 6px; }
 .cg-rates summary { cursor: pointer; font-weight: 600; font-size: 13px; }

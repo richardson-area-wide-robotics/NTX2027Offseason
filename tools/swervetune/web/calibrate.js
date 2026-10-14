@@ -132,6 +132,7 @@
           <figure class="board-fig">${boardSvg()}
             <figcaption class="small muted">The board: 9 × 11 in, 8 × 8 squares. Markers drawn for illustration; yours have their own patterns.</figcaption></figure>
           <div>
+            <div id="cm-box" class="cm-box"></div>
             <table class="t lens-set"><thead><tr><th>PhotonVision setting</th><th>Set to</th></tr></thead><tbody>
               <tr><td>Board type</td><td class="mono">ChArUco</td></tr>
               <tr><td>Tag family</td><td class="mono">4x4</td></tr>
@@ -206,6 +207,29 @@
         </div>
         <div id="fs-out"></div>
         ${HowTo.nextLine("field")}
+      </div>
+      <div class="panel" id="cal-newfield">
+        <h2 data-tip="cal.newfield">9. New field</h2>
+        ${HowTo.block(`<p class="small">At a new venue the lens is the same, but the light and the tags are not. With the field's match lighting on, do these three: the robot does the work, a person holds the deadman for the sweep.</p>
+        <ol class="small">
+          <li><b>Light.</b> Robot still, facing two or more tags 2 to 4 m away. The tool sets the exposure short enough that a fast turn doesn't blur a tag, then tries the gain from low to high and keeps the lowest that sees the tags well, plus a margin. It stays on the camera; the old settings are kept to put back.</li>
+          <li><b>Tags.</b> Robot on the floor (Where: on the floor), bumpers on, 1 m clear all round, someone holding the deadman. <b>Sweep here</b> spins it slowly, a full turn each way, recording every tag it sees. Do it at two or three spots, then <b>Work out where the tags are</b> (step 8 saves the layout).</li>
+          <li><b>Mount.</b> From the same sweeps: spinning in place, the vision pose should stay put. If it swings round, the camera's mount is off: measure it again in step 7.</li>
+        </ol>
+        <p class="small good-result"><b>A good result:</b> tags seen in nearly every frame at a low gain, most tags where the field drawing puts them, and the vision pose within 3 cm while it spins.</p>`)}
+        <div class="nf-part"><h3 data-tip="cal.nf-light">1. Light</h3>
+          <div class="row" style="flex-wrap:wrap"><button class="btn primary" id="nf-light" data-tip="cal.nf-light-go">Tune the camera to this light</button>
+            <button class="btn" id="nf-light-stop" data-tip="cal.nf-light-stop" hidden>Stop</button>
+            <button class="btn" id="nf-light-back" data-tip="cal.nf-light-back" hidden>Put the old settings back</button>
+            <span class="small muted" id="nf-light-msg"></span></div>
+          <div id="nf-light-out"></div></div>
+        <div class="nf-part"><h3 data-tip="cal.nf-tags">2. Tags</h3>
+          <div class="row" style="flex-wrap:wrap"><button class="btn primary" id="nf-sweep" data-tip="cal.nf-sweep">Sweep here</button>
+            <button class="btn" id="nf-solve" data-tip="cal.fs-solve">Work out where the tags are</button>
+            <button class="btn" id="nf-reset" data-tip="cal.nf-reset">Start over</button>
+            <span class="small muted" id="nf-msg"></span></div>
+          <div id="nf-sweeps" class="small"></div></div>
+        <div class="nf-part"><h3 data-tip="cal.nf-mount">3. Mount</h3><div id="nf-mount" class="small"><span class="muted">After a sweep.</span></div></div>
       </div>
     </div></div>`;
 
@@ -607,6 +631,66 @@
     $("#fs-out", root).innerHTML = `<p class="hint">Working it out (a few seconds)…</p>`;
     showSurvey(await App.api("/api/survey/solve", { variant: $("#fs-variant", root).value }));
   };
+  // ---------------------------------------------------------------- 9. New field
+  // Light, tags and the mount: newfield.py on the server, the camera through CameraUI's connection.
+  let nfTimer = null;
+  function paintLight(L) {
+    const out = $("#nf-light-out", root), msg = $("#nf-light-msg", root);
+    if (!L || L.state === "none") return;
+    msg.textContent = L.message || "";
+    const running = L.state === "running";
+    $("#nf-light", root).disabled = running;
+    $("#nf-light-stop", root).hidden = !running;
+    $("#nf-light-back", root).hidden = running || !L.before || !Object.keys(L.before).length;
+    out.innerHTML = L.trials && L.trials.length ? `<table class="t small"><thead><tr><th class="num">Gain</th><th class="num">Frames with a tag</th>
+        <th class="num">Tags a frame</th><th class="num">Ambiguity</th></tr></thead><tbody>${L.trials.map(t => `<tr class="${L.result && L.result.gain === t.gain ? "now" : ""}">
+        <td class="num">${t.gain}</td><td class="num">${Math.round(t.seen * 100)}%</td><td class="num">${fmt(t.tags, 1)}</td>
+        <td class="num">${t.ambiguity == null ? "–" : fmt(t.ambiguity, 2)}</td></tr>`).join("")}</tbody></table>
+        <p class="small muted">Exposure ${L.exposure_us} µs: a fast turn smears a tag by a few pixels at most.</p>` : "";
+  }
+  function paintNewField(r) {
+    if (!r || !r.ok) return;
+    if (r.default_host && !App.cameraHost) App.cameraHost = r.default_host;
+    $("#nf-msg", root).textContent = r.message || "";
+    $("#nf-sweep", root).disabled = r.running;
+    const sv = r.survey || {};
+    $("#nf-sweeps", root).innerHTML = r.sweeps.length ? `${r.sweeps.length} sweep${r.sweeps.length === 1 ? "" : "s"}: ${r.sweeps.map(s =>
+        `${esc(s.when)} ${s.outcome === "DONE" ? "done" : esc(s.outcome.toLowerCase())}`).join(", ")}. ${sv.sightings || 0} sightings of ${(sv.tags || []).length} tags, ${sv.views || 0} views with two or more.` : "";
+    const m = r.mount;
+    $("#nf-mount", root).innerHTML = !m ? `<span class="muted">After a sweep.</span>` : m.ok == null ? `<span class="level warn">warn</span> ${esc(m.why)}`
+      : `<span class="level ${m.ok ? "ok" : "error"}">${m.ok ? "ok" : "error"}</span> ${esc(m.why)} <span class="muted">(${m.samples} poses; ${m.spread_cm} cm, ${m.heading_offset_deg}°)</span>`;
+    paintLight(r.lighting);
+    if (m && m.ok != null) HowTo.mark("calibrate", "cal_newfield", m.ok, m.why);
+  }
+  async function pollNewField() {
+    clearTimeout(nfTimer);
+    const r = await App.api("/api/newfield");
+    paintNewField(r);
+    if (r && (r.running || (r.lighting && r.lighting.state === "running"))) nfTimer = setTimeout(pollNewField, 700);
+  }
+  $("#nf-light", root).onclick = async () => {
+    const cam = CameraUI.info() && CameraUI.currentCam();
+    if (!cam) { App.toast("Connect to the camera first: 6. Camera lens, Connect to the camera.", 6000); return; }
+    const r = await App.api("/api/camera/lighting", { host: CameraUI.host(), camera: cam.unique });
+    if (!r.ok) { $("#nf-light-msg", root).textContent = r.error; return; }
+    pollNewField();
+  };
+  $("#nf-light-stop", root).onclick = () => App.api("/api/camera/lighting/stop", {}).then(pollNewField);
+  $("#nf-light-back", root).onclick = () => App.api("/api/camera/lighting/restore", {}).then(pollNewField);
+  $("#nf-sweep", root).onclick = async () => {
+    const r = await App.api("/api/newfield/sweep", {});
+    if (!r.ok) { $("#nf-msg", root).textContent = r.error; return; }
+    pollNewField();
+  };
+  $("#nf-reset", root).onclick = () => App.api("/api/newfield/reset", {}).then(pollNewField);
+  $("#nf-solve", root).onclick = async () => {
+    // Step 8 works it out and saves it: show it there.
+    showSurvey(await App.api("/api/survey/solve", { variant: $("#fs-variant", root).value }));
+    const job = $('#tab-calibrate [data-rail-job="field"]');
+    if (job) job.click();
+  };
+  App.on("tab", t => { if (t === "calibrate") pollNewField(); });
+  CameraUI.mount($("#cm-box", root));
   $("#fs-practice", root).onclick = async () => {
     $("#fs-out", root).innerHTML = `<p class="hint">Working it out (a few seconds)…</p>`;
     showSurvey(await App.api("/api/survey/solve", { practice: true }));

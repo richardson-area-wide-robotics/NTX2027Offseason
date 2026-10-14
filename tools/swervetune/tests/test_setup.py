@@ -56,7 +56,7 @@ class CalibrateTest(unittest.TestCase):
         p = SP.calibrate(ctx(tune=cams, prog={"cal_lens_front": mark()}))
         lens = [j for j in p["jobs"] if j["id"] == "lens"][0]
         self.assertEqual((lens["title"], lens["status"], lens["detail"]), ("6. Camera lens", "todo", "Not calibrated yet: back"))
-        self.assertEqual([j["title"] for j in p["jobs"]][-3:], ["6. Camera lens", "7. Camera positions", "8. Field tags"])
+        self.assertEqual([j["title"] for j in p["jobs"]][-4:], ["6. Camera lens", "7. Camera positions", "8. Field tags", "9. New field"])
         st = jobs(SP.calibrate(ctx(tune=cams, prog={"cal_lens_front": mark(), "cal_lens_back": mark("fail")})))
         self.assertEqual(st["lens"], "attention", "a high mean error: recalibrate")
 

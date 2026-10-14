@@ -115,7 +115,7 @@ const Tune = (() => {
           </div>
           <div id="needs"></div>
           <div class="row"><button class="btn primary" id="run" aria-describedby="needs" data-tip="tune.run">Run</button>
-            <button class="btn" id="auto" data-tip="tune.auto" hidden>Auto-tune all four…</button></div>
+            <button class="btn" id="auto" data-tip="tune.auto" hidden>Auto-tune…</button></div>
         </div>
         <details class="panel" id="history-panel" open>
           <summary><h3 data-tip="tune.history">Earlier runs</h3></summary>
