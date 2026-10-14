@@ -753,17 +753,21 @@ SYMPTOMS = [
         "looks_like": "Communications goes red for a moment, the robot stops, then it comes back.",
         "checks": [
             check("Are the radio's power and Ethernet connections tight?",
-                  "Wiggle each one with the robot on and watch the radio's lights.", DISABLED,
+                  "Wiggle each one with the robot on and watch the radio's lights. The Driver Station's log "
+                  "(Check the networks reads it) shows each drop.", DISABLED,
                   "A loose connection drops the link whenever the robot is bumped.",
-                  "Reseat and secure them, with strain relief on the cables.", None, diagram=SEE_RADIO),
+                  "Reseat and secure them, with strain relief on the cables.", NETCHECK, {"net": ["dslog-drops"]},
+                  diagram=SEE_RADIO),
             check("Does the battery stay healthy under load?",
-                  "The Live view shows its voltage; brownouts show in the Driver Station's log.", FIELD,
+                  "The Live view shows its voltage; the Driver Station's log records each brownout.", FIELD,
                   "A sagging battery browns the robot out.",
-                  "Charge or swap it.", {"type": "troubleshoot", "symptom": "brownout"}),
+                  "Charge or swap it.", NETCHECK, {"net": ["dslog-brownout"]}),
             check("At home, is the laptop on a cable to the access point, not 2.4 GHz Wi-Fi?",
-                  "2.4 GHz is for checking things; it is slow in a busy building.", LAPTOP,
+                  "2.4 GHz is for checking things; it is slow in a busy building. The Driver Station's log shows "
+                  "packet loss and trip time.", LAPTOP,
                   "Busy 2.4 GHz Wi-Fi drops packets.",
-                  "Plug the laptop into the access point radio's network by Ethernet.", None),
+                  "Plug the laptop into the access point radio's network by Ethernet.", NETCHECK,
+                  {"net": ["dslog-loss", "dslog-trip"]}),
             check("Is Windows kept from pausing the network adapter?",
                   "Device Manager, the adapter, Power Management: 'Allow the computer to turn off this device' "
                   "unticked; the laptop plugged in.", LAPTOP,

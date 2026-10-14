@@ -95,6 +95,12 @@ run `py -3.12 tools/swervetune netcheck --project Peashooter`. It reads these an
 - **The robot's software, once connected:**
   - the roboRIO image's year;
   - whether GradleRIO will deploy to that image.
+- **The Driver Station's log:** the newest session on this laptop that reached a robot.
+  - The Driver Station records the link 50 times a second.
+  - This reads each drop and whether the robot was enabled at the time, each brownout and the
+    lowest battery voltage, trip time, packet loss, the roboRIO's CPU, and which links the Driver
+    Station's own pings found bad.
+  - To read any session's log: `py -3.12 tools/swervetune dslog "C:\Users\Public\Documents\FRC\Log Files\<session>.dslog"`.
 
 A team number becomes an address as `10.TE.AM.x`: 1745 is `10.17.45.x`, and a test robot numbered
 17451 is `10.174.51.x`.

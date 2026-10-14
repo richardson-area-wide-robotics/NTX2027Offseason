@@ -77,6 +77,8 @@ py -3.12 tools/swervetune netcheck --project Peashooter --save
 | Windows Firewall has no rule letting the Driver Station in | Windows Security, Firewall, **Allow an app through firewall**: tick Driver Station for Private and Public. |
 | Another firewall is running | Allow the Driver Station in it too, or turn it off while on the robot's network. |
 | roboRIO image is from another year | Image the roboRIO with the roboRIO Imaging Tool (FRC Game Tools 2026). |
+| The link to the robot dropped (from the Driver Station's log) | Troubleshoot: **The robot keeps losing communication**. |
+| Browned out (from the Driver Station's log) | Charge or swap the battery; check its leads are tight. |
 
 The yellow lines are worth reading but don't stop the robot. Troubleshoot's **Connecting to the
 robot** symptoms walk through the same causes one question at a time.
@@ -90,9 +92,12 @@ For each robot, send:
 3. **The firmware version** the radio's page shows, or "none shown" (step 8).
 4. **Anything the check got wrong:** a red line for something that was fine, or nothing said about
    something that was broken.
+5. **If the robot dropped out**, that session's Driver Station logs: the `.dslog` and `.dsevents`
+   files with its date and time, in `C:\Users\Public\Documents\FRC\Log Files`. They hold the
+   link's timing and the Driver Station's messages; no passwords.
 
 Paste the file's contents into a Claude Code session on this repository, or attach the file, with
-items 2 to 4.
+items 2 to 5.
 
 **What's in the file:**
 - Every result, and the facts behind them: the Driver Station's version and team number, this
@@ -104,6 +109,7 @@ items 2 to 4.
 
 **What it confirms:**
 - that the tools read the firmware version the way the radio's page shows it;
-- that they find the Driver Station's team number in its settings file.
+- that they find the Driver Station's team number in its settings file;
+- with a dropped session's logs, that the tools read a dropped link in the Driver Station's log.
 
 Both are checked so far only against the radio's and the Driver Station's documentation.

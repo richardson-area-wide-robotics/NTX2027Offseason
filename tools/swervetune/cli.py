@@ -983,6 +983,37 @@ def cmd_setup(args, out):
             lk.close()
 
 
+def cmd_dslog(args, out):
+    from . import dslog
+    if args.file:
+        try:
+            with open(args.file, "rb") as fh:
+                log = dslog.read_dslog(fh.read())
+            ev = args.file[:-6] + ".dsevents" if args.file.endswith(".dslog") else None
+            events = []
+            if ev and os.path.exists(ev):
+                with open(ev, "rb") as fh:
+                    events = dslog.read_dsevents(fh.read())
+        except (OSError, ValueError) as e:
+            return out.done(out.fail(f"Can't read that Driver Station log: {e}", code="BAD_ARGS"))
+        s = dslog.summary(log, events, os.path.basename(args.file)[:-6])
+    else:
+        s = dslog.latest_summary()
+        if not s:
+            return out.done(out.fail("No Driver Station log with a robot in it on this laptop ("
+                                     + dslog.LOG_DIRS[0] + ").", code="NOT_FOUND"))
+    found = dslog.checks(s)
+    out.put(summary=s, checks=found)
+    out.say(f"Driver Station session {s['name']}: {s['duration_s']:g} s, {s['heard_s']:g} s with the robot, "
+            f"{s['enabled_s']:g} s enabled")
+    for c in found:
+        out.say(f"  [{c['level'].upper():4s}] {c['title']}")
+        out.say(f"         {c['why']}")
+    for text, n in s.get("messages") or []:
+        out.say(f"  {n:4d}x {text}")
+    return out.done(0 if not any(c["level"] == "fail" for c in found) else 1)
+
+
 def cmd_netcheck(args, out):
     from . import link as L
 
@@ -992,8 +1023,13 @@ def cmd_netcheck(args, out):
     if proj:
         team = team or L.team_from_project(proj.path)
         year = proj.year
+    from . import dslog
+    try:
+        ds_log = dslog.latest_summary()
+    except Exception:  # noqa: BLE001 - a log this can't read leaves the rest of the check alone
+        ds_log = None
     if team:
-        r = netcheck.run(team, args.adapter, year=year)
+        r = netcheck.run(team, args.adapter, year=year, ds_log=ds_log)
     else:
         # No robot named: try each robot's team in this repo, and report the one this laptop is on.
         # Projects sharing a number are named together; Examples (simulator only) last.
@@ -1004,7 +1040,7 @@ def cmd_netcheck(args, out):
                 robots.setdefault(t, []).append(os.path.basename(p))
         robots = {t: " / ".join(n) for t, n in robots.items()} or {1745: "robot"}
         for t in robots:
-            r = netcheck.run(t, args.adapter)
+            r = netcheck.run(t, args.adapter, ds_log=ds_log)
             if r.get("robot_adapter") or r.get("error"):
                 name, team = robots[t].split(" / ")[0], t
                 break
@@ -1216,6 +1252,9 @@ def build_parser():
     s.add_argument("--adapter", help="the network adapter on the robot's Wi-Fi, if it can't be found")
     s.add_argument("--save", action="store_true", help="also save it to tools/swervetune/reports/, to send")
     s.set_defaults(fn=cmd_netcheck)
+    s = sub.add_parser("dslog", help="what a Driver Station log recorded of the link: drops, packet loss, brownouts")
+    s.add_argument("file", nargs="?", help="a .dslog file (default: this laptop's newest session with a robot)")
+    s.set_defaults(fn=cmd_dslog)
     s = sub.add_parser("setup", help="where to start and what to do next: each tool's checklist, or one part's")
     s.add_argument("--tab", help="one tool: bringup, config, motors, wiring, calibrate or controllers")
     s.add_argument("--part", help="one part that changed, e.g. module:frontleft, camera:front, field, gyro, wheels, "

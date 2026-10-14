@@ -34,12 +34,13 @@ FIREWALL = "Firewall"
 RADIO = "Radio and robot"
 INTERNET = "Internet and Claude"
 ROBOT = "The robot's software"
+DSLOG = "Driver Station log"
 
 # The network script's own checks, by id, under the same headings.
 SCRIPT_GROUPS = {"internet": INTERNET, "vpn": INTERNET, "claude": INTERNET, "claude-route": INTERNET,
                  "killswitch": INTERNET, "robot-adapter": ADDRESS, "robot-route": ADDRESS, "robot-metric": ADDRESS,
                  "overlap": ADDRESS, "robot-ping": RADIO, "nt4": RADIO, "firewall": FIREWALL}
-ORDER = [DS, ADDRESS, FIREWALL, RADIO, ROBOT, INTERNET]
+ORDER = [DS, ADDRESS, FIREWALL, RADIO, DSLOG, ROBOT, INTERNET]
 MIN_FIRMWARE = (1, 3, 0)
 
 
@@ -299,9 +300,10 @@ def robot_software(image, wpilib, year, accepted=()):
     return out
 
 
-def checks(out, team, year=None, robot=None, accepted=()):
+def checks(out, team, year=None, robot=None, accepted=(), ds_log=None):
     """Every check for a network-check result: the script's own, then these, each with its group,
-    in the page's order. ``robot`` is ``{"image", "wpilib"}`` from the connected robot."""
+    in the page's order. ``robot`` is ``{"image", "wpilib"}`` from the connected robot; ``ds_log``
+    the newest Driver Station session's summary (:mod:`dslog`)."""
     facts = out.get("facts") or {}
     mine = []
     if facts:
@@ -312,6 +314,9 @@ def checks(out, team, year=None, robot=None, accepted=()):
         mine += radio(facts.get("reach"), facts.get("radio_page"), team)
     if robot:
         mine += robot_software(robot.get("image"), robot.get("wpilib"), year, accepted)
+    if ds_log:
+        from . import dslog
+        mine += dslog.checks(ds_log)
     base = [dict(c, group=SCRIPT_GROUPS.get(c.get("id"), ADDRESS)) for c in out.get("checks") or []
             # The script's one-line firewall hint gives way to the firewall checks above.
             if not (facts and c.get("id") == "firewall")]

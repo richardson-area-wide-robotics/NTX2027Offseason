@@ -262,8 +262,13 @@ def api_netcheck(body=None):
             robot = {"image": info.get("image"), "wpilib": info.get("wpilib")}
         except Exception:  # noqa: BLE001 - a robot without the newer topics: no versions to compare
             robot = None
+    from . import dslog
+    try:
+        ds_log = dslog.latest_summary()
+    except Exception:  # noqa: BLE001 - a log this can't read leaves the rest of the check alone
+        ds_log = None
     r = netcheck.run(team or 1745, (body or {}).get("adapter") or None, year=getattr(S.project, "year", None),
-                     robot=robot, accepted=station.accepted_images(S.project) if S.project else [])
+                     robot=robot, accepted=station.accepted_images(S.project) if S.project else [], ds_log=ds_log)
     S.netcheck_last = r
     return r
 
