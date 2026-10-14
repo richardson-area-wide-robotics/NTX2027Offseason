@@ -1203,7 +1203,7 @@ def build_parser():
     s.add_argument("--adapter", help="the network adapter on the robot's Wi-Fi, if it can't be found")
     s.set_defaults(fn=cmd_netcheck)
     s = sub.add_parser("setup", help="where to start and what to do next: each tool's checklist, or one part's")
-    s.add_argument("--tab", help="one tool: calibrate, config, motors, wiring or controllers")
+    s.add_argument("--tab", help="one tool: bringup, config, motors, wiring, calibrate or controllers")
     s.add_argument("--part", help="one part that changed, e.g. module:frontleft, camera:front, field, gyro, wheels, "
                    "motor:'frontleft drive'")
     s.add_argument("--start", action="store_true", help="start (or start over) that part's checklist")

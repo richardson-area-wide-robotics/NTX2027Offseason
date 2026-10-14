@@ -85,5 +85,29 @@ class MotorTestReportTest(unittest.TestCase):
         self.assertTrue(any("turns against" in t for t in titles(rep)))
 
 
+class ReportTest(unittest.TestCase):
+    def test_the_report_is_written_from_the_evidence(self):
+        import os
+        from swervetune import design as D, setup as SP, yagslcfg as Y
+        here = os.path.dirname(os.path.abspath(__file__))
+        p = Y.Project(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(here))), "Peashooter"))
+        d = D.from_code(p)
+        c = {"project": p, "robot": p.name, "connected": False, "live_motors": [], "runs": [], "lint": [], "pp": None,
+             "inventory": {"rows": [], "findings": []}, "controllers": [], "wiring_saved": False,
+             "wiring_map": {"buses": [{"name": "rio", "chain": [], "orderConfirmed": False}], "pdhPorts": {}},
+             "design": d, "design_check": D.check(d), "design_compare": [],
+             "prog": {"bu_motor:Tower": {"result": "pass", "when": "20261013-143100", "detail": "right way"}}}
+        path, text = bringup.report(p, c, {"programming": "A. Student", "mechanical": ""})
+        self.assertEqual(os.path.basename(os.path.dirname(path)), "bringup")
+        self.assertIn("# Bring-up: Peashooter", text)
+        self.assertIn("Signed off by programming: A. Student.", text)
+        self.assertIn("| Tower | pass |", text)
+        self.assertIn("UTC)", text, "the laptop's time, with UTC beside it")
+        self.assertIn("rio (yellow/green)", text)
+        self.assertIn("no gear ratio", text, "what still disagrees is in it")
+        for j in SP.bringup(c)["jobs"]:
+            self.assertIn(f"| {j['title']} | {j['status']} |", text, "every job of the checklist, with its status")
+
+
 if __name__ == "__main__":
     unittest.main()

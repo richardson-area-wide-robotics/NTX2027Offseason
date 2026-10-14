@@ -367,10 +367,122 @@ def controllers_plan(ctx):
                  ["Each controller, with a USB cable"], jobs, {"guide": "", "label": "Back to the Guide"})
 
 
-TOOLS = {"calibrate": calibrate, "config": config, "motors": motors, "wiring": wiring,
+def is_swerve(name):
+    """A swerve motor: the Guide brings these up, wheel by wheel."""
+    return name.endswith((" drive", " steer"))
+
+
+def mechanism_motors(design):
+    """The design's motors bring-up runs one at a time: not the swerve's, and not a follower (it is
+    checked by running its leader)."""
+    return [m for m in (design or {}).get("motors") or []
+            if m.get("name") and not is_swerve(m["name"]) and not m.get("follows")]
+
+
+def shafts(design):
+    """``{shaft: [motor, ...]}`` for every shaft two or more designed motors share."""
+    out = {}
+    for m in (design or {}).get("motors") or []:
+        if m.get("shaft"):
+            out.setdefault(m["shaft"], []).append(m)
+    return {k: v for k, v in out.items() if len(v) > 1}
+
+
+def bringup(ctx):
+    """A freshly built robot, handed over by the mechanical and electrical teams, brought up against
+    its design file: the file, the code against it, the robot off, the first power-on, each motor and
+    each shared shaft, the drivetrain, then a signed-off report."""
+    d, prog = ctx.get("design"), ctx.get("prog") or {}
+    connected = bool(ctx.get("connected"))
+    errors = [f for f in ctx.get("design_check") or [] if f["level"] == "error"]
+    jobs = []
+    go = lambda panel: {"tab": "bringup", "panel": panel}  # noqa: E731
+    if not d:
+        jobs.append(_job("design", "The design file", "todo",
+                         "None yet: draft one from the code, or import the design team's spreadsheet.", go=go("br-design")))
+    else:
+        jobs.append(_job("design", "The design file", "attention" if errors else "done",
+                         f"{len(errors)} to fix in it." if errors else
+                         f"{len(d.get('motors') or [])} motors, {len(d.get('sensors') or [])} sensors, "
+                         f"{len(d.get('canBuses') or [])} CAN bus(es).", go=go("br-design")))
+    if not d:
+        jobs.append(_job("code", "The code matches the design", "later", "Needs the design file.",
+                         go=go("br-code"), unblock={"tab": "bringup", "panel": "br-design", "label": "The design file"}))
+    else:
+        cmp_ = ctx.get("design_compare") or []
+        bad = [f for f in cmp_ if f["level"] == "error"]
+        jobs.append(_job("code", "The code matches the design", "attention" if bad else "done",
+                         f"{len(bad)} disagree: fix the code or the design." if bad else
+                         (f"{len(cmp_)} to read." if cmp_ else "Every motor, ID, follower and port agrees."), go=go("br-code")))
+    st = _mark_status(_mark(prog, "bu_handover"), "Something to fix before power-on.")
+    jobs.append(_job("handover", "Hand-over check, robot off", st[0] if st else "todo",
+                     st[1] if st else "Breakers, the CAN terminators, the battery and main breaker, the radio.", go=go("br-handover")))
+    # First power-on: what the Motors and Wiring tools already check, linked from here.
+    mplan = motors(ctx)
+    live = next((j for j in mplan["jobs"] if j["id"] == "live"), None)
+    jobs.append(_job("heard", "First power-on: every controller heard", live["status"] if live else "todo",
+                     (live or {}).get("detail", ""), go={"tab": "motors", "panel": "motor-inventory"},
+                     unblock=(live or {}).get("unblock")))
+    wplan = wiring(ctx)
+    order = next((j for j in wplan["jobs"] if j["id"] == "order"), None)
+    if order:
+        jobs.append(_job("can", "The CAN cable in the designed order", order["status"], order.get("detail", ""),
+                         go=order.get("go"), unblock=order.get("unblock")))
+    sensors = (d or {}).get("sensors") or []
+    if d and not sensors:
+        jobs.append(_job("sensors", "Every sensor reads", "skip", "No sensors in the design.", go=go("br-sensors")))
+    else:
+        st = _mark_status(_mark(prog, "bu_sensors"), "A sensor didn't read: check its port and wiring.")
+        jobs.append(_job("sensors", "Every sensor reads", st[0] if st else ("todo" if d else "later"),
+                         st[1] if st else (f"{len(sensors)} to toggle by hand and watch." if d else "Needs the design file."), go=go("br-sensors"),
+                         unblock=None if d else {"tab": "bringup", "panel": "br-design", "label": "The design file"}))
+    mech = mechanism_motors(d)
+    if d and not mech:
+        jobs.append(_job("motors", "Each mechanism motor turns the right way", "skip", "No mechanism motors in the design.", go=go("br-motors")))
+    else:
+        marks = {m["name"]: _mark(prog, "bu_motor:" + m["name"]) for m in mech}
+        passed = [n for n, mk in marks.items() if mk and mk.get("result") == "pass"]
+        failed = [n for n, mk in marks.items() if mk and mk.get("result") != "pass"]
+        status = "later" if not d or not connected else "attention" if failed else "done" if len(passed) == len(mech) else "todo"
+        detail = ("Needs the design file and the robot, on blocks." if status == "later" else
+                  "Wrong: " + ", ".join(failed[:4]) if failed else f"{len(passed)} of {len(mech)} checked.")
+        jobs.append(_job("motors", "Each mechanism motor turns the right way", status, detail, go=go("br-motors"),
+                         unblock=None if d and connected else ({"connect": 1, "label": "Connect to the robot"} if d else
+                                                               {"tab": "bringup", "panel": "br-design", "label": "The design file"})))
+    sh = shafts(d)
+    if not d:
+        jobs.append(_job("shafts", "Motors on one shaft turn together", "later", "Needs the design file.", go=go("br-shafts"),
+                         unblock={"tab": "bringup", "panel": "br-design", "label": "The design file"}))
+    elif not sh:
+        jobs.append(_job("shafts", "Motors on one shaft turn together", "skip", "No shared shafts in the design.", go=go("br-shafts")))
+    elif sh:
+        marks = {k: _mark(prog, "bu_shaft:" + k) for k in sh}
+        passed = [k for k, mk in marks.items() if mk and mk.get("result") == "pass"]
+        failed = [k for k, mk in marks.items() if mk and mk.get("result") != "pass"]
+        status = "later" if not connected else "attention" if failed else "done" if len(passed) == len(sh) else "todo"
+        jobs.append(_job("shafts", "Motors on one shaft turn together", status,
+                         "Needs the robot, on blocks." if status == "later" else
+                         "They fight: " + ", ".join(failed) if failed else f"{len(passed)} of {len(sh)} shafts checked.",
+                         go=go("br-shafts"), unblock=None if connected else {"connect": 1, "label": "Connect to the robot"}))
+    dirs, sticks = prog.get("directions"), prog.get("sticks")
+    jobs.append(_job("drivetrain", "The drivetrain: the Guide's path", "done" if dirs == "pass" and sticks == "pass"
+                     else "attention" if "fail" in (dirs, sticks) else "todo",
+                     "Every wheel drives the right way, and it drives with the sticks." if dirs == "pass" and sticks == "pass"
+                     else "Wheel directions on blocks, then the sticks on the floor, in the Guide.", go={"guide": "directions"}))
+    st = _mark_status(_mark(prog, "bu_signoff"))
+    jobs.append(_job("signoff", "Sign off: the bring-up report", st[0] if st else "todo",
+                     st[1] if st else "Write what was checked, by whom and when, into the robot's folder.", go=go("br-signoff")))
+    return _plan("Bring-up: a new robot against its design",
+                 "A robot just handed over by the mechanical and electrical teams, checked against its design file "
+                 "before it is tuned: the code, the robot off, the first power-on, then one motor at a time.",
+                 ["The design file (CAN IDs, ports, the ReCalc/AMBcalc designs)", "A multimeter", "Blocks under the frame",
+                  "The mechanical and electrical leads"], jobs, {"tab": "config", "label": "Next: Config"})
+
+
+TOOLS = {"bringup": bringup, "calibrate": calibrate, "config": config, "motors": motors, "wiring": wiring,
          "controllers": controllers_plan}
 # The order a new robot goes through them (each one's "after" points at the next).
-CHAIN = ["config", "motors", "wiring", "calibrate", "controllers"]
+CHAIN = ["bringup", "config", "motors", "wiring", "calibrate", "controllers"]
 
 
 def with_order(tab, ctx, plans=None):
@@ -380,6 +492,10 @@ def with_order(tab, ctx, plans=None):
     i = CHAIN.index(tab) if tab in CHAIN else -1
     earlier = None
     for t in CHAIN[:max(i, 0)]:
+        # Bring-up is for a new robot: it comes first only once the team has started it (a design
+        # file), never as a nag on a robot that was brought up long ago.
+        if t == "bringup" and not ctx.get("design"):
+            continue
         p = plans.get(t) or TOOLS[t](ctx)
         n = sum(1 for j in p["jobs"] if j["status"] in WORK)
         if n:
@@ -626,4 +742,13 @@ def gather(project, *, link=None, battery_grades_stale=False, measured=None):
     dbs = [d["value"] for d in controllers.code_deadbands(project) if d.get("value")]
     ctx["code_deadband"] = min(dbs) if dbs else None
     ctx["battery_grades_stale"] = bool(battery_grades_stale)
+    from . import design
+    try:
+        ctx["design"] = design.load(project)
+    except (OSError, ValueError) as e:
+        ctx["design"] = None
+        ctx["design_error"] = str(e)
+    if ctx["design"]:
+        ctx["design_check"] = design.check(ctx["design"])
+        ctx["design_compare"] = design.compare(project, ctx["design"])
     return ctx

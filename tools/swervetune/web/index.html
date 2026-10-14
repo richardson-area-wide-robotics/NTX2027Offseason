@@ -43,6 +43,7 @@
 
 <div class="bar2">
 <nav class="tabs" aria-label="Screens">
+  <button data-tab="bringup" data-tip="tab.bringup">Bring-up</button>
   <button data-tab="guide" class="on" aria-current="page" data-tip="tab.guide">Guide</button>
   <button data-tab="live" data-tip="tab.live">Live</button>
   <button data-tab="motors" data-tip="tab.motors">Motors</button>
@@ -67,6 +68,7 @@
 </div>
 
 <main>
+  <section id="tab-bringup" class="tab"></section>
   <section id="tab-guide" class="tab on"></section>
   <section id="tab-live" class="tab"></section>
   <section id="tab-motors" class="tab"></section>
@@ -104,5 +106,6 @@
 <script src="trouble.js"></script>
 <script src="config.js"></script>
 <script src="runs.js"></script>
+<script src="bringup.js"></script>
 </body>
 </html>

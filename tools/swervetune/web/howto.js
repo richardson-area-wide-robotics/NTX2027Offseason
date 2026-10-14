@@ -11,7 +11,7 @@ const HowTo = (() => {
   const KEY = "swervetune.howto";
   const WORD = { done: "done", attention: "needs a fix", todo: "to do", later: "later", optional: "optional", skip: "not needed" };
   const MARK = { done: "✓", attention: "!" };
-  const NAME = { config: "Config", motors: "Motors", wiring: "Wiring", calibrate: "Calibrate", controllers: "Controllers" };
+  const NAME = { bringup: "Bring-up", config: "Config", motors: "Motors", wiring: "Wiring", calibrate: "Calibrate", controllers: "Controllers" };
   const plans = {};   // tab -> the last plan shown
   const seqs = {};    // tab -> the newest paint asked for: a slow answer never paints over it
 
@@ -245,7 +245,7 @@ const HowTo = (() => {
     paint(tab);
   }
 
-  const TABS = ["calibrate", "config", "motors", "wiring", "controllers"];
+  const TABS = ["bringup", "calibrate", "config", "motors", "wiring", "controllers"];
   App.on("tab", t => { if (TABS.includes(t)) paint(t); });
   App.on("saved", () => TABS.forEach(t => { if ($(`#tab-${t}`).classList.contains("on")) paint(t); }));
   App.on("run", () => TABS.forEach(t => { if ($(`#tab-${t}`).classList.contains("on")) paint(t); }));

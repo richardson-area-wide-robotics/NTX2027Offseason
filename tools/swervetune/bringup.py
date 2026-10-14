@@ -132,3 +132,72 @@ def motor_test_report(doc, design=None):
     bad = any(f["level"] == "error" for f in F)
     return {"test": "motor_test", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
             "score": None if sim else (0 if bad else 100), "next": None, "modules": {}, "motors": rows, "ask": ask}
+
+
+# ---------------------------------------------------------------------------- the sign-off report
+
+
+def _local_and_utc(t=None):
+    """'10/13/2026 2:31 PM CDT (19:31 UTC)': this laptop's time first, UTC beside it."""
+    import time
+    lt, ut = time.localtime(t), time.gmtime(t)
+    name = time.strftime("%Z", lt)
+    abbr = "".join(w[0] for w in name.split()) if " " in name else name
+    clock = time.strftime("%I:%M %p", lt).lstrip("0")
+    return f"{lt.tm_mon}/{lt.tm_mday}/{lt.tm_year} {clock} {abbr} ({time.strftime('%H:%M', ut)} UTC)"
+
+
+def _stamp_text(s):
+    """A progress stamp ``20261013-143100`` (laptop time) in the same form."""
+    import time
+    try:
+        return _local_and_utc(time.mktime(time.strptime(str(s), "%Y%m%d-%H%M%S")))
+    except ValueError:
+        return str(s or "")
+
+
+def report(project, ctx, signed=None):
+    """The bring-up report for this robot: ``(path, markdown)``. Written from the evidence (the
+    checklist, the design file, the marks), dated, in the robot's ``bringup`` folder."""
+    import os
+    import time
+    from . import design as D, setup as SP
+    d = ctx.get("design") or {}
+    prog = ctx.get("prog") or {}
+    plan = SP.bringup(ctx)
+    signed = signed or {}
+    path = os.path.join(project.path, "bringup", time.strftime("%Y-%m-%d") + ".md")
+    L = [f"# Bring-up: {project.name}", "",
+         f"Written {_local_and_utc()} by the swerve tools from what was checked.", ""]
+    who = [f"{k}: {v}" for k, v in signed.items() if v]
+    L += [("Signed off by " + "; ".join(who) + ".") if who else "Not signed by anyone yet.", ""]
+    L += ["## The checklist", "", "| Job | Status | Detail |", "|---|---|---|"]
+    for j in plan["jobs"]:
+        L.append(f"| {j['title']} | {j['status']} | {(j.get('detail') or '').replace('|', '/')} |")
+    L += ["", "## The design file", ""]
+    if d:
+        buses = ", ".join(f"{b.get('name')} ({b.get('color')}/green)" for b in d.get("canBuses") or [])
+        L += [f"`{os.path.relpath(D.path(project), project.path).replace(os.sep, '/')}`: controller {d.get('controller')}, "
+              f"CAN {buses}, {len(d.get('motors') or [])} motors, {len(d.get('sensors') or [])} sensors.", ""]
+        left = [f for f in (ctx.get("design_check") or []) + (ctx.get("design_compare") or [])]
+        L += ["Where the design and the code still disagree:", ""]
+        L += [f"- **{f['level']}**: {f['title']}" for f in left] or ["- Nothing."]
+    else:
+        L += ["No design file."]
+    L += ["", "## Each mechanism motor", "", "| Motor | Result | When | Detail |", "|---|---|---|---|"]
+    for m in SP.mechanism_motors(d):
+        mk = prog.get("bu_motor:" + m["name"]) or {}
+        L.append(f"| {m['name']} | {mk.get('result', 'not checked')} | {_stamp_text(mk.get('when')) if mk else ''} | "
+                 f"{(mk.get('detail') or '').replace('|', '/')} |")
+    sh = SP.shafts(d)
+    if sh:
+        L += ["", "## Shared shafts", "", "| Shaft | Motors | Result | Detail |", "|---|---|---|---|"]
+        for k, ms in sh.items():
+            mk = prog.get("bu_shaft:" + k) or {}
+            L.append(f"| {k} | {', '.join(m['name'] for m in ms)} | {mk.get('result', 'not checked')} | "
+                     f"{(mk.get('detail') or '').replace('|', '/')} |")
+    for key, title in (("bu_handover", "Hand-over check, robot off"), ("bu_sensors", "Sensors")):
+        mk = prog.get(key)
+        if mk:
+            L += ["", f"## {title}", "", f"{mk.get('result')} ({_stamp_text(mk.get('when'))}): {mk.get('detail', '')}"]
+    return path, "\n".join(L) + "\n"

@@ -639,6 +639,13 @@ table.t td > select { padding-block: 1px; }
 .tr-where { --frc-h: calc(var(--work-h) - 260px); position: sticky; top: calc(var(--top-h) + var(--bar-h) + var(--gap)); }
 @media (max-width: 900px) { .tr2.has-map { grid-template-columns: minmax(0, 1fr); } .tr-where { position: static; } }
 
+/* Bring-up: the bus colors (CTRE's cable: this color with green), the checklists, a shaft. */
+.bus-swatch { display: inline-block; width: 14px; height: 10px; margin-right: 4px; vertical-align: middle; border-radius: 2px;
+  background: linear-gradient(90deg, var(--c) 50%, #2e9e44 50%); box-shadow: inset 0 0 0 1px var(--edge); }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.br-shaft { display: grid; gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--rule); }
+.br-motors { max-height: calc(var(--work-h) - 120px); overflow: auto; }
+
 /* ---------------------------------------------------------------- laptops at 125% (about 1536 x 740)
    The same one-screen rule with less room: a narrower rail, and long lists scroll in their own box. */
 @media (max-width: 1700px) {

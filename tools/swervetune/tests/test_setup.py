@@ -85,7 +85,8 @@ class CalibrateTest(unittest.TestCase):
         if o["earlier"]:
             self.assertIn(o["earlier"]["tab"], SP.CHAIN[:o["index"]])
             self.assertGreater(o["earlier"]["count"], 0)
-        self.assertIsNone(SP.with_order("config", c)["order"]["earlier"], "nothing comes before Config")
+        self.assertIsNone(SP.with_order("config", c)["order"]["earlier"],
+                          "only Bring-up comes before Config, and only once a design file exists")
 
 
 class OtherToolsTest(unittest.TestCase):
@@ -166,6 +167,59 @@ class PartTest(unittest.TestCase):
                 self.assertTrue(SP.part_plan(kind, which, c, START)["jobs"], (robot, kind))
 
 
+def design(motors, sensors=()):
+    return {"version": 1, "controller": "roborio2", "canBuses": [{"name": "rio", "color": "yellow"}],
+            "motors": list(motors), "sensors": list(sensors)}
+
+
+def dm(name, cid, **kw):
+    m = {"name": name, "motor": {"type": "sparkflex_vortex", "id": cid, "canbus": "rio"}}
+    m.update(kw)
+    return m
+
+
+def bctx(**kw):
+    wm = {"buses": [{"name": "rio", "chain": ["roboRIO", "PDH"], "orderConfirmed": False}], "pdhPorts": {}}
+    return ctx(wiring_map=wm, wiring_saved=False, controllers=[], **kw)
+
+
+class BringupPlanTest(unittest.TestCase):
+    def test_a_new_robot_starts_with_its_design_file(self):
+        p = SP.bringup(bctx())
+        st = jobs(p)
+        self.assertEqual(p["next"]["id"], "design")
+        self.assertEqual((st["code"], st["motors"], st["shafts"], st["sensors"]), ("later", "later", "later", "later"),
+                         "nothing to check the robot against yet")
+        self.assertEqual(p["after"], None)
+
+    def test_each_mechanism_motor_and_each_shaft_is_checked(self):
+        d = design([dm("frontleft drive", 5), dm("Shooter leader", 10, shaft="shooter", gearRatio=1),
+                    dm("Shooter follower", 11, shaft="shooter", gearRatio=1, follows={"leader": "Shooter leader", "inverted": True}),
+                    dm("Intake pivot", 12)])
+        self.assertEqual([m["name"] for m in SP.mechanism_motors(d)], ["Shooter leader", "Intake pivot"],
+                         "not the swerve's (the Guide does those), not a follower (its leader's run checks it)")
+        c = bctx(design=d, design_check=[], design_compare=[], connected=True,
+                 prog={"bu_motor:Shooter leader": mark(), "bu_motor:Intake pivot": mark("fail", detail="wrong way")})
+        st = jobs(SP.bringup(c))
+        self.assertEqual((st["design"], st["code"], st["motors"], st["shafts"], st["sensors"]),
+                         ("done", "done", "attention", "todo", "skip"))
+        c["prog"].update({"bu_motor:Intake pivot": mark(), "bu_shaft:shooter": mark()})
+        st = jobs(SP.bringup(c))
+        self.assertEqual((st["motors"], st["shafts"]), ("done", "done"))
+
+    def test_the_code_disagreeing_needs_a_fix(self):
+        c = bctx(design=design([dm("Tower", 18)]), design_check=[],
+                 design_compare=[{"level": "error", "title": "Tower: CAN ID 18 in the design, 19 in the code", "why": ""}])
+        self.assertEqual(jobs(SP.bringup(c))["code"], "attention")
+
+    def test_bringup_comes_first_only_once_started(self):
+        c = bctx()
+        self.assertIsNone(SP.with_order("config", c)["order"]["earlier"], "no design file: not a nag on an old robot")
+        c.update(design=design([dm("Tower", 18)]), design_check=[], design_compare=[])
+        self.assertEqual(SP.with_order("config", c)["order"]["earlier"]["tab"], "bringup")
+        self.assertEqual(SP.CHAIN[0], "bringup")
+
+
 class ServerTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.mkdtemp()
@@ -223,6 +277,24 @@ class ServerTest(unittest.TestCase):
             one = server._edits_from({"kind": "offsets", "file": "x", "module": "frontleft"})
         self.assertEqual(len(every), 2)
         self.assertEqual(one, [("modules/frontleft.json", ("absoluteEncoderOffset",), 12.0)])
+
+    def test_bringup_drafts_a_design_file_and_saves_it_only_through_the_preview(self):
+        from swervetune import design as D
+        r = server.api_bringup()
+        self.assertEqual((r["ok"], r["exists"]), (True, False))
+        d = server.api_bringup_draft({"controller": "systemcore"})
+        self.assertEqual(d["design"]["controller"], "systemcore")
+        self.assertEqual(len(d["design"]["motors"]), 15)
+        p = server.api_save_preview({"kind": "design", "design": d["design"]})
+        self.assertTrue(p["ok"])
+        self.assertEqual(p["files"], ["src/main/deploy/design/devices.json"])
+        self.assertIn('+  "controller": "systemcore"', p["diff"])
+        self.assertFalse(server.api_save_preview({"kind": "design", "design": {"robot": "x"}})["ok"], "not a design file")
+        self.assertFalse(os.path.exists(D.path(server.S.project)), "a preview writes nothing")
+
+    def test_bringup_marks_are_kept(self):
+        self.assertTrue(server.api_mark({"key": "bu_motor:Tower", "result": "pass", "detail": "right way"})["ok"])
+        self.assertEqual(progress.load("Peashooter")["bu_motor:Tower"]["result"], "pass")
 
     def test_the_cli_starts_a_part_and_says_whats_next(self):
         buf = io.StringIO()

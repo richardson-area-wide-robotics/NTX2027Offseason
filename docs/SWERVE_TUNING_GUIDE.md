@@ -91,7 +91,8 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 
 | Tab | What it's for |
 |---|---|
-| **Guide** | The path to a tight swerve, step by step. Start here. |
+| **Bring-up** | A newly built robot against its design file: the code, the robot off, the first power-on, each motor and shared shaft, then a signed report. Start here with a new robot. |
+| **Guide** | The path to a tight swerve, step by step. Start here once the robot is brought up. |
 | **Live** | Every module's angle and speed, what was asked against what happened. |
 | **Motors** | Each motor's heat, current and health. Warns before a motor overheats, and stops one that's stalled or failing. |
 | **Wiring** | The CAN chain and power feeds as a map, live. Finds loose plugs and bad power leads, finds which PDH port feeds each motor, and walks you through a wiggle test. Every device, the PDH's ports and each finding are shown on FIRST's own control-system drawing (WPILib's REV layout, CC BY 4.0), with the part in question outlined and the parts our robots don't use, such as pneumatics, faded. Troubleshoot's power and CAN checks use the same drawing. |
@@ -101,6 +102,35 @@ USB Ethernet adapter instead; the same check and the same fix apply to it.
 | **Troubleshoot** | Describe what the robot is doing wrong; it asks questions and points at the cause. |
 | **Config** | Checks the swerve config files for mistakes, with one-click fixes. |
 | **Runs** | Every saved test, and **Match logs**: what went wrong in a match and where to look. |
+
+## Bringing up a new robot (the Bring-up tab)
+
+When the mechanical and electrical teams hand over a newly built robot, start in **Bring-up**,
+before the Guide. It checks the robot against its **design file**
+(`src/main/deploy/design/devices.json`): every motor in YAGSL's style (`"type"`, `"id"`,
+`"canbus"`), with its PDH port and breaker, inversion, brake or coast, current limit, gear ratio,
+which way is positive, and which motors share a shaft; every sensor on its port; each CAN bus by
+its cable color (CTRE's cable: a color with green, green is CAN-L), so a SystemCore robot's buses
+are told apart.
+
+1. **The design file.** *Draft from the code*, or *Import a spreadsheet (CSV)* from the design
+   team, then go through it with the mechanical and electrical leads and fill in what the code
+   can't know (breakers, gear ratios, which way is positive). The command line does the same:
+   `py -3.12 tools/swervetune design --project Peashooter`.
+2. **The code against the design.** CAN IDs, a SPARK MAX created for a SPARK Flex, a follower set
+   the wrong way, a port: fix whichever one is wrong.
+3. **Robot off:** breakers, terminators (about 60 ohm across CAN-H and CAN-L), battery, radio.
+4. **First power-on:** every controller heard (Motors), the CAN cable in order (Wiring), each
+   sensor tripped by hand.
+5. **Each mechanism motor alone**, on blocks with the deadman held: it runs at 8% for 0.6 s with
+   the robot's own code paused, and you say which way it went. Its encoder always agrees with
+   the code, so only a person can tell if that is the right way.
+6. **Motors that share a shaft:** first one alone with the others held at zero, so the shaft
+   turns them; each must turn the way its own setting expects. Then all together: if two push
+   against each other the robot stops it at once.
+7. **The drivetrain:** the Guide's path, below.
+8. **Sign off:** each lead types their name; the report is written, dated, into the robot's
+   `bringup` folder. Commit it with the code.
 
 ## The path (the Guide tab)
 

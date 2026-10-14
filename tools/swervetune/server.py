@@ -415,6 +415,27 @@ def _wiring_change(body):
     return path, old, wiring.map_text(body["map"])
 
 
+def _design_change(body):
+    """The robot's design file, as the page edited, drafted or imported it."""
+    from . import design as D
+    d = body.get("design")
+    if not isinstance(d, dict) or not isinstance(d.get("motors"), list):
+        raise ValueError("not a design file (it needs a motors list)")
+    path = D.path(S.project)
+    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    return path, old, D.text(d)
+
+
+def _report_change(body):
+    """The bring-up report: written here from the evidence, never from the browser's text."""
+    from . import bringup
+    ctx = _setup_ctx()
+    signed = {k: str(v)[:60] for k, v in (body.get("signed") or {}).items() if k in ("programming", "mechanical", "electrical")}
+    path, text = bringup.report(S.project, ctx, signed)
+    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    return path, old, text
+
+
 def _bad_save(e):
     return {"ok": False, "error": f"Not saved: {e}"}
 
@@ -422,7 +443,7 @@ def _bad_save(e):
 def api_save_preview(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
-    if body.get("kind") in ("wiring", "layout", "pathplanner"):
+    if body.get("kind") in CHANGES:
         try:
             path, old, new = CHANGES[body["kind"]](body)
         except (ValueError, KeyError, OSError) as e:
@@ -440,7 +461,7 @@ def api_save_preview(body):
 def api_save_apply(body):
     if not S.project:
         return {"ok": False, "error": "Pick a robot project first."}
-    if body.get("kind") in ("wiring", "layout", "pathplanner"):
+    if body.get("kind") in CHANGES:
         try:
             path, old, new = CHANGES[body["kind"]](body)
         except (ValueError, KeyError, OSError) as e:
@@ -451,6 +472,9 @@ def api_save_apply(body):
         S._wiring = None
         if body["kind"] == "pathplanner":
             S.reload_project()
+        if body["kind"] == "bringup_report":
+            progress.update(S.project.name, {"bu_signoff": {"result": "pass", "when": setup_plans.stamp(),
+                                                            "detail": "Report: " + os.path.relpath(path, S.project.path).replace(os.sep, "/")}})
         return {"ok": True, "diff": yagslcfg.diff(old, new, os.path.basename(path))}
     try:
         text = S.project.apply(_edits_from(body))
@@ -460,7 +484,51 @@ def api_save_apply(body):
 
 
 CHANGES = {"wiring": lambda b: _wiring_change(b), "layout": lambda b: _layout_change(b),
-           "pathplanner": lambda b: _pathplanner_change(b)}
+           "pathplanner": lambda b: _pathplanner_change(b), "design": lambda b: _design_change(b),
+           "bringup_report": lambda b: _report_change(b)}
+
+
+def api_bringup(_query=None):
+    """The design file and what it says against itself and the code; the robot's motor order (for
+    the motor test's masks); and bring-up's marks."""
+    from . import design as D
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    path = D.path(S.project)
+    rel = os.path.relpath(path, S.project.path).replace(os.sep, "/")
+    try:
+        d = D.load(S.project)
+    except (OSError, ValueError) as e:
+        return {"ok": True, "exists": True, "path": rel, "design": None, "error": f"The design file doesn't read: {e}"}
+    order = []
+    if S.link and S.link.is_connected():
+        try:
+            order = [m.get("name") for m in (S.link.motors().get("motors") or [])]
+        except Exception:  # noqa: BLE001 - a robot without the motor guard
+            order = []
+    prog = progress.load(S.project.name)
+    marks = {k: v for k, v in prog.items() if k.startswith("bu_")}
+    out = {"ok": True, "exists": d is not None, "path": rel, "design": d, "order": order, "marks": marks,
+           "colors": D.BUS_COLORS}
+    if d is not None:
+        out["check"] = D.check(d)
+        out["compare"] = D.compare(S.project, d)
+    return out
+
+
+def api_bringup_draft(body):
+    """A design file drafted from the code, or imported from a spreadsheet (``text``); not saved."""
+    from . import design as D
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    b = body or {}
+    ctl = b.get("controller") if b.get("controller") in D.CONTROLLERS else "roborio2"
+    if b.get("text"):
+        d = D.from_csv(str(b["text"]), robot=S.project.name, controller=ctl)
+    else:
+        d = D.from_code(S.project)
+        d["controller"] = ctl
+    return {"ok": True, "design": d, "check": D.check(d)}
 
 
 def api_runs(_):
@@ -780,7 +848,7 @@ def api_mark(body):
     """A tool's result for its checklist: ``{"key": "cal_positions", "result": "pass", "detail"}``."""
     b = body or {}
     key = str(b.get("key") or "")
-    if not S.project or not (key.startswith("cal_") or key.startswith("wire_")):
+    if not S.project or not key.startswith(("cal_", "wire_", "bu_")):
         return {"ok": False, "error": "Nothing to mark."}
     if _in_sim():
         return {"ok": False, "error": "The simulator's results never count: nothing was recorded."}
@@ -1348,7 +1416,8 @@ GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_s
        "/api/survey/state": api_survey_state, "/api/ppcheck": api_ppcheck,
        "/api/motors/inventory": api_motor_inventory, "/api/battery": api_battery,
        "/api/controllers/code": api_controllers_code, "/api/controllers/history": api_controllers_history,
-       "/api/setup": api_setup, "/api/parts": api_parts, "/api/parts/plan": api_part_plan}
+       "/api/setup": api_setup, "/api/parts": api_parts, "/api/parts/plan": api_part_plan,
+       "/api/bringup": api_bringup}
 POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netcheck": api_netcheck,
         "/api/disconnect": api_disconnect, "/api/env": api_env, "/api/test": api_test,
         "/api/abort": api_abort, "/api/stop": api_stop, "/api/deadman": api_deadman,
@@ -1366,7 +1435,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/controllers/step": api_controllers_step, "/api/controllers/report": api_controllers_report,
         "/api/controllers/robot": api_controllers_robot,
         "/api/controllers/save": api_controllers_save, "/api/mark": api_mark,
-        "/api/parts/start": api_part_start, "/api/parts/mark": api_part_mark, "/api/parts/stop": api_part_stop}
+        "/api/parts/start": api_part_start, "/api/parts/mark": api_part_mark, "/api/parts/stop": api_part_stop,
+        "/api/bringup/draft": api_bringup_draft}
 
 
 class Handler(BaseHTTPRequestHandler):
