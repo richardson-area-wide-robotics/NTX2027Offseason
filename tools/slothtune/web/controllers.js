@@ -28,7 +28,7 @@
     <div class="jobs" data-jobs="controllers">
     ${HowTo.slot("controllers")}
     <div class="job-area">
-    <div class="panel">
+    <div class="panel" id="ct-check">
       <div class="row" style="justify-content:space-between;flex-wrap:wrap">
         <h2 data-tip="ct.title">Check a joystick</h2>
         <span id="ct-rate" class="small muted"></span>
@@ -50,9 +50,8 @@
       </div>
       <p id="ct-port-note" class="hint" hidden></p>
       <p id="ct-mapping" class="hint" hidden></p>
-    </div>
-    <div class="grid2">
-      <div class="panel">
+    <div class="ct-cols">
+      <section class="ct-live-col">
         <h3 data-tip="ct.live">Live</h3>
         <div class="ct-live">
           <svg id="ct-svg" viewBox="0 0 340 302" role="img" aria-label="Stick positions, with each stick's center zoomed in below"></svg>
@@ -65,19 +64,22 @@
           a circle where the deadband is round (distance from center), a square where each axis has its own.
           <span class="ct-key-rec">Green outline</span>: what this joystick needs, once measured. A button turns green with ✓ once seen;
           the number is the one robot code uses.</p></details>
-      </div>
-      <div class="panel">
-        <h3 data-tip="ct.steps">Steps</h3>
-        <ol id="ct-steps" class="ct-steps" role="list"></ol>
-        <div id="ct-step-box"></div>
+      </section>
+      <div>
+        <section>
+          <h3 data-tip="ct.steps">Steps</h3>
+          <ol id="ct-steps" class="ct-steps" role="list"></ol>
+          <div id="ct-step-box"></div>
+        </section>
+        <section>
+          <h3 data-tip="ct.report">Report</h3>
+          <div id="ct-report"><p class="hint">Run the Steps; the report appears here.</p></div>
+          ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
+        </section>
       </div>
     </div>
-    <div class="panel">
-      <h3 data-tip="ct.report">Report</h3>
-      <div id="ct-report"><p class="hint">Run the steps above; the report appears here.</p></div>
-      ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
     </div>
-    <div class="panel">
+    <div class="panel" id="ct-hist">
       <h3 data-tip="ct.history">Every joystick checked</h3>
       <div id="ct-history"></div>
     </div></div></div>`;

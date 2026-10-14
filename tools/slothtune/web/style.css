@@ -647,6 +647,13 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .rail-first { justify-self: start; margin: 2px 0 2px 38px; }
 .rail-about > summary { cursor: pointer; color: var(--muted); }
 .rail-foot { justify-content: space-between; }
+/* Joysticks: one check, Live beside the Steps and the Report. */
+.ct-cols { display: grid; grid-template-columns: minmax(0, 440px) minmax(320px, 1fr); gap: var(--gap); align-items: start; margin-top: 8px; }
+.ct-cols > * { min-width: 0; }
+.ct-cols > div { display: grid; gap: 8px; align-content: start; }
+.ct-cols section + section { border-top: 1px solid var(--rule); padding-top: 8px; }
+.ct-cols h3 { margin: 0 0 4px; }
+@media (max-width: 900px) { .ct-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) {
   .jobs { grid-template-columns: minmax(0, 1fr); }
   .rail-panel { position: static; max-height: none; }
