@@ -32,7 +32,7 @@ from urllib.parse import parse_qsl, unquote, urlparse
 from . import setup as setup_plans
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
                designcheck, designlinks, logsummary, monitor, motorinv, netcheck, pdhports, plant, ppcheck, predict, progress,
-               rehearse, revspecs, robotlog, runs, wiring, yagslcfg)
+               rehearse, revspecs, robotlog, runs, systems, wiring, yagslcfg)
 
 # A fresh secret each run: only the page this run served can change anything (see Handler).
 TOKEN = secrets.token_urlsafe(18)
@@ -857,6 +857,58 @@ def api_robotlog(_query=None):
             "messages": S.robotlog.summary()}
 
 
+def api_systems(_query=None):
+    """The Systems tab: the robot's subsystems and their motors and sensors, and each mechanism the
+    code registers with its live state, its settings, its physics and its safe test."""
+    if not S.project:
+        return {"ok": False, "error": "Pick a robot project first."}
+    connected = bool(S.link and S.link.is_connected())
+    reg = S.link.systems() if connected else []
+    cfg = systems.settings(S.project)
+    out = []
+    for r in reg:
+        entry = cfg.get(r["name"]) or {}
+        try:
+            phys, err = systems.physics(entry), None
+        except ValueError as e:
+            phys, err = None, str(e)
+        from . import mechanics
+        out.append(dict(r, settings=entry, physics=phys, physics_error=err, plan=systems.plan(entry, r),
+                        feedforward=mechanics.feedforward(phys) if phys else None,
+                        scale=systems.scale(entry, r.get("units"), phys)))
+    return {"ok": True, "connected": connected, "groups": systems.groups(S.project, wiring._design(S.project), reg),
+            "systems": out, "motors": mechanics_motors()}
+
+
+def mechanics_motors():
+    from . import mechanics
+    return sorted(mechanics.MOTORS)
+
+
+def api_systems_physics(body):
+    """A mechanism's physics and safe test from a ReCalc link or typed numbers, before saving."""
+    b = body or {}
+    entry = {k: v for k, v in (b.get("settings") or {}).items() if v not in (None, "")}
+    registered = next((r for r in (S.link.systems() if S.link and S.link.is_connected() else [])
+                       if r["name"] == b.get("name")), {"name": b.get("name"), "kind": b.get("kind", ""),
+                                                         "units": b.get("units", "")})
+    try:
+        phys = systems.physics(entry)
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+    from . import mechanics
+    return {"ok": True, "physics": phys, "feedforward": mechanics.feedforward(phys) if phys else None,
+            "plan": systems.plan(entry, registered), "scale": systems.scale(entry, registered.get("units"), phys)}
+
+
+def api_systems_gains(body):
+    if not (S.link and S.link.is_connected()):
+        return {"ok": False, "error": "Connect to the robot first."}
+    values = {k: float(v) for k, v in ((body or {}).get("values") or {}).items()}
+    status = S.link.set_system_gains(values)
+    return {"ok": "REFUSED" not in status and "No answer" not in status, "status": status}
+
+
 def api_robotlog_clear(_body):
     S.robotlog.clear()
     return {"ok": True}
@@ -1475,7 +1527,7 @@ def api_sim(body):
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state,
        "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
-       "/api/robotlog": api_robotlog,
+       "/api/robotlog": api_robotlog, "/api/systems": api_systems,
        "/api/designs": api_designs,
        "/api/logsummary": api_logsummary, "/api/wiring/pdhfind": api_wiring_pdhfind,
        "/api/wiring/wiggle": api_wiring_wiggle, "/api/geometry/spin": api_geometry_spin,
@@ -1494,7 +1546,8 @@ POST = {"/api/project": api_set_project, "/api/connect": api_connect, "/api/netc
         "/api/designs/read": api_design_read, "/api/sim": api_sim,
         "/api/motors/override": api_motor_override, "/api/predict": api_predict,
         "/api/export": api_export, "/api/wiring/termination": api_wiring_termination,
-        "/api/robotlog/clear": api_robotlog_clear,
+        "/api/robotlog/clear": api_robotlog_clear, "/api/systems/physics": api_systems_physics,
+        "/api/systems/gains": api_systems_gains,
         "/api/geometry/tape": api_geometry_tape, "/api/geometry/wheels": api_geometry_wheels,
         "/api/camcal/sample": api_camcal_sample, "/api/camcal/solve": api_camcal_solve,
         "/api/survey/start": api_survey_start, "/api/survey/stop": api_survey_stop,

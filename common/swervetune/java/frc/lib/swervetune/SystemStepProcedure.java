@@ -18,7 +18,7 @@ import java.util.Locale;
  *
  * <p>Args: {@code system} (index), {@code a}, {@code b}, {@code vmax}, {@code amax}, {@code hold_s},
  * {@code moves}. Channels: {@code pos}, {@code vel}, {@code sp} (the moving goal), {@code sp_vel},
- * {@code goal} (where it is headed), and {@code amps0..} for its motors.
+ * {@code goal} (where it is headed), and {@code amps0..}, {@code volts0..} for its motors.
  */
 final class SystemStepProcedure implements Procedure {
   /** Goals stay this far inside the limits, as a fraction of the range. */
@@ -151,7 +151,7 @@ final class SystemStepProcedure implements Procedure {
     int i = 0;
     for (MotorGuard.Motor m : ctx.motors) {
       if (sys.motors.contains(m.name)) {
-        ctx.sampler.channel("amps" + i, m::amps);
+        ctx.sampler.channel("amps" + i, m::amps).channel("volts" + i, m::appliedVolts);
         ctx.note("motor " + i + ": " + m.name);
         i++;
       }

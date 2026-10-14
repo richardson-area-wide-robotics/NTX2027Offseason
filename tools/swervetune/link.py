@@ -506,6 +506,51 @@ class RobotLink:
             time.sleep(0.02)
         return "No answer from the robot about the gain change.", self.gains()
 
+    # ------------------------------------------------------------------ systems
+    def systems(self):
+        """Every mechanism the robot code registered (TunableSystem), with its live state, limits
+        and gains: ``[{"index", "name", "kind", "units", "motors", "position", "velocity", "goal",
+        "min", "max", "max_velocity", "max_accel", "limits_from", "gains": {name: {value, min, max}}}]``."""
+        names = list(self.get("str[]", C.SYSTEMS_NAMES))
+        col = lambda t: list(self.get("str[]", t))
+        num = lambda t: list(self.get("double[]", t))
+        kinds, units, motors, frm = col(C.SYSTEMS_KINDS), col(C.SYSTEMS_UNITS), col(C.SYSTEMS_MOTORS), col(C.SYSTEMS_LIMITS_FROM)
+        pos, vel, goal, lim = num(C.SYSTEMS_POSITION), num(C.SYSTEMS_VELOCITY), num(C.SYSTEMS_GOAL), num(C.SYSTEMS_LIMITS)
+        at = lambda xs, i, d=None: xs[i] if i < len(xs) else d
+        gains = {}
+        for entry in col(C.SYSTEMS_GAIN_NAMES):
+            key, _, rng = entry.partition("|")
+            lo, _, hi = rng.partition("|")
+            sysname, _, g = key.partition("/")
+            gains.setdefault(sysname, {})[g] = {"value": self.get("double", C.SYSTEMS_GAINS_APPLIED + key),
+                                                "min": float(lo or "nan"), "max": float(hi or "nan")}
+        out = []
+        for i, n in enumerate(names):
+            out.append({"index": i, "name": n, "kind": at(kinds, i, ""), "units": at(units, i, ""),
+                        "motors": [m for m in (at(motors, i, "") or "").split(",") if m],
+                        "position": at(pos, i), "velocity": at(vel, i), "goal": at(goal, i),
+                        "min": at(lim, 4 * i), "max": at(lim, 4 * i + 1), "max_velocity": at(lim, 4 * i + 2),
+                        "max_accel": at(lim, 4 * i + 3), "limits_from": at(frm, i, ""), "gains": gains.get(n, {})})
+        return out
+
+    def set_system_gains(self, values, timeout=3.0):
+        """Applies systems' gains together, ``{"Shooter/kV": 0.002}``. Returns the robot's sentence."""
+        for key, value in values.items():
+            self.put("double", C.SYSTEMS_GAINS + key, float(value))
+        self.put("int", C.SYSTEMS_APPLY_BOOT_ID, self.get("int", C.BOOT_ID))
+        self.flush()
+        time.sleep(0.05)
+        seq = int(time.time() * 1000) % (2 ** 52)
+        self.put("int", C.SYSTEMS_APPLY_SEQ, seq)
+        self.flush()
+        end = time.time() + timeout
+        while time.time() < end:
+            if self.get("int", C.SYSTEMS_APPLIED_SEQ) == seq:
+                time.sleep(0.1)
+                return self.get("str", C.SYSTEMS_APPLY_STATUS)
+            time.sleep(0.02)
+        return "No answer from the robot about the gain change."
+
     # ------------------------------------------------------------------ motor guard
     def motors(self):
         """Every watched motor as a dict, with the guard's startup report and recent events."""

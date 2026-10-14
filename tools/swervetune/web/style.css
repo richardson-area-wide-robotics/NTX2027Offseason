@@ -763,3 +763,17 @@ table.t td > select { padding-block: 1px; }
 /* Tune drive train: a pod whose gains differ from the shared ones. */
 #podseg button.own::after { content: " \2022"; color: var(--warn); }
 #podcmp p { margin: 4px 0; }
+
+/* Systems: the mechanism picker on top; subsystems, setup and the test side by side. */
+.sys { display: grid; gap: var(--gap); }
+.sys-cols { display: grid; grid-template-columns: minmax(200px, 250px) minmax(320px, 400px) 1fr; gap: var(--gap); align-items: start; }
+.sys-groups { max-height: calc(var(--work-h) - 120px); overflow: auto; }
+.sys-group { padding: 6px 0; border-top: 1px solid var(--rule); }
+.sys-group.on { box-shadow: inset 3px 0 0 var(--accent); padding-left: 8px; }
+.sys-group .chip { margin: 2px 2px 0 0; }
+.sys-setup h3, .sys-test h3 { margin: 8px 0 4px; }
+.sys-setup h3:first-child { margin-top: 0; }
+.sys-typed label { display: flex; gap: 4px; align-items: center; }
+.sys-gains { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sys-gains input { width: 100%; }
+@media (max-width: 1100px) { .sys-cols { grid-template-columns: 1fr; } }

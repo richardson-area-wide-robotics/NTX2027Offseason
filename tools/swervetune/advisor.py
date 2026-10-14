@@ -1388,7 +1388,8 @@ def robot_context(project):
     return {"mass_kg": mass, "mass_source": source, "moi_estimate": moi, "drive_gear": project.drive_gear(),
             "wheel_d_in": project.wheel_d_in(), "drive_kind": project.drive_kind(), "drive_inventory": inv,
             "max_speed": vmax, "inverted_imu": bool((project.data.get("swervedrive.json") or {}).get("invertedIMU", False)),
-            "design": _design(project)}
+            "design": _design(project),
+            "systems": (project.data.get("swervetune.json") or {}).get("systems") or {}}
 
 
 def _design(project):
@@ -1684,6 +1685,12 @@ def _analyze_test(result, gains=None, **kw):
     if test == "can_load":
         from . import wiring
         return wiring.can_load_report(result)
+    if test == "system_step":
+        from . import systems
+        return systems.step_report(result, kw.get("systems"))
+    if test == "system_limits":
+        from . import systems
+        return systems.limits_report(result)
     if test == "spin_ff":
         history = kw.get("history")
         if history is None and not result.get("practice"):

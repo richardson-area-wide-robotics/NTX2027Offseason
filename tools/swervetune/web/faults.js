@@ -8,7 +8,8 @@ const Faults = (() => {
   const strips = [];
 
   // A swerve motor's name is "<module> drive" or "<module> steer".
-  function wanted(name, kind, module) {
+  function wanted(name, kind, module, names) {
+    if (kind === "named") return (names || []).includes(name);
     const m = / (drive|steer)$/.exec(name);
     if (!m) return kind === "all";
     if (kind !== "all" && kind !== "swerve" && kind !== m[1]) return false;
@@ -39,7 +40,7 @@ const Faults = (() => {
     const items = [];
     if (o.kind) {
       for (const m of live.motors || []) {
-        if (!m.name || !wanted(m.name, o.kind, o.module)) continue;
+        if (!m.name || !wanted(m.name, o.kind, o.module, o.names)) continue;
         const l = lines(m, report);
         if (l.now.length || l.earlier.length) items.push({ name: m.name, ...l });
       }
