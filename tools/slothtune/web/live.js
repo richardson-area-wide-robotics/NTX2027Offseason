@@ -28,7 +28,7 @@
           <div id="flags" class="flags"><span class="hint">Not checking: no robot connected.</span></div>
         </div>
         <div class="panel">
-          <h3 data-tip="live.mods">Modules</h3>
+          <h3 data-tip="live.mods" id="mods-h">Modules</h3>
           <div id="mods" class="mods"></div>
         </div>
         <div class="panel">
@@ -76,6 +76,33 @@
     });
     pods.head = head;
     built = true;
+  }
+
+  // ---------------------------------------------------------------------------- the module table
+  // A column a module, a row a quantity: built when the modules are known, then only its cells'
+  // text changes (rebuilt ten times a second, its terms lost focus and clicks).
+  const MOD_ROWS = [
+    ["angle", `<span class="term" tabindex="0" data-tip="live.angle" data-quiet>Angle</span>`],
+    ["motorenc", `<span class="term" tabindex="0" data-tip="live.motorenc" data-quiet>Motor encoder</span>`],
+    ["raw", `<span class="term" tabindex="0" data-tip="live.raw" data-quiet>Absolute, raw</span>`],
+    ["speed", `<span class="term" tabindex="0" data-tip="live.speedrow" data-quiet>Speed</span>`],
+    ["current", `<span class="term" tabindex="0" data-tip="live.current" data-quiet>Current</span>`],
+    ["temp", `<span class="term" tabindex="0" data-tip="live.temp" data-quiet>Temperature</span>`],
+    ["faults", `<span class="term" tabindex="0" data-tip="live.faults" data-quiet>Faults</span>`],
+  ];
+  let modsKey = null, cells = {};
+  function buildMods(names) {
+    $("#mods", root).innerHTML = `<table class="t mods-t" aria-labelledby="mods-h"><thead><tr><td></td>${names.map((n, i) =>
+      `<th scope="col" data-col="${i}"><b>${abbr(n)}</b><span class="flag-word"></span> <span class="muted small">${esc(n)}</span></th>`).join("")}</tr></thead>
+      <tbody>${MOD_ROWS.map(([k, label]) => `<tr data-row="${k}"${k === "faults" ? " hidden" : ""}><th scope="row">${label}</th>${names.map((_, i) =>
+        `<td data-c="${k}-${i}"></td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    cells = {};
+    $$("#mods [data-c]", root).forEach(td => { cells[td.dataset.c] = td; });
+    modsKey = names.join("|");
+  }
+  function setCell(k, i, html) {
+    const td = cells[`${k}-${i}`];
+    if (td && td._h !== html) { td._h = html; td.innerHTML = html; }
   }
 
   // Direction (deg, CCW from forward) to a screen-space rotation for an element drawn pointing up.
@@ -134,28 +161,45 @@
             + (live.vision_last_reject ? ` (last: ${live.vision_last_reject})` : "") : "")
       : "";
 
-    $("#mods", root).innerHTML = (L.names || []).map((name, i) => {
+    const names = L.names || [];
+    if (modsKey !== names.join("|")) buildMods(names);
+    let anyFault = false;
+    names.forEach((name, i) => {
       const err = isFinite(live.steer_sp[i]) ? ((live.steer_sp[i] - live.steer[i] + 540) % 360) - 180 : NaN;
       const gap = ((live.steer[i] - live.steer_motor[i] + 540) % 360) - 180;
       const fault = live.faults && live.faults[i];
-      return `<div class="mod ${flagged.has(name) ? "flag" : ""}"><b>${abbr(name)} <span class="muted small">${esc(name)}</span></b>
-        <div class="kv">
-          <span class="term" tabindex="0" data-tip="live.angle" data-quiet>Angle</span><span>${fmt(live.steer[i], 1)}° (told ${fmt(live.steer_sp[i], 1)}°, off ${fmt(err, 1)}°)</span>
-          <span class="term" tabindex="0" data-tip="live.motorenc" data-quiet>Motor encoder</span><span>${fmt(live.steer_motor[i] % 360, 1)}° (gap ${fmt(gap, 1)}°)</span>
-          <span class="term" tabindex="0" data-tip="live.raw" data-quiet>Absolute, raw</span><span>${fmt(live.steer_raw[i], 1)}°</span>
-          <span class="term" tabindex="0" data-tip="live.speedrow" data-quiet>Speed</span><span>${U.speed(live.v[i])} (told ${U.speed(live.v_sp[i])})${speedWord[i] || ""}</span>
-          <span class="term" tabindex="0" data-tip="live.current" data-quiet>Current</span><span>drive ${fmt(live.drive_amps[i], 1)} A · steer ${fmt(live.steer_amps[i], 1)} A</span>
-          <span class="term" tabindex="0" data-tip="live.temp" data-quiet>Temperature</span><span>drive ${fmt(live.drive_temp[i], 0)} °C · steer ${fmt(live.steer_temp[i], 0)} °C</span>
-          ${fault ? `<span class="term" tabindex="0" data-tip="live.faults" data-quiet>Faults</span><span style="color:var(--bad)">${esc(fault)}</span>` : ""}
-        </div></div>`;
-    }).join("");
+      anyFault = anyFault || !!fault;
+      setCell("angle", i, `${fmt(live.steer[i], 1)}°<small>told ${fmt(live.steer_sp[i], 1)}°, off ${fmt(err, 1)}°</small>`);
+      setCell("motorenc", i, `${fmt(live.steer_motor[i] % 360, 1)}°<small>gap ${fmt(gap, 1)}°</small>`);
+      setCell("raw", i, `${fmt(live.steer_raw[i], 1)}°`);
+      setCell("speed", i, `${U.speed(live.v[i])}<small>told ${U.speed(live.v_sp[i])}${speedWord[i] || ""}</small>`);
+      setCell("current", i, `drive ${fmt(live.drive_amps[i], 1)} A<small>steer ${fmt(live.steer_amps[i], 1)} A</small>`);
+      setCell("temp", i, `drive ${fmt(live.drive_temp[i], 0)} °C<small>steer ${fmt(live.steer_temp[i], 0)} °C</small>`);
+      setCell("faults", i, fault ? `<span class="bad-ink">${esc(fault)}</span>` : "");
+      const on = flagged.has(name), th = $(`#mods th[data-col="${i}"]`, root);
+      if (th && th.classList.contains("flag") !== on) {
+        th.classList.toggle("flag", on);
+        $(".flag-word", th).textContent = on ? " · flagged" : "";
+        $$(`#mods td[data-c$="-${i}"]`, root).forEach(td => td.classList.toggle("flag", on));
+      }
+    });
+    const fr = $('#mods tr[data-row="faults"]', root);
+    if (fr) fr.hidden = !anyFault;
 
+    // Rebuilt only when the problems themselves change: rebuilding the rows every repaint lost a
+    // click on Troubleshoot and threw keyboard focus off it.
     const flags = L.flags || [];
-    $("#flags", root).innerHTML = flags.length ? flags.map(f => `<div class="flagrow">
-        <span>${Learn.link(f.text, 2)} <span class="mono small">${esc(f.detail || "")}</span></span>
-        <button class="btn small" data-sym="${esc(f.symptom)}" data-tip="live.trouble">Troubleshoot</button></div>`).join("")
-      : `<span class="hint">Nothing wrong right now. Problems the tool spots while you drive appear here, with a link to the fix.</span>`;
-    $$("#flags [data-sym]", root).forEach(b => b.onclick = () => Trouble.open(b.dataset.sym));
+    const fkey = JSON.stringify(flags.map(f => [f.symptom, f.text, f.module]));
+    const fbox = $("#flags", root);
+    if (fbox._key !== fkey) {
+      fbox._key = fkey;
+      fbox.innerHTML = flags.length ? flags.map((f, k) => `<div class="flagrow">
+          <span>${Learn.link(f.text, 2)} <span class="mono small" data-flag-detail="${k}"></span></span>
+          <button class="btn small" data-sym="${esc(f.symptom)}" data-tip="live.trouble">Troubleshoot</button></div>`).join("")
+        : `<span class="hint">Nothing wrong right now. Problems the tool spots while you drive appear here, with a link to the fix.</span>`;
+      $$("#flags [data-sym]", root).forEach(b => b.onclick = () => Trouble.open(b.dataset.sym));
+    }
+    flags.forEach((f, k) => { const d = $(`[data-flag-detail="${k}"]`, fbox); if (d && d.textContent !== (f.detail || "")) d.textContent = f.detail || ""; });
   }
 
   // ---------------------------------------------------------------------------- on the field
@@ -323,6 +367,8 @@
       trail = [];
       $("#live-empty", root).hidden = false;
       $("#mods", root).innerHTML = "";
+      modsKey = null;
+      $("#flags", root)._key = null;
       $("#live-pose", root).textContent = "";
       $("#flags", root).innerHTML = `<span class="hint">Not checking: no robot connected.</span>`;
     }

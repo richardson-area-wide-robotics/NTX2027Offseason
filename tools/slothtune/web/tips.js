@@ -327,7 +327,7 @@ const TIPS = {
   "live.heading": ["Which way the gyro says the robot faces.", "Counter-clockwise is positive, so turning left makes the number go up.", "gyro"],
   "live.pose": ["Where the robot thinks it is: x and y in inches, from the wheels and gyro, plus cameras if on (then measured from the blue wall's corner).", "Slipping wheels or a wrong wheel size make it drift.", "odometry"],
   "live.flags": ["Problems the tool spots in the live data, each with a Troubleshoot button.", "It checks rules like \"this wheel spins against its command\" while you drive.", null],
-  "live.mods": ["One card per module: angle, speed, current and temperature, beside what it was told.", "\"Told\" is the setpoint; a big \"off\" means that loop isn't keeping up.", "setpoint"],
+  "live.mods": ["One column per module: angle, speed, current and temperature, beside what it was told.", "\"Told\" is the setpoint; a big \"off\" means that loop isn't keeping up.", "setpoint"],
   "live.angle": ["Where the wheel points now, what it was told, and how far off it is.", "A few degrees off while turning is normal; still off at rest means a weak loop or a bad offset.", "setpoint"],
   "live.motorenc": ["The steering motor's own encoder, and its gap from the absolute encoder.", "The loop steers by the motor encoder; a growing gap means it has slipped from the true angle.", "encoder_sync"],
   "live.raw": ["The absolute encoder's reading before the offset is taken off.", "Offsets come from this number with the wheel pointing straight.", "absolute_encoder"],

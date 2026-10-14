@@ -207,12 +207,13 @@ table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
 .field-svg .bot .nose { fill: none; stroke: var(--panel); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .field-svg .bot.ghost .body { fill: var(--sp); fill-opacity: .18; stroke: var(--sp); stroke-dasharray: 5 4; }
 .field-svg .bot.ghost .nose { stroke: var(--sp); }
-.mods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.mod { border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; font-size: 13px; }
-.mod.flag { border-color: var(--bad); }
-.mod b { font-size: 14px; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 0 10px; font-family: var(--mono); font-size: 12px; }
-.kv span:nth-child(odd) { color: var(--muted); font-family: var(--sans); }
+/* Live's modules: one table, a column a module (fixed columns: the numbers change ten times a second). */
+table.t.mods-t { table-layout: fixed; width: 100%; }
+.mods-t th[scope=row] { width: 9em; font-weight: 400; }
+.mods-t td { font: 12px/1.4 var(--mono); font-variant-numeric: tabular-nums; vertical-align: top; }
+.mods-t td small { display: block; color: var(--muted); font-size: 11px; }
+.mods-t .flag { background: var(--bad-bg); }
+.mods-t thead th.flag { color: var(--bad); box-shadow: inset 0 3px 0 var(--bad); }
 .flags { display: grid; gap: 6px; }
 .flagrow { display: flex; gap: 8px; align-items: center; justify-content: space-between; background: var(--bad-bg);
   color: var(--bad); padding: 6px 10px; border-radius: 6px; }
@@ -754,6 +755,9 @@ table.t td > select { padding-block: 1px; }
   /* Live: the robot drawing sized to the screen, not to its column. */
   #tab-live .robot-svg { width: min(100%, 520px, calc(var(--work-h) - 200px)); }
   #tab-live .field-svg { max-height: calc(var(--work-h) - 200px); }
+  /* The robot drawing's column is the drawing's width; the field view gets three fifths. */
+  #tab-live > .grid2:not(:has(#field-wrap:not([hidden]))) { grid-template-columns: calc(min(520px, var(--work-h) - 200px) + 110px) minmax(0, 1fr); }
+  #tab-live > .grid2:has(#field-wrap:not([hidden])) { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
   /* Motors: the side column (recent changes, override, the guard's rules) scrolls by itself. */
   #motors-live > .motors-side { max-height: calc(var(--work-h) - 2px); overflow-y: auto; }
   /* Config: the robot's files in two columns; the findings and PathPlanner's lists in their own boxes. */
