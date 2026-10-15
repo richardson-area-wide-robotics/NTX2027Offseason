@@ -497,3 +497,290 @@ def limits_report(doc):
                                  "Held for this session; save them so the robot keeps them after a restart."))
     return {"test": "system_limits", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
             "score": None, "next": None, "modules": {}, "limits": {"min": lo, "max": hi, "units": units, "name": name}}
+
+
+# ---------------------------------------------------------------------------- model-based tuning
+
+
+# The gains each SPARK closed-loop mode uses (REV applies kV and kA only in some of them). A
+# position loop the code profiles on the roboRIO (plain Position) gets no speed feedforward.
+MODE_GAINS = {
+    "Position": ("kP", "kD", "kG", "kCos"),
+    "MAXMotionPosition": ("kP", "kD", "kS", "kV", "kA", "kG", "kCos", "mmCruise", "mmAccel"),
+    "Velocity": ("kP", "kI", "kS", "kV"),
+    "MAXMotionVelocity": ("kP", "kI", "kS", "kV", "kA", "mmAccel"),
+}
+MOTOR_LABEL = {"NEO Vortex": "NEO Vortex", "NEO 2.0": "NEO 2.0", "NEO V1.1": "NEO V1.1", "NEO 550": "NEO 550"}
+
+
+def _system_note(doc):
+    m = next((re.match(r"system: (.+) \((\w+), (.*)\)$", n) for n in doc.get("notes") or [] if n.startswith("system: ")), None)
+    return (m.group(1), m.group(2), m.group(3)) if m else ("the mechanism", "PIVOT", "")
+
+
+def _finite(xs):
+    return [x for x in xs if isinstance(x, (int, float)) and x == x]
+
+
+def _slope(xs, ys):
+    """Least-squares slope of ys against xs over the pairs both have; None without spread."""
+    pairs = [(x, y) for x, y in zip(xs, ys) if isinstance(x, (int, float)) and isinstance(y, (int, float))
+             and x == x and y == y]
+    if len(pairs) < 10:
+        return None
+    mx = sum(p[0] for p in pairs) / len(pairs)
+    my = sum(p[1] for p in pairs) / len(pairs)
+    sxx = sum((p[0] - mx) ** 2 for p in pairs)
+    return sum((p[0] - mx) * (p[1] - my) for p in pairs) / sxx if sxx > 1e-12 else None
+
+
+def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
+    """A system_id run (model-based tuning, decision 75): the mechanism's physics fitted from what it
+    did (:func:`modeltune.fit_held`), its speed reading's delay and a filter to try (decision 78), the
+    battery it held under load (decision 77), and the SPARK settings worked out from them for the
+    mode its code runs the SPARK in (:func:`model_gains`).
+
+    ``entry`` is its slothtune.json settings (physics, to compare with); ``registered`` the robot's
+    view of it (its gains and their ranges, its control mode); ``motor`` its leading motor:
+    ``{"motor", "limit_a", "count", "controller", "settings"}``. The fit is in the SPARK's own units
+    (its closed loop's sensor, conversion factors and all), so the gains need no conversion but REV's.
+    """
+    from . import modeltune as M
+
+    ch = doc.get("channels") or {}
+    meta = doc.get("meta") or {}
+    name, kind, units = _system_note(doc)
+    registered = registered or {}
+    motor = motor or {}
+    positional = kind in ("PIVOT", "ELEVATOR")
+    sim = doc.get("env") == "SIM"
+    base = {"test": "system_id", "env": doc.get("env", ""), "targets": [], "score": None, "cost": None,
+            "next": None, "options": [], "system": {"name": name, "kind": kind, "units": units}}
+    t = ch.get("t") or []
+    if sim and ch.get("loop"):
+        t = [l * 0.02 for l in ch["loop"]]   # the simulator's physics: a 20 ms step each loop
+    n = len(t)
+    if n < 40:
+        return dict(base, summary="Too short to fit: it stopped before it had moved much.", findings=[])
+    pos = (ch.get("pos") or [float("nan")] * n)[:n]
+    vel = (ch.get("vel") or [float("nan")] * n)[:n]
+    spos, svel = (ch.get("spos") or [])[:n], (ch.get("svel") or [])[:n]
+    cmd = (ch.get("cmd") or [])[:n]
+    applied = (ch.get("volts0") or [])[:n]
+    use_applied = len(_finite(applied)) >= 0.9 * n and len(applied) == n
+    volts = applied if use_applied else cmd
+    spark_units = len(_finite(spos)) >= 0.9 * n and (max(_finite(spos)) - min(_finite(spos))) > 0
+    x = spos if spark_units else pos
+    F = []
+
+    # The units: the SPARK's position per the code's, and its speed reading per its position a second.
+    delay = M.delay(t, spos, svel) if spark_units and len(_finite(svel)) >= 0.9 * n else None
+    ratio_v = M.speed_ratio(t, spos, svel, delay or 0.0) if delay is not None else None
+    if positional:
+        per = _slope(spos, pos) if spark_units else 1.0      # code units per SPARK unit
+    else:
+        per = M.speed_ratio(t, spos, vel, delay or 0.0) if spark_units else 1.0   # code speed per SPARK unit/s
+    mech = None
+    try:
+        mech = physics(entry, kind)
+    except ValueError:
+        mech = None
+    k_units = scale(entry, units, mech)
+    arpu = ANGLE_TO_RAD.get((units or "").strip().lower()) or (1.0 / k_units if k_units else None)
+    angle = None
+    if kind == "PIVOT":
+        if arpu and len(_finite(pos)) >= 0.9 * n:
+            angle = [p * arpu if p == p else float("nan") for p in pos]
+        else:
+            F.append(advisor.finding("warn", f"Say how many {units or 'units'} are one radian of {name}",
+                                     "An arm's gravity follows the cosine of its angle: without the angle the fit "
+                                     "can't separate gravity from friction. Set unitsPerRadian in its settings."))
+    fit = M.fit_held(t, x, volts, kind, angle=angle)
+    if not fit.get("ok"):
+        return dict(base, summary=f"The fit didn't take: {fit.get('why')}.", findings=F, fit=fit)
+    ok = lambda v: v is not None and v == v   # noqa: E731
+    sp_units = "its SPARK's units" if spark_units else (units or "its units")
+
+    # The model, shown in the code's units (what a person reads); the gains use the SPARK's.
+    shown = {"kS": fit["kS"], "kG": fit["kG"]}
+    if ok(per) and per:
+        shown["kV"] = fit["kV"] / per
+        shown["kA"] = fit["kA"] / per
+    model = {k: fit[k] for k in ("kS", "kV", "kA", "kG", "offset_rad", "r2", "samples", "dt", "shift")}
+    model["units"] = sp_units
+
+    # The battery it held under its hardest pull (decision 77).
+    batt = _finite(ch.get("batt") or [])
+    low = min(batt) if batt else None
+    vcomp = M.compensation_volts(low) if low and not sim else 12.0 if sim else M.compensation_volts(None)
+
+    # The filter (decision 78): only a speed loop reads it.
+    filt = M.filter_suggestion(delay, motor.get("controller") or "SPARK MAX",
+                               int(registered.get("gains", {}).get("velMs", {}).get("value") or 0) or None,
+                               int(registered.get("gains", {}).get("velDepth", {}).get("value") or 0) or None,
+                               speed_loop=not positional)
+
+    # The move the gains are judged on: its planned test, else half its window (or 60% of its top speed).
+    plan_ = plan(entry, dict(registered, kind=kind, units=units, min=meta.get("min"), max=meta.get("max"))) if entry else {}
+    if positional:
+        move_code = abs(plan_["b"] - plan_["a"]) if plan_.get("ok") else 0.5 * abs((meta.get("hi") or 1) - (meta.get("lo") or 0))
+    else:
+        move_code = plan_.get("b") if plan_.get("ok") and plan_.get("b") else 0.6 * (meta.get("vmax") or 0)
+    move = move_code / per if ok(per) and per else move_code
+    control = registered.get("control") or ""
+    basis = {"name": name, "kind": kind, "model": {k: fit[k] for k in ("kS", "kV", "kA", "kG", "offset_rad")},
+             "volts": vcomp, "delay_s": delay or 0.0, "move": move, "current_limit_a": motor.get("limit_a"),
+             "motor": MOTOR_LABEL.get(motor.get("motor") or "", "NEO"), "motors": motor.get("count") or 1,
+             "ratio_v": ratio_v if ok(ratio_v) and ratio_v else 1.0, "angle_rad_per_unit": (arpu * per) if (arpu and ok(per)) else None,
+             "control": control, "spark_units": spark_units,
+             "ranges": {k: (g.get("min"), g.get("max")) for k, g in (registered.get("gains") or {}).items()}}
+    computed = model_gains(basis, aggressiveness)
+
+    # What a person should know.
+    level = "info" if fit["r2"] >= 0.98 else "warn"
+    F.append(advisor.finding(level, f"The model explains {fit['r2']:.1%} of how {name} moved",
+                             f"Fitted from {fit['samples']} moving samples with the "
+                             f"{'volts the SPARK applied' if use_applied else 'volts asked'}."
+                             + (" Below 98%: something it doesn't model (a cable, a spring, slack) is in there."
+                                if level == "warn" else "")))
+    if fit["kS"] < 0:
+        F.append(advisor.finding("info", "Friction came out just below zero",
+                                 f"kS {fit['kS']:.3f} V: there is next to no friction to fit (a simulator's mechanism "
+                                 "has none); kS is left at zero."))
+    if kind == "PIVOT" and angle is not None:
+        off = math.degrees(fit["offset_rad"])
+        if abs(off) > 3:
+            F.append(advisor.finding("warn", f"{name} is level at {off:.1f} degrees, not 0",
+                                     "REV's kCos assumes the position reads 0 when the arm is level. Either zero the "
+                                     f"encoder so level reads 0, or the gravity it holds is off by cos({off:.0f} degrees)."))
+    if mech and positional is not None:
+        ff = mechanics.feedforward(mech)
+        k_rad = k_units  # code units per radian (per meter for an elevator)
+        if ff and ff.get("kV") and k_rad and ok(shown.get("kV")):
+            want = ff["kV"] / k_rad
+            if want and abs(shown["kV"] / want - 1) > 0.3:
+                F.append(advisor.finding("warn", f"kV is {shown['kV'] / want:.1f} times what its physics say",
+                                         "Its gear ratio, drum or wheel in the settings, or its units, may be off; or it "
+                                         "drags more than the physics know (a bearing, a belt too tight)."))
+    if low is not None:
+        F.append(advisor.finding("info", f"The battery held {low:.2f} V at the hardest pull",
+                                 f"Voltage compensation at {vcomp:.1f} V keeps the gains the same as it drains "
+                                 "(decision 77): the motor gets the volts asked whatever the battery holds above that."))
+    sensor = ((motor.get("settings") or {}).get("sensor") or "PrimaryEncoder")
+    if not positional and sensor not in ("PrimaryEncoder", ""):
+        filt = dict(filt, suggest=None)
+        filt["why"] = ((filt.get("why") or "") + f" Its loop reads its {sensor}: that encoder's own filter is set in "
+                       "its code (velMs and velDepth are the built-in encoder's).").strip()
+    if filt.get("why"):
+        F.append(advisor.finding("warn" if filt.get("suggest") else "info",
+                                 f"Its speed reading is {filt['delay_ms']:.0f} ms late" if filt.get("delay_ms") is not None
+                                 else "Its speed reading's delay is unknown", filt["why"]))
+    if computed.get("note"):
+        F.append(advisor.finding("info", computed["note_title"], computed["note"]))
+    pred = computed["predicted"]
+    settle = pred.get("settle_s")
+    summary = (f"{name}: kS {fit['kS']:.3f} V, kV {shown.get('kV', fit['kV']):.4g}, kA {shown.get('kA', fit['kA']):.4g}"
+               + (f", kG {fit['kG']:.3f} V" if kind in ("ELEVATOR", "PIVOT") else "")
+               + f" (fit {fit['r2']:.1%}). With the gains worked out from it, the model expects "
+               + f"{pred['overshoot_pct']:.0f}% overshoot"
+               + (", on target as the move ends." if settle is not None and settle < 0.01 else
+                  f", settled {settle:.2f} s after the move." if settle is not None else ", never settling: check it."))
+    if computed.get("clamped"):
+        F.append(advisor.finding("warn", f"{', '.join(computed['clamped'])} held at the robot's allowed range",
+                                 "The model wants more than the code allows for "
+                                 + ("it" if len(computed["clamped"]) == 1 else "them")
+                                 + ": the check run shows what that costs."))
+    if sim:
+        summary = "Simulator, practice only. " + summary
+    nxt = None
+    if computed["apply"]:
+        nxt = {"level": "warn", "title": f"Apply the gains worked out from {name}'s model",
+               "why": "Every gain at once, from one measured model: a check run of the step test follows.",
+               "action": {"type": "gains", "values": computed["apply"], "model": True}}
+    options = [nxt] if nxt else []
+    if filt.get("suggest") and "velMs" in (registered.get("gains") or {}):
+        options.append({"level": "info", "title": f"Try the speed filter at {filt['suggest']['ms']} ms, depth {filt['suggest']['depth']}",
+                        "why": filt["why"],
+                        "action": {"type": "gains", "values": {f"{name}/velMs": filt["suggest"]["ms"],
+                                                               f"{name}/velDepth": filt["suggest"]["depth"]}}})
+    current = {k: g.get("value") for k, g in (registered.get("gains") or {}).items()}
+    return dict(base, summary=summary, findings=F, next=nxt, options=options, fit=fit, model=model, shown=shown, current=current,
+                delay_s=delay, filter=filt, ratio_v=ratio_v, per=per, battery_low=low, volts_comp=vcomp,
+                computed=computed, basis=basis, applied_volts=use_applied)
+
+
+def model_gains(basis, aggressiveness=1.0):
+    """The SPARK settings for a fitted model (:func:`id_report`'s ``basis``): LQR position gains or
+    SIMC speed gains (:func:`modeltune.compute`), REV's units, voltage compensation, and only the ones
+    the mode the code runs its SPARK in uses, inside the ranges the robot allows. ``apply`` is
+    ``{"Name/k": value}``; ``all`` every computed value; ``predicted`` the model's own step test."""
+    from . import modeltune as M
+
+    kind, name = basis["kind"], basis["name"]
+    positional = kind in ("PIVOT", "ELEVATOR")
+    model = dict(basis["model"])
+    model["kS"] = max(0.0, model["kS"])
+    control = basis.get("control") or ""
+    mode = control if control in MODE_GAINS else ("Position" if positional else "Velocity")
+    c = M.compute(model, kind, basis["volts"], basis["delay_s"], basis["move"], basis.get("current_limit_a"),
+                  basis.get("motor") or "NEO", basis.get("motors") or 1, aggressiveness,
+                  basis.get("angle_rad_per_unit"), control=mode)
+    spark = M.spark_gains(c["gains"], c["maxmotion"], basis["volts"], 1.0, basis.get("ratio_v") or 1.0, positional)
+    spark["vComp"] = basis["volts"]
+    note_title = note = ""
+    if control not in MODE_GAINS:
+        guess = "Position" if positional else "Velocity"
+        if control in ("DutyCycle", "Voltage", "Current"):
+            note_title = f"{name}'s code runs its SPARK open loop ({control})"
+            note = ("The SPARK's gains do nothing then: these are what its own loop would want, in volts: "
+                    f"kS {c['gains']['kS']:.3f}, kV {c['gains']['kV']:.4g}, kA {c['gains']['kA']:.4g}.")
+            keep = ()
+        else:
+            note_title = f"Not seen how {name}'s code runs its SPARK yet"
+            note = (f"Gains for {guess} mode: run its code once (a move) and measure again to be sure. "
+                    "REV applies kV and kA only in MAXMotion and velocity modes.")
+            keep = MODE_GAINS[guess]
+    else:
+        keep = MODE_GAINS[control]
+        if control == "Position":
+            note_title = f"{name}'s code profiles on the roboRIO in plain Position mode"
+            note = ("REV doesn't apply kV or kA there, so kP carries it along the profile. MAXMotion would add the "
+                    f"speed feedforward and a 1 kHz profile: cruise {spark.get('mmCruise', 0):.4g}, acceleration "
+                    f"{spark.get('mmAccel', 0):.4g} in its SPARK's units.")
+    keep = set(keep)
+    if keep:
+        keep.add("vComp")   # never for open loop: it would change what the code's duty cycle means
+    if kind == "PIVOT":
+        keep.discard("kG")
+    elif kind == "ELEVATOR":
+        keep.discard("kCos")
+    ranges = basis.get("ranges") or {}
+    apply, clamped = {}, []
+    for k, v in spark.items():
+        if k not in keep or k not in ranges:
+            continue
+        lo, hi = ranges[k]
+        w = v
+        if lo is not None and lo == lo and w < lo:
+            w = lo
+        if hi is not None and hi == hi and w > hi:
+            w = hi
+        if w != v:
+            clamped.append(k)
+        apply[f"{name}/{k}"] = round(w, 10)
+    return {"apply": apply, "all": spark, "model_gains": c["gains"], "maxmotion": c["maxmotion"],
+            "predicted": c["predicted"], "aggressiveness": aggressiveness, "clamped": clamped,
+            "note": note, "note_title": note_title}
+
+
+def system_motor(motors, registered):
+    """A mechanism's leading motor for :func:`id_report`, from the motor guard's list
+    (:meth:`link.motors`): its kind, current limit, controller and settings, and how many of the
+    mechanism's motors drive."""
+    names = set((registered or {}).get("motors") or [])
+    mine = [m for m in motors or [] if m.get("name") in names]
+    leads = [m for m in mine if not (m.get("settings") or {}).get("follows")]
+    lead = (leads or mine or [{}])[0]
+    return {"motor": lead.get("kind") or "", "limit_a": lead.get("base_limit") or lead.get("limit"),
+            "count": max(1, len(mine)), "controller": lead.get("controller") or lead.get("code_controller") or "",
+            "settings": lead.get("settings") or {}}

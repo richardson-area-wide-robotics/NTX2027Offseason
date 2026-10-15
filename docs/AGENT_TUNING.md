@@ -24,7 +24,10 @@ yours, and nothing in the tools will stop you from breaking them:
    `--yes`. Never commit or push.
 4. **One change per run, never more than double or half.** Every gain change the advisor gives
    is already held to that (`"clamped": true` when it was held, and the finding says so); a gain at
-   0 may be set to its first value. Never apply a bigger step yourself.
+   0 may be set to its first value. Never apply a bigger step yourself. The one exception is a
+   `system_id` report's `next` (its action says `"model": true`): every gain worked out from one
+   measured model of the mechanism. Apply it whole (one `gains set` with all its values), then run
+   `system_step` to check it; never mix it with other changes.
 5. **Stay inside the current policy.** Drive and mechanism limits: NEO Vortex 80 A, NEO 2.0 80 A,
    NEO V1.1 60 A, NEO 550 20 A. The slip test may recommend a drive limit *below* 80 A for this
    carpet; nothing may go above policy.

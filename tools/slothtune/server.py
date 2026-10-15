@@ -516,10 +516,36 @@ def api_autotune_start(body):
     return {"ok": True, **S.autotune.to_json()}
 
 
+def id_args(name, args=None):
+    """The measuring run's arguments for a registered mechanism: its number, its top test speed (the
+    step test's), and a guess at the volts that hold it from its physics (an arm's at its angle now)."""
+    reg = next((s for s in (S.link.systems() if S.link and S.link.is_connected() else []) if s["name"] == name), None)
+    if not reg:
+        return None
+    out = {"system": reg["index"]}
+    vmax = (args or {}).get("vmax") or reg.get("max_velocity")
+    if isinstance(vmax, (int, float)) and vmax == vmax and vmax > 0:
+        out["vmax"] = vmax
+    entry = systems.settings(S.project).get(name)
+    p = systems.plan(entry, reg) if entry else {}
+    ff = p.get("feedforward") if p.get("ok") else None
+    if not out.get("vmax") and p.get("ok") and p.get("vmax"):
+        out["vmax"] = p["vmax"]
+    if ff and ff.get("kG") and reg.get("kind") in ("ELEVATOR", "PIVOT"):
+        hold = ff["kG"]
+        if reg["kind"] == "PIVOT":
+            k = p.get("scale")
+            pos = reg.get("position")
+            hold = ff["kG"] * math.cos(pos / k) if k and isinstance(pos, (int, float)) and pos == pos else 0.0
+        out["hold"] = round(max(-6.0, min(6.0, hold)), 3)
+    return out
+
+
 def api_sys_autotune_start(body):
-    """Starts the auto-tuner on one mechanism (the Systems tab): its step test with the tab's
-    arguments, a round at a time, while a person holds the deadman. ``practice`` runs a made-up
-    elevator or flywheel instead, for trying it out."""
+    """Starts the auto-tuner on one mechanism (the Systems tab), while a person holds the deadman.
+    ``mode`` "model" (decision 75) measures it once (system_id, on blocks) and works every gain out
+    from its model, then checks with the step test; otherwise its step test with the tab's arguments,
+    a round at a time. ``practice`` runs a made-up elevator or flywheel instead, for trying it out."""
     from . import autotune
 
     body = body or {}
@@ -530,9 +556,11 @@ def api_sys_autotune_start(body):
         if t and t.state in ("running", "paused"):
             return {"ok": False, "error": "An auto-tune is already running: stop it first."}
     rounds = int(body.get("rounds") or autotune.MAX_ROUNDS)
+    model = body.get("mode") == "model"
     if body.get("practice"):
         kind = "FLYWHEEL" if str(body.get("kind") or "").upper() in ("FLYWHEEL", "ROLLER") else "ELEVATOR"
-        runner = autotune.PracticeSystemRunner(name, kind, {k: float(v) for k, v in (body.get("gains") or {}).items()} or None)
+        runner = autotune.PracticeSystemRunner(name, kind, {k: float(v) for k, v in (body.get("gains") or {}).items()} or None,
+                                               spark=model, control=body.get("control") or None)
     else:
         if not (S.link and S.link.is_connected()):
             return {"ok": False, "error": "Connect to the robot first."}
@@ -540,10 +568,14 @@ def api_sys_autotune_start(body):
             return {"ok": False, "error": "A test is running: let it finish first."}
         if not any(s["name"] == name for s in S.link.systems()):
             return {"ok": False, "error": f"The robot has no mechanism called {name}."}
-        runner = autotune.RobotSystemRunner(S, name, args)
+        ida = dict(id_args(name, args) or {}, **(body.get("id_args") or {}))
+        if model and not ida.get("vmax"):
+            return {"ok": False, "error": f"Give {name} a top speed for its measuring run (its physics or maxVelocity)."}
+        runner = autotune.RobotSystemRunner(S, name, args, id_args=ida)
         if not runner.gains():
             return {"ok": False, "error": f"{name} registers no gains for the tuner to change."}
-    S.sys_autotune = autotune.SystemTune(runner, name, max_rounds=rounds)
+    S.sys_autotune = (autotune.ModelTune(runner, name, max_checks=int(body.get("checks") or autotune.ModelTune.MAX_CHECKS))
+                      if model else autotune.SystemTune(runner, name, max_rounds=rounds))
     S.sys_autotune.target = "practice" if body.get("practice") else "robot"
     S.sys_autotune.start()
     return {"ok": True, **S.sys_autotune.to_json()}

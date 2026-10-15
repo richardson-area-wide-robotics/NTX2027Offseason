@@ -1696,6 +1696,10 @@ def _analyze_test(result, gains=None, **kw):
     if test == "system_limits":
         from . import systems
         return systems.limits_report(result)
+    if test == "system_id":
+        from . import systems
+        name = systems._system_note(result)[0]
+        return systems.id_report(result, (kw.get("systems") or {}).get(name))
     if test in ("system_piece", "system_hold"):
         from . import piecesense
         rep = piecesense.calibration_report(result) if test == "system_piece" else piecesense.hold_report(result)

@@ -174,7 +174,7 @@ def fit(t, pos, vel, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
     return out
 
 
-def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=None, max_shift=3):
+def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=None, max_shift=3, angle=None):
     """:func:`fit` from position alone, for volts held between samples.
 
     A robot loop sets the volts and holds them until the next loop. Over each interval the speed is
@@ -191,9 +191,13 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
     every 20 ms) repeats readings: only the samples where the position changed are kept, each
     interval's volts the average of what was asked over it, and an interval much longer than the
     rest (it sat still) breaks the chain.
+
+    ``angle`` (radians, one per sample) gives an arm's angle apart from ``pos``: the fit can then be
+    in the SPARK's own units while its gravity follows the arm's real angle.
     """
     n0 = min(len(t), len(pos), len(volts))
     keep = [k for k in range(n0) if k == 0 or pos[k] != pos[k - 1]]
+    rad = [angle[k] for k in keep] if angle is not None else None
     t = [t[k] for k in keep]
     pos = [pos[k] for k in keep]
 
@@ -219,7 +223,7 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
     if top <= 0:
         return {"ok": False, "why": "it never moved"}
     floor = min_speed if min_speed is not None else 0.02 * top
-    arm = kind == "PIVOT" and angle_rad_per_unit
+    arm = kind == "PIVOT" and (angle_rad_per_unit or rad is not None)
     best = None
     for shift in range(0, max_shift + 1):
         u = held(shift)
@@ -235,7 +239,9 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
             if kind == "ELEVATOR":
                 row.append(1.0)
             elif arm:
-                x = pos[k] * angle_rad_per_unit
+                x = rad[k] if rad is not None else pos[k] * angle_rad_per_unit
+                if x != x:
+                    continue
                 row += [math.cos(x), math.sin(x)]
             rows.append(row)
             ys.append(v1)
@@ -282,17 +288,124 @@ def delay(t, pos, ctrl_vel, max_s=0.15):
     dt = sorted(t[k + 1] - t[k] for k in range(n - 1))[(n - 1) // 2]
     if dt <= 0:
         return None
+    # Its scale: the controller's speed units may not be the position's per second (RPM).
+    scale = None
+    num = den = 0.0
+    for k in range(1, n - 1):
+        a, b = ctrl_vel[k], dv[k]
+        if a == a and b == b:
+            num, den = num + a * b, den + b * b
+    scale = num / den if den > 0 else 1.0
     best, best_err = 0.0, float("inf")
-    for lag in range(0, int(max_s / dt) + 1):
+    # Fractional lags, a tenth of a sample apart: a robot loop's rows are 20 ms apart and a SPARK's
+    # filter is often under that.
+    steps = int(max_s / dt * 10) + 1
+    for j in range(steps):
+        lag = j / 10.0
+        whole, frac = int(lag), lag - int(lag)
         err, used = 0.0, 0
-        for k in range(1 + lag, n - 1):
-            a, b = ctrl_vel[k], dv[k - lag]
-            if a == a and b == b:
-                err += (a - b) ** 2
+        for k in range(2 + whole, n - 1):
+            a = ctrl_vel[k]
+            b0, b1 = dv[k - whole], dv[k - whole - 1]
+            if a == a and b0 == b0 and b1 == b1:
+                b = (1 - frac) * b0 + frac * b1
+                err += (a - scale * b) ** 2
                 used += 1
         if used > 10 and err / used < best_err:
             best, best_err = lag * dt, err / used
     return best
+
+
+def speed_ratio(t, pos, speed, delay_s=0.0):
+    """How many of the controller's speed units are one of its position units a second (60 for a
+    SPARK reading RPM against rotations, 1 when the code set matching conversion factors): its speed
+    reading against its position's slope, ``delay_s`` apart. None without enough motion."""
+    n = min(len(t), len(pos), len(speed))
+    if n < 20:
+        return None
+    dt = sorted(t[k + 1] - t[k] for k in range(n - 1))[(n - 1) // 2]
+    lag = int(round((delay_s or 0.0) / dt)) if dt > 0 else 0
+    dx = velocity_from_position(t[:n], pos[:n])
+    top = max((abs(x) for x in dx if x == x), default=0.0)
+    num = den = 0.0
+    for k in range(lag + 1, n - 1):
+        a, b = speed[k], dx[k - lag]
+        if a == a and b == b and abs(b) > 0.1 * top:
+            num += a * b
+            den += b * b
+    return num / den if den > 0 else None
+
+
+# A SPARK's speed filter, as Chief Delphi measured it (the PSA "REV SPARK default velocity filtering
+# is still really bad for flywheels", Feb-Mar 2026; REV doesn't document it). A quadrature encoder (a
+# Vortex's own, on a SPARK Flex) takes a speed over a ``ms`` window every millisecond and averages
+# ``depth`` of them, overlapping: a ms + depth window, half of it late (100 and 64, the device default
+# in REV's parameter table and the PSA, are 82 ms; REVLib's API docs say 10 and 8). A NEO's hall
+# sensors on a SPARK MAX took ``depth`` windows that don't overlap, "under the original parameter
+# structure": ms x depth, half of it late (the defaults 32 and 8 are 128 ms). REVLib 2026.0.5's
+# changelog changes neither; SPARK firmware past 24.x has no public notes. So these rules only say
+# what to expect: every SPARK's own settings are read, and its delay measured, and the measurement
+# is what the gains use. Its ranges are REV's.
+FILTERS = {"SPARK Flex": {"ms": (1, 100), "depth": (1, 64), "name": "quadrature", "overlap": True},
+           "SPARK MAX": {"ms": (8, 64), "depth": (1, 8), "name": "hall sensor (UVW)", "overlap": False}}
+# What to try: about a 10 ms window, 5 ms late (Oblarg's advice there). A NEO's hall sensors count 42
+# a turn, so its window stays at 16 ms (8 ms late) to keep the noise down.
+FILTER_TRY = {"SPARK Flex": (10, 2), "SPARK MAX": (16, 1)}
+FILTER_OK_S = 0.020
+
+
+def filter_delay_s(controller, ms, depth):
+    """How late a SPARK's speed reading is from its filter settings, seconds (see FILTERS); None unknown."""
+    if not ms or not depth:
+        return None
+    spec = FILTERS.get(controller, FILTERS["SPARK MAX"])
+    window = ms + depth if spec["overlap"] else ms * depth
+    return window / 2 / 1000.0
+
+
+def filter_suggestion(delay_s, controller, ms=None, depth=None, speed_loop=True):
+    """Decision 78: the speed filter's measured delay, and a setting to try when it is long for a
+    speed loop. A SPARK works its speed out over a window of positions and averages several windows:
+    smooth, but late. SIMC's speed gains fall as the delay grows, so a flywheel or roller tuned
+    behind a long filter answers slowly. A position loop on the SPARK never reads this filter.
+
+    ``controller`` is "SPARK Flex" (its Vortex encoder is quadrature: 1-100 ms, depth 1-64) or
+    "SPARK MAX" (a NEO's hall sensors: 8-64 ms, depth 1, 2, 4 or 8); ``ms`` and ``depth`` what it has
+    now. Returns ``{"delay_ms", "expected_ms", "now", "suggest", "why"}``: ``expected_ms`` what its
+    settings make it (:func:`filter_delay_s`), ``suggest`` None when it is short enough or doesn't
+    matter, else ``{"ms", "depth", "expected_ms"}``. A shorter window is noisier (a NEO's 42 counts a
+    turn most of all): the next measuring run reads the new delay."""
+    expected = filter_delay_s(controller, ms, depth)
+    out = {"delay_ms": None if delay_s is None else round(delay_s * 1000, 1),
+           "expected_ms": None if expected is None else round(expected * 1000, 1),
+           "now": {"ms": ms, "depth": depth} if ms else None, "suggest": None, "why": ""}
+    if delay_s is None:
+        out["why"] = "The run had no speed reading from the SPARK to time against its position."
+        return out
+    if not speed_loop:
+        out["why"] = (f"Its speed reading is {delay_s * 1000:.0f} ms late; its position loop on the SPARK "
+                      f"doesn't read it, so it doesn't matter here.")
+        return out
+    if delay_s <= FILTER_OK_S:
+        out["why"] = f"Its speed reading is {delay_s * 1000:.0f} ms late: short enough for a speed loop."
+        return out
+    try_ms, try_depth = FILTER_TRY.get(controller, FILTER_TRY["SPARK MAX"])
+    if ms and depth and ms <= try_ms and depth <= try_depth:
+        out["why"] = (f"Its speed reading is {delay_s * 1000:.0f} ms late although its filter is already short "
+                      f"({ms} ms, depth {depth}): the delay is elsewhere (the code's own filter, or the CAN status rate).")
+        return out
+    spec = FILTERS.get(controller, FILTERS["SPARK MAX"])
+    after = filter_delay_s(controller, try_ms, try_depth)
+    out["suggest"] = {"ms": try_ms, "depth": try_depth, "expected_ms": round(after * 1000, 1)}
+    said = ""
+    if ms and depth:
+        said = f" (now {ms} ms, depth {depth}"
+        said += f", which the filter's rule puts at {expected * 1000:.0f} ms)" if expected else ")"
+    out["why"] = (f"Its speed reading is {delay_s * 1000:.0f} ms late, and a speed loop can only be as quick as "
+                  f"what it reads. Try the {spec['name']} filter at {try_ms} ms, depth {try_depth}{said}: about "
+                  f"{after * 1000:.0f} ms late. Shorter is noisier, so measure again: the next run reads the new "
+                  "delay, and its noise.")
+    return out
 
 
 def velocity_from_position(t, pos):
@@ -422,12 +535,15 @@ def _profile(x0, x1, vmax, amax, dt):
 
 
 def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, hold_s=1.0, dt=SPARK_DT,
-            angle_rad_per_unit=None, start=0.0):
+            angle_rad_per_unit=None, start=0.0, ff=("kS", "kV", "kA", "kG"), sp_period=None):
     """The loop simulated: the model, a 1 ms controller seeing the mechanism ``delay_s`` late,
     output limited to ``volts``. Positional: a profiled move of ``move`` units then a hold; speed: a
     ramp to ``move`` units/s then a hold. ``gains``: Kp, Kd (positional) or Kp, Ki (speed), and the
-    feedforward kS, kV, kA, kG in volts. Returns overshoot (% of the move), error at the end (%),
-    settling time (s, to 2% positional, 3% speed) and the peak volts."""
+    feedforward kS, kV, kA, kG in volts, of which only those in ``ff`` are applied (REV applies kV
+    and kA only in MAXMotion; plain Position applies none but gravity). ``sp_period``: how often the
+    setpoint changes (a profile the roboRIO steps every 20 ms; None is every ``dt``). Returns
+    overshoot (% of the move), error at the end (%), settling time (s, to 2% positional, 3% speed)
+    and the peak volts."""
     kS, kV, kA, kG = model["kS"], model["kV"], model["kA"], model.get("kG") or 0.0
     positional = kind in ("ELEVATOR", "PIVOT")
     lag = max(0, int(round(delay_s / dt)))
@@ -441,17 +557,23 @@ def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, ho
         ref = [(0.0, move * min(1.0, k / ramp), (move / ramp / dt) if k < ramp else 0.0) for k in range(ramp + 1)]
     ref += [ref[-1][:1] + (ref[-1][1] if not positional else 0.0, 0.0)] * int(hold_s / dt)
     trace = []
-    for rp, rv, ra in ref:
+    hold_every = max(1, int(round((sp_period or dt) / dt)))
+    held = ref[0]
+    for i, now in enumerate(ref):
+        if i % hold_every == 0 or i >= len(ref) - int(hold_s / dt):
+            held = now     # the setpoint as the SPARK has it: stepped when the roboRIO profiles it
+        rp, rv, ra = held
         xs, vs = seen[0]
         grav = kG * math.cos((x - (model.get("offset_rad") or 0.0) / (angle_rad_per_unit or 1)) * (angle_rad_per_unit or 0)) \
             if kind == "PIVOT" and angle_rad_per_unit else (kG if kind == "ELEVATOR" else 0.0)
-        ff = kS * (1 if rv > 0 else -1 if rv < 0 else 0) + kV * rv + kA * ra + grav
+        ffv = (kS * (1 if rv > 0 else -1 if rv < 0 else 0) if "kS" in ff else 0.0) + (kV * rv if "kV" in ff else 0.0) \
+            + (kA * ra if "kA" in ff else 0.0) + (grav if "kG" in ff else 0.0)
         if positional:
-            u = ff + gains.get("kP", 0) * (rp - xs) + gains.get("kD", 0) * (rv - vs)
+            u = ffv + gains.get("kP", 0) * (rp - xs) + gains.get("kD", 0) * (rv - vs)
         else:
             e = rv - vs
             integ += e * dt
-            u = ff + gains.get("kP", 0) * e + gains.get("kI", 0) * integ
+            u = ffv + gains.get("kP", 0) * e + gains.get("kI", 0) * integ
         u = max(-volts, min(volts, u))
         peak_u = max(peak_u, abs(u))
         fric = kS * (1 if v > 1e-9 else -1 if v < -1e-9 else 0)
@@ -480,10 +602,18 @@ def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, ho
 
 
 POSITION_DELAY_S = 0.002   # a SPARK's onboard position loop: the encoder read and one loop, about 2 ms
+SPEED_DELAY_MIN_S = 0.005  # no SPARK speed reading is quicker than this: a speed loop never assumes less
+
+
+# The feedforward REV applies in each closed-loop mode (gravity's kG or kCos in all), and how often
+# the setpoint moves: a profile on the roboRIO steps each 20 ms loop, MAXMotion's every millisecond.
+MODE_FF = {"Position": ("kG",), "MAXMotionPosition": ("kS", "kV", "kA", "kG"),
+           "Velocity": ("kS", "kV"), "MAXMotionVelocity": ("kS", "kV", "kA")}
+MODE_SP_PERIOD = {"Position": 0.02, "Velocity": 0.02}
 
 
 def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO", motors=1, aggressiveness=1.0,
-            angle_rad_per_unit=None, position_delay_s=POSITION_DELAY_S):
+            angle_rad_per_unit=None, position_delay_s=POSITION_DELAY_S, control=None):
     """Gains and limits for an identified mechanism, in its own units and volts: positional loops by
     LQR (the position error worth 7 V is 2% of the move, divided by ``aggressiveness``), speed loops
     by SIMC (tau_c = the delay, divided by ``aggressiveness``). ``aggressiveness`` is the one setting
@@ -491,7 +621,11 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
 
     ``delay_s`` is the speed reading's measured delay: it is what a speed loop sees. A position loop
     on the SPARK reads its encoder every millisecond, so it sees only ``position_delay_s``; the
-    speed filter's delay never reaches it (its D term uses the position's own differences)."""
+    speed filter's delay never reaches it (its D term uses the position's own differences).
+
+    ``control`` is the SPARK mode the code runs it in ("Position", "MAXMotionPosition", "Velocity",
+    ...): the prediction applies only that mode's feedforward and setpoint rate (None: all of it,
+    every millisecond)."""
     positional = kind in ("ELEVATOR", "PIVOT")
     mm = maxmotion(model, volts, current_limit_a, motor, motors, move if positional else None)
     gains = {"kS": model["kS"], "kV": model["kV"], "kA": model["kA"]}
@@ -505,11 +639,13 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
         kp, kd = lqr_pd(model["kV"], model["kA"], qp, qv, r=7.0, delay_s=round(position_delay_s / SPARK_DT) * SPARK_DT)
         gains.update(kP=kp, kD=kd, kI=0.0)
     else:
-        theta = max(delay_s, 0.0005)
+        theta = max(delay_s or 0.0, SPEED_DELAY_MIN_S)
         kp, ki = simc_pi(model["kV"], model["kA"], theta, tau_c=theta / aggressiveness)
         gains.update(kP=kp, kI=ki, kD=0.0)
     pred = predict(model, gains, kind, move, mm["cruise"] or abs(move), mm["accel"] or abs(move), volts=volts,
-                   delay_s=position_delay_s if positional else delay_s, angle_rad_per_unit=angle_rad_per_unit)
+                   delay_s=position_delay_s if positional else max(delay_s or 0.0, SPEED_DELAY_MIN_S),
+                   angle_rad_per_unit=angle_rad_per_unit,
+                   ff=MODE_FF.get(control, ("kS", "kV", "kA", "kG")), sp_period=MODE_SP_PERIOD.get(control))
     return {"gains": gains, "maxmotion": mm, "predicted": pred, "aggressiveness": aggressiveness}
 
 

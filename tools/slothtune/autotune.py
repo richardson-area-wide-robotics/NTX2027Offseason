@@ -27,10 +27,15 @@ to a file: the result is offered for Save gains, which previews the change as us
 :class:`SystemTune` does the same for one mechanism on the Systems tab: its step test, the one
 change its report asks for (:func:`systems.tune_next`) to its own gains, a round at a time, ending
 on its best round. Its Save writes the gains to slothtune.json, which the robot applies at startup.
+
+:class:`ModelTune` is the model-based way (decision 75): one measuring run (``system_id``), the
+gains worked out from the fitted model applied together, then the step test as a check, trimming the
+one setting the model leaves open (how hard the loop pushes) by the checks' cost, at most four times.
 """
 
 from __future__ import annotations
 
+import math
 import threading
 import time
 
@@ -536,12 +541,156 @@ class SystemTune(_Loop):
             self.status, self.reason = "stopped", self.message or "Stopped."
 
 
+class ModelTune(_Loop):
+    """Model-based auto-tune (decision 75) for one mechanism.
+
+    1. Measure it: ``system_id`` on blocks, the robot's code paused, its SPARK run by voltage.
+    2. Fit its physics and work every gain out from them at once (:func:`systems.id_report`): LQR
+       for a position loop, SIMC for a speed loop, MAXMotion's limits, voltage compensation from the
+       battery it held, only the gains the mode its code runs the SPARK in uses.
+    3. Check: the step test with those gains, judged as every step test is (its cost).
+    4. Trim the one setting the model leaves open, how hard the loop pushes (``aggressiveness``,
+       half to double): a check that overshoots or rings more than the model said goes softer,
+       one that is clean goes harder, then one between the two best. At most ``max_checks``.
+    5. End on the best check's gains. A first check that meets every target ends it at once.
+
+    Nothing is written to a file: Save writes the gains to slothtune.json as usual."""
+
+    MAX_CHECKS = 4
+    SOFT, HARD = 0.5, 2.0
+    ACCEPT_OVERSHOOT = 15.0   # the best check must settle and overshoot no more than this (percent)
+
+    def __init__(self, runner, name, max_checks=MAX_CHECKS):
+        self._init_loop(runner, max_checks + 1)
+        self.name = name
+        self.max_checks = max_checks
+        self.report = None
+        self.checks = []
+        self.best = None
+        self.before = None
+        self.status, self.reason = "tuning", ""
+
+    def to_json(self):
+        r = self.report or {}
+        return {"system": self.name, "mode": "model", "state": self.state, "message": self.message,
+                "round": self.round, "max_rounds": self.max_rounds, "status": self.status, "reason": self.reason,
+                "model": {k: r.get(k) for k in ("summary", "model", "shown", "fit", "delay_s", "filter", "volts_comp",
+                                                 "findings", "current", "ratio_v", "applied_volts")} if r else None,
+                "run": r.get("_run"), "checks": self.checks, "best": self.best,
+                "best_gains": self.best_gains(), "before": self.before}
+
+    def best_gains(self):
+        return dict(self.best["gains"]) if self.best else {}
+
+    def _finish(self, status, reason):
+        self.status, self.reason = status, reason
+
+    def _check(self, agg):
+        comp = systems.model_gains(self.report["basis"], agg)
+        self.runner.apply(comp["apply"], f"Model-based tune {self.name}: the model's gains at {agg:g}x")
+        doc = self._test("system_step", f"check {len(self.checks) + 1}, the model's gains at {agg:g}x")
+        if doc is None:
+            return None
+        rep = self.runner.report(dict(doc, gains=self.runner.gains()))
+        moves = rep.get("moves") or []
+        measured = {"overshoot_pct": max((m["overshoot_pct"] for m in moves), default=None),
+                    "error_pct": max((abs(m["error_pct"]) for m in moves), default=None),
+                    "settled": all(m["settle_s"] is not None for m in moves) if moves else None,
+                    "settle_s": max((m["settle_s"] for m in moves if m["settle_s"] is not None), default=None)}
+        entry = {"check": len(self.checks) + 1, "aggressiveness": agg, "gains": comp["apply"],
+                 "cost": rep.get("cost"), "score": rep.get("score"), "summary": rep.get("summary"),
+                 "measured": measured, "predicted": comp["predicted"], "run": doc.get("_run"),
+                 "meets": bool((rep.get("options") or [{}])[0].get("action", {}).get("type") == "save")}
+        self.checks.append(entry)
+        self.round += 1
+        if entry["cost"] is not None and (self.best is None or entry["cost"] < self.best["cost"]):
+            self.best = entry
+        return entry
+
+    def _next_trim(self):
+        """The next aggressiveness: away from the first check toward what it lacked, then between."""
+        tried = sorted(c["aggressiveness"] for c in self.checks)
+        judged = [c for c in self.checks if c["cost"] is not None]
+        if len(judged) == 1:
+            c = judged[0]
+            m, p = c["measured"], c["predicted"]
+            rough = (m["settled"] is False or (m["overshoot_pct"] or 0) > (p.get("overshoot_pct") or 0) + 5)
+            return 0.6 if rough else 1.6
+        by = sorted(judged, key=lambda c: c["cost"])
+        a, b = by[0]["aggressiveness"], by[1]["aggressiveness"]
+        if by[0]["aggressiveness"] in (min(tried), max(tried)):
+            # The best is at an end: one more step past it, inside half to double.
+            nxt = a * (a / b) if a != b else a * 1.25
+            nxt = min(self.HARD, max(self.SOFT, nxt))
+        else:
+            nxt = math.sqrt(a * b)
+        return None if any(abs(nxt - x) < 0.05 for x in tried) else round(nxt, 3)
+
+    def run(self):
+        self.before = {k: v for k, v in self.runner.gains().items() if k.startswith(self.name + "/")}
+        doc = self._test("system_id", f"measuring {self.name}")
+        if doc is None:
+            if self.status == "tuning":
+                self._finish("stopped", self.message or "Stopped.")
+        else:
+            rep = self.runner.id_report(doc)
+            self.report = dict(rep, _run=doc.get("_run"))
+            self.round += 1
+            if not rep.get("basis"):
+                self._finish("stopped", "Needs a person: " + (rep.get("summary") or "the run couldn't be fitted."))
+            elif not rep["computed"]["apply"]:
+                self._finish("stopped", "Needs a person: nothing to apply. " + (rep["computed"].get("note") or ""))
+            else:
+                agg = 1.0
+                while not self._stop and len(self.checks) < self.max_checks and agg is not None:
+                    entry = self._check(agg)
+                    if entry is None:
+                        break
+                    if entry["cost"] is None:
+                        self._finish("stopped", "Needs a person: " + (entry["summary"] or "the check run can't be judged."))
+                        break
+                    if entry["meets"] and len(self.checks) == 1:
+                        self._finish("done", "The model's gains meet every target on the first check.")
+                        break
+                    agg = self._next_trim()
+                if self.status == "tuning" and self.best:
+                    m = self.best["measured"]
+                    if m["settled"] is False or (m["overshoot_pct"] or 0) > self.ACCEPT_OVERSHOOT:
+                        # Even the best check doesn't behave: the model is off for this mechanism. Put
+                        # back what it started on rather than leave it on gains that ring.
+                        p = self.best["predicted"]
+                        self._finish("stopped", (
+                            f"Needs a person: the best check still {'never settled' if m['settled'] is False else 'overshot'}"
+                            f" ({m['overshoot_pct'] or 0:.0f}% against the model's {p.get('overshoot_pct') or 0:.0f}%), so "
+                            "the model doesn't match it: something loose, a delay it didn't measure, or a filter. It is "
+                            "back on the gains it started with."))
+                        self.best = None
+                    else:
+                        self._finish("done", f"{len(self.checks)} checks: the best was {self.best['aggressiveness']:g}x "
+                                             f"(cost {self.best['cost']:.3g}).")
+        if self.best:
+            now = self.runner.gains()
+            back = {k: v for k, v in self.best["gains"].items() if now.get(k) != v}
+            if back:
+                self.runner.apply(back, f"Model-based tune {self.name}: back on its best check's gains")
+        elif self.before and self.checks:
+            self.runner.apply(self.before, f"Model-based tune {self.name}: no check could be judged, back to where it started")
+        if self.state != "stopped":
+            self.state = "stopped" if self._stop else "finished"
+            if not self._stop:
+                self.message = (f"Finished: {self.reason} " if self.reason else "Finished. ") + (
+                    f"It is on check {self.best['check']}'s gains; Save writes them to slothtune.json." if self.best else "")
+        if self._stop and self.status == "tuning":
+            self.status, self.reason = "stopped", self.message or "Stopped."
+
+
 class RobotSystemRunner:
     """One mechanism on the connected robot, through the tool's session: its live gains (and their
-    allowed ranges) as the robot reports them, its step test with the Systems tab's arguments."""
+    allowed ranges) as the robot reports them, its step test with the Systems tab's arguments, and
+    for the model-based tune its measuring run with ``id_args``."""
 
-    def __init__(self, session, name, args):
-        self.s, self.name, self.args = session, name, dict(args)
+    def __init__(self, session, name, args, id_args=None):
+        self.s, self.name, self.args, self.id_args = session, name, dict(args), dict(id_args or {})
 
     def _system(self):
         return next((x for x in self.s.link.systems() if x["name"] == self.name), None) or {}
@@ -554,13 +703,17 @@ class RobotSystemRunner:
                 for k, g in (self._system().get("gains") or {}).items()}
 
     def run(self, test):
-        res, doc, path = self.s.run_test_sync(test, "ALL", self.args)
+        res, doc, path = self.s.run_test_sync(test, "ALL", self.id_args if test == "system_id" else self.args)
         if doc is not None and path:
             doc = dict(doc, _run=path)
         return doc, res.outcome if res.accepted else "REFUSED", res.message
 
     def report(self, doc):
         return advisor.analyze(doc, doc.get("gains"), **advisor.robot_context(self.s.project))
+
+    def id_report(self, doc):
+        return systems.id_report(doc, systems.settings(self.s.project).get(self.name), self._system(),
+                                 systems.system_motor(self.s.link.motors().get("motors") or [], self._system()))
 
     def apply(self, values, reason):
         return self.s.link.set_system_gains(values)
@@ -579,8 +732,15 @@ class PracticeSystemRunner:
     ARGS = {"ELEVATOR": {"a": 0.2, "b": 0.8, "vmax": 0.6, "amax": 3.0, "hold_s": 1.0, "moves": 2},
             "FLYWHEEL": {"a": 200.0, "b": 400.0, "vmax": 400.0, "amax": 800.0, "hold_s": 1.5, "moves": 2}}
 
+    # A SPARK in practice (``spark=True``): its gains in REV's units, run at 1 kHz in ``control`` mode;
+    # its speed reading in RPM-like units (SPEED_UNITS per position unit a second) through a filter.
+    SPEED_UNITS = 60.0
+    FILTER_S = 0.02
+    SPARK_GAINS = {"kP": (0, 1000), "kI": (0, 100), "kD": (0, 1e5), "kS": (0, 4), "kV": (0, 20), "kA": (0, 20),
+                   "kG": (-12, 12), "kCos": (-12, 12), "mmCruise": (0, 1e6), "mmAccel": (0, 1e7), "vComp": (0, 13)}
+
     def __init__(self, name="Elevator", kind="ELEVATOR", gains=None, args=None, ranges=(0.0, 1000.0), delay_s=0.03,
-                 position_only=False):
+                 position_only=False, spark=False, control=None):
         self.name, self.kind = name, kind
         self.g = {f"{name}/{k}": float(v) for k, v in (gains or {"kP": 4.0, "kD": 0.0, "kS": 0.0, "kV": 0.0, "kG": 0.0}).items()}
         self.args = dict(self.ARGS[kind], **(args or {}))
@@ -588,13 +748,31 @@ class PracticeSystemRunner:
         self.lo, self.hi = ranges
         self.delay = max(0, round(delay_s / 0.01))
         self.position_only = position_only
+        self.spark = spark
+        self.control = control or ("Position" if kind == "ELEVATOR" else "Velocity")
+        if spark:
+            self.g = {f"{name}/{k}": 0.0 for k in self.SPARK_GAINS}
+            self.g.update({f"{name}/{k}": float(v) for k, v in (gains or {"kP": 1.0}).items()})
         self.runs = 0
 
     def gains(self):
         return dict(self.g)
 
     def ranges(self):
+        if self.spark:
+            return {f"{self.name}/{k}": r for k, r in self.SPARK_GAINS.items()}
         return {k: (self.lo, self.hi) for k in self.g}
+
+    def registered(self):
+        """The robot's view of it, as :meth:`link.systems` gives it."""
+        return {"name": self.name, "kind": self.kind, "units": "meters" if self.kind == "ELEVATOR" else "rad/s",
+                "control": self.control, "min": 0.0, "max": 1.0,
+                "gains": {k.split("/", 1)[1]: {"value": v, "min": self.ranges()[k][0], "max": self.ranges()[k][1]}
+                          for k, v in self.g.items()}}
+
+    def id_report(self, doc):
+        return systems.id_report(doc, None, self.registered(),
+                                 {"motor": "NEO V1.1", "limit_a": 40, "count": 1, "controller": "SPARK MAX"})
 
     def apply(self, values, reason):
         self.g.update(values)
@@ -625,8 +803,137 @@ class PracticeSystemRunner:
         out.append((x1, 0.0))
         return out
 
+    def _filtered(self, speeds):
+        """A SPARK's speed reading: a moving average FILTER_S long, in its speed units."""
+        n = max(1, int(round(self.FILTER_S / 0.001)))
+        out, acc = [], []
+        for v in speeds:
+            acc.append(v)
+            if len(acc) > n:
+                acc.pop(0)
+            out.append(sum(acc) / len(acc) * self.SPEED_UNITS)
+        return out
+
+    def _step_plant(self, x, v, u, h):
+        P = self.p
+        positional = self.kind == "ELEVATOR"
+        grav = P["kG"] if positional else 0.0
+        if v == 0 and abs(u - grav) <= P["kS"]:
+            return x, 0.0
+        acc = (u - grav - P["kS"] * (1 if (v or (u - grav)) > 0 else -1) - P["kV"] * v) / P["kA"]
+        nv = v + acc * h
+        if v and nv * v < 0:
+            nv = 0.0
+        return x + nv * h, nv
+
+    def _identify(self):
+        """system_id on the practice mechanism: its hold, slow ramps and quick steps each way, the
+        volts held each 20 ms loop, a row a loop, as the robot records it."""
+        P, h, loop = self.p, 0.001, 0.02
+        positional = self.kind == "ELEVATOR"
+        g0 = P["kG"] if positional else 0.0
+        plan = []
+        if positional:
+            for sgn in (1, -1):
+                plan += [(lambda s, sgn=sgn: g0 + sgn * (P["kS"] + 0.3 + 0.4 * s), 3.0, 2), (lambda s: g0, 0.6, 1)]
+            for sgn in (1, -1):
+                plan += [(lambda s, sgn=sgn: g0 + sgn * 3.0, 0.35, 3), (lambda s: g0, 0.6, 1)]
+        else:
+            plan += [(lambda s: min(8.0, 1.0 * s), 8.0, 2), (lambda s: max(0.0, 8.0 - 1.0 * s), 8.0, 2),
+                     (lambda s: 4.0, 1.5, 3), (lambda s: 4.0 / 3, 1.5, 3), (lambda s: 0.0, 0.5, 1)]
+        x, v, loops = (0.3 if positional else 0.0), 0.0, 0
+        rows = {k: [] for k in ("t", "pos", "vel", "cmd", "volts0", "stage", "loop", "batt", "spos", "svel")}
+        speeds = []
+        for f, dur, stage in plan:
+            k = 0
+            while k * loop < dur - 1e-9:
+                u = max(-12.0, min(12.0, f(k * loop)))
+                for _ in range(int(round(loop / h))):
+                    x, v = self._step_plant(x, v, u, h)
+                    speeds.append(v)
+                sv = self._filtered(speeds[-int(round(self.FILTER_S / h)):])[-1]
+                for key, val in (("t", loops * loop), ("pos", x if positional else float("nan")), ("vel", v),
+                                 ("cmd", u), ("volts0", u), ("stage", stage), ("loop", loops),
+                                 ("batt", 12.4 - 0.08 * abs(u)), ("spos", x), ("svel", sv)):
+                    rows[key].append(val)
+                loops += 1
+                k += 1
+        units = "meters" if positional else "rad/s"
+        return {"test": "system_id", "outcome": "DONE", "env": "PRACTICE", "practice": True, "channels": rows,
+                "notes": [f"system: {self.name} ({self.kind}, {units})", "motor 0: practice (driven)"],
+                "meta": {"min": 0.0, "max": 1.0, "lo": 0.05, "hi": 0.95, "vmax": self.args["vmax"]} if positional
+                else {"vmax": self.args["vmax"]}}
+
+    def _spark_step(self):
+        """The step test with a SPARK's own loop: REV's units, 1 kHz, in ``control`` mode."""
+        name, a, h = self.name, self.args, 0.001
+        g = lambda k: self.g.get(f"{name}/{k}", 0.0)   # noqa: E731
+        positional = self.kind == "ELEVATOR"
+        vcomp = g("vComp") or 12.0
+        x, v = (a["a"] if positional else 0.0), 0.0
+        rows = {k: [] for k in ("t", "pos", "vel", "sp", "goal", "volts0")}
+        start = x if positional else 0.0
+        targets = [a["b"] if i % 2 == 0 else a["a"] for i in range(int(a["moves"]))]
+        t, e_prev, integ = 0.0, None, 0.0
+        speeds, held = [], None
+        mm = self.control.startswith("MAXMotion")
+        cruise = (g("mmCruise") / self.SPEED_UNITS) if g("mmCruise") else a["vmax"]
+        accel = (g("mmAccel") / self.SPEED_UNITS) if g("mmAccel") else a["amax"]
+        mp, mv = x, 0.0   # MAXMotion's own profile state, chasing the goal the code gives it
+        for target in targets:
+            prof = self._profile(start, target, a["vmax"], a["amax"], h)
+            prof += [(target, 0.0)] * int(a["hold_s"] / h)
+            prev_v = 0.0
+            for i, (p_sp, v_sp) in enumerate(prof):
+                acc_sp = (v_sp - prev_v) / h
+                prev_v = v_sp
+                if held is None or i % 20 == 0:
+                    held = (p_sp, v_sp, acc_sp)   # the code's goal reaches the SPARK each 20 ms loop
+                hp, hv, ha = held
+                if mm and positional:
+                    # MAXMotion: its own trapezoid toward that goal, never past cruise or acceleration.
+                    gap = hp - mp
+                    stop = mv * mv / (2 * accel) if accel > 0 else 0.0
+                    want = (cruise if gap > 0 else -cruise) if abs(gap) > stop else 0.0
+                    dv_ = max(-accel * h, min(accel * h, want - mv))
+                    if abs(gap) < 1e-6 and abs(mv) < accel * h:
+                        mp, mv, dv_ = hp, 0.0, 0.0
+                    mv += dv_
+                    mp += mv * h
+                    hp, hv, ha = mp, mv, dv_ / h
+                if positional:
+                    e = hp - x
+                    ff = g("kG")
+                    if mm:
+                        ff += g("kS") * (1 if hv > 0 else -1 if hv < 0 else 0) + g("kV") * hv + g("kA") * ha
+                else:
+                    # A flywheel's profile is of its speed: hp is the speed asked, hv how fast it ramps.
+                    sv = self._filtered(speeds[-int(round(self.FILTER_S / h)):] or [0.0])[-1]
+                    e = hp * self.SPEED_UNITS - sv
+                    ff = g("kS") * (1 if hp > 0 else 0) + g("kV") * hp * self.SPEED_UNITS
+                d = 0.0 if e_prev is None else e - e_prev
+                e_prev = e
+                integ += e
+                u = ff + vcomp * (g("kP") * e + g("kD") * d + g("kI") * integ)
+                u = max(-12.0, min(12.0, u))
+                x, v = self._step_plant(x, v, u, h)
+                speeds.append(v)
+                if i % 10 == 0:
+                    for key, val in (("t", round(t, 4)), ("pos", x if positional else v), ("vel", v),
+                                     ("sp", p_sp), ("goal", target), ("volts0", u)):
+                        rows[key].append(val)
+                t += h
+            start = target
+        units = "meters" if positional else "rad/s"
+        return {"test": "system_step", "outcome": "DONE", "env": "PRACTICE", "practice": True, "channels": rows,
+                "notes": [f"system: {name} ({self.kind}, {units})"], "meta": {"min": 0.0, "max": 1.0} if positional else {}}
+
     def run(self, test):
         self.runs += 1
+        if test == "system_id":
+            return self._identify(), "DONE", ""
+        if self.spark:
+            return self._spark_step(), "DONE", ""
         name, a = self.name, self.args
         g = lambda k: self.g.get(f"{name}/{k}", 0.0)   # noqa: E731
         P, dt = self.p, 0.01

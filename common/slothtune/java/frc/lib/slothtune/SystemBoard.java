@@ -30,6 +30,8 @@ final class SystemBoard {
   private final StringArrayPublisher motors;
   private final StringArrayPublisher gainNames;
   private final StringArrayPublisher limitsFrom;
+  private final StringArrayPublisher control;
+  private int loops;
   private final DoubleArrayPublisher position;
   private final DoubleArrayPublisher velocity;
   private final DoubleArrayPublisher goal;
@@ -52,6 +54,7 @@ final class SystemBoard {
     motors = nt.getStringArrayTopic(SlothTuneTopics.SYSTEMS_MOTORS).publish();
     gainNames = nt.getStringArrayTopic(SlothTuneTopics.SYSTEMS_GAIN_NAMES).publish();
     limitsFrom = nt.getStringArrayTopic(SlothTuneTopics.SYSTEMS_LIMITS_FROM).publish();
+    control = nt.getStringArrayTopic(SlothTuneTopics.SYSTEMS_CONTROL).publish();
     position = nt.getDoubleArrayTopic(SlothTuneTopics.SYSTEMS_POSITION).publish();
     velocity = nt.getDoubleArrayTopic(SlothTuneTopics.SYSTEMS_VELOCITY).publish();
     goal = nt.getDoubleArrayTopic(SlothTuneTopics.SYSTEMS_GOAL).publish();
@@ -140,6 +143,19 @@ final class SystemBoard {
     goal.set(gl);
     limits.set(lim);
     limitsFrom.set(from);
+    if (loops++ % 25 == 0) {
+      // Twice a second: the mode each SPARK's code runs it in. Not while a test runs it by voltage
+      // (gains are blocked then), which would hide the code's own mode.
+      String[] ctl = new String[n];
+      for (int i = 0; i < n; i++) {
+        TunableSystem s = systems.get(i);
+        if (gainsBlocked == null) {
+          s.noteControl();
+        }
+        ctl[i] = s.control;
+      }
+      control.set(ctl);
+    }
     long seq = applySeq.get();
     if (seq != lastSeq) {
       lastSeq = seq;

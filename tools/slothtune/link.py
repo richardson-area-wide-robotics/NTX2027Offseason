@@ -568,11 +568,13 @@ class RobotLink:
     def systems(self):
         """Every mechanism the robot code registered (TunableSystem), with its live state, limits
         and gains: ``[{"index", "name", "kind", "units", "motors", "position", "velocity", "goal",
-        "min", "max", "max_velocity", "max_accel", "limits_from", "gains": {name: {value, min, max}}}]``."""
+        "min", "max", "max_velocity", "max_accel", "limits_from", "gains": {name: {value, min, max}},
+        "control"}]``: ``control`` is the mode its code runs its SPARK in ("Position", "Velocity", ...)."""
         names = list(self.get("str[]", C.SYSTEMS_NAMES))
         col = lambda t: list(self.get("str[]", t))
         num = lambda t: list(self.get("double[]", t))
         kinds, units, motors, frm = col(C.SYSTEMS_KINDS), col(C.SYSTEMS_UNITS), col(C.SYSTEMS_MOTORS), col(C.SYSTEMS_LIMITS_FROM)
+        control = col(C.SYSTEMS_CONTROL)
         pos, vel, goal, lim = num(C.SYSTEMS_POSITION), num(C.SYSTEMS_VELOCITY), num(C.SYSTEMS_GOAL), num(C.SYSTEMS_LIMITS)
         at = lambda xs, i, d=None: xs[i] if i < len(xs) else d
         gains = {}
@@ -588,7 +590,8 @@ class RobotLink:
                         "motors": [m for m in (at(motors, i, "") or "").split(",") if m],
                         "position": at(pos, i), "velocity": at(vel, i), "goal": at(goal, i),
                         "min": at(lim, 4 * i), "max": at(lim, 4 * i + 1), "max_velocity": at(lim, 4 * i + 2),
-                        "max_accel": at(lim, 4 * i + 3), "limits_from": at(frm, i, ""), "gains": gains.get(n, {})})
+                        "max_accel": at(lim, 4 * i + 3), "limits_from": at(frm, i, ""), "gains": gains.get(n, {}),
+                        "control": at(control, i, "")})
         return out
 
     def set_system_gains(self, values, timeout=3.0):

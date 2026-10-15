@@ -280,6 +280,8 @@ public final class SlothTuneTopics {
   public static final String SYSTEMS_LIMITS_FROM = SYSTEMS + "LimitsFrom";
   /** Every live gain as "system/gain|min|max". */
   public static final String SYSTEMS_GAIN_NAMES = SYSTEMS + "GainNames";
+  /** The mode each mechanism's code runs its SPARK in ("Position", "Velocity", ...); empty if none. */
+  public static final String SYSTEMS_CONTROL = SYSTEMS + "Control";
   /** Requested gains, laptop -> robot: SYSTEMS_GAINS + "system/gain". */
   public static final String SYSTEMS_GAINS = SYSTEMS + "Gains/";
   /** What each gain really is now. */

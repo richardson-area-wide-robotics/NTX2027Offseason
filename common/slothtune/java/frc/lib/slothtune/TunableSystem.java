@@ -81,6 +81,14 @@ public final class TunableSystem {
   Map<String, Double> saved = Map.of();
   /** Where a line about a saved gain goes: the robot's startup report. */
   Consumer<String> report = line -> {};
+  /** The SPARK whose closed loop {@link #sparkGains} tunes; null when the code tunes its own loop. */
+  SparkBase spark;
+  /**
+   * The closed-loop mode the code last ran that SPARK in ("Position", "MAXMotionPosition",
+   * "Velocity", ...): REV applies kV and kA only in some, so the tuner computes for this one.
+   * Empty until seen; not changed while a test runs the motor itself.
+   */
+  volatile String control = "";
 
   TunableSystem(String name, Kind kind) {
     this.name = name;
@@ -163,18 +171,74 @@ public final class TunableSystem {
    * code's own values come back, then any saved in slothtune.json (see {@link #gain}).
    */
   public TunableSystem sparkGains(SparkBase spark) {
-    var a = (spark instanceof SparkFlex flex ? (SparkBaseConfigAccessor) flex.configAccessor
-        : ((SparkMax) spark).configAccessor).closedLoop;
-    sparkGain(spark, "kP", a::getP, (c, v) -> c.closedLoop.p(v), 0, 10);
-    sparkGain(spark, "kI", a::getI, (c, v) -> c.closedLoop.i(v), 0, 1);
-    sparkGain(spark, "kD", a::getD, (c, v) -> c.closedLoop.d(v), 0, 50);
+    this.spark = spark;
+    SparkBaseConfigAccessor all = spark instanceof SparkFlex flex ? flex.configAccessor
+        : ((SparkMax) spark).configAccessor;
+    var a = all.closedLoop;
+    // Wide: their size depends on the code's units (an elevator in meters wants a kP far above one in
+    // motor rotations) and REV's kD and kI are per millisecond; the tuner keeps every change sane.
+    sparkGain(spark, "kP", a::getP, (c, v) -> c.closedLoop.p(v), 0, 1000);
+    sparkGain(spark, "kI", a::getI, (c, v) -> c.closedLoop.i(v), 0, 100);
+    sparkGain(spark, "kD", a::getD, (c, v) -> c.closedLoop.d(v), 0, 100000);
     sparkGain(spark, "kS", a.feedForward::getkS, (c, v) -> c.closedLoop.feedForward.kS(v), 0, 4);
     sparkGain(spark, "kV", a.feedForward::getkV, (c, v) -> c.closedLoop.feedForward.kV(v), 0, 20);
     sparkGain(spark, "kA", a.feedForward::getkA, (c, v) -> c.closedLoop.feedForward.kA(v), 0, 20);
     sparkGain(spark, "kG", a.feedForward::getkG, (c, v) -> c.closedLoop.feedForward.kG(v), -12, 12);
     // An arm's gravity: volts at horizontal, scaled by the cosine of its angle (kCosRatio sets the units).
     sparkGain(spark, "kCos", a.feedForward::getkCos, (c, v) -> c.closedLoop.feedForward.kCos(v), -12, 12);
+    // MAXMotion's profile: cruise speed and acceleration, in the SPARK's speed units (and per second).
+    sparkGain(spark, "mmCruise", a.maxMotion::getCruiseVelocity, (c, v) -> c.closedLoop.maxMotion.cruiseVelocity(v), 0, 1e6);
+    sparkGain(spark, "mmAccel", a.maxMotion::getMaxAcceleration, (c, v) -> c.closedLoop.maxMotion.maxAcceleration(v), 0, 1e7);
+    // Voltage compensation: its output scaled to this many volts whatever the battery holds; 0 is off.
+    sparkGain(spark, "vComp", () -> all.getVoltageCompensationEnabled() ? all.getVoltageCompensation() : 0,
+        (c, v) -> {
+          if (v > 0) {
+            c.voltageCompensation(v);
+          } else {
+            c.disableVoltageCompensation();
+          }
+        }, 0, 13);
+    // Its speed filter: a window of positions (ms), then an average of that many windows. A Flex's
+    // built-in encoder is quadrature (windows every ms, overlapping: about (ms + depth) / 2 ms late);
+    // a SPARK MAX's NEO is read by its hall sensors (windows end to end: about ms x depth / 2 late).
+    if (spark instanceof SparkFlex) {
+      sparkGain(spark, "velMs", () -> all.encoder.getQuadratureMeasurementPeriod(),
+          (c, v) -> c.encoder.quadratureMeasurementPeriod((int) Math.round(v)), 1, 100);
+      sparkGain(spark, "velDepth", () -> all.encoder.getQuadratureAverageDepth(),
+          (c, v) -> c.encoder.quadratureAverageDepth((int) Math.round(v)), 1, 64);
+    } else {
+      sparkGain(spark, "velMs", () -> all.encoder.getUvwMeasurementPeriod(),
+          (c, v) -> c.encoder.uvwMeasurementPeriod((int) Math.round(v)), 8, 64);
+      sparkGain(spark, "velDepth", () -> all.encoder.getUvwAverageDepth(),
+          (c, v) -> c.encoder.uvwAverageDepth(powerOfTwo(v)), 1, 8);
+    }
     return this;
+  }
+
+  /** A hall sensor's average depth must be 1, 2, 4 or 8: the nearest. */
+  static int powerOfTwo(double v) {
+    int best = 1;
+    for (int d : new int[] {1, 2, 4, 8}) {
+      if (Math.abs(d - v) < Math.abs(best - v)) {
+        best = d;
+      }
+    }
+    return best;
+  }
+
+  /** Notes the mode the code runs its SPARK in; called while no test is running it. */
+  void noteControl() {
+    if (spark == null) {
+      return;
+    }
+    try {
+      var t = spark.getClosedLoopController().getControlType();
+      if (t != null) {
+        control = t.name().replaceFirst("^k", "");
+      }
+    } catch (RuntimeException e) {
+      // It won't say: keep what was seen.
+    }
   }
 
   private interface ConfigEdit {
