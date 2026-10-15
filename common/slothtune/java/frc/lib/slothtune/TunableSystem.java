@@ -226,7 +226,11 @@ public final class TunableSystem {
     return best;
   }
 
-  /** Notes the mode the code runs its SPARK in; called while no test is running it. */
+  /**
+   * Notes the mode the code runs its SPARK in; called while no test is running it. A closed loop,
+   * once seen, stays: a shooter idles at duty cycle 0 between shots and runs its velocity loop when
+   * it shoots, and the velocity loop is the one to tune. Open loop only until a closed loop is seen.
+   */
   void noteControl() {
     if (spark == null) {
       return;
@@ -234,7 +238,11 @@ public final class TunableSystem {
     try {
       var t = spark.getClosedLoopController().getControlType();
       if (t != null) {
-        control = t.name().replaceFirst("^k", "");
+        String name = t.name().replaceFirst("^k", "");
+        boolean open = name.equals("DutyCycle") || name.equals("Voltage");
+        if (!open || control.isEmpty() || control.equals("DutyCycle") || control.equals("Voltage")) {
+          control = name;
+        }
       }
     } catch (RuntimeException e) {
       // It won't say: keep what was seen.

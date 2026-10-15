@@ -548,11 +548,13 @@ class ModelTune(_Loop):
     2. Fit its physics and work every gain out from them at once (:func:`systems.id_report`): LQR
        for a position loop, SIMC for a speed loop, MAXMotion's limits, voltage compensation from the
        battery it held, only the gains the mode its code runs the SPARK in uses.
-    3. Check: the step test with those gains, judged as every step test is (its cost).
+    3. Check: the step test with the gains it has first (the baseline: what the model must beat),
+       then with the model's, each judged as every step test is (its cost).
     4. Trim the one setting the model leaves open, how hard the loop pushes (``aggressiveness``,
        half to double): a check that overshoots or rings more than the model said goes softer,
        one that is clean goes harder, then one between the two best. At most ``max_checks``.
-    5. End on the best check's gains. A first check that meets every target ends it at once.
+    5. End on the best check's gains. A first check that meets every target ends it at once; a
+       best that doesn't beat the baseline, or still rings, puts back what it started on.
 
     Nothing is written to a file: Save writes the gains to slothtune.json as usual."""
 
@@ -561,13 +563,15 @@ class ModelTune(_Loop):
     ACCEPT_OVERSHOOT = 15.0   # the best check must settle and overshoot no more than this (percent)
 
     def __init__(self, runner, name, max_checks=MAX_CHECKS):
-        self._init_loop(runner, max_checks + 1)
+        self._init_loop(runner, max_checks + 2)
         self.name = name
         self.max_checks = max_checks
         self.report = None
         self.checks = []
         self.best = None
         self.before = None
+        self.baseline = None
+        self.changed = False
         self.status, self.reason = "tuning", ""
 
     def to_json(self):
@@ -576,7 +580,7 @@ class ModelTune(_Loop):
                 "round": self.round, "max_rounds": self.max_rounds, "status": self.status, "reason": self.reason,
                 "model": {k: r.get(k) for k in ("summary", "model", "shown", "fit", "delay_s", "filter", "volts_comp",
                                                  "findings", "current", "ratio_v", "applied_volts")} if r else None,
-                "run": r.get("_run"), "checks": self.checks, "best": self.best,
+                "run": r.get("_run"), "baseline": self.baseline, "checks": self.checks, "best": self.best,
                 "best_gains": self.best_gains(), "before": self.before}
 
     def best_gains(self):
@@ -588,6 +592,7 @@ class ModelTune(_Loop):
     def _check(self, agg):
         comp = systems.model_gains(self.report["basis"], agg)
         self.runner.apply(comp["apply"], f"Model-based tune {self.name}: the model's gains at {agg:g}x")
+        self.changed = True
         doc = self._test("system_step", f"check {len(self.checks) + 1}, the model's gains at {agg:g}x")
         if doc is None:
             return None
@@ -606,6 +611,21 @@ class ModelTune(_Loop):
         if entry["cost"] is not None and (self.best is None or entry["cost"] < self.best["cost"]):
             self.best = entry
         return entry
+
+    def _baseline(self):
+        """The step test with the gains it has now: what the model's must beat."""
+        doc = self._test("system_step", "the step test with the gains it has now")
+        if doc is None:
+            return None
+        rep = self.runner.report(dict(doc, gains=self.runner.gains()))
+        moves = rep.get("moves") or []
+        self.baseline = {"check": 0, "cost": rep.get("cost"), "summary": rep.get("summary"), "run": doc.get("_run"),
+                         "gains": dict(self.before),
+                         "measured": {"overshoot_pct": max((m["overshoot_pct"] for m in moves), default=None),
+                                      "error_pct": max((abs(m["error_pct"]) for m in moves), default=None),
+                                      "settled": all(m["settle_s"] is not None for m in moves) if moves else None}}
+        self.round += 1
+        return self.baseline
 
     def _next_trim(self):
         """The next aggressiveness: away from the first check toward what it lacked, then between."""
@@ -640,11 +660,17 @@ class ModelTune(_Loop):
                 self._finish("stopped", "Needs a person: " + (rep.get("summary") or "the run couldn't be fitted."))
             elif not rep["computed"]["apply"]:
                 self._finish("stopped", "Needs a person: nothing to apply. " + (rep["computed"].get("note") or ""))
+            elif self._baseline() is None:
+                if not self._stop:
+                    self._finish("stopped", self.message or "The baseline step test stopped part-way.")
             else:
                 agg = 1.0
                 while not self._stop and len(self.checks) < self.max_checks and agg is not None:
                     entry = self._check(agg)
                     if entry is None:
+                        # The check stopped part-way (an abort, the deadman for good): a person's call.
+                        if not self._stop:
+                            self._finish("stopped", self.message or "A check run stopped part-way.")
                         break
                     if entry["cost"] is None:
                         self._finish("stopped", "Needs a person: " + (entry["summary"] or "the check run can't be judged."))
@@ -653,9 +679,17 @@ class ModelTune(_Loop):
                         self._finish("done", "The model's gains meet every target on the first check.")
                         break
                     agg = self._next_trim()
+                base = self.baseline or {}
+                if self.status == "tuning" and self.best and base.get("cost") is not None \
+                        and self.best["cost"] >= base["cost"]:
+                    self._finish("done", f"The gains it had (cost {base['cost']:.3g}) were already as good as the "
+                                         f"model's best (cost {self.best['cost']:.3g}): it keeps them.")
+                    self.best = None
                 if self.status == "tuning" and self.best:
                     m = self.best["measured"]
-                    if m["settled"] is False or (m["overshoot_pct"] or 0) > self.ACCEPT_OVERSHOOT:
+                    band = 2.0 if self.report["basis"]["kind"] in ("ELEVATOR", "PIVOT") else 3.0
+                    off = (m["error_pct"] or 0) > band
+                    if (m["settled"] is False and off) or (m["overshoot_pct"] or 0) > self.ACCEPT_OVERSHOOT:
                         # Even the best check doesn't behave: the model is off for this mechanism. Put
                         # back what it started on rather than leave it on gains that ring.
                         p = self.best["predicted"]
@@ -673,8 +707,12 @@ class ModelTune(_Loop):
             back = {k: v for k, v in self.best["gains"].items() if now.get(k) != v}
             if back:
                 self.runner.apply(back, f"Model-based tune {self.name}: back on its best check's gains")
-        elif self.before and self.checks:
-            self.runner.apply(self.before, f"Model-based tune {self.name}: no check could be judged, back to where it started")
+        elif self.before and self.changed:
+            # No check to keep (one stopped part-way, or none behaved): what it started on, every gain.
+            now = self.runner.gains()
+            back = {k: v for k, v in self.before.items() if now.get(k) != v}
+            if back:
+                self.runner.apply(back, f"Model-based tune {self.name}: back to the gains it started with")
         if self.state != "stopped":
             self.state = "stopped" if self._stop else "finished"
             if not self._stop:

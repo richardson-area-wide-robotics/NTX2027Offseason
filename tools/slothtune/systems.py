@@ -633,6 +633,11 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
              "motor": MOTOR_LABEL.get(motor.get("motor") or "", "NEO"), "motors": motor.get("count") or 1,
              "ratio_v": ratio_v if ok(ratio_v) and ratio_v else 1.0, "angle_rad_per_unit": (arpu * per) if (arpu and ok(per)) else None,
              "control": control, "spark_units": spark_units,
+             # A real SPARK's loop runs every millisecond; REVLib's simulated one once a robot loop.
+             "period": 0.02 if sim else M.SPARK_DT,
+             # REVLib's simulated SPARK applies kD far harder than a real one (it wrecked the Examples
+             # elevator at kD 0.5): the simulator's gains use kP alone.
+             "use_kd": not sim,
              "ranges": {k: (g.get("min"), g.get("max")) for k, g in (registered.get("gains") or {}).items()}}
     computed = model_gains(basis, aggressiveness)
 
@@ -677,6 +682,11 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
                                  else "Its speed reading's delay is unknown", filt["why"]))
     if computed.get("note"):
         F.append(advisor.finding("info", computed["note_title"], computed["note"]))
+    if sim and positional:
+        F.append(advisor.finding("info", "No kD in the simulator",
+                                 "REVLib's simulated SPARK runs its loop once a robot loop and applies kD far harder than "
+                                 "a real SPARK (any kD wrecked the Examples elevator), so the simulator's gains use kP "
+                                 "alone. On the robot the same model gives kP and kD."))
     pred = computed["predicted"]
     settle = pred.get("settle_s")
     summary = (f"{name}: kS {fit['kS']:.3f} V, kV {shown.get('kV', fit['kV']):.4g}, kA {shown.get('kA', fit['kA']):.4g}"
@@ -724,16 +734,20 @@ def model_gains(basis, aggressiveness=1.0):
     mode = control if control in MODE_GAINS else ("Position" if positional else "Velocity")
     c = M.compute(model, kind, basis["volts"], basis["delay_s"], basis["move"], basis.get("current_limit_a"),
                   basis.get("motor") or "NEO", basis.get("motors") or 1, aggressiveness,
-                  basis.get("angle_rad_per_unit"), control=mode)
-    spark = M.spark_gains(c["gains"], c["maxmotion"], basis["volts"], 1.0, basis.get("ratio_v") or 1.0, positional)
+                  basis.get("angle_rad_per_unit"), control=mode, period=basis.get("period") or M.SPARK_DT,
+                  use_kd=basis.get("use_kd", True))
+    spark = M.spark_gains(c["gains"], c["maxmotion"], basis["volts"], 1.0, basis.get("ratio_v") or 1.0, positional,
+                          period=basis.get("period") or M.SPARK_DT)
     spark["vComp"] = basis["volts"]
     note_title = note = ""
     if control not in MODE_GAINS:
         guess = "Position" if positional else "Velocity"
-        if control in ("DutyCycle", "Voltage", "Current"):
-            note_title = f"{name}'s code runs its SPARK open loop ({control})"
-            note = ("The SPARK's gains do nothing then: these are what its own loop would want, in volts: "
-                    f"kS {c['gains']['kS']:.3f}, kV {c['gains']['kV']:.4g}, kA {c['gains']['kA']:.4g}.")
+        if control in ("DutyCycle", "Voltage"):
+            note_title = f"{name}'s code has only run its SPARK open loop ({control}) so far"
+            note = ("If its code runs a closed loop when it's used (a shooter at speed), run that once and measure "
+                    "again: nothing is applied until then. If it is always open loop, the SPARK's gains do nothing; "
+                    f"its own feedforward would want, in volts: kS {c['gains']['kS']:.3f}, kV {c['gains']['kV']:.4g}, "
+                    f"kA {c['gains']['kA']:.4g}.")
             keep = ()
         else:
             note_title = f"Not seen how {name}'s code runs its SPARK yet"

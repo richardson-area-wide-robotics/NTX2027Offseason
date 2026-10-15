@@ -149,7 +149,9 @@ class ModelTuneTest(unittest.TestCase):
             self.assertLess(j["best"]["cost"], 0.5 * start, (kind, control))
             self.assertEqual(j["best_gains"], {k: v for k, v in r.gains().items() if k in j["best_gains"]},
                              "it ends on its best check's gains")
-            self.assertEqual(r.runs, 1 + 1 + len(j["checks"]), "this test's own run, one measuring run, the checks")
+            self.assertEqual(r.runs, 1 + 1 + 1 + len(j["checks"]),
+                             "this test's own run, one measuring run, the baseline, the checks")
+            self.assertLess(j["best"]["cost"], j["baseline"]["cost"], "the model's beat the gains it had")
 
     def test_a_check_unlike_the_model_puts_the_start_back(self):
         # Its speed filter is made ten times longer after it was measured (someone changed the config):
@@ -164,14 +166,36 @@ class ModelTuneTest(unittest.TestCase):
             return orig(test)
         r.run = run
         t, j = tune(r)
-        self.assertEqual(j["status"], "stopped", j["reason"])
-        self.assertIn("doesn't match", j["reason"])
+        # Either the gains it had beat every ringing check, or nothing it tried was acceptable: both
+        # put back what it started on.
+        self.assertTrue("already as good" in j["reason"] or "doesn't match" in j["reason"], j["reason"])
         self.assertIsNone(j["best"])
         self.assertEqual({k: v for k, v in r.gains().items() if k in before}, before, "back on what it started with")
+
+    def test_the_gains_it_had_are_kept_when_the_model_cant_beat_them(self):
+        # Start on the gains the model would give: its checks can't beat them by much, and a tie keeps them.
+        r = practice()
+        rep = r.id_report(r._identify())
+        r.apply(rep["computed"]["apply"], "already tuned")
+        before = r.gains()
+        t, j = tune(r)
+        if j["best"] is None:
+            self.assertIn("already as good", j["reason"])
+            self.assertEqual(r.gains(), before)
+
+    def test_no_kd_in_the_simulator(self):
+        r = practice()
+        doc = dict(r._identify(), env="SIM")
+        doc["channels"]["loop"] = list(range(len(doc["channels"]["t"])))
+        rep = systems.id_report(doc, None, r.registered(), {"controller": "SPARK MAX"})
+        self.assertEqual(rep["computed"]["apply"].get("Lift/kD", 0.0), 0.0)
+        self.assertGreater(rep["computed"]["apply"]["Lift/kP"], 0)
+        self.assertTrue(any("No kD" in f["title"] for f in rep["findings"]))
 
     def test_the_report_reaches_the_page(self):
         t, j = tune(practice())
         self.assertEqual(j["mode"], "model")
+        self.assertIsNotNone(j["baseline"]["cost"])
         self.assertIn("kG", j["model"]["summary"])
         self.assertTrue(j["checks"][0]["predicted"])
         self.assertIsNotNone(j["checks"][0]["measured"]["overshoot_pct"])

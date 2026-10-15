@@ -613,7 +613,7 @@ MODE_SP_PERIOD = {"Position": 0.02, "Velocity": 0.02}
 
 
 def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO", motors=1, aggressiveness=1.0,
-            angle_rad_per_unit=None, position_delay_s=POSITION_DELAY_S, control=None):
+            angle_rad_per_unit=None, position_delay_s=POSITION_DELAY_S, control=None, period=SPARK_DT, use_kd=True):
     """Gains and limits for an identified mechanism, in its own units and volts: positional loops by
     LQR (the position error worth 7 V is 2% of the move, divided by ``aggressiveness``), speed loops
     by SIMC (tau_c = the delay, divided by ``aggressiveness``). ``aggressiveness`` is the one setting
@@ -625,7 +625,12 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
 
     ``control`` is the SPARK mode the code runs it in ("Position", "MAXMotionPosition", "Velocity",
     ...): the prediction applies only that mode's feedforward and setpoint rate (None: all of it,
-    every millisecond)."""
+    every millisecond).
+
+    ``period`` is how often the controller runs: a SPARK every millisecond, REVLib's simulated SPARK
+    once a 20 ms robot loop (its loop then sees the mechanism a whole period late, and REV's per-step
+    kD and kI scale with it, see :func:`spark_gains`). ``use_kd`` False leaves kD at zero (REVLib's
+    simulated SPARK applies any kD far harder than a real one): kP alone, softened the same way."""
     positional = kind in ("ELEVATOR", "PIVOT")
     mm = maxmotion(model, volts, current_limit_a, motor, motors, move if positional else None)
     gains = {"kS": model["kS"], "kV": model["kV"], "kA": model["kA"]}
@@ -633,23 +638,48 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
         gains["kG"] = model["kG"]
     elif kind == "PIVOT":
         gains["kCos"] = model["kG"]
+    ff = MODE_FF.get(control, ("kS", "kV", "kA", "kG"))
+    sp_period = MODE_SP_PERIOD.get(control)
+    pdelay = max(position_delay_s, period)
+    softened = 1.0
     if positional:
-        qp = max(1e-9, 0.02 * abs(move)) / aggressiveness
+        # The LQR, then its own check: the model run with the delay and the controller's period. An
+        # aggressive regulator compensated for a delay longer than its step can come out wrong (kP
+        # below zero, ringing); softened a step at a time (the position error worth 7 V allowed half
+        # again as large) until the check settles with little overshoot. On a real SPARK (1 ms, 2 ms
+        # late) the first one always does.
+        qp0 = max(1e-9, 0.02 * abs(move)) / aggressiveness
         qv = max(1e-9, 0.25 * (mm["cruise"] or 1.0))
-        kp, kd = lqr_pd(model["kV"], model["kA"], qp, qv, r=7.0, delay_s=round(position_delay_s / SPARK_DT) * SPARK_DT)
-        gains.update(kP=kp, kD=kd, kI=0.0)
+        chosen = None
+        for n in range(14):
+            scale = 1.5 ** n
+            kp, kd = lqr_pd(model["kV"], model["kA"], qp0 * scale, qv * scale, r=7.0, dt=period,
+                            delay_s=round(pdelay / period) * period)
+            if not use_kd:
+                kd = 0.0
+            if not (kp > 0 and kd >= 0):
+                continue
+            trial = dict(gains, kP=kp, kD=kd, kI=0.0)
+            p = predict(model, trial, kind, move, mm["cruise"] or abs(move), mm["accel"] or abs(move), volts=volts,
+                        delay_s=pdelay, dt=period, angle_rad_per_unit=angle_rad_per_unit, ff=ff, sp_period=sp_period)
+            chosen = (trial, scale)
+            if p["settle_s"] is not None and p["overshoot_pct"] <= 5.0:
+                break
+        if chosen is None:
+            kp, kd = lqr_pd(model["kV"], model["kA"], qp0 * 1.5 ** 13, qv * 1.5 ** 13, r=7.0, dt=period)
+            chosen = (dict(gains, kP=max(kp, 0.0), kD=max(kd, 0.0), kI=0.0), 1.5 ** 13)
+        gains, softened = chosen
     else:
-        theta = max(delay_s or 0.0, SPEED_DELAY_MIN_S)
+        theta = max(delay_s or 0.0, SPEED_DELAY_MIN_S) + (period / 2 if period > SPARK_DT else 0.0)
         kp, ki = simc_pi(model["kV"], model["kA"], theta, tau_c=theta / aggressiveness)
         gains.update(kP=kp, kI=ki, kD=0.0)
     pred = predict(model, gains, kind, move, mm["cruise"] or abs(move), mm["accel"] or abs(move), volts=volts,
-                   delay_s=position_delay_s if positional else max(delay_s or 0.0, SPEED_DELAY_MIN_S),
-                   angle_rad_per_unit=angle_rad_per_unit,
-                   ff=MODE_FF.get(control, ("kS", "kV", "kA", "kG")), sp_period=MODE_SP_PERIOD.get(control))
-    return {"gains": gains, "maxmotion": mm, "predicted": pred, "aggressiveness": aggressiveness}
+                   delay_s=pdelay if positional else max(delay_s or 0.0, SPEED_DELAY_MIN_S),
+                   dt=period, angle_rad_per_unit=angle_rad_per_unit, ff=ff, sp_period=sp_period)
+    return {"gains": gains, "maxmotion": mm, "predicted": pred, "aggressiveness": aggressiveness, "softened": softened}
 
 
-def spark_gains(gains, mm, volts_comp, ratio_p=1.0, ratio_v=1.0, positional=True):
+def spark_gains(gains, mm, volts_comp, ratio_p=1.0, ratio_v=1.0, positional=True, period=SPARK_DT):
     """The gains in a SPARK's units, with voltage compensation at ``volts_comp``: kP, kI, kD in duty
     per its own position (or speed) unit, kD per unit change per millisecond and kI per unit
     accumulated each millisecond (REV's units); kS, kG, kCos in volts; kV, kA in volts per its speed
@@ -658,8 +688,8 @@ def spark_gains(gains, mm, volts_comp, ratio_p=1.0, ratio_v=1.0, positional=True
     cruise and acceleration come back in the SPARK's speed units (and per second)."""
     rv = ratio_p if positional else ratio_v
     out = {"kP": gains["kP"] / (volts_comp * rv),
-           "kI": gains.get("kI", 0.0) * SPARK_DT / (volts_comp * rv),
-           "kD": gains.get("kD", 0.0) / (volts_comp * SPARK_DT * rv),
+           "kI": gains.get("kI", 0.0) * period / (volts_comp * rv),
+           "kD": gains.get("kD", 0.0) / (volts_comp * period * rv),
            "kS": gains["kS"], "kV": gains["kV"] / ratio_v, "kA": gains["kA"] / ratio_v}
     for k in ("kG", "kCos"):
         if k in gains:
