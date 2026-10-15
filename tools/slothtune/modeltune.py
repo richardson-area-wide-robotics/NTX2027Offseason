@@ -7,7 +7,8 @@ way the teams that publish their methods (971, 6328) tune:
 1. :func:`fit`: SysId's discrete-time least squares over a slow voltage ramp and a quick voltage
    step, each way: ``v[k+1] = a v[k] + b u[k] + c sgn(v[k])`` (``+ d`` for an elevator's gravity,
    ``+ d cos(x) + e sin(x)`` for an arm's), giving kS, kV, kA and kG (and where an arm's gravity
-   pulls hardest).
+   pulls hardest). :func:`fit_held` is the same from position alone, exact for volts a robot loop
+   holds between samples (the robot's ``system_id`` test).
 2. :func:`delay`: how far the controller's own speed reading lags the position's: a SPARK's speed
    filter adds tens of milliseconds, and the feedback gains must allow for it.
 3. :func:`lqr_pd`: a position loop's kP and kD as SysId computes them: a linear-quadratic regulator
@@ -167,6 +168,100 @@ def fit(t, pos, vel, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
         out["kG"] = math.hypot(d, e) / abs(b)
         out["offset_rad"] = math.atan2(e, -d) if b > 0 else math.atan2(-e, d)
     if kV <= 0 or kA <= 0:
+        out.update(ok=False, why="kV or kA came out at or below zero: not a physical fit")
+    elif r2 < 0.9:
+        out.update(ok=False, why=f"the fit explains only {r2:.0%} of the motion (needs 90%): measure again")
+    return out
+
+
+def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=None, max_shift=3):
+    """:func:`fit` from position alone, for volts held between samples.
+
+    A robot loop sets the volts and holds them until the next loop. Over each interval the speed is
+    then exactly ``(x[k+1] - x[k]) / T``, and the next interval's speed is a fixed mix of this one,
+    the volts held over it and the volts held over the one before:
+    ``v[k+1] = a v[k] + b0 u[k] + b1 u[k-1] + c sgn(v[k]) (+ gravity)``, with ``b0 + b1 = (1 - a) / kV``.
+    A central difference would fold the next interval's volts into this sample's speed and inflate
+    kA; a backward one without ``u[k-1]`` would leave half of each change unexplained.
+
+    The volts may reach the motor a sample or more after they were recorded (CAN, status frames):
+    shifts of 0 to ``max_shift`` samples are tried and the best fit kept (``shift`` in the result).
+
+    A recorder sampling faster than the position arrives (a status frame every 10 ms, a simulation
+    every 20 ms) repeats readings: only the samples where the position changed are kept, each
+    interval's volts the average of what was asked over it, and an interval much longer than the
+    rest (it sat still) breaks the chain.
+    """
+    n0 = min(len(t), len(pos), len(volts))
+    keep = [k for k in range(n0) if k == 0 or pos[k] != pos[k - 1]]
+    t = [t[k] for k in keep]
+    pos = [pos[k] for k in keep]
+
+    def held(shift):
+        # The volts over each kept interval, recorded ``shift`` samples before they acted.
+        out = []
+        for j, k in enumerate(keep):
+            end = keep[j + 1] if j + 1 < len(keep) else k + 1
+            us = [volts[i - shift] for i in range(k, end) if i - shift >= 0 and volts[i - shift] == volts[i - shift]]
+            out.append(sum(us) / len(us) if us else float("nan"))
+        return out
+    n = len(t)
+    if n < 40:
+        return {"ok": False, "why": "too few samples"}
+    gaps = sorted(t[k] - t[k - 1] for k in range(1, n))
+    longest = 2.5 * gaps[len(gaps) // 2]
+    sp = [float("nan")] * n
+    for k in range(1, n):
+        dt = t[k] - t[k - 1]
+        if 0 < dt <= longest and pos[k] == pos[k] and pos[k - 1] == pos[k - 1]:
+            sp[k] = (pos[k] - pos[k - 1]) / dt
+    top = max((abs(v) for v in sp if v == v), default=0.0)
+    if top <= 0:
+        return {"ok": False, "why": "it never moved"}
+    floor = min_speed if min_speed is not None else 0.02 * top
+    arm = kind == "PIVOT" and angle_rad_per_unit
+    best = None
+    for shift in range(0, max_shift + 1):
+        u = held(shift)
+        rows, ys, dts = [], [], []
+        for k in range(1, n - 1):
+            v0, v1 = sp[k], sp[k + 1]
+            u0, um = u[k], u[k - 1]
+            dt = t[k + 1] - t[k]
+            if not (v0 == v0 and v1 == v1 and u0 == u0 and um == um) or dt <= 0 \
+                    or abs(v0) < floor or abs(v1) < floor:
+                continue
+            row = [v0, u0, um, math.copysign(1.0, v0)]
+            if kind == "ELEVATOR":
+                row.append(1.0)
+            elif arm:
+                x = pos[k] * angle_rad_per_unit
+                row += [math.cos(x), math.sin(x)]
+            rows.append(row)
+            ys.append(v1)
+            dts.append(dt)
+        if len(rows) < 30:
+            continue
+        beta, r2 = A.ols(rows, ys)
+        if beta and (best is None or r2 > best[1]):
+            best = (beta, r2, shift, len(rows), sorted(dts)[len(dts) // 2])
+    if best is None:
+        return {"ok": False, "why": "too few moving samples, or the fit is singular: the run had no variety"}
+    beta, r2, shift, used, T = best
+    alpha, b = beta[0], beta[1] + beta[2]
+    if not (0 < alpha < 1) or abs(b) < 1e-12:
+        return {"ok": False, "why": f"not a physical fit (alpha {alpha:.4f}): a sign, an inversion, or something pushed it",
+                "r2": r2}
+    kV = (1 - alpha) / b
+    out = {"ok": True, "kS": -beta[3] / b, "kV": kV, "kA": -kV * T / math.log(alpha), "kG": 0.0, "offset_rad": 0.0,
+           "r2": r2, "samples": used, "dt": T, "shift": shift}
+    if kind == "ELEVATOR":
+        out["kG"] = -beta[4] / b
+    elif arm:
+        d, e = beta[4], beta[5]
+        out["kG"] = math.hypot(d, e) / abs(b)
+        out["offset_rad"] = math.atan2(e, -d) if b > 0 else math.atan2(-e, d)
+    if kV <= 0 or out["kA"] <= 0:
         out.update(ok=False, why="kV or kA came out at or below zero: not a physical fit")
     elif r2 < 0.9:
         out.update(ok=False, why=f"the fit explains only {r2:.0%} of the motion (needs 90%): measure again")

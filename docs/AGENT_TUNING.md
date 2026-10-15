@@ -115,6 +115,14 @@ pivot or elevator by hand to both ends, robot disabled, its motors coasting: tho
 `vmax` nor `amax`; refuses a pivot or elevator without limits, stops it past them or too fast; its
 report's `next` is one change to the mechanism's own `Name/k` gains, `options` the rest in order, `cost`
 lower is better; a pivot's or elevator's first leg, from wherever it was, isn't judged),
+`system_id` (model-based tuning's measuring run, on blocks, the robot's own code paused: the
+mechanism's leaders driven by voltage from their SPARKs. A pivot or elevator first finds the volts
+that hold it still, then sweeps across its travel window at a governed speed (the first two, one
+each way, map the volts that hold it everywhere), then quick steps; each ends at the map's hold
+before the far edge; a flywheel or roller ramps up near `vmax` and down, then steps. It records a
+row each robot loop: the volts asked and applied, each SPARK's supply, the robot's battery, the
+position and speed the code reads and the SPARK's own, and the loop count (the simulator's clock);
+stops on an inverted motor, a jam, the limits or `1.5 x vmax`),
 `system_piece` (calibrates a game-piece current sensor: `sensor` and `system` by number and
 `pieces`; a roller runs while a person feeds that many pieces one at a time when the banner says,
 stopping between them; an arm or elevator sweeps empty, then once with each piece; a person is
@@ -140,6 +148,7 @@ typed, so they are in its units: m/s, meters, rad/s, as each key says:
 | `can_load` | none |
 | `system_limits` | `system` (its index in the robot's Systems list), `duration_s` |
 | `system_step` | `system`, `a`, `b` (goals, or speeds for a flywheel, in its units), `vmax`, `amax` (per second), `hold_s`, `moves` |
+| `system_id` | `system`, `vmax` (its units a second, or its speed units for a flywheel), `sweep` (a pivot's or elevator's first sweep speed, a fraction of `vmax`), `ramp` (a flywheel's, V/s), `step` (V), `volts_max`, `hold` (a guess at the volts that hold it), `both_ways` (a flywheel 0, a roller 1), `stop_amps` |
 | `motor_test` | `drive`, `zero`, `watch` (bit masks over the robot's motor list, in the order `motors` lists them: run, hold at zero, only record; never drive or zero a follower, drive its leader), `duty` (0.02-0.15), `pulse` (0.2-1.0 s), `sign` (1 or -1), `stop_amps` |
 
 ## The loop
@@ -202,6 +211,9 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `NO_LIMITS` | A pivot or elevator without limits: run `system_limits` with a person moving it by hand. Never invent them. |
 | `PAST_LIMITS` | The mechanism left its limits and was stopped. A person looks at it before anything else runs. |
 | `JAMMED` | A motor pulled hard without turning: jammed, or motors on one shaft pushing against each other. A person looks first; then run each motor on that shaft alone. |
+| `INVERTED` | `system_id` pushed the mechanism one way and it went the other: its motor's inversion doesn't match its position reading. A programmer checks both; nothing else runs on it until then. |
+| `NEEDS_HOLD_GUESS` | `system_id` found the mechanism moving too fast while it looked for the volts that hold it: rerun with `hold` set to its physics' gravity volts (the Systems tab works it out), or have a programmer check its inversion. |
+| `WONT_HOLD` | `system_id` couldn't find, or keep, the volts that hold it still: a person looks at it (something loose, a spring, a cable pulling). |
 | `NO_MOTORS`, `NOT_SUPPORTED` | The robot has no motors registered with its motor guard, or one the test can't run: tell the person. |
 | `NO_PROJECT`, `NOT_FOUND` | A robot project or saved run that doesn't exist: `runs` lists runs; the projects are Peashooter and Black team. |
 | `WRONG_PLACE` | The test can't run where the robot is (a floor test on blocks, the PDH map on the floor): ask a person to move it and set the environment. |

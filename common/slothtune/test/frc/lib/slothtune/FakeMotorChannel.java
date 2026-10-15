@@ -31,6 +31,16 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
   final java.util.List<Boolean> coastCalls = new java.util.ArrayList<>();
   double testDuty = Double.NaN;
   int testDutyCalls;
+  /** The last volts an identification test asked for; NaN until one did. */
+  double testVolts = Double.NaN;
+  int testVoltsCalls;
+  boolean follower;
+  /** A controller a test can't run by voltage. */
+  boolean noVolts;
+  /** Every status-rate change asked of it, in order (0 puts back what it had). */
+  final java.util.List<Integer> signalCalls = new java.util.ArrayList<>();
+  double feedbackPos = Double.NaN;
+  double feedbackVel = Double.NaN;
 
   FakeMotorChannel(int configuredLimitA) {
     this.configured = configuredLimitA;
@@ -50,6 +60,34 @@ final class FakeMotorChannel implements MotorGuard.MotorChannel {
   public boolean setCoast(boolean coast) {
     coastNow = coast;
     coastCalls.add(coast);
+    return true;
+  }
+
+  @Override
+  public boolean testVolts(double v) {
+    testVolts = v;
+    testVoltsCalls++;
+    return !noVolts;
+  }
+
+  @Override
+  public boolean follower() {
+    return follower;
+  }
+
+  @Override
+  public double feedbackPosition() {
+    return feedbackPos;
+  }
+
+  @Override
+  public double feedbackVelocity() {
+    return feedbackVel;
+  }
+
+  @Override
+  public boolean fastSignals(int ms) {
+    signalCalls.add(ms);
     return true;
   }
 

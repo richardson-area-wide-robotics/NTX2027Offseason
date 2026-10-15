@@ -99,6 +99,16 @@ public interface Procedure {
     return 100;
   }
 
+  /**
+   * Whether it records one row each robot loop, right after {@link #execute}, instead of on the
+   * sampler's own timer: for a test whose speeds come from position differences. The timer runs
+   * against the loop (and in the simulator against its physics, a step each loop), so its rows land
+   * a varying time after each new reading, and dividing by those times scrambles the speed.
+   */
+  default boolean samplesEachLoop() {
+    return false;
+  }
+
   /** Registers sampler channels and sends first commands. */
   void start(TestContext ctx);
 

@@ -306,6 +306,7 @@ public final class SlothTune {
     procedures.put("can_load", CanLoadProcedure::new);
     procedures.put("system_limits", SystemLimitsProcedure::new);
     procedures.put("system_step", SystemStepProcedure::new);
+    procedures.put("system_id", SystemIdProcedure::new);
     procedures.put("system_piece", PieceSenseProcedure::new);
     procedures.put("system_hold", HoldProcedure::new);
 
@@ -1455,7 +1456,7 @@ public final class SlothTune {
     if (live != null) {
       message = live;
     }
-    if (manualSampling) {
+    if (manualSampling || proc.samplesEachLoop()) {
       ctx.sampler.sampleNow();
     }
     if (done) {
@@ -1595,7 +1596,7 @@ public final class SlothTune {
     ctx.note("Environment: " + ctx.env + (ctx.visionInUse ? ", AprilTags in use" : ", no AprilTags"));
     ctx.note("Battery: " + (battery.current().isEmpty() ? "not picked" : battery.current()));
     ctx.sampler.start(clock);
-    if (!manualSampling) {
+    if (!manualSampling && !proc.samplesEachLoop()) {
       notifier = new Notifier(ctx.sampler::sampleNow);
       notifier.setName("SlothTune sampler");
       notifier.startPeriodic(1.0 / rate);

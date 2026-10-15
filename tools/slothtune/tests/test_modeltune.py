@@ -82,6 +82,75 @@ class FitTest(unittest.TestCase):
         self.assertFalse(f["ok"])
 
 
+def sim_held(plant, kind, loop=0.02, sample=0.01, arpu=None, late=0):
+    """A robot loop holding its volts for ``loop`` seconds, sampled every ``sample``: a ramp then a
+    step each way from the hold, as the robot's system_id test runs. ``late`` records the volts that
+    many samples before they reach the motor."""
+    g0 = plant.get("kG", 0.0) if kind == "ELEVATOR" else 0.0
+    plan = []
+    for sgn in (1, -1):
+        plan += [(lambda s, sgn=sgn: g0 + sgn * (0.3 + 0.5 * s), 4.0), (lambda s: g0, 0.6)]
+    for sgn in (1, -1):
+        plan += [(lambda s, sgn=sgn: g0 + sgn * 4.0, 0.5), (lambda s: g0, 0.6)]
+    t, pos, volts = [], [], []
+    x, v, now, u = 0.0, 0.0, 0.0, 0.0
+    h = 0.0005
+    applied = []
+    for f, dur in plan:
+        start = now
+        while now - start < dur - 1e-9:
+            if abs(((now + 1e-9) % loop)) < 1e-6 or abs(((now + 1e-9) % loop) - loop) < 1e-6:
+                u = f(now - start)  # the loop sets the volts and holds them
+            applied.append(u)
+            t.append(now)
+            pos.append(x)
+            for _ in range(round(sample / h)):
+                g = plant["kG"] * (math.cos(x * arpu) if kind == "PIVOT" else 1.0) if kind in ("ELEVATOR", "PIVOT") else 0.0
+                net = u - g - plant["kV"] * v
+                if v == 0 and abs(net) <= plant["kS"]:
+                    continue
+                a = (net - plant["kS"] * math.copysign(1, v if v else net)) / plant["kA"]
+                nv = v + a * h
+                v = 0.0 if v and nv * v < 0 else nv
+                x += v * h
+            now += sample
+    volts = applied[late:] + [applied[-1]] * late
+    return t, pos, volts
+
+
+class HeldFitTest(unittest.TestCase):
+    def test_volts_held_by_a_robot_loop_give_the_exact_model(self):
+        t, pos, volts = sim_held(ELEVATOR, "ELEVATOR")
+        f = M.fit_held(t, pos, volts, "ELEVATOR")
+        self.assertTrue(f["ok"], f)
+        for k in ("kS", "kV", "kA", "kG"):
+            self.assertAlmostEqual(f[k], ELEVATOR[k], delta=0.02 * ELEVATOR[k] + 0.005, msg=(k, f))
+
+    def test_volts_recorded_early_are_lined_up(self):
+        t, pos, volts = sim_held(ELEVATOR, "ELEVATOR", late=2)
+        f = M.fit_held(t, pos, volts, "ELEVATOR")
+        self.assertEqual(f["shift"], 2, f)
+        self.assertAlmostEqual(f["kA"], ELEVATOR["kA"], delta=0.02 * ELEVATOR["kA"])
+
+    def test_central_differences_are_biased_on_held_volts(self):
+        # Why fit_held exists: the same run through fit() with a central-difference speed.
+        t, pos, volts = sim_held(ELEVATOR, "ELEVATOR")
+        old = M.fit(t, pos, M.velocity_from_position(t, pos), volts, "ELEVATOR")
+        new = M.fit_held(t, pos, volts, "ELEVATOR")
+        self.assertLess(abs(new["kA"] - ELEVATOR["kA"]), abs(old["kA"] - ELEVATOR["kA"]))
+
+    def test_an_arm(self):
+        t, pos, volts = sim_held(ARM, "PIVOT", arpu=1.0)
+        f = M.fit_held(t, pos, volts, "PIVOT", angle_rad_per_unit=1.0)
+        self.assertTrue(f["ok"], f)
+        self.assertAlmostEqual(f["kG"], ARM["kG"], delta=0.05)
+        self.assertAlmostEqual(f["kV"], ARM["kV"], delta=0.06 * ARM["kV"])
+
+    def test_a_reversed_motor_is_not_physical(self):
+        t, pos, volts = sim_held(ELEVATOR, "ELEVATOR")
+        self.assertFalse(M.fit_held(t, pos, [-u for u in volts], "ELEVATOR")["ok"])
+
+
 class DelayTest(unittest.TestCase):
     def test_a_filtered_speed_reading_is_found_late(self):
         dt = 0.005

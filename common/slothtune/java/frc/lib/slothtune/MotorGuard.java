@@ -73,10 +73,6 @@ public final class MotorGuard {
     /** Changes the smart current limit, never saved to flash. False if the controller refused. */
     boolean setCurrentLimit(int amps);
 
-    /**
-     * Bring-up only ({@link MotorTestProcedure}, with the robot's code paused): runs this motor at a
-     * duty cycle, -1 to 1, outside its subsystem. Returns false if this controller can't be run so.
-     */
     /** Its idle mode now: true coast, false brake, null when it can't say. */
     default Boolean coast() {
       return null;
@@ -87,7 +83,50 @@ public final class MotorGuard {
       return false;
     }
 
+    /**
+     * Bring-up only ({@link MotorTestProcedure}, with the robot's code paused): runs this motor at a
+     * duty cycle, -1 to 1, outside its subsystem. Returns false if this controller can't be run so.
+     */
     default boolean testDuty(double duty) {
+      return false;
+    }
+
+    /**
+     * Identification only ({@link SystemIdProcedure}, with the robot's code paused): runs this motor
+     * at {@code volts}, the controller itself holding them as its supply sags. False if it can't.
+     */
+    default boolean testVolts(double volts) {
+      return false;
+    }
+
+    /**
+     * Volts it is applying to the motor now (its output times its supply), for identification: unlike
+     * {@link #appliedDuty} this reads the simulator's too, whose SPARK models its own output.
+     */
+    default double appliedVolts() {
+      return appliedDuty() * busVolts();
+    }
+
+    /** Whether it follows another controller: a test drives the leader, never a follower. */
+    default boolean follower() {
+      return false;
+    }
+
+    /** Position as its own closed loop reads it (the units its gains use); NaN if unknown. */
+    default double feedbackPosition() {
+      return Double.NaN;
+    }
+
+    /** Velocity as its own closed loop reads it, filter and all; NaN if unknown. */
+    default double feedbackVelocity() {
+      return Double.NaN;
+    }
+
+    /**
+     * Sends its position, speed, output, supply and current every {@code ms} while a test records
+     * them, never persisted; {@code ms <= 0} puts back what it sent before. False if it can't.
+     */
+    default boolean fastSignals(int ms) {
       return false;
     }
 

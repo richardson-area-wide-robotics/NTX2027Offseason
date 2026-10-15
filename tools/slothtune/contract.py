@@ -275,6 +275,12 @@ STOP_CODES = [
     # Bring-up's sensor readout and motor test.
     ("No sensors to read", "NO_SENSORS"), ("can't read the CAN bus", "NO_CAN_STATUS"), ("without turning", "JAMMED"),
     # Systems: a mechanism's limits and its closed-loop test.
+    # Its identification (system_id): what it found while finding the volts that hold it.
+    ("looked for the volts that hold it", "NEEDS_HOLD_GUESS"), ("inversion", "INVERTED"),
+    ("didn't start moving", "JAMMED"), ("didn't move with", "JAMMED"), ("wouldn't stay still", "WONT_HOLD"),
+    ("find the volts that hold", "WONT_HOLD"), ("took over 30 s", "TIMEOUT"), ("can't be run by voltage", "NOT_SUPPORTED"),
+    ("Give the test a top speed", "BAD_ARGS"), ("is watched by the motor guard", "NO_SYSTEM_HOOK"),
+    ("follows another", "NO_SYSTEM_HOOK"), ("Every motor of", "NO_SYSTEM_HOOK"), ("can't read", "NO_SYSTEM_HOOK"),
     ("No such system", "BAD_ARGS"), ("has limits to find", "BAD_ARGS"), ("Disable the robot first", "NEEDS_DISABLED"),
     # Game pieces: a current sensor's calibration and a hold's tuning.
     ("No such hold", "BAD_ARGS"), ("No such current sensor", "BAD_ARGS"), ("Start above the lowest current", "BAD_ARGS"),
@@ -372,4 +378,5 @@ def gain_spec(key):
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
 TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",
-         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_step", "system_piece", "system_hold")
+         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_step", "system_piece", "system_hold",
+         "system_id")

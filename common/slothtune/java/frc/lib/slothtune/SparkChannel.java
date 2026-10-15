@@ -41,6 +41,11 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
       java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
   private final String model;
   private final String firmware;
+  /** Whether it follows another SPARK: tests drive the leader only. */
+  private final boolean follower;
+  /** Its closed loop's sensor: position and velocity, in the units its gains use. */
+  private final java.util.function.DoubleSupplier feedbackPos;
+  private final java.util.function.DoubleSupplier feedbackVel;
 
   public SparkChannel(SparkBase spark, boolean simulation) {
     this.spark = spark;
@@ -81,6 +86,16 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
     this.settingsMap = readSettings(a);
     this.settings = join(settingsMap, live);
     BY_SPARK.put(spark, this);
+    boolean follows = settingsMap.containsKey("follows");
+    try {
+      follows = spark.isFollower();
+    } catch (RuntimeException e) {
+      // It won't say: the configured leader stands.
+    }
+    this.follower = follows;
+    java.util.function.DoubleSupplier[] fb = feedback(spark, settingsMap.get("sensor"));
+    this.feedbackPos = fb[0];
+    this.feedbackVel = fb[1];
     this.model = simulation ? "" : detectModel(spark);
     String fw = "";
     if (!simulation) {
@@ -174,6 +189,12 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
     putNum(out, "mmAccel", a.closedLoop.maxMotion::getMaxAcceleration, true);
     putNum(out, "mmError", a.closedLoop.maxMotion::getAllowedProfileError, true);
     put(out, "sensor", () -> a.closedLoop.getFeedbackSensor().name().replaceFirst("^k", ""));
+    // How its speed reading is filtered (each a window of positions, then an average of windows):
+    // the hall sensor of a NEO on a SPARK MAX, and the quadrature encoders (a Vortex's own on a Flex).
+    putNum(out, "uvwMs", () -> (double) a.encoder.getUvwMeasurementPeriod(), true);
+    putNum(out, "uvwDepth", () -> (double) a.encoder.getUvwAverageDepth(), true);
+    putNum(out, "quadMs", () -> (double) a.encoder.getQuadratureMeasurementPeriod(), true);
+    putNum(out, "quadDepth", () -> (double) a.encoder.getQuadratureAverageDepth(), true);
     putNum(out, "follows", () -> (double) a.getFollowerModeLeaderId(), true);
     return out;
   }
@@ -377,6 +398,100 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
   public boolean testDuty(double duty) {
     spark.set(Math.max(-1, Math.min(1, duty)));
     return true;
+  }
+
+  @Override
+  public boolean testVolts(double volts) {
+    // Voltage control: the SPARK scales its output by its own supply, so the motor gets these volts
+    // however the battery sags (until the battery is below them).
+    spark.setVoltage(Math.max(-12, Math.min(12, volts)));
+    return true;
+  }
+
+  @Override
+  public boolean follower() {
+    return follower;
+  }
+
+  @Override
+  public double appliedVolts() {
+    // REVLib's simulated SPARK keeps its output and supply up to date, so these read in simulation too.
+    return spark.getAppliedOutput() * spark.getBusVoltage();
+  }
+
+  @Override
+  public double feedbackPosition() {
+    try {
+      return feedbackPos.getAsDouble();
+    } catch (RuntimeException e) {
+      return Double.NaN;
+    }
+  }
+
+  @Override
+  public double feedbackVelocity() {
+    try {
+      return feedbackVel.getAsDouble();
+    } catch (RuntimeException e) {
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Its closed loop's sensor, as configured: the built-in encoder, an absolute encoder, or an
+   * alternate (MAX) or external (Flex) encoder. Read through REVLib's own objects, so the
+   * conversion factors and the velocity filter are the ones its gains see.
+   */
+  private static java.util.function.DoubleSupplier[] feedback(SparkBase spark, String sensor) {
+    try {
+      if ("AbsoluteEncoder".equals(sensor)) {
+        var e = spark.getAbsoluteEncoder();
+        return new java.util.function.DoubleSupplier[] {e::getPosition, e::getVelocity};
+      }
+      if ("AlternateOrExternalEncoder".equals(sensor)) {
+        var e = spark instanceof SparkFlex flex ? flex.getExternalEncoder() : ((SparkMax) spark).getAlternateEncoder();
+        return new java.util.function.DoubleSupplier[] {e::getPosition, e::getVelocity};
+      }
+      var e = spark.getEncoder();
+      return new java.util.function.DoubleSupplier[] {e::getPosition, e::getVelocity};
+    } catch (RuntimeException e) {
+      return new java.util.function.DoubleSupplier[] {() -> Double.NaN, () -> Double.NaN};
+    }
+  }
+
+  /** What it sent before a test sped its signals up, to put back; null when not sped up. */
+  private int[] savedSignals;
+
+  @Override
+  public synchronized boolean fastSignals(int ms) {
+    if (simulation) {
+      return true;
+    }
+    SparkBaseConfigAccessor a = accessor(spark);
+    if (a == null) {
+      return false;
+    }
+    int[] p;
+    if (ms > 0) {
+      if (savedSignals == null) {
+        var s = a.signals;
+        savedSignals = new int[] {s.getPrimaryEncoderPositionPeriodMs(), s.getPrimaryEncoderVelocityPeriodMs(),
+            s.getAbsoluteEncoderPositionPeriodMs(), s.getAbsoluteEncoderVelocityPeriodMs(),
+            s.getAppliedOutputPeriodMs(), s.getBusVoltagePeriodMs(), s.getOutputCurrentPeriodMs()};
+      }
+      boolean abs = "AbsoluteEncoder".equals(settingsMap.get("sensor"));
+      p = new int[] {ms, ms, abs ? ms : savedSignals[2], abs ? ms : savedSignals[3], ms, ms, ms};
+    } else if (savedSignals != null) {
+      p = savedSignals;
+      savedSignals = null;
+    } else {
+      return true;
+    }
+    SparkBaseConfig c = spark instanceof SparkFlex ? new SparkFlexConfig() : new SparkMaxConfig();
+    c.signals.primaryEncoderPositionPeriodMs(p[0]).primaryEncoderVelocityPeriodMs(p[1])
+        .absoluteEncoderPositionPeriodMs(p[2]).absoluteEncoderVelocityPeriodMs(p[3])
+        .appliedOutputPeriodMs(p[4]).busVoltagePeriodMs(p[5]).outputCurrentPeriodMs(p[6]);
+    return spark.configure(c, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters) == REVLibError.kOk;
   }
 
   @Override
