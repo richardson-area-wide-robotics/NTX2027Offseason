@@ -54,7 +54,7 @@ const Plot = (() => {
     let [y0, y1] = opts.yrange || extent(series, "y", x0, x1);
     const pad = (y1 - y0) * 0.08;
     y0 -= pad; y1 += pad;
-    const L = 54, R = 12, T = 12, B = 30;
+    const L = 54, R = 12, T = opts.ylabel ? 22 : 12, B = 30;
     const pw = w - L - R, ph = h - T - B;
     const X = x => L + (x - x0) / (x1 - x0) * pw;
     const Y = y => T + (1 - (y - y0) / (y1 - y0)) * ph;
@@ -75,7 +75,7 @@ const Plot = (() => {
     }
     g.fillStyle = muted;
     if (opts.xlabel) g.fillText(opts.xlabel, L + pw - g.measureText(opts.xlabel).width, h - 4);
-    if (opts.ylabel) g.fillText(opts.ylabel, L + 4, T + 10);
+    if (opts.ylabel) g.fillText(opts.ylabel, L, 13);
 
     const hits = [];
     const notes = opts.annotations || [];

@@ -5,7 +5,7 @@
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? "–" : Number(v).toFixed(d);
+const fmt = (v, d = 2) => (v == null || !isFinite(v)) ? "–" : Number(v).toFixed(d).replace(/^-(0(?:\.0+)?)$/, "$1");
 const ABBR = { frontleft: "FL", frontright: "FR", backleft: "BL", backright: "BR" };
 const abbr = n => ABBR[n] || n;
 // One word for each place the robot can be, used by every screen (the robot's own names are
@@ -175,7 +175,7 @@ $("#connect").onclick = async () => {
 async function checkNetworks() {
   App.modal(`<h2>The robot's network</h2><p class="hint">Checking the Driver Station, this laptop, the firewall and the radios: about 15 seconds…</p>`);
   const r = await App.api("/api/netcheck", {});
-  const word = { ok: "good", warn: "warn", fail: "bad", info: "info" };
+  const word = { ok: "ok", warn: "warn", fail: "error", info: "info" };
   const groups = [];
   for (const c of r.checks || []) {
     const g = c.group || "";
@@ -184,17 +184,17 @@ async function checkNetworks() {
   }
   const NET_LESSONS = { learn: ["robot_network", "networktables", "nt_topics", "nt_timing", "dashboards"] };
   App.modal(`<h2>The robot's network</h2>
-    <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="net.learn">How it works:</span>${Learn.chips(NET_LESSONS.learn)}</div>
     ${r.error ? `<div class="callout warn">${esc(r.error)}</div>` : `
-    <p>${r.ok ? "Nothing blocking." : "Fix the red lines, then check again."}</p>
-    ${groups.map(g => `${g.name ? `<h3>${esc(g.name)}</h3>` : ""}${g.checks.map(c => `<div class="finding"><div class="head"><span class="chip ${word[c.level] || ""}">${esc(c.level)}</span>
+    <p>${r.ok ? "Nothing blocking." : "Fix each one marked FAIL, then check again."}</p>
+    ${groups.map(g => `${g.name ? `<h3>${esc(g.name)}</h3>` : ""}${g.checks.map(c => `<div class="finding"><div class="head"><span class="level ${word[c.level] || ""}">${esc(c.level)}</span>
       <span class="title">${esc(c.title)}</span></div><div class="why">${esc(c.why)}</div></div>`).join("")}`).join("")}
     ${r.fix ? `<div class="callout warn"><b>One-time fix, as Administrator.</b> Open PowerShell as Administrator
       (right-click it, Run as administrator) and run:<pre class="diff">${esc(r.fix)}</pre>
       It sets the robot adapter's metric to 500, so it never carries the internet. Nothing else changes.</div>` : ""}`}
+    <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="net.learn">How it works:</span>${Learn.chips(NET_LESSONS.learn)}</div>
     <div class="row"><button class="btn" id="nc-again" data-tip="net.check">Check again</button>
       ${r.error ? "" : `<button class="btn" id="nc-save" data-tip="net.save">Save a copy to send</button>`}
-      <button class="btn" onclick="App.closeModal()">Close</button></div>`, root => {
+      <button class="btn" onclick="App.closeModal()" autofocus>Close</button></div>`, root => {
     $("#nc-again", root).onclick = checkNetworks;
     const sv = $("#nc-save", root);
     if (sv) sv.onclick = async () => {

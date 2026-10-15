@@ -9,7 +9,7 @@
         <div class="row live-head"><h2 data-tip="live.above">From above</h2>
           <div class="seg" id="live-view" role="group" aria-label="Show">
             <button data-view="robot" class="on" aria-pressed="true" data-tip="live.view-robot">Robot</button><button data-view="field" aria-pressed="false" data-tip="live.view-field">On the field</button></div></div>
-        <p class="hint" id="live-hint-robot">Front is up. Black wheel: where it points. Faint wheel: where it was told to point. Arrows: how fast, full length at top speed; green on target, amber behind, red the wrong way. The faint arrow: the speed it was told.</p>
+        <p class="hint" id="live-hint-robot">Front is up. Solid wheel: where it points. Faint wheel: where it was told to point. Arrows: how fast, full length at top speed; green on target, amber behind, red the wrong way. The faint arrow: the speed it was told.</p>
         <p class="hint" id="live-hint-field" hidden>Blue wall on the left. Solid robot: where it thinks it is. Faint dashed robot: where the cameras alone put it. Green tags: in view now, with a line to each. Faint trail: the last 8 seconds.</p>
         <div id="live-empty" class="empty">Not connected. Connect to a robot or the simulator to see every module live.
           <div class="row" style="justify-content:center;margin-top:10px"><button class="btn primary" data-connect>Connect</button>
@@ -28,7 +28,7 @@
           <div id="flags" class="flags"><span class="hint">Not checking: no robot connected.</span></div>
         </div>
         <div class="panel">
-          <h3 data-tip="live.gyro">Gyro</h3>
+          <h3 data-tip="live.gyro"><span class="term" tabindex="0" data-learn="gyro">Gyro</span></h3>
           <div class="gyro-strip" id="live-gyro" role="group" aria-label="The gyro"><span class="hint">Not connected.</span></div>
         </div>
         <div class="panel">
@@ -72,7 +72,7 @@
     const horiz = a.length >= 2 && ok(a[0]) && ok(a[1]) ? Math.hypot(a[0], a[1]) : NaN;
     const set = (k, v) => { const e = $(`[data-g="${k}"]`, box); if (e.textContent !== v) e.textContent = v; };
     set("heading", ok(nums[0]) ? `${fmt(nums[0], 1)}°` : ok(live.heading) ? `${fmt(live.heading, 1)}°` : "–");
-    set("rate", ok(nums[1]) ? `${fmt(Math.abs(nums[1]) < 0.5 ? 0 : nums[1], 0)}°/s` : "–");   // still reads 0, not -0
+    set("rate", ok(nums[1]) ? `${fmt(nums[1], 0)}°/s` : "–");
     set("pitch", ok(nums[3]) ? `${fmt(nums[3], 1)}°` : "–");
     set("roll", ok(nums[2]) ? `${fmt(nums[2], 1)}°` : "–");
     set("accel", ok(horiz) ? U.accel(horiz, 1) : "–");

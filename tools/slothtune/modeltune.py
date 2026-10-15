@@ -463,7 +463,8 @@ def lqr_pd(kV, kA, qp, qv, r=7.0, dt=SPARK_DT, delay_s=0.0):
 def simc_pi(kV, kA, delay_s, tau_c=None):
     """A speed loop's Kp (volts per unit/s) and Ki (volts per unit), Skogestad's SIMC for a first
     order plant with delay: gain 1/kV, time constant kA/kV, delay theta; tau_c defaults to theta
-    (his 'tight but robust' choice: gain margin about 3, phase margin about 60 degrees)."""
+    (his 'tight but robust' choice: gain margin about 3, phase margin 47 to 61 degrees), and the
+    integral time is the shorter of tau and 4 (tau_c + theta), 8 theta at the default."""
     theta = max(delay_s, 0.0005)
     tc = theta if tau_c is None else tau_c
     tau = kA / kV
@@ -540,7 +541,7 @@ def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, ho
     output limited to ``volts``. Positional: a profiled move of ``move`` units then a hold; speed: a
     ramp to ``move`` units/s then a hold. ``gains``: Kp, Kd (positional) or Kp, Ki (speed), and the
     feedforward kS, kV, kA, kG in volts, of which only those in ``ff`` are applied (REV applies kV
-    and kA only in MAXMotion; plain Position applies none but gravity). ``sp_period``: how often the
+    only where it has a target speed and kA only in MAXMotion; see MODE_FF for plain Position). ``sp_period``: how often the
     setpoint changes (a profile the roboRIO steps every 20 ms; None is every ``dt``). Returns
     overshoot (% of the move), error at the end (%), settling time (s, to 2% positional, 3% speed)
     and the peak volts."""
@@ -605,8 +606,11 @@ POSITION_DELAY_S = 0.002   # a SPARK's onboard position loop: the encoder read a
 SPEED_DELAY_MIN_S = 0.005  # no SPARK speed reading is quicker than this: a speed loop never assumes less
 
 
-# The feedforward REV applies in each closed-loop mode (gravity's kG or kCos in all), and how often
-# the setpoint moves: a profile on the roboRIO steps each 20 ms loop, MAXMotion's every millisecond.
+# The feedforward the tool sets, and predicts, in each closed-loop mode, and how often the setpoint
+# moves: a profile on the roboRIO steps each 20 ms loop, MAXMotion's every millisecond. REV applies
+# kS in plain Position too, but with no target speed to point it, REV doesn't say which way (its
+# docs: "in the direction of desired velocity"), and a kS pushed by the error can make a mechanism
+# hunt around its target. So the tool leaves kS there as the team set it (decision 79).
 MODE_FF = {"Position": ("kG",), "MAXMotionPosition": ("kS", "kV", "kA", "kG"),
            "Velocity": ("kS", "kV"), "MAXMotionVelocity": ("kS", "kV", "kA")}
 MODE_SP_PERIOD = {"Position": 0.02, "Velocity": 0.02}

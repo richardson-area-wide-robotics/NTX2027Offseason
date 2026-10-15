@@ -123,9 +123,9 @@ const Systems = (() => {
       <h3 data-tip="sys.top">${positional(s) ? "3" : "2"}. Its top speed</h3>
       <div class="row small"><label>Team's maximum <input id="sys-vmax" type="number" step="any" value="${shown(val("maxVelocity"), k)}" style="width:6em"> ${esc(label)}${rate}</label>
         <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${shown(val("maxAccel"), k)}" style="width:6em"> ${esc(label)}/s${positional(s) ? "²" : ""}</label></div>
-      <div class="row"><button class="btn primary small" id="sys-save" data-tip="sys.save">Save to slothtune.json…</button></div>
+      <div class="row"><button class="btn small ${Object.keys(edits).length ? "primary" : ""}" id="sys-save" data-tip="sys.save">Save settings…</button></div>
       ${Object.keys(s.gains || {}).length ? `<div class="row" style="justify-content:space-between"><h3 data-tip="sys.gains">Its gains, live</h3>
-          <span class="row small"><span class="muted">Live only: Auto-tune's Save (slothtune.json) or the code keeps a value.</span>
+          <span class="row small"><span class="muted">Live only: Auto-tune's Save gains (slothtune.json) or the code keeps a value.</span>
           <button class="btn small" id="sys-apply" data-tip="sys.apply">Apply live</button></span></div>
         <div class="gains sys-gains">${shownGains(s).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
     const ap = $("#sys-apply", box);
@@ -150,6 +150,8 @@ const Systems = (() => {
     $("#sys-vmax", box).onchange = e => { edits.maxVelocity = e.target.value === "" ? null : +e.target.value / k; preview(); };
     $("#sys-amax", box).onchange = e => { edits.maxAccel = e.target.value === "" ? null : +e.target.value / k; };
     $("#sys-save", box).onclick = save;
+    // Every setting's change bubbles here after its own handler: Save turns primary once there is something to save.
+    box.onchange = () => { const b = $("#sys-save", box); if (b) b.classList.toggle("primary", Object.keys(edits).length > 0); };
     const lim = $("#sys-limits", box);
     if (lim) lim.onclick = setLimits;
   }
@@ -230,16 +232,17 @@ const Systems = (() => {
           `<button data-speed="${k}" class="${speed === k ? "on" : ""}" aria-pressed="${speed === k}" data-tip="sys.speed-${k}">${k === "half" ? "Half speed" : "Full speed"}</button>`).join("")}</div>
         <button class="btn" id="sys-autotune" data-tip="sys.autotune" ${p.ok && Object.keys(s.gains || {}).length ? "" : "disabled"}>Auto-tune…</button>
         <button class="btn primary" id="sys-run" data-tip="sys.run" ${p.ok && App.connected() && where ? "" : "disabled"}>Run</button></div></div>
+      <div id="sys-at" class="small" hidden></div>
       <p class="small sys-live-note" id="sys-live-note" data-tip="sys.live"></p>
-      <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The target and where the mechanism is"></canvas></div>
-      <div class="plotwrap"><canvas class="plot sys-err" id="sys-err" role="img" aria-label="The error: the target less where the mechanism is"></canvas></div>
+      <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The setpoint and where the mechanism is"></canvas></div>
+      <div class="plotwrap"><canvas class="plot sys-err" id="sys-err" role="img" aria-label="The error: the setpoint less where the mechanism is"></canvas></div>
+      <div id="sys-at-more" class="small" hidden></div>
+      <div id="sys-report" class="small"></div>
       ${p.ok ? `<p class="small">${positional(s) ? `Moves between ${n4(by(p.a, k))} and ${n4(by(p.b, k))} ${u}` : `Spins up to ${n4(by(p.a, k))}, then ${n4(by(p.b, k))} ${u}, then down`},
           no faster than <b>${n4(by(p.vmax, k))}</b> ${u}${positional(s) ? "/s" : ""}${speed === "half" ? " (half its planned speed)" : ""}, changing at most ${n4(by(p.amax, k))}${u ? ` ${u}/s${positional(s) ? "²" : ""}` : ` per second${positional(s) ? " per second" : ""}`}.
           <span class="muted">${(p.why || []).map(esc).join("; ")}.</span></p>
         <p class="small muted">Robot enabled ${where ? "" : "<b class=\"warn-ink\">(set On blocks or On the floor first)</b> "}and the deadman held; someone watching it, hands clear. It stops at once if it leaves its limits or goes too fast.</p>`
-        : `<p class="small warn-ink">Before it can be tested: ${(p.missing || ["its settings"]).map(esc).join("; ")}.</p>`}
-      <div id="sys-at" class="small" hidden></div>
-      <div id="sys-report" class="small"></div>`;
+        : `<p class="small warn-ink">Before it can be tested: ${(p.missing || ["its settings"]).map(esc).join("; ")}.</p>`}`;
     $("#sys-run", box).onclick = run;
     $("#sys-autotune", box).onclick = () => openAutoTune(s, p);
     if (tuneState && tuneState.system === s.name) paintTune(tuneState);
@@ -272,6 +275,20 @@ const Systems = (() => {
   // the error between them (WPILib's error: the target less the measurement). The measuring run has
   // no target: below it, the volts it asks for and the volts the SPARK applies.
   let liveRun = null;
+  // Said against the graph above, so it is right whichever way the move goes (WPILib's error:
+  // setpoint - measurement).
+  const errLine = s => positional(s)
+    ? `<span class="term" tabindex="0" data-learn="error">Error</span> = setpoint - where it is: above zero, it is below the setpoint; below zero, above it.`
+    : `<span class="term" tabindex="0" data-learn="error">Error</span> = setpoint - its speed: above zero, it is slower than the setpoint; below zero, faster.`;
+  // The error axis is symmetric and never tighter than the band the report calls settled (2% of
+  // the move, 3% of a speed), so a good run looks small and a bad one big.
+  const errRange = (err, s, k) => {
+    const p = scaled(s) || {};
+    const band = (positional(s) ? 0.02 * Math.abs(p.b - p.a) : 0.03 * Math.max(Math.abs(p.a), Math.abs(p.b))) * k || 1e-6;
+    const peak = err.reduce((m, v) => (v == null || !isFinite(v) ? m : Math.max(m, Math.abs(v))), band);
+    return [-peak, peak];
+  };
+  const errSeries = (x, err) => [{ x: [x[0], x[1]], y: [0, 0], color: "--muted", width: 1 }, { x: err.t, y: err.y, color: "--ink", width: 1.6 }];
   const STAGE_WORD = ["finding the volts that hold it", "holding still", "a slow sweep", "a quick step", "done"];
 
   function takeLive(L) {
@@ -310,7 +327,7 @@ const Systems = (() => {
     if (liveRun.test === "system_id") {
       const st = col("stage").filter(v => v != null).pop();
       note.innerHTML = `${lead}: ${term("system_id", "the measuring run")}${st != null && STAGE_WORD[st] ? `, ${STAGE_WORD[st]}` : ""}.
-        No target here: below are the volts it is testing ${esc(s.name)} with.`;
+        No setpoint here: below are the volts it is testing ${esc(s.name)} with.`;
       Plot.draw(cv, { xlabel: "s", ylabel: label, xrange, series: [
         { x: t, y: actual, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
       Plot.draw(ev, { xlabel: "s", ylabel: "volts", xrange, series: [
@@ -320,15 +337,12 @@ const Systems = (() => {
     }
     const sp = show(col("sp"));
     const err = sp.map((v, i) => (v == null || actual[i] == null ? null : v - actual[i]));
-    note.innerHTML = `${lead}: the ${term("setpoint", "target")} moves along a limited path and the mechanism follows it.
-      ${term("error", "Error")} = target - where it is: above zero it is behind, below it has gone past.`;
+    note.innerHTML = `${lead}: the ${term("setpoint", "setpoint")} moves along a limited path toward the ${term("motion_profile", "goal")}, and ${esc(s.name)} follows it. ${errLine(s)}`;
     Plot.draw(cv, { xlabel: "s", ylabel: label, xrange, series: [
-      { x: t, y: show(col("goal")), color: "--muted", dash: [2, 3], width: 1, label: "headed for" },
-      { x: t, y: sp, color: "--sp", dash: [6, 4], width: 1.6, label: "target", learn: "setpoint" },
+      { x: t, y: show(col("goal")), color: "--muted", dash: [2, 3], width: 1, label: "goal", learn: "motion_profile" },
+      { x: t, y: sp, color: "--sp", dash: [6, 4], width: 1.6, label: "setpoint", learn: "setpoint" },
       { x: t, y: actual, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
-    Plot.draw(ev, { xlabel: "s", ylabel: `error, ${label}`, xrange, series: [
-      { x: [xrange[0], xrange[1]], y: [0, 0], color: "--muted", width: 1, label: "zero" },
-      { x: t, y: err, color: "--bad", width: 1.6, label: "error", learn: "error" }] });
+    Plot.draw(ev, { xlabel: "s", ylabel: `error, ${label}`, xrange, yrange: errRange(err, s, k), series: errSeries(xrange, { t, y: err }) });
     return true;
   }
 
@@ -344,7 +358,7 @@ const Systems = (() => {
     const out = $("#sys-report", root), cv = $("#sys-plot", root), ev = $("#sys-err", root), note = $("#sys-live-note", root);
     if (!cv) return;
     if (!last) {
-      Plot.draw(cv, { series: [], empty: "The target and where it is show here, live, while a test of it runs" });
+      Plot.draw(cv, { series: [], empty: "The setpoint and where it is show here, live, while a test of it runs" });
       if (ev) Plot.draw(ev, { series: [], empty: "And the error between them here" });
       if (note) note.innerHTML = "";
       out.innerHTML = "";
@@ -354,14 +368,17 @@ const Systems = (() => {
     // New arrays in the team's units: the run keeps its own.
     const show = a => (a || []).map(v => v == null ? v : v * k);
     const actual = show(pos ? ch.pos : ch.vel), sp = show(ch.sp);
-    if (note) note.innerHTML = `<b>Last run</b>: <span class="term" tabindex="0" data-learn="error">error</span> = target - where it is.`;
-    Plot.draw(cv, { xlabel: "s", ylabel: label, series: [
-      { x: ch.t, y: show(ch.goal), color: "--muted", dash: [2, 3], width: 1, label: "headed for" },
-      { x: ch.t, y: sp, color: "--sp", dash: [6, 4], width: 1.6, label: "target", learn: "setpoint" },
+    // The same time axis as the live graphs, so the end of a run doesn't jump.
+    const xrange = [0, Math.max(5, (ch.t || [])[(ch.t || []).length - 1] || 0)];
+    if (note) note.innerHTML = `<b>Last run</b>: ${errLine(s)}`;
+    Plot.draw(cv, { xlabel: "s", ylabel: label, xrange, series: [
+      { x: ch.t, y: show(ch.goal), color: "--muted", dash: [2, 3], width: 1, label: "goal", learn: "motion_profile" },
+      { x: ch.t, y: sp, color: "--sp", dash: [6, 4], width: 1.6, label: "setpoint", learn: "setpoint" },
       { x: ch.t, y: actual, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
-    if (ev && ch.t) Plot.draw(ev, { xlabel: "s", ylabel: `error, ${label}`, series: [
-      { x: [ch.t[0], ch.t[ch.t.length - 1]], y: [0, 0], color: "--muted", width: 1, label: "zero" },
-      { x: ch.t, y: sp.map((v, i) => (v == null || actual[i] == null ? null : v - actual[i])), color: "--bad", width: 1.6, label: "error", learn: "error" }] });
+    if (ev && ch.t) {
+      const err = sp.map((v, i) => (v == null || actual[i] == null ? null : v - actual[i]));
+      Plot.draw(ev, { xlabel: "s", ylabel: `error, ${label}`, xrange, yrange: errRange(err, s, k), series: errSeries(xrange, { t: ch.t, y: err }) });
+    }
     const rep = last.report || {};
     out.innerHTML = `<p><b>${esc(rep.summary || "")}</b>${rep.score != null ? ` · score ${rep.score}` : ""}</p>
       ${(rep.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")}
@@ -381,11 +398,11 @@ const Systems = (() => {
   // its report asks for, again, up to 8 rounds. Either ends on its best, and Save writes what it
   // changed to slothtune.json.
   let tuneState = null, tuneTimer = null, tuneMethod = "model";
-  const MODEL_LESSONS = { learn: ["model_tuning", "system_id", "hold_band", "least_squares", "lqr", "simc", "spark_modes",
-    "voltage_compensation", "check_runs"] };
+  const MODEL_LESSONS = { learn: ["model_tuning", "system_id", "hold_band", "kG", "least_squares", "lqr", "simc", "velocity_filter",
+    "spark_modes", "maxmotion_limits", "voltage_compensation", "check_runs", "sim_vs_real"] };
   const STATE_WORD = { running: "running", paused: "paused", finished: "finished", stopped: "stopped" };
 
-  function openAutoTune(s, p) {
+  function openAutoTune(s, p, ticked = []) {
     const env = App.env(), model = tuneMethod === "model";
     // The measuring run turns the motor by voltage with the robot's code paused: on blocks only.
     const places = model ? ["BLOCKS", "SIM"] : ["BLOCKS", "FIELD", "SIM"];
@@ -402,18 +419,18 @@ const Systems = (() => {
     if (model && positional(s)) checks.splice(1, 0, ["limits", `<b>Its limits are right</b>: the measuring run sweeps between them by itself, braking before each end.`]);
     const args = { system: s.index, a: p.a, b: p.b, vmax: p.vmax, amax: p.amax, hold_s: 1, moves: 2 };
     const method = `<div class="seg" id="sat-method" role="group" aria-label="How to tune" data-tip="sys.at-method">
-      <button data-m="model" class="${model ? "on" : ""}">Measure, then compute</button><button data-m="rounds" class="${model ? "" : "on"}">Round by round</button></div>`;
+      <button data-m="model" class="${model ? "on" : ""}" aria-pressed="${model}" ${model ? "autofocus" : ""}>Measure, then compute</button><button data-m="rounds" class="${model ? "" : "on"}" aria-pressed="${!model}" ${model ? "" : "autofocus"}>Round by round</button></div>`;
     App.modal(`<h2>Auto-tune ${esc(s.name)}</h2>
       <div class="row" style="flex-wrap:wrap">${method}<span class="small muted">${model ? "Recommended: one measuring run, then every gain from the model." : "One gain at a time, from each run's advice."}</span></div>
       ${blocker ? `<div class="callout warn">${esc(blocker)}</div>` : ""}
       ${robot ? `<h3>Before you start: tick each one</h3>
-      <ul class="checklist">${checks.map(([k, t]) => `<li><label class="row"><input type="checkbox" data-sat-check="${k}"> <span>${t}</span></label></li>`).join("")}</ul>` : ""}
+      <ul class="checklist">${checks.map(([k, t]) => `<li><label class="row"><input type="checkbox" data-sat-check="${k}" ${ticked.includes(k) ? "checked" : ""}> <span>${t}</span></label></li>`).join("")}</ul>` : ""}
       <h3>What happens</h3>
       ${model ? `<ol class="small">
         <li><b>The measuring run</b> (about half a minute): the robot's code pauses and the motor is run by voltage. ${positional(s)
           ? "It finds the volts that hold it still, sweeps it across its travel slowly, then makes quick steps, braking before each end."
           : "It ramps it up near its top test speed and back down, then makes quick steps."}</li>
-        <li>From that it fits the physics (friction, back-EMF, inertia${positional(s) ? ", gravity" : ""}) and works out every gain at once, only those the mode its code runs the SPARK in uses, with voltage compensation from the battery it held.</li>
+        <li>From that it fits the physics (friction, back-EMF, inertia${positional(s) ? ", gravity" : ""}) and works out, at once, every gain the SPARK uses in the mode the code runs it in, with voltage compensation at the battery voltage it held.</li>
         <li><b>Check runs</b>: the step test with the gains it has now first, then with the model's, up to 4 times, trying softer and harder.</li>
         <li>It keeps the best. If the model's can't beat the gains it had, or still ring, it puts back every gain it started with and says why.</li>
         ${robot ? `<li><b>Let go of the deadman at any time</b>: the run stops and it waits. Hold it again and press <b>Continue</b>. <b>ABORT</b> (or Esc) stops it for good.</li>` : ""}
@@ -435,8 +452,12 @@ const Systems = (() => {
       const boxes = $$("[data-sat-check]", m);
       const ready = () => { $("#sat-start", m).disabled = !robot || !boxes.every(b => b.checked); };
       boxes.forEach(b => b.onchange = ready);
+      ready();
       $("#sat-cancel", m).onclick = () => App.closeModal();
-      $$("#sat-method [data-m]", m).forEach(b => b.onclick = () => { tuneMethod = b.dataset.m; openAutoTune(s, p); });
+      $$("#sat-method [data-m]", m).forEach(b => b.onclick = () => {
+        tuneMethod = b.dataset.m;
+        openAutoTune(s, p, boxes.filter(x => x.checked).map(x => x.dataset.satCheck));
+      });
       const go = async body => {
         App.closeModal();
         const full = (s.plan || {}).vmax;
@@ -467,6 +488,28 @@ const Systems = (() => {
 
   // A measure-then-compute run: the model it fitted, what it found, and each check against the
   // gains it had (the baseline), predicted beside measured.
+  // The strip above the graphs: which tuner, its state and message, and its one or two buttons (the
+  // loudest thing after ABORT, like Tune's next step). Paused is amber: Continue is the way on.
+  function tuneStrip(r, el, method, changed) {
+    const live = ["running", "paused"].includes(r.state);
+    const done = r.status === "done" ? "Done" : "Stopped";
+    const say = live || !r.reason ? esc(r.message || "") : `<b>${done}:</b> ${esc(r.reason)}`;
+    el.className = `small next-step compact${r.state === "paused" ? " paused" : ""}`;
+    el.innerHTML = `<p><b data-tip="sys.autotune">Auto-tune ${esc(r.system)}</b>${r.target === "practice" ? " (made-up mechanism)" : ""}
+        · ${method} · ${STATE_WORD[r.state] || esc(r.state)}: <span class="${r.state === "paused" ? "warn-ink" : ""}">${say}</span></p>
+      <span class="row">
+        ${r.state === "paused" ? `<button class="btn small primary" id="sat-continue" data-tip="sys.at-continue">Continue</button>` : ""}
+        ${live ? `<button class="btn small" id="sat-stop" data-tip="sys.at-stop">Stop</button>` : ""}
+        ${!live && changed.length && r.target !== "practice" ? `<button class="btn small primary" id="sat-save" data-tip="sys.at-save">Save gains…</button>` : ""}
+        ${!live ? `<button class="btn small" id="sat-close" data-tip="sys.at-close">Close</button>` : ""}</span>`;
+    const more = $("#sys-at-more", root);
+    const c = $("#sat-continue", el), st = $("#sat-stop", el), cl = $("#sat-close", el);
+    if (c) c.onclick = async () => { await App.api("/api/systems/autotune/continue", {}); pollTune(); };
+    if (st) st.onclick = () => App.api("/api/systems/autotune/stop", {});
+    if (cl) cl.onclick = () => { tuneState = null; el.hidden = true; el.innerHTML = ""; if (more) { more.hidden = true; more.innerHTML = ""; } };
+    return more;
+  }
+
   function paintModelTune(r, el) {
     const live = ["running", "paused"].includes(r.state);
     const m = r.model || {}, fit = m.fit || {}, shown = m.shown || {};
@@ -478,43 +521,36 @@ const Systems = (() => {
     if (r.baseline) rows.push({ name: "The gains it had", agg: null, cost: r.baseline.cost, meas: r.baseline.measured || {}, pred: null, best: false });
     for (const c of r.checks || []) rows.push({ name: `Check ${c.check}`, agg: c.aggressiveness, cost: c.cost, meas: c.measured || {},
       pred: c.predicted || {}, best: r.best && r.best.check === c.check });
-    el.innerHTML = `<div class="at-panel sys-at-panel">
-      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-        <b data-tip="sys.autotune">Measure, then compute: ${esc(r.system)}${r.target === "practice" ? " (made-up mechanism)" : ""}: ${STATE_WORD[r.state] || esc(r.state)}</b>
-        <span class="row">
-          ${r.state === "paused" ? `<button class="btn small primary" id="sat-continue" data-tip="autotune.continue">Continue</button>` : ""}
-          ${live ? `<button class="btn small" id="sat-stop" data-tip="autotune.stop">Stop</button>` : ""}
-          ${!live && changed.length && r.target !== "practice" ? `<button class="btn small primary" id="sat-save" data-tip="sys.at-save">Save to slothtune.json…</button>` : ""}
-          ${!live ? `<button class="btn small" id="sat-close" data-tip="sys.at-close">Close</button>` : ""}</span></div>
-      ${live || !r.reason || !(r.message || "").includes(r.reason) ? `<p class="${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>` : ""}
+    const more = tuneStrip(r, el, "measure, then compute", changed);
+    if (!more) return;
+    const said = !live && r.message && r.reason && !r.message.includes(r.reason) ? `<p>${esc(r.message)}</p>` : "";
+    more.hidden = !(said || m.summary || rows.length || changed.length);
+    more.innerHTML = `<div class="at-panel sys-at-panel">${said}
       ${m.summary ? `<div data-tip="sys.at-model"><b>${term("system_id", "The model")}</b>
         <div class="sys-model-facts">
           <span>${term("kS", "Friction kS")} <b class="mono">${n4(fit.kS)} V</b></span>
           <span>${term("kV", "Back-EMF kV")} <b class="mono">${n4(shown.kV ?? fit.kV)}</b></span>
           <span>${term("kA", "Inertia kA")} <b class="mono">${n4(shown.kA ?? fit.kA)}</b></span>
-          ${fit.kG ? `<span>${term("hold_band", "Gravity kG")} <b class="mono">${n4(fit.kG)} V</b></span>` : ""}
+          ${fit.kG ? `<span>${term("kG", "Gravity kG")} <b class="mono">${n4(fit.kG)} V</b></span>` : ""}
           <span>${term("least_squares", "Fit")} <b class="mono">${fit.r2 == null ? "–" : fmt(100 * fit.r2, 1) + "%"}</b></span>
           <span>${term("velocity_filter", "Speed reading late")} <b class="mono">${m.delay_s == null ? "–" : fmt(1000 * m.delay_s, 0) + " ms"}</b></span>
           <span>${term("voltage_compensation", "Compensation")} <b class="mono">${m.volts_comp == null ? "–" : fmt(m.volts_comp, 1) + " V"}</b></span>
         </div>
         <p class="small">${esc(m.summary)}</p>
         ${(m.findings || []).filter(f => f.level !== "info" || /kD|open loop|Not seen|level at/.test(f.title)).map(f =>
-          `<div class="finding"><div class="head"><span class="chip ${f.level === "warn" ? "warn" : ""}">${esc(f.level)}</span>
+          `<div class="finding"><div class="head"><span class="level ${esc(f.level)}">${esc(f.level)}</span>
           <span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why || "")}</div></div>`).join("")}</div>` : ""}
       ${rows.length ? `<table class="t" data-tip="sys.at-checks"><thead><tr><th>${term("check_runs", "Run")}</th><th class="num">How hard</th>
-        <th class="num">${term("overshoot", "Overshoot")}</th><th class="num">Predicted</th><th>Settled</th><th class="num" data-tip="sys.at-cost">Cost</th></tr></thead><tbody>
+        <th class="num">${term("overshoot", "Overshoot")}</th><th class="num">Model said</th><th>Settled</th><th class="num" data-tip="sys.at-cost">Cost, lower is better</th></tr></thead><tbody>
         ${rows.map(x => `<tr class="${x.best ? "best" : ""}"><td>${esc(x.name)}${x.best ? ` <span class="chip">best</span>` : ""}</td>
           <td class="num mono">${x.agg == null ? "–" : fmt(x.agg, 2) + "x"}</td><td class="num mono">${pct(x.meas.overshoot_pct)}</td>
           <td class="num mono">${x.pred ? pct(x.pred.overshoot_pct) : "–"}</td>
           <td>${x.meas.settled == null ? "–" : x.meas.settled ? "yes" : "no"}</td><td class="num mono">${x.cost == null ? "–" : fmt(x.cost, 1)}</td></tr>`).join("")}</tbody></table>` : ""}
-      ${r.reason && !live ? `<p><b>${r.status === "done" ? "Done" : "Stopped"}:</b> ${esc(r.reason)}</p>` : ""}
       ${changed.length && !live ? `<table class="t small" data-tip="sys.at-changes"><thead><tr><th>What it changes</th><th class="num">It had</th><th class="num">Now</th></tr></thead><tbody>
         ${changed.map(([k, v]) => `<tr><td>${esc(k.split("/").pop())}</td><td class="num mono">${n4(before[k])}</td><td class="num mono">${n4(v)}</td></tr>`).join("")}</tbody></table>` : ""}
       <details class="small"><summary>How it works: the lessons</summary><div class="row learn-row" style="flex-wrap:wrap">${Learn.chips(MODEL_LESSONS.learn)}</div></details></div>`;
-    const c = $("#sat-continue", el), st = $("#sat-stop", el), sv = $("#sat-save", el), cl = $("#sat-close", el);
-    if (c) c.onclick = async () => { await App.api("/api/systems/autotune/continue", {}); pollTune(); };
-    if (st) st.onclick = () => App.api("/api/systems/autotune/stop", {});
-    if (cl) cl.onclick = () => { tuneState = null; el.hidden = true; el.innerHTML = ""; };
+    more.hidden = false;
+    const sv = $("#sat-save", el);
     if (sv) sv.onclick = () => App.previewAndSave({ kind: "edits", edits: changed.map(([k, v]) =>
       ({ file: "slothtune.json", path: ["systems", r.system, "gains", k.split("/").pop()], value: +Number(v).toPrecision(6) })) },
       `${r.system}: the gains from its model`);
@@ -532,24 +568,16 @@ const Systems = (() => {
     const show = keys.length ? keys : Object.keys((r.rounds[0] || {}).gains || {}).filter(k => /\/kP$/.test(k));
     const short = k => k.split("/").pop();
     const changed = r.best ? Object.entries(r.best.gains).filter(([k, v]) => v !== ((r.rounds[0] || {}).gains || {})[k]) : [];
-    el.innerHTML = `<div class="at-panel sys-at-panel">
-      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
-        <b data-tip="sys.autotune">Auto-tune ${esc(r.system)}${r.target === "practice" ? " (made-up mechanism)" : ""}: ${STATE_WORD[r.state] || esc(r.state)}</b>
-        <span class="row">
-          ${r.state === "paused" ? `<button class="btn small primary" id="sat-continue" data-tip="autotune.continue">Continue</button>` : ""}
-          ${live ? `<button class="btn small" id="sat-stop" data-tip="autotune.stop">Stop</button>` : ""}
-          ${!live && changed.length && r.target !== "practice" ? `<button class="btn small primary" id="sat-save" data-tip="sys.at-save">Save to slothtune.json…</button>` : ""}
-          ${!live ? `<button class="btn small" id="sat-close" data-tip="sys.at-close">Close</button>` : ""}</span></div>
-      <p class="${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>
-      ${r.rounds.length ? `<table class="t"><thead><tr><th>Round</th>${show.map(k => `<th class="num">${esc(short(k))}</th>`).join("")}<th class="num" data-tip="sys.at-cost">Cost</th><th>Then</th></tr></thead><tbody>
+    const more = tuneStrip(r, el, "round by round", changed);
+    if (!more) return;
+    const said = !live && r.message && r.reason && !r.message.includes(r.reason) ? `<p>${esc(r.message)}</p>` : "";
+    more.hidden = !(said || r.rounds.length);
+    more.innerHTML = `<div class="at-panel sys-at-panel">${said}
+      ${r.rounds.length ? `<table class="t"><thead><tr><th>Round</th>${show.map(k => `<th class="num">${esc(short(k))}</th>`).join("")}<th class="num" data-tip="sys.at-cost">Cost, lower is better</th><th>Then</th></tr></thead><tbody>
         ${r.rounds.map(x => `<tr class="${r.best && r.best.round === x.round ? "best" : ""}"><td>${x.round}${r.best && r.best.round === x.round ? " <span class=\"chip\">best</span>" : ""}</td>
           ${show.map(k => `<td class="num mono">${n4(x.gains[k])}</td>`).join("")}<td class="num mono">${x.cost == null ? "–" : fmt(x.cost, 1)}</td>
-          <td>${esc(x.advice || "")}</td></tr>`).join("")}</tbody></table>` : ""}
-      ${r.reason && !live ? `<p><b>${r.status === "done" ? "Done" : "Stopped"}:</b> ${esc(r.reason)}</p>` : ""}</div>`;
-    const c = $("#sat-continue", el), st = $("#sat-stop", el), sv = $("#sat-save", el), cl = $("#sat-close", el);
-    if (c) c.onclick = async () => { await App.api("/api/systems/autotune/continue", {}); pollTune(); };
-    if (st) st.onclick = () => App.api("/api/systems/autotune/stop", {});
-    if (cl) cl.onclick = () => { tuneState = null; el.hidden = true; el.innerHTML = ""; };
+          <td>${esc(x.advice || "")}</td></tr>`).join("")}</tbody></table>` : ""}</div>`;
+    const sv = $("#sat-save", el);
     if (sv) sv.onclick = () => App.previewAndSave({ kind: "edits", edits: changed.map(([k, v]) =>
       ({ file: "slothtune.json", path: ["systems", r.system, "gains", short(k)], value: +Number(v).toPrecision(6) })) },
       `${r.system}: its tuned gains`);

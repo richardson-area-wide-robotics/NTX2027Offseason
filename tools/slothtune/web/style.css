@@ -262,7 +262,8 @@ details > summary { cursor: pointer; font-weight: 600; }
 .seg button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 0 4px var(--panel); }
 .seg button:disabled { color: var(--muted); cursor: not-allowed; }
 .seg button:last-child { border-right: 0; }
-.seg button.on { background: var(--seg-on); color: var(--seg-on-ink); font-weight: 600; box-shadow: inset 0 0 0 1px var(--seg-on-edge); }
+.seg button.on { background: var(--seg-on); color: var(--seg-on-ink); font-weight: 600; }
+.seg button.on:not(:focus-visible) { box-shadow: inset 0 0 0 1px var(--seg-on-edge); }
 
 /* ---------------------------------------------------------------- guide */
 @media (max-width: 900px) { #gbody { order: -1; } }  /* phone: the step before the list */
@@ -308,7 +309,7 @@ ol.do { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
 /* ---------------------------------------------------------------- modal, toast */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; z-index: 50; padding: 16px;
   grid-template-columns: minmax(0, 1fr); }  /* a long diff line must scroll inside the box, not widen it past the screen */
-.modal-box { background: var(--panel); border-radius: 10px; max-width: 760px; width: 100%; min-width: 0; max-height: 90vh; overflow: auto;
+.modal-box { background: var(--panel); border: 1px solid var(--edge); border-radius: 10px; max-width: 760px; width: 100%; min-width: 0; max-height: 90vh; overflow: auto;
   padding: 18px 20px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 pre.diff { background: var(--bg); border-radius: 6px; padding: 10px; overflow-x: auto; font: 12px/1.45 var(--mono); margin: 0; }
 pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.diff .hdr { color: var(--muted); }
@@ -327,15 +328,10 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 .ct-dot { fill: var(--accent); }
 .ct-label { fill: var(--muted); font-size: 12px; }
 .ct-key-rec { color: var(--ok); font-weight: 600; }
-.ct-trig { display: flex; gap: 10px; align-items: center; }
-.ct-trig > div { display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
-.ct-trig b { display: flex; align-items: flex-end; width: 18px; height: 124px; background: var(--bg);
-  border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
-.ct-trig i { display: block; width: 100%; height: 0; background: var(--accent); }
-.ct-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
 /* The joystick check's Xbox drawing. A press fills in the joystick's role color: the driver's
-   blue, the tester's or operator's orange; a button seen keeps a green ring. */
-.ct-pad { --press: var(--accent); width: 100%; max-width: 300px; height: auto; display: block; margin: 2px auto; }
+   blue, the tester's or operator's orange, one not named yet in ink; a button seen keeps a green
+   ring, and the line under the drawing names the ones still to press. */
+.ct-pad { --press: var(--ink); width: 100%; max-width: 300px; height: auto; display: block; margin: 2px auto; }
 .ct-pad-key { margin: 2px 0 0; }
 /* The Live tab's gyro: its health, then its numbers in a row of small cells. */
 .gyro-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
@@ -348,24 +344,18 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 .sys-model-facts b { font-weight: 600; }
 .ct-pad.role-driver { --press: var(--driver); }
 .ct-pad.role-operator { --press: var(--operator); }
-.ct-pad .ct-body { fill: var(--bg); stroke: var(--rule); stroke-width: 2; }
+.ct-pad .ct-body { fill: var(--bg); stroke: var(--edge); stroke-width: 1.5; }
 .ct-pad .ct-btn { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
 .ct-pad .ct-trig-fill { fill: var(--press); opacity: .85; }
-.ct-pad .ct-btn-text { font-size: 10px; font-weight: 600; fill: var(--ink); pointer-events: none; }
-.ct-pad .ct-btn-num { font-size: 9px; fill: var(--muted); pointer-events: none; }
-.ct-pad .ct-btn-cap { font-size: 10px; font-weight: 600; fill: var(--muted); pointer-events: none; }
+.ct-pad .ct-btn-text { font-size: 12px; font-weight: 600; fill: var(--ink); pointer-events: none;
+  paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; }
+.ct-pad .ct-btn-num { font-size: 12px; fill: var(--muted); pointer-events: none; }
+.ct-pad .ct-btn-cap { font-size: 12px; font-weight: 600; fill: var(--muted); pointer-events: none; }
 .ct-pad g.seen .ct-btn { stroke: var(--ok); stroke-width: 3; }
 .ct-pad g.down .ct-btn { fill: var(--press); stroke: var(--press); }
-.ct-pad g.down .ct-btn-text { fill: var(--on-state); }
-.ct-pad g:focus { outline: none; }
-.ct-pad g:focus .ct-btn { stroke: var(--accent); stroke-width: 3; }
+.ct-pad g.down .ct-btn-text { fill: var(--on-state); stroke: none; }
 .ct-key-driver { color: var(--driver); font-weight: 600; }
 .ct-key-operator { color: var(--operator); font-weight: 600; }
-/* A button seen is solid green with a check; one held now gets a ring. Neither is color alone. */
-.ct-buttons .chip.seen { background: var(--ok); color: var(--on-state); border-color: var(--ok); }
-.ct-buttons .chip.seen::before { content: "\2713"; }
-.ct-buttons .chip.seen .muted { color: inherit; }
-.ct-buttons .chip.down { box-shadow: 0 0 0 2px var(--accent); }
 .ct-zoom { fill: var(--bg); stroke: var(--edge); stroke-width: 1; }
 .ct-key-code { color: var(--warn); font-weight: 600; }
 /* The steps keep their numbers (a flex li drops the list marker). */
@@ -667,7 +657,7 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
   padding: 4px 8px; border: 1px solid transparent; border-radius: 6px; background: none; text-align: left;
   cursor: pointer; color: var(--ink); font: inherit; }
 .rail-item:not(.on):hover { background: var(--seg-hover); }
-/* The open section: accent edge and rail, 5.96:1 (light) / 7.65:1 (dark) on the panel. */
+/* The open section: accent edge and rail, 4.67:1 (light) / 6.35:1 (dark) on the panel. */
 .rail-item.on { background: var(--sel); box-shadow: inset 3px 0 0 var(--accent); }
 .rail-item .n { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
   font: 700 12px var(--sans); color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--edge); }
@@ -795,6 +785,7 @@ table.t td > select { padding-block: 1px; }
   /* Live: the robot drawing sized to the screen, not to its column. */
   #tab-live .robot-svg { width: min(100%, 520px, calc(var(--work-h) - 200px)); }
   #tab-live .field-svg { max-height: calc(var(--work-h) - 200px); }
+  #tab-live > .grid2 > .stack { max-height: var(--work-h); overflow-y: auto; }
   /* The robot drawing's column is the drawing's width; the field view gets three fifths. */
   #tab-live > .grid2:not(:has(#field-wrap:not([hidden]))) { grid-template-columns: calc(min(520px, var(--work-h) - 200px) + 110px) minmax(0, 1fr); }
   #tab-live > .grid2:has(#field-wrap:not([hidden])) { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
@@ -949,7 +940,7 @@ table.lights.compact .lights-group th { padding-top: 5px; }
 /* Systems: game pieces, a sensor or hold a row, its button beside it. */
 .pc-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--rule); }
 .pc-table { max-width: 260px; }
-#sys-view { display: inline-flex; margin-bottom: 6px; }
+#sys-view { display: inline-flex; justify-self: start; margin-bottom: 6px; }
 /* Calibrate, 6 and 9: the camera's connection, the guided calibration, and the new field. */
 .cm-box { display: grid; gap: 6px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
 .nf-part { border-top: 1px solid var(--rule); padding-top: 6px; margin-top: 6px; }
@@ -986,10 +977,16 @@ table.lights.compact .lights-group th { padding-top: 5px; }
 .at-why { margin: 6px 0; padding-left: 18px; }
 .at-why li + li { margin-top: 2px; }
 .at-panel .warn-ink { font-weight: 600; }
-/* A mechanism's auto-tune, above its plot: one row a round, its best marked. */
+/* A mechanism's auto-tune: its state and buttons in a strip above the graphs (Tune's next step,
+   compact; amber while paused), its model, checks and rounds under them, the best marked. */
+.next-step.compact { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 4px 12px; padding: 6px 10px 6px 14px; margin: 4px 0; }
+.next-step.compact p { margin: 0; flex: 1 1 240px; }
+.next-step.compact.paused { box-shadow: inset 4px 0 0 var(--warn); }
 .sys-at-panel { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
 .sys-at-panel p { margin: 4px 0; }
-.sys-at-panel tr.best td { background: var(--seg-hover); }
+/* The best row: the accent rail Tune marks its current run with (the hover tint was 1.36:1 light). */
+.sys-at-panel tr.best > td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 
 /* Tune drive train: a pod whose gains differ from the shared ones. */
 #podseg button.own::after { content: " \2022"; color: var(--warn); }

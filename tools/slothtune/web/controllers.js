@@ -14,7 +14,7 @@
     { id: "triggers", title: "Squeeze the triggers", secs: 6,
       text: "Squeeze both triggers all the way and let go, three times." },
     { id: "buttons", title: "Press every button", secs: 60, manual: true,
-      text: "Press each button three times, firmly, one at a time. Each lights up when it's seen. Press Done when they're all lit." },
+      text: "Press each button three times, firmly, one at a time. Each lights while it's held and keeps a green ring once it's seen. Press Done when the line under the drawing says every button is seen." },
   ];
   const BUTTONS = ["A", "B", "X", "Y", "Left bumper", "Right bumper", "Left trigger", "Right trigger", "Back", "Start",
     "Left stick press", "Right stick press", "D-pad up", "D-pad down", "D-pad left", "D-pad right"];
@@ -60,8 +60,8 @@
         <details class="small"><summary>What the drawing shows</summary><p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
           <span class="ct-key-code">Dashed outline</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>):
           a circle where the deadband is round (distance from center), a square where each axis has its own.
-          <span class="ct-key-rec">Green outline</span>: what this joystick needs, once measured. A button turns green with ✓ once seen;
-          the number is the one robot code uses.</p></details>
+          <span class="ct-key-rec">Green outline</span>: what this joystick needs, once measured. A button keeps a green ring once it's seen;
+          the number by it is the one robot code uses.</p></details>
       </section>
       <div>
         <section>
@@ -72,7 +72,7 @@
         <section>
           <h3 data-tip="ct.colors">Buttons</h3>
           <svg id="ct-buttons" class="ct-pad" viewBox="0 0 360 214" role="list" aria-label="Buttons, laid out as on an Xbox controller"></svg>
-          <p class="small muted ct-pad-key"><span class="ct-key-driver">Blue</span>: driver · <span class="ct-key-operator">Orange</span>: tester or operator · green ring: seen · numbers: as robot code counts them</p>
+          <p class="small muted ct-pad-key" id="ct-pad-key" aria-live="polite"></p>
         </section>
         <section>
           <h3 data-tip="ct.report">Report</h3>
@@ -183,7 +183,7 @@
       <rect x="${x}" y="2" width="34" height="20" rx="5" class="ct-btn"/>
       <rect x="${x}" y="2" width="34" height="0" rx="5" class="ct-trig-fill" id="ct-${label.toLowerCase()}"/>
       <text x="${x + 17}" y="16" text-anchor="middle" class="ct-btn-text">${label}</text></g>`;
-    const buttons = PAD.map(b => `<g role="listitem" tabindex="0" aria-label="${esc(BUTTONS[b.i])}" data-b="${b.i}"
+    const buttons = PAD.map(b => `<g role="listitem" aria-label="${esc(BUTTONS[b.i])}${WPI[b.i] ? `, button ${WPI[b.i]}` : ""}" data-b="${b.i}"
       ${WPI[b.i] ? `data-tip="ct.button"` : `data-tip="ct.dpad"`} data-quiet>${b.shape}
       <text x="${b.lx}" y="${b.ly}" text-anchor="middle" class="${b.caption ? "ct-btn-cap" : "ct-btn-text"}">${b.text}</text>
       ${WPI[b.i] && b.nx != null ? `<text x="${b.nx}" y="${b.ny}" text-anchor="middle" class="ct-btn-num">${WPI[b.i]}</text>` : ""}</g>`).join("");
@@ -191,7 +191,7 @@
   }
 
   // Whose joystick this is: the driver's (its port, or "Driver" in its name) or the tester's or
-  // an operator's. Their presses light in different colors; unnamed ones in the accent color.
+  // an operator's. Their presses light in different colors; unnamed ones in ink.
   function role() {
     const { drive, deadman } = ports();
     const label = ($("#ct-label", root).value || "").toLowerCase();
@@ -237,6 +237,22 @@
       c.classList.toggle("down", down);
       c.classList.toggle("seen", seen.has(i));
     });
+    paintKey(who);
+  }
+
+  // The line under the drawing says in words what its colors say: whose joystick it is and, while
+  // the buttons are being checked, which are still to press. Written only when it changes.
+  let keyWas = "";
+  function paintKey(who) {
+    const whom = who === "driver" ? `<b class="ct-key-driver">Driver's joystick</b>: presses light blue.`
+      : who === "operator" ? `<b class="ct-key-operator">Tester's or operator's joystick</b>: presses light orange.`
+      : `<b>Not named yet</b>: presses fill solid. Say which one it is above to color them.`;
+    const left = DIGITAL.filter(i => !seen.has(i));
+    const checking = recording && recording.step.id === "buttons";
+    const todo = !checking ? " Green ring: seen. Numbers: as robot code counts them."
+      : left.length ? ` Still to press (${left.length}): ${left.map(i => esc(BUTTONS[i])).join(", ")}.` : " <b>Every button seen.</b>";
+    const html = whom + todo;
+    if (html !== keyWas) { keyWas = html; $("#ct-pad-key", root).innerHTML = html; }
   }
 
   function frame() { paint(); requestAnimationFrame(frame); }

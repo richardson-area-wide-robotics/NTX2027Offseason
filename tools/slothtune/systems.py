@@ -502,8 +502,9 @@ def limits_report(doc):
 # ---------------------------------------------------------------------------- model-based tuning
 
 
-# The gains each SPARK closed-loop mode uses (REV applies kV and kA only in some of them). A
-# position loop the code profiles on the roboRIO (plain Position) gets no speed feedforward.
+# The gains the tool sets in each SPARK closed-loop mode (REV applies kV and kA only in some). A
+# position loop the code profiles on the roboRIO (plain Position) gets no speed feedforward, and
+# its kS is left as the team set it (modeltune.MODE_FF).
 MODE_GAINS = {
     "Position": ("kP", "kD", "kG", "kCos"),
     "MAXMotionPosition": ("kP", "kD", "kS", "kV", "kA", "kG", "kCos", "mmCruise", "mmAccel"),
