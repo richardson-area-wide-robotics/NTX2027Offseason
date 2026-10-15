@@ -97,6 +97,9 @@ public final class SlothTuneTopics {
   public static final String STATUS_MESSAGE = ROOT + "/Status/Message";
   public static final String STATUS_PROGRESS = ROOT + "/Status/Progress";
   public static final String STATUS_DEADMAN_HELD = ROOT + "/Status/DeadmanHeld";
+  /** A running test's live view: the channels in it (time first), and its newest rows, flattened. */
+  public static final String STATUS_LIVE_NAMES = ROOT + "/Status/LiveNames";
+  public static final String STATUS_LIVE_ROWS = ROOT + "/Status/LiveRows";
 
   // ---------------------------------------------------------------- results (robot -> laptop)
   public static final String RESULT_SEQ = ROOT + "/Result/Seq";

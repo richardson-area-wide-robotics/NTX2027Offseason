@@ -57,6 +57,8 @@ STATUS_STATE = ROOT + "/Status/State"
 STATUS_MESSAGE = ROOT + "/Status/Message"
 STATUS_PROGRESS = ROOT + "/Status/Progress"
 STATUS_DEADMAN_HELD = ROOT + "/Status/DeadmanHeld"
+STATUS_LIVE_NAMES = ROOT + "/Status/LiveNames"
+STATUS_LIVE_ROWS = ROOT + "/Status/LiveRows"
 
 # results
 RESULT_SEQ = ROOT + "/Result/Seq"

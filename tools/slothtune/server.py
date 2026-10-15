@@ -192,7 +192,7 @@ class Session:
                 self.test_state.update(running=False, state="ERROR", message=str(e))
 
         self.test_state = {"running": True, "test": test, "module": module, "state": "SENDING",
-                           "message": "Sending to the robot...", "progress": 0.0}
+                           "message": "Sending to the robot...", "progress": 0.0, "args": dict(args or {})}
         self.test_thread = threading.Thread(target=work, name="slothtune-test", daemon=True)
         self.test_thread.start()
         return True, "Started."
@@ -201,7 +201,7 @@ class Session:
         """Runs one test to its end, the banner following it, and saves the run like any other:
         ``(result, document, saved run's file name)``; the document is None when it was refused."""
         self.test_state = {"running": True, "test": test, "module": module, "state": "SENDING",
-                           "message": "Sending to the robot...", "progress": 0.0}
+                           "message": "Sending to the robot...", "progress": 0.0, "args": dict(args or {})}
         gains = self.link.gains()
         if test.startswith("system_"):
             # A mechanism's run keeps the mechanism's own gains ("Elevator/kP"): its report's next
@@ -351,6 +351,8 @@ def api_live(_):
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],
             "deadman": S.link.get("bool", C.STATUS_DEADMAN_HELD),
+            # A running test's newest rows, for a live graph (the Systems tab's).
+            "test_live": S.link.test_live() if S.test_state.get("running") else None,
             "seen_tags": seen_tags(S.link.sightings(), live.get("t")),
             "motor_guard": {k: v for k, v in S.link.motors().items() if k != "motors"}}
 

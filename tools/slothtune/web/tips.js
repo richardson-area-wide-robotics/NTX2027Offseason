@@ -257,6 +257,8 @@ const TIPS = {
   "sys.autotune": ["Tunes this mechanism's own gains round by round: its test, one gain changed, again, up to 8 rounds.", "kG or kV first (from the physics or the run), then kP; it ends on its best round, and Save keeps it.", null],
   "sys.at-start": ["Starts the first round as soon as the deadman is held.", "Every round is an ordinary test: letting go stops it, and Continue runs it again.", null],
   "sys.at-practice": ["Runs the tuner on a made-up mechanism on this laptop: nothing on the robot moves.", "A way to see how it works before tuning the real one.", null],
+  "sys.live": ["What the graphs below show: live while a test of this mechanism runs, then the last run.",
+    "Top: the target and where it is. Below: the error between them, or during the measuring run the volts it tests with.", "error"],
   "sys.at-method": ["Picks how to tune: measure the mechanism once and work every gain out, or change one gain a round.",
     "Measuring is quicker and explains itself; round by round needs no blocks and works where the measuring run can't.", "model_tuning"],
   "sys.at-model": ["What the measuring run found: friction, back-EMF, inertia and gravity, how well they fit, and the speed reading's delay.",

@@ -124,6 +124,32 @@ public final class Sampler {
     return names;
   }
 
+  /**
+   * The newest {@code rows} rows of the named channels, oldest first, one row after another: for a
+   * live view while it records. A channel it doesn't record reads NaN.
+   */
+  public synchronized double[] tail(List<String> names, int rows) {
+    int n = Math.max(0, Math.min(rows, count));
+    int[] at = new int[names.size()];
+    for (int j = 0; j < at.length; j++) {
+      at[j] = -1;
+      for (int c = 0; c < channels.size(); c++) {
+        if (channels.get(c).name.equals(names.get(j))) {
+          at[j] = c;
+          break;
+        }
+      }
+    }
+    double[] out = new double[n * at.length];
+    for (int r = 0; r < n; r++) {
+      int row = count - n + r;
+      for (int j = 0; j < at.length; j++) {
+        out[r * at.length + j] = at[j] < 0 || data.length <= at[j] ? Double.NaN : data[at[j]][row];
+      }
+    }
+    return out;
+  }
+
   /** Copies of every channel trimmed to the rows recorded. */
   public synchronized Map<String, double[]> snapshot() {
     Map<String, double[]> out = new LinkedHashMap<>();

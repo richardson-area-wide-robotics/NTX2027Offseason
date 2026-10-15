@@ -134,6 +134,11 @@ public final class SlothTune {
   private final StringPublisher statusMessage;
   private final DoublePublisher statusProgress;
   private final BooleanPublisher statusDeadman;
+  private final StringArrayPublisher statusLiveNames;
+  private final DoubleArrayPublisher statusLiveRows;
+  /** The channels a live view shows (those a test records), time first; and how many rows each loop. */
+  private List<String> liveNames = List.of();
+  private int liveRowCount;
   private final IntegerPublisher resultSeq;
   private final StringPublisher resultTest;
   private final StringPublisher resultOutcome;
@@ -354,6 +359,8 @@ public final class SlothTune {
     statusMessage = nt.getStringTopic(SlothTuneTopics.STATUS_MESSAGE).publish();
     statusProgress = nt.getDoubleTopic(SlothTuneTopics.STATUS_PROGRESS).publish();
     statusDeadman = nt.getBooleanTopic(SlothTuneTopics.STATUS_DEADMAN_HELD).publish();
+    statusLiveNames = nt.getStringArrayTopic(SlothTuneTopics.STATUS_LIVE_NAMES).publish();
+    statusLiveRows = nt.getDoubleArrayTopic(SlothTuneTopics.STATUS_LIVE_ROWS).publish();
     resultSeq = nt.getIntegerTopic(SlothTuneTopics.RESULT_SEQ).publish();
     resultTest = nt.getStringTopic(SlothTuneTopics.RESULT_TEST).publish();
     resultOutcome = nt.getStringTopic(SlothTuneTopics.RESULT_OUTCOME).publish();
@@ -1098,6 +1105,7 @@ public final class SlothTune {
       }
     }
     publishStatus(isDeadmanHeld(now));
+    publishLive();
   }
 
   private void readPdhPower() {
@@ -1596,6 +1604,19 @@ public final class SlothTune {
     ctx.note("Environment: " + ctx.env + (ctx.visionInUse ? ", AprilTags in use" : ", no AprilTags"));
     ctx.note("Battery: " + (battery.current().isEmpty() ? "not picked" : battery.current()));
     ctx.sampler.start(clock);
+    // The live view: what a mechanism's tests record that a person wants to watch (its target, where
+    // it is, the volts asked), the newest 0.6 s of it each loop. NetworkTables sends about every
+    // 100 ms, so each send overlaps the last and the laptop misses no row.
+    List<String> recorded = ctx.sampler.names();
+    liveNames = new ArrayList<>(List.of("t"));
+    for (String n : LIVE_CHANNELS) {
+      if (recorded.contains(n)) {
+        liveNames.add(n);
+      }
+    }
+    liveRowCount = (int) Math.min(64, Math.ceil(0.6 * rate) + 1);
+    statusLiveNames.set(liveNames.toArray(new String[0]));
+    statusLiveRows.set(new double[0]);
     if (!manualSampling && !proc.samplesEachLoop()) {
       notifier = new Notifier(ctx.sampler::sampleNow);
       notifier.setName("SlothTune sampler");
@@ -1698,6 +1719,15 @@ public final class SlothTune {
   }
 
   // ------------------------------------------------------------------ telemetry
+
+  /** What a running test's live view shows, when the test records it. */
+  static final List<String> LIVE_CHANNELS = List.of("pos", "vel", "sp", "goal", "cmd", "stage", "volts0");
+
+  private void publishLive() {
+    if (state == State.RUNNING && ctx != null && liveNames.size() > 1) {
+      statusLiveRows.set(ctx.sampler.tail(liveNames, liveRowCount));
+    }
+  }
 
   private void publishStatus(boolean deadmanHeld) {
     envActive.set(environment().name());

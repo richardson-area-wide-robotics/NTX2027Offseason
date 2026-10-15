@@ -112,6 +112,9 @@ final class SystemIdProcedure implements Procedure {
   /** The speed governor's integral, volts; and its gain, volts a second per unit a second. */
   private double uInt;
   private double kI;
+  /** Volts per unit of speed, from the sweeps: the quick steps are sized from it. */
+  private double kvSum;
+  private int kvN;
   /** The hold map: the volts asked at each place moving up, and down, at the first sweeps' speed. */
   private final double[] mapUp = new double[BINS];
   private final double[] mapDn = new double[BINS];
@@ -246,6 +249,8 @@ final class SystemIdProcedure implements Procedure {
       java.util.Arrays.fill(nUp, 0);
       java.util.Arrays.fill(nDn, 0);
       holds.clear();
+      kvSum = 0;
+      kvN = 0;
       for (double volts : new double[] {step, step, 1.5 * step, 1.5 * step}) {
         legs.add(new Leg(Stage.STEP, Math.min(volts, voltsMax), 0));
       }
@@ -474,6 +479,19 @@ final class SystemIdProcedure implements Procedure {
     uInt += Math.max(-rate, Math.min(rate, kI * (target - v))) * dt;
   }
 
+  /**
+   * A quick step's volts above the hold: what was asked, but never more than takes it to 60% of
+   * {@code vmax} (the first two) or 90% (the last two), from the volts per speed the sweeps measured.
+   * A fixed few volts would carry a light mechanism past its speed stop.
+   */
+  private double stepVolts(Leg l) {
+    if (kvN == 0) {
+      return l.amount;
+    }
+    double frac = leg < legs.size() - 2 ? 0.6 : 0.9;
+    return Math.min(l.amount, frac * (kvSum / kvN) * vmax + (uUp - uDn) / 2);
+  }
+
   private boolean brake(double t) {
     leg++;
     uInt = 0;  // the hold there, then the governor takes it to rest
@@ -594,7 +612,14 @@ final class SystemIdProcedure implements Procedure {
           double target = dir * l.amount * vmax * Math.min(1, ts / 0.5);
           govern(target, vq, dt, SWEEP_RATE);
           cmd = holdAt(p) + uInt;
-          if (leg < 2 && ts > 0.5 && Math.abs(vq - target) < 0.25 * Math.abs(target)) {
+          boolean steady = ts > 0.5 && Math.abs(vq - target) < 0.25 * Math.abs(target);
+          if (steady && Math.abs(vq) > 0) {
+            // At a steady speed the volts above the hold are friction's share and back-EMF's: volts
+            // per unit of speed, for sizing the quick steps.
+            kvSum += Math.max(0, Math.abs(cmd - holdAt(p)) - (uUp - uDn) / 2) / Math.abs(vq);
+            kvN++;
+          }
+          if (leg < 2 && steady) {
             int b = bin(p);  // the first two sweeps, one each way at the same speed: the hold map
             if (dir > 0) {
               mapUp[b] += cmd;
@@ -605,7 +630,7 @@ final class SystemIdProcedure implements Procedure {
             }
           }
         } else {
-          cmd = holdAt(p) + dir * l.amount;
+          cmd = holdAt(p) + dir * stepVolts(l);
         }
         double edge = dir > 0 ? hi : lo;
         if (dir * (p + vq * LEAD_S - edge) >= 0 || Math.abs(vq) > (stage == Stage.STEP ? 0.9 : 0.8) * vmax) {

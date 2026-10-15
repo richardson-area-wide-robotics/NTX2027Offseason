@@ -230,20 +230,22 @@ const Systems = (() => {
           `<button data-speed="${k}" class="${speed === k ? "on" : ""}" aria-pressed="${speed === k}" data-tip="sys.speed-${k}">${k === "half" ? "Half speed" : "Full speed"}</button>`).join("")}</div>
         <button class="btn" id="sys-autotune" data-tip="sys.autotune" ${p.ok && Object.keys(s.gains || {}).length ? "" : "disabled"}>Auto-tune…</button>
         <button class="btn primary" id="sys-run" data-tip="sys.run" ${p.ok && App.connected() && where ? "" : "disabled"}>Run</button></div></div>
+      <p class="small sys-live-note" id="sys-live-note" data-tip="sys.live"></p>
+      <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The target and where the mechanism is"></canvas></div>
+      <div class="plotwrap"><canvas class="plot sys-err" id="sys-err" role="img" aria-label="The error: the target less where the mechanism is"></canvas></div>
       ${p.ok ? `<p class="small">${positional(s) ? `Moves between ${n4(by(p.a, k))} and ${n4(by(p.b, k))} ${u}` : `Spins up to ${n4(by(p.a, k))}, then ${n4(by(p.b, k))} ${u}, then down`},
           no faster than <b>${n4(by(p.vmax, k))}</b> ${u}${positional(s) ? "/s" : ""}${speed === "half" ? " (half its planned speed)" : ""}, changing at most ${n4(by(p.amax, k))}${u ? ` ${u}/s${positional(s) ? "²" : ""}` : ` per second${positional(s) ? " per second" : ""}`}.
           <span class="muted">${(p.why || []).map(esc).join("; ")}.</span></p>
         <p class="small muted">Robot enabled ${where ? "" : "<b class=\"warn-ink\">(set On blocks or On the floor first)</b> "}and the deadman held; someone watching it, hands clear. It stops at once if it leaves its limits or goes too fast.</p>`
         : `<p class="small warn-ink">Before it can be tested: ${(p.missing || ["its settings"]).map(esc).join("; ")}.</p>`}
       <div id="sys-at" class="small" hidden></div>
-      <div class="plotwrap"><canvas class="plot short" id="sys-plot" role="img" aria-label="The goal and what the mechanism did"></canvas></div>
       <div id="sys-report" class="small"></div>`;
     $("#sys-run", box).onclick = run;
     $("#sys-autotune", box).onclick = () => openAutoTune(s, p);
     if (tuneState && tuneState.system === s.name) paintTune(tuneState);
     wireView(box);
     $$("#sys-speed [data-speed]", box).forEach(b => b.onclick = () => { speed = b.dataset.speed; paintTest(); });
-    drawRun();
+    if (!drawLive()) drawRun();
   }
 
   // The plan at the chosen speed: a flywheel's goals are speeds too, a pivot's stay where they are.
@@ -263,17 +265,103 @@ const Systems = (() => {
     drawRun();
   }
 
+  // ---------------------------------------------------------------- live graphs
+  // While a test of this mechanism runs (a Run, the measuring run, an auto-tune check), the robot
+  // sends its newest 0.6 s of rows about ten times a second (SlothTune.publishLive). They are
+  // stitched together here, so the graphs grow as it moves: the target and where it is, and below,
+  // the error between them (WPILib's error: the target less the measurement). The measuring run has
+  // no target: below it, the volts it asks for and the volts the SPARK applies.
+  let liveRun = null;
+  const STAGE_WORD = ["finding the volts that hold it", "holding still", "a slow sweep", "a quick step", "done"];
+
+  function takeLive(L) {
+    const t = L && L.test, tl = L && L.test_live;
+    if (!t || !t.running || !tl || !(tl.names || []).length || !/^system_(step|id)$/.test(t.test || "")) return false;
+    const ti = tl.names.indexOf("t");
+    if (ti < 0) return false;
+    // Until the robot itself is running this test, the topic still holds the last run's rows.
+    const robot = L.status || {};
+    if (robot.state !== "RUNNING" || robot.test !== t.test) return !!liveRun;
+    const key = `${t.test}:${(t.args || {}).system}`;
+    const fresh = !liveRun || liveRun.key !== key || liveRun.names.join() !== tl.names.join();
+    const newest = (tl.rows || []).length ? tl.rows[tl.rows.length - 1][ti] : null;
+    const lastT = liveRun && liveRun.rows.length ? liveRun.rows[liveRun.rows.length - 1][ti] : -Infinity;
+    // A new run's clock starts again at zero: a fresh graph.
+    if (fresh || (newest != null && newest < lastT - 0.5)) {
+      liveRun = { key, test: t.test, system: (t.args || {}).system, names: tl.names, rows: [] };
+    }
+    const after = liveRun.rows.length ? liveRun.rows[liveRun.rows.length - 1][ti] : -Infinity;
+    for (const r of tl.rows || []) if (r[ti] > after + 1e-9) liveRun.rows.push(r);
+    return true;
+  }
+
+  function drawLive() {
+    const s = current(), cv = $("#sys-plot", root), ev = $("#sys-err", root), note = $("#sys-live-note", root);
+    if (!cv || !ev || !s || !liveRun || +liveRun.system !== +s.index || !liveRun.rows.length) return false;
+    const N = liveRun.names, R = liveRun.rows;
+    const col = n => { const i = N.indexOf(n); return i < 0 ? [] : R.map(r => (r[i] == null || !isFinite(r[i]) ? null : r[i])); };
+    const pos = positional(s), { label, k } = unit(s);
+    const show = a => a.map(v => v == null ? null : v * k);
+    const t = col("t"), actual = show(col(pos ? "pos" : "vel"));
+    const xrange = [0, Math.max(5, t[t.length - 1] || 0)];
+    const running = !!(App.live && App.live.test && App.live.test.running);
+    const lead = running ? `<b class="live-dot">Live</b>` : `<b>Last run</b>`;
+    const term = (key, text) => `<span class="term" tabindex="0" data-learn="${key}">${text}</span>`;
+    if (liveRun.test === "system_id") {
+      const st = col("stage").filter(v => v != null).pop();
+      note.innerHTML = `${lead}: ${term("system_id", "the measuring run")}${st != null && STAGE_WORD[st] ? `, ${STAGE_WORD[st]}` : ""}.
+        No target here: below are the volts it is testing ${esc(s.name)} with.`;
+      Plot.draw(cv, { xlabel: "s", ylabel: label, xrange, series: [
+        { x: t, y: actual, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
+      Plot.draw(ev, { xlabel: "s", ylabel: "volts", xrange, series: [
+        { x: t, y: col("cmd"), color: "--sp", dash: [6, 4], width: 1.6, label: "volts asked", learn: "control_effort" },
+        { x: t, y: col("volts0"), color: "--s1", width: 1.5, label: "volts applied", learn: "control_effort" }] });
+      return true;
+    }
+    const sp = show(col("sp"));
+    const err = sp.map((v, i) => (v == null || actual[i] == null ? null : v - actual[i]));
+    note.innerHTML = `${lead}: the ${term("setpoint", "target")} moves along a limited path and the mechanism follows it.
+      ${term("error", "Error")} = target - where it is: above zero it is behind, below it has gone past.`;
+    Plot.draw(cv, { xlabel: "s", ylabel: label, xrange, series: [
+      { x: t, y: show(col("goal")), color: "--muted", dash: [2, 3], width: 1, label: "headed for" },
+      { x: t, y: sp, color: "--sp", dash: [6, 4], width: 1.6, label: "target", learn: "setpoint" },
+      { x: t, y: actual, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
+    Plot.draw(ev, { xlabel: "s", ylabel: `error, ${label}`, xrange, series: [
+      { x: [xrange[0], xrange[1]], y: [0, 0], color: "--muted", width: 1, label: "zero" },
+      { x: t, y: err, color: "--bad", width: 1.6, label: "error", learn: "error" }] });
+    return true;
+  }
+
+  let liveWas = false;
+  App.on("live", L => {
+    if (!root.classList.contains("on")) return;
+    const running = !!(L && L.test && L.test.running);
+    if (takeLive(L) || (liveWas && !running)) drawLive();
+    liveWas = running;
+  });
+
   function drawRun() {
-    const out = $("#sys-report", root), cv = $("#sys-plot", root);
+    const out = $("#sys-report", root), cv = $("#sys-plot", root), ev = $("#sys-err", root), note = $("#sys-live-note", root);
     if (!cv) return;
-    if (!last) { Plot.draw(cv, { series: [] }); out.innerHTML = ""; return; }
+    if (!last) {
+      Plot.draw(cv, { series: [], empty: "The target and where it is show here, live, while a test of it runs" });
+      if (ev) Plot.draw(ev, { series: [], empty: "And the error between them here" });
+      if (note) note.innerHTML = "";
+      out.innerHTML = "";
+      return;
+    }
     const ch = last.channels || {}, s = current(), pos = positional(s), { label, k } = unit(s);
     // New arrays in the team's units: the run keeps its own.
     const show = a => (a || []).map(v => v == null ? v : v * k);
+    const actual = show(pos ? ch.pos : ch.vel), sp = show(ch.sp);
+    if (note) note.innerHTML = `<b>Last run</b>: <span class="term" tabindex="0" data-learn="error">error</span> = target - where it is.`;
     Plot.draw(cv, { xlabel: "s", ylabel: label, series: [
       { x: ch.t, y: show(ch.goal), color: "--muted", dash: [2, 3], width: 1, label: "headed for" },
-      { x: ch.t, y: show(ch.sp), color: "--sp", dash: [6, 4], width: 1.6, label: "goal", learn: "setpoint" },
-      { x: ch.t, y: show(pos ? ch.pos : ch.vel), color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
+      { x: ch.t, y: sp, color: "--sp", dash: [6, 4], width: 1.6, label: "target", learn: "setpoint" },
+      { x: ch.t, y: actual, color: "--s0", width: 2, label: s.name, learn: "measurement" }] });
+    if (ev && ch.t) Plot.draw(ev, { xlabel: "s", ylabel: `error, ${label}`, series: [
+      { x: [ch.t[0], ch.t[ch.t.length - 1]], y: [0, 0], color: "--muted", width: 1, label: "zero" },
+      { x: ch.t, y: sp.map((v, i) => (v == null || actual[i] == null ? null : v - actual[i])), color: "--bad", width: 1.6, label: "error", learn: "error" }] });
     const rep = last.report || {};
     out.innerHTML = `<p><b>${esc(rep.summary || "")}</b>${rep.score != null ? ` · score ${rep.score}` : ""}</p>
       ${(rep.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")}
@@ -351,7 +439,9 @@ const Systems = (() => {
       $$("#sat-method [data-m]", m).forEach(b => b.onclick = () => { tuneMethod = b.dataset.m; openAutoTune(s, p); });
       const go = async body => {
         App.closeModal();
-        const r = await App.api("/api/systems/autotune/start", Object.assign({ system: s.name, args, mode: model ? "model" : "rounds" }, body));
+        const full = (s.plan || {}).vmax;
+        const r = await App.api("/api/systems/autotune/start", Object.assign({ system: s.name, args, mode: model ? "model" : "rounds",
+          id_args: full ? { vmax: full } : {} }, body));
         if (!r.ok) { App.toast(r.error || "The auto-tuner didn't start.", 6000); return; }
         tuneState = r;
         paintTest();
@@ -396,7 +486,7 @@ const Systems = (() => {
           ${live ? `<button class="btn small" id="sat-stop" data-tip="autotune.stop">Stop</button>` : ""}
           ${!live && changed.length && r.target !== "practice" ? `<button class="btn small primary" id="sat-save" data-tip="sys.at-save">Save to slothtune.json…</button>` : ""}
           ${!live ? `<button class="btn small" id="sat-close" data-tip="sys.at-close">Close</button>` : ""}</span></div>
-      <p class="${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>
+      ${live || !r.reason || !(r.message || "").includes(r.reason) ? `<p class="${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>` : ""}
       ${m.summary ? `<div data-tip="sys.at-model"><b>${term("system_id", "The model")}</b>
         <div class="sys-model-facts">
           <span>${term("kS", "Friction kS")} <b class="mono">${n4(fit.kS)} V</b></span>
@@ -420,7 +510,7 @@ const Systems = (() => {
       ${r.reason && !live ? `<p><b>${r.status === "done" ? "Done" : "Stopped"}:</b> ${esc(r.reason)}</p>` : ""}
       ${changed.length && !live ? `<table class="t small" data-tip="sys.at-changes"><thead><tr><th>What it changes</th><th class="num">It had</th><th class="num">Now</th></tr></thead><tbody>
         ${changed.map(([k, v]) => `<tr><td>${esc(k.split("/").pop())}</td><td class="num mono">${n4(before[k])}</td><td class="num mono">${n4(v)}</td></tr>`).join("")}</tbody></table>` : ""}
-      <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted">How it works:</span>${Learn.chips(MODEL_LESSONS.learn)}</div></div>`;
+      <details class="small"><summary>How it works: the lessons</summary><div class="row learn-row" style="flex-wrap:wrap">${Learn.chips(MODEL_LESSONS.learn)}</div></details></div>`;
     const c = $("#sat-continue", el), st = $("#sat-stop", el), sv = $("#sat-save", el), cl = $("#sat-close", el);
     if (c) c.onclick = async () => { await App.api("/api/systems/autotune/continue", {}); pollTune(); };
     if (st) st.onclick = () => App.api("/api/systems/autotune/stop", {});

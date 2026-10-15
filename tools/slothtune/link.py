@@ -351,6 +351,14 @@ class RobotLink:
         })
         return out
 
+    def test_live(self):
+        """A running test's newest rows: ``{"names": [...], "rows": [[t, ...], ...]}`` (time first)."""
+        names = list(self.get("str[]", C.STATUS_LIVE_NAMES))
+        flat = list(self.get("double[]", C.STATUS_LIVE_ROWS))
+        n = len(names)
+        rows = [flat[i:i + n] for i in range(0, len(flat) - n + 1, n)] if n else []
+        return {"names": names, "rows": rows}
+
     def alerts(self):
         """The robot's WPILib Alerts showing now, every group: ``[(level, text), ...]``. A group is a
         table under /SmartDashboard whose ".type" is "Alerts", with string arrays of errors and

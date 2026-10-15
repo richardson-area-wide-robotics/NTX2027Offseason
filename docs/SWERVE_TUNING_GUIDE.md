@@ -405,6 +405,13 @@ Set each mechanism up from top to bottom:
    holds the deadman, one of two ways. Tick the checks (it moves freely, its limits are right,
    someone holds the deadman, the robot is enabled) and press **Start**.
 
+   **Live graphs:** while any test of the mechanism runs (a Run, the measuring run, every check),
+   the graphs above grow as it moves: the target and where it is, and below, the error between
+   them (the target less where it is: above zero it is behind, below it has gone past). During the
+   measuring run there is no target: the graph below shows the volts it asks for and the volts the
+   SPARK applies. The robot sends its newest rows about ten times a second; afterwards the graphs
+   keep the last run.
+
    **Measure, then compute** (recommended; on blocks or in the simulator):
    - **The measuring run** (about half a minute, `system_id`): the robot's code pauses and the
      mechanism's SPARK is run by voltage. A pivot or elevator finds the volts that hold it, sweeps

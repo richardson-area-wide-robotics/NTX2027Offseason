@@ -450,7 +450,14 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
 .sys-bar-row { justify-content: space-between; gap: 8px 20px; flex-wrap: wrap; }
 /* The blurb sits in the row when it has room (340 px or more), else on its own line under it. */
 #sys-blurb { flex: 1 1 340px; min-width: 0; }
-@media (min-width: 1101px) and (min-height: 700px) { #sys-plot { height: max(220px, calc(var(--work-h) - 380px)); } }
+@media (min-width: 1101px) and (min-height: 700px) { #sys-plot { height: max(170px, calc(var(--work-h) - 520px)); } }
+/* The error under the target graph: the same time axis, its own scale. */
+canvas.plot.sys-err { height: 120px; margin-top: 4px; }
+.sys-live-note { margin: 6px 0 2px; }
+.live-dot::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--bad);
+  margin-right: 5px; vertical-align: 1px; animation: live-blink 1.2s steps(2, start) infinite; }
+@keyframes live-blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .live-dot::before { animation: none; } }
 .plot-cursor { position: absolute; width: 1px; background: var(--accent); pointer-events: none; opacity: .7; }
 .plot-readout { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--rule);
   border-radius: 6px; padding: 6px 8px; font: 12px/1.5 var(--mono); box-shadow: 0 4px 14px rgba(0, 0, 0, .12); white-space: nowrap; }
