@@ -38,6 +38,10 @@ class SystemIdProcedureTest {
     double pushedIntoStopS;
     /** One count of its sensor: the position it reports is rounded to this (0: exact). */
     double count;
+    /** Its reading freezes after this many steps (its sensor drops out); the motor's encoder doesn't. */
+    int freezeAfter = Integer.MAX_VALUE;
+    int steps;
+    double frozen = Double.NaN;
     final FakeMotorChannel motor = new FakeMotorChannel(40);
 
     Plant(TunableSystem.Kind kind, double kS, double kV, double kA, double kG) {
@@ -76,6 +80,9 @@ class SystemIdProcedureTest {
       if ((x >= stopHi && u - g > 1) || (x <= stopLo && u - g < -1)) {
         pushedIntoStopS += dt;
       }
+      if (++steps == freezeAfter) {
+        frozen = reading();
+      }
       lowest = Math.min(lowest, x);
       highest = Math.max(highest, x);
       fastest = Math.max(fastest, Math.abs(v));
@@ -85,6 +92,9 @@ class SystemIdProcedureTest {
 
     /** Where its sensor says it is. */
     double reading() {
+      if (!Double.isNaN(frozen)) {
+        return frozen;
+      }
       return count > 0 ? Math.round(x / count) * count : x;
     }
   }
@@ -312,6 +322,25 @@ class SystemIdProcedureTest {
     assertNull(why, why);
     assertEquals(0.65, c.meta().get("u_hold"), 0.08);
     assertTrue(p.hitSpeed < 0.02 * 1.5, "struck a stop at " + p.hitSpeed);
+  }
+
+  @Test
+  void aFrozenPositionReadingStopsIt() {
+    // Its sensor drops out mid-sweep: the code's position stops changing, its motor's encoder doesn't.
+    Plant p = new Plant(TunableSystem.Kind.ELEVATOR, 0.1, 3.8, 0.067, 0.65);
+    p.stopLo = 0;
+    p.stopHi = 1.18;
+    TunableSystem s = system(p, "Elevator", "meters");
+    s.setLimits(0, 1.18, "slothtune.json");
+    List<MotorGuard.Motor> ms = List.of(guard.register("Elevator", p.motor, MotorKind.VORTEX, false));
+    TestContext c = ctx(s, ms, new String[] {"system", "vmax"}, new double[] {0, 1.5});
+    // Find where the sweeps are under way, then freeze there.
+    SystemIdProcedure proc = new SystemIdProcedure();
+    p.freezeAfter = 400;
+    String why = run(proc, c, p);
+    assertNotNull(why, "it noticed");
+    assertTrue(why.contains("stopped changing"), why);
+    assertTrue(p.hitSpeed < 0.02 * 1.5, "stopped before it struck a stop: " + p.hitSpeed);
   }
 
   @Test

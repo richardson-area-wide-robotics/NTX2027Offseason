@@ -286,6 +286,7 @@ STOP_CODES = [
     # Its own motion checks: the volts it chose weren't controlling it.
     ("kept going past the end of its test window", "PAST_LIMITS"), ("sped up while braking", "RUNAWAY"),
     ("went the wrong way in a sweep", "RUNAWAY"), ("ran away in a sweep", "RUNAWAY"),
+    ("position reading stopped changing", "SENSOR_FROZEN"),
     ("Give the test a top speed", "BAD_ARGS"), ("is watched by the motor guard", "NO_SYSTEM_HOOK"),
     ("follows another", "NO_SYSTEM_HOOK"), ("Every motor of", "NO_SYSTEM_HOOK"), ("can't read", "NO_SYSTEM_HOOK"),
     ("No such system", "BAD_ARGS"), ("has limits to find", "BAD_ARGS"), ("Disable the robot first", "NEEDS_DISABLED"),

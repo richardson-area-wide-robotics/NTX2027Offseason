@@ -365,6 +365,32 @@ def step_cost(moves, positional):
                  + 10 * sum(mv["settle_s"] is None for mv in moves), 3)
 
 
+BUZZ_V = 1.0   # the applied volts jumping this far around the hold, sitting still, is a buzz
+
+
+def _buzz(hold, hv, amps, i0, i1, band):
+    """How hard it buzzes holding still: the 90th percentile of how far the applied volts (and the
+    current) sit from their middle, over the samples where it is still within its settle band of
+    where it ends. A SPARK's D term kicks the output for a millisecond at each encoder count; the
+    status frames catch some of those kicks, so a buzzing hold reads as volts that jump about while
+    the position doesn't. None when there is too little still time to judge."""
+    if len(hold) < 10 or len(hv) < 10:
+        return None, None
+    end = hold[-1]
+    still = [j for j in range(min(len(hold), len(hv))) if abs(hold[j] - end) <= band]
+    if len(still) < 10:
+        return None, None
+
+    def p90(xs):
+        xs = sorted(xs)
+        mid = xs[len(xs) // 2]
+        dev = sorted(abs(x - mid) for x in xs)
+        return dev[int(0.9 * (len(dev) - 1))]
+    bv = p90([hv[j] for j in still])
+    ia = [sum(a[i0 + j] for a in amps if i0 + j < len(a) and a[i0 + j] == a[i0 + j]) for j in still] if amps else []
+    return bv, (p90(ia) if len(ia) >= 10 else None)
+
+
 def step_report(doc, all_settings=None, gains=None):
     """A system_step run: per move, how closely it followed the moving goal, how far it overshot,
     how long it took to settle and what it settled at, and the volts it held with against what the
@@ -379,6 +405,7 @@ def step_report(doc, all_settings=None, gains=None):
     positional = kind in ("PIVOT", "ELEVATOR")
     meas = pos if positional else vel
     volts = [v for k, v in sorted(ch.items()) if re.fullmatch(r"volts\d+", k)]
+    amps = [v for k, v in sorted(ch.items()) if re.fullmatch(r"amps\d+", k)]
     sim = doc.get("env") == "SIM"
     # A simulated mechanism with physics (the Examples robot) moves; one without never does.
     seen = [x for x in meas if x == x]
@@ -415,9 +442,11 @@ def step_report(doc, all_settings=None, gains=None):
                        if all(abs(x - g) <= band for x in hold[j:])), None)
         hv = [sum(v[i] for v in volts if i < len(v)) / max(1, len(volts)) for i in range(arrive, i1)]
         hv = [x for x in hv if x == x]
+        buzz_v, buzz_a = _buzz(hold, hv, amps, arrive, i1, band)
         moves.append({"goal": g, "step": step, "track_error": track, "track_pct": track / abs(step) * 100,
                       "overshoot_pct": overshoot, "error_pct": err, "final": final,
-                      "settle_s": settle, "hold_volts": sum(hv[-len(tail):]) / len(tail) if hv else None})
+                      "settle_s": settle, "hold_volts": sum(hv[-len(tail):]) / len(tail) if hv else None,
+                      "buzz_v": buzz_v, "buzz_a": buzz_a})
     if not moves:
         return {"test": "system_step", "env": doc.get("env", ""), "summary": "Nothing to judge: no move was recorded.",
                 "findings": [], "targets": [], "score": None, "next": None, "modules": {}, "moves": []}
@@ -448,6 +477,14 @@ def step_report(doc, all_settings=None, gains=None):
                 why += ("more kP pulls it the rest of the way; a mechanism that sags under gravity wants "
                         "kG (or kCos for an arm) so kP isn't holding it up.")
             F.append(advisor.finding("warn", f"{name} settles {worst_err:.1f}% {word} its goals", why))
+        buzzy = [mv for mv in moves if (mv.get("buzz_v") or 0) > BUZZ_V]
+        if buzzy and positional and not sim:
+            bv = max(mv["buzz_v"] for mv in buzzy)
+            ba = max((mv.get("buzz_a") or 0) for mv in buzzy)
+            F.append(advisor.finding("warn", f"{name} buzzes while it holds still",
+                                     f"Sitting at its goal, its output jumps about {bv:.1f} V around the hold"
+                                     + (f" (its current about {ba:.0f} A)" if ba else "") + ": kD kicking at each encoder count, "
+                                     "or kP fighting slack. Less kD first; you will hear it stop."))
         if slow:
             F.append(advisor.finding("warn", f"{name} never settled within {'2' if positional else '3'}% on "
                                      f"{len(slow)} of {len(moves)} moves",
@@ -679,6 +716,14 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
         refuse_title, refuse = "its speed units are unknown", (
             "Its SPARK's speed reading couldn't be matched to its position, so kV, kA and a speed loop's gains can't "
             "be put in its units (a wrong guess is often 60 times off). Measure again with the robot code redeployed.")
+    # One count of the SPARK's sensor: the smallest change its position made between readings (a NEO's
+    # hall sensor counts 42 a turn, a Vortex's 7168): what each kick of kD acts on.
+    count = None
+    if spark_units and positional:
+        fs = _finite(spos)
+        span = (max(fs) - min(fs)) if fs else 0.0
+        steps = [abs(b - a) for a, b in zip(spos, spos[1:]) if a == a and b == b and abs(b - a) > 1e-6 * span]
+        count = min(steps) if steps else None
     kcos = None
     if kind == "PIVOT" and angle is not None and spark_units:
         kcos = kcos_check(pos, spos, arpu, fit["offset_rad"], _num((motor.get("settings") or {}).get("kCosRatio")),
@@ -688,7 +733,7 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
              "motor": MOTOR_LABEL.get(motor.get("motor") or "", "NEO"), "motors": motor.get("count") or 1,
              "ratio_v": ratio_v if ok(ratio_v) and ratio_v else 1.0, "angle_rad_per_unit": (arpu * per) if (arpu and ok(per)) else None,
              "control": control, "spark_units": spark_units, "per": per if ok(per) and per else 1.0,
-             "refuse": refuse, "refuse_title": refuse_title, "kcos": kcos,
+             "refuse": refuse, "refuse_title": refuse_title, "kcos": kcos, "count": count,
              # A real SPARK's loop runs every millisecond; REVLib's simulated one once a robot loop.
              "period": 0.02 if sim else M.SPARK_DT,
              # REVLib's simulated SPARK applies kD far harder than a real one (it wrecked the Examples
@@ -737,6 +782,11 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
                                  else "Its speed reading's delay is unknown", filt["why"]))
     if computed.get("note"):
         F.append(advisor.finding("info", computed["note_title"], computed["note"]))
+    if computed.get("kd_capped"):
+        F.append(advisor.finding("info", f"kD held so one encoder count kicks at most {M.COUNT_KICK:.0%}",
+                                 f"Its SPARK's sensor moves in steps of {count:.4g} of its units. The SPARK's D term acts on "
+                                 "each step at once, so the model's full kD would pulse the motor hard at every count "
+                                 "(a buzz). kP is softened to suit the kD it keeps."))
     if sim and positional:
         F.append(advisor.finding("info", "No kD in the simulator",
                                  "REVLib's simulated SPARK runs its loop once a robot loop and applies kD far harder than "
@@ -794,10 +844,14 @@ def model_gains(basis, aggressiveness=1.0):
     move = basis["move"]
     if positional and test.get("a") is not None and test.get("b") is not None and per:
         move = abs(test["b"] - test["a"]) / per
+    period = basis.get("period") or M.SPARK_DT
+    count = basis.get("count")
+    # One count's change of error through kD: at most COUNT_KICK of the output (REV's kD per millisecond).
+    kd_max = M.COUNT_KICK * basis["volts"] * period / count if positional and count and count > 0 else None
     c = M.compute(model, kind, basis["volts"], basis["delay_s"], move, basis.get("current_limit_a"),
                   basis.get("motor") or "NEO", basis.get("motors") or 1, aggressiveness,
-                  basis.get("angle_rad_per_unit"), control=mode, period=basis.get("period") or M.SPARK_DT,
-                  use_kd=basis.get("use_kd", True), profile=profile)
+                  basis.get("angle_rad_per_unit"), control=mode, period=period,
+                  use_kd=basis.get("use_kd", True), profile=profile, kd_max=kd_max)
     spark = M.spark_gains(c["gains"], c["maxmotion"], basis["volts"], 1.0, basis.get("ratio_v") or 1.0, positional,
                           period=basis.get("period") or M.SPARK_DT)
     if basis.get("refuse"):
@@ -871,7 +925,8 @@ def model_gains(basis, aggressiveness=1.0):
             apply[f"{name}/{k}"] = 0.0
     return {"apply": apply, "all": spark, "model_gains": c["gains"], "maxmotion": c["maxmotion"],
             "predicted": c["predicted"], "aggressiveness": aggressiveness, "clamped": clamped,
-            "note": note, "note_title": note_title}
+            "note": note, "note_title": note_title, "kd_capped": bool(c["gains"].get("kd_capped")),
+            "count": count}
 
 
 def system_motor(motors, registered):

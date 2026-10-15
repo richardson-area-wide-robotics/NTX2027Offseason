@@ -185,6 +185,32 @@ class IdReportTest(unittest.TestCase):
         self.assertAlmostEqual(bad["ratio"], 1 / 50, places=6)
         self.assertFalse(systems.kcos_check(pos, spos, deg, 20 * deg, None, 360.0)["ok"], "unknown ratio: not applied")
 
+    def test_a_coarse_sensor_holds_kd_to_a_small_kick_a_count(self):
+        # A NEO's hall sensor on an elevator: half a millimeter a count. The model's kD would pulse the
+        # motor at full output for a millisecond at every count; it is held to a quarter.
+        r = practice()
+        doc = r._identify()
+        c = 0.0005
+        doc["channels"]["spos"] = [round(x / c) * c if x == x else x for x in doc["channels"]["spos"]]
+        rep = systems.id_report(doc, None, dict(r.registered(), control="Position"),
+                                {"motor": "NEO V1.1", "limit_a": 40, "count": 1, "controller": "SPARK MAX"})
+        self.assertAlmostEqual(rep["basis"]["count"], c, delta=1e-9, msg="one count, measured from the run")
+        self.assertTrue(rep["computed"]["kd_capped"])
+        self.assertLessEqual(rep["computed"]["apply"]["Lift/kD"] * c, M.COUNT_KICK * 1.000001)
+        self.assertTrue(any("kD held" in f["title"] for f in rep["findings"]))
+        self.assertFalse(report(practice(), "Position")["computed"]["kd_capped"], "a fine sensor keeps the model's kD")
+
+    def test_a_buzz_is_heard_in_the_applied_volts(self):
+        r = practice()
+        doc = r.run("system_step")[0]
+        clean = systems.step_report(doc, None, r.gains())
+        self.assertFalse(any("buzzes" in f["title"] for f in clean["findings"]), "a smooth hold isn't a buzz")
+        v = doc["channels"]["volts0"]
+        doc["channels"]["volts0"] = [x + (3.0 if k % 3 == 0 else 0.0) for k, x in enumerate(v)]
+        rep = systems.step_report(doc, None, r.gains())
+        self.assertTrue(any("buzzes" in f["title"] for f in rep["findings"]), rep["findings"])
+        self.assertGreater(max(m["buzz_v"] for m in rep["moves"]), systems.BUZZ_V)
+
     def test_maxmotion_current_limit_is_each_motors(self):
         m = {"kS": 0.1, "kV": 2.0, "kA": 0.3, "kG": 0.5}
         one = M.maxmotion(m, 12.0, 40, "NEO", 1)

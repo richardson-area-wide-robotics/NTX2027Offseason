@@ -33,7 +33,9 @@ yours, and nothing in the tools will stop you from breaking them:
    unread, its speed units unmatched, a sensor the robot can't read): the report says so, and a
    person fixes that first. An arm's kCos is applied only when REV's angle (the SPARK's position x
    kCosRatio, 0 at level) matches the measured one within 5 degrees; otherwise the report gives the
-   kCosRatio and zero it needs, and kCos is left for a programmer.
+   kCosRatio and zero it needs, and kCos is left for a programmer. kD is held so one encoder count
+   kicks the output at most 25% (the count measured from the run). A `system_step` report that says
+   the mechanism buzzes while it holds still means less kD: a person listens before more checks.
 5. **Stay inside the current policy.** Drive and mechanism limits: NEO Vortex 80 A, NEO 2.0 80 A,
    NEO V1.1 60 A, NEO 550 20 A. The slip test may recommend a drive limit *below* 80 A for this
    carpet; nothing may go above policy.
@@ -222,6 +224,7 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `NO_SYSTEM_HOOK` | The robot code registers that mechanism without a goal to set. A programmer adds `.goal(...)`. |
 | `NO_LIMITS` | A pivot or elevator without limits: run `system_limits` with a person moving it by hand. Never invent them. |
 | `PAST_LIMITS` | The mechanism left its limits (or, measuring, kept going past its test window) and was stopped. A person looks at it before anything else runs. |
+| `SENSOR_FROZEN` | The measuring run saw the code's position reading stop changing while the motor's own encoder kept moving: a sensor, or its CAN messages, dropped out. A person checks that sensor's wiring and CAN ID before anything else runs on the mechanism. |
 | `RUNAWAY` | The measuring run's volts weren't controlling it: it sped up while braking, went the wrong way, or ran past twice its sweep speed (an arm's gravity far from its hold, slack, a spring, a loose sensor). A person looks at it before it is measured again. |
 | `JAMMED` | A motor pulled hard without turning: jammed, or motors on one shaft pushing against each other. A person looks first; then run each motor on that shaft alone. |
 | `INVERTED` | `system_id` pushed the mechanism one way and it went the other: its motor's inversion doesn't match its position reading. A programmer checks both; nothing else runs on it until then. |

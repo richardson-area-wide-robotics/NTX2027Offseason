@@ -620,7 +620,8 @@ class ModelTune(_Loop):
         measured = {"overshoot_pct": max((m["overshoot_pct"] for m in moves), default=None),
                     "error_pct": max((abs(m["error_pct"]) for m in moves), default=None),
                     "settled": all(m["settle_s"] is not None for m in moves) if moves else None,
-                    "settle_s": max((m["settle_s"] for m in moves if m["settle_s"] is not None), default=None)}
+                    "settle_s": max((m["settle_s"] for m in moves if m["settle_s"] is not None), default=None),
+                    "buzz_v": max((m.get("buzz_v") or 0 for m in moves), default=None)}
         entry = {"check": len(self.checks) + 1, "aggressiveness": agg, "gains": comp["apply"],
                  "cost": rep.get("cost"), "score": rep.get("score"), "summary": rep.get("summary"),
                  "measured": measured, "predicted": comp["predicted"], "run": doc.get("_run"),
@@ -653,7 +654,8 @@ class ModelTune(_Loop):
         if len(judged) == 1:
             c = judged[0]
             m, p = c["measured"], c["predicted"]
-            rough = (m["settled"] is False or (m["overshoot_pct"] or 0) > (p.get("overshoot_pct") or 0) + 5)
+            rough = (m["settled"] is False or (m["overshoot_pct"] or 0) > (p.get("overshoot_pct") or 0) + 5
+                     or (m.get("buzz_v") or 0) > systems.BUZZ_V)   # a buzz is kD too hard: softer
             return 0.6 if rough else 1.6
         by = sorted(judged, key=lambda c: c["cost"])
         a, b = by[0]["aggressiveness"], by[1]["aggressiveness"]

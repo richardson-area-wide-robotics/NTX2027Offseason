@@ -88,6 +88,8 @@ final class SystemIdProcedure implements Procedure {
   static final int STEADY_LOOPS = 5;
   /** Pushed this far past the hold guess into a stop, still, it stops: volts. */
   static final double INTO_STOP_V = 2.0;
+  /** The code's position unchanged this long while its SPARK's encoder moves: the reading froze. */
+  static final double FROZEN_S = 0.5;
   private static final int NO_KEY = Integer.MIN_VALUE;
 
   /** What it is doing, recorded as a number in {@code stage}. */
@@ -137,6 +139,18 @@ final class SystemIdProcedure implements Procedure {
   private int steadyN;
   private int movingN;
   private double movingSign;
+  /**
+   * The frozen-reading check: the code's position against its SPARK's own, their ratio learned as it
+   * moves; the smallest change the code's reading has made; when it last changed, and where the
+   * SPARK's encoder was then.
+   */
+  private double pFirst = Double.NaN;
+  private double sFirst = Double.NaN;
+  private double sPerP = Double.NaN;
+  private double pStep = Double.POSITIVE_INFINITY;
+  private double lastP = Double.NaN;
+  private double frozenSince = Double.NaN;
+  private double sAtFreeze = Double.NaN;
   /** The hold map: the volts asked at each place moving up, and down, at the first sweeps' speed. */
   private final double[] mapUp = new double[BINS];
   private final double[] mapDn = new double[BINS];
@@ -349,6 +363,13 @@ final class SystemIdProcedure implements Procedure {
     uDn = Double.NaN;
     guess = uHold;
     holdKey = NO_KEY;
+    pFirst = Double.NaN;
+    sFirst = Double.NaN;
+    sPerP = Double.NaN;
+    pStep = Double.POSITIVE_INFINITY;
+    lastP = Double.NaN;
+    frozenSince = Double.NaN;
+    sAtFreeze = Double.NaN;
     brakeV = Double.NaN;
     movingN = 0;
     // Toward the middle first: resting on a stop, there is nowhere to go the other way.
@@ -459,7 +480,8 @@ final class SystemIdProcedure implements Procedure {
         done = false;
       } else {
         remember(t, p);
-        done = positionStep(ctx, t, p, slope(5), slope(3), dt);
+        checkFrozen(t, p);
+        done = cut == null && positionStep(ctx, t, p, slope(5), slope(3), dt);
       }
     } else {
       double v = sys.velocity.getAsDouble();
@@ -528,6 +550,44 @@ final class SystemIdProcedure implements Procedure {
     holdKey = lastKey;
     holdWas = h;
     return h;
+  }
+
+  /**
+   * The code's position hasn't changed at all for {@link #FROZEN_S} while its SPARK's own encoder
+   * moved more than a percent of the travel (or three of the reading's own smallest steps, whichever
+   * is more): its sensor, or that sensor's CAN messages, dropped out, and the run would push on blind.
+   * Their ratio is learned as it moves, so a reading in other units, or coarser, never trips it.
+   */
+  private void checkFrozen(double t, double p) {
+    double s = driven.isEmpty() ? Double.NaN : driven.get(0).feedbackPosition();
+    if (!Double.isFinite(s)) {
+      return;  // no second reading to compare with
+    }
+    double range = max - min;
+    if (Double.isNaN(pFirst)) {
+      pFirst = p;
+      sFirst = s;
+    }
+    if (Math.abs(p - pFirst) > 0.05 * range && s != sFirst) {
+      sPerP = (s - sFirst) / (p - pFirst);
+    }
+    if (Double.isNaN(lastP) || p != lastP) {
+      if (!Double.isNaN(lastP)) {
+        pStep = Math.min(pStep, Math.abs(p - lastP));
+      }
+      frozenSince = t;
+      sAtFreeze = s;
+    }
+    lastP = p;
+    if (Double.isFinite(sPerP) && sPerP != 0 && t - frozenSince >= FROZEN_S) {
+      double moved = Math.abs((s - sAtFreeze) / sPerP);
+      double enough = Math.max(0.01 * range, Double.isFinite(pStep) ? 3 * pStep : 0);
+      if (moved > enough) {
+        cut = String.format(Locale.ROOT, "%s's position reading stopped changing for %.1f s while its motor's encoder "
+            + "moved %.3f %s: its sensor, or that sensor's CAN messages, dropped out. Stopped.", sys.name,
+            t - frozenSince, sys.shown(moved), sys.shownUnits());
+      }
+    }
   }
 
   /** What to send when it stops: the hold where it is, or 0 V (a flywheel, or the hold not yet found). */
