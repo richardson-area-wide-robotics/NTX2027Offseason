@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="716" viewBox="0 0 520 716" font-family="Segoe UI, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title>Crimping 4 AWG wire into an SB50 contact</title>
+<desc>Instruction sheet for crimping 4 AWG wire into the 6 AWG Anderson SB50 contact. Step 1: strip 9/16 in (14 mm), keeping every strand; to scale, the 6 AWG contact barrel is 0.22 in (5.59 mm) and 4 AWG copper is 0.204 in (5.19 mm) if solid, more when fine-stranded. Step 2: crimp with Anderson's 1309G4 hand tool or a hex crimper with metric dies (die 25 for 4 AWG, 16 for 6 AWG); the die must fit the barrel. A good crimp has every strand inside the barrel, the insulation butting up to the barrel, and the barrel closed evenly, not split or cracked. Step 3: seat the contact in the housing with the notched side of the tongue next to the spring, push on the contact (not the insulation) until it snaps over the end of the spring, and tug slightly; a seated contact resists 50 lbf (222 N). Four bad examples: strands trimmed to fit, strands left outside the barrel, a split or flared barrel, and a contact not snapped over the spring. Check every crimp with a pull test, by pushing the contact back from the front, and by feeling for heat at the connector after a match.</desc>
+<defs>
+<style>
+text{font-family:"Segoe UI",Arial,sans-serif;font-size:13px;fill:#222222}
+.ti{font-size:16px;font-weight:700}
+.h{font-size:14px;font-weight:700}
+.m{fill:#5c5c5c}
+.s{font-size:12px}
+.w{fill:#ffffff}
+.c{text-anchor:middle}
+.e{text-anchor:end}
+.n{font-size:12px;font-weight:700;fill:#ffffff;text-anchor:middle}
+.gd{fill:#1a7f37;font-weight:700;font-size:14px}
+.ins{fill:#d32f2f;stroke:#444444;stroke-width:1}
+.met{fill:#b0b8c0;stroke:#7d8790;stroke-width:1.2}
+.cu{fill:#c47a2c;stroke:#8a531c;stroke-width:1}
+.st{stroke:#8a531c;stroke-width:0.8}
+.fc{stroke:#7d8790;stroke-width:1}
+.ld{fill:none;stroke:#444444;stroke-width:1}
+.hs{fill:#d32f2f;stroke:#444444;stroke-width:1}
+.sp{fill:none;stroke:#555555;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.strand{fill:none;stroke:#c47a2c;stroke-width:1.6;stroke-linecap:round}
+.cell{fill:none;stroke:#dddddd;stroke-width:1}
+.rule{stroke:#dddddd;stroke-width:1}
+</style>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 Z" fill="#444444"/></marker>
+<g id="xb"><circle r="10" fill="#c62828"/><path d="M-4.2,-4.2L4.2,4.2M4.2,-4.2L-4.2,4.2" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round"/></g>
+<g id="ok"><circle r="10" fill="#1a7f37"/><path d="M-4.8,0.2L-1.4,3.6L5,-3.4" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+</defs>
+
+<!-- Header -->
+<text x="16" y="26" class="ti">Crimping an SB50 contact: 4 AWG wire, 6 AWG contact</text>
+<text x="16" y="45" class="m">Anderson's 4 AWG connector is the SB120; 4 AWG in an SB50</text>
+<text x="16" y="61" class="m">is off spec, so check every crimp.</text>
+<line x1="16" y1="70" x2="504" y2="70" class="rule"/>
+
+<!-- Step 1: strip -->
+<circle cx="25" cy="90" r="9" fill="#222222"/><text x="25" y="94" class="n">1</text>
+<text x="40" y="95" class="h">Strip</text>
+<line x1="132" y1="114" x2="132" y2="128" stroke="#5c5c5c"/>
+<line x1="206" y1="114" x2="206" y2="132" stroke="#5c5c5c"/>
+<line x1="133" y1="120" x2="205" y2="120" stroke="#444444" marker-start="url(#ah)" marker-end="url(#ah)"/>
+<text x="169" y="111" class="c">9/16 in (14 mm)</text>
+<rect x="16" y="130" width="116" height="28" class="ins"/>
+<rect x="132" y="134" width="74" height="20" rx="3" class="cu"/>
+<path d="M133,138H204M133,142H205M133,146H205M133,150H204" class="st"/>
+<text x="16" y="182" class="m">Keep every strand; trim none.</text>
+
+<!-- Wire vs. barrel, both at 200 px per inch -->
+<text x="268" y="95" class="h">Wire vs. barrel, to scale</text>
+<circle cx="292" cy="127" r="25" class="met"/>
+<circle cx="292" cy="127" r="22" fill="#ffffff" stroke="#7d8790" stroke-width="1"/>
+<text x="326" y="123">6 AWG contact barrel</text>
+<text x="326" y="139" class="m">0.22 in (5.59 mm)</text>
+<circle cx="292" cy="176" r="20.4" class="cu"/>
+<text x="326" y="168">4 AWG copper, if solid</text>
+<text x="326" y="184" class="m">0.204 in (5.19 mm);</text>
+<text x="326" y="200" class="m">more when fine-stranded</text>
+
+<line x1="16" y1="210" x2="504" y2="210" class="rule"/>
+
+<!-- Step 2: crimp (good) -->
+<circle cx="25" cy="226" r="9" fill="#222222"/><text x="25" y="230" class="n">2</text>
+<text x="40" y="231" class="h">Crimp</text>
+<text x="16" y="250">Every strand inside;</text>
+<text x="16" y="266">insulation butts up to the barrel</text>
+<line x1="98" y1="271" x2="98" y2="281" class="ld"/>
+<rect x="16" y="285" width="82" height="30" class="ins"/>
+<rect x="98" y="282" width="20" height="36" class="met"/>
+<rect x="118" y="285" width="50" height="30" class="met"/>
+<path d="M118,293H168M118,307H168" class="fc"/>
+<rect x="168" y="282" width="18" height="36" class="met"/>
+<path d="M186,282L198,294L198,306L186,318Z" class="met"/>
+<path d="M198,294H246Q250,294 250,298V302Q250,306 246,306H218V302H208V306H198Z" class="met"/>
+<line x1="143" y1="317" x2="143" y2="327" class="ld"/>
+<text x="104" y="341">Barrel closed evenly,</text>
+<text x="104" y="357">not split or cracked</text>
+<use href="#ok" x="26" y="338"/>
+<text x="42" y="343" class="gd">Good</text>
+<text x="16" y="381">Tool: Anderson's 1309G4 hand tool, or</text>
+<text x="16" y="397">a hex crimper with metric dies: die 25</text>
+<text x="16" y="413">for 4 AWG (16 for 6 AWG).</text>
+<text x="16" y="429">The die must fit the barrel.</text>
+
+<!-- Step 3: seat -->
+<circle cx="277" cy="226" r="9" fill="#222222"/><text x="277" y="230" class="n">3</text>
+<text x="292" y="231" class="h">Seat the contact</text>
+<text x="271" y="257" class="m">tug</text>
+<line x1="302" y1="266" x2="272" y2="266" stroke="#444444" marker-end="url(#ah)"/>
+<rect x="304" y="244" width="196" height="16" class="hs"/>
+<text x="402" y="256" class="s w c">housing, cut away</text>
+<rect x="304" y="318" width="196" height="16" class="hs"/>
+<rect x="268" y="276" width="44" height="26" class="ins"/>
+<rect x="312" y="274" width="12" height="30" class="met"/>
+<rect x="324" y="276.5" width="36" height="25" class="met"/>
+<path d="M324,284.5H360M324,293.5H360" class="fc"/>
+<rect x="360" y="274" width="12" height="30" class="met"/>
+<path d="M372,274L381,283.5L381,294.5L372,304Z" class="met"/>
+<path d="M381,283.5H476Q480,283.5 480,287V291Q480,294.5 476,294.5H402V290.5H392V294.5H381Z" class="met"/>
+<rect x="488" y="306" width="12" height="12" fill="#777777"/>
+<polyline points="492,311 446,306 397,292.5" class="sp"/>
+<line x1="378" y1="340" x2="391" y2="297" class="ld"/>
+<text x="384" y="352" class="e">notched side</text>
+<line x1="444" y1="340" x2="444" y2="308" class="ld"/>
+<text x="432" y="352">spring</text>
+<text x="268" y="374">Notched side of the tongue next to the</text>
+<text x="268" y="390">spring. Push on the contact, not the</text>
+<text x="268" y="406">wire's insulation, until it snaps over</text>
+<text x="268" y="422">the end of the spring; tug slightly.</text>
+<text x="268" y="440" font-weight="700">Seated, it resists 50 lbf (222 N).</text>
+
+<line x1="16" y1="452" x2="504" y2="452" class="rule"/>
+
+<!-- Bad -->
+<text x="16" y="472" class="h">Bad: look for these with 4 AWG in the 6 AWG barrel</text>
+
+<!-- Bad 1: strands trimmed -->
+<rect x="16" y="482" width="240" height="80" rx="6" class="cell"/>
+<use href="#xb" x="30" y="496"/>
+<rect x="46" y="497" width="58" height="18" class="ins"/>
+<rect x="104" y="494" width="54" height="24" class="met"/>
+<rect x="105" y="497" width="51" height="18" fill="#ffffff"/>
+<rect x="104" y="501.5" width="46" height="9" class="cu"/>
+<path d="M105,504.5H149M105,507.5H149" class="st"/>
+<path d="M158,494L165,502.5L165,509.5L158,518Z" class="met"/>
+<rect x="165" y="502.5" width="57" height="7" class="met"/>
+<path d="M56,525L62,520M68,527L74,522M80,522L86,527M92,526L98,521" class="strand"/>
+<text x="25" y="542">Strands trimmed to make it fit: less</text>
+<text x="25" y="558">copper, more resistance and heat.</text>
+
+<!-- Bad 2: strands outside -->
+<rect x="264" y="482" width="240" height="80" rx="6" class="cell"/>
+<use href="#xb" x="278" y="496"/>
+<rect x="294" y="497" width="50" height="18" class="ins"/>
+<rect x="344" y="500" width="10" height="12" class="cu"/>
+<rect x="352" y="494" width="54" height="24" class="met"/>
+<path d="M364,496V516M394,496V516" class="fc"/>
+<path d="M406,494L413,502.5L413,509.5L406,518Z" class="met"/>
+<rect x="413" y="502.5" width="57" height="7" class="met"/>
+<path d="M353,498Q348,490 339,487M353,501Q346,496 335,495M353,513Q347,519 338,521M351,515Q345,521 331,524" class="strand"/>
+<text x="273" y="542">Strands left outside the barrel: a hot</text>
+<text x="273" y="558">spot, and a stray strand can short.</text>
+
+<!-- Bad 3: split or flared barrel -->
+<rect x="16" y="568" width="240" height="96" rx="6" class="cell"/>
+<use href="#xb" x="30" y="582"/>
+<rect x="46" y="583" width="54" height="18" class="ins"/>
+<path d="M98,575L112,580H158V604H112L98,609Z" class="met"/>
+<path d="M99,577L127,590L100,584Z" fill="#222222"/>
+<path d="M99,607L118,600L100,602Z" fill="#222222"/>
+<path d="M158,580L165,588.5L165,595.5L158,604Z" class="met"/>
+<rect x="165" y="588.5" width="57" height="7" class="met"/>
+<text x="25" y="628">Barrel split or flared (forced, or the</text>
+<text x="25" y="644">wrong die): it loosens and heats.</text>
+
+<!-- Bad 4: not snapped over the spring -->
+<rect x="264" y="568" width="240" height="96" rx="6" class="cell"/>
+<use href="#xb" x="278" y="582"/>
+<line x1="330" y1="576" x2="296" y2="576" stroke="#444444" marker-end="url(#ah)"/>
+<rect x="344" y="572" width="142" height="6" class="hs"/>
+<rect x="344" y="606" width="142" height="6" class="hs"/>
+<rect x="294" y="585" width="40" height="14" class="ins"/>
+<rect x="334" y="582" width="42" height="20" class="met"/>
+<path d="M376,582L381,589L381,595L376,602Z" class="met"/>
+<path d="M381,589H436V595H394V592H388V595H381Z" class="met"/>
+<rect x="476" y="598" width="10" height="8" fill="#777777"/>
+<polyline points="479,601 448,598 417,595.5" class="sp"/>
+<text x="273" y="628">Not snapped over the spring: it pushes</text>
+<text x="273" y="644">back out on mating. The robot reboots</text>
+<text x="273" y="660">or drops off the field for 30+ seconds.</text>
+
+<!-- Check -->
+<use href="#ok" x="26" y="686"/>
+<text x="42" y="691"><tspan font-weight="700">Check every crimp:</tspan> pull test; push the contact back from the</text>
+<text x="42" y="707">front to make sure it stays; after a match, feel for heat at the connector.</text>
+</svg>

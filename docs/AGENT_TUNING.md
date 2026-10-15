@@ -28,7 +28,8 @@ yours, and nothing in the tools will stop you from breaking them:
    `system_id` report's `next` (its action says `"model": true`): every gain worked out from one
    measured model of the mechanism. Apply it whole (one `gains set` with all its values), then run
    `system_step` to check it; never mix it with other changes. It sets to 0 the gains its design
-   leaves out (kI in a position loop, kD in a speed loop, the other gravity term), gives a speed loop
+   leaves out (kI in a position loop, kD in a speed loop, the other gravity term, and kS in plain
+   Position mode, where nothing signs it but the error), gives a speed loop
    an iZone, and applies nothing at all when it can't vouch for the SPARK's units (its own position
    unread, its speed units unmatched, a sensor the robot can't read): the report says so, and a
    person fixes that first. An arm's kCos is applied only when REV's angle (the SPARK's position x

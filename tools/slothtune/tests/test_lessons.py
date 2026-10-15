@@ -39,6 +39,13 @@ class LessonsTest(unittest.TestCase):
         for _, k in re.findall(r'\["([^"]+)", "(\w+)"\]', terms):
             self.assertIn(k, LESSONS, f"term links to {k}")
 
+    def test_every_drawing_a_lesson_shows_exists(self):
+        srcs = re.findall(r'src: "(img/[^"]+)"', LEARN)
+        self.assertGreater(len(srcs), 6)
+        web = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "web")
+        for src in srcs:
+            self.assertTrue(os.path.isfile(os.path.join(web, *src.split("/"))), f"lesson drawing {src}")
+
     def test_every_lesson_is_in_the_course(self):
         listed = {k for unit in re.findall(r"lessons: \[([^\]]*)\]", LEARN) for k in re.findall(r'"(\w+)"', unit)}
         self.assertEqual(LESSONS - listed, set(), "lessons no unit lists")

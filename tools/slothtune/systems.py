@@ -550,7 +550,8 @@ MODE_GAINS = {
 }
 # The gains each mode's design takes as zero: set to zero, so an old one doesn't act on top (an old kI
 # winding up under the LQR's kP and kD; a kD in a speed loop).
-MODE_ZERO = {"Position": ("kI",), "MAXMotionPosition": ("kI",), "Velocity": ("kD",), "MAXMotionVelocity": ("kD",)}
+# Plain Position's kS too (decision 79): with no profile to sign it, an error-signed kS dithers at the target.
+MODE_ZERO = {"Position": ("kI", "kS"), "MAXMotionPosition": ("kI",), "Velocity": ("kD",), "MAXMotionVelocity": ("kD",)}
 # The sensors the robot reads for the measuring run (SparkChannel.feedback): any other, it reads none.
 READ_SENSORS = ("PrimaryEncoder", "AbsoluteEncoder", "AlternateOrExternalEncoder", "")
 
@@ -879,7 +880,8 @@ def model_gains(basis, aggressiveness=1.0):
         keep = MODE_GAINS[control]
         if control == "Position":
             note_title = f"{name}'s code profiles on the roboRIO in plain Position mode"
-            note = ("REV doesn't apply kV or kA there, so kP carries it along the profile. MAXMotion would add the "
+            note = ("REV doesn't apply kV or kA there, so kP carries it along the profile, and its kS is set to 0: with no "
+                    "profile speed to sign it, a kS pushed by the error dithers at the target. MAXMotion would add the "
                     f"speed feedforward and a 1 kHz profile: cruise {spark.get('mmCruise', 0):.4g}, acceleration "
                     f"{spark.get('mmAccel', 0):.4g} in its SPARK's units.")
     keep = set(keep)

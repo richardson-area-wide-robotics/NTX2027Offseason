@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 520 728" width="520" height="728" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="ppc-title ppc-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="ppc-title">Crimping an Anderson Powerpole contact</title>
+<desc id="ppc-desc">Cutaway side view of a good crimp on an Anderson Powerpole contact, mating end at left, labeled: mating tongue, hooked edge, wire stop, barrel crimped on bare strands only, a small bare gap, and the insulation. Strip 5/16 in (7.9 mm). 45 A contacts take 14-10 AWG and 30 A contacts take 16-12 AWG; FRC motor leads are typically 12 AWG. Finished crimp height for reference: 0.100-0.120 in on a 45 A contact with 10 AWG, 0.090-0.110 in on a 30 A contact with 12 AWG. Seating: the contact goes in one way, hooked edge toward the flat spring in the housing; push until it clicks, then it floats slightly; a seated contact resists 20 lbf (90 N); tug each wire and push the contact from the front to make sure it does not back out. Five bad crimps, each marked with a red X: insulation under the crimp, stripped too far back, wire pushed past the wire stop, a spread or distorted tab, and a soldered joint. Use a Powerpole crimp tool.</desc>
+<defs>
+  <!-- Contact front: mating tongue with the hooked edge under it, then the wire stop. Local units, mating end at x=0. -->
+  <g id="ppc-front" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M6 6 H100 V14 H84 V27 L56 14 H6 Q2 14 2 10 Q2 6 6 6 Z" vector-effect="non-scaling-stroke"/>
+    <rect x="100" y="0" width="7" height="32" vector-effect="non-scaling-stroke"/>
+  </g>
+  <!-- Crimped barrel, cut away: top and bottom walls pinched in the middle -->
+  <g id="ppc-walls" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M107 0 H130 L137 4 H175 L182 0 H205 V5 H182 L175 9 H137 L130 5 H107 Z" vector-effect="non-scaling-stroke"/>
+    <path d="M107 32 H130 L137 28 H175 L182 32 H205 V27 H182 L175 23 H137 L130 27 H107 Z" vector-effect="non-scaling-stroke"/>
+  </g>
+  <!-- Bare strands from the wire stop back to the insulation -->
+  <g id="ppc-strands" stroke="#c47a2c" stroke-width="2.6">
+    <line x1="107" y1="10.75" x2="216" y2="10.75"/>
+    <line x1="107" y1="14.25" x2="216" y2="14.25"/>
+    <line x1="107" y1="17.75" x2="216" y2="17.75"/>
+    <line x1="107" y1="21.25" x2="216" y2="21.25"/>
+  </g>
+  <g id="ppc-core">
+    <use xlink:href="#ppc-strands"/>
+    <use xlink:href="#ppc-walls"/>
+    <use xlink:href="#ppc-front"/>
+  </g>
+  <g id="ppc-x">
+    <line x1="-5" y1="-5" x2="5" y2="5"/>
+    <line x1="5" y1="-5" x2="-5" y2="5"/>
+  </g>
+</defs>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Crimping an Anderson Powerpole contact</text>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="47">45 A contacts take 14–10 AWG wire; 30 A contacts take 16–12 AWG.</text>
+  <text x="16" y="62">FRC motor leads are typically 12 AWG.</text>
+</g>
+
+<!-- Good crimp heading -->
+<path d="M17 81 L21.5 85.5 L30 76" fill="none" stroke="#1a7f37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="36" y="88" font-size="14" font-weight="700" fill="#222222"><tspan fill="#1a7f37">Good</tspan> crimp<tspan font-size="12" font-weight="400" fill="#5c5c5c"> · cutaway side view, mating end at left</tspan></text>
+
+<!-- Good crimp drawing (local x 0-345 scaled 1.3) -->
+<g transform="translate(40 132) scale(1.3)">
+  <use xlink:href="#ppc-core"/>
+  <rect x="215" y="4" width="130" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+</g>
+
+<!-- Labels above -->
+<g font-size="13" font-weight="700" fill="#222222">
+  <text x="80" y="114" text-anchor="middle">Mating tongue</text>
+  <text x="174.5" y="114" text-anchor="middle">Wire stop</text>
+  <text x="256" y="114">Crimp on bare strands</text>
+  <text x="460" y="114" text-anchor="middle">Insulation</text>
+</g>
+<!-- Labels below -->
+<g font-size="13" font-weight="700" fill="#222222">
+  <text x="120" y="196" text-anchor="middle">Hooked edge</text>
+  <text x="243" y="196" text-anchor="middle">Crimp height</text>
+  <text x="332" y="196">Small bare gap</text>
+</g>
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="80" y1="119" x2="80" y2="138"/>
+  <line x1="174.5" y1="119" x2="174.5" y2="131"/>
+  <line x1="262" y1="119" x2="262" y2="150"/>
+  <line x1="460" y1="119" x2="460" y2="136"/>
+  <line x1="139" y1="184" x2="139" y2="160"/>
+  <line x1="332" y1="186" x2="315" y2="158"/>
+</g>
+<g fill="#222222">
+  <circle cx="80" cy="140" r="2.5"/>
+  <circle cx="174.5" cy="133" r="2.5"/>
+  <circle cx="262" cy="152" r="2.5"/>
+  <circle cx="460" cy="138" r="2.5"/>
+  <circle cx="139" cy="158" r="2.5"/>
+  <circle cx="314" cy="156" r="2.5"/>
+</g>
+
+<!-- Crimp height arrows, pointing in at the middle of the crimp -->
+<g stroke="#222222" stroke-width="1.2">
+  <line x1="243" y1="104" x2="243" y2="128"/>
+  <line x1="243" y1="177" x2="243" y2="185"/>
+</g>
+<path d="M243 136 L239.5 128 L246.5 128 Z M243 169.5 L239.5 177.5 L246.5 177.5 Z" fill="#222222"/>
+
+<!-- Strip length dimension: wire stop back to the insulation -->
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="179.1" y1="178" x2="179.1" y2="222"/>
+  <line x1="319.5" y1="178" x2="319.5" y2="222"/>
+  <line x1="187" y1="216" x2="311.6" y2="216"/>
+</g>
+<path d="M179.1 216 L187 212.5 L187 219.5 Z M319.5 216 L311.6 212.5 L311.6 219.5 Z" fill="#5c5c5c"/>
+<text x="249.3" y="234" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Strip 5/16 in (7.9 mm)</text>
+
+<!-- Crimp height reference -->
+<text x="16" y="258" font-size="12" font-weight="700" fill="#222222">Crimp height</text>
+<text x="16" y="273" font-size="12" fill="#5c5c5c">(for reference)</text>
+<g font-size="13" fill="#222222">
+  <text x="112" y="258">0.100–0.120 in (2.54–3.05 mm): 45 A contact, 10 AWG</text>
+  <text x="112" y="275">0.090–0.110 in (2.29–2.79 mm): 30 A contact, 12 AWG</text>
+</g>
+
+<line x1="16" y1="290" x2="504" y2="290" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Seat and check -->
+<text x="16" y="312" font-size="15" font-weight="700" fill="#222222">Seat the contact, then check it</text>
+<!-- Housing, cut away -->
+<rect x="24" y="324" width="166" height="14" fill="#d32f2f" stroke="#444444" stroke-width="1"/>
+<rect x="24" y="368" width="166" height="14" fill="#d32f2f" stroke="#444444" stroke-width="1"/>
+<text x="34" y="335" font-size="12" fill="#ffffff">housing (cut away)</text>
+<!-- Seated contact, scaled 0.72 -->
+<g transform="translate(30 341) scale(0.72)">
+  <use xlink:href="#ppc-core"/>
+  <rect x="215" y="4" width="73" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+</g>
+<!-- Flat spring: its tip has popped up behind the hooked edge -->
+<polyline points="34,367 88,367 96,355" fill="none" stroke="#7d8790" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<!-- Push-in arrow -->
+<line x1="206" y1="376" x2="236" y2="376" stroke="#222222" stroke-width="1.5"/>
+<path d="M198 376 L206 372.5 L206 379.5 Z" fill="#222222"/>
+<text x="217" y="396" font-size="12" fill="#5c5c5c" text-anchor="middle">push in</text>
+<g stroke="#222222" stroke-width="1" fill="none">
+  <line x1="56" y1="387" x2="56" y2="369"/>
+  <line x1="97" y1="386" x2="97" y2="358"/>
+</g>
+<g fill="#222222">
+  <circle cx="56" cy="367" r="2.5"/>
+  <circle cx="96.5" cy="355.5" r="2.5"/>
+</g>
+<text x="84" y="398" font-size="12" font-weight="700" fill="#222222" text-anchor="end">Flat spring</text>
+<text x="92" y="398" font-size="13" font-weight="700" fill="#222222">CLICK!</text>
+<g font-size="13" fill="#222222">
+  <text x="250" y="332">Goes in one way: hooked edge toward the</text>
+  <text x="250" y="349">flat spring. Push in until it CLICKs; then</text>
+  <text x="250" y="366">it floats slightly. Tug each wire: a seated</text>
+  <text x="250" y="383">contact resists 20 lbf (90 N). Push it from</text>
+  <text x="250" y="400">the front: it must not back out.</text>
+</g>
+
+<line x1="16" y1="414" x2="504" y2="414" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Bad crimps -->
+<text x="16" y="436" font-size="15" font-weight="700" fill="#222222">Bad crimps</text>
+
+<!-- Bad 1: insulation under the crimp -->
+<rect x="16" y="448" width="240" height="88" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#ppc-x" transform="translate(28 460)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(50 458) scale(0.6)">
+  <g stroke="#c47a2c" stroke-width="2.6">
+    <line x1="107" y1="10.75" x2="123" y2="10.75"/>
+    <line x1="107" y1="14.25" x2="123" y2="14.25"/>
+    <line x1="107" y1="17.75" x2="123" y2="17.75"/>
+    <line x1="107" y1="21.25" x2="123" y2="21.25"/>
+  </g>
+  <path d="M122 6 H130 L137 9 H175 L182 6 H206 V26 H182 L175 23 H137 L130 26 H122 Z" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <rect x="205" y="4" width="105" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <use xlink:href="#ppc-walls"/>
+  <use xlink:href="#ppc-front"/>
+  <ellipse cx="162" cy="16" rx="52" ry="24" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="24" y="501"><tspan font-weight="700" fill="#c62828">Bad:</tspan> insulation under the crimp.</text>
+  <text x="24" y="515">Copper isn't gripped: high resistance,</text>
+  <text x="24" y="529">heat, and a motor that cuts out.</text>
+</g>
+
+<!-- Bad 2: stripped too far back -->
+<rect x="264" y="448" width="240" height="88" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#ppc-x" transform="translate(276 460)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(298 458) scale(0.6)">
+  <g stroke="#c47a2c" stroke-width="2.6">
+    <line x1="107" y1="10.75" x2="263" y2="10.75"/>
+    <line x1="107" y1="14.25" x2="263" y2="14.25"/>
+    <line x1="107" y1="17.75" x2="263" y2="17.75"/>
+    <line x1="107" y1="21.25" x2="263" y2="21.25"/>
+  </g>
+  <use xlink:href="#ppc-walls"/>
+  <use xlink:href="#ppc-front"/>
+  <rect x="262" y="4" width="48" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <ellipse cx="234" cy="16" rx="36" ry="20" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="272" y="501"><tspan font-weight="700" fill="#c62828">Bad:</tspan> stripped too far back.</text>
+  <text x="272" y="515">A long bare gap of copper behind</text>
+  <text x="272" y="529">the barrel.</text>
+</g>
+
+<!-- Bad 3: wire pushed past the wire stop -->
+<rect x="16" y="540" width="240" height="88" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#ppc-x" transform="translate(28 552)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(50 550) scale(0.6)">
+  <use xlink:href="#ppc-core"/>
+  <rect x="215" y="4" width="95" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <g stroke="#c47a2c" stroke-width="2.6" stroke-linecap="round">
+    <line x1="112" y1="10.75" x2="72" y2="7"/>
+    <line x1="112" y1="14.25" x2="64" y2="12.5"/>
+    <line x1="112" y1="17.75" x2="66" y2="19"/>
+    <line x1="112" y1="21.25" x2="74" y2="25"/>
+  </g>
+  <ellipse cx="86" cy="16" rx="30" ry="17" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="24" y="593"><tspan font-weight="700" fill="#c62828">Bad:</tspan> wire pushed past the wire stop.</text>
+  <text x="24" y="607">Strands poke toward the mating end,</text>
+  <text x="24" y="621">so it won't mate cleanly.</text>
+</g>
+
+<!-- Bad 4: spread or distorted tab -->
+<rect x="264" y="540" width="240" height="88" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#ppc-x" transform="translate(276 552)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(298 550) scale(0.6)">
+  <use xlink:href="#ppc-strands"/>
+  <g fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M107 0 H130 L137 4 H150 L205 -11 V-6 L150 9 H137 L130 5 H107 Z" vector-effect="non-scaling-stroke"/>
+    <path d="M107 32 H130 L137 28 H175 L182 32 H205 V27 H182 L175 23 H137 L130 27 H107 Z" vector-effect="non-scaling-stroke"/>
+  </g>
+  <use xlink:href="#ppc-front"/>
+  <rect x="215" y="4" width="95" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <ellipse cx="182" cy="1" rx="32" ry="13" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="272" y="593"><tspan font-weight="700" fill="#c62828">Bad:</tspan> tab spread or distorted (wrong</text>
+  <text x="272" y="607">tool or a crooked die). The contact</text>
+  <text x="272" y="621">won't seat in the housing.</text>
+</g>
+
+<!-- Bad 5: soldered instead of crimped -->
+<rect x="16" y="632" width="240" height="88" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#ppc-x" transform="translate(28 644)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(50 642) scale(0.6)">
+  <use xlink:href="#ppc-strands"/>
+  <g fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2">
+    <rect x="107" y="0" width="98" height="5" vector-effect="non-scaling-stroke"/>
+    <rect x="107" y="27" width="98" height="5" vector-effect="non-scaling-stroke"/>
+  </g>
+  <use xlink:href="#ppc-front"/>
+  <rect x="215" y="4" width="95" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <path d="M152 -4 C178 -9 214 -6 228 4 C238 11 238 21 228 28 C214 38 178 41 152 36 C140 33 140 -1 152 -4 Z" fill="#8f989f" stroke="#5c5c5c" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <path d="M166 2 C182 -2 202 -1 214 4" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <ellipse cx="190" cy="16" rx="56" ry="25" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="24" y="685"><tspan font-weight="700" fill="#c62828">Bad:</tspan> soldered instead of crimped.</text>
+  <text x="24" y="699">Solder joints are brittle and fail under</text>
+  <text x="24" y="713">vibration (frcelectrical.org).</text>
+</g>
+
+<!-- The right tool -->
+<rect x="264" y="632" width="240" height="88" rx="6" fill="#f4f4f4" stroke="#d6d6d6"/>
+<text x="272" y="653" font-size="13" font-weight="700" fill="#222222">Use a Powerpole crimp tool</text>
+<g font-size="12" fill="#222222">
+  <text x="272" y="671">Other tools give high resistance joints</text>
+  <text x="272" y="685">or distort the contact so it won't seat</text>
+  <text x="272" y="699">properly (Anderson).</text>
+</g>
+</svg>

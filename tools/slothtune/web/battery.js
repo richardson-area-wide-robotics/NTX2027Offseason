@@ -46,6 +46,7 @@ const Battery = (() => {
           <span class="batt-s">${b.status ? `${WORDS[b.status]} · ${b.mohm} mΩ` : "not measured"}</span>${b.id === r.id ? `<span class="batt-in">in now</span>` : ""}${r.next && b.id === r.next.id ? `<span class="batt-in">next</span>` : ""}</button>`).join("")}</div>
       ${r.id && r.rest_v > 1 ? `<p class="small">Battery ${esc(r.id)} read ${fmt(r.rest_v, 2)} V at rest when it was picked
         (${r.rest_v >= 12.3 ? charge(r.rest_v) : `<b>${charge(r.rest_v)}</b>`}).</p>` : ""}
+      <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="battery.plug">Its plug and leads:</span>${Learn.chips(["crimp_sb50", "wire_gauge", "wire_loss"])}</div>
       <details class="batt-details"><summary>How each battery is doing</summary>
         <div class="tblwrap"><table class="t"><thead><tr><th>Battery</th><th></th><th>Sag</th><th>At rest</th><th>Measured</th><th>Trend</th><th>From</th></tr></thead><tbody>
         ${r.batteries.filter(b => b.n).map(b => `<tr><td><b>${esc(b.id)}</b>${b.listed ? "" : ` <span class="muted small">off the list</span>`}</td>

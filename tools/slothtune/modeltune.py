@@ -617,9 +617,10 @@ SPEED_DELAY_MIN_S = 0.005  # no SPARK speed reading is quicker than this: a spee
 
 # The feedforward the tool sets, and predicts, in each closed-loop mode, and how often the setpoint
 # moves: a profile on the roboRIO steps each 20 ms loop, MAXMotion's every millisecond. REV applies
-# kS in plain Position too, but with no target speed to point it, REV doesn't say which way (its
-# docs: "in the direction of desired velocity"), and a kS pushed by the error can make a mechanism
-# hunt around its target. So the tool leaves kS there as the team set it (decision 79).
+# kS in plain Position too, with no target speed to point it: reportedly by the error's sign, which
+# dithers near the target (CTRE warns the same of its UseClosedLoopSign). Best practice (WPILib,
+# CTRE, REV's examples) signs kS by a profile's speed: MAXMotion, or a roboRIO profile's feedforward.
+# So the tool sets the SPARK's kS to 0 in plain Position (decision 79; systems.MODE_ZERO).
 MODE_FF = {"Position": ("kG",), "MAXMotionPosition": ("kS", "kV", "kA", "kG"),
            "Velocity": ("kS", "kV"), "MAXMotionVelocity": ("kS", "kV", "kA")}
 MODE_SP_PERIOD = {"Position": 0.02, "Velocity": 0.02}

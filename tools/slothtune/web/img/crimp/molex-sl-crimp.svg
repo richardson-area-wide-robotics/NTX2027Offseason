@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 520 646" width="520" height="646" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mxc-title mxc-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mxc-title">Crimping a Molex SL terminal for CAN</title>
+<desc id="mxc-desc">Side view of a good crimp on a Molex SL female terminal 16-02-0103 (22-24 AWG wire, Molex hand tool 63811-8700), labeled from the mating end back: contact area, conductor brush, conductor crimp, bellmouth, inspection window and insulation crimp. Below it: strip 0.100-0.125 in (2.5-3.2 mm); pull test, a good 24 AWG crimp holds at least 6.5 lb (28.9 N); and four common bad crimps, each marked with a red X: insulation under the conductor crimp, strands outside the barrel, wire pushed in too far, and a terminal not latched in the housing.</desc>
+<defs>
+  <g id="mxc-box">
+    <rect x="30" y="158" width="120" height="44" rx="3" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5"/>
+    <line x1="37" y1="166" x2="144" y2="166" stroke="#7d8790" stroke-width="1"/>
+    <path d="M42 195 Q90 184 140 195" fill="none" stroke="#7d8790" stroke-width="1" stroke-dasharray="3 2"/>
+    <path d="M96 158 L130 146 L132 158" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
+  <g id="mxc-floor" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2">
+    <rect x="148" y="195" width="56" height="7"/>
+    <rect x="262" y="195" width="62" height="7"/>
+  </g>
+  <g id="mxc-strands" stroke="#c47a2c" stroke-width="2.4" stroke-linecap="round">
+    <line x1="189" y1="176" x2="300" y2="176"/>
+    <line x1="187" y1="180" x2="300" y2="180"/>
+    <line x1="190" y1="184" x2="300" y2="184"/>
+    <line x1="188" y1="188" x2="300" y2="188"/>
+  </g>
+  <g id="mxc-barrel">
+    <path d="M200 168 H252 Q259 168 266 162 V208 Q259 202 252 202 H200 Z" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5" stroke-linejoin="round"/>
+    <line x1="205" y1="175" x2="250" y2="175" stroke="#7d8790" stroke-width="1"/>
+  </g>
+  <g id="mxc-icrimp">
+    <rect x="320" y="160" width="50" height="42" rx="4" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5"/>
+    <path d="M324 166 Q345 177 366 166" fill="none" stroke="#7d8790" stroke-width="1"/>
+  </g>
+  <path id="mxc-ins-short" d="M292 169 H404 q5 6.5 0 13 q-5 6.5 0 13 H292 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+  <g id="mxc-good">
+    <use xlink:href="#mxc-floor"/>
+    <use xlink:href="#mxc-strands"/>
+    <path d="M292 169 H494 q5 6.5 0 13 q-5 6.5 0 13 H292 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+    <use xlink:href="#mxc-box"/>
+    <use xlink:href="#mxc-barrel"/>
+    <use xlink:href="#mxc-icrimp"/>
+  </g>
+  <g id="mxc-good-short">
+    <use xlink:href="#mxc-floor"/>
+    <use xlink:href="#mxc-strands"/>
+    <use xlink:href="#mxc-ins-short"/>
+    <use xlink:href="#mxc-box"/>
+    <use xlink:href="#mxc-barrel"/>
+    <use xlink:href="#mxc-icrimp"/>
+  </g>
+  <g id="mxc-x" stroke="#c62828" stroke-width="3" stroke-linecap="round">
+    <line x1="-5" y1="-5" x2="5" y2="5"/>
+    <line x1="5" y1="-5" x2="-5" y2="5"/>
+  </g>
+</defs>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Crimping a Molex SL terminal for CAN</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Terminal 16-02-0103 for 22–24 AWG wire · Molex hand tool 63811-8700</text>
+
+<!-- Good crimp heading -->
+<path d="M17 67 L21.5 71.5 L30 62" fill="none" stroke="#1a7f37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="36" y="74" font-size="14" font-weight="700" fill="#222222"><tspan fill="#1a7f37">Good</tspan> crimp<tspan font-size="12" font-weight="400" fill="#5c5c5c"> · side view, mating end at left</tspan></text>
+
+<!-- Good crimp drawing -->
+<use xlink:href="#mxc-good"/>
+
+<!-- Labels above -->
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="98" font-size="13" font-weight="700" fill="#222222">Contact area</text>
+  <text x="16" y="112">nothing in it but</text>
+  <text x="16" y="126">the contact itself</text>
+
+  <text x="150" y="98" font-size="13" font-weight="700" fill="#222222">Conductor brush</text>
+  <text x="150" y="112">strands stick out 0–0.04 in</text>
+  <text x="150" y="126">(0–1.0 mm) past the crimp,</text>
+  <text x="150" y="140">never into the contact area</text>
+
+  <text x="318" y="98" font-size="13" font-weight="700" fill="#222222">Inspection window</text>
+  <text x="318" y="112">bare strands and insulation</text>
+  <text x="318" y="126">show equally; no insulation</text>
+  <text x="318" y="140">under the conductor crimp</text>
+</g>
+
+<!-- Labels below -->
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="234" font-size="13" font-weight="700" fill="#222222">Conductor crimp</text>
+  <text x="16" y="248">wraps bare strands only;</text>
+  <text x="16" y="262">seam closed, no strands</text>
+  <text x="16" y="276">outside the barrel</text>
+
+  <text x="262" y="234" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Bellmouth</text>
+  <text x="262" y="248" text-anchor="middle">small flare at the back,</text>
+  <text x="262" y="262" text-anchor="middle">0.008–0.020 in</text>
+  <text x="262" y="276" text-anchor="middle">(0.2–0.5 mm)</text>
+
+  <text x="348" y="234" font-size="13" font-weight="700" fill="#222222">Insulation crimp</text>
+  <text x="348" y="248">grips the insulation; it must</text>
+  <text x="348" y="262">survive the wire being bent</text>
+  <text x="348" y="276">60–90° several times</text>
+</g>
+
+<!-- Leaders -->
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="60" y1="131" x2="60" y2="158"/>
+  <line x1="166" y1="145" x2="186" y2="174"/>
+  <line x1="322" y1="145" x2="294" y2="171"/>
+  <line x1="134" y1="229" x2="226" y2="203"/>
+  <line x1="266" y1="221" x2="266" y2="209"/>
+  <line x1="356" y1="221" x2="348" y2="203"/>
+</g>
+<g fill="#222222">
+  <circle cx="60" cy="160" r="2.5"/>
+  <circle cx="187" cy="176" r="2.5"/>
+  <circle cx="293" cy="172" r="2.5"/>
+  <circle cx="226" cy="201" r="2.5"/>
+  <circle cx="266" cy="207" r="2.5"/>
+  <circle cx="348" cy="201" r="2.5"/>
+</g>
+
+<line x1="16" y1="292" x2="504" y2="292" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Strip -->
+<text x="16" y="312" font-size="13" font-weight="700" fill="#222222">Strip 0.100–0.125 in (2.5–3.2 mm)</text>
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="96" y1="319" x2="96" y2="331"/>
+  <line x1="146" y1="319" x2="146" y2="331"/>
+  <line x1="100" y1="324" x2="142" y2="324"/>
+</g>
+<path d="M96 324 L102 321 L102 327 Z M146 324 L140 321 L140 327 Z" fill="#5c5c5c"/>
+<path d="M96 333 H24 q-4 5 0 10 q4 5 0 10 H96 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+<g stroke="#c47a2c" stroke-width="2.4" stroke-linecap="round">
+  <line x1="97" y1="337" x2="146" y2="337"/>
+  <line x1="97" y1="341" x2="144" y2="341"/>
+  <line x1="97" y1="345" x2="146" y2="345"/>
+  <line x1="97" y1="349" x2="145" y2="349"/>
+</g>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="370">22–24 AWG wire; insulation no more</text>
+  <text x="16" y="384">than 0.064 in (1.63 mm) across</text>
+</g>
+
+<!-- Pull test -->
+<text x="272" y="312" font-size="13" font-weight="700" fill="#222222">Pull test</text>
+<use xlink:href="#mxc-good" transform="translate(260 263.6) scale(0.4)"/>
+<line x1="466" y1="336.4" x2="494" y2="336.4" stroke="#222222" stroke-width="2"/>
+<path d="M502 336.4 L492 331 L492 341.8 Z" fill="#222222"/>
+<g font-size="12" fill="#5c5c5c">
+  <text x="272" y="370">Tug each crimped wire, one at a time.</text>
+  <text x="272" y="384">A good 24 AWG crimp holds at least</text>
+  <text x="272" y="398" font-weight="700" fill="#222222">6.5 lb (28.9 N).</text>
+</g>
+
+<line x1="16" y1="408" x2="504" y2="408" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Bad crimps -->
+<text x="16" y="428" font-size="15" font-weight="700" fill="#222222">Common bad crimps</text>
+<text x="16" y="444" font-size="12" fill="#5c5c5c">Bad crimps are the most common cause of intermittent connection issues (CTRE).</text>
+
+<!-- Bad 1: insulation under the conductor crimp -->
+<rect x="16" y="452" width="240" height="90" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#mxc-x" transform="translate(29 466)"/>
+<g transform="translate(25.5 376.7) scale(0.55)">
+  <use xlink:href="#mxc-floor"/>
+  <g stroke="#c47a2c" stroke-width="2.4" stroke-linecap="round">
+    <line x1="189" y1="176" x2="250" y2="176"/>
+    <line x1="187" y1="180" x2="250" y2="180"/>
+    <line x1="190" y1="184" x2="250" y2="184"/>
+    <line x1="188" y1="188" x2="250" y2="188"/>
+  </g>
+  <path d="M238 169 H404 q5 6.5 0 13 q-5 6.5 0 13 H238 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+  <use xlink:href="#mxc-box"/>
+  <use xlink:href="#mxc-barrel"/>
+  <use xlink:href="#mxc-icrimp"/>
+  <path d="M262 169 H238 V195 H262" fill="none" stroke="#222222" stroke-width="2" stroke-dasharray="5 3"/>
+  <ellipse cx="264" cy="183" rx="70" ry="30" fill="none" stroke="#c62828" stroke-width="3" stroke-dasharray="8 5"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="24" y="507"><tspan font-weight="700" fill="#c62828">Bad:</tspan> insulation under the conductor</text>
+  <text x="24" y="521">crimp. Copper is not gripped: an</text>
+  <text x="24" y="535">intermittent CAN connection.</text>
+</g>
+
+<!-- Bad 2: strands outside the barrel / open seam -->
+<rect x="264" y="452" width="240" height="90" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#mxc-x" transform="translate(277 466)"/>
+<g transform="translate(273.5 376.7) scale(0.55)">
+  <use xlink:href="#mxc-good-short"/>
+  <path d="M212 168 L220 155 L234 157 L240 168" fill="#b0b8c0" stroke="#7d8790" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M228 170 C226 156 208 148 190 148" fill="none" stroke="#c47a2c" stroke-width="3" stroke-linecap="round"/>
+  <ellipse cx="216" cy="160" rx="44" ry="20" fill="none" stroke="#c62828" stroke-width="3" stroke-dasharray="8 5"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="272" y="507"><tspan font-weight="700" fill="#c62828">Bad:</tspan> strands outside the barrel</text>
+  <text x="272" y="521">(open seam). A stray strand can</text>
+  <text x="272" y="535">short to the other pin.</text>
+</g>
+
+<!-- Bad 3: wire pushed in too far -->
+<rect x="16" y="548" width="240" height="90" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#mxc-x" transform="translate(29 562)"/>
+<g transform="translate(25.5 472.7) scale(0.55)">
+  <use xlink:href="#mxc-floor"/>
+  <use xlink:href="#mxc-box"/>
+  <g stroke="#c47a2c" stroke-width="2.4" stroke-linecap="round">
+    <line x1="94" y1="176" x2="300" y2="176"/>
+    <line x1="90" y1="180" x2="300" y2="180"/>
+    <line x1="95" y1="184" x2="300" y2="184"/>
+    <line x1="92" y1="188" x2="300" y2="188"/>
+  </g>
+  <path d="M280 169 H404 q5 6.5 0 13 q-5 6.5 0 13 H280 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+  <use xlink:href="#mxc-barrel"/>
+  <use xlink:href="#mxc-icrimp"/>
+  <ellipse cx="124" cy="182" rx="46" ry="28" fill="none" stroke="#c62828" stroke-width="3" stroke-dasharray="8 5"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="24" y="603"><tspan font-weight="700" fill="#c62828">Bad:</tspan> wire pushed in too far, strands</text>
+  <text x="24" y="617">in the contact area. The contact</text>
+  <text x="24" y="631">can't grip the pin.</text>
+</g>
+
+<!-- Bad 4: terminal not latched in the housing -->
+<rect x="264" y="548" width="240" height="90" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#mxc-x" transform="translate(277 562)"/>
+<g transform="translate(271.6 487.92) scale(0.46)">
+  <g transform="translate(96 0)">
+    <use xlink:href="#mxc-floor"/>
+    <use xlink:href="#mxc-strands"/>
+    <path d="M292 169 H390 q5 6.5 0 13 q-5 6.5 0 13 H292 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+    <use xlink:href="#mxc-box"/>
+    <use xlink:href="#mxc-barrel"/>
+    <use xlink:href="#mxc-icrimp"/>
+  </g>
+  <rect x="40" y="148" width="150" height="64" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="2.2"/>
+  <line x1="290" y1="148" x2="356" y2="148" stroke="#c62828" stroke-width="3.5"/>
+  <path d="M374 148 L354 139 L354 157 Z" fill="#c62828"/>
+  <ellipse cx="206" cy="152" rx="34" ry="14" fill="none" stroke="#c62828" stroke-width="3" stroke-dasharray="8 5"/>
+</g>
+<text x="324.5" y="575" font-size="12" fill="#5c5c5c" text-anchor="middle">housing</text>
+<g font-size="12" fill="#222222">
+  <text x="272" y="603"><tspan font-weight="700" fill="#c62828">Bad:</tspan> not latched, so it backs out</text>
+  <text x="272" y="617">when the plug is pushed in. The pin</text>
+  <text x="272" y="631">disconnects: devices drop off the bus.</text>
+</g>
+</svg>

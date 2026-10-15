@@ -53,3 +53,13 @@ half its size (1754 x 907 px, so 100 px a meter with PathPlanner's 0.5 m margin)
 256 colors. The Live tab places the robot on it the way PathPlanner's `field_image.dart` and
 `path_painter_util.dart` do. A new season's field: add PathPlanner's new picture the same way and
 a line for it in `FIELD_PICS` (`../live.js`); until then the Live tab draws the field plain.
+
+## crimp/ and wire/: drawn for this tool
+
+The crimp drawings (Molex SL, Anderson Powerpole, Anderson SB50: good and bad crimps, orientation
+and polarity) and the wire-gauge drawing are original schematics made for Sloth Tune, not copies of
+anyone's photos or drawings. Their facts come from, and the lessons link: Molex's SL hand-tool
+specification and Quality Crimp Handbook; Anderson Power Products' Powerpole and SB50 data and
+assembly sheets; West Mountain Radio's Powerpole crimping manual; frcelectrical.org (Making
+Connections, Battery); CTRE's CAN troubleshooting; WPILib's battery and wiring pages; and the 2026
+FRC game manual (R609, R622, R624). Copper resistance and diameters: the standard AWG table.

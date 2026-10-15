@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="400" viewBox="0 0 520 400" font-family="Segoe UI, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title>SB50 orientation and polarity</title>
+<desc>Two red Anderson SB50 housings about to mate: the battery's and the robot's. The housing is genderless, so two identical housings mate, one turned 180 degrees. Top view: red wire meets red wire and black wire meets black wire. Side section through the red pair: each contact's notched tongue sits against its spring, and the second housing is the same part turned 180 degrees. Notes: polarity comes from the wire colors, red = + (battery positive) and black = -; wire every SB50 on the team the same way; check a charger's polarity with a multimeter; FRC batteries carry a red (or pink) SB50 and only red or pink mates with red; hold the connector with clips or zip ties so the lugs can't move.</desc>
+<defs>
+<style>
+text{font-family:"Segoe UI",Arial,sans-serif;font-size:13px;fill:#222222}
+.ti{font-size:16px;font-weight:700}
+.h{font-size:14px;font-weight:700}
+.m{fill:#5c5c5c}
+.b{font-weight:700}
+.c{text-anchor:middle}
+.e{text-anchor:end}
+.ins{fill:#d32f2f;stroke:#444444;stroke-width:1}
+.blk{fill:#333333;stroke:#777777;stroke-width:1}
+.hs{fill:#d32f2f;stroke:#444444;stroke-width:1}
+.cav{fill:#ffffff;stroke:#444444;stroke-width:0.8}
+.met{fill:#b0b8c0;stroke:#7d8790;stroke-width:1.2}
+.fc{stroke:#7d8790;stroke-width:1}
+.ld{fill:none;stroke:#444444;stroke-width:1}
+.sp{fill:none;stroke:#555555;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.dot{fill:#222222}
+</style>
+<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 Z" fill="#444444"/></marker>
+</defs>
+
+<!-- Header -->
+<text x="16" y="26" class="ti">SB50 orientation and polarity</text>
+<text x="16" y="45" class="m">Genderless: two identical housings mate, one turned 180°.</text>
+
+<!-- Top view -->
+<text x="16" y="70" class="h">Top view, about to mate</text>
+
+<!-- Housing A: the battery's -->
+<rect x="80" y="80" width="120" height="88" rx="6" class="hs"/>
+<rect x="86" y="88" width="114" height="28" class="cav"/>
+<rect x="86" y="132" width="114" height="28" class="cav"/>
+<rect x="90" y="94" width="36" height="16" class="met"/>
+<path d="M126,94L133,91V113L126,110Z" class="met"/>
+<rect x="133" y="91" width="61" height="22" rx="2" class="met"/>
+<rect x="90" y="138" width="36" height="16" class="met"/>
+<path d="M126,138L133,135V157L126,154Z" class="met"/>
+<rect x="133" y="135" width="61" height="22" rx="2" class="met"/>
+<rect x="16" y="95" width="74" height="14" class="ins"/>
+<rect x="16" y="139" width="74" height="14" class="blk"/>
+<text x="16" y="88">red = <tspan class="b">+</tspan></text>
+<text x="16" y="133">black = <tspan class="b">−</tspan></text>
+
+<!-- Housing B: the robot's, the same part turned 180 degrees -->
+<rect x="320" y="80" width="120" height="88" rx="6" class="hs"/>
+<rect x="320" y="88" width="114" height="28" class="cav"/>
+<rect x="320" y="132" width="114" height="28" class="cav"/>
+<rect x="394" y="94" width="36" height="16" class="met"/>
+<path d="M394,94L387,91V113L394,110Z" class="met"/>
+<rect x="326" y="91" width="61" height="22" rx="2" class="met"/>
+<rect x="394" y="138" width="36" height="16" class="met"/>
+<path d="M394,138L387,135V157L394,154Z" class="met"/>
+<rect x="326" y="135" width="61" height="22" rx="2" class="met"/>
+<rect x="430" y="95" width="74" height="14" class="ins"/>
+<rect x="430" y="139" width="74" height="14" class="blk"/>
+<text x="504" y="88" class="e">red = <tspan class="b">+</tspan></text>
+<text x="504" y="133" class="e">black = <tspan class="b">−</tspan></text>
+
+<!-- Between them -->
+<text x="260" y="106" class="c">red to red</text>
+<line x1="206" y1="124" x2="236" y2="124" stroke="#444444" marker-end="url(#ah)"/>
+<line x1="314" y1="124" x2="284" y2="124" stroke="#444444" marker-end="url(#ah)"/>
+<text x="260" y="150" class="c">black to black</text>
+<text x="140" y="188" class="c">Battery's SB50 (red)</text>
+<text x="380" y="188" class="c">Robot's SB50 (red or pink)</text>
+
+<!-- Side section through the red pair -->
+<text x="16" y="210" class="h">Side section, red pair</text>
+<text x="504" y="210" class="e m">same housing, turned 180°</text>
+
+<!-- A -->
+<rect x="70" y="226" width="156" height="10" class="hs"/>
+<rect x="70" y="274" width="156" height="10" class="hs"/>
+<rect x="16" y="248" width="60" height="20" class="ins"/>
+<rect x="76" y="247" width="48" height="22" class="met"/>
+<path d="M88,247V269M112,247V269" class="fc"/>
+<path d="M124,247L131,252V260L124,269Z" class="met"/>
+<path d="M131,252H212Q216,252 216,255V257Q216,260 212,260H148V256.5H139V260H131Z" class="met"/>
+<rect x="216" y="264" width="10" height="10" fill="#777777"/>
+<polyline points="219,268 186,265.5 143.5,258.5" class="sp"/>
+
+<!-- B: A turned 180 degrees about (260, 252) -->
+<rect x="294" y="220" width="156" height="10" class="hs"/>
+<rect x="294" y="268" width="156" height="10" class="hs"/>
+<rect x="444" y="236" width="60" height="20" class="ins"/>
+<rect x="396" y="235" width="48" height="22" class="met"/>
+<path d="M408,235V257M432,235V257" class="fc"/>
+<path d="M396,257L389,252V244L396,235Z" class="met"/>
+<path d="M389,252H308Q304,252 304,249V247Q304,244 308,244H372V247.5H381V244H389Z" class="met"/>
+<rect x="294" y="230" width="10" height="10" fill="#777777"/>
+<polyline points="301,236 334,238.5 376.5,245.5" class="sp"/>
+
+<line x1="232" y1="252" x2="254" y2="252" stroke="#444444" marker-end="url(#ah)"/>
+<line x1="288" y1="252" x2="266" y2="252" stroke="#444444" marker-end="url(#ah)"/>
+
+<line x1="136" y1="288" x2="141" y2="262" class="ld"/>
+<text x="134" y="300" class="e">notched side</text>
+<line x1="184" y1="288" x2="184" y2="267" class="ld"/>
+<text x="170" y="300">spring</text>
+
+<!-- Notes -->
+<circle cx="21" cy="316" r="2.5" class="dot"/>
+<text x="30" y="320">Polarity comes from the wire colors: red = <tspan class="b">+</tspan> (battery positive), black = <tspan class="b">−</tspan>.</text>
+<circle cx="21" cy="334" r="2.5" class="dot"/>
+<text x="30" y="338">Wire every SB50 on the team the same way.</text>
+<circle cx="21" cy="352" r="2.5" class="dot"/>
+<text x="30" y="356">Check a charger's polarity with a multimeter.</text>
+<circle cx="21" cy="370" r="2.5" class="dot"/>
+<text x="30" y="374">FRC batteries carry a red (or pink) SB50; only red or pink mates with red.</text>
+<circle cx="21" cy="388" r="2.5" class="dot"/>
+<text x="30" y="392">Hold the connector with clips or zip ties so the lugs can't move.</text>
+</svg>

@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 356" width="520" height="356" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mxp-title mxp-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mxp-title">Molex SL polarity: CAN-H on pin 1</title>
+<desc id="mxp-desc">End view of a two-pin Molex SL housing: a small triangle molded on the housing marks pin 1. Pin 1 is CAN-H, the bus's own cable color and never green (yellow on bus 1, drawn here as the example); pin 2 is CAN-L, always green. A mated pair seen from the side shows CAN-H lining up with CAN-H, with the triangle on each housing on the CAN-H row. Use the same pinout on every connector; swapped CAN-H and CAN-L wires are a common failure. With the robot off, the finished bus reads about 60 ohms between CAN-H and CAN-L.</desc>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Molex SL polarity: CAN-H on pin 1</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Find pin 1 by the small triangle molded on the housing.</text>
+
+<!-- End view of one housing -->
+<text x="16" y="76" font-size="13" font-weight="700" fill="#222222">End view of one housing</text>
+<rect x="20" y="88" width="80" height="110" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<rect x="42" y="98" width="40" height="40" rx="3" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<rect x="42" y="148" width="40" height="40" rx="3" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle cx="62" cy="118" r="14" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+<circle cx="62" cy="118" r="6" fill="#c47a2c"/>
+<circle cx="62" cy="168" r="14" fill="#2e7d32" stroke="#444444" stroke-width="1"/>
+<circle cx="62" cy="168" r="6" fill="#c47a2c"/>
+<path d="M25 111 L25 125 L36 118 Z" fill="#222222"/>
+
+<g font-size="12" fill="#5c5c5c">
+  <text x="112" y="113" font-size="13" font-weight="700" fill="#222222">Pin 1: CAN-H</text>
+  <text x="112" y="128">the bus's color, never green</text>
+  <text x="112" y="143">(yellow on bus 1)</text>
+  <text x="112" y="168" font-size="13" font-weight="700" fill="#222222">Pin 2: CAN-L</text>
+  <text x="112" y="183">always green</text>
+  <text x="16" y="216" font-weight="700" fill="#222222">Molded triangle marks pin 1</text>
+</g>
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="83" y1="118" x2="108" y2="109"/>
+  <line x1="83" y1="168" x2="108" y2="164"/>
+  <line x1="30" y1="127" x2="30" y2="204"/>
+</g>
+<g fill="#222222">
+  <circle cx="83" cy="118" r="2.5"/>
+  <circle cx="83" cy="168" r="2.5"/>
+</g>
+
+<!-- Mated pair, side view -->
+<path d="M273 69 L277.5 73.5 L286 64" fill="none" stroke="#1a7f37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="292" y="76" font-size="13" font-weight="700" fill="#222222"><tspan fill="#1a7f37">Good</tspan> mated pair<tspan font-size="12" font-weight="400" fill="#5c5c5c"> (side view)</tspan></text>
+<text x="406" y="98" font-size="12" fill="#5c5c5c" text-anchor="middle">CAN-H lines up with CAN-H</text>
+
+<path d="M344 121 H324 q-4 3.5 0 7 q4 3.5 0 7 H344 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+<path d="M344 157 H324 q-4 3.5 0 7 q4 3.5 0 7 H344 Z" fill="#2e7d32" stroke="#444444" stroke-width="1"/>
+<path d="M468 121 H494 q4 3.5 0 7 q-4 3.5 0 7 H468 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+<path d="M468 157 H494 q4 3.5 0 7 q-4 3.5 0 7 H468 Z" fill="#2e7d32" stroke="#444444" stroke-width="1"/>
+<rect x="344" y="106" width="62" height="84" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<rect x="406" y="106" width="62" height="84" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<path d="M389 121 L389 135 L400 128 Z" fill="#222222"/>
+<path d="M423 121 L423 135 L412 128 Z" fill="#222222"/>
+
+<g font-size="12" font-weight="700" fill="#222222" text-anchor="end">
+  <text x="316" y="132">CAN-H</text>
+  <text x="316" y="168">CAN-L</text>
+</g>
+<text x="406" y="214" font-size="12" fill="#5c5c5c" text-anchor="middle">Each triangle marks pin 1</text>
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="393" y1="137" x2="393" y2="201"/>
+  <line x1="419" y1="137" x2="419" y2="201"/>
+</g>
+
+<line x1="16" y1="228" x2="504" y2="228" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Rules -->
+<g fill="#222222">
+  <circle cx="21" cy="243" r="2.5"/>
+  <circle cx="21" cy="283" r="2.5"/>
+  <circle cx="21" cy="323" r="2.5"/>
+</g>
+<g font-size="14" fill="#222222">
+  <text x="30" y="248">The non-green wire (CAN-H) on pin 1, the one the triangle marks;</text>
+  <text x="30" y="266">green (CAN-L) on pin 2. CAN-H takes its bus's own color.</text>
+  <text x="30" y="288">Use the same pinout on every connector on the robot: swapped</text>
+  <text x="30" y="306">CAN-H and CAN-L wires are a common failure (CTRE).</text>
+  <text x="30" y="328">Check the finished bus with the robot off: about 60 Ω between</text>
+  <text x="30" y="346">CAN-H and CAN-L.</text>
+</g>
+</svg>

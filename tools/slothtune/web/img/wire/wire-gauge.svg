@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 562" width="520" height="562" font-family="Segoe UI, Arial, sans-serif">
+<title>Wire gauge: thicker copper, less loss</title>
+<desc>FRC wire gauges from 4 AWG to 22 AWG, their copper drawn to scale, each with its resistance a foot, the 2026 robot rule it meets, and the volts and heat lost on a typical run of it, out and back.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Wire gauge: thicker copper, less loss</text>
+<text x="16" y="48" font-size="12" fill="#5c5c5c">Copper drawn to scale (8 px a millimeter). A smaller number is thicker wire.</text>
+<text x="16" y="64" font-size="12" fill="#5c5c5c">Loss on a typical run, out and back (the current returns on the other wire).</text>
+<line x1="16" y1="74" x2="504" y2="74" stroke="#e2e2e2"/>
+<circle cx="46" cy="102.0" r="24.8" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="102.0" r="20.8" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="96" font-size="15" font-weight="700" fill="#222222">4 AWG</text>
+<text x="88" y="115" font-size="12" fill="#5c5c5c">0.248 m&#937;/ft</text>
+<text x="170" y="96" font-size="13" fill="#222222">Your battery leads (R609: 6 AWG or larger)</text>
+<text x="170" y="115" font-size="12" fill="#5c5c5c">2 ft each way at 150 A: 0.15 V lost, 22 W of heat</text>
+<line x1="16" y1="130" x2="504" y2="130" stroke="#e2e2e2"/>
+<circle cx="46" cy="158.0" r="20.5" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="158.0" r="16.5" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="152" font-size="15" font-weight="700" fill="#222222">6 AWG</text>
+<text x="88" y="171" font-size="12" fill="#5c5c5c">0.395 m&#937;/ft</text>
+<text x="170" y="152" font-size="13" fill="#222222">Battery path minimum (R609)</text>
+<text x="170" y="171" font-size="12" fill="#5c5c5c">2 ft each way at 150 A: 0.24 V lost, 36 W of heat</text>
+<line x1="16" y1="186" x2="504" y2="186" stroke="#e2e2e2"/>
+<circle cx="46" cy="214.0" r="14.4" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="214.0" r="10.4" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="208" font-size="15" font-weight="700" fill="#222222">10 AWG</text>
+<text x="88" y="227" font-size="12" fill="#5c5c5c">0.999 m&#937;/ft</text>
+<text x="170" y="208" font-size="13" fill="#222222">Thicker than a 40 A circuit needs</text>
+<text x="170" y="227" font-size="12" fill="#5c5c5c">3 ft each way at 40 A: 0.24 V lost, 10 W of heat</text>
+<line x1="16" y1="242" x2="504" y2="242" stroke="#e2e2e2"/>
+<circle cx="46" cy="270.0" r="12.2" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="270.0" r="8.2" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="264" font-size="15" font-weight="700" fill="#222222">12 AWG</text>
+<text x="88" y="283" font-size="12" fill="#5c5c5c">1.59 m&#937;/ft</text>
+<text x="170" y="264" font-size="13" fill="#222222">31-40 A breaker minimum (R622)</text>
+<text x="170" y="283" font-size="12" fill="#5c5c5c">3 ft each way at 40 A: 0.38 V lost, 15 W of heat</text>
+<line x1="16" y1="298" x2="504" y2="298" stroke="#e2e2e2"/>
+<circle cx="46" cy="326.0" r="10.5" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="326.0" r="6.5" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="320" font-size="15" font-weight="700" fill="#222222">14 AWG</text>
+<text x="88" y="339" font-size="12" fill="#5c5c5c">2.52 m&#937;/ft</text>
+<text x="170" y="320" font-size="13" fill="#222222">21-30 A breaker minimum (R622)</text>
+<text x="170" y="339" font-size="12" fill="#5c5c5c">3 ft each way at 30 A: 0.45 V lost, 14 W of heat</text>
+<line x1="16" y1="354" x2="504" y2="354" stroke="#e2e2e2"/>
+<circle cx="46" cy="382.0" r="8.1" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="382.0" r="4.1" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="376" font-size="15" font-weight="700" fill="#222222">18 AWG</text>
+<text x="88" y="395" font-size="12" fill="#5c5c5c">6.38 m&#937;/ft</text>
+<text x="170" y="376" font-size="13" fill="#222222">6-20 A breaker minimum (R622)</text>
+<text x="170" y="395" font-size="12" fill="#5c5c5c">3 ft each way at 20 A: 0.77 V lost, 15 W of heat</text>
+<line x1="16" y1="410" x2="504" y2="410" stroke="#e2e2e2"/>
+<circle cx="46" cy="438.0" r="6.6" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="46" cy="438.0" r="2.6" fill="#c47a2c" stroke="#8a5216" stroke-width="1"/>
+<text x="88" y="432" font-size="15" font-weight="700" fill="#222222">22 AWG</text>
+<text x="88" y="451" font-size="12" fill="#5c5c5c">16.14 m&#937;/ft</text>
+<text x="170" y="432" font-size="13" fill="#222222">CAN pairs (the rule's minimum is 28 AWG)</text>
+<text x="170" y="451" font-size="12" fill="#5c5c5c">Carries a signal of milliamps: nothing worth losing</text>
+<line x1="16" y1="466" x2="504" y2="466" stroke="#e2e2e2"/>
+<text x="16" y="492" font-size="13" font-weight="700" fill="#1a7f37">Every 3 gauges thicker doubles the copper: half the resistance,</text>
+<text x="16" y="510" font-size="13" font-weight="700" fill="#1a7f37">half the volts lost, half the heat.</text>
+<text x="16" y="530" font-size="12" fill="#5c5c5c">Copper at 68 &#176;F (20 &#176;C); a warm wire reads about 0.4% more per &#176;C.</text>
+<text x="16" y="548" font-size="12" fill="#5c5c5c">Rules: 2026 game manual, R609 and R622 (Table 8-4).</text>
+</svg>

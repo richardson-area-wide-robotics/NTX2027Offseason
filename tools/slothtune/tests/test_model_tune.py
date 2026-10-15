@@ -101,7 +101,8 @@ class IdReportTest(unittest.TestCase):
 
     def test_plain_position_gets_no_speed_feedforward(self):
         apply = report(practice(), "Position")["computed"]["apply"]
-        self.assertEqual({k.split("/")[1] for k in apply}, {"kP", "kD", "kG", "kI", "kCos", "vComp"})
+        self.assertEqual({k.split("/")[1] for k in apply}, {"kP", "kD", "kG", "kI", "kS", "kCos", "vComp"})
+        self.assertEqual(apply["Lift/kS"], 0.0, "decision 79: no error-signed kS at the target")
         self.assertEqual(apply["Lift/kI"], 0.0, "an old kI would wind up under the LQR's kP and kD")
         self.assertEqual(apply["Lift/kCos"], 0.0, "an elevator's gravity once: kG, never kCos on top")
 

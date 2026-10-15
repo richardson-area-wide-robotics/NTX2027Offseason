@@ -10,9 +10,9 @@ const Wiring = (() => {
   // Findings from this page's own tools (the wiggle test, the PDH finder), drawn on the map too.
   let extra = [];
   // How the robot's devices talk, for a student meeting CAN here: the lessons, in teaching order.
-  const CAN_LESSONS = { learn: ["can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat", "can_load", "can_fd", "can_termination"] };
+  const CAN_LESSONS = { learn: ["can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat", "can_load", "can_fd", "can_termination", "crimp_molex_sl"] };
   // Wire and its joints: what length, gauge and current cost, then each connector's crimp.
-  const WIRE_LESSONS = { learn: ["wire_loss"] };
+  const WIRE_LESSONS = { learn: ["wire_gauge", "wire_loss", "crimp_molex_sl", "crimp_powerpole", "crimp_sb50"] };
   // Copper at 20 C, ohms per 1000 ft (the standard AWG table). A warm wire reads about 0.4% more a degree.
   const AWG_OHMS_KFT = { 4: 0.2485, 6: 0.3951, 8: 0.6282, 10: 0.9989, 12: 1.588, 14: 2.525, 16: 4.016, 18: 6.385,
                          20: 10.15, 22: 16.14, 24: 25.67 };
