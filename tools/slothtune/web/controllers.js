@@ -50,6 +50,11 @@
       </div>
       <p id="ct-port-note" class="hint" hidden></p>
       <p id="ct-mapping" class="hint" hidden></p>
+      <section class="ct-steps-row">
+        <h3 data-tip="ct.steps">Steps</h3>
+        <ol id="ct-steps" class="ct-steps" role="list"></ol>
+        <div id="ct-step-box"></div>
+      </section>
     <div class="ct-cols">
       <section class="ct-live-col">
         <h3 data-tip="ct.live">Live</h3>
@@ -63,24 +68,17 @@
           <span class="ct-key-rec">Green outline</span>: what this joystick needs, once measured. A button keeps a green ring once it's seen;
           the number by it is the one robot code uses.</p></details>
       </section>
-      <div>
-        <section>
-          <h3 data-tip="ct.steps">Steps</h3>
-          <ol id="ct-steps" class="ct-steps" role="list"></ol>
-          <div id="ct-step-box"></div>
-        </section>
-        <section>
-          <h3 data-tip="ct.colors">Buttons</h3>
-          <svg id="ct-buttons" class="ct-pad" viewBox="0 0 360 214" role="list" aria-label="Buttons, laid out as on an Xbox controller"></svg>
-          <p class="small muted ct-pad-key" id="ct-pad-key" aria-live="polite"></p>
-        </section>
-        <section>
-          <h3 data-tip="ct.report">Report</h3>
-          <div id="ct-report"><p class="hint">Run the Steps; the report appears here.</p></div>
-          ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
-        </section>
-      </div>
+      <section class="ct-pad-col">
+        <h3 data-tip="ct.colors">Buttons</h3>
+        <svg id="ct-buttons" class="ct-pad" viewBox="0 0 360 214" role="list" aria-label="Buttons, laid out as on an Xbox controller"></svg>
+        <p class="small muted ct-pad-key" id="ct-pad-key" aria-live="polite"></p>
+      </section>
     </div>
+    <section class="ct-report-row">
+      <h3 data-tip="ct.report">Report</h3>
+      <div id="ct-report"><p class="hint">Run the Steps; the report appears here.</p></div>
+      ${HowTo.nextLine("driver")}${HowTo.nextLine("tester")}
+    </section>
     </div>
     <div class="panel" id="ct-hist">
       <h3 data-tip="ct.history">Every joystick checked</h3>

@@ -333,7 +333,6 @@ const TIPS = {
 
   // ---------------------------------------------------------------- live
   "live.above": ["The robot from above, with every wheel where it really points.", "Front is up. A wheel that doesn't cover its faint ghost is behind or broken.", "swerve_module"],
-  "live.view-robot": ["The robot from above: every wheel's angle and speed against what it was told.", "The view for checking modules.", "swerve_module"],
   "live.view-field": ["The robot on the field: where it thinks it is, where the cameras put it, and which tags they see.", "Needs a camera on the robot and this field's tags surveyed (Calibrate, 9. New field).", "vision_pose"],
   "live.field-robot": ["Where the robot thinks it is on the field: wheels and gyro, blended with the cameras when vision is on.", "The point is the front. If it drifts from where the robot really sits, check odometry and the camera mount.", "odometry"],
   "live.field-vision": ["Where the cameras alone put the robot, from the tags in view.", "It should sit on the solid robot. A steady offset means the camera's mount transform is off; jumping means bad sightings.", "camera_mount"],

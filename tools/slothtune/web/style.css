@@ -189,8 +189,11 @@ table.t tbody th[scope=row] { color: var(--ink); font-size: 13px; }
 .robot-svg .lbl, .robot-svg .val { paint-order: stroke; stroke: var(--panel); stroke-width: 4px; stroke-linejoin: round; }
 .robot-svg .head-arrow { stroke: var(--accent); stroke-width: 3; fill: none; }
 /* Live, on the field: blue wall on the left, red on the right, the robot where it thinks it is. */
-#tab-live .live-head { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-#tab-live .live-head h2 { margin: 0; }
+/* Live: the robot and the field, each with its own heading and key; one column on a phone. */
+.live-views { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px 18px; align-content: start; }
+.live-views > section { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.live-views h2 { margin: 0; }
+.live-views > #live-empty, .live-views > #live-pose { grid-column: 1 / -1; }
 .field-svg { width: 100%; height: auto; display: block; }
 /* The drawing is in picture pixels (100 a meter): strokes stay in screen pixels whatever its size. */
 .field-svg * { vector-effect: non-scaling-stroke; }
@@ -331,7 +334,7 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 /* The joystick check's Xbox drawing. A press fills in the joystick's role color: the driver's
    blue, the tester's or operator's orange, one not named yet in ink; a button seen keeps a green
    ring, and the line under the drawing names the ones still to press. */
-.ct-pad { --press: var(--ink); width: 100%; max-width: 300px; height: auto; display: block; margin: 2px auto; }
+.ct-pad { --press: var(--ink); width: 100%; max-width: 560px; height: auto; display: block; margin: 2px auto; }
 .ct-pad-key { margin: 2px 0 0; }
 /* The Live tab's gyro: its health, then its numbers in a row of small cells. */
 .gyro-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
@@ -359,7 +362,7 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 .ct-zoom { fill: var(--bg); stroke: var(--edge); stroke-width: 1; }
 .ct-key-code { color: var(--warn); font-weight: 600; }
 /* The steps keep their numbers (a flex li drops the list marker). */
-.ct-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 8px; margin: 0 0 8px; padding-left: 0; list-style: none; counter-reset: ct; }
+.ct-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px 8px; margin: 0 0 8px; padding-left: 0; list-style: none; counter-reset: ct; }
 .ct-steps li { display: flex; gap: 10px; align-items: center; counter-increment: ct; }
 .ct-steps li::before { content: counter(ct); flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
   font: 700 12px var(--mono); background: var(--rule); color: var(--ink); }
@@ -679,11 +682,14 @@ details.howto > summary { cursor: pointer; font-size: 13px; font-weight: 600; co
 .rail-about > summary { cursor: pointer; color: var(--muted); }
 .rail-foot { justify-content: space-between; }
 /* Joysticks: one check, Live beside the Steps and the Report. */
-.ct-cols { display: grid; grid-template-columns: minmax(0, 440px) minmax(320px, 1fr); gap: var(--gap); align-items: start; margin-top: 8px; }
+/* Steps across the top; the sticks and the Xbox drawing side by side (the drawing as wide as its
+   half allows); the report below both. */
+.ct-steps-row { margin-top: 8px; }
+.ct-steps-row h3, .ct-report-row h3, .ct-cols h3 { margin: 0 0 4px; }
+.ct-cols { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: var(--gap); align-items: start;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule); }
 .ct-cols > * { min-width: 0; }
-.ct-cols > div { display: grid; gap: 8px; align-content: start; }
-.ct-cols section + section { border-top: 1px solid var(--rule); padding-top: 8px; }
-.ct-cols h3 { margin: 0 0 4px; }
+.ct-report-row { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--rule); }
 @media (max-width: 900px) { .ct-cols { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 900px) {
   .jobs { grid-template-columns: minmax(0, 1fr); }
@@ -783,12 +789,11 @@ table.t td > select { padding-block: 1px; }
 }
 @media (min-width: 901px) {
   /* Live: the robot drawing sized to the screen, not to its column. */
-  #tab-live .robot-svg { width: min(100%, 520px, calc(var(--work-h) - 200px)); }
-  #tab-live .field-svg { max-height: calc(var(--work-h) - 200px); }
+  /* The robot from above and on the field side by side; the flags, gyro and modules beside them. */
+  #tab-live > .grid2 { grid-template-columns: minmax(0, 1fr) minmax(340px, 420px); }
+  #tab-live .live-views { grid-template-columns: min(460px, calc(var(--work-h) - 230px)) minmax(0, 1fr); }
+  #tab-live .field-svg { max-height: calc(var(--work-h) - 190px); }
   #tab-live > .grid2 > .stack { max-height: var(--work-h); overflow-y: auto; }
-  /* The robot drawing's column is the drawing's width; the field view gets three fifths. */
-  #tab-live > .grid2:not(:has(#field-wrap:not([hidden]))) { grid-template-columns: calc(min(520px, var(--work-h) - 200px) + 110px) minmax(0, 1fr); }
-  #tab-live > .grid2:has(#field-wrap:not([hidden])) { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
   /* Motors: the side column (recent changes, override, the guard's rules) scrolls by itself. */
   #motors-live > .motors-side { max-height: calc(var(--work-h) - 2px); overflow-y: auto; }
   /* Config: the robot's files in two columns; the findings and PathPlanner's lists in their own boxes. */

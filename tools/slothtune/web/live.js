@@ -5,21 +5,24 @@
   const root = $("#tab-live");
   root.innerHTML = `
     <div class="grid2">
-      <div class="panel">
-        <div class="row live-head"><h2 data-tip="live.above">From above</h2>
-          <div class="seg" id="live-view" role="group" aria-label="Show">
-            <button data-view="robot" class="on" aria-pressed="true" data-tip="live.view-robot">Robot</button><button data-view="field" aria-pressed="false" data-tip="live.view-field">On the field</button></div></div>
-        <p class="hint" id="live-hint-robot">Front is up. Solid wheel: where it points. Faint wheel: where it was told to point. Arrows: how fast, full length at top speed; green on target, amber behind, red the wrong way. The faint arrow: the speed it was told.</p>
-        <p class="hint" id="live-hint-field" hidden>Blue wall on the left. Solid robot: where it thinks it is. Faint dashed robot: where the cameras alone put it. Green tags: in view now, with a line to each. Faint trail: the last 8 seconds.</p>
+      <div class="panel live-views">
         <div id="live-empty" class="empty">Not connected. Connect to a robot or the simulator to see every module live.
           <div class="row" style="justify-content:center;margin-top:10px"><button class="btn primary" data-connect>Connect</button>
           <button class="btn" data-netcheck data-tip="net.check">Check the networks</button></div></div>
-        <svg id="robot" class="robot-svg" viewBox="-200 -200 400 400" role="img" aria-label="Swerve modules seen from above" hidden></svg>
-        <div id="field-wrap" hidden>
-          <div id="field-empty" class="empty" hidden></div>
-          <svg id="field" class="field-svg" role="img" aria-label="The robot on the field, seen from above" hidden></svg>
-          <div class="small muted" id="field-credit"></div>
-        </div>
+        <section class="live-view-robot">
+          <h2 data-tip="live.above">The robot from above</h2>
+          <p class="hint">Front is up. Solid wheel: where it points. Faint wheel: where it was told to point. Arrows: how fast, full length at top speed; green on target, amber behind, red the wrong way. The faint arrow: the speed it was told.</p>
+          <svg id="robot" class="robot-svg" viewBox="-200 -200 400 400" role="img" aria-label="Swerve modules seen from above" hidden></svg>
+        </section>
+        <section class="live-view-field">
+          <h2 data-tip="live.view-field">On the field</h2>
+          <p class="hint">Blue wall on the left. Solid robot: where it thinks it is. Faint dashed robot: where the cameras alone put it. Green tags: in view now, with a line to each. Faint trail: the last 8 seconds.</p>
+          <div id="field-wrap" hidden>
+            <div id="field-empty" class="empty" hidden></div>
+            <svg id="field" class="field-svg" role="img" aria-label="The robot on the field, seen from above" hidden></svg>
+            <div class="small muted" id="field-credit"></div>
+          </div>
+        </section>
         <div class="row small muted" id="live-pose" data-tip="live.pose"></div>
       </div>
       <div class="stack">
@@ -194,7 +197,7 @@
     $("#live-pose", root).textContent = live.pose && live.pose.length
       ? `Odometry x ${U.length(live.pose[0])}, y ${U.length(live.pose[1])} · heading ${fmt(live.heading, 1)}°`
         + (live.vision_pose && live.vision_pose.length ? ` · vision x ${U.length(live.vision_pose[0])}, y ${U.length(live.vision_pose[1])}` : "")
-        + (view === "field" && L.seen_tags && !fieldMissing() ? ` · ${L.seen_tags.length} tag${L.seen_tags.length === 1 ? "" : "s"} in view` : "")
+        + (L.seen_tags && !fieldMissing() ? ` · ${L.seen_tags.length} tag${L.seen_tags.length === 1 ? "" : "s"} in view` : "")
         + (live.vision_counts && live.vision_counts.length && (live.vision_counts[0] || live.vision_counts[1])
           ? ` · vision ${live.vision_counts[0]} accepted, ${live.vision_counts[1]} rejected`
             + (live.vision_last_reject ? ` (last: ${live.vision_last_reject})` : "") : "")
@@ -248,8 +251,7 @@
   // (Calibrate, 9. New field): without both, a pose on the field is a guess.
   const fieldSvg = $("#field", root), fieldEmpty = $("#field-empty", root);
   const TRAIL_MS = 8000;
-  let view = "robot", field = null, fieldProject = null, fb = null, trail = [];
-  try { if (localStorage.getItem("slothtune.live.view") === "field") view = "field"; } catch (e) { /* no storage */ }
+  let field = null, fieldProject = null, fb = null, trail = [];
 
   async function loadField() {
     fieldProject = (App.state || {}).project || null;
@@ -370,37 +372,28 @@
     }
   }
 
-  function setView(v) {
-    view = v;
-    try { localStorage.setItem("slothtune.live.view", v); } catch (e) { /* no storage */ }
-    $$("#live-view [data-view]", root).forEach(b => {
-      b.classList.toggle("on", b.dataset.view === v);
-      b.setAttribute("aria-pressed", String(b.dataset.view === v));
-    });
-    $("#live-hint-robot", root).hidden = v !== "robot";
-    $("#live-hint-field", root).hidden = v !== "field";
+  // Both views at once: the robot from above, and beside it the robot on the field. Read the field's
+  // layout afresh each time the tab opens: New field may have just saved one.
+  function showViews() {
     const on = !!((App.state || {}).connected);
-    svg.toggleAttribute("hidden", !on || v !== "robot");
-    $("#field-wrap", root).hidden = !on || v !== "field";
-    // Read the layout afresh each time the view opens: New field may have just saved one.
-    if (v === "field" && on) loadField().then(() => App.live && App.live.live && paintField(App.live));
+    svg.toggleAttribute("hidden", !on);
+    $("#field-wrap", root).hidden = !on;
+    if (on) loadField().then(() => App.live && App.live.live && paintField(App.live));
   }
-  $$("#live-view [data-view]", root).forEach(b => b.onclick = () => setView(b.dataset.view));
-  setView(view);
+  App.on("tab", t => { if (t === "live") showViews(); });
+  showViews();
 
   App.on("saved", body => { if (body && body.kind === "layout") loadField(); });
 
   App.on("live", L => {
     if (!L || !L.connected || !L.live || !root.classList.contains("on")) return;
     // An <svg> has no hidden property (only HTML elements do): the attribute itself.
-    svg.toggleAttribute("hidden", view !== "robot");
-    $("#field-wrap", root).hidden = view !== "field";
+    svg.toggleAttribute("hidden", false);
+    $("#field-wrap", root).hidden = false;
     $("#live-empty", root).hidden = true;
     paint(L);
-    if (view === "field") {
-      if (!field || !field.ok || fieldProject !== (App.state || {}).project) loadField();
-      paintField(L);
-    }
+    if (!field || !field.ok || fieldProject !== (App.state || {}).project) loadField();
+    paintField(L);
   });
   App.on("state", st => {
     const lines = (st.robot && st.robot.startup_report) || [];
