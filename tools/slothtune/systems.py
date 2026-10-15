@@ -508,9 +508,44 @@ def limits_report(doc):
 MODE_GAINS = {
     "Position": ("kP", "kD", "kG", "kCos"),
     "MAXMotionPosition": ("kP", "kD", "kS", "kV", "kA", "kG", "kCos", "mmCruise", "mmAccel"),
-    "Velocity": ("kP", "kI", "kS", "kV"),
-    "MAXMotionVelocity": ("kP", "kI", "kS", "kV", "kA", "mmAccel"),
+    "Velocity": ("kP", "kI", "kS", "kV", "iZone"),
+    "MAXMotionVelocity": ("kP", "kI", "kS", "kV", "kA", "mmAccel", "iZone"),
 }
+# The gains each mode's design takes as zero: set to zero, so an old one doesn't act on top (an old kI
+# winding up under the LQR's kP and kD; a kD in a speed loop).
+MODE_ZERO = {"Position": ("kI",), "MAXMotionPosition": ("kI",), "Velocity": ("kD",), "MAXMotionVelocity": ("kD",)}
+# The sensors the robot reads for the measuring run (SparkChannel.feedback): any other, it reads none.
+READ_SENSORS = ("PrimaryEncoder", "AbsoluteEncoder", "AlternateOrExternalEncoder", "")
+
+
+
+def _num(v):
+    """A setting as a number (the robot's settings parse to floats), else None."""
+    return float(v) if isinstance(v, (int, float)) and v == v else None
+
+
+def kcos_check(pos, spos, arpu, offset_rad, ratio, per):
+    """Whether REV's kCos would see the arm's real angle. REV takes the arm's rotations from level as
+    its SPARK's position times kCosRatio (0 must be level); the run measured the angle from the code's
+    position (``pos`` x ``arpu`` radians, level at ``offset_rad``). ``per``: code units per SPARK
+    unit. ``{"ok", "worst_deg", "ratio", "level"}``: the worst gap between the two across the run, and
+    the kCosRatio and the SPARK position at level that would make them agree."""
+    out = {"ok": False, "worst_deg": None, "ratio": None, "level": None}
+    pairs = [(p, s) for p, s in zip(pos, spos) if p == p and s == s]
+    if not arpu or not per or per != per or len(pairs) < 10:
+        return out
+    out["ratio"] = arpu * per / (2 * math.pi)
+    offs = sorted(s - p / per for p, s in pairs)
+    out["level"] = (offset_rad / arpu) / per + offs[len(offs) // 2]
+    if not ratio or ratio != ratio:
+        return out
+    worst = 0.0
+    for p, s in pairs:
+        gap = (s * ratio * 2 * math.pi - (p * arpu - offset_rad) + math.pi) % (2 * math.pi) - math.pi
+        worst = max(worst, abs(gap))
+    out["worst_deg"] = math.degrees(worst)
+    out["ok"] = out["worst_deg"] <= 5.0
+    return out
 MOTOR_LABEL = {"NEO Vortex": "NEO Vortex", "NEO 2.0": "NEO 2.0", "NEO V1.1": "NEO V1.1", "NEO 550": "NEO 550"}
 
 
@@ -629,11 +664,31 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
         move_code = plan_.get("b") if plan_.get("ok") and plan_.get("b") else 0.6 * (meta.get("vmax") or 0)
     move = move_code / per if ok(per) and per else move_code
     control = registered.get("control") or ""
+    mode = control if control in MODE_GAINS else ("Position" if positional else "Velocity")
+    sensor = ((motor.get("settings") or {}).get("sensor") or "PrimaryEncoder")
+    refuse = refuse_title = None
+    if not spark_units:
+        refuse_title, refuse = "its SPARK's own position wasn't read", (
+            "The measuring run couldn't read the position its SPARK's loop uses, so the gains would be in the code's "
+            "units, not the SPARK's. Redeploy the robot code and measure again.")
+    elif sensor not in READ_SENSORS:
+        refuse_title, refuse = f"its loop reads a {sensor}", (
+            f"Its SPARK's loop reads its {sensor}, which the measuring run can't read: gains worked out from another "
+            "sensor would be in the wrong units.")
+    elif mode != "Position" and not ok(ratio_v):
+        refuse_title, refuse = "its speed units are unknown", (
+            "Its SPARK's speed reading couldn't be matched to its position, so kV, kA and a speed loop's gains can't "
+            "be put in its units (a wrong guess is often 60 times off). Measure again with the robot code redeployed.")
+    kcos = None
+    if kind == "PIVOT" and angle is not None and spark_units:
+        kcos = kcos_check(pos, spos, arpu, fit["offset_rad"], _num((motor.get("settings") or {}).get("kCosRatio")),
+                          per if ok(per) else None)
     basis = {"name": name, "kind": kind, "model": {k: fit[k] for k in ("kS", "kV", "kA", "kG", "offset_rad")},
              "volts": vcomp, "delay_s": delay or 0.0, "move": move, "current_limit_a": motor.get("limit_a"),
              "motor": MOTOR_LABEL.get(motor.get("motor") or "", "NEO"), "motors": motor.get("count") or 1,
              "ratio_v": ratio_v if ok(ratio_v) and ratio_v else 1.0, "angle_rad_per_unit": (arpu * per) if (arpu and ok(per)) else None,
-             "control": control, "spark_units": spark_units,
+             "control": control, "spark_units": spark_units, "per": per if ok(per) and per else 1.0,
+             "refuse": refuse, "refuse_title": refuse_title, "kcos": kcos,
              # A real SPARK's loop runs every millisecond; REVLib's simulated one once a robot loop.
              "period": 0.02 if sim else M.SPARK_DT,
              # REVLib's simulated SPARK applies kD far harder than a real one (it wrecked the Examples
@@ -672,7 +727,6 @@ def id_report(doc, entry=None, registered=None, motor=None, aggressiveness=1.0):
         F.append(advisor.finding("info", f"The battery held {low:.2f} V at the hardest pull",
                                  f"Voltage compensation at {vcomp:.1f} V keeps the gains the same as it drains "
                                  "(decision 77): the motor gets the volts asked whatever the battery holds above that."))
-    sensor = ((motor.get("settings") or {}).get("sensor") or "PrimaryEncoder")
     if not positional and sensor not in ("PrimaryEncoder", ""):
         filt = dict(filt, suggest=None)
         filt["why"] = ((filt.get("why") or "") + f" Its loop reads its {sensor}: that encoder's own filter is set in "
@@ -733,12 +787,24 @@ def model_gains(basis, aggressiveness=1.0):
     model["kS"] = max(0.0, model["kS"])
     control = basis.get("control") or ""
     mode = control if control in MODE_GAINS else ("Position" if positional else "Velocity")
-    c = M.compute(model, kind, basis["volts"], basis["delay_s"], basis["move"], basis.get("current_limit_a"),
+    # The check runs' own profile (the step test's speed, acceleration and move), in the SPARK's units.
+    test, per = basis.get("test") or {}, basis.get("per") or 1.0
+    profile = {"cruise": abs(test["vmax"]) / per, "accel": abs(test["amax"]) / per} \
+        if test.get("vmax") and test.get("amax") and per else None
+    move = basis["move"]
+    if positional and test.get("a") is not None and test.get("b") is not None and per:
+        move = abs(test["b"] - test["a"]) / per
+    c = M.compute(model, kind, basis["volts"], basis["delay_s"], move, basis.get("current_limit_a"),
                   basis.get("motor") or "NEO", basis.get("motors") or 1, aggressiveness,
                   basis.get("angle_rad_per_unit"), control=mode, period=basis.get("period") or M.SPARK_DT,
-                  use_kd=basis.get("use_kd", True))
+                  use_kd=basis.get("use_kd", True), profile=profile)
     spark = M.spark_gains(c["gains"], c["maxmotion"], basis["volts"], 1.0, basis.get("ratio_v") or 1.0, positional,
                           period=basis.get("period") or M.SPARK_DT)
+    if basis.get("refuse"):
+        # Units it can't vouch for: a gain in the wrong ones is tens of times off. Nothing applied.
+        return {"apply": {}, "all": spark, "model_gains": c["gains"], "maxmotion": c["maxmotion"],
+                "predicted": c["predicted"], "aggressiveness": aggressiveness, "clamped": [],
+                "note_title": f"Nothing applied to {name}: {basis['refuse_title']}", "note": basis["refuse"]}
     spark["vComp"] = basis["volts"]
     note_title = note = ""
     if control not in MODE_GAINS:
@@ -763,12 +829,29 @@ def model_gains(basis, aggressiveness=1.0):
                     f"speed feedforward and a 1 kHz profile: cruise {spark.get('mmCruise', 0):.4g}, acceleration "
                     f"{spark.get('mmAccel', 0):.4g} in its SPARK's units.")
     keep = set(keep)
+    zero = set(MODE_ZERO.get(mode, ())) if keep else set()
     if keep:
         keep.add("vComp")   # never for open loop: it would change what the code's duty cycle means
     if kind == "PIVOT":
         keep.discard("kG")
+        cos = basis.get("kcos") or {}
+        if "kCos" in keep and not cos.get("ok"):
+            # REV would put gravity's volts at the wrong angle: kCos (and the code's kG) left as they are.
+            keep.discard("kCos")
+            ratio = f"{cos['ratio']:.5g}" if cos.get("ratio") else "the arm's rotations per sensor unit"
+            level = f" (it reads {cos['level']:.4g} there now)" if cos.get("level") is not None else ""
+            off = f"{cos['worst_deg']:.0f} degrees off the angle the run measured" if cos.get("worst_deg") is not None \
+                else "unknown: the robot didn't say its kCosRatio (redeploy its code)"
+            note_title = f"kCos not applied to {name}: REV would see the wrong angle"
+            note = (f"REV takes the arm's angle as its SPARK's position times kCosRatio, from 0 at level: that is {off}. "
+                    f"Set kCosRatio to {ratio} and zero its position with the arm level{level}, then measure again. "
+                    + (note or ""))
+        elif "kCos" in keep:
+            zero.add("kG")   # gravity once: a constant kG left on top of kCos would hold it up twice
     elif kind == "ELEVATOR":
         keep.discard("kCos")
+        if "kG" in keep:
+            zero.add("kCos")
     ranges = basis.get("ranges") or {}
     apply, clamped = {}, []
     for k, v in spark.items():
@@ -783,6 +866,9 @@ def model_gains(basis, aggressiveness=1.0):
         if w != v:
             clamped.append(k)
         apply[f"{name}/{k}"] = round(w, 10)
+    for k in zero:
+        if k in ranges and f"{name}/{k}" not in apply:
+            apply[f"{name}/{k}"] = 0.0
     return {"apply": apply, "all": spark, "model_gains": c["gains"], "maxmotion": c["maxmotion"],
             "predicted": c["predicted"], "aggressiveness": aggressiveness, "clamped": clamped,
             "note": note, "note_title": note_title}

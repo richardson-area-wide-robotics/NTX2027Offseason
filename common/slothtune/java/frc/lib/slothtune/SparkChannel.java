@@ -185,6 +185,8 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
     putNum(out, "kA", a.closedLoop.feedForward::getkA, true);
     putNum(out, "kG", a.closedLoop.feedForward::getkG, true);
     putNum(out, "kCos", a.closedLoop.feedForward::getkCos, true);
+    // kCos's angle: the sensor's position times this is the arm's rotations from level (REV).
+    putNum(out, "kCosRatio", a.closedLoop.feedForward::getkCosRatio, true);
     putNum(out, "mmCruise", a.closedLoop.maxMotion::getCruiseVelocity, true);
     putNum(out, "mmAccel", a.closedLoop.maxMotion::getMaxAcceleration, true);
     putNum(out, "mmError", a.closedLoop.maxMotion::getAllowedProfileError, true);
@@ -452,8 +454,13 @@ public final class SparkChannel implements MotorGuard.MotorChannel {
         var e = spark instanceof SparkFlex flex ? flex.getExternalEncoder() : ((SparkMax) spark).getAlternateEncoder();
         return new java.util.function.DoubleSupplier[] {e::getPosition, e::getVelocity};
       }
-      var e = spark.getEncoder();
-      return new java.util.function.DoubleSupplier[] {e::getPosition, e::getVelocity};
+      if (sensor == null || sensor.isEmpty() || "PrimaryEncoder".equals(sensor)) {
+        var e = spark.getEncoder();
+        return new java.util.function.DoubleSupplier[] {e::getPosition, e::getVelocity};
+      }
+      // An analog or detached sensor: not read here. The built-in encoder would be the wrong one, in the
+      // wrong units, and gains worked out from it would be applied to the sensor the loop really reads.
+      return new java.util.function.DoubleSupplier[] {() -> Double.NaN, () -> Double.NaN};
     } catch (RuntimeException e) {
       return new java.util.function.DoubleSupplier[] {() -> Double.NaN, () -> Double.NaN};
     }

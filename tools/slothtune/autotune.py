@@ -584,15 +584,34 @@ class ModelTune(_Loop):
                 "best_gains": self.best_gains(), "before": self.before}
 
     def best_gains(self):
-        return dict(self.best["gains"]) if self.best else {}
+        best = self.best   # the tuning thread may clear it meanwhile
+        return dict(best["gains"]) if best else {}
 
     def _finish(self, status, reason):
         self.status, self.reason = status, reason
 
+    def _applied(self, values, reason):
+        """Applies gains and makes sure the robot took them: its sentence, then the gains read back. A
+        check on gains the robot refused would be judged as the model's. True when they took."""
+        status = self.runner.apply(values, reason) or ""
+        ok = (status.startswith("Applied") or status.startswith("Nothing changed")) and "REFUSED" not in status
+        for _ in range(10 if ok else 0):
+            now = self.runner.gains()
+            if all(k in now and abs(now[k] - v) <= 1e-6 * max(1.0, abs(v)) for k, v in values.items()):
+                return True
+            time.sleep(0.1)
+        self.message = f"Needs a person: the robot didn't take the gains ({status or 'no answer'})."
+        self._finish("stopped", self.message)
+        return False
+
     def _check(self, agg):
-        comp = systems.model_gains(self.report["basis"], agg)
-        self.runner.apply(comp["apply"], f"Model-based tune {self.name}: the model's gains at {agg:g}x")
+        # Predicted on the check's own step test: its profile and its move (code units; the basis converts).
+        args = getattr(self.runner, "args", None) or {}
+        basis = dict(self.report["basis"], test={k: args.get(k) for k in ("vmax", "amax", "a", "b")})
+        comp = systems.model_gains(basis, agg)
         self.changed = True
+        if not self._applied(comp["apply"], f"Model-based tune {self.name}: the model's gains at {agg:g}x"):
+            return None
         doc = self._test("system_step", f"check {len(self.checks) + 1}, the model's gains at {agg:g}x")
         if doc is None:
             return None
@@ -648,6 +667,21 @@ class ModelTune(_Loop):
 
     def run(self):
         self.before = {k: v for k, v in self.runner.gains().items() if k.startswith(self.name + "/")}
+        try:
+            self._run()
+        except BaseException:
+            # Whatever went wrong, the mechanism doesn't keep a check's untested gains.
+            if self.before and self.changed:
+                try:
+                    now = self.runner.gains()
+                    back = {k: v for k, v in self.before.items() if now.get(k) != v}
+                    if back:
+                        self.runner.apply(back, f"Model-based tune {self.name}: back to the gains it started with")
+                except Exception:  # noqa: BLE001 - the original error is the one to report
+                    pass
+            raise
+
+    def _run(self):
         doc = self._test("system_id", f"measuring {self.name}")
         if doc is None:
             if self.status == "tuning":
@@ -775,7 +809,8 @@ class PracticeSystemRunner:
     SPEED_UNITS = 60.0
     FILTER_S = 0.02
     SPARK_GAINS = {"kP": (0, 1000), "kI": (0, 100), "kD": (0, 1e5), "kS": (0, 4), "kV": (0, 20), "kA": (0, 20),
-                   "kG": (-12, 12), "kCos": (-12, 12), "mmCruise": (0, 1e6), "mmAccel": (0, 1e7), "vComp": (0, 13)}
+                   "kG": (-12, 12), "kCos": (-12, 12), "mmCruise": (0, 1e6), "mmAccel": (0, 1e7), "vComp": (0, 13),
+                   "iZone": (0, 1e6)}
 
     def __init__(self, name="Elevator", kind="ELEVATOR", gains=None, args=None, ranges=(0.0, 1000.0), delay_s=0.03,
                  position_only=False, spark=False, control=None):
@@ -951,7 +986,8 @@ class PracticeSystemRunner:
                     ff = g("kS") * (1 if hp > 0 else 0) + g("kV") * hp * self.SPEED_UNITS
                 d = 0.0 if e_prev is None else e - e_prev
                 e_prev = e
-                integ += e
+                # REV's iZone: outside it the integral is reset, so it can't wind up over a spin-up.
+                integ = 0.0 if g("iZone") and abs(e) > g("iZone") else integ + e
                 u = ff + vcomp * (g("kP") * e + g("kD") * d + g("kI") * integ)
                 u = max(-12.0, min(12.0, u))
                 x, v = self._step_plant(x, v, u, h)

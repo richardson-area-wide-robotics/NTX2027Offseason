@@ -27,7 +27,13 @@ yours, and nothing in the tools will stop you from breaking them:
    0 may be set to its first value. Never apply a bigger step yourself. The one exception is a
    `system_id` report's `next` (its action says `"model": true`): every gain worked out from one
    measured model of the mechanism. Apply it whole (one `gains set` with all its values), then run
-   `system_step` to check it; never mix it with other changes.
+   `system_step` to check it; never mix it with other changes. It sets to 0 the gains its design
+   leaves out (kI in a position loop, kD in a speed loop, the other gravity term), gives a speed loop
+   an iZone, and applies nothing at all when it can't vouch for the SPARK's units (its own position
+   unread, its speed units unmatched, a sensor the robot can't read): the report says so, and a
+   person fixes that first. An arm's kCos is applied only when REV's angle (the SPARK's position x
+   kCosRatio, 0 at level) matches the measured one within 5 degrees; otherwise the report gives the
+   kCosRatio and zero it needs, and kCos is left for a programmer.
 5. **Stay inside the current policy.** Drive and mechanism limits: NEO Vortex 80 A, NEO 2.0 80 A,
    NEO V1.1 60 A, NEO 550 20 A. The slip test may recommend a drive limit *below* 80 A for this
    carpet; nothing may go above policy.
@@ -120,12 +126,15 @@ report's `next` is one change to the mechanism's own `Name/k` gains, `options` t
 lower is better; a pivot's or elevator's first leg, from wherever it was, isn't judged),
 `system_id` (model-based tuning's measuring run, on blocks, the robot's own code paused: the
 mechanism's leaders driven by voltage from their SPARKs. A pivot or elevator first finds the volts
-that hold it still, then sweeps across its travel window at a governed speed (the first two, one
-each way, map the volts that hold it everywhere), then quick steps; each ends at the map's hold
-before the far edge; a flywheel or roller ramps up near `vmax` and down, then steps. It records a
+that hold it still (pushing toward the middle of its travel first), then sweeps across its travel
+window at a governed speed (the first two, one each way, map the volts that hold it everywhere),
+then quick steps; each brakes before the edge it is heading for, its volts never jumping; a
+flywheel or roller ramps up near `vmax` and down, then steps. It records a
 row each robot loop: the volts asked and applied, each SPARK's supply, the robot's battery, the
 position and speed the code reads and the SPARK's own, and the loop count (the simulator's clock);
-stops on an inverted motor, a jam, the limits or `1.5 x vmax`),
+stops on an inverted motor, a jam, pushing into a stop, the limits, `1.5 x vmax`, or its own motion
+checks: past its window and still going, speeding up while braking, the wrong way, twice its sweep
+speed),
 `system_piece` (calibrates a game-piece current sensor: `sensor` and `system` by number and
 `pieces`; a roller runs while a person feeds that many pieces one at a time when the banner says,
 stopping between them; an arm or elevator sweeps empty, then once with each piece; a person is
@@ -212,7 +221,8 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `NO_CAN_STATUS` | The robot code can't read the CAN bus's status, so the load test has nothing to count. |
 | `NO_SYSTEM_HOOK` | The robot code registers that mechanism without a goal to set. A programmer adds `.goal(...)`. |
 | `NO_LIMITS` | A pivot or elevator without limits: run `system_limits` with a person moving it by hand. Never invent them. |
-| `PAST_LIMITS` | The mechanism left its limits and was stopped. A person looks at it before anything else runs. |
+| `PAST_LIMITS` | The mechanism left its limits (or, measuring, kept going past its test window) and was stopped. A person looks at it before anything else runs. |
+| `RUNAWAY` | The measuring run's volts weren't controlling it: it sped up while braking, went the wrong way, or ran past twice its sweep speed (an arm's gravity far from its hold, slack, a spring, a loose sensor). A person looks at it before it is measured again. |
 | `JAMMED` | A motor pulled hard without turning: jammed, or motors on one shaft pushing against each other. A person looks first; then run each motor on that shaft alone. |
 | `INVERTED` | `system_id` pushed the mechanism one way and it went the other: its motor's inversion doesn't match its position reading. A programmer checks both; nothing else runs on it until then. |
 | `NEEDS_HOLD_GUESS` | `system_id` found the mechanism moving too fast while it looked for the volts that hold it: rerun with `hold` set to its physics' gravity volts (the Systems tab works it out), or have a programmer check its inversion. |

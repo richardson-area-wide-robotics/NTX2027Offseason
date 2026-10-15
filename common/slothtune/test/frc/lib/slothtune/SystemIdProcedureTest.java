@@ -33,6 +33,11 @@ class SystemIdProcedureTest {
     double lowest = Double.POSITIVE_INFINITY;
     double highest = Double.NEGATIVE_INFINITY;
     double fastest;
+    /** The fastest it struck a stop, and how long it was pushed into one past 1 V. */
+    double hitSpeed;
+    double pushedIntoStopS;
+    /** One count of its sensor: the position it reports is rounded to this (0: exact). */
+    double count;
     final FakeMotorChannel motor = new FakeMotorChannel(40);
 
     Plant(TunableSystem.Kind kind, double kS, double kV, double kA, double kG) {
@@ -61,15 +66,26 @@ class SystemIdProcedureTest {
         v = v != 0 && next * v < 0 ? 0 : next;  // friction stops it at zero
         x += v * h;
         if (x < stopLo || x > stopHi) {
+          hitSpeed = Math.max(hitSpeed, Math.abs(v));
           x = Math.max(stopLo, Math.min(stopHi, x));
           v = 0;
         }
+      }
+      double g = kind == TunableSystem.Kind.ELEVATOR ? kG
+          : kind == TunableSystem.Kind.PIVOT ? kG * Math.cos(x * radPerUnit) : 0;
+      if ((x >= stopHi && u - g > 1) || (x <= stopLo && u - g < -1)) {
+        pushedIntoStopS += dt;
       }
       lowest = Math.min(lowest, x);
       highest = Math.max(highest, x);
       fastest = Math.max(fastest, Math.abs(v));
       motor.feedbackPos = x;
       motor.feedbackVel = v;
+    }
+
+    /** Where its sensor says it is. */
+    double reading() {
+      return count > 0 ? Math.round(x / count) * count : x;
     }
   }
 
@@ -80,7 +96,7 @@ class SystemIdProcedureTest {
     TunableSystem s = new TunableSystem(name, p.kind).units(units).motors(name)
         .velocity(() -> p.v).goal(g -> {}).stop(() -> {});
     if (p.kind.positional) {
-      s.position(() -> p.x);
+      s.position(p::reading);
     }
     return s;
   }
@@ -219,6 +235,100 @@ class SystemIdProcedureTest {
     assertTrue(p.highest < 111.6 - 1, "never reaches its stop: " + p.highest);
     assertTrue(p.lowest > 3.6 - 1e-9, "nor its low one: " + p.lowest);
     assertTrue(p.highest > 95, "the sweeps cross its travel: " + p.highest);
+  }
+
+  /** An arm on the test's own travel (3.6 to 111.6 degrees, past straight up), resting on its low stop. */
+  Plant arm(double kS, double kA, double kG) {
+    double deg = Math.PI / 180;
+    Plant p = new Plant(TunableSystem.Kind.PIVOT, kS, 1.2 * deg, kA * deg, kG);
+    p.radPerUnit = deg;
+    p.x = 3.6;
+    p.stopLo = 3.6;
+    p.stopHi = 111.6;
+    return p;
+  }
+
+  String runArm(Plant p) {
+    TunableSystem s = system(p, "Shooter pivot", "degrees");
+    s.setLimits(3.6, 111.6, "slothtune.json");
+    // Its own guard: one test runs several arms under the same name.
+    List<MotorGuard.Motor> ms = List.of(new MotorGuard().register("Shooter pivot", p.motor, MotorKind.NEO_V1_1, false));
+    return run(new SystemIdProcedure(), ctx(s, ms, new String[] {"system", "vmax"}, new double[] {0, 120}), p);
+  }
+
+  @Test
+  void aStrongArmNeverStrikesAStop() {
+    // The code review's cases: with gravity at 1.5 V, and at 2 V with three times the inertia and
+    // little friction, braking at a hold measured low down drove it into its stops at up to half its
+    // top speed, and the run still finished. Whatever it ends with, it never strikes a stop.
+    for (double[] c : new double[][] {{0.1, 0.08, 1.5}, {0.03, 0.24, 2.0}, {0.1, 0.08, 0.6}}) {
+      Plant p = arm(c[0], c[1], c[2]);
+      String why = runArm(p);
+      String what = "kS " + c[0] + ", kA " + c[1] + ", kG " + c[2] + ": " + why;
+      assertTrue(p.hitSpeed < 0.02 * 120, "struck a stop at " + p.hitSpeed + " deg/s; " + what);
+      assertTrue(p.fastest < 0.95 * 120, "never near its top speed: " + p.fastest + "; " + what);
+      if (why == null) {
+        assertTrue(p.highest > 90, "a finished run crossed its travel: " + p.highest + "; " + what);
+      }
+    }
+  }
+
+  @Test
+  void anArmRestingOnItsHighStopIsntPushedIntoIt() {
+    // Past straight up its gravity holds it on its high stop: the seesaw starts toward the middle.
+    Plant p = arm(0.1, 0.08, 1.2);
+    p.x = 111.6;
+    String why = runArm(p);
+    assertTrue(p.pushedIntoStopS < 0.3, "pushed into its stop for " + p.pushedIntoStopS + " s; " + why);
+    assertTrue(p.hitSpeed < 0.02 * 120, "struck a stop at " + p.hitSpeed);
+  }
+
+  @Test
+  void anElevatorRestingOnItsTopStopIsntPushedIntoIt() {
+    Plant p = new Plant(TunableSystem.Kind.ELEVATOR, 0.1, 3.8, 0.067, 0.65);
+    p.stopLo = 0;
+    p.stopHi = 1.18;
+    p.x = 1.18;
+    TunableSystem s = system(p, "Elevator", "meters");
+    s.setLimits(0, 1.18, "slothtune.json");
+    List<MotorGuard.Motor> ms = List.of(guard.register("Elevator", p.motor, MotorKind.VORTEX, false));
+    String why = run(new SystemIdProcedure(), ctx(s, ms, new String[] {"system", "vmax", "hold"}, new double[] {0, 1.5, 0.65}), p);
+    assertTrue(p.pushedIntoStopS < 0.3, "pushed into its stop for " + p.pushedIntoStopS + " s; " + why);
+    assertTrue(p.hitSpeed < 0.02 * 1.5, "struck a stop at " + p.hitSpeed);
+  }
+
+  @Test
+  void aCoarseSensorStillFindsTheBand() {
+    // A NEO's hall sensor on a slow elevator: one count is 1 mm, and a count's flicker isn't motion.
+    Plant p = new Plant(TunableSystem.Kind.ELEVATOR, 0.1, 3.8, 0.067, 0.65);
+    p.count = 0.001;
+    p.stopLo = 0;
+    p.stopHi = 1.18;
+    TunableSystem s = system(p, "Elevator", "meters");
+    s.setLimits(0, 1.18, "slothtune.json");
+    List<MotorGuard.Motor> ms = List.of(guard.register("Elevator", p.motor, MotorKind.VORTEX, false));
+    TestContext c = ctx(s, ms, new String[] {"system", "vmax"}, new double[] {0, 1.5});
+    String why = run(new SystemIdProcedure(), c, p);
+    assertNull(why, why);
+    assertEquals(0.65, c.meta().get("u_hold"), 0.08);
+    assertTrue(p.hitSpeed < 0.02 * 1.5, "struck a stop at " + p.hitSpeed);
+  }
+
+  @Test
+  void itRecordsALeaderFirst() {
+    Plant p = new Plant(TunableSystem.Kind.ELEVATOR, 0.1, 3.8, 0.067, 0.65);
+    p.stopLo = 0;
+    p.stopHi = 1.18;
+    FakeMotorChannel follower = new FakeMotorChannel(40);
+    follower.follower = true;
+    TunableSystem s = system(p, "Elevator", "meters").motors("Elevator follower");
+    s.setLimits(0, 1.18, "slothtune.json");
+    // The follower registered first: volts0 must still be the motor it drives.
+    List<MotorGuard.Motor> ms = List.of(guard.register("Elevator follower", follower, MotorKind.VORTEX, false),
+        guard.register("Elevator", p.motor, MotorKind.VORTEX, false));
+    TestContext c = ctx(s, ms, new String[] {"system", "vmax"}, new double[] {0, 1.5});
+    assertNull(run(new SystemIdProcedure(), c, p));
+    assertTrue(c.notes().stream().anyMatch(n -> n.startsWith("motor 0: Elevator (driven)")), c.notes().toString());
   }
 
   @Test

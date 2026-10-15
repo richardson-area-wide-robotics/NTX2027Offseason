@@ -107,7 +107,8 @@ const Learn = (() => {
         "YAGSL's module loop does not use kA today, but measuring it tells you how hard the robot can accelerate."], links: ["ff"] },
     kG: { title: "kG - gravity (kCos for an arm)", short: "Volts to hold the mechanism up against gravity. An elevator's is the same everywhere; an arm's is kG x cos(angle): most when level, none straight up.",
       body: ["Gravity pulls the same way all the time, so the volts to hold against it are added whatever else the loop does. For an elevator that is one number: kG. For an arm it depends on the angle: level, all of the weight hangs on the motor; straight up, none does.",
-        "REV calls the arm's version <b>kCos</b>: the SPARK multiplies it by the cosine of the arm's angle, so the encoder must read 0 when the arm is level (and kCosRatio must turn its readings into turns of the arm). Use kG or kCos, never both.",
+        "REV calls the arm's version <b>kCos</b>: the SPARK multiplies it by the cosine of the arm's angle, so the encoder must read 0 when the arm is level (and kCosRatio must turn its readings into turns of the arm). Use kG or kCos, never both: the tool sets the other one to 0.",
+        "Before it applies kCos, the tool checks REV's angle (the SPARK's position x kCosRatio) against the angle the measuring run saw. More than 5 degrees apart and it leaves kCos alone and says what kCosRatio and zero it needs: kCos at the wrong angle pushes the arm the wrong amount everywhere.",
         "kG sits in the middle of the hold band: a little more and it rises, a little less and it sags."],
       links: ["ff", "cefrc"] },
 
@@ -438,6 +439,7 @@ const Learn = (() => {
     simc: { title: "SIMC: speed-loop gains", short: "Skogestad's rule for a speed loop: as quick as the speed reading's delay allows, and no quicker.",
       body: ["A speed loop can only react to what it reads, and a SPARK's speed reading is late (its filter). Skogestad's SIMC rule sets the loop's response time equal to that delay: kP = kA / (2 x delay). The integral time is the shorter of two: the mechanism's time constant (kA / kV, about how long it takes to get two-thirds of the way to a new speed) or 8 x the delay; kI is kP divided by it.",
         "Skogestad shows this is firm but safe: the gain could roughly triple before the loop would swing on its own. LQR, which SysId uses, gives a speed loop almost no gain once a real filter's delay is counted, so the tool uses SIMC for flywheels and rollers.",
+        "An integral that strong would wind up over a whole spin-up and shoot far past the speed, so the tool also sets REV's <b>iZone</b>: the integral counts only within a tenth of the speed. And match code sets a shooter's speed at once, so it checks a jump straight to speed too, softening the gains until that overshoots by no more than 15%.",
         "The shorter the delay, the higher the gains it can use: that is why the <span class=\"term\" tabindex=\"0\" data-learn=\"velocity_filter\">speed filter</span> matters so much for a flywheel."],
       links: ["simc", "flywheel"] },
     spark_modes: { title: "Which gains a SPARK uses", short: "Each mode uses only some gains. Position: kP, kD, kS and gravity. Velocity: kP, kI, kS and kV. MAXMotion: kS, kV and kA (plus gravity for position) and its profile, on top of PID.",

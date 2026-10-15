@@ -533,13 +533,10 @@ def id_args(name, args=None):
     ff = p.get("feedforward") if p.get("ok") else None
     if not out.get("vmax") and p.get("ok") and p.get("vmax"):
         out["vmax"] = p["vmax"]
-    if ff and ff.get("kG") and reg.get("kind") in ("ELEVATOR", "PIVOT"):
-        hold = ff["kG"]
-        if reg["kind"] == "PIVOT":
-            k = p.get("scale")
-            pos = reg.get("position")
-            hold = ff["kG"] * math.cos(pos / k) if k and isinstance(pos, (int, float)) and pos == pos else 0.0
-        out["hold"] = round(max(-6.0, min(6.0, hold)), 3)
+    # An elevator's gravity is the same everywhere; an arm's depends on where level is, which isn't known
+    # until it is measured (its zero may be straight up): an arm's seesaw starts from 0 V.
+    if ff and ff.get("kG") and reg.get("kind") == "ELEVATOR":
+        out["hold"] = round(max(-6.0, min(6.0, ff["kG"])), 3)
     return out
 
 

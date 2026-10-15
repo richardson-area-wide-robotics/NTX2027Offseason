@@ -101,7 +101,9 @@ class IdReportTest(unittest.TestCase):
 
     def test_plain_position_gets_no_speed_feedforward(self):
         apply = report(practice(), "Position")["computed"]["apply"]
-        self.assertEqual({k.split("/")[1] for k in apply}, {"kP", "kD", "kG", "vComp"})
+        self.assertEqual({k.split("/")[1] for k in apply}, {"kP", "kD", "kG", "kI", "kCos", "vComp"})
+        self.assertEqual(apply["Lift/kI"], 0.0, "an old kI would wind up under the LQR's kP and kD")
+        self.assertEqual(apply["Lift/kCos"], 0.0, "an elevator's gravity once: kG, never kCos on top")
 
     def test_maxmotion_gets_its_feedforward_and_profile(self):
         apply = report(practice(), "MAXMotionPosition")["computed"]["apply"]
@@ -110,7 +112,9 @@ class IdReportTest(unittest.TestCase):
     def test_a_speed_loop_gets_pi_and_kv_in_its_speed_units(self):
         rep = report(practice("FLYWHEEL"), "Velocity")
         apply = {k.split("/")[1]: v for k, v in rep["computed"]["apply"].items()}
-        self.assertEqual(set(apply), {"kP", "kI", "kS", "kV", "vComp"})
+        self.assertEqual(set(apply), {"kP", "kI", "kS", "kV", "vComp", "kD", "iZone"})
+        self.assertEqual(apply["kD"], 0.0, "no kD in a speed loop")
+        self.assertGreater(apply["iZone"], 0, "the integral can't wind up over a spin-up")
         self.assertAlmostEqual(apply["kV"] * 60, rep["model"]["kV"], delta=0.01 * rep["model"]["kV"],
                                msg="volts per RPM-like unit, not per position unit a second")
 
@@ -131,6 +135,61 @@ class IdReportTest(unittest.TestCase):
         self.assertEqual(rep["next"]["action"]["type"], "gains")
         self.assertTrue(rep["next"]["action"]["model"])
         self.assertEqual(rep["next"]["action"]["values"], rep["computed"]["apply"])
+
+    def test_a_speed_loop_survives_a_jump_to_its_speed(self):
+        # Match code sets a shooter's speed at once: the gains are judged on that too.
+        rep = report(practice("FLYWHEEL"), "Velocity")
+        b = rep["basis"]
+        c = M.compute(dict(b["model"]), b["kind"], b["volts"], b["delay_s"], b["move"], control="Velocity")
+        jump = M.predict(dict(b["model"]), c["gains"], b["kind"], b["move"], c["maxmotion"]["cruise"],
+                         c["maxmotion"]["accel"], volts=b["volts"], delay_s=max(b["delay_s"], M.SPEED_DELAY_MIN_S),
+                         ff=M.MODE_FF["Velocity"], sp_period=M.MODE_SP_PERIOD["Velocity"], step=True)
+        self.assertLessEqual(jump["overshoot_pct"], M.STEP_OVERSHOOT + 0.5, jump)
+
+    def test_units_it_cant_vouch_for_apply_nothing(self):
+        r = practice()
+        doc = r._identify()
+        doc["channels"]["spos"] = [float("nan")] * len(doc["channels"]["t"])
+        rep = systems.id_report(doc, None, dict(r.registered(), control="Position"), {"controller": "SPARK MAX"})
+        self.assertEqual(rep["computed"]["apply"], {})
+        self.assertIn("Nothing applied", rep["computed"]["note_title"])
+        sens = report(practice(), "Position")
+        b = dict(sens["basis"], refuse="its loop reads an analog sensor", refuse_title="its loop reads an AnalogSensor")
+        self.assertEqual(systems.model_gains(b)["apply"], {})
+
+    def test_kcos_only_when_rev_sees_the_real_angle(self):
+        rep = report(practice(), "Position")
+        b = dict(rep["basis"], kind="PIVOT", angle_rad_per_unit=1.0)
+        b["model"] = dict(b["model"], offset_rad=0.0)
+        withheld = systems.model_gains(dict(b, kcos=None))
+        self.assertNotIn("Lift/kCos", withheld["apply"])
+        self.assertNotIn("Lift/kG", withheld["apply"], "the code's own gravity is left alone too")
+        self.assertIn("kCos not applied", withheld["note_title"])
+        ok = systems.model_gains(dict(b, kcos={"ok": True}))
+        self.assertGreater(ok["apply"]["Lift/kCos"], 0)
+        self.assertEqual(ok["apply"]["Lift/kG"], 0.0, "gravity once, not kG on top of kCos")
+
+    def test_the_kcos_check(self):
+        # The code reads degrees, level at 20; the SPARK reads arm rotations from level: they agree.
+        deg = math.pi / 180
+        pos = [20 + k for k in range(60)]
+        spos = [(p - 20) / 360 for p in pos]
+        good = systems.kcos_check(pos, spos, deg, 20 * deg, 1.0, 360.0)
+        self.assertTrue(good["ok"], good)
+        self.assertAlmostEqual(good["ratio"], 1.0, places=6)
+        self.assertAlmostEqual(good["level"], 0.0, places=6)
+        # Its SPARK reads motor rotations through a 50:1 gearbox, kCosRatio left at 1: far off, and what to set.
+        motor = [50 * s for s in spos]
+        bad = systems.kcos_check(pos, motor, deg, 20 * deg, 1.0, 360.0 / 50)
+        self.assertFalse(bad["ok"])
+        self.assertAlmostEqual(bad["ratio"], 1 / 50, places=6)
+        self.assertFalse(systems.kcos_check(pos, spos, deg, 20 * deg, None, 360.0)["ok"], "unknown ratio: not applied")
+
+    def test_maxmotion_current_limit_is_each_motors(self):
+        m = {"kS": 0.1, "kV": 2.0, "kA": 0.3, "kG": 0.5}
+        one = M.maxmotion(m, 12.0, 40, "NEO", 1)
+        two = M.maxmotion(m, 12.0, 40, "NEO", 2)
+        self.assertAlmostEqual(one["accel"], two["accel"], msg="the limit is per motor: the volts it allows don't halve")
 
     def test_the_prediction_follows_the_mode(self):
         rep = report(practice(), "Position")
@@ -182,6 +241,37 @@ class ModelTuneTest(unittest.TestCase):
         if j["best"] is None:
             self.assertIn("already as good", j["reason"])
             self.assertEqual(r.gains(), before)
+
+    def test_a_refused_apply_stops_it_and_puts_the_start_back(self):
+        r = practice()
+        before = r.gains()
+        orig = r.apply
+
+        def apply(values, reason):
+            if "model's gains" in reason:
+                return "Refused: a test is running it by voltage."
+            return orig(values, reason)
+        r.apply = apply
+        t, j = tune(r)
+        self.assertEqual(j["status"], "stopped")
+        self.assertIn("didn't take the gains", j["reason"])
+        self.assertEqual(j["checks"], [], "no check judged on gains it never had")
+        self.assertEqual(r.gains(), before)
+
+    def test_an_error_mid_check_puts_the_start_back(self):
+        r = practice()
+        before = r.gains()
+        orig = r.report
+
+        def report_(doc):
+            if any(k.endswith("/kD") and v != before.get(k) for k, v in (doc.get("gains") or {}).items()):
+                raise RuntimeError("the link dropped")
+            return orig(doc)
+        r.report = report_
+        t, j = tune(r)
+        self.assertEqual(j["state"], "stopped")
+        self.assertIn("the link dropped", t.message)
+        self.assertEqual(r.gains(), before, "never left on a check's untested gains")
 
     def test_no_kd_in_the_simulator(self):
         r = practice()

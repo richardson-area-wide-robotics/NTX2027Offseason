@@ -164,9 +164,10 @@ def fit(t, pos, vel, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
     if kind == "ELEVATOR":
         out["kG"] = -beta[3] / b
     elif arm:
+        # d cos x + e sin x = -b kG cos(x - phi): phi, where gravity pulls hardest (level), is offset_rad.
         d, e = beta[3], beta[4]
         out["kG"] = math.hypot(d, e) / abs(b)
-        out["offset_rad"] = math.atan2(e, -d) if b > 0 else math.atan2(-e, d)
+        out["offset_rad"] = math.atan2(-e, -d) if b > 0 else math.atan2(e, d)
     if kV <= 0 or kA <= 0:
         out.update(ok=False, why="kV or kA came out at or below zero: not a physical fit")
     elif r2 < 0.9:
@@ -186,6 +187,8 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
 
     The volts may reach the motor a sample or more after they were recorded (CAN, status frames):
     shifts of 0 to ``max_shift`` samples are tried and the best fit kept (``shift`` in the result).
+    A shift of -1 too: a SPARK's applied volts, read right after a command, are its last status
+    frame's, which still hold the loop before's command.
 
     A recorder sampling faster than the position arrives (a status frame every 10 ms, a simulation
     every 20 ms) repeats readings: only the samples where the position changed are kept, each
@@ -206,7 +209,8 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
         out = []
         for j, k in enumerate(keep):
             end = keep[j + 1] if j + 1 < len(keep) else k + 1
-            us = [volts[i - shift] for i in range(k, end) if i - shift >= 0 and volts[i - shift] == volts[i - shift]]
+            us = [volts[i - shift] for i in range(k, end)
+                  if 0 <= i - shift < len(volts) and volts[i - shift] == volts[i - shift]]
             out.append(sum(us) / len(us) if us else float("nan"))
         return out
     n = len(t)
@@ -225,7 +229,7 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
     floor = min_speed if min_speed is not None else 0.02 * top
     arm = kind == "PIVOT" and (angle_rad_per_unit or rad is not None)
     best = None
-    for shift in range(0, max_shift + 1):
+    for shift in range(-1, max_shift + 1):
         u = held(shift)
         rows, ys, dts = [], [], []
         for k in range(1, n - 1):
@@ -264,9 +268,10 @@ def fit_held(t, pos, volts, kind="ELEVATOR", angle_rad_per_unit=None, min_speed=
     if kind == "ELEVATOR":
         out["kG"] = -beta[4] / b
     elif arm:
+        # d cos x + e sin x = -b kG cos(x - phi): phi, where gravity pulls hardest (level), is offset_rad.
         d, e = beta[4], beta[5]
         out["kG"] = math.hypot(d, e) / abs(b)
-        out["offset_rad"] = math.atan2(e, -d) if b > 0 else math.atan2(-e, d)
+        out["offset_rad"] = math.atan2(-e, -d) if b > 0 else math.atan2(e, d)
     if kV <= 0 or out["kA"] <= 0:
         out.update(ok=False, why="kV or kA came out at or below zero: not a physical fit")
     elif r2 < 0.9:
@@ -486,7 +491,8 @@ def maxmotion(model, volts, current_limit_a=None, motor="NEO", motors=1, move=No
     ``volts`` is what the battery holds under load (decision 77: measured on the robot, never an
     assumed 12 V); 80% of it is planned with, the rest left for feedback. The cruise speed is 80% of
     the fastest that leaves; the acceleration the least of what the voltage gives at cruise and what
-    the current limit gives (each motor's resistance from its stall current), less 20%. ``move`` (a
+    the current limit gives (the limit is each motor's, so the volts it allows are the limit times one
+    motor's resistance however many share the load), less 20%. ``move`` (a
     typical move, in units) caps the cruise speed at what a triangle profile reaches over it."""
     kS, kV, kA, kG = model["kS"], model["kV"], model["kA"], abs(model.get("kG") or 0.0)
     v_ff = V_HEADROOM * volts
@@ -496,7 +502,7 @@ def maxmotion(model, volts, current_limit_a=None, motor="NEO", motors=1, move=No
     why = [f"{V_HEADROOM:.0%} of {volts:.1f} V measured under load"]
     a_i = None
     if current_limit_a:
-        ohms = STALL_OHMS.get(motor, 12 / 105) / max(1, motors)
+        ohms = STALL_OHMS.get(motor, 12 / 105)
         a_i = max(0.0, (current_limit_a * ohms - kS - kG) / kA)
         why.append(f"{current_limit_a:.0f} A limit")
     accel = 0.8 * min(a_v, a_i) if a_i is not None else 0.8 * a_v
@@ -536,13 +542,15 @@ def _profile(x0, x1, vmax, amax, dt):
 
 
 def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, hold_s=1.0, dt=SPARK_DT,
-            angle_rad_per_unit=None, start=0.0, ff=("kS", "kV", "kA", "kG"), sp_period=None):
+            angle_rad_per_unit=None, start=0.0, ff=("kS", "kV", "kA", "kG"), sp_period=None, step=False):
     """The loop simulated: the model, a 1 ms controller seeing the mechanism ``delay_s`` late,
     output limited to ``volts``. Positional: a profiled move of ``move`` units then a hold; speed: a
     ramp to ``move`` units/s then a hold. ``gains``: Kp, Kd (positional) or Kp, Ki (speed), and the
     feedforward kS, kV, kA, kG in volts, of which only those in ``ff`` are applied (REV applies kV
     only where it has a target speed and kA only in MAXMotion; see MODE_FF for plain Position). ``sp_period``: how often the
-    setpoint changes (a profile the roboRIO steps every 20 ms; None is every ``dt``). Returns
+    setpoint changes (a profile the roboRIO steps every 20 ms; None is every ``dt``). ``step``: a
+    speed setpoint that jumps instead of ramping (match code sets a shooter's speed at once). A speed
+    loop's integral counts only within ``gains["iZone"]`` of its setpoint, as REV's does. Returns
     overshoot (% of the move), error at the end (%), settling time (s, to 2% positional, 3% speed)
     and the peak volts."""
     kS, kV, kA, kG = model["kS"], model["kV"], model["kA"], model.get("kG") or 0.0
@@ -554,7 +562,7 @@ def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, ho
     if positional:
         ref = _profile(start, start + move, cruise, accel, dt)
     else:
-        ramp = int(abs(move) / max(accel, 1e-9) / dt) + 1
+        ramp = 1 if step else int(abs(move) / max(accel, 1e-9) / dt) + 1
         ref = [(0.0, move * min(1.0, k / ramp), (move / ramp / dt) if k < ramp else 0.0) for k in range(ramp + 1)]
     ref += [ref[-1][:1] + (ref[-1][1] if not positional else 0.0, 0.0)] * int(hold_s / dt)
     trace = []
@@ -573,7 +581,8 @@ def predict(model, gains, kind, move, cruise, accel, volts=12.0, delay_s=0.0, ho
             u = ffv + gains.get("kP", 0) * (rp - xs) + gains.get("kD", 0) * (rv - vs)
         else:
             e = rv - vs
-            integ += e * dt
+            izone = gains.get("iZone") or 0.0
+            integ = 0.0 if izone and abs(e) > izone else integ + e * dt   # REV resets it outside its zone
             u = ffv + gains.get("kP", 0) * e + gains.get("kI", 0) * integ
         u = max(-volts, min(volts, u))
         peak_u = max(peak_u, abs(u))
@@ -616,8 +625,13 @@ MODE_FF = {"Position": ("kG",), "MAXMotionPosition": ("kS", "kV", "kA", "kG"),
 MODE_SP_PERIOD = {"Position": 0.02, "Velocity": 0.02}
 
 
+IZONE_FRACTION = 0.1   # a speed loop's integral counts within this fraction of its speed
+STEP_OVERSHOOT = 15.0  # a speed loop softened until a jump to its speed overshoots no more than this, %
+
+
 def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO", motors=1, aggressiveness=1.0,
-            angle_rad_per_unit=None, position_delay_s=POSITION_DELAY_S, control=None, period=SPARK_DT, use_kd=True):
+            angle_rad_per_unit=None, position_delay_s=POSITION_DELAY_S, control=None, period=SPARK_DT, use_kd=True,
+            profile=None):
     """Gains and limits for an identified mechanism, in its own units and volts: positional loops by
     LQR (the position error worth 7 V is 2% of the move, divided by ``aggressiveness``), speed loops
     by SIMC (tau_c = the delay, divided by ``aggressiveness``). ``aggressiveness`` is the one setting
@@ -634,7 +648,15 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
     ``period`` is how often the controller runs: a SPARK every millisecond, REVLib's simulated SPARK
     once a 20 ms robot loop (its loop then sees the mechanism a whole period late, and REV's per-step
     kD and kI scale with it, see :func:`spark_gains`). ``use_kd`` False leaves kD at zero (REVLib's
-    simulated SPARK applies any kD far harder than a real one): kP alone, softened the same way."""
+    simulated SPARK applies any kD far harder than a real one): kP alone, softened the same way.
+
+    A speed loop gets an iZone (its integral counts within a tenth of its speed, so it can't wind up
+    over a whole spin-up) and is softened until a jump straight to its speed, as match code sets a
+    shooter's, overshoots no more than STEP_OVERSHOOT.
+
+    ``profile`` ``{"cruise", "accel"}``: the speed and acceleration the check runs move at (the step
+    test profiles on the roboRIO), so what is predicted is what is measured. MAXMotion follows the
+    slower of that and its own."""
     positional = kind in ("ELEVATOR", "PIVOT")
     mm = maxmotion(model, volts, current_limit_a, motor, motors, move if positional else None)
     gains = {"kS": model["kS"], "kV": model["kV"], "kA": model["kA"]}
@@ -645,6 +667,12 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
     ff = MODE_FF.get(control, ("kS", "kV", "kA", "kG"))
     sp_period = MODE_SP_PERIOD.get(control)
     pdelay = max(position_delay_s, period)
+    # The profile the prediction moves on: the check's own, or MAXMotion's (the slower, in MAXMotion).
+    cruise, accel = mm["cruise"] or abs(move), mm["accel"] or abs(move)
+    if profile and profile.get("cruise") and profile.get("accel"):
+        mmode = (control or "").startswith("MAXMotion")
+        cruise = min(cruise, profile["cruise"]) if mmode else profile["cruise"]
+        accel = min(accel, profile["accel"]) if mmode else profile["accel"]
     softened = 1.0
     if positional:
         # The LQR, then its own check: the model run with the delay and the controller's period. An
@@ -664,7 +692,7 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
             if not (kp > 0 and kd >= 0):
                 continue
             trial = dict(gains, kP=kp, kD=kd, kI=0.0)
-            p = predict(model, trial, kind, move, mm["cruise"] or abs(move), mm["accel"] or abs(move), volts=volts,
+            p = predict(model, trial, kind, move, cruise, accel, volts=volts,
                         delay_s=pdelay, dt=period, angle_rad_per_unit=angle_rad_per_unit, ff=ff, sp_period=sp_period)
             chosen = (trial, scale)
             if p["settle_s"] is not None and p["overshoot_pct"] <= 5.0:
@@ -676,8 +704,16 @@ def compute(model, kind, volts, delay_s, move, current_limit_a=None, motor="NEO"
     else:
         theta = max(delay_s or 0.0, SPEED_DELAY_MIN_S) + (period / 2 if period > SPARK_DT else 0.0)
         kp, ki = simc_pi(model["kV"], model["kA"], theta, tau_c=theta / aggressiveness)
-        gains.update(kP=kp, kI=ki, kD=0.0)
-    pred = predict(model, gains, kind, move, mm["cruise"] or abs(move), mm["accel"] or abs(move), volts=volts,
+        gains.update(kP=kp, kI=ki, kD=0.0, iZone=IZONE_FRACTION * abs(move))
+        sdelay = max(delay_s or 0.0, SPEED_DELAY_MIN_S)
+        for n in range(10):
+            jump = predict(model, gains, kind, move, cruise, accel, volts=volts, delay_s=sdelay, dt=period,
+                           ff=ff, sp_period=sp_period, step=True)
+            if jump["overshoot_pct"] <= STEP_OVERSHOOT:
+                break
+            gains.update(kP=gains["kP"] / 1.5, kI=gains["kI"] / 1.5)
+            softened *= 1.5
+    pred = predict(model, gains, kind, move, cruise, accel, volts=volts,
                    delay_s=pdelay if positional else max(delay_s or 0.0, SPEED_DELAY_MIN_S),
                    dt=period, angle_rad_per_unit=angle_rad_per_unit, ff=ff, sp_period=sp_period)
     return {"gains": gains, "maxmotion": mm, "predicted": pred, "aggressiveness": aggressiveness, "softened": softened}
@@ -698,6 +734,8 @@ def spark_gains(gains, mm, volts_comp, ratio_p=1.0, ratio_v=1.0, positional=True
     for k in ("kG", "kCos"):
         if k in gains:
             out[k] = gains[k]
+    if "iZone" in gains:
+        out["iZone"] = gains["iZone"] * rv   # in the loop's own units, as its error is
     if mm:
         out["mmCruise"] = mm["cruise"] * ratio_v
         out["mmAccel"] = mm["accel"] * ratio_v

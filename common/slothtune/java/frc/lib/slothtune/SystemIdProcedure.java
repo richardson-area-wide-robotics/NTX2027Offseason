@@ -24,9 +24,16 @@ import java.util.Locale;
  * taken up as it goes): friction and back-EMF. The first two, one each way at the same speed, draw a
  * map of the volts that hold it everywhere in the window: the average of the two at each place, where
  * friction and back-EMF cancel. Then quick steps from the map's hold (inertia). Every sweep and step
- * ends before the far edge by dropping to the map's hold and governing the speed to zero: the motor's
- * back-EMF brakes it hard, and gravity past an arm's top is held too. Its brake mode is on for the
- * test, so zero volts is a short circuit, as the model assumes.
+ * ends before the far edge by dropping the volts its speed was taking (friction's share and back-EMF's)
+ * and governing the speed to zero: the motor's back-EMF brakes it hard, and gravity there is held by
+ * the volts the governor had found there. The volts never jump: when the hold comes from somewhere
+ * new (a new place held, the map's first place drawn both ways) the governor takes up the difference.
+ * Every moving stage watches the edge it is really heading for, and it stops on its own if the
+ * mechanism goes the wrong way, runs away, speeds up while braking, or keeps going past its window.
+ * Its brake mode is on for the test, so zero volts is a short circuit, as the model assumes.
+ *
+ * <p>The seesaw first pushes toward the middle of the travel (a mechanism resting on a stop has
+ * nowhere to go the other way) and stops if it finds itself pushing into a stop.
  *
  * <p>A flywheel or roller: the voltage ramped up until near {@code vmax}, then down; then a step up,
  * a step down to a third, and a ramp to rest; both ways for a roller ({@code both_ways}).
@@ -75,6 +82,13 @@ final class SystemIdProcedure implements Procedure {
   static final double STALL_S = 0.5;
   /** A flywheel's step lasts at most this long, seconds. */
   static final double STEP_MAX_S = 4.0;
+  /** Motion in the seesaw counts once it lasts this many loops the same way (one count's dither doesn't). */
+  static final int MOVING_LOOPS = 3;
+  /** A sweep's speed is steady once within a quarter of its target this many loops in a row. */
+  static final int STEADY_LOOPS = 5;
+  /** Pushed this far past the hold guess into a stop, still, it stops: volts. */
+  static final double INTO_STOP_V = 2.0;
+  private static final int NO_KEY = Integer.MIN_VALUE;
 
   /** What it is doing, recorded as a number in {@code stage}. */
   enum Stage {
@@ -112,9 +126,17 @@ final class SystemIdProcedure implements Procedure {
   /** The speed governor's integral, volts; and its gain, volts a second per unit a second. */
   private double uInt;
   private double kI;
-  /** Volts per unit of speed, from the sweeps: the quick steps are sized from it. */
-  private double kvSum;
-  private int kvN;
+  /** The hold guess it was given. */
+  private double guess;
+  /** Where the hold came from last loop ({@link #holdAt} sets {@code lastKey}), and what it was. */
+  private int holdKey = NO_KEY;
+  private int lastKey = NO_KEY;
+  private double holdWas;
+  /** Its speed when the brake began; NaN in a hold that isn't a brake. */
+  private double brakeV = Double.NaN;
+  private int steadyN;
+  private int movingN;
+  private double movingSign;
   /** The hold map: the volts asked at each place moving up, and down, at the first sweeps' speed. */
   private final double[] mapUp = new double[BINS];
   private final double[] mapDn = new double[BINS];
@@ -249,8 +271,6 @@ final class SystemIdProcedure implements Procedure {
       java.util.Arrays.fill(nUp, 0);
       java.util.Arrays.fill(nDn, 0);
       holds.clear();
-      kvSum = 0;
-      kvN = 0;
       for (double volts : new double[] {step, step, 1.5 * step, 1.5 * step}) {
         legs.add(new Leg(Stage.STEP, Math.min(volts, voltsMax), 0));
       }
@@ -264,20 +284,33 @@ final class SystemIdProcedure implements Procedure {
     all.clear();
     wasCoast.clear();
     int i = 0;
-    for (MotorGuard.Motor m : motors(ctx, sys)) {
+    List<MotorGuard.Motor> ordered = new ArrayList<>(motors(ctx, sys));
+    // Leaders first: volts0 is always a motor it drives (a follower's, inverted, would read negated).
+    ordered.sort((x, y) -> Boolean.compare(x.channel.follower(), y.channel.follower()));
+    for (MotorGuard.Motor m : ordered) {
       MotorGuard.MotorChannel c = m.channel;
       all.add(c);
       boolean leads = !c.follower();
       if (leads) {
         driven.add(c);
       }
-      c.fastSignals(SIGNAL_MS);
-      // Brake: zero volts then shorts the motor, which is what the model means by zero volts.
-      Boolean coast = positional ? c.coast() : null;
-      wasCoast.add(coast);
-      if (Boolean.TRUE.equals(coast)) {
-        c.setCoast(false);
+      // Each step on its own: one motor that throws must not leave the lists out of step for end().
+      Boolean coast = null;
+      try {
+        c.fastSignals(SIGNAL_MS);
+      } catch (RuntimeException e) {
+        ctx.note("motor " + i + ": its signals couldn't be sped up: " + e.getMessage());
       }
+      try {
+        // Brake: zero volts then shorts the motor, which is what the model means by zero volts.
+        coast = positional ? c.coast() : null;
+        if (Boolean.TRUE.equals(coast)) {
+          c.setCoast(false);
+        }
+      } catch (RuntimeException e) {
+        ctx.note("motor " + i + ": its idle mode couldn't be set: " + e.getMessage());
+      }
+      wasCoast.add(coast);
       ctx.sampler.channel("volts" + i, c::appliedVolts)
           .channel("bus" + i, c::busVolts)
           .channel("amps" + i, c::amps);
@@ -314,7 +347,13 @@ final class SystemIdProcedure implements Procedure {
     lastT = Double.NaN;
     uUp = Double.NaN;
     uDn = Double.NaN;
-    findDir = 1;
+    guess = uHold;
+    holdKey = NO_KEY;
+    brakeV = Double.NaN;
+    movingN = 0;
+    // Toward the middle first: resting on a stop, there is nowhere to go the other way.
+    double p0 = positional ? sys.position.getAsDouble() : Double.NaN;
+    findDir = Double.isFinite(p0) && p0 > (lo + hi) / 2 ? -1 : 1;
     wasStill = false;
     turnV = Double.NaN;
     cut = null;
@@ -350,7 +389,12 @@ final class SystemIdProcedure implements Procedure {
     enter(l.type, t);
     if (positional) {
       dir = p < (lo + hi) / 2 ? 1 : -1;  // toward the farther edge
-      uInt = dir * (uUp - uDn) / 2;  // friction's share, so it moves at once
+      // From the volts that held it here (no jump), plus friction's share, so it moves at once.
+      double held = cmd;
+      holdKey = NO_KEY;
+      uInt = held - hold(p) + dir * (uUp - uDn) / 2;
+      brakeV = Double.NaN;
+      steadyN = 0;
     } else {
       dir = l.dir;
       uRamp = 0;
@@ -407,18 +451,24 @@ final class SystemIdProcedure implements Procedure {
     double dt = Double.isFinite(lastT) ? Math.max(1e-3, t - lastT) : 0.02;
     lastT = t;
     boolean done;
+    double p = Double.NaN;
     if (positional) {
-      double p = sys.position.getAsDouble();
+      p = sys.position.getAsDouble();
       if (!Double.isFinite(p)) {
         cut = "It can't read " + sys.name + "'s position: stopped.";
-        return false;
+        done = false;
+      } else {
+        remember(t, p);
+        done = positionStep(ctx, t, p, slope(5), slope(3), dt);
       }
-      remember(t, p);
-      done = positionStep(ctx, t, p, slope(5), slope(3), dt);
     } else {
       double v = sys.velocity.getAsDouble();
       remember(t, Double.isFinite(v) ? v : 0);
       done = speedStep(ctx, t, Double.isFinite(v) ? v : 0, dt);
+    }
+    if (cut != null) {
+      // Stopping: the hold now (0 V for a flywheel, or before the hold is known), not the last command.
+      cmd = safeVolts(p);
     }
     cmd = Math.max(-voltsMax, Math.min(voltsMax, cmd));
     for (MotorGuard.MotorChannel c : driven) {
@@ -434,7 +484,7 @@ final class SystemIdProcedure implements Procedure {
 
   /**
    * The volts that hold it at {@code p}: the map the first two sweeps drew, between its nearest places
-   * either side, else the nearest place it was held still.
+   * either side, else the nearest place it was held still. Notes where it came from in {@code lastKey}.
    */
   double holdAt(double p) {
     int b = bin(p);
@@ -447,19 +497,62 @@ final class SystemIdProcedure implements Procedure {
       above = nUp[k] > 0 && nDn[k] > 0 ? k : -1;
     }
     if (below >= 0 && above >= 0 && above != below) {
+      lastKey = below * BINS + above;
       double f = (p - center(below)) / (center(above) - center(below));
       return mapAt(below) + Math.max(0, Math.min(1, f)) * (mapAt(above) - mapAt(below));
     }
     if (below >= 0 || above >= 0) {
+      lastKey = BINS * BINS + (below >= 0 ? below : above);
       return mapAt(below >= 0 ? below : above);
     }
-    double[] near = null;
-    for (double[] h : holds) {
-      if (near == null || Math.abs(h[0] - p) < Math.abs(near[0] - p)) {
-        near = h;
+    int near = -1;
+    for (int k = 0; k < holds.size(); k++) {
+      if (near < 0 || Math.abs(holds.get(k)[0] - p) < Math.abs(holds.get(near)[0] - p)) {
+        near = k;
       }
     }
-    return near == null ? uHold : near[1];
+    lastKey = near < 0 ? -1 : 2 * BINS * BINS + near;
+    return near < 0 ? uHold : holds.get(near)[1];
+  }
+
+  /**
+   * The hold at {@code p} for a governed stage. When it comes from somewhere new (a new place held,
+   * the map's first place drawn both ways) the governor's integral takes up the difference, so the
+   * volts never jump: a jump of a volt drove a strong arm into its stop.
+   */
+  private double hold(double p) {
+    double h = holdAt(p);
+    if (holdKey != NO_KEY && lastKey != holdKey) {
+      uInt -= h - holdWas;
+    }
+    holdKey = lastKey;
+    holdWas = h;
+    return h;
+  }
+
+  /** What to send when it stops: the hold where it is, or 0 V (a flywheel, or the hold not yet found). */
+  private double safeVolts(double p) {
+    if (!positional || Double.isNaN(uUp) || Double.isNaN(uDn)) {
+      return 0;
+    }
+    return Double.isFinite(p) ? holdAt(p) : uHold;
+  }
+
+  /**
+   * Volts per unit of speed, from the map: at each place drawn both ways at the first sweeps' speed,
+   * half the gap between up and down is friction's share and back-EMF's (gravity cancels). 0 until then.
+   */
+  private double kv() {
+    double sum = 0;
+    int n = 0;
+    for (int k = 0; k < BINS; k++) {
+      if (nUp[k] > 0 && nDn[k] > 0) {
+        sum += (mapUp[k] / nUp[k] - mapDn[k] / nDn[k]) / 2;
+        n++;
+      }
+    }
+    double speed = legs.isEmpty() ? 0 : legs.get(0).amount * vmax;
+    return n == 0 || !(speed > 0) ? 0 : Math.max(0, (sum / n - (uUp - uDn) / 2) / speed);
   }
 
   private int bin(double p) {
@@ -485,17 +578,65 @@ final class SystemIdProcedure implements Procedure {
    * A fixed few volts would carry a light mechanism past its speed stop.
    */
   private double stepVolts(Leg l) {
-    if (kvN == 0) {
+    double kv = kv();
+    if (!(kv > 0)) {
       return l.amount;
     }
     double frac = leg < legs.size() - 2 ? 0.6 : 0.9;
-    return Math.min(l.amount, frac * (kvSum / kvN) * vmax + (uUp - uDn) / 2);
+    return Math.min(l.amount, frac * kv * vmax + (uUp - uDn) / 2);
   }
 
-  private boolean brake(double t) {
+  /**
+   * Ends a sweep or step: the volts its speed was taking come off at once (friction's share and
+   * back-EMF's in a sweep; the step's push in a step), leaving the gravity the governor had found
+   * there, and the governor then takes it to rest. Never a hold measured somewhere else: past an
+   * arm's top that pushed it on into its stop.
+   */
+  private boolean brake(double t, double p, double vq) {
+    double target;
+    if (stage == Stage.SWEEP) {
+      target = cmd - Math.signum(vq) * ((uUp - uDn) / 2 + kv() * Math.abs(vq));
+    } else {
+      target = holdAt(p);
+    }
     leg++;
-    uInt = 0;  // the hold there, then the governor takes it to rest
     enter(Stage.HOLD, t);
+    brakeV = Math.abs(vq);
+    holdKey = NO_KEY;
+    uInt = target - hold(p);
+    cmd = target;
+    return false;
+  }
+
+  /**
+   * A moving stage's own checks: past its window and still going out, speeding up while braking, or
+   * going the wrong way. Each means the volts it chose aren't stopping it, so the test stops.
+   */
+  private boolean runaway(double p, double vq, double vth, Leg l) {
+    double range = max - min;
+    double m2 = 0.5 * MARGIN * range;
+    if ((p < lo - m2 && vq < -vth) || (p > hi + m2 && vq > vth)) {
+      cut = String.format(Locale.ROOT, "%s kept going past the end of its test window (at %.3f %s): the volts "
+          + "it chose didn't stop it. Stopped.", sys.name, sys.shown(p), sys.shownUnits());
+      return true;
+    }
+    if (stage == Stage.HOLD && Double.isFinite(brakeV) && Math.abs(vq) > Math.max(1.25 * brakeV, brakeV + 0.05 * vmax)) {
+      cut = String.format(Locale.ROOT, "%s sped up while braking (%.3f to %.3f %s/s): the volts that hold it there "
+          + "are off. Stopped.", sys.name, sys.shown(brakeV), sys.shown(Math.abs(vq)), sys.shownUnits());
+      return true;
+    }
+    if (l != null && stage == Stage.SWEEP) {
+      if (dir * vq < -Math.max(0.1 * vmax, vth)) {
+        cut = String.format(Locale.ROOT, "%s went the wrong way in a sweep (%.3f %s/s): stopped.", sys.name,
+            sys.shown(Math.abs(vq)), sys.shownUnits());
+        return true;
+      }
+      if (Math.abs(vq) > 2 * l.amount * vmax + vth) {
+        cut = String.format(Locale.ROOT, "%s ran away in a sweep: %.3f %s/s, twice the speed it was held to. "
+            + "Stopped.", sys.name, sys.shown(Math.abs(vq)), sys.shownUnits());
+        return true;
+      }
+    }
     return false;
   }
 
@@ -521,12 +662,16 @@ final class SystemIdProcedure implements Procedure {
           return false;  // not enough readings yet to tell still from moving
         }
         // Finer here: motion just starting at a band edge is slow, and the edge is read where it is seen.
-        moving = Math.abs(v) > vth / 2;
+        // It must last MOVING_LOOPS loops the same way: one encoder count's dither isn't motion.
+        boolean stirring = Math.abs(v) > vth / 2 && Math.abs(vq) > vth / 2 && Math.signum(v) == Math.signum(vq);
+        movingN = stirring ? (Math.signum(v) == movingSign ? movingN + 1 : 1) : 0;
+        movingSign = Math.signum(v);
+        moving = movingN >= MOVING_LOOPS;
         still = Math.abs(v) < vth / 4;
         if (moving && wasStill) {
           // Motion starting from rest, the voltage heading the same way: an edge of the band. The
-          // speed reading spans five loops, so the voltage then was a little behind where it is now.
-          double then = cmd - findDir * FIND_RATE * 0.06;
+          // speed reading spans five loops and must last three, so the voltage then was a little behind.
+          double then = cmd - findDir * FIND_RATE * (0.06 + 0.02 * (MOVING_LOOPS - 1));
           if (v > 0 && findDir > 0 && Double.isNaN(uUp)) {
             uUp = then;
           } else if (v < 0 && findDir < 0 && Double.isNaN(uDn)) {
@@ -569,12 +714,20 @@ final class SystemIdProcedure implements Procedure {
           ctx.meta("u_hold", uHold);
           holds.add(new double[] {p, uHold});
           cmd = uHold;
-          uInt = 0;
           enter(Stage.HOLD, t);
+          brakeV = Double.NaN;
+          holdKey = NO_KEY;
+          uInt = cmd - hold(p);
           return false;
         }
         if (!leaving || Math.abs(v) < 0.1 * vmax) {
           cmd += findDir * FIND_RATE * dt;
+        }
+        // Pushing well past the guess toward a stop it is already beyond: it is on the stop.
+        boolean intoStop = findDir > 0 ? p > hi : p < lo;
+        stall(ctx, t, moving, intoStop && Math.abs(cmd - guess) > INTO_STOP_V);
+        if (cut != null) {
+          return false;
         }
         if (Math.abs(cmd) > Math.min(FIND_CAP, voltsMax)) {
           cut = String.format(Locale.ROOT, "%s didn't start moving %s by %.1f V: is it jammed, pushing into a stop "
@@ -591,8 +744,11 @@ final class SystemIdProcedure implements Procedure {
       case HOLD -> {
         // The hold there, and the governor taking the speed to zero: gravity the hold misjudged (an
         // arm's, away from where it was measured) is taken up as it goes.
+        if (runaway(p, vq, vth, null)) {
+          return false;
+        }
         govern(0, vq, dt, BRAKE_RATE);
-        cmd = holdAt(p) + uInt;
+        cmd = hold(p) + uInt;
         // Settled: within a hair for the last STILL_S. Without friction (a simulated arm) the hold rocks a
         // little about its balance point and is never perfectly still.
         if (ts >= STILL_S && spread(STILL_S) <= 0.5 * vth * STILL_S) {
@@ -607,18 +763,17 @@ final class SystemIdProcedure implements Procedure {
       }
       case SWEEP, STEP -> {
         Leg l = legs.get(leg);
+        if (runaway(p, vq, vth, l)) {
+          return false;
+        }
         if (stage == Stage.SWEEP) {
           // A governed speed, reached over half a second: the volts follow what holds it there.
           double target = dir * l.amount * vmax * Math.min(1, ts / 0.5);
           govern(target, vq, dt, SWEEP_RATE);
-          cmd = holdAt(p) + uInt;
-          boolean steady = ts > 0.5 && Math.abs(vq - target) < 0.25 * Math.abs(target);
-          if (steady && Math.abs(vq) > 0) {
-            // At a steady speed the volts above the hold are friction's share and back-EMF's: volts
-            // per unit of speed, for sizing the quick steps.
-            kvSum += Math.max(0, Math.abs(cmd - holdAt(p)) - (uUp - uDn) / 2) / Math.abs(vq);
-            kvN++;
-          }
+          cmd = hold(p) + uInt;
+          // Steady: near its target for STEADY_LOOPS in a row, not just passing through it.
+          steadyN = ts > 0.5 && Math.abs(vq - target) < 0.25 * Math.abs(target) ? steadyN + 1 : 0;
+          boolean steady = steadyN >= STEADY_LOOPS;
           if (leg < 2 && steady) {
             int b = bin(p);  // the first two sweeps, one each way at the same speed: the hold map
             if (dir > 0) {
@@ -632,9 +787,11 @@ final class SystemIdProcedure implements Procedure {
         } else {
           cmd = holdAt(p) + dir * stepVolts(l);
         }
-        double edge = dir > 0 ? hi : lo;
-        if (dir * (p + vq * LEAD_S - edge) >= 0 || Math.abs(vq) > (stage == Stage.STEP ? 0.9 : 0.8) * vmax) {
-          return brake(t);
+        // The edge it is really heading for: its leg's, or the other one if something carries it back.
+        boolean ending = dir > 0 ? p + Math.max(0, vq) * LEAD_S >= hi : p + Math.min(0, vq) * LEAD_S <= lo;
+        boolean backward = dir > 0 ? p + Math.min(0, vq) * LEAD_S <= lo : p + Math.max(0, vq) * LEAD_S >= hi;
+        if (ending || backward || Math.abs(vq) > (stage == Stage.STEP ? 0.9 : 0.8) * vmax) {
+          return brake(t, p, vq);
         }
         stall(ctx, t, moving, Math.abs(cmd - holdAt(p)) > 2);
         if (ts > 30) {
@@ -756,7 +913,7 @@ final class SystemIdProcedure implements Procedure {
   public void end(TestContext ctx, boolean aborted) {
     try {
       // A pivot or elevator keeps its hold until its code is back; a flywheel coasts down.
-      double last = positional && !Double.isNaN(uUp) && !Double.isNaN(uDn) ? holdAt(sys.position.getAsDouble()) : 0;
+      double last = safeVolts(positional ? sys.position.getAsDouble() : Double.NaN);
       cmd = last;
       for (MotorGuard.MotorChannel c : driven) {
         c.testVolts(last);
@@ -767,12 +924,21 @@ final class SystemIdProcedure implements Procedure {
         sys.goal.accept(positional ? sys.position.getAsDouble() : 0);
       }
     } finally {
+      // Each motor on its own: one that throws must not leave the others on fast signals or in brake.
       for (int i = 0; i < all.size(); i++) {
         MotorGuard.MotorChannel c = all.get(i);
-        if (Boolean.TRUE.equals(wasCoast.get(i))) {
-          c.setCoast(true);
+        try {
+          if (i < wasCoast.size() && Boolean.TRUE.equals(wasCoast.get(i))) {
+            c.setCoast(true);
+          }
+        } catch (RuntimeException e) {
+          // Its idle mode stays brake until the robot restarts: safe.
         }
-        c.fastSignals(0);
+        try {
+          c.fastSignals(0);
+        } catch (RuntimeException e) {
+          // Its signals stay fast until the robot restarts: more CAN traffic, nothing worse.
+        }
       }
       stageCode = Stage.DONE.ordinal();
     }

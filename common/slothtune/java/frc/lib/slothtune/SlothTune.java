@@ -1737,6 +1737,8 @@ public final class SlothTune {
       double d = ((h - gyroLastDeg + 540) % 360) - 180;
       double rate = d / (now - gyroLastS);
       turnRateDegS = Double.isFinite(turnRateDegS) ? turnRateDegS + 0.3 * (rate - turnRateDegS) : rate;
+    } else if (!Double.isFinite(h)) {
+      turnRateDegS = Double.NaN;  // no heading, no rate: never the last one, frozen
     }
     gyroLastDeg = h;
     gyroLastS = now;

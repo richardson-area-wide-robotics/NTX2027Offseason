@@ -180,6 +180,9 @@ public final class TunableSystem {
     sparkGain(spark, "kP", a::getP, (c, v) -> c.closedLoop.p(v), 0, 1000);
     sparkGain(spark, "kI", a::getI, (c, v) -> c.closedLoop.i(v), 0, 100);
     sparkGain(spark, "kD", a::getD, (c, v) -> c.closedLoop.d(v), 0, 100000);
+    // The integral only counts within this much error (the loop's units; 0 is always): a speed loop's
+    // integral would otherwise wind up for the whole of a spin-up and overshoot far past the goal.
+    sparkGain(spark, "iZone", a::getIZone, (c, v) -> c.closedLoop.iZone(v), 0, 1e6);
     sparkGain(spark, "kS", a.feedForward::getkS, (c, v) -> c.closedLoop.feedForward.kS(v), 0, 4);
     sparkGain(spark, "kV", a.feedForward::getkV, (c, v) -> c.closedLoop.feedForward.kV(v), 0, 20);
     sparkGain(spark, "kA", a.feedForward::getkA, (c, v) -> c.closedLoop.feedForward.kA(v), 0, 20);

@@ -85,7 +85,8 @@ class FitTest(unittest.TestCase):
 def sim_held(plant, kind, loop=0.02, sample=0.01, arpu=None, late=0):
     """A robot loop holding its volts for ``loop`` seconds, sampled every ``sample``: a ramp then a
     step each way from the hold, as the robot's system_id test runs. ``late`` records the volts that
-    many samples before they reach the motor."""
+    many samples before they reach the motor (negative: after, as a SPARK's applied volts read right
+    after a command are). An arm's gravity pulls hardest at ``plant["level"]`` radians (default 0)."""
     g0 = plant.get("kG", 0.0) if kind == "ELEVATOR" else 0.0
     plan = []
     for sgn in (1, -1):
@@ -105,7 +106,8 @@ def sim_held(plant, kind, loop=0.02, sample=0.01, arpu=None, late=0):
             t.append(now)
             pos.append(x)
             for _ in range(round(sample / h)):
-                g = plant["kG"] * (math.cos(x * arpu) if kind == "PIVOT" else 1.0) if kind in ("ELEVATOR", "PIVOT") else 0.0
+                g = plant["kG"] * (math.cos(x * arpu - plant.get("level", 0.0)) if kind == "PIVOT" else 1.0) \
+                    if kind in ("ELEVATOR", "PIVOT") else 0.0
                 net = u - g - plant["kV"] * v
                 if v == 0 and abs(net) <= plant["kS"]:
                     continue
@@ -114,7 +116,7 @@ def sim_held(plant, kind, loop=0.02, sample=0.01, arpu=None, late=0):
                 v = 0.0 if v and nv * v < 0 else nv
                 x += v * h
             now += sample
-    volts = applied[late:] + [applied[-1]] * late
+    volts = applied[late:] + [applied[-1]] * late if late >= 0 else [applied[0]] * -late + applied[:late]
     return t, pos, volts
 
 
@@ -131,6 +133,21 @@ class HeldFitTest(unittest.TestCase):
         f = M.fit_held(t, pos, volts, "ELEVATOR")
         self.assertEqual(f["shift"], 2, f)
         self.assertAlmostEqual(f["kA"], ELEVATOR["kA"], delta=0.02 * ELEVATOR["kA"])
+
+    def test_volts_read_back_a_loop_late_are_lined_up(self):
+        # A SPARK's applied volts read right after a command still hold the loop before's.
+        t, pos, volts = sim_held(ELEVATOR, "ELEVATOR", late=-1)
+        f = M.fit_held(t, pos, volts, "ELEVATOR")
+        self.assertEqual(f["shift"], -1, f)
+        for k in ("kS", "kA"):
+            self.assertAlmostEqual(f[k], ELEVATOR[k], delta=0.03 * ELEVATOR[k] + 0.005, msg=(k, f))
+
+    def test_an_arm_level_away_from_zero_says_where(self):
+        arm = dict(ARM, level=0.3)
+        t, pos, volts = sim_held(arm, "PIVOT", arpu=1.0)
+        f = M.fit_held(t, pos, volts, "PIVOT", angle_rad_per_unit=1.0)
+        self.assertTrue(f["ok"], f)
+        self.assertAlmostEqual(f["offset_rad"], 0.3, delta=0.03, msg="level where gravity pulls hardest, its sign right")
 
     def test_central_differences_are_biased_on_held_volts(self):
         # Why fit_held exists: the same run through fit() with a central-difference speed.
