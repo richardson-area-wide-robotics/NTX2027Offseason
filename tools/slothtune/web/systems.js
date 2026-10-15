@@ -287,15 +287,23 @@ const Systems = (() => {
   }
 
   // ---------------------------------------------------------------- auto-tune
-  // The mechanism's own gains, tuned round by round while a person holds the deadman (autotune.py
-  // SystemTune): its step test, the one change its report asks for, again, up to 8 rounds; at the end
-  // it goes back to its best round, and Save writes what it changed to slothtune.json.
-  let tuneState = null, tuneTimer = null;
+  // Two ways, while a person holds the deadman. Measure, then compute (autotune.py ModelTune,
+  // decision 75): one measuring run on blocks, every gain worked out from the fitted model, then
+  // check runs against the gains it had. Round by round (SystemTune): its step test, the one change
+  // its report asks for, again, up to 8 rounds. Either ends on its best, and Save writes what it
+  // changed to slothtune.json.
+  let tuneState = null, tuneTimer = null, tuneMethod = "model";
+  const MODEL_LESSONS = { learn: ["model_tuning", "system_id", "hold_band", "least_squares", "lqr", "simc", "spark_modes",
+    "voltage_compensation", "check_runs"] };
   const STATE_WORD = { running: "running", paused: "paused", finished: "finished", stopped: "stopped" };
 
   function openAutoTune(s, p) {
-    const env = App.env(), robot = App.connected() && ["BLOCKS", "FIELD", "SIM"].includes(env);
+    const env = App.env(), model = tuneMethod === "model";
+    // The measuring run turns the motor by voltage with the robot's code paused: on blocks only.
+    const places = model ? ["BLOCKS", "SIM"] : ["BLOCKS", "FIELD", "SIM"];
+    const robot = App.connected() && places.includes(env);
     const blocker = !App.connected() ? "Not connected: you can try it on a made-up mechanism, or connect to tune the real one."
+      : model && env === "FIELD" ? "The measuring run is on blocks only: it runs the motor itself, with the robot's code paused. Put the robot on blocks, or pick Round by round."
       : !robot ? "Say where the robot is first (On blocks or On the floor): every test refuses without it." : "";
     const checks = [
       ["clear", positional(s) ? `<b>${esc(s.name)} moves freely</b> between its limits, nothing and nobody in its way.`
@@ -303,12 +311,27 @@ const Systems = (() => {
       ["holder", "<b>One person holds the deadman the whole time</b> and watches it, ready to let go."],
       ["enabled", "The robot is <b>enabled</b> in the Driver Station (Teleop or Test), as for any test."],
     ];
+    if (model && positional(s)) checks.splice(1, 0, ["limits", `<b>Its limits are right</b>: the measuring run sweeps between them by itself, braking before each end.`]);
     const args = { system: s.index, a: p.a, b: p.b, vmax: p.vmax, amax: p.amax, hold_s: 1, moves: 2 };
+    const method = `<div class="seg" id="sat-method" role="group" aria-label="How to tune" data-tip="sys.at-method">
+      <button data-m="model" class="${model ? "on" : ""}">Measure, then compute</button><button data-m="rounds" class="${model ? "" : "on"}">Round by round</button></div>`;
     App.modal(`<h2>Auto-tune ${esc(s.name)}</h2>
+      <div class="row" style="flex-wrap:wrap">${method}<span class="small muted">${model ? "Recommended: one measuring run, then every gain from the model." : "One gain at a time, from each run's advice."}</span></div>
       ${blocker ? `<div class="callout warn">${esc(blocker)}</div>` : ""}
       ${robot ? `<h3>Before you start: tick each one</h3>
       <ul class="checklist">${checks.map(([k, t]) => `<li><label class="row"><input type="checkbox" data-sat-check="${k}"> <span>${t}</span></label></li>`).join("")}</ul>` : ""}
       <h3>What happens</h3>
+      ${model ? `<ol class="small">
+        <li><b>The measuring run</b> (about half a minute): the robot's code pauses and the motor is run by voltage. ${positional(s)
+          ? "It finds the volts that hold it still, sweeps it across its travel slowly, then makes quick steps, braking before each end."
+          : "It ramps it up near its top test speed and back down, then makes quick steps."}</li>
+        <li>From that it fits the physics (friction, back-EMF, inertia${positional(s) ? ", gravity" : ""}) and works out every gain at once, only those the mode its code runs the SPARK in uses, with voltage compensation from the battery it held.</li>
+        <li><b>Check runs</b>: the step test with the gains it has now first, then with the model's, up to 4 times, trying softer and harder.</li>
+        <li>It keeps the best. If the model's can't beat the gains it had, or still ring, it puts back every gain it started with and says why.</li>
+        ${robot ? `<li><b>Let go of the deadman at any time</b>: the run stops and it waits. Hold it again and press <b>Continue</b>. <b>ABORT</b> (or Esc) stops it for good.</li>` : ""}
+        <li><b>Nothing is written to a file</b> until you press Save, which writes the gains to slothtune.json; the robot sets them every time it starts.</li>
+      </ol>
+      <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted">How it works:</span>${Learn.chips(MODEL_LESSONS.learn)}</div>` : `
       <ol class="small">
         <li>It runs the test you see on this panel (${speed === "half" ? "half" : "full"} speed), reads the result and changes <b>one gain</b>: gravity (kG) or speed (kV) first, from the physics or from the run itself, then kP.</li>
         <li>Again, round after round: up to 8. Each change at most doubles or halves a gain, and stays inside the range the code allows.</li>
@@ -316,7 +339,7 @@ const Systems = (() => {
         ${robot ? `<li><b>Let go of the deadman at any time</b>: the round stops and it waits. Hold it again and press <b>Continue</b>.</li>
         <li><b>ABORT</b> (or Esc) stops it for good.</li>` : ""}
         <li>At the end it goes back to its best round's gains. <b>Nothing is written to a file</b> until you press Save, which writes them to slothtune.json; the robot sets them every time it starts.</li>
-      </ol>
+      </ol>`}
       <div class="row" style="justify-content:flex-end">
         <button class="btn" id="sat-cancel" data-tip="autotune.cancel">Cancel</button>
         <button class="btn" id="sat-practice" data-tip="sys.at-practice">Try on a made-up ${positional(s) ? "elevator" : "flywheel"}</button>
@@ -325,9 +348,10 @@ const Systems = (() => {
       const ready = () => { $("#sat-start", m).disabled = !robot || !boxes.every(b => b.checked); };
       boxes.forEach(b => b.onchange = ready);
       $("#sat-cancel", m).onclick = () => App.closeModal();
+      $$("#sat-method [data-m]", m).forEach(b => b.onclick = () => { tuneMethod = b.dataset.m; openAutoTune(s, p); });
       const go = async body => {
         App.closeModal();
-        const r = await App.api("/api/systems/autotune/start", Object.assign({ system: s.name, args }, body));
+        const r = await App.api("/api/systems/autotune/start", Object.assign({ system: s.name, args, mode: model ? "model" : "rounds" }, body));
         if (!r.ok) { App.toast(r.error || "The auto-tuner didn't start.", 6000); return; }
         tuneState = r;
         paintTest();
@@ -351,10 +375,66 @@ const Systems = (() => {
     }, 500);
   }
 
+  // A measure-then-compute run: the model it fitted, what it found, and each check against the
+  // gains it had (the baseline), predicted beside measured.
+  function paintModelTune(r, el) {
+    const live = ["running", "paused"].includes(r.state);
+    const m = r.model || {}, fit = m.fit || {}, shown = m.shown || {};
+    const before = r.before || {}, best = r.best_gains || {};
+    const changed = Object.entries(best).filter(([k, v]) => before[k] !== v);
+    const term = (key, text) => `<span class="term" tabindex="0" data-learn="${key}">${text}</span>`;
+    const pct = v => v == null ? "–" : `${fmt(v, 0)}%`;
+    const rows = [];
+    if (r.baseline) rows.push({ name: "The gains it had", agg: null, cost: r.baseline.cost, meas: r.baseline.measured || {}, pred: null, best: false });
+    for (const c of r.checks || []) rows.push({ name: `Check ${c.check}`, agg: c.aggressiveness, cost: c.cost, meas: c.measured || {},
+      pred: c.predicted || {}, best: r.best && r.best.check === c.check });
+    el.innerHTML = `<div class="at-panel sys-at-panel">
+      <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+        <b data-tip="sys.autotune">Measure, then compute: ${esc(r.system)}${r.target === "practice" ? " (made-up mechanism)" : ""}: ${STATE_WORD[r.state] || esc(r.state)}</b>
+        <span class="row">
+          ${r.state === "paused" ? `<button class="btn small primary" id="sat-continue" data-tip="autotune.continue">Continue</button>` : ""}
+          ${live ? `<button class="btn small" id="sat-stop" data-tip="autotune.stop">Stop</button>` : ""}
+          ${!live && changed.length && r.target !== "practice" ? `<button class="btn small primary" id="sat-save" data-tip="sys.at-save">Save to slothtune.json…</button>` : ""}
+          ${!live ? `<button class="btn small" id="sat-close" data-tip="sys.at-close">Close</button>` : ""}</span></div>
+      <p class="${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>
+      ${m.summary ? `<div data-tip="sys.at-model"><b>${term("system_id", "The model")}</b>
+        <div class="sys-model-facts">
+          <span>${term("kS", "Friction kS")} <b class="mono">${n4(fit.kS)} V</b></span>
+          <span>${term("kV", "Back-EMF kV")} <b class="mono">${n4(shown.kV ?? fit.kV)}</b></span>
+          <span>${term("kA", "Inertia kA")} <b class="mono">${n4(shown.kA ?? fit.kA)}</b></span>
+          ${fit.kG ? `<span>${term("hold_band", "Gravity kG")} <b class="mono">${n4(fit.kG)} V</b></span>` : ""}
+          <span>${term("least_squares", "Fit")} <b class="mono">${fit.r2 == null ? "–" : fmt(100 * fit.r2, 1) + "%"}</b></span>
+          <span>${term("velocity_filter", "Speed reading late")} <b class="mono">${m.delay_s == null ? "–" : fmt(1000 * m.delay_s, 0) + " ms"}</b></span>
+          <span>${term("voltage_compensation", "Compensation")} <b class="mono">${m.volts_comp == null ? "–" : fmt(m.volts_comp, 1) + " V"}</b></span>
+        </div>
+        <p class="small">${esc(m.summary)}</p>
+        ${(m.findings || []).filter(f => f.level !== "info" || /kD|open loop|Not seen|level at/.test(f.title)).map(f =>
+          `<div class="finding"><div class="head"><span class="chip ${f.level === "warn" ? "warn" : ""}">${esc(f.level)}</span>
+          <span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why || "")}</div></div>`).join("")}</div>` : ""}
+      ${rows.length ? `<table class="t" data-tip="sys.at-checks"><thead><tr><th>${term("check_runs", "Run")}</th><th class="num">How hard</th>
+        <th class="num">${term("overshoot", "Overshoot")}</th><th class="num">Predicted</th><th>Settled</th><th class="num" data-tip="sys.at-cost">Cost</th></tr></thead><tbody>
+        ${rows.map(x => `<tr class="${x.best ? "best" : ""}"><td>${esc(x.name)}${x.best ? ` <span class="chip">best</span>` : ""}</td>
+          <td class="num mono">${x.agg == null ? "–" : fmt(x.agg, 2) + "x"}</td><td class="num mono">${pct(x.meas.overshoot_pct)}</td>
+          <td class="num mono">${x.pred ? pct(x.pred.overshoot_pct) : "–"}</td>
+          <td>${x.meas.settled == null ? "–" : x.meas.settled ? "yes" : "no"}</td><td class="num mono">${x.cost == null ? "–" : fmt(x.cost, 1)}</td></tr>`).join("")}</tbody></table>` : ""}
+      ${r.reason && !live ? `<p><b>${r.status === "done" ? "Done" : "Stopped"}:</b> ${esc(r.reason)}</p>` : ""}
+      ${changed.length && !live ? `<table class="t small" data-tip="sys.at-changes"><thead><tr><th>What it changes</th><th class="num">It had</th><th class="num">Now</th></tr></thead><tbody>
+        ${changed.map(([k, v]) => `<tr><td>${esc(k.split("/").pop())}</td><td class="num mono">${n4(before[k])}</td><td class="num mono">${n4(v)}</td></tr>`).join("")}</tbody></table>` : ""}
+      <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted">How it works:</span>${Learn.chips(MODEL_LESSONS.learn)}</div></div>`;
+    const c = $("#sat-continue", el), st = $("#sat-stop", el), sv = $("#sat-save", el), cl = $("#sat-close", el);
+    if (c) c.onclick = async () => { await App.api("/api/systems/autotune/continue", {}); pollTune(); };
+    if (st) st.onclick = () => App.api("/api/systems/autotune/stop", {});
+    if (cl) cl.onclick = () => { tuneState = null; el.hidden = true; el.innerHTML = ""; };
+    if (sv) sv.onclick = () => App.previewAndSave({ kind: "edits", edits: changed.map(([k, v]) =>
+      ({ file: "slothtune.json", path: ["systems", r.system, "gains", k.split("/").pop()], value: +Number(v).toPrecision(6) })) },
+      `${r.system}: the gains from its model`);
+  }
+
   function paintTune(r) {
     const el = $("#sys-at", root);
     if (!el) return;
     el.hidden = false;
+    if (r.mode === "model") { paintModelTune(r, el); return; }
     const live = ["running", "paused"].includes(r.state);
     // The gains it changed: every round's value of each, so each round's change shows.
     const keys = Object.keys((r.rounds[0] || {}).gains || {}).filter(k => new Set(r.rounds.map(x => x.gains[k])).size > 1

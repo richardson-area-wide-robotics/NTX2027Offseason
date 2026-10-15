@@ -182,7 +182,9 @@ async function checkNetworks() {
     if (!groups.length || groups[groups.length - 1].name !== g) groups.push({ name: g, checks: [] });
     groups[groups.length - 1].checks.push(c);
   }
+  const NET_LESSONS = { learn: ["robot_network", "networktables", "nt_topics", "nt_timing", "dashboards"] };
   App.modal(`<h2>The robot's network</h2>
+    <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="net.learn">How it works:</span>${Learn.chips(NET_LESSONS.learn)}</div>
     ${r.error ? `<div class="callout warn">${esc(r.error)}</div>` : `
     <p>${r.ok ? "Nothing blocking." : "Fix the red lines, then check again."}</p>
     ${groups.map(g => `${g.name ? `<h3>${esc(g.name)}</h3>` : ""}${g.checks.map(c => `<div class="finding"><div class="head"><span class="chip ${word[c.level] || ""}">${esc(c.level)}</span>

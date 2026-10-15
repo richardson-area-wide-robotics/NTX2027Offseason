@@ -9,6 +9,8 @@ const Wiring = (() => {
   let mapFocus, mapFinding = null, ohmsDrawn = false;
   // Findings from this page's own tools (the wiggle test, the PDH finder), drawn on the map too.
   let extra = [];
+  // How the robot's devices talk, for a student meeting CAN here: the lessons, in teaching order.
+  const CAN_LESSONS = { learn: ["can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat", "can_load", "can_fd", "can_termination"] };
 
   root.innerHTML = `
     <div class="jobs" data-jobs="wiring">
@@ -38,6 +40,7 @@ const Wiring = (() => {
           <span><span class="term" tabindex="0" data-learn="can_termination">Ω = terminator</span></span>
           <span>Point at a box (or Tab to it) to see what the part is; click it (or press Enter) for its place on the robot below.</span>
         </div>
+        <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="wiring.learn">How CAN works:</span>${Learn.chips(CAN_LESSONS.learn)}</div>
         <div id="w-detail" class="callout" hidden></div>
         <div id="w-detail-map" class="frc-slot"></div>
       </div>
@@ -590,7 +593,7 @@ const Wiring = (() => {
     const before = at > 0 ? bus.chain[at - 1] : null, after = bus && at >= 0 && at < bus.chain.length - 1 ? bus.chain[at + 1] : null;
     const port = m.pdhPorts[name];
     const facts = [];
-    if (dev.can_id != null) facts.push(["CAN ID", String(dev.can_id)]);
+    if (dev.can_id != null) facts.push([`<span class="term" tabindex="0" data-learn="frc_can_id">CAN ID</span>`, String(dev.can_id)]);
     // The robot controller is where a bus starts (place 0); the devices count from 1 after it.
     if (bus) facts.push(["Bus", at === 0 ? `${swatchOf(bi)}${esc(labelOf(bus))}: it starts here${after ? `, then ${esc(shown(after))}` : ""}`
       : `${swatchOf(bi)}${esc(labelOf(bus))}, ${ordinal(at)} along it` + (before || after ? `: between ${esc(before ? shown(before) : "the start")} and ${esc(after ? shown(after) : "the far end")}` : "")]);

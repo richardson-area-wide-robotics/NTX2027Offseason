@@ -55,10 +55,8 @@
         <h3 data-tip="ct.live">Live</h3>
         <div class="ct-live">
           <svg id="ct-svg" viewBox="0 0 340 302" role="img" aria-label="Stick positions, with each stick's center zoomed in below"></svg>
-          <div class="ct-trig" role="group" aria-label="Triggers" data-tip="ct.trig" data-quiet><div><b><i id="ct-lt"></i></b><span>LT (axis 2)</span></div><div><b><i id="ct-rt"></i></b><span>RT (axis 3)</span></div></div>
         </div>
         <div id="ct-axes" class="small mono"></div>
-        <div id="ct-buttons" class="ct-buttons" role="list" aria-label="Buttons"></div>
         <details class="small"><summary>What the drawing shows</summary><p class="hint">Top: the whole stick, with its trail. Below: its center, 5 times bigger.
           <span class="ct-key-code">Dashed outline</span>: what the robot code ignores (<span id="ct-code">no deadband found</span>):
           a circle where the deadband is round (distance from center), a square where each axis has its own.
@@ -70,6 +68,11 @@
           <h3 data-tip="ct.steps">Steps</h3>
           <ol id="ct-steps" class="ct-steps" role="list"></ol>
           <div id="ct-step-box"></div>
+        </section>
+        <section>
+          <h3 data-tip="ct.colors">Buttons</h3>
+          <svg id="ct-buttons" class="ct-pad" viewBox="0 0 360 214" role="list" aria-label="Buttons, laid out as on an Xbox controller"></svg>
+          <p class="small muted ct-pad-key"><span class="ct-key-driver">Blue</span>: driver · <span class="ct-key-operator">Orange</span>: tester or operator · green ring: seen · numbers: as robot code counts them</p>
         </section>
         <section>
           <h3 data-tip="ct.report">Report</h3>
@@ -147,11 +150,55 @@
       <text x="${cx}" y="296" text-anchor="middle" class="ct-label">center, 5×</text>`;
   }
 
-  // The button chips are built once and only their classes change, 60 times a second: rebuilding
-  // them every frame would throw away any focus or tip on them.
+  // The buttons, drawn where they are on an Xbox controller (browser button numbers: 0 A, 1 B,
+  // 2 X, 3 Y, 4 LB, 5 RB, 6 LT, 7 RT, 8 Back, 9 Start, 10 and 11 the stick presses, 12-15 the
+  // D-pad). Built once; only their classes change, 60 times a second, so a focus or tip on one
+  // survives. A press lights in the joystick's color: the driver's blue, the tester's orange.
+  const PAD = (() => {
+    const btn = (i, shape, lx, ly, text, nx, ny, caption) => ({ i, shape, lx, ly, text, nx, ny, caption });
+    const c = (cx, cy, r) => `<circle cx="${cx}" cy="${cy}" r="${r}" class="ct-btn"/>`;
+    const rr = (x, y, w, h, r) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}" class="ct-btn"/>`;
+    return [
+      btn(4, rr(58, 26, 74, 14, 7), 95, 37, "LB", 140, 37),
+      btn(5, rr(228, 26, 74, 14, 7), 265, 37, "RB", 220, 37),
+      btn(10, c(98, 84, 21), 98, 88, "L3", 72, 112),
+      btn(11, c(226, 132, 19), 226, 136, "R3", 252, 160),
+      btn(8, c(150, 84, 8), 150, 104, "Back", 150, 70, true),
+      btn(9, c(210, 84, 8), 210, 104, "Start", 210, 70, true),
+      btn(3, c(264, 64, 10), 264, 68, "Y", 280, 56),
+      btn(2, c(244, 84, 10), 244, 88, "X", 228, 76),
+      btn(1, c(284, 84, 10), 284, 88, "B", 300, 76),
+      btn(0, c(264, 104, 10), 264, 108, "A", 280, 116),
+      btn(12, rr(126, 112, 16, 18, 3), 134, 125, "▲", null, null),
+      btn(13, rr(126, 146, 16, 18, 3), 134, 159, "▼", null, null),
+      btn(14, rr(108, 130, 18, 16, 3), 117, 142, "◀", null, null),
+      btn(15, rr(142, 130, 18, 16, 3), 151, 142, "▶", null, null),
+    ];
+  })();
   function buildButtons() {
-    $("#ct-buttons", root).innerHTML = DIGITAL.map(i => `<span class="chip" role="listitem" data-b="${i}" ${WPI[i] ? `data-tip="ct.button"` : `data-tip="ct.dpad"`} data-quiet>
-      ${esc(BUTTONS[i])}${WPI[i] ? ` <span class="muted">${WPI[i]}</span>` : ""}</span>`).join("");
+    const body = `<path class="ct-body" d="M95 46 L265 46 C298 46 318 62 326 92 L344 170 C350 196 330 212 312 202 C296 194 286 178 270 164
+      L90 164 C74 178 64 194 48 202 C30 212 10 196 16 170 L34 92 C42 62 62 46 95 46 Z"/>`;
+    // The triggers, above the bumpers: filled as far as they are squeezed.
+    const trig = (i, x, label) => `<g role="listitem" aria-label="${label}" data-b="${i}" data-tip="ct.trig" data-quiet>
+      <rect x="${x}" y="2" width="34" height="20" rx="5" class="ct-btn"/>
+      <rect x="${x}" y="2" width="34" height="0" rx="5" class="ct-trig-fill" id="ct-${label.toLowerCase()}"/>
+      <text x="${x + 17}" y="16" text-anchor="middle" class="ct-btn-text">${label}</text></g>`;
+    const buttons = PAD.map(b => `<g role="listitem" tabindex="0" aria-label="${esc(BUTTONS[b.i])}" data-b="${b.i}"
+      ${WPI[b.i] ? `data-tip="ct.button"` : `data-tip="ct.dpad"`} data-quiet>${b.shape}
+      <text x="${b.lx}" y="${b.ly}" text-anchor="middle" class="${b.caption ? "ct-btn-cap" : "ct-btn-text"}">${b.text}</text>
+      ${WPI[b.i] && b.nx != null ? `<text x="${b.nx}" y="${b.ny}" text-anchor="middle" class="ct-btn-num">${WPI[b.i]}</text>` : ""}</g>`).join("");
+    $("#ct-buttons", root).innerHTML = body + trig(6, 78, "LT") + trig(7, 248, "RT") + buttons;
+  }
+
+  // Whose joystick this is: the driver's (its port, or "Driver" in its name) or the tester's or
+  // an operator's. Their presses light in different colors; unnamed ones in the accent color.
+  function role() {
+    const { drive, deadman } = ports();
+    const label = ($("#ct-label", root).value || "").toLowerCase();
+    if (src !== "laptop") return +src === drive ? "driver" : +src === deadman ? "operator" : "";
+    if (/driv/.test(label)) return "driver";
+    if (/operat|test|deadman|co-?pilot/.test(label)) return "operator";
+    return "";
   }
   // Names the robot sends in its live line, "Pressed now: A, D-pad up".
   function robotPressed() {
@@ -171,16 +218,22 @@
     }
     $("#ct-svg", root).innerHTML = stickSvg(85, a[0], a[1], trails.left, "Left stick", "left") + stickSvg(255, a[2], a[3], trails.right, "Right stick", "right");
     const b = i => (p && p.buttons[i] ? p.buttons[i].value : 0);
-    $("#ct-lt", root).style.height = (b(6) * 100).toFixed(0) + "%";
-    $("#ct-rt", root).style.height = (b(7) * 100).toFixed(0) + "%";
+    if (!$("#ct-buttons [data-b]", root)) buildButtons();
+    for (const [id, i] of [["#ct-lt", 6], ["#ct-rt", 7]]) {
+      const v = Math.max(0, Math.min(1, b(i))), el = $(id, root);
+      if (el) { el.setAttribute("height", (20 * v).toFixed(1)); el.setAttribute("y", (22 - 20 * v).toFixed(1)); }
+    }
     $("#ct-axes", root).textContent = p
       ? `Left X ${fmt(a[0], 3)}  Y ${fmt(a[1], 3)} · Right X ${fmt(a[2], 3)}  Y ${fmt(a[3], 3)} · LT ${fmt(b(6), 2)}  RT ${fmt(b(7), 2)}`
       : "No joystick yet.";
     const viaRobot = recording && recording.robot ? robotPressed() : null;
     if (viaRobot) viaRobot.forEach(i => seen.add(i));
-    if (!$("#ct-buttons [data-b]", root)) buildButtons();
+    const pad = $("#ct-buttons", root), who = role();
+    pad.classList.toggle("role-driver", who === "driver");
+    pad.classList.toggle("role-operator", who === "operator");
     $$("#ct-buttons [data-b]", root).forEach(c => {
-      const i = +c.dataset.b, down = viaRobot ? viaRobot.has(i) : b(i) >= 0.5;
+      // A trigger shows how far it is squeezed in its own fill; the others light when pressed.
+      const i = +c.dataset.b, down = i !== 6 && i !== 7 && (viaRobot ? viaRobot.has(i) : b(i) >= 0.5);
       c.classList.toggle("down", down);
       c.classList.toggle("seen", seen.has(i));
     });

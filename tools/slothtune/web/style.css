@@ -14,6 +14,8 @@
   --seg: #eeeeee; --seg-hover: #dddddd; --seg-on: #aaaaaa; --seg-on-edge: #222222; --seg-on-ink: #222222; --sel: #d4d4d4;
   /* Text on a solid state fill (ABORT, a done step): 5.35-6.84:1 on --ok/--warn/--bad/--info/--accent. */
   --on-state: #ffffff;
+  /* Whose joystick a press is on: the driver's, the tester's or an operator's (4.5:1+ on the panel). */
+  --driver: #446ce3; --operator: #c2410c;
   /* AdvantageScope's GraphColors, so a module is the same color here and there. FR is darkened in
      light mode: AdvantageScope's #e5b31b is 1.95:1 on white, too faint for a line that means something. */
   --s0: #2b66a2; --s1: #a87d00; --s2: #af2437; --s3: #80588e;
@@ -37,6 +39,7 @@
     --edge: #7d7d7d;      /* 3.9:1 on --panel */
     --seg: #444444; --seg-hover: #555555; --seg-on: #888888; --seg-on-edge: #eeeeee; --seg-on-ink: #111111; --sel: #3d3d3d;
     --on-state: #10161c;  /* 7.97-10.67:1 on the dark state fills (white was 1.7-2.3:1) */
+    --driver: #58a7ff; --operator: #fb923c;
     --s0: #5b93d1; --s1: #e5b31b; --s2: #e0505f; --s3: #b48cc4;
     color-scheme: dark;
   }
@@ -330,6 +333,27 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
   border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; }
 .ct-trig i { display: block; width: 100%; height: 0; background: var(--accent); }
 .ct-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+/* The joystick check's Xbox drawing. A press fills in the joystick's role color: the driver's
+   blue, the tester's or operator's orange; a button seen keeps a green ring. */
+.ct-pad { --press: var(--accent); width: 100%; max-width: 300px; height: auto; display: block; margin: 2px auto; }
+.ct-pad-key { margin: 2px 0 0; }
+.sys-model-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0; font-size: 13px; }
+.sys-model-facts b { font-weight: 600; }
+.ct-pad.role-driver { --press: var(--driver); }
+.ct-pad.role-operator { --press: var(--operator); }
+.ct-pad .ct-body { fill: var(--bg); stroke: var(--rule); stroke-width: 2; }
+.ct-pad .ct-btn { fill: var(--panel); stroke: var(--muted); stroke-width: 1.5; }
+.ct-pad .ct-trig-fill { fill: var(--press); opacity: .85; }
+.ct-pad .ct-btn-text { font-size: 10px; font-weight: 600; fill: var(--ink); pointer-events: none; }
+.ct-pad .ct-btn-num { font-size: 9px; fill: var(--muted); pointer-events: none; }
+.ct-pad .ct-btn-cap { font-size: 10px; font-weight: 600; fill: var(--muted); pointer-events: none; }
+.ct-pad g.seen .ct-btn { stroke: var(--ok); stroke-width: 3; }
+.ct-pad g.down .ct-btn { fill: var(--press); stroke: var(--press); }
+.ct-pad g.down .ct-btn-text { fill: var(--on-state); }
+.ct-pad g:focus { outline: none; }
+.ct-pad g:focus .ct-btn { stroke: var(--accent); stroke-width: 3; }
+.ct-key-driver { color: var(--driver); font-weight: 600; }
+.ct-key-operator { color: var(--operator); font-weight: 600; }
 /* A button seen is solid green with a check; one held now gets a ring. Neither is color alone. */
 .ct-buttons .chip.seen { background: var(--ok); color: var(--on-state); border-color: var(--ok); }
 .ct-buttons .chip.seen::before { content: "\2713"; }
@@ -338,7 +362,7 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
 .ct-zoom { fill: var(--bg); stroke: var(--edge); stroke-width: 1; }
 .ct-key-code { color: var(--warn); font-weight: 600; }
 /* The steps keep their numbers (a flex li drops the list marker). */
-.ct-steps { display: grid; gap: 8px; margin: 0 0 12px; padding-left: 0; list-style: none; counter-reset: ct; }
+.ct-steps { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 8px; margin: 0 0 8px; padding-left: 0; list-style: none; counter-reset: ct; }
 .ct-steps li { display: flex; gap: 10px; align-items: center; counter-increment: ct; }
 .ct-steps li::before { content: counter(ct); flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
   font: 700 12px var(--mono); background: var(--rule); color: var(--ink); }

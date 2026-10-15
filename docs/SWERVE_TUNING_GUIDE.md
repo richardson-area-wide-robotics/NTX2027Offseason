@@ -401,9 +401,28 @@ Set each mechanism up from top to bottom:
      volts that held it. If a flywheel settles short of its goal, the report suggests a kV from the
      physics, and its **Try kV** button applies it live.
    - **In the simulator,** the mechanism's physics aren't modeled, so only the sequence is checked.
-5. **Auto-tune it.** **Auto-tune…** beside **Run** tunes the mechanism's own gains, a round at a
-   time, while a person holds the deadman. Tick the checks (it moves freely, someone holds the
-   deadman, the robot is enabled) and press **Start**.
+5. **Auto-tune it.** **Auto-tune…** beside **Run** tunes the mechanism's own gains while a person
+   holds the deadman, one of two ways. Tick the checks (it moves freely, its limits are right,
+   someone holds the deadman, the robot is enabled) and press **Start**.
+
+   **Measure, then compute** (recommended; on blocks or in the simulator):
+   - **The measuring run** (about half a minute, `system_id`): the robot's code pauses and the
+     mechanism's SPARK is run by voltage. A pivot or elevator finds the volts that hold it, sweeps
+     its travel at a governed speed (the first two sweeps map the hold everywhere, so an arm past
+     vertical is held too), then makes quick steps, braking before each end; a flywheel ramps and
+     steps. It stops itself on an inverted motor, a jam, its limits or too much speed.
+   - **The model:** friction, back-EMF, inertia and gravity fitted from that run, its speed
+     reading's delay (and a filter to try when it is long), and the battery it held. Every gain
+     follows: LQR for a position loop, SIMC for a speed loop, MAXMotion's limits and voltage
+     compensation, only the gains the mode its code runs the SPARK in uses.
+   - **Check runs:** the step test with the gains it had first (the baseline), then the model's, up
+     to four times, softer or harder. It keeps the best, and puts back every gain it started with if
+     the model's can't beat the baseline or still ring. **Save to slothtune.json…** writes what it
+     changed. Every part of it has a lesson (Lessons, unit 13).
+   - **In the simulator** REVLib's SPARK runs its loop once a robot loop and applies kD far harder
+     than a real one, so the simulator's gains are kP alone: practice there, tune on the robot.
+
+   **Round by round:**
    - **Each round** runs the same test as **Run**, then changes **one gain**: gravity (kG) or speed
      (kV) first, from the physics or, with none entered, from the run's own volts and speeds; then
      kP, down for overshoot or ringing, up for lag or settling short. No change more than doubles or
