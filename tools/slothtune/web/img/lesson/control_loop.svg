@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 386" width="520" height="386" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="control_loop-title control_loop-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="control_loop-title">A control loop: measure, compare, push, repeat</title>
+<desc id="control_loop-desc">Animated. A ring with three numbered stops that a dot travels round, over and over: 1, measure, what the sensor says; 2, compare, setpoint minus measurement, the error; 3, push, volts to the motor, the control effort; then back to measure. Each stop lights up as the dot reaches it. In the middle a wheel, seen from above, turns toward a dashed setpoint heading: after each push a green arrow in the gap shows the push and the wheel closes part of the gap, until it points at the setpoint; then the setpoint moves and it chases it back. On a SPARK MAX the steering loop runs 1000 times a second; the drawing is slowed down. Footer: feedforward guesses the volts before any error shows up; feedback (PID) fixes whatever error is left.</desc>
+<style>
+.cl-run{transform-box:view-box;transform-origin:250px 214px;animation:cl-run 2s linear infinite}
+@keyframes cl-run{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.cl-runc{fill:#c2410c;animation:cl-runc 2s step-end infinite}
+@keyframes cl-runc{0%{fill:#c2410c}33.33%{fill:#c62828}66.67%{fill:#1a7f37}100%{fill:#1a7f37}}
+.cl-lit0,.cl-lit1,.cl-lit2{opacity:0;animation:2s linear infinite}
+.cl-lit0{animation-name:cl-lit0}.cl-lit1{animation-name:cl-lit1}.cl-lit2{animation-name:cl-lit2}
+@keyframes cl-lit0{0%{opacity:1}14%,96%{opacity:0}100%{opacity:1}}
+@keyframes cl-lit1{0%,30.33%{opacity:0}33.33%{opacity:1}47.33%,100%{opacity:0}}
+@keyframes cl-lit2{0%,63.67%{opacity:0}66.67%{opacity:1}80.67%,100%{opacity:0}}
+.cl-sp{transform-box:view-box;transform-origin:250px 214px;transform:rotate(60deg);animation:cl-sp 8s step-end infinite}
+@keyframes cl-sp{0%{transform:rotate(60deg)}50%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.cl-wh{transform-box:view-box;transform-origin:250px 214px;animation:cl-wh 8s ease-in-out infinite}
+@keyframes cl-wh{0%,17.5%{transform:rotate(0deg)}23.75%,42.5%{transform:rotate(48deg)}48.75%,67.5%{transform:rotate(60deg)}73.75%,92.5%{transform:rotate(12deg)}98.75%,100%{transform:rotate(0deg)}}
+.cl-pa,.cl-pb{opacity:0;animation:8s linear infinite}
+.cl-pa{animation-name:cl-pa}.cl-pb{animation-name:cl-pb}
+@keyframes cl-pa{0%,16.2%{opacity:0}17.2%,23.75%{opacity:1}25%,41.2%{opacity:0}42.2%,48.75%{opacity:1}50%,100%{opacity:0}}
+@keyframes cl-pb{0%,66.2%{opacity:0}67.2%,73.75%{opacity:1}75%,91.2%{opacity:0}92.2%,98.75%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">A control loop: measure, compare, push, repeat</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Measure, compare with what you want, push to close the gap, then do it all again.</text>
+<path d="M250 118 A96 96 0 0 1 333.1 262" fill="none" stroke="#c2410c" stroke-width="4" stroke-opacity="0.5"/>
+<path d="M333.1 262 A96 96 0 0 1 166.9 262" fill="none" stroke="#c62828" stroke-width="4" stroke-opacity="0.5"/>
+<path d="M166.9 262 A96 96 0 0 1 250 118" fill="none" stroke="#1a7f37" stroke-width="4" stroke-opacity="0.5"/>
+<path d="M337.1 172.9L336.2 157.3L324.1 164.3Z" fill="#c2410c"/>
+<path d="M242 310L256 317L256 303Z" fill="#c62828"/>
+<path d="M170.9 159.1L157.8 167.7L169.9 174.7Z" fill="#1a7f37"/>
+<circle cx="250" cy="214" r="66" fill="none" stroke="#e6e6e6" stroke-width="1"/>
+<g class="cl-sp"><line x1="250" y1="214" x2="250" y2="148" stroke="#446ce3" stroke-width="2.5" stroke-dasharray="6 4"/><circle cx="250" cy="148" r="4" fill="#446ce3"/></g>
+<g class="cl-pa"><path d="M268.4 140.3 A76 76 0 0 1 308.2 165.1" fill="none" stroke="#1a7f37" stroke-width="3.5"/><path d="M314 172L310.9 159L301.7 166.7Z" fill="#1a7f37"/></g>
+<g class="cl-pb"><path d="M268.4 140.3 A76 76 0 0 1 308.2 165.1" fill="none" stroke="#1a7f37" stroke-width="3.5"/><path d="M259.7 138.1L272.7 135.2L269.8 146.8Z" fill="#1a7f37"/></g>
+<g class="cl-wh"><rect x="239" y="188" width="22" height="52" rx="5" fill="#333333"/><line x1="241" y1="194" x2="259" y2="194" stroke="#6b7178" stroke-width="2"/><line x1="241" y1="204" x2="259" y2="204" stroke="#6b7178" stroke-width="2"/><line x1="241" y1="214" x2="259" y2="214" stroke="#6b7178" stroke-width="2"/><line x1="241" y1="224" x2="259" y2="224" stroke="#6b7178" stroke-width="2"/><line x1="241" y1="234" x2="259" y2="234" stroke="#6b7178" stroke-width="2"/><line x1="250" y1="186" x2="250" y2="162" stroke="#c2410c" stroke-width="3.5"/><path d="M243 164L250 152L257 164Z" fill="#c2410c"/></g>
+<g class="cl-run"><circle class="cl-runc" cx="250" cy="118" r="8" stroke="#ffffff" stroke-width="2.5"/></g>
+<circle cx="250" cy="118" r="18" fill="#ffffff" stroke="#c2410c" stroke-width="3"/><text x="250" y="123" font-size="15" font-weight="700" fill="#c2410c" text-anchor="middle">1</text>
+<g class="cl-lit0"><circle cx="250" cy="118" r="18" fill="#c2410c" stroke="#c2410c" stroke-width="3"/><text x="250" y="123" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">1</text></g>
+<circle cx="333.1" cy="262" r="18" fill="#ffffff" stroke="#c62828" stroke-width="3"/><text x="333.1" y="267" font-size="15" font-weight="700" fill="#c62828" text-anchor="middle">2</text>
+<g class="cl-lit1"><circle cx="333.1" cy="262" r="18" fill="#c62828" stroke="#c62828" stroke-width="3"/><text x="333.1" y="267" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">2</text></g>
+<circle cx="166.9" cy="262" r="18" fill="#ffffff" stroke="#1a7f37" stroke-width="3"/><text x="166.9" y="267" font-size="15" font-weight="700" fill="#1a7f37" text-anchor="middle">3</text>
+<g class="cl-lit2"><circle cx="166.9" cy="262" r="18" fill="#1a7f37" stroke="#1a7f37" stroke-width="3"/><text x="166.9" y="267" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">3</text></g>
+<text x="250" y="74" font-size="13" font-weight="700" fill="#c2410c" text-anchor="middle">Measure</text><text x="250" y="90" font-size="12" fill="#5c5c5c" text-anchor="middle">what the sensor says: the measurement</text>
+<text x="358.1" y="256" font-size="13" font-weight="700" fill="#c62828">Compare</text><text x="358.1" y="272" font-size="12" fill="#5c5c5c">setpoint − measurement</text><text x="358.1" y="288" font-size="12" fill="#5c5c5c">= the error</text>
+<text x="141.9" y="256" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="end">Push</text><text x="141.9" y="272" font-size="12" fill="#5c5c5c" text-anchor="end">volts to the motor</text><text x="141.9" y="288" font-size="12" fill="#5c5c5c" text-anchor="end">(the control effort)</text>
+<text x="16" y="122" font-size="13" font-weight="700" fill="#222222">In the middle: a wheel</text>
+<line x1="16" y1="138" x2="40" y2="138" stroke="#446ce3" stroke-width="2.5" stroke-dasharray="6 4"/><text x="46" y="142" font-size="12" fill="#222222">setpoint</text>
+<line x1="16" y1="156" x2="40" y2="156" stroke="#c2410c" stroke-width="3.5"/><text x="46" y="160" font-size="12" fill="#222222">measurement</text>
+<text x="16" y="178" font-size="12" fill="#5c5c5c">the gap is the error</text>
+<text x="364" y="122" font-size="13" font-weight="700" fill="#222222">On a SPARK MAX</text>
+<text x="364" y="141" font-size="12" fill="#222222">the steering loop runs</text><text x="364" y="157" font-size="12" fill="#222222">1000 times a second.</text><text x="364" y="175" font-size="12" fill="#5c5c5c">Slowed down here.</text>
+<line x1="16" y1="332" x2="504" y2="332" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="352" font-size="13" fill="#222222">Two halves do the work: feedforward guesses the volts before any error</text>
+<text x="16" y="370" font-size="13" fill="#222222">shows up; feedback (PID) fixes whatever error is left.</text>
+</svg>

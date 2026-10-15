@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 506" width="520" height="506" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="ri-title ri-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="ri-title">Rollers and intakes</title>
+<desc id="ri-desc">Animated side view of a roller intake with a current graph. A motor drives a top roller through a belt, and a bottom roller turns the other way; both are compliant wheels. A yellow game piece rolls in from the right, the rollers squeeze it and pull it in to a back stop, where a beam break across the path sees it and the motor stops to hold it. Then the rollers run backward and spit the piece out to the right. Below, a graph of motor current against time with a dashed detection threshold and a moving cursor: a short start-up spike when the motor turns on (ignore it; wait for spin-up), a low steady current while the rollers spin free, a spike when the wheels squeeze the piece (how a current sensor knows it has a piece), zero while holding, and a spike again when reversing. A second trace shows the beam break blocked while the piece is inside. Sources: FIRST Robotics Competition guided experience, Game Piece Intakes and Launchers and Placers; Chief Delphi threads on current detection and intake compression; CTRE Phoenix 6 docs.</desc>
+<style>
+/* One 8 s loop. Motor forward 0.3-3.2 s; piece rolls in 1.0-2.4 s, rollers pull it to the back stop
+   2.4-3.2 s; hold 3.2-4.6 s; reverse 4.6-6.1 s, piece out 4.6-5.4 s, rolls away and fades 5.4-6.0 s;
+   back at the start, faded in, by 7.0 s. Beam blocked 2.93-4.87 s. Rollers 2700/7 deg/s. */
+.rtop { transform-box: fill-box; transform-origin: 50% 50%; animation: rtop 8s linear infinite; }
+@keyframes rtop { 0%, 3.75% { transform: rotate(0deg); } 40%, 57.5% { transform: rotate(1118.57deg); } 76.25%, 100% { transform: rotate(540deg); } }
+.rbot { transform-box: fill-box; transform-origin: 50% 50%; animation: rbot 8s linear infinite; }
+@keyframes rbot { 0%, 3.75% { transform: rotate(0deg); } 40%, 57.5% { transform: rotate(-1118.57deg); } 76.25%, 100% { transform: rotate(-540deg); } }
+.pmove { transform: translateX(-360px); animation: pmove 8s linear infinite; }
+@keyframes pmove { 0%, 12.5% { transform: translateX(0px); } 30% { transform: translateX(-252px); } 40%, 57.5% { transform: translateX(-360px); } 67.5% { transform: translateX(-252px); } 75%, 77% { transform: translateX(-140px); } 77.1%, 100% { transform: translateX(0px); } }
+.proll { transform-box: fill-box; transform-origin: 50% 50%; transform: rotate(-656.3deg); animation: proll 8s linear infinite; }
+@keyframes proll { 0%, 12.5% { transform: rotate(0deg); } 30%, 67.5% { transform: rotate(-656.3deg); } 75%, 77% { transform: rotate(-364.6deg); } 77.1%, 100% { transform: rotate(0deg); } }
+.pfade { animation: pfade 8s linear infinite; }
+@keyframes pfade { 0%, 72% { opacity: 1; } 75%, 82.5% { opacity: 0; } 87.5%, 100% { opacity: 1; } }
+.beam { opacity: 0; animation: beam 8s linear infinite; }
+@keyframes beam { 0%, 36.6% { opacity: 1; } 36.7%, 60.8% { opacity: 0; } 60.9%, 100% { opacity: 1; } }
+.seen { opacity: 1; animation: seen 8s linear infinite; }
+@keyframes seen { 0%, 36.6% { opacity: 0; } 36.7%, 60.8% { opacity: 1; } 60.9%, 100% { opacity: 0; } }
+.st0 { opacity: 0; animation: st0 8s linear infinite; }
+@keyframes st0 { 0%, 3.7% { opacity: 1; } 3.8%, 76.2% { opacity: 0; } 76.3%, 100% { opacity: 1; } }
+.st1 { opacity: 0; animation: st1 8s linear infinite; }
+@keyframes st1 { 0%, 3.7% { opacity: 0; } 3.8%, 39.9% { opacity: 1; } 40%, 100% { opacity: 0; } }
+.st2 { opacity: 1; animation: st2 8s linear infinite; }
+@keyframes st2 { 0%, 39.9% { opacity: 0; } 40%, 57.4% { opacity: 1; } 57.5%, 100% { opacity: 0; } }
+.st3 { opacity: 0; animation: st3 8s linear infinite; }
+@keyframes st3 { 0%, 57.4% { opacity: 0; } 57.5%, 76.2% { opacity: 1; } 76.3%, 100% { opacity: 0; } }
+.cur { transform: translateX(214.5px); animation: cur 8s linear infinite; }
+@keyframes cur { 0% { transform: translateX(0px); } 100% { transform: translateX(440px); } }
+/* Reduced motion: the piece held inside, the beam blocked, the cursor in the hold. */
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Rollers and intakes</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">Compliant wheels squeeze the piece to pull it in; run backward, they spit it out.</text>
+
+<!-- what the intake is doing (the words swap; they don't move) -->
+<text x="16" y="76" font-size="13" font-weight="700" fill="#222222">Intake:</text>
+<g font-size="13" font-weight="700" fill="#446ce3">
+  <text class="st0" x="70" y="76">off</text>
+  <text class="st1" x="70" y="76">running in</text>
+  <text class="st2" x="70" y="76">holding</text>
+  <text class="st3" x="70" y="76">reverse: spitting out</text>
+</g>
+
+<!-- motor, belt, controller -->
+<path d="M225.8 92.7L192.1 155.8M238.3 99L208.2 163.8" stroke="#c2410c" stroke-width="2.5"/>
+<rect x="226" y="84" width="66" height="24" rx="3" fill="#333333"/>
+<text x="264" y="100" font-size="12" fill="#ffffff" text-anchor="middle">motor</text>
+<circle cx="232" cy="96" r="7" fill="#e7e9ec" stroke="#444444" stroke-width="1.2"/>
+<circle cx="232" cy="96" r="1.8" fill="#444444"/>
+<path d="M292 92L316 92M292 100L316 100" stroke="#5c5c5c" stroke-width="1.6"/>
+<rect x="316" y="84" width="70" height="24" rx="3" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<text x="351" y="100" font-size="12" fill="#222222" text-anchor="middle">controller</text>
+<text x="316" y="124" font-size="12" fill="#5c5c5c">measures motor current</text>
+
+<!-- guide plates and back stop -->
+<rect x="226" y="220" width="278" height="4" fill="#b0b8c0" stroke="#444444" stroke-width="0.8"/>
+<rect x="40" y="220" width="134" height="4" fill="#b0b8c0" stroke="#444444" stroke-width="0.8"/>
+<rect x="80" y="166" width="6" height="54" fill="#7d8790" stroke="#444444" stroke-width="0.8"/>
+
+<!-- compliant rollers: top turns clockwise to pull in, bottom the other way -->
+<circle cx="200" cy="160" r="20" fill="#555555" stroke="#444444" stroke-width="1"/>
+<g class="rtop">
+  <circle cx="200" cy="160" r="20" fill="none"/>
+  <path d="M200 153L200 143M206.06 156.5L214.72 151.5M206.06 163.5L214.72 168.5M200 167L200 177M193.94 163.5L185.28 168.5M193.94 156.5L185.28 151.5" stroke="#9aa0a6" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<circle cx="200" cy="160" r="7" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<circle cx="200" cy="236" r="20" fill="#555555" stroke="#444444" stroke-width="1"/>
+<g class="rbot">
+  <circle cx="200" cy="236" r="20" fill="none"/>
+  <path d="M200 229L200 219M206.06 232.5L214.72 227.5M206.06 239.5L214.72 244.5M200 243L200 253M193.94 239.5L185.28 244.5M193.94 232.5L185.28 227.5" stroke="#9aa0a6" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+<circle cx="200" cy="236" r="7" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+
+<!-- the game piece: rolls in, gets pulled to the back stop, is spat back out -->
+<g class="pfade">
+  <g class="pmove">
+    <g class="proll">
+      <circle cx="470" cy="198" r="22" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+      <path d="M470 178L470 218" stroke="#b38f00" stroke-width="2"/>
+      <circle cx="481" cy="190" r="3" fill="#b38f00"/>
+    </g>
+  </g>
+</g>
+
+<!-- beam break across the path, just inside the rollers -->
+<line class="beam" x1="124" y1="152" x2="124" y2="226" stroke="#e65100" stroke-width="1.6" stroke-dasharray="4 3"/>
+<rect x="116" y="140" width="16" height="12" rx="2" fill="#444444"/>
+<rect x="116" y="226" width="16" height="12" rx="2" fill="#444444"/>
+<circle class="seen" cx="124" cy="146" r="3" fill="#1a7f37"/>
+
+<!-- labels (still) -->
+<text x="16" y="150" font-size="12" fill="#222222">beam break</text>
+<line x1="80" y1="146" x2="114" y2="146" stroke="#5c5c5c" stroke-width="1"/>
+<text x="440" y="166" font-size="12" fill="#222222">game piece</text>
+<text x="234" y="262" font-size="12" fill="#222222">top and bottom rollers</text>
+<text x="234" y="278" font-size="12" fill="#5c5c5c">(compliant wheels)</text>
+<line x1="232" y1="256" x2="218" y2="246" stroke="#5c5c5c" stroke-width="1"/>
+
+<!-- current graph: 0-8 s across 60-500, 3 px per amp -->
+<text x="16" y="300" font-size="13" font-weight="700" fill="#222222">Motor current</text>
+<line x1="60" y1="312" x2="60" y2="404" stroke="#444444" stroke-width="1"/>
+<line x1="60" y1="404" x2="500" y2="404" stroke="#444444" stroke-width="1"/>
+<text x="54" y="408" font-size="12" fill="#5c5c5c" text-anchor="end">0</text>
+<text x="54" y="318" font-size="12" fill="#5c5c5c" text-anchor="end">30 A</text>
+<line x1="60" y1="368" x2="500" y2="368" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="500" y="362" font-size="12" fill="#5c5c5c" text-anchor="end">threshold</text>
+<path d="M60 404L76.5 404L80.9 314L84.8 350L90.2 377L98.5 392L192 392L195.3 362L198.6 338L204.1 347L214 353L236 356L237.1 404L313 404L317.4 314L321.2 344L326.8 356L357 362L360.3 386L362.5 392L395.5 392L396.6 404L500 404" fill="none" stroke="#446ce3" stroke-width="2"/>
+<g font-size="12" fill="#222222">
+  <text x="96" y="340">start-up spike:</text>
+  <text x="96" y="354">ignore it</text>
+  <text x="150" y="303" font-weight="700">how a current sensor knows it has a piece</text>
+  <text x="364" y="385">spitting it out</text>
+</g>
+<line x1="199" y1="308" x2="199" y2="333" stroke="#222222" stroke-width="1"/>
+<!-- beam break trace -->
+<path d="M60 438L221.3 438L221.3 424L327.7 424L327.7 438L500 438" fill="none" stroke="#1a7f37" stroke-width="2"/>
+<text x="274" y="419" font-size="12" fill="#1a7f37" text-anchor="middle">blocked</text>
+<text x="500" y="432" font-size="12" fill="#222222" text-anchor="end">beam break</text>
+<text x="500" y="454" font-size="12" fill="#5c5c5c" text-anchor="end">time</text>
+<g class="cur"><line x1="60" y1="310" x2="60" y2="442" stroke="#e65100" stroke-width="1.4" stroke-dasharray="3 3"/></g>
+
+<line x1="16" y1="464" x2="504" y2="464" stroke="#d6d6d6" stroke-width="1"/>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="482">Current jumps when the wheels squeeze a piece; check it only after spin-up.</text>
+  <text x="16" y="498">A beam break sees the piece itself. Run the rollers backward to spit it out.</text>
+</g>
+</svg>

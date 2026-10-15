@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 384" width="520" height="384" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="r_squared-title r_squared-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="r_squared-title">R²: how well a straight line fits</title>
+<desc id="r_squared-desc">Animated, two scatter plots of volts against speed. Measured points appear one by one, then a straight blue line is drawn through them. Left, a good fit: every point sits close to the line, marked 'R² near 1.00'. Right, a poor fit: the same points, but some are pushed well above the line by extra volts, with red marks showing the gaps the line can't explain, marked 'R² under 0.95: something else pushed on the wheel'. The feedforward test fits volts = kS + kV × speed + kA × acceleration to every sample; a slipping wheel, a bump in the carpet, a cable catching or someone touching the robot add volts the line can't explain, and R² drops. Re-run it on clear carpet.</desc>
+<style>
+.r2-p0{animation:r2-p0 8s linear infinite}
+@keyframes r2-p0{0%,5%{opacity:0}6.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p1{animation:r2-p1 8s linear infinite}
+@keyframes r2-p1{0%,8%{opacity:0}9.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p2{animation:r2-p2 8s linear infinite}
+@keyframes r2-p2{0%,11%{opacity:0}12.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p3{animation:r2-p3 8s linear infinite}
+@keyframes r2-p3{0%,14%{opacity:0}15.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p4{animation:r2-p4 8s linear infinite}
+@keyframes r2-p4{0%,17%{opacity:0}18.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p5{animation:r2-p5 8s linear infinite}
+@keyframes r2-p5{0%,20%{opacity:0}21.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p6{animation:r2-p6 8s linear infinite}
+@keyframes r2-p6{0%,23%{opacity:0}24.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p7{animation:r2-p7 8s linear infinite}
+@keyframes r2-p7{0%,26%{opacity:0}27.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p8{animation:r2-p8 8s linear infinite}
+@keyframes r2-p8{0%,29%{opacity:0}30.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p9{animation:r2-p9 8s linear infinite}
+@keyframes r2-p9{0%,32%{opacity:0}33.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p10{animation:r2-p10 8s linear infinite}
+@keyframes r2-p10{0%,35%{opacity:0}36.5%,92%{opacity:1}100%{opacity:0}}
+.r2-p11{animation:r2-p11 8s linear infinite}
+@keyframes r2-p11{0%,38%{opacity:0}39.5%,92%{opacity:1}100%{opacity:0}}
+.r2-res{animation:r2-res 8s linear infinite}
+@keyframes r2-res{0%,57%{opacity:0}59.5%,92%{opacity:1}100%{opacity:0}}
+.r2-badge{animation:r2-badge 8s linear infinite}
+@keyframes r2-badge{0%,60%{opacity:0}62.5%,92%{opacity:1}100%{opacity:0}}
+.r2-l0{stroke-dasharray:199.2 199.2;animation:r2-l0 8s linear infinite}
+@keyframes r2-l0{0%,42%{stroke-dashoffset:199.2}56%,92%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+.r2-l1{stroke-dasharray:204.7 204.7;animation:r2-l1 8s linear infinite}
+@keyframes r2-l1{0%,42%{stroke-dashoffset:204.7}56%,92%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">R²: how well a straight line fits</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">How well a straight line through the measured points fits them.</text>
+<text x="40" y="78" font-size="13" font-weight="700" fill="#1a7f37">A good fit</text>
+<path d="M40 92V262H236" fill="none" stroke="#444444" stroke-width="1.4"/><path d="M236 258L244 262L236 266Z" fill="#444444"/>
+<path d="M36 100L40 92L44 100Z" fill="#444444"/>
+<text x="46" y="102" font-size="12" font-weight="700" fill="#1a7f37">volts</text><text x="244" y="280" font-size="12" font-weight="700" fill="#c2410c" text-anchor="end">speed</text>
+<line class="r2-l0" x1="51.6" y1="235.2" x2="224.4" y2="136" stroke="#446ce3" stroke-width="3"/>
+<circle class="r2-p0" cx="62.4" cy="229.4" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p1" cx="76.1" cy="222.6" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p2" cx="89.9" cy="210.9" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p3" cx="103.6" cy="207.1" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p4" cx="117.4" cy="195.7" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p5" cx="131.1" cy="188.9" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p6" cx="144.9" cy="183.1" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p7" cx="158.6" cy="171.8" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p8" cx="172.4" cy="167.2" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p9" cx="186.1" cy="156.3" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p10" cx="199.9" cy="150.9" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p11" cx="213.6" cy="142.8" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/>
+<text x="296" y="78" font-size="13" font-weight="700" fill="#c62828">A poor fit</text>
+<path d="M296 92V262H492" fill="none" stroke="#444444" stroke-width="1.4"/><path d="M492 258L500 262L492 266Z" fill="#444444"/>
+<path d="M292 100L296 92L300 100Z" fill="#444444"/>
+<text x="302" y="102" font-size="12" font-weight="700" fill="#1a7f37">volts</text><text x="500" y="280" font-size="12" font-weight="700" fill="#c2410c" text-anchor="end">speed</text>
+<g class="r2-res"><line x1="373.4" y1="162.7" x2="373.4" y2="185" stroke="#c62828" stroke-width="2.5"/><line x1="387.1" y1="144.3" x2="387.1" y2="176.3" stroke="#c62828" stroke-width="2.5"/><line x1="414.6" y1="144.7" x2="414.6" y2="158.8" stroke="#c62828" stroke-width="2.5"/><line x1="442.1" y1="117.5" x2="442.1" y2="141.4" stroke="#c62828" stroke-width="2.5"/></g>
+<line class="r2-l1" x1="307.6" y1="226.8" x2="480.4" y2="117.1" stroke="#446ce3" stroke-width="3"/>
+<circle class="r2-p0" cx="318.4" cy="229.4" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p1" cx="332.1" cy="222.6" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p2" cx="345.9" cy="210.9" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p3" cx="359.6" cy="207.1" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p4" cx="373.4" cy="157.7" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p5" cx="387.1" cy="139.3" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p6" cx="400.9" cy="183.1" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p7" cx="414.6" cy="139.7" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p8" cx="428.4" cy="167.2" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p9" cx="442.1" cy="112.5" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p10" cx="455.9" cy="150.9" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/><circle class="r2-p11" cx="469.6" cy="142.8" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="1.5"/>
+<g class="r2-badge"><rect x="132" y="204" width="100" height="44" rx="6" fill="#ffffff" stroke="#1a7f37" stroke-width="2"/><text x="182" y="223" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">R² near 1.00</text><text x="182" y="239" font-size="12" fill="#222222" text-anchor="middle">a good fit</text><rect x="372" y="194" width="118" height="60" rx="6" fill="#ffffff" stroke="#c62828" stroke-width="2"/><text x="431" y="213" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle">R² under 0.95</text><text x="431" y="229" font-size="12" fill="#222222" text-anchor="middle">extra volts the</text><text x="431" y="245" font-size="12" fill="#222222" text-anchor="middle">line can't explain</text></g>
+<line x1="16" y1="290" x2="504" y2="290" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="310" font-size="13" fill="#222222">The feedforward test fits volts = kS + kV × speed + kA × acceleration</text>
+<text x="16" y="328" font-size="13" fill="#222222">to every sample. A slipping wheel, a bump in the carpet, a cable catching</text>
+<text x="16" y="346" font-size="13" fill="#222222">or someone touching the robot add volts the line can't explain, and R² drops.</text>
+<text x="16" y="364" font-size="12" fill="#5c5c5c">Under 0.95 something else pushed on the wheel: re-run it on clear carpet.</text>
+</svg>

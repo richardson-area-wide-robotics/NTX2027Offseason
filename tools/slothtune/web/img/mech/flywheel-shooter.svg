@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 460" width="520" height="460" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="fw-title fw-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="fw-title">Flywheel shooters</title>
+<desc id="fw-desc">Animated side view of a hooded flywheel shooter with a speed graph. A motor turns the flywheel through a belt; the wheel carries weights for inertia. The wheel spins up from rest, a feeder roller pushes a yellow game piece into the gap, the hood squeezes it against the wheel, and it rides around the wheel and flies out. The graph plots wheel speed against time with a dashed setpoint line and a moving cursor: the speed rises during spin-up, holds at the setpoint, dips when the piece goes through, and recovers. A dashed gray curve shows a heavier wheel with more inertia: it spins up more slowly but dips less. Notes: more inertia means a smaller dip but a slower spin-up; the hood or a second wheel squeezes the piece against the spinning wheel, and the piece takes energy from the wheel, so it slows until the motor catches up. After the graphed 8 seconds the motor stops and the loop restarts. Sources: FIRST Robotics Competition guided experience, Launchers and Placers; WPILib flywheel tuning docs; ReCalc flywheel calculator; Chief Delphi.</desc>
+<style>
+/* One 10 s loop. Motor on at 0.5 s; feeder pushes the piece 4.5-5.0 s; the piece rides the
+   hood 5.0-5.3 s (wheel dips 22 %), flies out 5.3-5.9 s; wheel recovers; motor off 8.0 s,
+   stopped 9.6 s. The wheel angle is the time integral of the graphed speed (blue curve). */
+.wheel { transform-box: view-box; transform-origin: 150px 250px; animation: wheel 10s linear infinite; }
+@keyframes wheel { 0% { transform: rotate(0deg); } 5% { transform: rotate(0deg); } 6% { transform: rotate(4.3deg); } 7% { transform: rotate(16deg); } 8% { transform: rotate(33.9deg); } 9% { transform: rotate(56.8deg); } 10% { transform: rotate(83.8deg); } 11% { transform: rotate(114.2deg); } 12% { transform: rotate(147.4deg); } 13% { transform: rotate(182.7deg); } 14% { transform: rotate(220deg); } 15% { transform: rotate(258.7deg); } 16% { transform: rotate(298.7deg); } 17% { transform: rotate(339.7deg); } 18% { transform: rotate(381.6deg); } 19% { transform: rotate(424.1deg); } 20% { transform: rotate(467.1deg); } 21% { transform: rotate(510.7deg); } 22% { transform: rotate(554.5deg); } 23% { transform: rotate(598.7deg); } 24% { transform: rotate(643.2deg); } 25% { transform: rotate(687.9deg); } 26% { transform: rotate(732.7deg); } 27% { transform: rotate(777.6deg); } 28% { transform: rotate(822.7deg); } 29% { transform: rotate(867.9deg); } 30% { transform: rotate(913.1deg); } 31% { transform: rotate(958.4deg); } 32% { transform: rotate(1003.8deg); } 33% { transform: rotate(1049.2deg); } 34% { transform: rotate(1094.6deg); } 35% { transform: rotate(1140deg); } 36% { transform: rotate(1185.5deg); } 37% { transform: rotate(1231deg); } 38% { transform: rotate(1276.5deg); } 39% { transform: rotate(1322deg); } 40% { transform: rotate(1367.6deg); } 41% { transform: rotate(1413.1deg); } 42% { transform: rotate(1458.7deg); } 43% { transform: rotate(1504.2deg); } 44% { transform: rotate(1549.8deg); } 45% { transform: rotate(1595.3deg); } 46% { transform: rotate(1640.9deg); } 47% { transform: rotate(1686.5deg); } 48% { transform: rotate(1732deg); } 49% { transform: rotate(1777.6deg); } 50% { transform: rotate(1823.2deg); } 51% { transform: rotate(1867.1deg); } 52% { transform: rotate(1907.6deg); } 53% { transform: rotate(1944.9deg); } 54% { transform: rotate(1981.9deg); } 55% { transform: rotate(2021.4deg); } 56% { transform: rotate(2062.6deg); } 57% { transform: rotate(2105deg); } 58% { transform: rotate(2148.3deg); } 59% { transform: rotate(2192.3deg); } 60% { transform: rotate(2236.7deg); } 61% { transform: rotate(2281.5deg); } 62% { transform: rotate(2326.5deg); } 63% { transform: rotate(2371.6deg); } 64% { transform: rotate(2416.9deg); } 65% { transform: rotate(2462.2deg); } 66% { transform: rotate(2507.7deg); } 67% { transform: rotate(2553.1deg); } 68% { transform: rotate(2598.6deg); } 69% { transform: rotate(2644.2deg); } 70% { transform: rotate(2689.7deg); } 71% { transform: rotate(2735.2deg); } 72% { transform: rotate(2780.8deg); } 73% { transform: rotate(2826.4deg); } 74% { transform: rotate(2871.9deg); } 75% { transform: rotate(2917.5deg); } 76% { transform: rotate(2963.1deg); } 77% { transform: rotate(3008.7deg); } 78% { transform: rotate(3054.2deg); } 79% { transform: rotate(3099.8deg); } 80% { transform: rotate(3145.4deg); } 81% { transform: rotate(3189.5deg); } 82% { transform: rotate(3230.8deg); } 83% { transform: rotate(3269.3deg); } 84% { transform: rotate(3304.9deg); } 85% { transform: rotate(3337.7deg); } 86% { transform: rotate(3367.6deg); } 87% { transform: rotate(3394.6deg); } 88% { transform: rotate(3418.8deg); } 89% { transform: rotate(3440.2deg); } 90% { transform: rotate(3458.7deg); } 91% { transform: rotate(3474.4deg); } 92% { transform: rotate(3487.2deg); } 93% { transform: rotate(3497.2deg); } 94% { transform: rotate(3504.3deg); } 95% { transform: rotate(3508.6deg); } 96%, 100% { transform: rotate(3510deg); } }
+.feed { transform-box: fill-box; transform-origin: 50% 50%; animation: feed 10s linear infinite; }
+@keyframes feed { 0%, 44% { transform: rotate(0deg); } 51%, 100% { transform: rotate(-480deg); } }
+.bfeed { animation: bfeed 10s linear infinite; }
+@keyframes bfeed { 0%, 45% { transform: translate(27.36px, 75.2px); } 50%, 60.4% { transform: translate(0px, 0px); } 60.5%, 100% { transform: translate(27.36px, 75.2px); } }
+.barc { transform-box: view-box; transform-origin: 150px 250px; transform: rotate(30deg); animation: barc 10s linear infinite; }
+@keyframes barc { 0%, 50% { transform: rotate(0deg); } 53%, 60.4% { transform: rotate(65deg); } 60.5%, 100% { transform: rotate(0deg); } }
+.bexit { animation: bexit 10s linear infinite; }
+@keyframes bexit { 0%, 53% { transform: translate(0px, 0px); } 59%, 60.4% { transform: translate(106.07px, -106.07px); } 60.5%, 100% { transform: translate(0px, 0px); } }
+.bfade { animation: bfade 10s linear infinite; }
+@keyframes bfade { 0%, 56% { opacity: 1; } 59%, 65% { opacity: 0; } 68%, 100% { opacity: 1; } }
+.cur { transform: translateX(128.75px); animation: cur 10s linear infinite; }
+@keyframes cur { 0% { transform: translateX(0px); opacity: 1; } 80% { transform: translateX(200px); opacity: 1; } 80.1%, 100% { transform: translateX(200px); opacity: 0; } }
+/* Reduced motion: the piece half way round the hood, the cursor at the dip. */
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Flywheel shooters</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">Spin up, feed the piece, then the wheel slows and recovers.</text>
+
+<!-- belt from the motor (behind the wheel) -->
+<path d="M141.3 258.3L216.2 336.5M159.3 242.4L228.2 325.9" stroke="#c2410c" stroke-width="2.5"/>
+<rect x="222" y="318" width="52" height="26" rx="3" fill="#333333"/>
+<text x="250" y="335" font-size="12" fill="#ffffff" text-anchor="middle">motor</text>
+<circle cx="222" cy="331" r="8" fill="#e7e9ec" stroke="#444444" stroke-width="1.2"/>
+<circle cx="222" cy="331" r="2" fill="#444444"/>
+
+<!-- the flywheel: compliant tread, aluminum disk, steel weights for inertia -->
+<g class="wheel">
+  <circle cx="150" cy="250" r="48" fill="#b0b8c0"/>
+  <circle cx="150" cy="250" r="52" fill="none" stroke="#555555" stroke-width="8"/>
+  <circle cx="150" cy="250" r="56" fill="none" stroke="#444444" stroke-width="1"/>
+  <circle cx="150" cy="250" r="48" fill="none" stroke="#444444" stroke-width="1"/>
+  <g fill="#7d8790" stroke="#444444" stroke-width="1">
+    <circle cx="186" cy="250" r="7"/>
+    <circle cx="150" cy="286" r="7"/>
+    <circle cx="114" cy="250" r="7"/>
+    <circle cx="150" cy="214" r="7"/>
+  </g>
+  <path d="M150 238L150 226M162 250L174 250M150 262L150 274M138 250L126 250" stroke="#444444" stroke-width="2"/>
+  <circle cx="150" cy="250" r="12" fill="#e7e9ec" stroke="#444444" stroke-width="1.2"/>
+  <circle cx="150" cy="250" r="3" fill="#444444"/>
+</g>
+
+<!-- feeder roller -->
+<circle cx="82.7" cy="322.4" r="9" fill="#5c5c5c" stroke="#444444" stroke-width="1"/>
+<g class="feed">
+  <circle cx="82.7" cy="322.4" r="9" fill="none"/>
+  <path d="M82.7 322.4L82.7 315.4M82.7 322.4L76.64 325.9M82.7 322.4L88.76 325.9" stroke="#d6d6d6" stroke-width="1.6"/>
+</g>
+<circle cx="82.7" cy="322.4" r="1.8" fill="#d6d6d6"/>
+
+<!-- the game piece: fed in, carried round under the hood, thrown out -->
+<g class="bfade">
+  <g class="bexit">
+    <g class="barc">
+      <g class="bfeed">
+        <circle cx="88" cy="272.6" r="13" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+      </g>
+    </g>
+  </g>
+</g>
+
+<!-- hood -->
+<path d="M77.8 282.1A79 79 0 0 1 97.1 191.3" fill="none" stroke="#444444" stroke-width="8" stroke-linecap="round"/>
+<path d="M77.8 282.1A79 79 0 0 1 97.1 191.3" fill="none" stroke="#7d8790" stroke-width="6" stroke-linecap="round"/>
+
+<!-- labels (still) -->
+<text x="22" y="222" font-size="12" fill="#222222">hood</text>
+<line x1="50" y1="219" x2="70" y2="223" stroke="#5c5c5c" stroke-width="1"/>
+<text x="200" y="196" font-size="12" fill="#222222">flywheel</text>
+<text x="200" y="212" font-size="12" fill="#5c5c5c">(its inertia)</text>
+<line x1="198" y1="204" x2="188" y2="214" stroke="#5c5c5c" stroke-width="1"/>
+<text x="22" y="338" font-size="12" fill="#222222">feeder</text>
+<line x1="60" y1="334" x2="73" y2="327" stroke="#5c5c5c" stroke-width="1"/>
+<text x="138" y="382" font-size="12" fill="#222222">game piece</text>
+<line x1="140" y1="371" x2="127" y2="359" stroke="#5c5c5c" stroke-width="1"/>
+
+<!-- speed graph: 0-8 s across 200 px, setpoint at y 130 -->
+<text x="304" y="92" font-size="13" font-weight="700" fill="#222222">Wheel speed</text>
+<line x1="304" y1="104" x2="304" y2="250" stroke="#444444" stroke-width="1"/>
+<line x1="304" y1="250" x2="504" y2="250" stroke="#444444" stroke-width="1"/>
+<text x="298" y="254" font-size="12" fill="#5c5c5c" text-anchor="end">0</text>
+<line x1="304" y1="130" x2="504" y2="130" stroke="#1a7f37" stroke-width="1.4" stroke-dasharray="5 4"/>
+<text x="504" y="123" font-size="12" fill="#1a7f37" text-anchor="end">setpoint</text>
+<path d="M304.0 250.0L316.5 250.0L319.0 238.6L321.5 228.2L324.0 218.9L326.5 210.4L329.0 202.8L331.5 195.9L334.0 189.6L336.5 183.9L339.0 178.8L341.5 174.1L344.0 169.9L346.5 166.1L349.0 162.7L351.5 159.6L354.0 156.8L356.5 154.2L359.0 151.9L361.5 149.8L364.0 147.9L366.5 146.2L369.0 144.7L371.5 143.3L374.0 142.0L376.5 140.9L379.0 139.9L381.5 138.9L384.0 138.1L386.5 137.3L389.0 136.6L391.5 136.0L394.0 135.4L396.5 134.9L399.0 134.4L401.5 134.0L404.0 133.6L406.5 133.3L409.0 133.0L411.5 132.7L414.0 132.4L416.5 132.2L419.0 132.0L421.5 131.8L424.0 131.6L426.5 131.5L429.0 131.3L431.5 135.7L434.0 140.1L436.5 144.5L439.0 140.9L441.5 138.2L444.0 136.2L446.5 134.6L449.0 133.5L451.5 132.6L454.0 132.0L456.5 131.5L459.0 131.1L461.5 130.8L464.0 130.6L466.5 130.5L471.5 130.3L479.0 130.1L504.0 130.0" fill="none" stroke="#5c5c5c" stroke-width="1.6" stroke-dasharray="4 3"/>
+<path d="M304.0 250.0L316.5 250.0L319.0 228.2L321.5 210.4L324.0 195.9L326.5 183.9L329.0 174.1L331.5 166.1L334.0 159.6L336.5 154.2L339.0 149.8L341.5 146.2L344.0 143.3L346.5 140.9L349.0 138.9L351.5 137.3L354.0 136.0L356.5 134.9L359.0 134.0L361.5 133.3L364.0 132.7L366.5 132.2L369.0 131.8L371.5 131.5L374.0 131.2L376.5 131.0L379.0 130.8L384.0 130.5L389.0 130.4L396.5 130.2L414.0 130.0L429.0 130.0L431.5 138.8L434.0 147.6L436.5 156.4L439.0 148.9L441.5 143.6L444.0 139.7L446.5 137.0L449.0 135.0L451.5 133.6L454.0 132.6L456.5 131.8L459.0 131.3L461.5 130.9L464.0 130.7L466.5 130.5L471.5 130.2L479.0 130.1L504.0 130.0" fill="none" stroke="#446ce3" stroke-width="2.2"/>
+<g font-size="12" fill="#222222">
+  <text x="346" y="226">spin-up</text>
+  <text x="436" y="176" text-anchor="middle">dip</text>
+  <text x="452" y="176">recovers</text>
+</g>
+<circle cx="429" cy="250" r="4" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+<text x="429" y="266" font-size="12" fill="#5c5c5c" text-anchor="middle">piece in</text>
+<text x="504" y="266" font-size="12" fill="#5c5c5c" text-anchor="end">time</text>
+<g class="cur"><line x1="304" y1="104" x2="304" y2="250" stroke="#e65100" stroke-width="1.4" stroke-dasharray="3 3"/></g>
+
+<!-- graph legend -->
+<line x1="304" y1="286" x2="322" y2="286" stroke="#446ce3" stroke-width="2.2"/>
+<text x="328" y="290" font-size="12" fill="#222222">this wheel</text>
+<line x1="304" y1="304" x2="322" y2="304" stroke="#5c5c5c" stroke-width="1.6" stroke-dasharray="4 3"/>
+<text x="328" y="308" font-size="12" fill="#222222">heavier wheel (more inertia)</text>
+<g font-size="12" fill="#222222">
+  <text x="304" y="340">Feed only once it is at the setpoint,</text>
+  <text x="304" y="356">and let it recover before the next.</text>
+</g>
+
+<line x1="16" y1="394" x2="504" y2="394" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="414" font-size="12" font-weight="700" fill="#222222">More inertia means a smaller dip but a slower spin-up.</text>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="432">The hood (or a second wheel) squeezes the piece against the spinning wheel; the</text>
+  <text x="16" y="448">piece takes energy from the wheel, so it slows until the motor catches up.</text>
+</g>
+</svg>

@@ -27,6 +27,14 @@ const Systems = (() => {
   const GAIN_TIP = { kP: "kP", kI: "kI", kD: "kD", kS: "kS", kV: "kV", kA: "kA", kG: "kG", kCos: "kCos", iZone: "iZone",
     mmCruise: "mmCruise", mmAccel: "mmAccel", vComp: "vComp", velMs: "velMs", velDepth: "velDepth" };
   const gainTipOf = k => GAIN_TIP[k] || "other";
+  // What kind of mechanism it is, in one line: the word opens its lesson and animated drawing.
+  const KIND_LINE = {
+    ELEVATOR: ["An", "elevator", "mech_elevator", " (continuous or cascade): it moves to heights, and kG holds it up against gravity."],
+    PIVOT: ["An", "arm", "mech_arm", " on a pivot: it moves to angles, and kCos holds it up, hardest when it sticks out level."],
+    FLYWHEEL: ["A", "flywheel", "mech_flywheel", ": it holds a speed, with no gravity to hold; its weight smooths each shot."],
+    ROLLER: ["A", "roller", "mech_roller", " (an intake or feeder): it spins to grab, hold or spit out a piece."] };
+  const kindLine = s => { const k = KIND_LINE[s.kind];
+    return k ? `<p class="small sys-kind">${k[0]} <span class="term" tabindex="0" data-learn="${k[2]}">${k[1]}</span>${k[3]}</p>` : ""; };
 
   root.innerHTML = `
     <div class="sys">
@@ -103,7 +111,7 @@ const Systems = (() => {
     const ph = (s.physics || {}), typed = val("physics") || {}, ff = s.feedforward || (s.plan && s.plan.feedforward) || null;
     const kindNow = (s.physics && s.physics.kind) || (KIND[s.kind] === "roller" ? "flywheel" : KIND[s.kind]);
     const { label, k } = unit(s), rate = positional(s) ? "/s" : "";
-    box.innerHTML = `
+    box.innerHTML = `${kindLine(s)}
       <h3 data-tip="sys.physics">1. Its physics</h3>
       <div class="row"><input id="sys-link" data-tip="sys.link" placeholder="Paste its ReCalc or AMBcalc link" value="${esc(val("link") || "")}" style="flex:1">
         <button class="btn small" id="sys-read" data-tip="sys.read">Read it</button></div>

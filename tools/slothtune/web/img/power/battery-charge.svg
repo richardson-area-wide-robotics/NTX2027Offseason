@@ -1,0 +1,244 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 482" width="520" height="482" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bc-title bc-desc">
+<title id="bc-title">Charging: the charger pushes it back</title>
+<desc id="bc-desc">Animated, slowed way down. Left: the same lead-acid cell as the discharge picture, now wired to a charger. The charger pulls yellow electrons out of the positive terminal and pushes them into the negative terminal, the opposite way to discharging. Pale lead sulfate leaves both plates and goes back into the acid, so the plates turn back into gray lead and dark brown lead dioxide and the acid turns from pale to deep blue (stronger). Fewer electrons flow as the charge goes on. Right: a chart of one charge, not to scale, with a moving cursor. In the bulk stage the current is steady (up to 5.4 A for the MK ES17-12) while the voltage rises. In the absorption stage the voltage is held at 14.4 to 15.0 V and the current tapers off. In the float stage the voltage drops to 13.5 to 13.8 V and only a tiny current flows. The voltages and the 5.4 A maximum are from the MK ES17-12 datasheet at 25 C. Text: in bulk a steady current puts back about 70% (Battery University; FRC rule R604 limits robot-battery chargers to 6 A average); in absorption the battery's own voltage climbs toward the held voltage, so less current flows; float keeps it topped up; charge only once the case is not warm (WPILib: about 15 minutes); let the battery rest a few hours before reading its voltage, because fresh off the charger it reads high (Battery University: at least 4 hours, makers say 24).</desc>
+<style>
+/* One 8 s loop. The cursor waits 0-5 %, sweeps the chart 5-85 % (bulk to 34.25 %, absorption to 68.66 %,
+   float to 85 %), holds to 95 %, then fades and jumps back. x on the chart = 292 + (t - 5) / 80 * 186. */
+.bc-e { animation: bc-e 2s linear infinite; }
+@keyframes bc-e {
+  0% { transform: translate(193px, 124px); opacity: 0; }
+  4% { opacity: 1; }
+  13.8% { transform: translate(193px, 100px); }
+  86.2% { transform: translate(67px, 100px); }
+  96% { opacity: 1; }
+  100% { transform: translate(67px, 124px); opacity: 0; }
+}
+.bc-e1 { animation-delay: -0.1667s; } .bc-e2 { animation-delay: -0.5s; } .bc-e3 { animation-delay: -0.8333s; }
+.bc-e4 { animation-delay: -1.1667s; } .bc-e5 { animation-delay: -1.5s; } .bc-e6 { animation-delay: -1.8333s; }
+/* fewer electrons as the current tapers: two dots drop out early in absorption, two more later */
+.bc-gC { animation: bc-gC 8s linear infinite; }
+.bc-gB { animation: bc-gB 8s linear infinite; }
+@keyframes bc-gC { 0%, 40% { opacity: 1; } 46%, 96.9% { opacity: 0; } 97%, 100% { opacity: 1; } }
+@keyframes bc-gB { 0%, 55% { opacity: 1; } 62%, 96.9% { opacity: 0; } 97%, 100% { opacity: 1; } }
+.bc-chipL { animation: bc-chipL 2s linear infinite; }
+.bc-chipR { animation: bc-chipR 2s linear infinite; }
+@keyframes bc-chipL { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(32px); opacity: 0; } }
+@keyframes bc-chipR { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(-32px); opacity: 0; } }
+.bc-chips { animation: bc-chips 8s linear infinite; }
+@keyframes bc-chips { 0%, 62% { opacity: 1; } 68.66%, 96.9% { opacity: 0; } 97%, 100% { opacity: 1; } }
+.bc-sulf { animation: bc-sulf 8s linear infinite; }
+@keyframes bc-sulf { 0%, 5% { opacity: 0.88; } 34.25% { opacity: 0.3; } 68.66% { opacity: 0; } 95% { opacity: 0; } 100% { opacity: 0.88; } }
+.bc-acid { animation: bc-acid 8s linear infinite; }
+@keyframes bc-acid { 0%, 5% { fill: #e3eef9; } 34.25% { fill: #a9cbee; } 68.66% { fill: #7fb3e6; } 95% { fill: #7fb3e6; } 100% { fill: #e3eef9; } }
+.bc-cursor { animation: bc-cursor 8s linear infinite; }
+@keyframes bc-cursor {
+  0%, 5% { transform: translateX(0); opacity: 1; }
+  85% { transform: translateX(186px); }
+  95% { transform: translateX(186px); opacity: 1; }
+  97% { transform: translateX(186px); opacity: 0; }
+  97.1% { transform: translateX(0); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.bc-vdot { animation: bc-vdot 8s linear infinite; }
+@keyframes bc-vdot {
+  0%, 5% { transform: translate(292px, 170.7px); opacity: 1; }
+  8.66% { transform: translate(300.5px, 154.8px); }
+  12.31% { transform: translate(309px, 142.8px); }
+  15.97% { transform: translate(317.5px, 133.6px); }
+  19.62% { transform: translate(326px, 126.7px); }
+  23.28% { transform: translate(334.5px, 121.4px); }
+  26.94% { transform: translate(343px, 117.4px); }
+  30.59% { transform: translate(351.5px, 114.3px); }
+  34.25% { transform: translate(360px, 112px); }
+  68.66% { transform: translate(440px, 112px); }
+  69% { transform: translate(440.8px, 132px); }
+  85% { transform: translate(478px, 132px); }
+  95% { transform: translate(478px, 132px); opacity: 1; }
+  97% { transform: translate(478px, 132px); opacity: 0; }
+  97.1% { transform: translate(292px, 170.7px); opacity: 0; }
+  100% { transform: translate(292px, 170.7px); opacity: 1; }
+}
+.bc-idot { animation: bc-idot 8s linear infinite; }
+@keyframes bc-idot {
+  0%, 5% { transform: translate(292px, 203px); opacity: 1; }
+  34.25% { transform: translate(360px, 203px); }
+  37.69% { transform: translate(368px, 218px); }
+  41.13% { transform: translate(376px, 229px); }
+  44.57% { transform: translate(384px, 237.2px); }
+  48.01% { transform: translate(392px, 243.3px); }
+  51.45% { transform: translate(400px, 247.8px); }
+  54.89% { transform: translate(408px, 251.2px); }
+  58.33% { transform: translate(416px, 253.6px); }
+  61.77% { transform: translate(424px, 255.5px); }
+  65.22% { transform: translate(432px, 256.8px); }
+  68.66% { transform: translate(440px, 257.8px); }
+  69% { transform: translate(440.8px, 263.7px); }
+  85% { transform: translate(478px, 263.7px); }
+  95% { transform: translate(478px, 263.7px); opacity: 1; }
+  97% { transform: translate(478px, 263.7px); opacity: 0; }
+  97.1% { transform: translate(292px, 203px); opacity: 0; }
+  100% { transform: translate(292px, 203px); opacity: 1; }
+}
+/* the stage names light up, and the charger's display changes, as the cursor passes */
+.bc-sb { animation: bc-sb 8s linear infinite; }
+.bc-sa { animation: bc-sa 8s linear infinite; }
+.bc-sf { animation: bc-sf 8s linear infinite; }
+@keyframes bc-sb { 0%, 34.2% { fill: #446ce3; } 34.3%, 96.9% { fill: #5c5c5c; } 97%, 100% { fill: #446ce3; } }
+@keyframes bc-sa { 0%, 34.2% { fill: #5c5c5c; } 34.3%, 68.6% { fill: #446ce3; } 68.7%, 100% { fill: #5c5c5c; } }
+@keyframes bc-sf { 0%, 68.6% { fill: #5c5c5c; } 68.7%, 96.9% { fill: #446ce3; } 97%, 100% { fill: #5c5c5c; } }
+.bc-db { animation: bc-db 8s linear infinite; }
+.bc-da { animation: bc-da 8s linear infinite; }
+.bc-df { animation: bc-df 8s linear infinite; }
+@keyframes bc-db { 0%, 34.2% { opacity: 1; } 34.3%, 96.9% { opacity: 0; } 97%, 100% { opacity: 1; } }
+@keyframes bc-da { 0%, 34.2% { opacity: 0; } 34.3%, 68.6% { opacity: 1; } 68.7%, 100% { opacity: 0; } }
+@keyframes bc-df { 0%, 68.6% { opacity: 0; } 68.7%, 96.9% { opacity: 1; } 97%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Charging: the charger pushes it back</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">The same cell, now on a charger. Slowed way down: a real charge takes hours.</text>
+
+<!-- ============ the cell on a charger ============ -->
+<text x="130" y="72" font-size="12" fill="#5c5c5c" text-anchor="middle">moves electrons from + to −</text>
+<path d="M67 124 V100 H193 V124" fill="none" stroke="#444444" stroke-width="2.5" stroke-linejoin="round"/>
+<!-- electrons: drawn before the charger so they pass through it -->
+<g fill="#f2c200" stroke="#8a6d00" stroke-width="1">
+  <circle class="bc-e bc-e1" r="4.5" transform="translate(193 109.5)"/>
+  <circle class="bc-e bc-e4" r="4.5" transform="translate(115.5 100)"/>
+  <g class="bc-gB">
+    <circle class="bc-e bc-e2" r="4.5" transform="translate(173.5 100)"/>
+    <circle class="bc-e bc-e5" r="4.5" transform="translate(86.5 100)"/>
+  </g>
+  <g class="bc-gC">
+    <circle class="bc-e bc-e3" r="4.5" transform="translate(144.5 100)"/>
+    <circle class="bc-e bc-e6" r="4.5" transform="translate(67 109.5)"/>
+  </g>
+</g>
+<rect x="95" y="84" width="80" height="32" rx="5" fill="#f5f7fa" stroke="#444444" stroke-width="1.5"/>
+<text x="135" y="97" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">charger</text>
+<g font-size="12" fill="#446ce3" text-anchor="middle">
+  <text class="bc-db" x="135" y="111">bulk</text>
+  <text class="bc-da" x="135" y="111" opacity="0">absorption</text>
+  <text class="bc-df" x="135" y="111" opacity="0">float</text>
+</g>
+<text x="87" y="95" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">−</text>
+<text x="183" y="95" font-size="14" font-weight="700" fill="#c62828" text-anchor="middle">+</text>
+
+<!-- terminals -->
+<rect x="59" y="124" width="16" height="16" fill="#222222" stroke="#444444"/>
+<rect x="185" y="124" width="16" height="16" fill="#c62828" stroke="#444444"/>
+<text x="46" y="137" font-size="18" font-weight="700" fill="#222222" text-anchor="middle">−</text>
+<text x="214" y="137" font-size="18" font-weight="700" fill="#c62828" text-anchor="middle">+</text>
+<!-- acid (gets stronger), case and lid -->
+<rect class="bc-acid" x="32" y="156" width="196" height="142" fill="#e3eef9"/>
+<rect x="30" y="156" width="200" height="144" fill="none" stroke="#444444" stroke-width="2"/>
+<rect x="24" y="140" width="212" height="16" rx="2" fill="#b0b8c0" stroke="#444444"/>
+<rect x="62" y="156" width="10" height="10" fill="#7d8790" stroke="#444444"/>
+<rect x="188" y="156" width="10" height="10" fill="#6d4c41" stroke="#444444"/>
+<!-- negative plate: lead -->
+<rect x="52" y="166" width="30" height="120" fill="#7d8790" stroke="#444444"/>
+<g stroke="#5f6870" stroke-width="1">
+  <line x1="52" y1="180" x2="82" y2="180"/><line x1="52" y1="194" x2="82" y2="194"/><line x1="52" y1="208" x2="82" y2="208"/>
+  <line x1="52" y1="222" x2="82" y2="222"/><line x1="52" y1="236" x2="82" y2="236"/><line x1="52" y1="250" x2="82" y2="250"/>
+  <line x1="52" y1="264" x2="82" y2="264"/><line x1="52" y1="278" x2="82" y2="278"/>
+</g>
+<!-- positive plate: lead dioxide -->
+<rect x="178" y="166" width="30" height="120" fill="#6d4c41" stroke="#444444"/>
+<g stroke="#4e342e" stroke-width="1">
+  <line x1="178" y1="180" x2="208" y2="180"/><line x1="178" y1="194" x2="208" y2="194"/><line x1="178" y1="208" x2="208" y2="208"/>
+  <line x1="178" y1="222" x2="208" y2="222"/><line x1="178" y1="236" x2="208" y2="236"/><line x1="178" y1="250" x2="208" y2="250"/>
+  <line x1="178" y1="264" x2="208" y2="264"/><line x1="178" y1="278" x2="208" y2="278"/>
+</g>
+<!-- lead sulfate coat: starts thick (a flat battery) and clears as it charges -->
+<g class="bc-sulf" opacity="0.88">
+  <rect x="52" y="166" width="30" height="120" fill="#e8e8e8" stroke="#9aa4ad" stroke-width="1.5"/>
+  <rect x="178" y="166" width="30" height="120" fill="#e8e8e8" stroke="#9aa4ad" stroke-width="1.5"/>
+  <g fill="#f7f7f7" stroke="#9aa4ad" stroke-width="1">
+    <rect x="56" y="174" width="8" height="5"/><rect x="70" y="189" width="8" height="5"/><rect x="57" y="209" width="8" height="5"/>
+    <rect x="71" y="227" width="8" height="5"/><rect x="56" y="247" width="8" height="5"/><rect x="68" y="266" width="8" height="5"/>
+    <rect x="182" y="179" width="8" height="5"/><rect x="196" y="197" width="8" height="5"/><rect x="184" y="217" width="8" height="5"/>
+    <rect x="197" y="237" width="8" height="5"/><rect x="182" y="255" width="8" height="5"/><rect x="194" y="271" width="8" height="5"/>
+  </g>
+</g>
+<!-- what the acid does -->
+<text x="130" y="182" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">sulfuric acid</text>
+<text x="130" y="197" font-size="12" fill="#222222" text-anchor="middle">in water</text>
+<text x="105" y="216" font-size="13" fill="#222222" text-anchor="middle">SO<tspan font-size="12" dy="3">4</tspan></text>
+<text x="155" y="216" font-size="13" fill="#222222" text-anchor="middle">SO<tspan font-size="12" dy="3">4</tspan></text>
+<g stroke="#222222" stroke-width="1.6" fill="none">
+  <path d="M86 224 H124 M118 219 L124 224 L118 229"/>
+  <path d="M174 224 H136 M142 219 L136 224 L142 229"/>
+</g>
+<g class="bc-chips" fill="#e8e8e8" stroke="#9aa4ad" stroke-width="1">
+  <rect class="bc-chipL" x="86" y="232" width="10" height="8" rx="1.5"/>
+  <rect class="bc-chipR" x="164" y="232" width="10" height="8" rx="1.5"/>
+</g>
+<text x="130" y="258" font-size="12" fill="#222222" text-anchor="middle">sulfate goes</text>
+<text x="130" y="273" font-size="12" fill="#222222" text-anchor="middle">back to the acid</text>
+<text x="130" y="291" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">stronger acid</text>
+<!-- plate names -->
+<text x="30" y="318" font-size="13" font-weight="700" fill="#222222">− plate</text>
+<text x="30" y="335" font-size="13" fill="#222222">lead (Pb)</text>
+<text x="230" y="318" font-size="13" font-weight="700" fill="#222222" text-anchor="end">+ plate</text>
+<text x="230" y="335" font-size="13" fill="#222222" text-anchor="end">lead dioxide (PbO<tspan font-size="12" dy="3">2</tspan><tspan dy="-3">)</tspan></text>
+
+<!-- ============ the chart of one charge ============ -->
+<text x="262" y="72" font-size="13" font-weight="700" fill="#222222">One charge (not to scale)</text>
+<g font-size="12" font-weight="700" text-anchor="middle" fill="#5c5c5c">
+  <text class="bc-sb" x="326" y="90" fill="#446ce3">bulk</text>
+  <text class="bc-sa" x="400" y="90">absorption</text>
+  <text class="bc-sf" x="459" y="90">float</text>
+</g>
+<!-- voltage panel -->
+<rect x="292" y="96" width="186" height="80" fill="#fafafa" stroke="#c8c8c8"/>
+<rect x="360" y="96" width="80" height="16" fill="#446ce3" opacity="0.13"/>
+<rect x="440" y="128" width="38" height="8" fill="#446ce3" opacity="0.13"/>
+<!-- current panel -->
+<rect x="292" y="196" width="186" height="70" fill="#fafafa" stroke="#c8c8c8"/>
+<g stroke="#c8c8c8" stroke-width="1" stroke-dasharray="3 3">
+  <line x1="360" y1="94" x2="360" y2="268"/>
+  <line x1="440" y1="94" x2="440" y2="268"/>
+</g>
+<g font-size="12" fill="#5c5c5c" text-anchor="end">
+  <text x="288" y="101">15 V</text>
+  <text x="288" y="180">12 V</text>
+  <text x="288" y="201">6 A</text>
+  <text x="288" y="270">0 A</text>
+</g>
+<path d="M292 170.7 L300.5 154.8 L309 142.8 L317.5 133.6 L326 126.7 L334.5 121.4 L343 117.4 L351.5 114.3 L360 112 L440 112 L440 132 L478 132"
+  fill="none" stroke="#446ce3" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M292 203 L360 203 L368 218 L376 229 L384 237.2 L392 243.3 L400 247.8 L408 251.2 L416 253.6 L424 255.5 L432 256.8 L440 257.8 L440 263.7 L478 263.7"
+  fill="none" stroke="#e65100" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="296" y="110" font-size="12" font-weight="700" fill="#446ce3">voltage</text>
+<text x="400" y="128" font-size="12" fill="#222222" text-anchor="middle">14.4–15.0 V</text>
+<rect x="414" y="140" width="63" height="16" fill="#fafafa"/>
+<text x="478" y="152" font-size="12" fill="#222222" text-anchor="end">13.5–13.8 V</text>
+<text x="296" y="222" font-size="12" font-weight="700" fill="#e65100">current</text>
+<text x="296" y="238" font-size="12" fill="#222222">steady,</text>
+<text x="296" y="254" font-size="12" fill="#222222">≤ 5.4 A</text>
+<text x="420" y="214" font-size="12" fill="#222222" text-anchor="middle">tapers</text>
+<text x="478" y="284" font-size="12" fill="#5c5c5c" text-anchor="end">time (hours) →</text>
+<text x="262" y="300" font-size="12" fill="#5c5c5c">Numbers: MK ES17-12 datasheet, 25 °C</text>
+<!-- cursor and the dots riding the two curves -->
+<g class="bc-cursor"><line x1="292" y1="92" x2="292" y2="270" stroke="#5c5c5c" stroke-width="1.4" stroke-dasharray="3 3"/></g>
+<circle class="bc-vdot" r="5" fill="#446ce3" stroke="#ffffff" stroke-width="1.5" transform="translate(292 170.7)"/>
+<circle class="bc-idot" r="5" fill="#e65100" stroke="#ffffff" stroke-width="1.5" transform="translate(292 203)"/>
+<!-- key -->
+<g font-size="12" fill="#222222">
+  <rect x="262" y="314" width="14" height="12" fill="#e8e8e8" stroke="#9aa4ad"/>
+  <text x="282" y="325">lead sulfate, turning back</text>
+  <circle cx="269" cy="338" r="4.5" fill="#f2c200" stroke="#8a6d00"/>
+  <text x="282" y="342">electron</text>
+</g>
+
+<!-- ============ why ============ -->
+<line x1="16" y1="352" x2="504" y2="352" stroke="#e2e2e2"/>
+<g font-size="13" fill="#222222">
+  <text x="16" y="372"><tspan font-weight="700">Bulk:</tspan> a steady current puts back about 70% (FRC R604: 6 A average max).</text>
+  <text x="16" y="391"><tspan font-weight="700">Absorption:</tspan> the voltage is held. The battery's own voltage climbs toward</text>
+  <text x="16" y="410">it, so less current flows: the current tapers. <tspan font-weight="700">Float</tspan> keeps it topped up.</text>
+  <text x="16" y="429"><tspan font-weight="700">Cool first:</tspan> charge once the case is not warm (WPILib: about 15 min).</text>
+  <text x="16" y="448"><tspan font-weight="700">Let it rest</tspan> a few hours before you read its voltage: fresh off the</text>
+  <text x="16" y="467">charger it reads high (Battery University: 4 h or more; makers say 24 h).</text>
+</g>
+</svg>

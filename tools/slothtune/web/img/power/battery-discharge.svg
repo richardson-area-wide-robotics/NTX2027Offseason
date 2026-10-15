@@ -1,0 +1,208 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 478" width="520" height="478" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bd-title bd-desc">
+<title id="bd-title">Discharging: chemistry makes the current</title>
+<desc id="bd-desc">Animated cutaway of one cell of the robot's sealed lead-acid battery, slowed way down. On the left is the negative plate, made of gray lead (Pb); on the right is the positive plate, made of dark brown lead dioxide (PbO2); between them is blue sulfuric acid in water. A wire runs from the negative terminal up through a motor (the load) and down to the positive terminal. Yellow electrons flow out of the negative plate, through the motor, and into the positive plate. Pale sulfate chips move out of the acid onto both plates. Over the loop both plates turn pale as they become lead sulfate (PbSO4), and the acid fades from deep blue to pale as it turns toward water. Two readouts for the whole 12 V battery (6 cells) step down together while a charge gauge empties and turns red: with no load it falls from 12.7 V to 12.0 V, and pulling 100 A it reads 1.2 V lower, from 11.5 V to 10.8 V. The gauge marks no-load volts of 11.9 V empty, 12.2 V half and 12.7 V full (Battery University). Then the loop restarts. Text gives the reactions: lead plus acid gives lead sulfate and 2 electrons; lead dioxide plus acid plus 2 electrons gives lead sulfate and water; overall Pb + PbO2 + 2 H2SO4 gives 2 PbSO4 + 2 H2O. Six cells of about 2.1 V make 12.7 V full. Under load the voltage reads lower than at rest: V = Voc - I x R. A new battery's internal resistance R is about 0.012 ohm (MK datasheet), so 100 A loses 1.2 V inside the battery.</desc>
+<style>
+/* One 8 s loop: the cell drains from 0 % to 75 %, holds empty to 94 %, and snaps back by 100 %.
+   Electrons (2 s per trip, 6 dots), sulfate chips (2 s) and the motor (2 s per turn) loop on their own. */
+.bd-e { animation: bd-e 2s linear infinite; }
+@keyframes bd-e {
+  0% { transform: translate(85px, 124px); opacity: 0; }
+  4% { opacity: 1; }
+  11% { transform: translate(85px, 100px); }
+  89% { transform: translate(255px, 100px); }
+  96% { opacity: 1; }
+  100% { transform: translate(255px, 124px); opacity: 0; }
+}
+.bd-e1 { animation-delay: -0.1667s; } .bd-e2 { animation-delay: -0.5s; } .bd-e3 { animation-delay: -0.8333s; }
+.bd-e4 { animation-delay: -1.1667s; } .bd-e5 { animation-delay: -1.5s; } .bd-e6 { animation-delay: -1.8333s; }
+.bd-rotor { transform-box: view-box; transform-origin: 170px 100px; animation: bd-spin 2s linear infinite; }
+@keyframes bd-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.bd-chipL { animation: bd-chipL 2s linear infinite; }
+.bd-chipR { animation: bd-chipR 2s linear infinite; }
+@keyframes bd-chipL { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(-42px); opacity: 0; } }
+@keyframes bd-chipR { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translateX(42px); opacity: 0; } }
+.bd-sulf { opacity: 0; animation: bd-sulf 8s linear infinite; }
+@keyframes bd-sulf { 0% { opacity: 0; } 75% { opacity: 0.88; } 94% { opacity: 0.88; } 100% { opacity: 0; } }
+.bd-acid { animation: bd-acid 8s linear infinite; }
+@keyframes bd-acid { 0% { fill: #7fb3e6; } 75% { fill: #e3eef9; } 94% { fill: #e3eef9; } 100% { fill: #7fb3e6; } }
+.bd-gauge { transform-box: fill-box; transform-origin: 0 50%; animation: bd-gauge 8s linear infinite; }
+@keyframes bd-gauge {
+  0% { transform: scaleX(1); fill: #1a7f37; }
+  35% { fill: #1a7f37; }
+  70% { fill: #c62828; }
+  75% { transform: scaleX(0.16); }
+  94% { transform: scaleX(0.16); fill: #c62828; }
+  100% { transform: scaleX(1); fill: #1a7f37; }
+}
+.bd-v0 { animation: bd-v0 8s linear infinite; }
+.bd-v1 { animation: bd-v1 8s linear infinite; } .bd-v2 { animation: bd-v2 8s linear infinite; }
+.bd-v3 { animation: bd-v3 8s linear infinite; } .bd-v4 { animation: bd-v4 8s linear infinite; }
+.bd-v5 { animation: bd-v5 8s linear infinite; } .bd-v6 { animation: bd-v6 8s linear infinite; }
+.bd-v7 { animation: bd-v7 8s linear infinite; }
+@keyframes bd-v0 { 0%, 9.3% { opacity: 1; } 9.4%, 96.9% { opacity: 0; } 97%, 100% { opacity: 1; } }
+@keyframes bd-v1 { 0%, 9.3% { opacity: 0; } 9.4%, 18.7% { opacity: 1; } 18.8%, 100% { opacity: 0; } }
+@keyframes bd-v2 { 0%, 18.7% { opacity: 0; } 18.8%, 28.1% { opacity: 1; } 28.2%, 100% { opacity: 0; } }
+@keyframes bd-v3 { 0%, 28.1% { opacity: 0; } 28.2%, 37.4% { opacity: 1; } 37.5%, 100% { opacity: 0; } }
+@keyframes bd-v4 { 0%, 37.4% { opacity: 0; } 37.5%, 46.8% { opacity: 1; } 46.9%, 100% { opacity: 0; } }
+@keyframes bd-v5 { 0%, 46.8% { opacity: 0; } 46.9%, 56.2% { opacity: 1; } 56.3%, 100% { opacity: 0; } }
+@keyframes bd-v6 { 0%, 56.2% { opacity: 0; } 56.3%, 65.5% { opacity: 1; } 65.6%, 100% { opacity: 0; } }
+@keyframes bd-v7 { 0%, 65.5% { opacity: 0; } 65.6%, 96.9% { opacity: 1; } 97%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Discharging: chemistry makes the current</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">One cell (about 2.1 V when full), cut open and slowed way down.</text>
+
+<!-- ============ the outside circuit: wire through a motor ============ -->
+<path d="M85 124 V100 H255 V124" fill="none" stroke="#444444" stroke-width="2.5" stroke-linejoin="round"/>
+<text x="98" y="93" font-size="12" fill="#5c5c5c">electrons</text>
+<text x="170" y="74" font-size="12" fill="#5c5c5c" text-anchor="middle">load: a motor</text>
+
+<!-- electrons: drawn before the motor so they pass behind it -->
+<g fill="#f2c200" stroke="#8a6d00" stroke-width="1">
+  <circle class="bd-e bd-e1" r="4.5" transform="translate(85 105.8)"/>
+  <circle class="bd-e bd-e2" r="4.5" transform="translate(115.5 100)"/>
+  <circle class="bd-e bd-e3" r="4.5" transform="translate(151.8 100)"/>
+  <circle class="bd-e bd-e4" r="4.5" transform="translate(188.2 100)"/>
+  <circle class="bd-e bd-e5" r="4.5" transform="translate(224.5 100)"/>
+  <circle class="bd-e bd-e6" r="4.5" transform="translate(255 105.8)"/>
+</g>
+<circle cx="170" cy="100" r="16" fill="#ffffff" stroke="#444444" stroke-width="2"/>
+<g class="bd-rotor" stroke="#5c5c5c" stroke-width="3.5" stroke-linecap="round">
+  <line x1="170" y1="100" x2="170" y2="89"/>
+  <line x1="170" y1="100" x2="179.5" y2="105.5"/>
+  <line x1="170" y1="100" x2="160.5" y2="105.5"/>
+</g>
+<circle cx="170" cy="100" r="2.5" fill="#444444"/>
+
+<!-- ============ the cell ============ -->
+<!-- terminals -->
+<rect x="77" y="124" width="16" height="16" fill="#222222" stroke="#444444"/>
+<rect x="247" y="124" width="16" height="16" fill="#c62828" stroke="#444444"/>
+<text x="64" y="137" font-size="18" font-weight="700" fill="#222222" text-anchor="middle">−</text>
+<text x="276" y="137" font-size="18" font-weight="700" fill="#c62828" text-anchor="middle">+</text>
+<!-- acid (fades as it weakens), case and lid -->
+<rect class="bd-acid" x="42" y="156" width="256" height="142" fill="#7fb3e6"/>
+<rect x="40" y="156" width="260" height="144" fill="none" stroke="#444444" stroke-width="2"/>
+<rect x="34" y="140" width="272" height="16" rx="2" fill="#b0b8c0" stroke="#444444"/>
+<!-- straps from plates up to the terminals -->
+<rect x="80" y="156" width="10" height="10" fill="#7d8790" stroke="#444444"/>
+<rect x="250" y="156" width="10" height="10" fill="#6d4c41" stroke="#444444"/>
+<!-- negative plate: lead -->
+<rect x="70" y="166" width="30" height="120" fill="#7d8790" stroke="#444444"/>
+<g stroke="#5f6870" stroke-width="1">
+  <line x1="70" y1="180" x2="100" y2="180"/><line x1="70" y1="194" x2="100" y2="194"/><line x1="70" y1="208" x2="100" y2="208"/>
+  <line x1="70" y1="222" x2="100" y2="222"/><line x1="70" y1="236" x2="100" y2="236"/><line x1="70" y1="250" x2="100" y2="250"/>
+  <line x1="70" y1="264" x2="100" y2="264"/><line x1="70" y1="278" x2="100" y2="278"/>
+</g>
+<!-- positive plate: lead dioxide -->
+<rect x="240" y="166" width="30" height="120" fill="#6d4c41" stroke="#444444"/>
+<g stroke="#4e342e" stroke-width="1">
+  <line x1="240" y1="180" x2="270" y2="180"/><line x1="240" y1="194" x2="270" y2="194"/><line x1="240" y1="208" x2="270" y2="208"/>
+  <line x1="240" y1="222" x2="270" y2="222"/><line x1="240" y1="236" x2="270" y2="236"/><line x1="240" y1="250" x2="270" y2="250"/>
+  <line x1="240" y1="264" x2="270" y2="264"/><line x1="240" y1="278" x2="270" y2="278"/>
+</g>
+<!-- lead sulfate coat that grows on both plates -->
+<g class="bd-sulf">
+  <rect x="70" y="166" width="30" height="120" fill="#e8e8e8" stroke="#9aa4ad" stroke-width="1.5"/>
+  <rect x="240" y="166" width="30" height="120" fill="#e8e8e8" stroke="#9aa4ad" stroke-width="1.5"/>
+  <g fill="#f7f7f7" stroke="#9aa4ad" stroke-width="1">
+    <rect x="74" y="174" width="8" height="5"/><rect x="88" y="189" width="8" height="5"/><rect x="75" y="209" width="8" height="5"/>
+    <rect x="89" y="227" width="8" height="5"/><rect x="74" y="247" width="8" height="5"/><rect x="86" y="266" width="8" height="5"/>
+    <rect x="244" y="179" width="8" height="5"/><rect x="258" y="197" width="8" height="5"/><rect x="246" y="217" width="8" height="5"/>
+    <rect x="259" y="237" width="8" height="5"/><rect x="244" y="255" width="8" height="5"/><rect x="256" y="271" width="8" height="5"/>
+  </g>
+</g>
+<!-- what the acid does -->
+<text x="170" y="182" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">sulfuric acid</text>
+<text x="170" y="197" font-size="12" fill="#222222" text-anchor="middle">in water</text>
+<text x="128" y="216" font-size="13" fill="#222222" text-anchor="middle">SO<tspan font-size="12" dy="3">4</tspan></text>
+<text x="212" y="216" font-size="13" fill="#222222" text-anchor="middle">SO<tspan font-size="12" dy="3">4</tspan></text>
+<g stroke="#222222" stroke-width="1.6" fill="none">
+  <path d="M152 224 H108 M114 219 L108 224 L114 229"/>
+  <path d="M188 224 H232 M226 219 L232 224 L226 229"/>
+</g>
+<g fill="#e8e8e8" stroke="#9aa4ad" stroke-width="1">
+  <rect class="bd-chipL" x="146" y="232" width="10" height="8" rx="1.5"/>
+  <rect class="bd-chipR" x="184" y="232" width="10" height="8" rx="1.5"/>
+</g>
+<text x="170" y="258" font-size="12" fill="#222222" text-anchor="middle">sulfate moves</text>
+<text x="170" y="273" font-size="12" fill="#222222" text-anchor="middle">onto both plates</text>
+<text x="170" y="291" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">acid weakens</text>
+
+<!-- plate names -->
+<text x="40" y="318" font-size="13" font-weight="700" fill="#222222">− plate</text>
+<text x="40" y="335" font-size="13" fill="#222222">lead (Pb)</text>
+<text x="300" y="318" font-size="13" font-weight="700" fill="#222222" text-anchor="end">+ plate</text>
+<text x="300" y="335" font-size="13" fill="#222222" text-anchor="end">lead dioxide (PbO<tspan font-size="12" dy="3">2</tspan><tspan dy="-3">)</tspan></text>
+
+<!-- ============ the whole battery: two readouts and a gauge ============ -->
+<text x="325" y="72" font-size="13" font-weight="700" fill="#222222">Whole battery: 6 cells</text>
+<text x="325" y="89" font-size="12" fill="#222222">6 × about 2.1 V = 12.7 V full</text>
+<text x="325" y="109" font-size="12" fill="#5c5c5c">no load</text>
+<text x="417" y="109" font-size="12" fill="#5c5c5c">pulling 100 A</text>
+<rect x="325" y="114" width="86" height="34" rx="6" fill="#f5f7fa" stroke="#444444"/>
+<rect x="417" y="114" width="87" height="34" rx="6" fill="#f5f7fa" stroke="#444444"/>
+<!-- no-load (resting) volts on the left; the same minus 100 A x 0.012 ohm = 1.2 V on the right -->
+<g font-size="20" font-weight="700" fill="#222222" text-anchor="middle">
+  <text class="bd-v0" x="368" y="138">12.7 V</text>
+  <text class="bd-v1" x="368" y="138" opacity="0">12.6 V</text>
+  <text class="bd-v2" x="368" y="138" opacity="0">12.5 V</text>
+  <text class="bd-v3" x="368" y="138" opacity="0">12.4 V</text>
+  <text class="bd-v4" x="368" y="138" opacity="0">12.3 V</text>
+  <text class="bd-v5" x="368" y="138" opacity="0">12.2 V</text>
+  <text class="bd-v6" x="368" y="138" opacity="0">12.1 V</text>
+  <text class="bd-v7" x="368" y="138" opacity="0">12.0 V</text>
+  <text class="bd-v0" x="460.5" y="138">11.5 V</text>
+  <text class="bd-v1" x="460.5" y="138" opacity="0">11.4 V</text>
+  <text class="bd-v2" x="460.5" y="138" opacity="0">11.3 V</text>
+  <text class="bd-v3" x="460.5" y="138" opacity="0">11.2 V</text>
+  <text class="bd-v4" x="460.5" y="138" opacity="0">11.1 V</text>
+  <text class="bd-v5" x="460.5" y="138" opacity="0">11.0 V</text>
+  <text class="bd-v6" x="460.5" y="138" opacity="0">10.9 V</text>
+  <text class="bd-v7" x="460.5" y="138" opacity="0">10.8 V</text>
+</g>
+<text x="325" y="168" font-size="12" fill="#5c5c5c">charge left</text>
+<rect x="325" y="174" width="170" height="16" rx="3" fill="#f2f2f2" stroke="#444444"/>
+<rect class="bd-gauge" x="326" y="175" width="168" height="14" rx="2" fill="#1a7f37"/>
+<g stroke="#444444" stroke-width="1">
+  <line x1="325.5" y1="190" x2="325.5" y2="195"/><line x1="410" y1="190" x2="410" y2="195"/><line x1="494.5" y1="190" x2="494.5" y2="195"/>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="325" y="208">11.9 V</text>
+  <text x="410" y="208" text-anchor="middle">12.2 V</text>
+  <text x="495" y="208" text-anchor="end">12.7 V</text>
+</g>
+<g font-size="12" fill="#5c5c5c">
+  <text x="325" y="223">empty</text>
+  <text x="410" y="223" text-anchor="middle">half</text>
+  <text x="495" y="223" text-anchor="end">full</text>
+  <text x="325" y="239">(no-load volts; Battery University)</text>
+</g>
+
+<!-- key -->
+<g font-size="13" fill="#222222">
+  <rect x="325" y="252" width="14" height="12" fill="#7d8790" stroke="#444444"/>
+  <text x="346" y="263">lead (Pb)</text>
+  <rect x="325" y="271" width="14" height="12" fill="#6d4c41" stroke="#444444"/>
+  <text x="346" y="282">lead dioxide (PbO<tspan font-size="12" dy="3">2</tspan><tspan dy="-3">)</tspan></text>
+  <rect x="325" y="290" width="14" height="12" fill="#e8e8e8" stroke="#9aa4ad"/>
+  <text x="346" y="301">lead sulfate (PbSO<tspan font-size="12" dy="3">4</tspan><tspan dy="-3">)</tspan></text>
+  <rect x="325" y="309" width="7" height="12" fill="#7fb3e6" stroke="#444444" stroke-width="0.8"/>
+  <rect x="332" y="309" width="7" height="12" fill="#e3eef9" stroke="#444444" stroke-width="0.8"/>
+  <text x="346" y="320">acid: bluer = stronger</text>
+  <circle cx="332" cy="334" r="4.5" fill="#f2c200" stroke="#8a6d00"/>
+  <text x="346" y="339">electron</text>
+</g>
+
+<!-- ============ the reactions ============ -->
+<line x1="16" y1="350" x2="504" y2="350" stroke="#e2e2e2"/>
+<g font-size="13" fill="#222222">
+  <text x="16" y="370"><tspan font-weight="700">− plate:</tspan> lead + acid → lead sulfate + 2 electrons (out the wire)</text>
+  <text x="16" y="389"><tspan font-weight="700">+ plate:</tspan> lead dioxide + acid + 2 electrons → lead sulfate + water</text>
+  <text x="16" y="408"><tspan font-weight="700">Overall:</tspan> Pb + PbO<tspan font-size="12" dy="3">2</tspan><tspan dy="-3"> + 2 H</tspan><tspan font-size="12" dy="3">2</tspan><tspan dy="-3">SO</tspan><tspan font-size="12" dy="3">4</tspan><tspan dy="-3"> → 2 PbSO</tspan><tspan font-size="12" dy="3">4</tspan><tspan dy="-3"> + 2 H</tspan><tspan font-size="12" dy="3">2</tspan><tspan dy="-3">O</tspan></text>
+  <text x="16" y="427">Both plates turn to lead sulfate and the acid turns toward water.</text>
+  <text x="16" y="446">Under load it reads lower than at rest: <tspan font-weight="700">V = V<tspan font-size="12" dy="3">oc</tspan><tspan dy="-3"> − I × R</tspan></tspan></text>
+  <text x="16" y="465">A new battery's R is about 0.012 Ω (MK datasheet): 100 A loses 1.2 V inside.</text>
+</g>
+</svg>

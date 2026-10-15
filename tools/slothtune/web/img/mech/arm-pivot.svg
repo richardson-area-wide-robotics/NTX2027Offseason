@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 470" width="520" height="470" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="arm-title arm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="arm-title">Arms (pivots)</title>
+<desc id="arm-desc">Animated side view of an arm on a pivot at the top of a tower. A motor and gearbox low on the tower drive the pivot through a chain, and an absolute encoder sits on the joint's shaft. The arm starts resting on a lower hard stop, swings up through level and past straight up to an upper soft limit, holds, and swings back down. A red gravity arrow always points straight down from the arm's center of mass. Beside it, a bar shows the gravity torque at the joint, the part of a gravity feedforward that kCos times the cosine of the angle cancels: biggest when the arm is level (0 degrees), zero when it is straight up or straight down, and reversed once the arm goes past straight up. A small cosine graph has a dot that tracks the arm's angle. Notes: kCos times cos(angle) is REV's gravity feedforward for an arm, with 0 meaning level; a counterweight or gas spring carries part of the weight so the motor works less; with two joints each joint's load depends on both angles. Sources: WPILib ArmFeedforward docs; REVLib feed forward control docs; Chief Delphi; FRC 997's 2-jointed arm paper.</desc>
+<style>
+/* One 8 s loop: rest on the hard stop at -75 deg (0-8 %), swing up to 110 deg (8-45 %, eased),
+   hold (45-55 %), swing down (55-92 %), rest. Angles from level, up positive.
+   Sampled every 1.85 % so the bar and dot follow cos(angle). Without motion: the arm level. */
+.arm { transform-box: view-box; transform-origin: 170px 240px; animation: arm 8s linear infinite; }
+.arr { transform-box: fill-box; transform-origin: 50% 0%; animation: arr 8s linear infinite; }
+.tbar { transform-box: fill-box; transform-origin: 0% 50%; animation: tbar 8s linear infinite; }
+.tdot { transform: translate(72px, -56px); animation: tdot 8s linear infinite; }
+@keyframes arm { 0% { transform: rotate(75deg); } 8% { transform: rotate(75deg); } 9.85% { transform: rotate(73.86deg); } 11.7% { transform: rotate(70.47deg); } 13.55% { transform: rotate(64.92deg); } 15.4% { transform: rotate(57.33deg); } 17.25% { transform: rotate(47.91deg); } 19.1% { transform: rotate(36.87deg); } 20.95% { transform: rotate(24.49deg); } 22.8% { transform: rotate(11.08deg); } 24.65% { transform: rotate(-3.03deg); } 26.5% { transform: rotate(-17.5deg); } 28.35% { transform: rotate(-31.97deg); } 30.2% { transform: rotate(-46.08deg); } 32.05% { transform: rotate(-59.49deg); } 33.9% { transform: rotate(-71.87deg); } 35.75% { transform: rotate(-82.91deg); } 37.6% { transform: rotate(-92.33deg); } 39.45% { transform: rotate(-99.92deg); } 41.3% { transform: rotate(-105.47deg); } 43.15% { transform: rotate(-108.86deg); } 45% { transform: rotate(-110deg); } 55% { transform: rotate(-110deg); } 56.85% { transform: rotate(-108.86deg); } 58.7% { transform: rotate(-105.47deg); } 60.55% { transform: rotate(-99.92deg); } 62.4% { transform: rotate(-92.33deg); } 64.25% { transform: rotate(-82.91deg); } 66.1% { transform: rotate(-71.87deg); } 67.95% { transform: rotate(-59.49deg); } 69.8% { transform: rotate(-46.08deg); } 71.65% { transform: rotate(-31.97deg); } 73.5% { transform: rotate(-17.5deg); } 75.35% { transform: rotate(-3.03deg); } 77.2% { transform: rotate(11.08deg); } 79.05% { transform: rotate(24.49deg); } 80.9% { transform: rotate(36.87deg); } 82.75% { transform: rotate(47.91deg); } 84.6% { transform: rotate(57.33deg); } 86.45% { transform: rotate(64.92deg); } 88.3% { transform: rotate(70.47deg); } 90.15% { transform: rotate(73.86deg); } 92% { transform: rotate(75deg); } 100% { transform: rotate(75deg); } }
+@keyframes arr { 0% { transform: rotate(-75deg); } 8% { transform: rotate(-75deg); } 9.85% { transform: rotate(-73.86deg); } 11.7% { transform: rotate(-70.47deg); } 13.55% { transform: rotate(-64.92deg); } 15.4% { transform: rotate(-57.33deg); } 17.25% { transform: rotate(-47.91deg); } 19.1% { transform: rotate(-36.87deg); } 20.95% { transform: rotate(-24.49deg); } 22.8% { transform: rotate(-11.08deg); } 24.65% { transform: rotate(3.03deg); } 26.5% { transform: rotate(17.5deg); } 28.35% { transform: rotate(31.97deg); } 30.2% { transform: rotate(46.08deg); } 32.05% { transform: rotate(59.49deg); } 33.9% { transform: rotate(71.87deg); } 35.75% { transform: rotate(82.91deg); } 37.6% { transform: rotate(92.33deg); } 39.45% { transform: rotate(99.92deg); } 41.3% { transform: rotate(105.47deg); } 43.15% { transform: rotate(108.86deg); } 45% { transform: rotate(110deg); } 55% { transform: rotate(110deg); } 56.85% { transform: rotate(108.86deg); } 58.7% { transform: rotate(105.47deg); } 60.55% { transform: rotate(99.92deg); } 62.4% { transform: rotate(92.33deg); } 64.25% { transform: rotate(82.91deg); } 66.1% { transform: rotate(71.87deg); } 67.95% { transform: rotate(59.49deg); } 69.8% { transform: rotate(46.08deg); } 71.65% { transform: rotate(31.97deg); } 73.5% { transform: rotate(17.5deg); } 75.35% { transform: rotate(3.03deg); } 77.2% { transform: rotate(-11.08deg); } 79.05% { transform: rotate(-24.49deg); } 80.9% { transform: rotate(-36.87deg); } 82.75% { transform: rotate(-47.91deg); } 84.6% { transform: rotate(-57.33deg); } 86.45% { transform: rotate(-64.92deg); } 88.3% { transform: rotate(-70.47deg); } 90.15% { transform: rotate(-73.86deg); } 92% { transform: rotate(-75deg); } 100% { transform: rotate(-75deg); } }
+@keyframes tbar { 0% { transform: scaleX(0.2588); } 8% { transform: scaleX(0.2588); } 9.85% { transform: scaleX(0.2780); } 11.7% { transform: scaleX(0.3343); } 13.55% { transform: scaleX(0.4239); } 15.4% { transform: scaleX(0.5397); } 17.25% { transform: scaleX(0.6703); } 19.1% { transform: scaleX(0.8000); } 20.95% { transform: scaleX(0.9100); } 22.8% { transform: scaleX(0.9813); } 24.65% { transform: scaleX(0.9986); } 26.5% { transform: scaleX(0.9537); } 28.35% { transform: scaleX(0.8483); } 30.2% { transform: scaleX(0.6936); } 32.05% { transform: scaleX(0.5076); } 33.9% { transform: scaleX(0.3112); } 35.75% { transform: scaleX(0.1235); } 37.6% { transform: scaleX(-0.0407); } 39.45% { transform: scaleX(-0.1722); } 41.3% { transform: scaleX(-0.2668); } 43.15% { transform: scaleX(-0.3233); } 45% { transform: scaleX(-0.3420); } 55% { transform: scaleX(-0.3420); } 56.85% { transform: scaleX(-0.3233); } 58.7% { transform: scaleX(-0.2668); } 60.55% { transform: scaleX(-0.1722); } 62.4% { transform: scaleX(-0.0407); } 64.25% { transform: scaleX(0.1235); } 66.1% { transform: scaleX(0.3112); } 67.95% { transform: scaleX(0.5076); } 69.8% { transform: scaleX(0.6936); } 71.65% { transform: scaleX(0.8483); } 73.5% { transform: scaleX(0.9537); } 75.35% { transform: scaleX(0.9986); } 77.2% { transform: scaleX(0.9813); } 79.05% { transform: scaleX(0.9100); } 80.9% { transform: scaleX(0.8000); } 82.75% { transform: scaleX(0.6703); } 84.6% { transform: scaleX(0.5397); } 86.45% { transform: scaleX(0.4239); } 88.3% { transform: scaleX(0.3343); } 90.15% { transform: scaleX(0.2780); } 92% { transform: scaleX(0.2588); } 100% { transform: scaleX(0.2588); } }
+@keyframes tdot { 0% { transform: translate(12px, -14.49px); } 8% { transform: translate(12px, -14.49px); } 9.85% { transform: translate(12.91px, -15.57px); } 11.7% { transform: translate(15.62px, -18.72px); } 13.55% { transform: translate(20.07px, -23.74px); } 15.4% { transform: translate(26.13px, -30.23px); } 17.25% { transform: translate(33.67px, -37.54px); } 19.1% { transform: translate(42.5px, -44.8px); } 20.95% { transform: translate(52.4px, -50.96px); } 22.8% { transform: translate(63.13px, -54.96px); } 24.65% { transform: translate(74.42px, -55.92px); } 26.5% { transform: translate(86px, -53.41px); } 28.35% { transform: translate(97.58px, -47.51px); } 30.2% { transform: translate(108.87px, -38.84px); } 32.05% { transform: translate(119.6px, -28.43px); } 33.9% { transform: translate(129.5px, -17.43px); } 35.75% { transform: translate(138.33px, -6.91px); } 37.6% { transform: translate(145.87px, 2.28px); } 39.45% { transform: translate(151.93px, 9.65px); } 41.3% { transform: translate(156.38px, 14.94px); } 43.15% { transform: translate(159.09px, 18.1px); } 45% { transform: translate(160px, 19.15px); } 55% { transform: translate(160px, 19.15px); } 56.85% { transform: translate(159.09px, 18.1px); } 58.7% { transform: translate(156.38px, 14.94px); } 60.55% { transform: translate(151.93px, 9.65px); } 62.4% { transform: translate(145.87px, 2.28px); } 64.25% { transform: translate(138.33px, -6.91px); } 66.1% { transform: translate(129.5px, -17.43px); } 67.95% { transform: translate(119.6px, -28.43px); } 69.8% { transform: translate(108.87px, -38.84px); } 71.65% { transform: translate(97.58px, -47.51px); } 73.5% { transform: translate(86px, -53.41px); } 75.35% { transform: translate(74.42px, -55.92px); } 77.2% { transform: translate(63.13px, -54.96px); } 79.05% { transform: translate(52.4px, -50.96px); } 80.9% { transform: translate(42.5px, -44.8px); } 82.75% { transform: translate(33.67px, -37.54px); } 84.6% { transform: translate(26.13px, -30.23px); } 86.45% { transform: translate(20.07px, -23.74px); } 88.3% { transform: translate(15.62px, -18.72px); } 90.15% { transform: translate(12.91px, -15.57px); } 92% { transform: translate(12px, -14.49px); } 100% { transform: translate(12px, -14.49px); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Arms (pivots)</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">Gravity always pulls straight down, but how hard it twists the joint depends on the angle.</text>
+
+<!-- legend -->
+<circle cx="22" cy="65" r="6" fill="#ffffff" stroke="#222222" stroke-width="1.2"/>
+<path d="M22 65L28 65A6 6 0 0 1 22 71ZM22 65L16 65A6 6 0 0 1 22 59Z" fill="#222222"/>
+<text x="33" y="70" font-size="12" fill="#222222">center of mass</text>
+<path d="M140 58L140 68" stroke="#c62828" stroke-width="2.5"/>
+<path d="M135.5 66.5L140 74L144.5 66.5Z" fill="#c62828"/>
+<text x="150" y="70" font-size="12" fill="#222222">gravity</text>
+<circle cx="208" cy="65" r="6" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+<text x="219" y="70" font-size="12" fill="#222222">game piece</text>
+
+<!-- angle references (still) -->
+<line x1="170" y1="240" x2="310" y2="240" stroke="#c8c8c8" stroke-width="1.2" stroke-dasharray="4 4"/>
+<text x="314" y="244" font-size="12" fill="#5c5c5c">0°</text>
+<line x1="170" y1="240" x2="170" y2="104" stroke="#c8c8c8" stroke-width="1.2" stroke-dasharray="4 4"/>
+<text x="176" y="102" font-size="12" fill="#5c5c5c">90°</text>
+<!-- limits -->
+<line x1="170" y1="240" x2="118.7" y2="99" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="16" y="98" font-size="12" fill="#5c5c5c">upper soft limit</text>
+<line x1="170" y1="240" x2="208.8" y2="384.9" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="6 4"/>
+<text x="216" y="368" font-size="12" fill="#5c5c5c">lower limit</text>
+<text x="216" y="384" font-size="12" fill="#5c5c5c">(hard stop)</text>
+
+<!-- tower, motor, gearbox, chain (still) -->
+<line x1="40" y1="392" x2="300" y2="392" stroke="#444444" stroke-width="1.5"/>
+<rect x="156" y="226" width="28" height="166" rx="4" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<rect x="104" y="330" width="46" height="22" rx="3" fill="#333333"/>
+<text x="127" y="345" font-size="12" fill="#ffffff" text-anchor="middle">motor</text>
+<rect x="150" y="326" width="26" height="30" rx="2" fill="#7d8790" stroke="#444444" stroke-width="1"/>
+<circle cx="163" cy="341" r="7" fill="#ffffff" stroke="#444444" stroke-width="1.2" stroke-dasharray="2.2 1.4"/>
+<path d="M152 240.7L156 341.3M187.7 243.2L169.9 342.2" stroke="#444444" stroke-width="1.6" stroke-dasharray="3 1.6"/>
+<rect x="171" y="297" width="8" height="8" rx="1" fill="#444444"/>
+<text x="146" y="300" font-size="12" fill="#5c5c5c" text-anchor="end">chain</text>
+<text x="104" y="374" font-size="12" fill="#5c5c5c">gearbox</text>
+<line x1="150" y1="368" x2="158" y2="357" stroke="#5c5c5c" stroke-width="1"/>
+
+<!-- the arm (turns about the pivot); drawn level, the animation sets its angle -->
+<g class="arm">
+  <circle cx="170" cy="240" r="18" fill="#e7e9ec" stroke="#444444" stroke-width="1.2" stroke-dasharray="3 2"/>
+  <circle cx="170" cy="240" r="13" fill="none" stroke="#444444" stroke-width="0.8"/>
+  <circle cx="170" cy="231" r="2.5" fill="#444444"/>
+  <circle cx="170" cy="249" r="2.5" fill="#444444"/>
+  <rect x="160" y="233" width="116" height="14" rx="7" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <rect x="274" y="228" width="8" height="24" rx="1.5" fill="#7d8790" stroke="#444444" stroke-width="1"/>
+  <circle cx="292" cy="240" r="12" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+  <!-- gravity arrow: turns back the other way, so it always points down -->
+  <g class="arr">
+    <path d="M242 240L242 272" stroke="#c62828" stroke-width="3"/>
+    <path d="M236 270L242 282L248 270Z" fill="#c62828"/>
+  </g>
+  <circle cx="242" cy="240" r="6" fill="#ffffff" stroke="#222222" stroke-width="1.2"/>
+  <path d="M242 240L248 240A6 6 0 0 1 242 246ZM242 240L236 240A6 6 0 0 1 242 234Z" fill="#222222"/>
+</g>
+
+<!-- pivot shaft with the absolute encoder on it (still) -->
+<circle cx="170" cy="240" r="8" fill="#446ce3" stroke="#444444" stroke-width="1"/>
+<circle cx="170" cy="240" r="4" fill="#ffffff" stroke="#444444" stroke-width="0.8"/>
+<circle cx="170" cy="240" r="1.8" fill="#444444"/>
+<text x="16" y="250" font-size="12" fill="#222222">pivot, with the</text>
+<text x="16" y="266" font-size="12" fill="#222222">absolute encoder</text>
+<text x="16" y="282" font-size="12" fill="#222222">on its shaft</text>
+<line x1="122" y1="261" x2="161" y2="245" stroke="#5c5c5c" stroke-width="1"/>
+
+<!-- gravity torque bar -->
+<text x="334" y="96" font-size="13" font-weight="700" fill="#222222">Gravity torque at the joint</text>
+<text x="334" y="112" font-size="12" fill="#5c5c5c">what kCos x cos(angle) cancels</text>
+<rect x="334" y="122" width="168" height="20" fill="#f6f6f6" stroke="#c8c8c8" stroke-width="1"/>
+<rect class="tbar" x="378" y="124" width="124" height="16" fill="#c62828"/>
+<line x1="378" y1="118" x2="378" y2="146" stroke="#222222" stroke-width="1.2"/>
+<text x="378" y="160" font-size="12" fill="#222222" text-anchor="middle">0</text>
+<text x="502" y="160" font-size="12" fill="#222222" text-anchor="end">level: most</text>
+
+<!-- cos(angle) with a dot at the arm's angle -->
+<text x="334" y="190" font-size="12" fill="#5c5c5c">cos(angle)</text>
+<line x1="412" y1="200" x2="412" y2="286" stroke="#e2e2e2" stroke-width="1"/>
+<line x1="484" y1="200" x2="484" y2="286" stroke="#e2e2e2" stroke-width="1"/>
+<line x1="340" y1="262" x2="500" y2="262" stroke="#c8c8c8" stroke-width="1"/>
+<path d="M340.0 262.0L344.0 257.1L348.0 252.3L352.0 247.5L356.0 242.8L360.0 238.3L364.0 234.0L368.0 229.9L372.0 226.0L376.0 222.4L380.0 219.1L384.0 216.1L388.0 213.5L392.0 211.2L396.0 209.4L400.0 207.9L404.0 206.9L408.0 206.2L412.0 206.0L416.0 206.2L420.0 206.9L424.0 207.9L428.0 209.4L432.0 211.2L436.0 213.5L440.0 216.1L444.0 219.1L448.0 222.4L452.0 226.0L456.0 229.9L460.0 234.0L464.0 238.3L468.0 242.8L472.0 247.5L476.0 252.3L480.0 257.1L484.0 262.0L488.0 266.9L492.0 271.7L496.0 276.5L500.0 281.2" fill="none" stroke="#5c5c5c" stroke-width="1.6"/>
+<circle class="tdot" cx="340" cy="262" r="5" fill="#c62828" stroke="#ffffff" stroke-width="1.2"/>
+<g font-size="12" fill="#5c5c5c" text-anchor="middle">
+  <text x="342" y="300">-90°</text>
+  <text x="412" y="300">0°</text>
+  <text x="484" y="300">90°</text>
+  <text x="342" y="315">down</text>
+  <text x="412" y="315">level</text>
+  <text x="484" y="315">up</text>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="334" y="342">Most when level, zero when</text>
+  <text x="334" y="358">straight up or straight down,</text>
+  <text x="334" y="374">and it flips past straight up.</text>
+</g>
+
+<line x1="16" y1="404" x2="504" y2="404" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="424" font-size="12" font-weight="700" fill="#222222">kCos x cos(angle): REV's gravity feedforward for an arm (0 = level).</text>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="442">A counterweight or gas spring carries part of the weight, so the motor works less.</text>
+  <text x="16" y="458">Two joints: each joint's load depends on both angles, so one kCos is not enough.</text>
+</g>
+</svg>

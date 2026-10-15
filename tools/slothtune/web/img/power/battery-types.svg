@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 670" width="520" height="670" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bt-title bt-desc">
+<title id="bt-title">Battery types compared</title>
+<desc id="bt-desc">A comparison of five rechargeable battery types, one row each, with the volts per cell, a bar for energy per kilogram on a 0 to 300 watt-hours per kilogram scale, what each is mostly used for, and one thing to watch out for. Lead-acid (AGM), highlighted green because it is the one the FRC robot must use (rule R601): 2.0 V per cell (2.1 V full), 35 to 40 Wh/kg; used for the FRC robot, car starting and backup power; a short can arc over 500 A, so insulate the terminals (R607). Nickel-cadmium (NiCd): 1.2 V per cell, 40 to 60 Wh/kg; used for power tools and emergency lights, and its cousin NiMH (1.2 V, no cadmium) powers FTC robots; cadmium is toxic so recycle it, and it suffers from memory. Lithium polymer (LiPo): 3.7 V per cell (4.2 V full), 100 to 265 Wh/kg; used for drones and RC models (3S is 11.1 V) and thin phones and tablets; a puncture, overcharge or over-discharge can make it swell and burn. Lithium iron phosphate (LiFePO4, LiFe): 3.2 V per cell (3.65 V full), 95 to 172 Wh/kg; used for solar and RV storage, and 4 cells (12.8 V) can replace a 12 V lead-acid battery; the safest lithium type but it still needs a battery management system. Lithium-ion (Li-ion): 3.6 V per cell (4.2 V full), 160 to 300 Wh/kg; used for laptops such as the Driver Station, phones, power tools and electric cars; never float-charge it, and a damaged or overcharged cell can catch fire. A note explains that each lithium cell must stay inside its voltage window and cells in a series pack drift apart, so a battery management system balances them and cuts off the charge. A box lists the 2026 FRC rules: R601, exactly 1 sealed lead-acid battery, 12 V and 17 to 18.2 Ah, runs the robot; R602, other batteries only for COTS computers and cameras, either USB packs of 100 Wh or less or batteries built into the device; R605, no other batteries on the robot, not even as ballast. Our MK ES17-12 holds 12 V times 18 Ah, 216 Wh, in 5.86 kg: about 37 Wh/kg. Sources: Wikipedia infoboxes for energy per kilogram, Battery University for cell volts, the MK ES17-12 datasheet, WPILib and the 2026 FRC game manual.</desc>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Battery types compared</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">Volts per cell, energy per kilogram, main uses, and one thing to watch out for.</text>
+
+<!-- column heads and the energy axis (0-300 Wh/kg over x 286-426: 0.4667 px per Wh/kg) -->
+<text x="28" y="82" font-size="12" font-weight="700" fill="#5c5c5c">type and volts per cell</text>
+<text x="286" y="66" font-size="12" font-weight="700" fill="#5c5c5c">energy per kg (Wh/kg)</text>
+<g font-size="12" fill="#5c5c5c" text-anchor="middle">
+  <text x="286" y="82">0</text><text x="332.7" y="82">100</text><text x="379.3" y="82">200</text><text x="426" y="82">300</text>
+</g>
+<g stroke="#9a9a9a" stroke-width="1">
+  <line x1="286" y1="89" x2="426" y2="89"/>
+  <line x1="286.5" y1="86" x2="286.5" y2="89"/><line x1="332.7" y1="86" x2="332.7" y2="89"/>
+  <line x1="379.3" y1="86" x2="379.3" y2="89"/><line x1="425.5" y1="86" x2="425.5" y2="89"/>
+</g>
+
+<!-- row cards: lead-acid is the FRC robot's battery, so it gets the green card -->
+<rect x="16" y="96" width="488" height="68" rx="6" fill="#eef7f0" stroke="#1a7f37" stroke-width="1.5"/>
+<rect x="16" y="170" width="488" height="68" rx="6" fill="#f7f7f7" stroke="#d0d0d0"/>
+<rect x="16" y="244" width="488" height="68" rx="6" fill="#f7f7f7" stroke="#d0d0d0"/>
+<rect x="16" y="318" width="488" height="68" rx="6" fill="#f7f7f7" stroke="#d0d0d0"/>
+<rect x="16" y="392" width="488" height="68" rx="6" fill="#f7f7f7" stroke="#d0d0d0"/>
+
+<!-- energy bars: track 0-300, solid to the low end of the range, pale to the high end -->
+<g fill="#e4e4e4">
+  <rect x="286" y="106" width="140" height="12" rx="2"/>
+  <rect x="286" y="180" width="140" height="12" rx="2"/>
+  <rect x="286" y="254" width="140" height="12" rx="2"/>
+  <rect x="286" y="328" width="140" height="12" rx="2"/>
+  <rect x="286" y="402" width="140" height="12" rx="2"/>
+</g>
+<g fill="#446ce3" fill-opacity="0.38">
+  <rect x="286" y="106" width="18.7" height="12" rx="2"/>
+  <rect x="286" y="180" width="28" height="12" rx="2"/>
+  <rect x="286" y="254" width="123.7" height="12" rx="2"/>
+  <rect x="286" y="328" width="80.3" height="12" rx="2"/>
+  <rect x="286" y="402" width="140" height="12" rx="2"/>
+</g>
+<g fill="#446ce3">
+  <rect x="286" y="106" width="16.3" height="12" rx="2"/>
+  <rect x="286" y="180" width="18.7" height="12" rx="2"/>
+  <rect x="286" y="254" width="46.7" height="12" rx="2"/>
+  <rect x="286" y="328" width="44.3" height="12" rx="2"/>
+  <rect x="286" y="402" width="74.7" height="12" rx="2"/>
+</g>
+<g font-size="13" font-weight="700" fill="#222222" text-anchor="end">
+  <text x="494" y="117">35–40</text>
+  <text x="494" y="191">40–60</text>
+  <text x="494" y="265">100–265</text>
+  <text x="494" y="339">95–172</text>
+  <text x="494" y="413">160–300</text>
+</g>
+
+<!-- names and volts per cell -->
+<g font-size="14" font-weight="700" fill="#222222">
+  <text x="28" y="117">Lead-acid (AGM)</text>
+  <text x="28" y="191">NiCd</text>
+  <text x="28" y="265">LiPo</text>
+  <text x="28" y="339">LiFePO<tspan font-size="12" dy="3">4</tspan><tspan dy="-3"> (“LiFe”)</tspan></text>
+  <text x="28" y="413">Li-ion</text>
+</g>
+<g font-size="12" fill="#5c5c5c">
+  <text x="152" y="117">2.0 V/cell (2.1 full)</text>
+  <text x="152" y="191">1.2 V/cell</text>
+  <text x="152" y="265">3.7 V/cell (4.2 full)</text>
+  <text x="152" y="339">3.2 V/cell (3.65 full)</text>
+  <text x="152" y="413">3.6 V/cell (4.2 full)</text>
+</g>
+
+<!-- what each is used for -->
+<g font-size="12" fill="#222222">
+  <text x="28" y="137"><tspan font-weight="700" fill="#1a7f37">Our FRC robot (required, R601)</tspan>, car starting, backup power (UPS)</text>
+  <text x="28" y="211">Power tools, emergency lights. Its cousin NiMH (no cadmium): FTC robots</text>
+  <text x="28" y="285">Drones and RC models (3S = 11.1 V), thin phones and tablets</text>
+  <text x="28" y="359">Solar and RV storage; 4 cells (12.8 V) can replace a 12 V lead-acid</text>
+  <text x="28" y="433">Laptops (like the Driver Station), phones, power tools, electric cars</text>
+</g>
+<!-- one thing to watch out for -->
+<g font-size="12" fill="#222222">
+  <text x="28" y="155"><tspan font-weight="700" fill="#c62828">Watch out:</tspan> a short can arc over 500 A, so insulate the terminals (R607).</text>
+  <text x="28" y="229"><tspan font-weight="700" fill="#c62828">Watch out:</tspan> cadmium is toxic, so recycle it; it also suffers from “memory.”</text>
+  <text x="28" y="303"><tspan font-weight="700" fill="#c62828">Watch out:</tspan> a puncture, overcharge or over-discharge can make it swell and burn.</text>
+  <text x="28" y="377"><tspan font-weight="700" fill="#c62828">Watch out:</tspan> the safest lithium type, but it still needs a BMS to guard its cells.</text>
+  <text x="28" y="451"><tspan font-weight="700" fill="#c62828">Watch out:</tspan> never float-charge it; a damaged or overcharged cell can catch fire.</text>
+</g>
+
+<text x="16" y="479" font-size="12" fill="#5c5c5c">Ours, the MK ES17-12: 12 V × 18 Ah = 216 Wh in 5.86 kg, about 37 Wh/kg.</text>
+
+<!-- why lithium needs balancing -->
+<g font-size="12" fill="#222222">
+  <text x="16" y="503"><tspan font-weight="700">Why lithium needs a BMS:</tspan> every cell must stay inside its voltage window</text>
+  <text x="16" y="520">(Li-ion: 4.2 V max), and cells in a series pack drift apart. A battery management</text>
+  <text x="16" y="537">system balances them and cuts off the charge. Lead-acid takes a gentle float.</text>
+</g>
+
+<!-- the FRC rules -->
+<rect x="16" y="552" width="488" height="104" rx="6" fill="#f5f7fa" stroke="#444444"/>
+<text x="28" y="572" font-size="13" font-weight="700" fill="#222222">On the FRC robot (2026 game manual)</text>
+<g font-size="12" fill="#222222">
+  <text x="28" y="591"><tspan font-weight="700">R601:</tspan> exactly 1 sealed lead-acid battery runs the robot: 12 V, 17 to 18.2 Ah.</text>
+  <text x="28" y="609"><tspan font-weight="700">R602:</tspan> other batteries only for COTS computers and cameras: USB packs</text>
+  <text x="28" y="627">of 100 Wh or less, or batteries built into the device (a laptop, a GoPro).</text>
+  <text x="28" y="645"><tspan font-weight="700">R605:</tspan> no other batteries on the robot, not even as ballast.</text>
+</g>
+</svg>
