@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="he-title he-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="he-title">The Hall effect</title>
+<desc id="he-desc">Animated. A thin plate carries a current from left to right, drawn as dots moving along it. A magnet above the plate moves in close and back out on a loop. While the magnet is close, the moving charges are pushed toward one edge of the plate, a voltmeter wired across the plate's two sides swings up, and a switch output lamp turns on. When the magnet moves away, the charges spread back out, the voltage falls and the lamp turns off. A magnetic field pushes moving charges sideways: a small voltage across the plate, growing with the field. Three in a NEO tell its controller where the rotor is; one in REV's magnetic limit switch sees a magnet 10 mm away (either pole).</desc>
+<style>
+  .magnet { transform: translateY(0px); animation: he-mag 6s linear infinite; }
+  @keyframes he-mag {
+    0% { transform: translateY(0px); }
+    15% { transform: translateY(0px); animation-timing-function: ease-in-out; }
+    40% { transform: translateY(-80px); }
+    62% { transform: translateY(-80px); animation-timing-function: ease-in-out; }
+    87% { transform: translateY(0px); }
+    100% { transform: translateY(0px); }
+  }
+  .shadow { opacity: 0.15; animation: he-shadow 6s linear infinite; }
+  @keyframes he-shadow {
+    0% { opacity: 0.15; }
+    15% { opacity: 0.15; animation-timing-function: ease-in-out; }
+    40% { opacity: 0.03; }
+    62% { opacity: 0.03; animation-timing-function: ease-in-out; }
+    87% { opacity: 0.15; }
+    100% { opacity: 0.15; }
+  }
+  .needle { transform-origin: 375px 176px; transform: rotate(50deg); animation: he-needle 6s linear infinite; }
+  @keyframes he-needle {
+    0% { transform: rotate(50deg); }
+    15% { transform: rotate(50deg); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+    40% { transform: rotate(-55deg); }
+    62% { transform: rotate(-55deg); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3); }
+    87% { transform: rotate(50deg); }
+    100% { transform: rotate(50deg); }
+  }
+  .d1 { transform: translate(22px, -18px); animation: he-d1 6s linear infinite; }
+  .d2 { transform: translate(16.23px, -13.28px); animation: he-d2 6s linear infinite; }
+  .d3 { transform: translate(10.45px, -8.55px); animation: he-d3 6s linear infinite; }
+  .d4 { transform: translate(4.68px, -3.83px); animation: he-d4 6s linear infinite; }
+  @keyframes he-d1 {
+    0% { transform: translate(22px, -18px); }
+    15% { transform: translate(22px, -18px); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+    40% { transform: translate(0px, 0px); }
+    62% { transform: translate(0px, 0px); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3); }
+    87% { transform: translate(22px, -18px); }
+    100% { transform: translate(22px, -18px); }
+  }
+  @keyframes he-d2 {
+    0% { transform: translate(16.23px, -13.28px); }
+    15% { transform: translate(16.23px, -13.28px); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+    40% { transform: translate(0px, 0px); }
+    62% { transform: translate(0px, 0px); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3); }
+    87% { transform: translate(16.23px, -13.28px); }
+    100% { transform: translate(16.23px, -13.28px); }
+  }
+  @keyframes he-d3 {
+    0% { transform: translate(10.45px, -8.55px); }
+    15% { transform: translate(10.45px, -8.55px); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+    40% { transform: translate(0px, 0px); }
+    62% { transform: translate(0px, 0px); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3); }
+    87% { transform: translate(10.45px, -8.55px); }
+    100% { transform: translate(10.45px, -8.55px); }
+  }
+  @keyframes he-d4 {
+    0% { transform: translate(4.68px, -3.83px); }
+    15% { transform: translate(4.68px, -3.83px); animation-timing-function: cubic-bezier(0.2, 0.7, 0.4, 1); }
+    40% { transform: translate(0px, 0px); }
+    62% { transform: translate(0px, 0px); animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.3); }
+    87% { transform: translate(4.68px, -3.83px); }
+    100% { transform: translate(4.68px, -3.83px); }
+  }
+  .flow { animation: he-flow 1s linear infinite; }
+  @keyframes he-flow { 0% { transform: translateX(0px); } 100% { transform: translateX(24px); } }
+  .lampOn, .onTxt { opacity: 1; animation: he-on 6s step-end infinite; }
+  @keyframes he-on { 0% { opacity: 1; } 19.19% { opacity: 0; } 82.83% { opacity: 1; } 100% { opacity: 1; } }
+  .offTxt { opacity: 0; animation: he-off 6s step-end infinite; }
+  @keyframes he-off { 0% { opacity: 0; } 19.19% { opacity: 1; } 82.83% { opacity: 0; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<defs>
+  <clipPath id="he-top"><polygon points="40,256 260,256 304,220 84,220"/></clipPath>
+</defs>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The Hall effect</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A thin plate carrying a current, with a magnet moving in and out above it.</text>
+
+<!-- Plate (oblique view) -->
+<polygon points="40,256 260,256 304,220 84,220" fill="#eef1f4" stroke="#444444" stroke-width="1.4" stroke-linejoin="round"/>
+<polygon points="40,256 260,256 260,266 40,266" fill="#b0b8c0" stroke="#444444" stroke-width="1.4" stroke-linejoin="round"/>
+<polygon points="260,256 304,220 304,230 260,266" fill="#c8ced5" stroke="#444444" stroke-width="1.4" stroke-linejoin="round"/>
+<ellipse class="shadow" cx="178" cy="236" rx="30" ry="9" fill="#000000"/>
+
+<!-- Moving charges: four lanes; each lane drifts toward the back edge while the magnet is close -->
+<g clip-path="url(#he-top)" stroke="#446ce3" stroke-width="6.4" stroke-linecap="round" stroke-dasharray="0 24">
+  <g class="d1"><g class="flow"><line x1="0.8" y1="248.8" x2="336" y2="248.8"/></g></g>
+  <g class="d2"><g class="flow"><line x1="9.6" y1="241.6" x2="336" y2="241.6"/></g></g>
+  <g class="d3"><g class="flow"><line x1="0.4" y1="234.4" x2="336" y2="234.4"/></g></g>
+  <g class="d4"><g class="flow"><line x1="21.2" y1="227.2" x2="336" y2="227.2"/></g></g>
+</g>
+
+<!-- Current leads -->
+<g stroke="#444444" stroke-width="1.6" fill="none">
+  <line x1="12" y1="238" x2="62" y2="238"/>
+  <line x1="282" y1="238" x2="322" y2="238"/>
+</g>
+<g fill="#444444">
+  <path d="M38 238L28 233V243Z"/>
+  <path d="M310 238L300 233V243Z"/>
+</g>
+<text x="12" y="228" font-size="12" fill="#5c5c5c">current</text>
+
+<!-- Voltage wires from the plate's two sides to the meter -->
+<g stroke="#444444" stroke-width="1.6" fill="none" stroke-linejoin="round">
+  <path d="M234 220V150H330"/>
+  <path d="M190 256V276H375V190"/>
+</g>
+<g fill="#222222">
+  <rect x="230" y="217.5" width="8" height="5" rx="1"/>
+  <rect x="186" y="253.5" width="8" height="5" rx="1"/>
+</g>
+
+<!-- Magnet (moves in and out) -->
+<g class="magnet">
+  <rect x="150" y="148" width="40" height="32" fill="#1f5fbf"/>
+  <rect x="150" y="180" width="40" height="32" fill="#d32f2f"/>
+  <polygon points="190,148 201,139 201,171 190,180" fill="#1f5fbf"/>
+  <polygon points="190,180 201,171 201,203 190,212" fill="#d32f2f"/>
+  <polygon points="190,148 201,139 201,203 190,212" fill="#000000" fill-opacity="0.22"/>
+  <polygon points="150,148 161,139 201,139 190,148" fill="#1f5fbf"/>
+  <polygon points="150,148 161,139 201,139 190,148" fill="#ffffff" fill-opacity="0.3"/>
+  <g fill="none" stroke="#444444" stroke-width="1.2" stroke-linejoin="round">
+    <rect x="150" y="148" width="40" height="64"/>
+    <polygon points="190,148 201,139 201,203 190,212"/>
+    <polygon points="150,148 161,139 201,139 190,148"/>
+  </g>
+  <g font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <text x="170" y="169">S</text>
+    <text x="170" y="201">N</text>
+  </g>
+</g>
+
+<!-- Magnet motion label (still) -->
+<g stroke="#5c5c5c" stroke-width="1.2" fill="none">
+  <line x1="136" y1="76" x2="136" y2="206"/>
+</g>
+<g fill="#5c5c5c">
+  <path d="M136 70L131.5 79H140.5Z"/>
+  <path d="M136 212L131.5 203H140.5Z"/>
+</g>
+<text x="128" y="128" font-size="13" font-weight="700" fill="#222222" text-anchor="end">magnet</text>
+<g font-size="12" fill="#5c5c5c" text-anchor="end">
+  <text x="128" y="144">moves in</text>
+  <text x="128" y="159">and out</text>
+</g>
+
+<!-- Voltmeter -->
+<text x="375" y="108" font-size="12" fill="#5c5c5c" text-anchor="middle">voltage across the plate</text>
+<rect x="330" y="118" width="90" height="72" rx="6" fill="#ffffff" stroke="#444444" stroke-width="1.6"/>
+<path d="M340.36 156A40 40 0 0 1 409.64 156" fill="none" stroke="#5c5c5c" stroke-width="1.4"/>
+<g stroke="#5c5c5c" stroke-width="1.4">
+  <line x1="340.36" y1="156" x2="335.16" y2="153"/>
+  <line x1="375" y1="136" x2="375" y2="130"/>
+  <line x1="409.64" y1="156" x2="414.84" y2="153"/>
+</g>
+<text x="398" y="183" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">V</text>
+<g class="needle">
+  <line x1="375" y1="176" x2="375" y2="141" stroke="#222222" stroke-width="2.4" stroke-linecap="round"/>
+</g>
+<circle cx="375" cy="176" r="4" fill="#222222"/>
+
+<!-- Switch output -->
+<line x1="424" y1="162" x2="448" y2="162" stroke="#444444" stroke-width="1.6"/>
+<path d="M456 162L447 157.5V166.5Z" fill="#444444"/>
+<g font-size="12" font-weight="700" fill="#222222" text-anchor="middle">
+  <text x="476" y="126">switch</text>
+  <text x="476" y="140">output</text>
+</g>
+<circle cx="476" cy="162" r="12" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<g class="lampOn">
+  <circle cx="476" cy="162" r="18" fill="#1a7f37" fill-opacity="0.18"/>
+  <circle cx="476" cy="162" r="12" fill="#1a7f37" stroke="#444444" stroke-width="1.4"/>
+</g>
+<g font-size="13" font-weight="700" text-anchor="middle">
+  <text class="onTxt" x="476" y="196" fill="#1a7f37">ON</text>
+  <text class="offTxt" x="476" y="196" fill="#5c5c5c">OFF</text>
+</g>
+
+<text x="16" y="298" font-size="12" fill="#5c5c5c">Thin plate; the dots are the moving charges (the current).</text>
+
+<line x1="16" y1="310" x2="504" y2="310" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Rules -->
+<g fill="#222222">
+  <circle cx="21" cy="327" r="2.5"/>
+  <circle cx="21" cy="369" r="2.5"/>
+</g>
+<g font-size="14" fill="#222222">
+  <text x="30" y="332">A magnetic field pushes moving charges sideways: a small voltage</text>
+  <text x="30" y="350">across the plate, growing with the field.</text>
+  <text x="30" y="374">Three in a NEO tell its controller where the rotor is; one in REV's</text>
+  <text x="30" y="392">magnetic limit switch sees a magnet 10 mm away (either pole).</text>
+</g>
+</svg>

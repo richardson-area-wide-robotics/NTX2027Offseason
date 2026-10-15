@@ -62,7 +62,8 @@ const Bringup = (() => {
           steps: ["<b>Start the live readout</b>: each sensor's value, as the robot reads it.",
             "Trip each one by hand (block the beam, press the switch, turn the encoder). It is ticked the moment it changes.",
             "Untick any that changed the wrong way (the design's <b>Means</b> says which way is which), then <b>Stop</b>."],
-          good: "every sensor ticked, each changing the way its design says." })}
+          good: "every sensor ticked, each changing the way its design says.",
+          learn: `<span class="small muted" data-tip="br.sensors-learn">How each sensor works:</span>${Learn.chips(["limit_switch", "break_beam", "time_of_flight", "hall_effect", "encoder_quadrature", "encoder_magnetic", "gyro_mems"])}` })}
         <div id="br-sensors-body"></div>
         ${HowTo.nextLine("sensors")}
       </div>
@@ -72,7 +73,8 @@ const Bringup = (() => {
           steps: ["Press <b>Run</b>: the robot's code pauses and the motor runs at 8% for 0.6 s.",
             "Say which way it went. Its encoder always agrees with the code, so only a person can tell if the code's direction is the mechanism's right direction.",
             "A motor that didn't turn: check its PDH port and breaker, then its CAN plug."],
-          good: "every motor turned, the way its design says is positive, on its designed PDH port." })}
+          good: "every motor turned, the way its design says is positive, on its designed PDH port.",
+          learn: `<span class="small muted" data-tip="br.motors-learn">How motors work:</span>${Learn.chips(["motor_basics", "brushed_brushless", "inrunner_outrunner", "pole_pairs"])}` })}
         <div id="br-motors-body"></div>
         ${HowTo.nextLine("motors")}
       </div>

@@ -34,11 +34,12 @@ const HowTo = (() => {
   }
 
   /** Steps, a good result and what you need, in the house layout. */
-  function steps({ need, steps: list, good, note } = {}) {
+  function steps({ need, steps: list, good, note, learn } = {}) {
     return block(`${need ? `<p class="small"><b>You need:</b> ${need}</p>` : ""}
       ${list ? `<ol class="small">${list.map(s => `<li>${s}</li>`).join("")}</ol>` : ""}
       ${note ? `<p class="small">${note}</p>` : ""}
-      ${good ? `<p class="small good-result"><b>A good result:</b> ${good}</p>` : ""}`);
+      ${good ? `<p class="small good-result"><b>A good result:</b> ${good}</p>` : ""}
+      ${learn ? `<div class="row learn-row" style="flex-wrap:wrap">${learn}</div>` : ""}`);
   }
 
   function apply(root) {

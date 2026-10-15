@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 432" width="520" height="432" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mb-title mb-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mb-title">Brushed DC motor</title>
+<desc id="mb-desc">Animated end view of a brushed DC motor. Two permanent magnets, north in red on the left and south in blue on the right, stay still inside the motor can. Between them a steel rotor carrying one coil (the armature) turns clockwise. On the same shaft, a two-segment commutator turns with the rotor while two carbon brushes, wired to plus and minus from the controller, press on it. The left coil side carries current toward you and the right side carries current away from you. Each time the coil sides pass the top and bottom, the gaps in the commutator pass under the brushes, the brushes swap segments, and the current in each coil side flips, so the rotor keeps turning the same way. A spark at the brushes marks each swap. The brushes and commutator flip the coil's current every half turn. Brushes wear and spark; the commutator heats. FRC still allows brushed motors such as the CIM and 775pro (2026 R501).</desc>
+<style>
+  .spin { transform-box: view-box; transform-origin: 0 0; animation: mb-spin 6s linear infinite; }
+  .upright { transform-box: view-box; transform-origin: 0 0; animation: mb-unspin 6s linear infinite; }
+  .half-a { animation: mb-half-a 6s linear infinite; }
+  .half-b { opacity: 0; animation: mb-half-b 6s linear infinite; }
+  .spark { opacity: 0; animation: mb-spark 6s linear infinite; }
+  @keyframes mb-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes mb-unspin { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+  @keyframes mb-half-a { 0%, 24.9% { opacity: 1; } 25%, 74.9% { opacity: 0; } 75%, 100% { opacity: 1; } }
+  @keyframes mb-half-b { 0%, 24.9% { opacity: 0; } 25%, 74.9% { opacity: 1; } 75%, 100% { opacity: 0; } }
+  @keyframes mb-spark { 0%, 23.5% { opacity: 0; } 25% { opacity: 1; } 28.5%, 73.5% { opacity: 0; } 75% { opacity: 1; } 78.5%, 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Brushed DC motor</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">End view, looking down the shaft. The magnets stay still; the rotor turns.</text>
+
+<!-- ============ Main view: magnets + rotor coil ============ -->
+<text x="130" y="72" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">magnets (still)</text>
+<g stroke="#222222" stroke-width="1" fill="none">
+  <line x1="106" y1="77" x2="67" y2="132"/>
+  <line x1="154" y1="77" x2="193" y2="132"/>
+</g>
+
+<g transform="translate(130 182)">
+  <!-- motor can -->
+  <circle r="95" fill="none" stroke="#b0b8c0" stroke-width="10"/>
+  <circle r="100" fill="none" stroke="#444444" stroke-width="1"/>
+  <!-- magnets -->
+  <path d="M-66.88 60.22A90 90 0 0 1 -66.88 -60.22L-52.02 -46.84A70 70 0 0 0 -52.02 46.84Z" fill="#d32f2f" stroke="#444444" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M66.88 -60.22A90 90 0 0 1 66.88 60.22L52.02 46.84A70 70 0 0 0 52.02 -46.84Z" fill="#1f5fbf" stroke="#444444" stroke-width="1.5" stroke-linejoin="round"/>
+  <g font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">
+    <text x="-80" y="6">N</text>
+    <text x="80" y="6">S</text>
+  </g>
+  <circle r="90" fill="none" stroke="#444444" stroke-width="1"/>
+
+  <!-- turning direction (static) -->
+  <path d="M-22.57 -62.02A66 66 0 0 1 20.4 -62.77" fill="none" stroke="#222222" stroke-width="2"/>
+  <path d="M29.96 -58.81L18.85 -58.01L21.94 -67.52Z" fill="#222222"/>
+
+  <!-- rotor (turns) -->
+  <g class="spin">
+    <circle r="58" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/>
+    <path d="M-44 0L-18 0A18 18 0 0 1 18 0L44 0" fill="none" stroke="#c47a2c" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="-44" cy="0" r="10" fill="#c47a2c" stroke="#444444" stroke-width="1.5"/>
+    <circle cx="44" cy="0" r="10" fill="#f0cfa6" stroke="#444444" stroke-width="1.5"/>
+    <circle r="7" fill="#444444"/>
+    <!-- coil side 1 (dark copper): toward you, then away -->
+    <g transform="translate(-44 0)">
+      <g class="upright">
+        <circle class="half-a" r="3.2" fill="#222222"/>
+        <path class="half-b" d="M-4.5 -4.5L4.5 4.5M4.5 -4.5L-4.5 4.5" stroke="#222222" stroke-width="2.2" stroke-linecap="round"/>
+      </g>
+    </g>
+    <!-- coil side 2 (light copper): away from you, then toward -->
+    <g transform="translate(44 0)">
+      <g class="upright">
+        <path class="half-a" d="M-4.5 -4.5L4.5 4.5M4.5 -4.5L-4.5 4.5" stroke="#222222" stroke-width="2.2" stroke-linecap="round"/>
+        <circle class="half-b" r="3.2" fill="#222222"/>
+      </g>
+    </g>
+  </g>
+</g>
+
+<line x1="130" y1="288" x2="130" y2="234" stroke="#222222" stroke-width="1"/>
+<circle cx="130" cy="234" r="2.5" fill="#222222"/>
+<text x="130" y="302" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">rotor coil (armature): turns</text>
+
+<!-- ============ Commutator + brushes ============ -->
+<text x="390" y="114" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">commutator</text>
+<text x="390" y="129" font-size="12" fill="#5c5c5c" text-anchor="middle">(on the same shaft, turns)</text>
+<line x1="390" y1="134" x2="390" y2="146" stroke="#222222" stroke-width="1"/>
+
+<g transform="translate(390 182)">
+  <g class="spin">
+    <path d="M-2.96 33.87A34 34 0 0 1 -2.96 -33.87L-1.13 -12.95A13 13 0 0 0 -1.13 12.95Z" fill="#c47a2c" stroke="#444444" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M2.96 -33.87A34 34 0 0 1 2.96 33.87L1.13 12.95A13 13 0 0 0 1.13 -12.95Z" fill="#f0cfa6" stroke="#444444" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle r="12" fill="#e6e6e6" stroke="#444444" stroke-width="1"/>
+    <circle r="7" fill="#444444"/>
+  </g>
+</g>
+
+<!-- brushes (still), pressed on by springs -->
+<g>
+  <rect x="297" y="170" width="6" height="24" fill="#5c5c5c"/>
+  <rect x="477" y="170" width="6" height="24" fill="#5c5c5c"/>
+  <g fill="none" stroke="#5c5c5c" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M303 182L306 176L309.5 188L313 176L316.5 188L320 176L323 182"/>
+    <path d="M477 182L474 176L470.5 188L467 176L463.5 188L460 176L457 182"/>
+  </g>
+  <rect x="323" y="172" width="34" height="20" rx="2" fill="#4a4a4a" stroke="#222222" stroke-width="1.2"/>
+  <rect x="423" y="172" width="34" height="20" rx="2" fill="#4a4a4a" stroke="#222222" stroke-width="1.2"/>
+</g>
+
+<!-- sparks at each swap -->
+<g class="spark" fill="#ffc107" stroke="#c47a2c" stroke-width="1" stroke-linejoin="round">
+  <path d="M357 172L359.2 179.8L367 182L359.2 184.2L357 192L354.8 184.2L347 182L354.8 179.8Z"/>
+  <path d="M423 172L425.2 179.8L433 182L425.2 184.2L423 192L420.8 184.2L413 182L420.8 179.8Z"/>
+</g>
+
+<g stroke="#222222" stroke-width="1">
+  <line x1="340" y1="194" x2="340" y2="216"/>
+  <line x1="440" y1="194" x2="440" y2="216"/>
+</g>
+<g font-size="12" fill="#222222" text-anchor="middle">
+  <text x="340" y="229">carbon brush</text>
+  <text x="440" y="229">carbon brush</text>
+</g>
+
+<!-- wires to the controller -->
+<g fill="none" stroke-width="2.5" stroke-linejoin="round">
+  <path d="M300 194L300 246L384 246L384 280" stroke="#222222"/>
+  <path d="M480 194L480 246L396 246L396 280" stroke="#d32f2f"/>
+</g>
+<g font-size="16" font-weight="700" text-anchor="middle">
+  <text x="288" y="236" fill="#222222">−</text>
+  <text x="493" y="236" fill="#d32f2f">+</text>
+</g>
+<text x="390" y="302" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">+ and − from the controller</text>
+
+<!-- legend -->
+<g transform="translate(26 324)">
+  <circle r="7" fill="#ffffff" stroke="#222222" stroke-width="1.5"/>
+  <circle r="2.6" fill="#222222"/>
+</g>
+<text x="39" y="328" font-size="12" fill="#222222">current toward you</text>
+<g transform="translate(168 324)">
+  <circle r="7" fill="#ffffff" stroke="#222222" stroke-width="1.5"/>
+  <path d="M-3.5 -3.5L3.5 3.5M3.5 -3.5L-3.5 3.5" stroke="#222222" stroke-width="1.8" stroke-linecap="round"/>
+</g>
+<text x="181" y="328" font-size="12" fill="#222222">current away from you</text>
+<rect x="327" y="317" width="12" height="14" fill="#c47a2c" stroke="#444444" stroke-width="1"/>
+<rect x="341" y="317" width="12" height="14" fill="#f0cfa6" stroke="#444444" stroke-width="1"/>
+<text x="359" y="328" font-size="12" fill="#222222">same color: wired together</text>
+
+<line x1="16" y1="344" x2="504" y2="344" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- caption -->
+<g font-size="13" fill="#222222">
+  <text x="16" y="364"><tspan font-weight="700">The brushes and commutator flip the coil's current every half turn,</tspan></text>
+  <text x="16" y="381"><tspan font-weight="700">so it keeps turning the same way.</tspan></text>
+  <text x="16" y="401">Brushes wear and spark; the commutator heats.</text>
+</g>
+<text x="16" y="420" font-size="12" fill="#5c5c5c">FRC still allows brushed motors such as the CIM and 775pro (2026 R501).</text>
+</svg>

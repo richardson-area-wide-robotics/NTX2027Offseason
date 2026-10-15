@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 456" width="520" height="456" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="tof-title tof-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="tof-title">Time-of-flight distance sensor</title>
+<desc id="tof-desc">Animated time-of-flight measurement: a sensor on the left fires a short light pulse that travels to a target 1 m (3.3 ft) away on the right and back. A round-trip timer bar fills and its reading counts up in steps from 0.0 to 6.7 ns while the pulse is out; when the pulse returns, the distance reading shows 1 m (3.3 ft), then the timer resets and the loop repeats. Formula: distance = speed of light x time / 2, divided by 2 because the light goes there and back. Light is fast: 1 m (3.3 ft) away is a 6.7 ns round trip. FRC parts: Grapple LaserCAN, 0-4 m (0-13 ft), CAN, 10-50 Hz; CTRE CANrange, 1-300 cm (0.4-118 in), CAN, up to 100 Hz; Playing With Fusion, up to 4 m (13 ft), CAN, 50 Hz; REV 2m Distance Sensor, 5-200 cm (2-79 in), I2C. Bright light and dark targets shorten the range (ST's VL53L1X chip: 360 cm on white in the dark, 73 cm in strong light).</desc>
+<style>
+/* One 6 s loop, starting on the finished reading: result 0-14 %, reset 14-16 %,
+   pulse out 20-50 %, back 50-80 %, new result 80-100 %. */
+.pout{opacity:0;animation:pout 6s linear infinite}
+@keyframes pout{0%,19.9%{opacity:0;transform:translateX(0)}20%{opacity:1;transform:translateX(0)}50%{opacity:1;transform:translateX(352px)}50.1%,100%{opacity:0;transform:translateX(352px)}}
+.pback{opacity:0;animation:pback 6s linear infinite}
+@keyframes pback{0%,49.9%{opacity:0;transform:translateX(0)}50%{opacity:1;transform:translateX(0)}80%{opacity:1;transform:translateX(-352px)}80.1%,100%{opacity:0;transform:translateX(-352px)}}
+.tflash{opacity:0;animation:tflash 6s linear infinite}
+@keyframes tflash{0%,48%{opacity:0}50%{opacity:.55}56%,100%{opacity:0}}
+.txw{animation:txw 6s linear infinite}
+@keyframes txw{0%,18%{fill:#5c5c5c}20%{fill:#e65100}25%,100%{fill:#5c5c5c}}
+.rxw{animation:rxw 6s linear infinite}
+@keyframes rxw{0%,78%{fill:#5c5c5c}80%{fill:#e65100}86%,100%{fill:#5c5c5c}}
+.tbar{transform-box:fill-box;transform-origin:0% 50%;animation:tbar 6s linear infinite}
+@keyframes tbar{0%,14%{transform:scaleX(1)}15%,20%{transform:scaleX(0)}80%,100%{transform:scaleX(1)}}
+.v{opacity:0}
+.v0{animation:v0 6s linear infinite}
+@keyframes v0{0%,13.9%{opacity:0}14%,29.9%{opacity:1}30%,100%{opacity:0}}
+.v1{animation:v1 6s linear infinite}
+@keyframes v1{0%,29.9%{opacity:0}30%,39.9%{opacity:1}40%,100%{opacity:0}}
+.v2{animation:v2 6s linear infinite}
+@keyframes v2{0%,39.9%{opacity:0}40%,49.9%{opacity:1}50%,100%{opacity:0}}
+.v3{animation:v3 6s linear infinite}
+@keyframes v3{0%,49.9%{opacity:0}50%,59.9%{opacity:1}60%,100%{opacity:0}}
+.v4{animation:v4 6s linear infinite}
+@keyframes v4{0%,59.9%{opacity:0}60%,69.9%{opacity:1}70%,100%{opacity:0}}
+.v5{animation:v5 6s linear infinite}
+@keyframes v5{0%,69.9%{opacity:0}70%,79.9%{opacity:1}80%,100%{opacity:0}}
+.v6,.done{opacity:1;animation:done 6s linear infinite}
+@keyframes done{0%,13.9%{opacity:1}14%,79.9%{opacity:0}80%,100%{opacity:1}}
+.wait{opacity:0;animation:wait 6s linear infinite}
+@keyframes wait{0%,13.9%{opacity:0}14%,79.9%{opacity:1}80%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Time-of-flight distance sensor</text>
+<text x="16" y="46" font-size="12" fill="#5c5c5c">It times a short light pulse out to the target and back.</text>
+
+<!-- ===== Scene ===== -->
+<g font-size="12" fill="#5c5c5c" text-anchor="middle">
+  <text x="46" y="70">sensor</text>
+  <text x="459" y="66">target</text>
+  <text x="260" y="92">out</text>
+  <text x="260" y="144">back</text>
+</g>
+<rect x="20" y="78" width="52" height="70" rx="4" fill="#444444"/>
+<circle class="txw" cx="64" cy="100" r="5" fill="#5c5c5c" stroke="#222222" stroke-width="1"/>
+<circle class="rxw" cx="64" cy="126" r="5" fill="#5c5c5c" stroke="#222222" stroke-width="1"/>
+<rect x="448" y="72" width="22" height="82" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<!-- lanes -->
+<g stroke="#e65100" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.45">
+  <line x1="76" y1="100" x2="438" y2="100"/>
+  <line x1="440" y1="126" x2="82" y2="126"/>
+</g>
+<path d="M446 100 L437 96 L437 104 Z M74 126 L83 122 L83 130 Z" fill="#e65100" fill-opacity="0.6"/>
+<circle class="tflash" cx="448" cy="113" r="15" fill="#e65100"/>
+<!-- the pulse, out then back -->
+<g class="pout">
+  <ellipse cx="84" cy="100" rx="17" ry="7" fill="#e65100" fill-opacity="0.25"/>
+  <ellipse cx="84" cy="100" rx="10" ry="4" fill="#e65100"/>
+</g>
+<g class="pback">
+  <ellipse cx="436" cy="126" rx="17" ry="7" fill="#e65100" fill-opacity="0.25"/>
+  <ellipse cx="436" cy="126" rx="10" ry="4" fill="#e65100"/>
+</g>
+<!-- true distance -->
+<g stroke="#5c5c5c" stroke-width="1">
+  <line x1="78" y1="168" x2="442" y2="168"/>
+  <line x1="72" y1="161" x2="72" y2="175"/>
+  <line x1="448" y1="161" x2="448" y2="175"/>
+</g>
+<path d="M72 168 L80 164.5 L80 171.5 Z M448 168 L440 164.5 L440 171.5 Z" fill="#5c5c5c"/>
+<text x="260" y="185" font-size="12" fill="#5c5c5c" text-anchor="middle">1 m (3.3 ft) away</text>
+
+<!-- ===== Timer and reading ===== -->
+<text x="16" y="210" font-size="13" font-weight="700" fill="#222222">Round-trip timer</text>
+<rect x="136" y="199" width="244" height="13" rx="2" fill="#f4f4f4" stroke="#444444" stroke-width="1"/>
+<rect class="tbar" x="137" y="200" width="242" height="11" fill="#446ce3"/>
+<g font-size="14" font-weight="700" fill="#222222">
+  <text class="v v0" x="392" y="210">0.0 ns</text>
+  <text class="v v1" x="392" y="210">1.1 ns</text>
+  <text class="v v2" x="392" y="210">2.2 ns</text>
+  <text class="v v3" x="392" y="210">3.3 ns</text>
+  <text class="v v4" x="392" y="210">4.4 ns</text>
+  <text class="v v5" x="392" y="210">5.6 ns</text>
+  <text class="v6" x="392" y="210">6.7 ns</text>
+</g>
+<text x="16" y="236" font-size="13" font-weight="700" fill="#222222">Distance:</text>
+<text class="wait" x="86" y="236" font-size="13" fill="#5c5c5c">waiting for the pulse to come back</text>
+<text class="done" x="86" y="236" font-size="14" font-weight="700" fill="#446ce3">1 m (3.3 ft)<tspan font-size="12" font-weight="400" fill="#5c5c5c"> = speed of light × 6.7 ns / 2</tspan></text>
+
+<!-- ===== Formula ===== -->
+<rect x="16" y="250" width="488" height="40" rx="4" fill="#f4f4f4" stroke="#d6d6d6" stroke-width="1"/>
+<text x="260" y="269" font-size="15" font-weight="700" fill="#222222" text-anchor="middle">distance = speed of light × time / 2</text>
+<text x="260" y="284" font-size="12" fill="#5c5c5c" text-anchor="middle">Divide by 2: the light goes there and back.</text>
+<text x="16" y="311" font-size="13" fill="#222222"><tspan font-weight="700">Light is fast:</tspan> 1 m (3.3 ft) away is a 6.7 ns round trip.</text>
+
+<!-- ===== FRC parts ===== -->
+<g font-size="12" font-weight="700" fill="#5c5c5c">
+  <text x="16" y="334">FRC part</text>
+  <text x="182" y="334">Range</text>
+  <text x="336" y="334">Bus</text>
+  <text x="384" y="334">Rate</text>
+</g>
+<line x1="16" y1="340" x2="504" y2="340" stroke="#d6d6d6" stroke-width="1"/>
+<g font-size="13" fill="#222222">
+  <text x="16" y="357">Grapple LaserCAN</text>
+  <text x="182" y="357">0–4 m (0–13 ft)</text>
+  <text x="336" y="357">CAN</text>
+  <text x="384" y="357">10–50 Hz</text>
+  <text x="16" y="374">CTRE CANrange</text>
+  <text x="182" y="374">1–300 cm (0.4–118 in)</text>
+  <text x="336" y="374">CAN</text>
+  <text x="384" y="374">up to 100 Hz</text>
+  <text x="16" y="391">Playing With Fusion</text>
+  <text x="182" y="391">up to 4 m (13 ft)</text>
+  <text x="336" y="391">CAN</text>
+  <text x="384" y="391">50 Hz</text>
+  <text x="16" y="408">REV 2m Distance Sensor</text>
+  <text x="182" y="408">5–200 cm (2–79 in)</text>
+  <text x="336" y="408">I2C</text>
+  <text x="384" y="408" fill="#5c5c5c">–</text>
+</g>
+<line x1="16" y1="416" x2="504" y2="416" stroke="#d6d6d6" stroke-width="1"/>
+<g font-size="13" fill="#222222">
+  <text x="16" y="434">Bright light and dark targets shorten the range (ST's VL53L1X chip:</text>
+  <text x="16" y="450">360 cm on white in the dark, 73 cm in strong light).</text>
+</g>
+</svg>

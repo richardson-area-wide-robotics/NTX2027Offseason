@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 426" width="520" height="426" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="io-title io-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="io-title">Inrunner vs outrunner</title>
+<desc id="io-desc">Two animated motor cross sections side by side. Left, an inrunner: the stator coils are on the outside and stay still, and the magnet rotor inside turns. Inrunner: rotor inside, spins fast, needs gearing. Right, an outrunner: the stator coils are in the middle and stay still, and the magnets are on a rotating outer can that turns around them. Outrunner: rotating outer can, more poles, more torque at low speed. Only the rotating parts move. REV calls the NEO V1.1, NEO 2.0 and NEO 550 out-runners; WCP calls the Kraken X60 and X44 outrunners. REV doesn't say which the Vortex is.</desc>
+<defs>
+  <!-- inrunner tooth, pointing in from the outer ring -->
+  <path id="io-in-tooth" d="M-7 -88L-7 -56.57A57 57 0 0 0 -20.43 -53.21L-18.64 -48.55A52 52 0 0 1 18.64 -48.55L20.43 -53.21A57 57 0 0 0 7 -56.57L7 -88Z" fill="#b0b8c0" stroke="#444444" stroke-width="1.2" stroke-linejoin="round"/>
+  <rect id="io-in-coil" x="-15" y="-79" width="30" height="19" rx="2.5" fill="#c47a2c" stroke="#444444" stroke-width="1"/>
+  <!-- outrunner tooth, pointing out from the center core -->
+  <path id="io-out-tooth" d="M-4.5 -30L-4.5 -63.84A64 64 0 0 0 -13.31 -62.6L-14.35 -67.49A69 69 0 0 1 14.35 -67.49L13.31 -62.6A64 64 0 0 0 4.5 -63.84L4.5 -30Z" fill="#b0b8c0" stroke="#444444" stroke-width="1.2" stroke-linejoin="round"/>
+  <rect id="io-out-coil" x="-8" y="-60" width="16" height="20" rx="2" fill="#c47a2c" stroke="#444444" stroke-width="1"/>
+</defs>
+<style>
+  .spin-fast { transform-box: view-box; transform-origin: 0 0; animation: io-spin 4s linear infinite; }
+  .spin-slow { transform-box: view-box; transform-origin: 0 0; animation: io-spin 8s linear infinite; }
+  @keyframes io-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Inrunner vs outrunner</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Cross sections, looking down the shaft. Only the magnet side turns.</text>
+
+<!-- legend -->
+<rect x="16" y="61" width="16" height="12" rx="2" fill="#c47a2c" stroke="#444444" stroke-width="1"/>
+<text x="38" y="72" font-size="12" fill="#222222">stator coils (still)</text>
+<rect x="170" y="61" width="8" height="12" fill="#d32f2f" stroke="#444444" stroke-width="1"/>
+<rect x="178" y="61" width="8" height="12" fill="#1f5fbf" stroke="#444444" stroke-width="1"/>
+<text x="192" y="72" font-size="12" fill="#222222">magnets (turning)</text>
+<rect x="318" y="61" width="16" height="12" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<text x="340" y="72" font-size="12" fill="#222222">steel</text>
+
+<!-- ============ INRUNNER ============ -->
+<g transform="translate(130 190)">
+  <!-- stator (still): outer ring, 6 teeth pointing in, coils -->
+  <circle r="82" fill="none" stroke="#444444" stroke-width="1"/>
+  <use href="#io-in-tooth"/>
+  <use href="#io-in-tooth" transform="rotate(60)"/>
+  <use href="#io-in-tooth" transform="rotate(120)"/>
+  <use href="#io-in-tooth" transform="rotate(180)"/>
+  <use href="#io-in-tooth" transform="rotate(240)"/>
+  <use href="#io-in-tooth" transform="rotate(300)"/>
+  <circle r="89.25" fill="none" stroke="#b0b8c0" stroke-width="13.5"/>
+  <circle r="96" fill="none" stroke="#444444" stroke-width="1.2"/>
+  <use href="#io-in-coil"/>
+  <use href="#io-in-coil" transform="rotate(60)"/>
+  <use href="#io-in-coil" transform="rotate(120)"/>
+  <use href="#io-in-coil" transform="rotate(180)"/>
+  <use href="#io-in-coil" transform="rotate(240)"/>
+  <use href="#io-in-coil" transform="rotate(300)"/>
+
+  <!-- rotor (turns): 4 magnets on a steel core -->
+  <g class="spin-fast">
+    <circle r="36" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+    <g stroke="#444444" stroke-width="1" stroke-linejoin="round">
+      <path d="M-32.74 -35.1A48 48 0 0 1 32.74 -35.1L24.55 -26.33A36 36 0 0 0 -24.55 -26.33Z" fill="#d32f2f"/>
+      <path d="M35.1 -32.74A48 48 0 0 1 35.1 32.74L26.33 24.55A36 36 0 0 0 26.33 -24.55Z" fill="#1f5fbf"/>
+      <path d="M32.74 35.1A48 48 0 0 1 -32.74 35.1L-24.55 26.33A36 36 0 0 0 24.55 26.33Z" fill="#d32f2f"/>
+      <path d="M-35.1 32.74A48 48 0 0 1 -35.1 -32.74L-26.33 -24.55A36 36 0 0 0 -26.33 24.55Z" fill="#1f5fbf"/>
+    </g>
+    <circle r="6" fill="#444444"/>
+  </g>
+  <!-- turning direction (static) -->
+  <path d="M-20.78 -12A24 24 0 0 1 15.43 -18.39" fill="none" stroke="#222222" stroke-width="2"/>
+  <path d="M20.03 -14.53L17.68 -21.07L13.18 -15.71Z" fill="#222222"/>
+</g>
+
+<!-- ============ OUTRUNNER ============ -->
+<g transform="translate(390 190)">
+  <!-- outer can (turns) with 14 magnets inside it -->
+  <g class="spin-slow">
+    <circle r="91" fill="none" stroke="#b0b8c0" stroke-width="10"/>
+    <circle r="96" fill="none" stroke="#444444" stroke-width="1.2"/>
+    <circle r="86" fill="none" stroke="#444444" stroke-width="1"/>
+    <g stroke="#444444" stroke-width="1" stroke-linejoin="round">
+      <path d="M-16.94 -84.32A86 86 0 0 1 16.94 -84.32L14.57 -72.55A74 74 0 0 0 -14.57 -72.55Z" fill="#d32f2f"/>
+      <path d="M21.33 -83.31A86 86 0 0 1 51.84 -68.62L44.61 -59.04A74 74 0 0 0 18.35 -71.69Z" fill="#1f5fbf"/>
+      <path d="M55.36 -65.81A86 86 0 0 1 76.48 -39.33L65.81 -33.84A74 74 0 0 0 47.64 -56.63Z" fill="#d32f2f"/>
+      <path d="M78.43 -35.27A86 86 0 0 1 85.97 -2.25L73.97 -1.94A74 74 0 0 0 67.49 -30.35Z" fill="#1f5fbf"/>
+      <path d="M85.97 2.25A86 86 0 0 1 78.43 35.27L67.49 30.35A74 74 0 0 0 73.97 1.94Z" fill="#d32f2f"/>
+      <path d="M76.48 39.33A86 86 0 0 1 55.36 65.81L47.64 56.63A74 74 0 0 0 65.81 33.84Z" fill="#1f5fbf"/>
+      <path d="M51.84 68.62A86 86 0 0 1 21.33 83.31L18.35 71.69A74 74 0 0 0 44.61 59.04Z" fill="#d32f2f"/>
+      <path d="M16.94 84.32A86 86 0 0 1 -16.94 84.32L-14.57 72.55A74 74 0 0 0 14.57 72.55Z" fill="#1f5fbf"/>
+      <path d="M-21.33 83.31A86 86 0 0 1 -51.84 68.62L-44.61 59.04A74 74 0 0 0 -18.35 71.69Z" fill="#d32f2f"/>
+      <path d="M-55.36 65.81A86 86 0 0 1 -76.48 39.33L-65.81 33.84A74 74 0 0 0 -47.64 56.63Z" fill="#1f5fbf"/>
+      <path d="M-78.43 35.27A86 86 0 0 1 -85.97 2.25L-73.97 1.94A74 74 0 0 0 -67.49 30.35Z" fill="#d32f2f"/>
+      <path d="M-85.97 -2.25A86 86 0 0 1 -78.43 -35.27L-67.49 -30.35A74 74 0 0 0 -73.97 -1.94Z" fill="#1f5fbf"/>
+      <path d="M-76.48 -39.33A86 86 0 0 1 -55.36 -65.81L-47.64 -56.63A74 74 0 0 0 -65.81 -33.84Z" fill="#d32f2f"/>
+      <path d="M-51.84 -68.62A86 86 0 0 1 -21.33 -83.31L-18.35 -71.69A74 74 0 0 0 -44.61 -59.04Z" fill="#1f5fbf"/>
+    </g>
+  </g>
+
+  <!-- stator (still): center core, 12 teeth pointing out, coils -->
+  <circle r="35" fill="none" stroke="#444444" stroke-width="2"/>
+  <use href="#io-out-tooth"/>
+  <use href="#io-out-tooth" transform="rotate(30)"/>
+  <use href="#io-out-tooth" transform="rotate(60)"/>
+  <use href="#io-out-tooth" transform="rotate(90)"/>
+  <use href="#io-out-tooth" transform="rotate(120)"/>
+  <use href="#io-out-tooth" transform="rotate(150)"/>
+  <use href="#io-out-tooth" transform="rotate(180)"/>
+  <use href="#io-out-tooth" transform="rotate(210)"/>
+  <use href="#io-out-tooth" transform="rotate(240)"/>
+  <use href="#io-out-tooth" transform="rotate(270)"/>
+  <use href="#io-out-tooth" transform="rotate(300)"/>
+  <use href="#io-out-tooth" transform="rotate(330)"/>
+  <circle r="35" fill="#b0b8c0"/>
+  <circle r="15" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+  <use href="#io-out-coil"/>
+  <use href="#io-out-coil" transform="rotate(30)"/>
+  <use href="#io-out-coil" transform="rotate(60)"/>
+  <use href="#io-out-coil" transform="rotate(90)"/>
+  <use href="#io-out-coil" transform="rotate(120)"/>
+  <use href="#io-out-coil" transform="rotate(150)"/>
+  <use href="#io-out-coil" transform="rotate(180)"/>
+  <use href="#io-out-coil" transform="rotate(210)"/>
+  <use href="#io-out-coil" transform="rotate(240)"/>
+  <use href="#io-out-coil" transform="rotate(270)"/>
+  <use href="#io-out-coil" transform="rotate(300)"/>
+  <use href="#io-out-coil" transform="rotate(330)"/>
+
+  <!-- shaft turns with the can -->
+  <g class="spin-slow">
+    <circle r="9" fill="#444444"/>
+  </g>
+  <!-- turning direction (static) -->
+  <path d="M35.57 -97.73A104 104 0 0 1 94.26 -43.95" fill="none" stroke="#222222" stroke-width="2"/>
+  <path d="M97.22 -37.61L97.88 -45.64L90.63 -42.26Z" fill="#222222"/>
+</g>
+
+<!-- labels under each -->
+<g text-anchor="middle">
+  <text x="130" y="310" font-size="14" font-weight="700" fill="#222222">INRUNNER</text>
+  <text x="130" y="328" font-size="12" fill="#222222">rotor inside: spins fast,</text>
+  <text x="130" y="343" font-size="12" fill="#222222">needs gearing</text>
+  <text x="390" y="310" font-size="14" font-weight="700" fill="#222222">OUTRUNNER</text>
+  <text x="390" y="328" font-size="12" fill="#222222">rotating outer can, more poles:</text>
+  <text x="390" y="343" font-size="12" fill="#222222">more torque at low speed</text>
+</g>
+
+<line x1="16" y1="360" x2="504" y2="360" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- note -->
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="380">REV calls the NEO V1.1, NEO 2.0 and NEO 550 out-runners;</text>
+  <text x="16" y="397">WCP calls the Kraken X60 and X44 outrunners.</text>
+  <text x="16" y="414">(REV doesn't say which the Vortex is.)</text>
+</g>
+</svg>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 418" width="520" height="418" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bb-title bb-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="bb-title">Break-beam sensor</title>
+<desc id="bb-desc">Animated top view of a through-beam break-beam sensor on a ball path: an IR emitter on one wall faces a receiver on the other wall across the gap, with the invisible beam drawn as a dashed line. A ball rolls along the path, blocks the beam as it passes, then rolls on, in a loop. While the beam is clear the output is HIGH and DigitalInput reads true; while the ball breaks the beam the output is LOW and it reads false. Adafruit's 3 mm IR pair has an open-collector output that needs a pull-up, and the roboRIO has one. Inset, other kinds: retroreflective, with the emitter and receiver together and a reflector across; and diffuse, where the light bounces off the object itself. Note: sunlight can blind an IR receiver; shiny or dark objects change what reflective kinds see.</desc>
+<style>
+/* One 6 s loop: the ball fades in, rolls 12-88 %, fades out. It blocks the beam 40.7-59.3 %. */
+.ball{animation:ball 6s linear infinite}
+@keyframes ball{0%{opacity:0;transform:translateX(0)}5%{opacity:1;transform:translateX(0)}12%{opacity:1;transform:translateX(0)}88%{opacity:1;transform:translateX(246px)}94%{opacity:0;transform:translateX(246px)}100%{opacity:0;transform:translateX(246px)}}
+.past{animation:clear 6s linear infinite}
+@keyframes clear{0%,40.6%{opacity:1}40.7%,59.2%{opacity:0}59.3%,100%{opacity:1}}
+.rxlens{animation:rxlens 6s linear infinite}
+@keyframes rxlens{0%,40.6%{fill:#e65100}40.7%,59.2%{fill:#5c5c5c}59.3%,100%{fill:#e65100}}
+.isClear{animation:clear 6s linear infinite}
+.isBroken{opacity:0;animation:broken 6s linear infinite}
+@keyframes broken{0%,40.6%{opacity:0}40.7%,59.2%{opacity:1}59.3%,100%{opacity:0}}
+/* light travelling along each dashed beam, start to end */
+.march{animation:march .75s linear infinite}
+@keyframes march{from{stroke-dashoffset:9}to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Break-beam sensor</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Through-beam: an IR emitter shines across a gap at a receiver.</text>
+
+<!-- ===== Through-beam on a ball path (top view) ===== -->
+<text x="16" y="72" font-size="13" font-weight="700" fill="#222222">Through-beam <tspan font-weight="400" font-size="12" fill="#5c5c5c">(top view of a ball path)</tspan></text>
+<rect x="16" y="100" width="314" height="8" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<rect x="16" y="196" width="314" height="8" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<!-- beam: emitter half always lit, receiver half goes dark when blocked -->
+<line class="march" x1="173" y1="116" x2="173" y2="152" stroke="#e65100" stroke-width="2.5" stroke-dasharray="5 4"/>
+<g class="past">
+  <line class="march" x1="173" y1="152" x2="173" y2="188" stroke="#e65100" stroke-width="2.5" stroke-dasharray="5 4"/>
+</g>
+<!-- emitter and receiver -->
+<rect x="161" y="80" width="24" height="28" rx="2" fill="#444444"/>
+<circle cx="173" cy="110" r="5" fill="#e65100" stroke="#444444" stroke-width="1"/>
+<rect x="161" y="196" width="24" height="28" rx="2" fill="#444444"/>
+<circle class="rxlens" cx="173" cy="194" r="5" fill="#e65100" stroke="#444444" stroke-width="1"/>
+<g font-size="12" fill="#5c5c5c">
+  <text x="192" y="93">IR emitter</text>
+  <text x="192" y="220">receiver</text>
+</g>
+<!-- the ball rolling through -->
+<g class="ball">
+  <circle cx="50" cy="152" r="30" fill="#f2c200" stroke="#444444" stroke-width="1.4"/>
+  <circle cx="40" cy="141" r="7" fill="#ffffff" fill-opacity="0.45"/>
+</g>
+<text x="20" y="226" font-size="12" fill="#5c5c5c">ball rolls through</text>
+
+<line x1="338" y1="62" x2="338" y2="234" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- ===== Output readout ===== -->
+<text x="346" y="72" font-size="13" font-weight="700" fill="#222222">Output</text>
+<g class="isClear">
+  <text x="346" y="98" font-size="13" fill="#222222">Beam clear</text>
+  <text x="346" y="122" font-size="18" font-weight="700" fill="#446ce3">HIGH</text>
+  <text x="346" y="142" font-size="13" fill="#222222">reads <tspan font-weight="700" fill="#446ce3">true</tspan></text>
+</g>
+<g class="isBroken">
+  <text x="346" y="98" font-size="13" fill="#222222">Beam broken</text>
+  <text x="346" y="122" font-size="18" font-weight="700" fill="#446ce3">LOW</text>
+  <text x="346" y="142" font-size="13" fill="#222222">reads <tspan font-weight="700" fill="#446ce3">false</tspan></text>
+</g>
+<g font-size="12" fill="#222222">
+  <text x="346" y="172" font-weight="700">Adafruit's 3 mm IR pair:</text>
+  <text x="346" y="188">open-collector output,</text>
+  <text x="346" y="204">needs a pull-up (the</text>
+  <text x="346" y="220">roboRIO has one).</text>
+</g>
+
+<line x1="16" y1="244" x2="504" y2="244" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- ===== Other kinds ===== -->
+<text x="16" y="264" font-size="13" font-weight="700" fill="#222222">Other kinds</text>
+<!-- retroreflective -->
+<rect x="20" y="280" width="34" height="40" rx="2" fill="#444444"/>
+<circle cx="48" cy="291" r="4" fill="#e65100"/>
+<circle cx="48" cy="309" r="4" fill="#e65100"/>
+<line class="march" x1="54" y1="291" x2="204" y2="291" stroke="#e65100" stroke-width="2" stroke-dasharray="5 4"/>
+<line class="march" x1="210" y1="309" x2="60" y2="309" stroke="#e65100" stroke-width="2" stroke-dasharray="5 4"/>
+<path d="M210 291 L202 287 L202 295 Z M54 309 L62 305 L62 313 Z" fill="#e65100"/>
+<rect x="212" y="278" width="14" height="44" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<path d="M212 284 L219 289 L212 294 L219 299 L212 304 L219 309 L212 314 L219 319" fill="none" stroke="#444444" stroke-width="1"/>
+<g font-size="12" fill="#222222">
+  <text x="16" y="340"><tspan font-weight="700">Retroreflective:</tspan> emitter and</text>
+  <text x="16" y="356">receiver together, a reflector across.</text>
+</g>
+<!-- diffuse -->
+<rect x="272" y="280" width="34" height="40" rx="2" fill="#444444"/>
+<circle cx="300" cy="291" r="4" fill="#e65100"/>
+<circle cx="300" cy="309" r="4" fill="#e65100"/>
+<line class="march" x1="306" y1="291" x2="416" y2="294" stroke="#e65100" stroke-width="2" stroke-dasharray="5 4"/>
+<line class="march" x1="420" y1="307" x2="312" y2="309" stroke="#e65100" stroke-width="2" stroke-dasharray="5 4"/>
+<path d="M422 294.2 L414 290 L413.8 298 Z M306 309 L314 305 L314 313 Z" fill="#e65100"/>
+<g stroke="#e65100" stroke-width="1.6" stroke-dasharray="3 3" opacity="0.6">
+  <line x1="424" y1="285" x2="404" y2="268"/>
+  <line x1="424" y1="316" x2="404" y2="332"/>
+  <line x1="440" y1="279" x2="440" y2="264"/>
+</g>
+<circle cx="442" cy="300" r="20" fill="#f2c200" stroke="#444444" stroke-width="1.4"/>
+<circle cx="435" cy="292" r="5" fill="#ffffff" fill-opacity="0.45"/>
+<g font-size="12" fill="#222222">
+  <text x="268" y="340"><tspan font-weight="700">Diffuse:</tspan> light bounces off</text>
+  <text x="268" y="356">the object itself.</text>
+</g>
+
+<line x1="16" y1="372" x2="504" y2="372" stroke="#d6d6d6" stroke-width="1"/>
+<g font-size="13" fill="#222222">
+  <text x="16" y="392">Sunlight can blind an IR receiver; shiny or dark objects change</text>
+  <text x="16" y="409">what reflective kinds see.</text>
+</g>
+</svg>

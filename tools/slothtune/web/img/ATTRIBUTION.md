@@ -63,3 +63,21 @@ specification and Quality Crimp Handbook; Anderson Power Products' Powerpole and
 assembly sheets; West Mountain Radio's Powerpole crimping manual; frcelectrical.org (Making
 Connections, Battery); CTRE's CAN troubleshooting; WPILib's battery and wiring pages; and the 2026
 FRC game manual (R609, R622, R624). Copper resistance and diameters: the standard AWG table.
+
+## motor/ and sensor/: drawn for this tool, animated
+
+The motor and sensor drawings (brushed and brushless motors, inrunner and outrunner, pole pairs; the
+Hall effect, quadrature and magnetic encoders, the MEMS gyro, limit switches, break beams, time of
+flight) are original animated schematics made for Sloth Tune. Their facts come from, and the lessons
+link: REV Robotics' product pages and docs, WCP's and CTRE's docs, Redux Robotics' Canandgyro docs,
+WPILib's sensor pages, PhotonVision's docs, Adafruit, ST's VL53L1X data sheet, the 2026 FRC game
+manual, and Wikipedia for the physics.
+
+## Spectrum 3847
+
+The lessons What a motor's numbers mean, Brushed and brushless motors, and How an encoder counts are
+adapted in part from Spectrum (FRC 3847)'s training curriculum, used with credit: C2.3 Beginner
+Motors for FRC and C2.4 Encoders & Spark Max Controls
+(https://docs.google.com/document/d/e/2PACX-1vQk_ghFBN7682QI_17lbBCx8V_RXNomQRR7er-UIzlllsbdpO4RWOQAVnGFZAEypeNm2grS2G9oxFMp/pub).
+Each of those lessons says so and links Spectrum's slides and video.
+

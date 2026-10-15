@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="pp-title pp-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="pp-title">Pole pairs: one turn, seven electrical cycles</title>
+<desc id="pp-desc">Animated. Left, a rotor ring with 14 magnets, alternating north in red and south in blue, making 7 north-south pairs, turns slowly past a fixed marker at the top. Right, a wave shows the electrical cycle, what the controller switches: 7 full cycles across one turn of the rotor, peaking when a north magnet is at the marker and dipping when a south magnet is. A cursor sweeps across the wave in step with the rotor, so one rotor revolution carries it across all 7 cycles, while a row of 42 boxes fills in: 6 Hall states times 7 pole pairs is 42 counts a turn, a NEO's built-in encoder. Electrical frequency equals rpm times pole pairs divided by 60. REV lists the NEO Vortex at 7 pole pairs: at its 6784 rpm free speed that is about 791 switching cycles a second.</desc>
+<style>
+  .spin { transform-box: view-box; transform-origin: 0 0; animation: pp-spin 7s linear infinite; }
+  .sweep { animation: pp-sweep 7s linear infinite; }
+  .bob { animation: pp-bob 0.5s cubic-bezier(0.3642, 0, 0.6358, 1) infinite alternate; }
+  .count { transform-box: fill-box; transform-origin: 0 50%; animation: pp-count 7s steps(42, start) infinite; }
+  @keyframes pp-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes pp-sweep { from { transform: translateX(0px); } to { transform: translateX(266px); } }
+  @keyframes pp-bob { from { transform: translateY(0px); } to { transform: translateY(72px); } }
+  @keyframes pp-count { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Pole pairs: one turn, seven electrical cycles</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Each north-south pair that passes the marker is one electrical cycle.</text>
+
+<!-- ============ Rotor ring ============ -->
+<path d="M105 84L119 84L112 96Z" fill="#222222"/>
+<text x="126" y="91" font-size="12" font-weight="700" fill="#222222">fixed marker</text>
+
+<g transform="translate(112 176)">
+  <g class="spin">
+    <circle r="54" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+    <g stroke="#444444" stroke-width="1" stroke-linejoin="round">
+      <path d="M-16.03 -76.34A78 78 0 0 1 16.03 -76.34L11.1 -52.85A54 54 0 0 0 -11.1 -52.85Z" fill="#d32f2f"/>
+      <path d="M18.68 -75.73A78 78 0 0 1 47.56 -61.82L32.93 -42.8A54 54 0 0 0 12.93 -52.43Z" fill="#1f5fbf"/>
+      <path d="M49.69 -60.12A78 78 0 0 1 69.67 -35.06L48.24 -24.28A54 54 0 0 0 34.4 -41.62Z" fill="#d32f2f"/>
+      <path d="M70.86 -32.61A78 78 0 0 1 77.99 -1.36L53.99 -0.94A54 54 0 0 0 49.05 -22.58Z" fill="#1f5fbf"/>
+      <path d="M77.99 1.36A78 78 0 0 1 70.86 32.61L49.05 22.58A54 54 0 0 0 53.99 0.94Z" fill="#d32f2f"/>
+      <path d="M69.67 35.06A78 78 0 0 1 49.69 60.12L34.4 41.62A54 54 0 0 0 48.24 24.28Z" fill="#1f5fbf"/>
+      <path d="M47.56 61.82A78 78 0 0 1 18.68 75.73L12.93 52.43A54 54 0 0 0 32.93 42.8Z" fill="#d32f2f"/>
+      <path d="M16.03 76.34A78 78 0 0 1 -16.03 76.34L-11.1 52.85A54 54 0 0 0 11.1 52.85Z" fill="#1f5fbf"/>
+      <path d="M-18.68 75.73A78 78 0 0 1 -47.56 61.82L-32.93 42.8A54 54 0 0 0 -12.93 52.43Z" fill="#d32f2f"/>
+      <path d="M-49.69 60.12A78 78 0 0 1 -69.67 35.06L-48.24 24.28A54 54 0 0 0 -34.4 41.62Z" fill="#1f5fbf"/>
+      <path d="M-70.86 32.61A78 78 0 0 1 -77.99 1.36L-53.99 0.94A54 54 0 0 0 -49.05 22.58Z" fill="#d32f2f"/>
+      <path d="M-77.99 -1.36A78 78 0 0 1 -70.86 -32.61L-49.05 -22.58A54 54 0 0 0 -53.99 -0.94Z" fill="#1f5fbf"/>
+      <path d="M-69.67 -35.06A78 78 0 0 1 -49.69 -60.12L-34.4 -41.62A54 54 0 0 0 -48.24 -24.28Z" fill="#d32f2f"/>
+      <path d="M-47.56 -61.82A78 78 0 0 1 -18.68 -75.73L-12.93 -52.43A54 54 0 0 0 -32.93 -42.8Z" fill="#1f5fbf"/>
+    </g>
+    <circle r="8" fill="#444444"/>
+  </g>
+  <!-- turning direction (static) -->
+  <path d="M-23.3 -27.77A36.25 36.25 0 0 1 27.77 -23.3" fill="none" stroke="#222222" stroke-width="2"/>
+  <path d="M32.27 -17.94L30.83 -25.87L24.71 -20.73Z" fill="#222222"/>
+</g>
+<text x="112" y="276" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">rotor (turning): 14 magnets,</text>
+<text x="112" y="291" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">7 north-south pairs</text>
+
+<!-- ============ Electrical cycle wave ============ -->
+<text x="232" y="80" font-size="13" font-weight="700" fill="#222222">Electrical cycle</text>
+<text x="232" y="95" font-size="12" fill="#5c5c5c">(what the controller switches)</text>
+<!-- one-cycle bracket -->
+<path d="M232 116V110H270V116" fill="none" stroke="#5c5c5c" stroke-width="1"/>
+<text x="276" y="114" font-size="12" fill="#5c5c5c">1 cycle = 1 north-south pair</text>
+
+<line x1="232" y1="160" x2="498" y2="160" stroke="#d6d6d6" stroke-width="1" stroke-dasharray="4 3"/>
+<g font-size="13" font-weight="700" text-anchor="end">
+  <text x="225" y="129" fill="#d32f2f">N</text>
+  <text x="225" y="201" fill="#1f5fbf">S</text>
+</g>
+<path d="M232 124C238.92 124 244.08 196 251 196S263.08 124 270 124S282.08 196 289 196S301.08 124 308 124S320.08 196 327 196S339.08 124 346 124S358.08 196 365 196S377.08 124 384 124S396.08 196 403 196S415.08 124 422 124S434.08 196 441 196S453.08 124 460 124S472.08 196 479 196S491.08 124 498 124" fill="none" stroke="#222222" stroke-width="2" stroke-linejoin="round"/>
+
+<!-- one-turn bracket -->
+<path d="M232 202V208H498V202" fill="none" stroke="#5c5c5c" stroke-width="1"/>
+<text x="365" y="223" font-size="12" fill="#222222" text-anchor="middle">one turn of the rotor</text>
+
+<!-- 42 counts a turn -->
+<rect x="232" y="232" width="266" height="14" fill="#ffffff"/>
+<rect class="count" x="232" y="232" width="266" height="14" fill="#446ce3" fill-opacity="0.8"/>
+<path d="M238.33 232V246M244.67 232V246M251 232V246M257.33 232V246M263.67 232V246M276.33 232V246M282.67 232V246M289 232V246M295.33 232V246M301.67 232V246M314.33 232V246M320.67 232V246M327 232V246M333.33 232V246M339.67 232V246M352.33 232V246M358.67 232V246M365 232V246M371.33 232V246M377.67 232V246M390.33 232V246M396.67 232V246M403 232V246M409.33 232V246M415.67 232V246M428.33 232V246M434.67 232V246M441 232V246M447.33 232V246M453.67 232V246M466.33 232V246M472.67 232V246M479 232V246M485.33 232V246M491.67 232V246" stroke="#9aa3ad" stroke-width="0.8"/>
+<path d="M270 230V248M308 230V248M346 230V248M384 230V248M422 230V248M460 230V248" stroke="#444444" stroke-width="1.5"/>
+<rect x="232" y="232" width="266" height="14" fill="none" stroke="#444444" stroke-width="1.2"/>
+
+<!-- cursor: sweeps once per rotor turn, riding the wave -->
+<g class="sweep">
+  <path d="M232 117V200M232 228V250" stroke="#446ce3" stroke-width="2"/>
+  <g class="bob">
+    <circle cx="232" cy="124" r="6" fill="#446ce3" stroke="#ffffff" stroke-width="2"/>
+  </g>
+</g>
+
+<g font-size="13" fill="#222222">
+  <text x="232" y="266"><tspan font-weight="700">6 Hall states × 7 pole pairs</tspan></text>
+  <text x="232" y="283"><tspan font-weight="700">= 42 counts a turn</tspan></text>
+</g>
+<text x="232" y="299" font-size="12" fill="#5c5c5c">(a NEO's built-in encoder)</text>
+
+<line x1="16" y1="314" x2="504" y2="314" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- caption -->
+<g font-size="13" fill="#222222">
+  <text x="16" y="334"><tspan font-weight="700">Electrical frequency = rpm × pole pairs / 60.</tspan></text>
+  <text x="16" y="353">REV lists the NEO Vortex at 7 pole pairs: at its 6784 rpm free speed</text>
+  <text x="16" y="370">that is about 791 switching cycles a second.</text>
+</g>
+<text x="16" y="389" font-size="12" fill="#5c5c5c">6784 × 7 / 60 ≈ 791</text>
+</svg>

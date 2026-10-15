@@ -76,8 +76,9 @@
           "For any row marked red, fix what it says: usually the code creates the wrong controller, or YAGSL names the wrong motor (<b>Fix</b> writes all four module files).",
           "Pick each motor's type where it says <i>not said anywhere</i>, then <b>Save the motor inventory</b>.",
           "Old firmware: update it with REV Hardware Client, robot connected by USB."],
-        good: "every row the same three ways, every motor named." })}
-      <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="motors.plugs">Their power plugs:</span>${Learn.chips(["crimp_powerpole", "wire_gauge", "wire_loss"])}</div>
+        good: "every row the same three ways, every motor named.",
+        learn: `<span class="small muted" data-tip="motors.how">How motors work:</span>${Learn.chips(["motor_basics", "brushed_brushless", "inrunner_outrunner", "pole_pairs"])}
+          <span class="small muted" data-tip="motors.plugs">Their power plugs:</span>${Learn.chips(["crimp_powerpole", "wire_gauge", "wire_loss"])}` })}
       <div id="inv-body"><p class="hint">Reading the code…</p></div>
     </div></div></div>`;
 

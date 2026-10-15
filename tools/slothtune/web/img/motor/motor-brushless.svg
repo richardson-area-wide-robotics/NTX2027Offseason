@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 462" width="520" height="462" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bl-title bl-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="bl-title">Brushless motor: the controller does the switching</title>
+<desc id="bl-desc">Animated end view of a brushless motor. A still stator has six coil teeth labeled A, B, C, A, B, C around the circle, so opposite coils are the same phase. Inside, a permanent-magnet rotor with one north and one south half turns clockwise. Three Hall sensors, H1, H2 and H3, sit 120 degrees apart around the rotor and light while the north half is over them. In six steps per electrical turn the controller switches on a different pair of phases, lighting those coils, while the rotor turns 60 electrical degrees per step. A table steps along with it: Hall states 100, 110, 010, 011, 001, 101 switch on B+ C−, A+ C−, A+ B−, C+ B−, C+ A−, B+ A−. That gives 6 valid Hall states per electrical turn. No brushes: the controller switches the three phases in turn, from where the Hall sensors say the rotor is. That's why a NEO won't spin without its sensor cable.</desc>
+<defs>
+  <path id="bl-tooth" d="M-8 -97L-8 -63.5A64 64 0 0 0 -23.97 -59.34L-21.73 -53.78A58 58 0 0 1 21.73 -53.78L23.97 -59.34A64 64 0 0 0 8 -63.5L8 -97Z" fill="#b0b8c0" stroke="#444444" stroke-width="1.2" stroke-linejoin="round"/>
+  <rect id="bl-coil" x="-17" y="-88" width="34" height="22" rx="3" fill="#f3e2cc" stroke="#c9a27a" stroke-width="1.2"/>
+  <rect id="bl-coil-on" x="-17" y="-88" width="34" height="22" rx="3" fill="#c47a2c" stroke="#446ce3" stroke-width="3"/>
+</defs>
+<style>
+  .spin { transform-box: view-box; transform-origin: 0 0; animation: bl-spin 7.2s linear infinite; }
+  .upright { transform-box: view-box; transform-origin: 0 0; animation: bl-unspin 7.2s linear infinite; }
+  .on-a { opacity: 0; animation: bl-on-a 7.2s linear infinite; }
+  .on-b { animation: bl-on-b 7.2s linear infinite; }
+  .on-c { animation: bl-on-c 7.2s linear infinite; }
+  .h1 { animation: bl-h1 7.2s linear infinite; }
+  .h2 { opacity: 0; animation: bl-h2 7.2s linear infinite; }
+  .h3 { opacity: 0; animation: bl-h3 7.2s linear infinite; }
+  .step { animation: bl-step 7.2s linear infinite; }
+  @keyframes bl-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes bl-unspin { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+  /* six steps, switching every 60 degrees of rotor turn, at 1/12, 3/12, 5/12, 7/12, 9/12, 11/12 */
+  @keyframes bl-on-a { 0%, 8.32% { opacity: 0; } 8.34%, 41.66% { opacity: 1; } 41.67%, 58.32% { opacity: 0; } 58.34%, 91.66% { opacity: 1; } 91.67%, 100% { opacity: 0; } }
+  @keyframes bl-on-b { 0%, 8.32% { opacity: 1; } 8.34%, 24.99% { opacity: 0; } 25%, 58.32% { opacity: 1; } 58.34%, 74.99% { opacity: 0; } 75%, 100% { opacity: 1; } }
+  @keyframes bl-on-c { 0%, 24.99% { opacity: 1; } 25%, 41.66% { opacity: 0; } 41.67%, 74.99% { opacity: 1; } 75%, 91.66% { opacity: 0; } 91.67%, 100% { opacity: 1; } }
+  @keyframes bl-h1 { 0%, 24.99% { opacity: 1; } 25%, 74.99% { opacity: 0; } 75%, 100% { opacity: 1; } }
+  @keyframes bl-h2 { 0%, 8.32% { opacity: 0; } 8.34%, 58.32% { opacity: 1; } 58.34%, 100% { opacity: 0; } }
+  @keyframes bl-h3 { 0%, 41.66% { opacity: 0; } 41.67%, 91.66% { opacity: 1; } 91.67%, 100% { opacity: 0; } }
+  @keyframes bl-step {
+    0%, 8.32% { transform: translateX(0px); }
+    8.34%, 24.99% { transform: translateX(62px); }
+    25%, 41.66% { transform: translateX(124px); }
+    41.67%, 58.32% { transform: translateX(186px); }
+    58.34%, 74.99% { transform: translateX(248px); }
+    75%, 91.66% { transform: translateX(310px); }
+    91.67%, 100% { transform: translateX(0px); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Brushless motor: the controller does the switching</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">End view. The coils stay still; the magnet rotor turns.</text>
+
+<!-- ============ Motor ============ -->
+<g transform="translate(140 190)">
+  <!-- stator: back iron + six teeth -->
+  <circle r="92" fill="none" stroke="#444444" stroke-width="1"/>
+  <use href="#bl-tooth"/>
+  <use href="#bl-tooth" transform="rotate(60)"/>
+  <use href="#bl-tooth" transform="rotate(120)"/>
+  <use href="#bl-tooth" transform="rotate(180)"/>
+  <use href="#bl-tooth" transform="rotate(240)"/>
+  <use href="#bl-tooth" transform="rotate(300)"/>
+  <circle r="98.25" fill="none" stroke="#b0b8c0" stroke-width="11.5"/>
+  <circle r="104" fill="none" stroke="#444444" stroke-width="1.2"/>
+
+  <!-- coils, dim when off -->
+  <use href="#bl-coil"/>
+  <use href="#bl-coil" transform="rotate(60)"/>
+  <use href="#bl-coil" transform="rotate(120)"/>
+  <use href="#bl-coil" transform="rotate(180)"/>
+  <use href="#bl-coil" transform="rotate(240)"/>
+  <use href="#bl-coil" transform="rotate(300)"/>
+  <!-- coils switched on, by phase -->
+  <g class="on-a">
+    <use href="#bl-coil-on"/>
+    <use href="#bl-coil-on" transform="rotate(180)"/>
+  </g>
+  <g class="on-b">
+    <use href="#bl-coil-on" transform="rotate(60)"/>
+    <use href="#bl-coil-on" transform="rotate(240)"/>
+  </g>
+  <g class="on-c">
+    <use href="#bl-coil-on" transform="rotate(120)"/>
+    <use href="#bl-coil-on" transform="rotate(300)"/>
+  </g>
+  <g font-size="13" font-weight="700" fill="#222222" text-anchor="middle">
+    <text x="0" y="-72.5">A</text>
+    <text x="66.68" y="-34">B</text>
+    <text x="66.68" y="43">C</text>
+    <text x="0" y="81.5">A</text>
+    <text x="-66.68" y="43">B</text>
+    <text x="-66.68" y="-34">C</text>
+  </g>
+
+  <!-- rotor (turns): one north half, one south half -->
+  <g class="spin">
+    <path d="M-42 0A42 42 0 0 1 42 0Z" fill="#d32f2f" stroke="#444444" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M42 0A42 42 0 0 1 -42 0Z" fill="#1f5fbf" stroke="#444444" stroke-width="1.2" stroke-linejoin="round"/>
+    <circle r="13" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+    <circle r="5" fill="#444444"/>
+    <g transform="translate(0 -27)"><g class="upright"><text y="5.5" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">N</text></g></g>
+    <g transform="translate(0 27)"><g class="upright"><text y="5.5" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">S</text></g></g>
+  </g>
+
+  <!-- Hall sensors, 120 degrees apart (still); lit while north is over them -->
+  <g font-size="12" font-weight="700" text-anchor="middle">
+    <g transform="translate(0 -50)">
+      <circle r="7.5" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+      <text y="4.3" fill="#222222">1</text>
+      <g class="h1"><circle r="7.5" fill="#f5b301" stroke="#222222" stroke-width="1.5"/><text y="4.3" fill="#222222">1</text></g>
+    </g>
+    <g transform="translate(43.3 25)">
+      <circle r="7.5" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+      <text y="4.3" fill="#222222">2</text>
+      <g class="h2"><circle r="7.5" fill="#f5b301" stroke="#222222" stroke-width="1.5"/><text y="4.3" fill="#222222">2</text></g>
+    </g>
+    <g transform="translate(-43.3 25)">
+      <circle r="7.5" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+      <text y="4.3" fill="#222222">3</text>
+      <g class="h3"><circle r="7.5" fill="#f5b301" stroke="#222222" stroke-width="1.5"/><text y="4.3" fill="#222222">3</text></g>
+    </g>
+  </g>
+</g>
+
+<!-- ============ Labels ============ -->
+<g stroke="#222222" stroke-width="1" fill="none">
+  <line x1="258" y1="98" x2="216" y2="143"/>
+  <line x1="258" y1="180" x2="180" y2="190"/>
+</g>
+<g fill="#222222">
+  <circle cx="216" cy="143" r="2.5"/>
+  <circle cx="180" cy="190" r="2.5"/>
+</g>
+<text x="262" y="96" font-size="13" font-weight="700" fill="#222222">stator coils (still)</text>
+<text x="262" y="112" font-size="12" fill="#5c5c5c">A, B, C: opposite coils are</text>
+<text x="262" y="127" font-size="12" fill="#5c5c5c">the same phase. Lit = switched on.</text>
+
+<text x="262" y="178" font-size="13" font-weight="700" fill="#222222">rotor magnets (turning)</text>
+<text x="262" y="194" font-size="12" fill="#5c5c5c">one north, one south</text>
+
+<g transform="translate(270 244)">
+  <circle r="7.5" fill="#f5b301" stroke="#222222" stroke-width="1.5"/>
+  <text y="4.3" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">1</text>
+</g>
+<text x="284" y="248" font-size="13" font-weight="700" fill="#222222">Hall sensors H1, H2, H3</text>
+<text x="262" y="266" font-size="12" fill="#5c5c5c">120° apart; each lights while north is over it</text>
+
+<!-- ============ Switching table ============ -->
+<text x="16" y="312" font-size="13" font-weight="700" fill="#222222">SPARK switches the coils from the Hall sensors</text>
+<rect class="step" x="128" y="320" width="62" height="48" rx="4" fill="#446ce3" fill-opacity="0.12" stroke="#446ce3" stroke-width="2"/>
+<g stroke="#d6d6d6" stroke-width="1">
+  <line x1="16" y1="344" x2="500" y2="344"/>
+  <line x1="190" y1="324" x2="190" y2="364"/>
+  <line x1="252" y1="324" x2="252" y2="364"/>
+  <line x1="314" y1="324" x2="314" y2="364"/>
+  <line x1="376" y1="324" x2="376" y2="364"/>
+  <line x1="438" y1="324" x2="438" y2="364"/>
+</g>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="337">Hall H1 H2 H3</text>
+  <text x="16" y="360">coils on</text>
+</g>
+<g font-size="12" fill="#222222" text-anchor="middle">
+  <text x="159" y="337">1 0 0</text>
+  <text x="221" y="337">1 1 0</text>
+  <text x="283" y="337">0 1 0</text>
+  <text x="345" y="337">0 1 1</text>
+  <text x="407" y="337">0 0 1</text>
+  <text x="469" y="337">1 0 1</text>
+</g>
+<g font-size="12" font-weight="700" fill="#222222" text-anchor="middle">
+  <text x="159" y="360">B+ C−</text>
+  <text x="221" y="360">A+ C−</text>
+  <text x="283" y="360">A+ B−</text>
+  <text x="345" y="360">C+ B−</text>
+  <text x="407" y="360">C+ A−</text>
+  <text x="469" y="360">B+ A−</text>
+</g>
+<text x="16" y="386" font-size="12" fill="#5c5c5c">6 valid Hall states per electrical turn; the rotor turns 60 electrical degrees per step.</text>
+
+<line x1="16" y1="398" x2="504" y2="398" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- caption -->
+<g font-size="13" fill="#222222">
+  <text x="16" y="418"><tspan font-weight="700">No brushes:</tspan> the controller switches the three phases in turn, from where</text>
+  <text x="16" y="435">the Hall sensors say the rotor is. That's why a NEO won't spin without its</text>
+  <text x="16" y="452">sensor cable.</text>
+</g>
+</svg>
