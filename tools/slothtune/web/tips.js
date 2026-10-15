@@ -628,6 +628,8 @@ const TIPS = {
   "br.sensors-learn": ["How each kind of sensor works, from the switch you press to the gyro.", "Knowing how it works says how it fails.", "limit_switch"],
   "br.motors-learn": ["How a motor works: its numbers, brushed or brushless, inrunner or outrunner, and its pole pairs.", "A NEO won't spin without its sensor cable: the lesson says why.", "brushed_brushless"],
   "motors.plugs": ["How the motor leads' Powerpoles are crimped and plugged, and what wire they need.", "A bad crimp is a small resistor carrying a motor's current: it heats and browns out.", "crimp_powerpole"],
+  "battery.how": ["What happens inside the battery as it runs the robot and as it charges, and how other kinds of battery compare.",
+    "Knowing why it sags, why it needs to cool and rest, and what wears it out keeps the team's batteries alive longer.", "lead_acid"],
   "battery.plug": ["How the battery's SB50 is crimped and seated, and its 4 AWG leads.", "A loose battery connection reboots the robot or drops it off the field.", "crimp_sb50"],
   "wiring.wire": ["What a run of wire costs: the volts lost on the way, and the heat in the wire.", "Both wires count: the current goes out along one and back along the other.", "wire_loss"],
   "wiring.wire-learn": ["Short lessons on wire: its gauge, resistance and length, and how to crimp each connector.", "A bad joint loses more than the wire does.", "wire_gauge"],
