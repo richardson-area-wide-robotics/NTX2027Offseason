@@ -11,6 +11,11 @@ const Wiring = (() => {
   let extra = [];
   // How the robot's devices talk, for a student meeting CAN here: the lessons, in teaching order.
   const CAN_LESSONS = { learn: ["can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat", "can_load", "can_fd", "can_termination"] };
+  // Wire and its joints: what length, gauge and current cost, then each connector's crimp.
+  const WIRE_LESSONS = { learn: ["wire_loss"] };
+  // Copper at 20 C, ohms per 1000 ft (the standard AWG table). A warm wire reads about 0.4% more a degree.
+  const AWG_OHMS_KFT = { 4: 0.2485, 6: 0.3951, 8: 0.6282, 10: 0.9989, 12: 1.588, 14: 2.525, 16: 4.016, 18: 6.385,
+                         20: 10.15, 22: 16.14, 24: 25.67 };
 
   root.innerHTML = `
     <div class="jobs" data-jobs="wiring">
@@ -94,6 +99,22 @@ const Wiring = (() => {
         <div id="wf-out"></div>
         ${HowTo.nextLine("pdh")}
       </div>
+      <div class="panel" id="w-wire">
+        <h3 data-tip="wiring.wire"><span class="term" tabindex="0" data-learn="wire_loss">Wire: length, gauge and lost power</span></h3>
+        <div class="row learn-row" style="flex-wrap:wrap" id="w-wire-learn"><span class="small muted" data-tip="wiring.wire-learn">How wire works:</span>${Learn.chips(WIRE_LESSONS.learn)}</div>
+        <div class="row" style="flex-wrap:wrap;gap:12px;align-items:flex-end">
+          <label class="gain" data-tip="wiring.wire-gauge">Gauge<select id="wc-gauge">${Object.keys(AWG_OHMS_KFT).map(Number).sort((a, b) => a - b)
+            .map(g => `<option value="${g}" ${g === 12 ? "selected" : ""}>${g} AWG</option>`).join("")}</select></label>
+          <label class="gain" data-tip="wiring.wire-len">Length, one way<span class="row"><input id="wc-len" type="number" min="1" step="1" value="36" style="width:6em"> in</span></label>
+          <label class="gain" data-tip="wiring.wire-amps">Current<span class="row"><input id="wc-amps" type="number" min="0" step="1" value="40" style="width:6em"> A</span></label>
+          <div class="row" style="flex-wrap:wrap" data-tip="wiring.wire-preset">
+            <button class="btn small" data-wc="4,24,150">Battery leads</button>
+            <button class="btn small" data-wc="12,36,40">A 40 A motor lead</button>
+            <button class="btn small" data-wc="12,36,105">The same, a NEO stalled</button>
+            <button class="btn small" data-wc="22,48,0.1">CAN wire</button></div>
+        </div>
+        <div id="wc-out" class="small" aria-live="polite"></div>
+      </div>
       <div class="panel" id="w-wiggle">
         <div class="row" style="justify-content:space-between;flex-wrap:wrap">
           <h3 data-tip="wiring.wiggle"><span class="term" tabindex="0" data-learn="wiggle_test">Wiggle test</span></h3>
@@ -107,6 +128,35 @@ const Wiring = (() => {
         ${HowTo.nextLine("wiggle")}
       </div>
     </div></div>`;
+
+  // ---------------------------------------------------------------- the wire calculator
+  // A run of two wires (out and back): its resistance, the volts it loses (V = I x R) and the heat it
+  // makes (P = I squared x R), beside every gauge FRC uses for the same run, so the trade is plain.
+  function wireCalc() {
+    const g = +$("#wc-gauge", root).value, inches = +$("#wc-len", root).value, amps = +$("#wc-amps", root).value;
+    const out = $("#wc-out", root);
+    if (!(inches > 0) || !(amps >= 0) || !AWG_OHMS_KFT[g]) { out.innerHTML = `<p class="muted">Give it a length and a current.</p>`; return; }
+    const run = gg => { const r = AWG_OHMS_KFT[gg] / 1000 * (2 * inches / 12); return { g: gg, mohm: 1000 * r, v: amps * r, w: amps * amps * r }; };
+    const me = run(g);
+    const pct = 100 * me.v / 12;
+    const num = (x, d) => x >= 100 ? fmt(x, 0) : x >= 10 ? fmt(x, 1) : fmt(x, d);
+    out.innerHTML = `<p><b>${fmt(inches, 0)} in each way is ${fmt(2 * inches, 0)} in of ${g} AWG: ${num(me.mohm, 2)} mΩ.</b>
+        At ${num(amps, 1)} A it loses <b>${num(me.v, 3)} V</b> (${fmt(pct, 1)}% of 12 V) and turns <b>${num(me.w, 2)} W</b> into heat in the wire.
+        ${pct > 5 ? `<span class="warn-ink">More than 5% of the battery gone in the wire alone.</span>` : ""}</p>
+      <table class="t small wc-table"><thead><tr><th>Gauge</th><th class="num">Resistance</th><th class="num">Volts lost</th><th class="num">Heat</th></tr></thead><tbody>
+      ${[4, 6, 8, 10, 12, 14, 18, 22].map(run).map(x => `<tr class="${x.g === g ? "on" : ""}"><td>${x.g} AWG${x.g === g ? " ←" : ""}</td>
+        <td class="num mono">${num(x.mohm, 2)} mΩ</td><td class="num mono">${num(x.v, 3)} V</td><td class="num mono">${num(x.w, 2)} W</td></tr>`).join("")}
+      </tbody></table>`;
+  }
+  ["#wc-gauge", "#wc-len", "#wc-amps"].forEach(s => $(s, root).addEventListener("input", wireCalc));
+  $$("[data-wc]", root).forEach(b => b.onclick = () => {
+    const [g, len, a] = b.dataset.wc.split(",");
+    $("#wc-gauge", root).value = g;
+    $("#wc-len", root).value = len;
+    $("#wc-amps", root).value = a;
+    wireCalc();
+  });
+  wireCalc();
 
   // ---------------------------------------------------------------- data
   async function refresh() {

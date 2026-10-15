@@ -62,7 +62,7 @@ const Learn = (() => {
     { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "wheel_size", "slip_current", "motor_inventory", "battery", "gyro", "moment_of_inertia", "pathplanner_model", "camera_mount", "field_survey"] },
     { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "odometry", "field_relative", "vision_pose", "robot_mode", "environment", "deadman", "simulator", "what_if"] },
     { id: "motors", title: "9. Keeping motors alive", lessons: ["heat_estimate", "derate", "stall", "thermal_override"] },
-    { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat",
+    { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["wire_loss", "can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat",
       "can_load", "can_fd", "can_termination", "power_path", "battery_current", "wiggle_test"] },
     { id: "network", title: "11. The robot's network and NetworkTables", lessons: ["robot_network", "networktables", "nt_topics", "nt_timing", "dashboards"] },
     { id: "controllers", title: "12. The drive team's joysticks", lessons: ["deadband", "stick_drift", "button_bounce"] },
@@ -298,6 +298,16 @@ const Learn = (() => {
       body: ["Current flows from the battery through the main breaker to the PDH, out through a port's breaker and along two leads to the controller, and back. Every crimp, Wago and screw terminal on the way is a small resistor.",
         "Resistance turns current into lost voltage (V = I x R). A good feed loses about 0.6 V at 40 A. A loose joint can lose several volts: the controller sees a low supply, warns, and if it drops too far it reboots - vanishing from the CAN bus while it restarts.",
         "The tool compares the voltage each controller sees with the PDH's, at the current the PDH measured on that port, to estimate each feed's resistance. One controller rebooting points at its own feed; many at once points upstream, at the battery or main breaker."], links: ["frcpower", "frcconn"] },
+    wire_loss: { title: "Resistance, length and lost power", short: "Every wire is a small resistor. Longer or thinner means more resistance; more current through it means volts lost on the way and heat in the wire.",
+      body: ["A wire's resistance grows with its length and shrinks with its thickness: R = resistivity x length / area. A foot of 12 AWG copper is about 1.6 milliohms (mΩ); a foot of 4 AWG, about 0.25 mΩ.",
+        "Current goes out along one wire and comes back along the other, so a lead 3 ft long is 6 ft of wire. That 12 AWG pair: 6 x 1.6 = 9.5 mΩ.",
+        "<b>Volts lost</b> = current x resistance (Ohm's law, V = I x R). At 40 A that pair loses 0.38 V: the motor controller sees 11.6 V when the PDH has 12. At a stalled NEO's 105 A it loses 1 V.",
+        "<b>Power lost</b> = current squared x resistance (P = I² x R), and it all becomes heat in the wire: 40 A through 9.5 mΩ is 15 W, spread along it. Double the current and the heat goes up four times. That is why a stalled motor's leads get hot fast.",
+        "What changes it: <b>twice the length</b>, twice the volts lost and twice the heat. <b>Three gauges thicker</b> (every 3 gauges doubles the copper), half of both. A warm wire also has a little more resistance: copper adds about 0.4% for every degree C.",
+        "The battery leads carry the whole robot's current, so they matter most. At 200 A, 2 ft of 6 AWG each way (1.6 mΩ) loses 0.32 V and makes 63 W of heat; 4 AWG (1.0 mΩ) loses 0.2 V and makes 40 W.",
+        "A bad crimp or a loose bolt can add more resistance than all the wire put together: the same V = I x R and I² x R, at one small spot that gets hot."],
+      try: "On the Wiring tab's wire calculator, put in your longest motor lead at a stalled NEO's current, then try one gauge thinner and twice the length.",
+      links: ["frcpower", "frcconn"] },
     motor_inventory: { title: "Motors and controllers", short: "A SPARK MAX and a SPARK Flex, or a NEO and a Vortex, look alike in code but aren't. The code must create the controller that's really there, and know which motor it drives.",
       body: ["The controller is the box on the CAN bus: a SPARK MAX or a SPARK Flex. Each one reports which it is, so the robot can check the code created the right one.",
         "The motor is what the controller drives: a NEO, a NEO 2.0, a Vortex, a NEO 550. A controller can't tell which, so someone has to say - and it matters: free speed, torque per amp, the current limit and how fast it heats all differ.",
@@ -498,11 +508,18 @@ const Learn = (() => {
   document.body.appendChild(tip);
   let hideTimer = null, anchor = null;
 
+  // A lesson's figures (drawings, each {src, alt, caption}): full size in the lesson; the first, small,
+  // on a hover card, so a tip about a crimp shows the crimp.
+  const figuresOf = l => (l && (l.figures || (l.figure ? [l.figure] : []))) || [];
+  const thumb = l => {
+    const f = figuresOf(l)[0];
+    return f ? `<img class="learn-thumb" src="${esc(f.src)}" alt="${esc(f.alt)}" loading="lazy">` : "";
+  };
   function card(key, extra) {
     const l = L[key];
     if (!l) return extra ? `<div>${esc(extra)}</div>` : "";
     return `${extra ? `<div class="learn-extra">${esc(extra)}</div>` : ""}
-      <div class="learn-title">${esc(l.title)}</div><div>${esc(l.short)}</div>
+      <div class="learn-title">${esc(l.title)}</div><div>${esc(l.short)}</div>${thumb(l)}
       <button class="learn-more" data-lesson="${esc(key)}">Lesson →</button>`;
   }
 
@@ -511,7 +528,7 @@ const Learn = (() => {
   function tipCard(t, now) {
     const [what, how, key] = t;
     return `${now ? `<div class="learn-extra">${esc(now)}</div>` : ""}<div class="learn-what">${esc(what)}</div>
-      ${how ? `<div class="learn-how">${esc(how)}</div>` : ""}
+      ${how ? `<div class="learn-how">${esc(how)}</div>` : ""}${key && L[key] ? thumb(L[key]) : ""}
       ${key && L[key] ? `<button class="learn-more" data-lesson="${esc(key)}">Lesson: ${esc(L[key].title)} →</button>` : ""}`;
   }
   const TIP_SEL = "[data-learn], [data-tip]";
@@ -622,6 +639,8 @@ const Learn = (() => {
       ${unit ? `<div class="muted small">${esc(unit.title)}</div>` : ""}
       <h2>${esc(l.title)}</h2>
       <p class="learn-short">${esc(l.short)}</p>
+      ${figuresOf(l).map(f => `<figure class="learn-fig"><a href="${esc(f.src)}" target="_blank" rel="noopener"><img src="${esc(f.src)}" alt="${esc(f.alt)}"></a>
+        ${f.caption ? `<figcaption class="small muted">${esc(f.caption)}</figcaption>` : ""}</figure>`).join("")}
       ${(l.body || []).map(p => `<p>${p}</p>`).join("")}
       ${l.see ? `<div class="callout"><b>On the graphs:</b> ${esc(l.see)}</div>` : ""}
       ${l.try ? `<div class="callout"><b>Try it:</b> ${esc(l.try)}</div>` : ""}

@@ -427,6 +427,16 @@ table.t tr.history > td:first-child { box-shadow: inset 4px 0 0 var(--warn); }
 }
 .learn-title { font-weight: 700; margin-bottom: 2px; }
 .learn-what { font-weight: 600; }
+/* A lesson's drawing: its own light page in both themes (a printed diagram), full width in the
+   lesson, small on a hover card. Opens full size in a tab. */
+.learn-thumb { display: block; width: 100%; max-height: 190px; object-fit: contain; margin: 6px 0 2px; border-radius: 6px;
+  background: #ffffff; border: 1px solid var(--rule); }
+.learn-fig { margin: 8px 0; }
+.learn-fig img { display: block; width: 100%; height: auto; border-radius: 8px; background: #ffffff; border: 1px solid var(--rule); }
+.learn-fig figcaption { margin-top: 4px; }
+/* The wire calculator: the chosen gauge marked the way Tune marks its current run. */
+.wc-table { max-width: 520px; margin-top: 6px; }
+.wc-table tr.on > td:first-child { box-shadow: inset 3px 0 0 var(--accent); font-weight: 600; }
 .learn-how { color: var(--muted); margin-top: 2px; }
 .term:focus-visible { outline-offset: 1px; }
 .tipline { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); font-weight: 400; letter-spacing: 0;
