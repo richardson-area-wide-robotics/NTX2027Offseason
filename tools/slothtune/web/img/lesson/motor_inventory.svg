@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 446" width="520" height="446" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mi-title mi-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mi-title">Which controller? Which motor?</title>
+<desc id="mi-desc">Animated. Top: a code box that creates a SPARK MAX is wired over the CAN bus to the real controller, a SPARK MAX. A message, I'm a SPARK MAX, travels from the controller to the code and a green check appears: the controller reports what it is, so the robot can check the code created the right one. Bottom: four motors spin at the same voltage, each at its own rpm per volt: NEO V1.1 and NEO 2.0 about 473, Vortex 565, NEO 550 917. The two NEOs spin alike, so only a person can tell them apart.</desc>
+<style>
+.mi-pill { animation: mi-pill 6s linear infinite; }
+.mi-ok { animation: mi-ok 6s linear infinite; }
+.mi-spin { transform-box: view-box; transform-origin: 0 0; animation-name: mi-rot; animation-timing-function: linear; animation-iteration-count: infinite; }
+.mi-neo { animation-duration: 7.76s; }
+.mi-vtx { animation-duration: 6.496s; }
+.mi-550 { animation-duration: 4.003s; }
+@keyframes mi-pill {
+  0% { transform: translateX(32px); opacity: 0; }
+  8% { transform: translateX(32px); opacity: 1; }
+  45% { transform: translateX(-32px); opacity: 1; }
+  55% { transform: translateX(-32px); opacity: 0; }
+  100% { transform: translateX(32px); opacity: 0; }
+}
+@keyframes mi-ok {
+  0% { opacity: 0; }
+  45% { opacity: 0; }
+  52% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes mi-rot {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Which controller? Which motor?</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A SPARK MAX and a SPARK Flex, or a NEO and a Vortex, look alike in code but aren't.</text>
+<text x="16" y="78" font-size="13" font-weight="700" fill="#222222">The controller says what it is</text>
+<rect x="16" y="90" width="150" height="58" rx="6" fill="#f3f5fa" stroke="#444444" stroke-width="1.2"/>
+<text x="28" y="111" font-size="12" fill="#5c5c5c">the code creates a</text>
+<text x="28" y="135" font-size="15" font-weight="700" fill="#222222">SPARK MAX</text>
+<line x1="166" y1="114" x2="354" y2="114" stroke="#5c5c5c" stroke-width="2.5"/>
+<line x1="166" y1="124" x2="354" y2="124" stroke="#5c5c5c" stroke-width="2.5"/>
+<text x="260" y="146" font-size="12" fill="#5c5c5c" text-anchor="middle">CAN bus</text>
+<rect x="354" y="90" width="150" height="58" rx="8" fill="#333333" stroke="#444444" stroke-width="1.2"/>
+<text x="429" y="124" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">SPARK MAX</text>
+<text x="429" y="166" font-size="12" fill="#5c5c5c" text-anchor="middle">the box on the CAN bus</text>
+<g transform="translate(260 119)"><g class="mi-pill">
+  <rect x="-62" y="-12" width="124" height="24" rx="12" fill="#ffffff" stroke="#446ce3" stroke-width="1.6"/>
+<text x="0" y="4" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">I'm a SPARK MAX</text>
+</g></g>
+<g class="mi-ok">
+<path d="M18 162 l4 4 l8 -9" fill="none" stroke="#1a7f37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="36" y="168" font-size="12" font-weight="700" fill="#1a7f37">matches: the robot can check it</text>
+</g>
+<text x="16" y="198" font-size="13" font-weight="700" fill="#222222">The motor can't say which it is</text>
+<text x="16" y="215" font-size="12" fill="#5c5c5c">One measurement can tell: how fast it spins per volt.</text>
+<g transform="translate(77 262)">
+  <circle r="34" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <g class="mi-spin mi-neo">
+    <circle r="25" fill="#333333"/>
+    <line x1="0" y1="-4" x2="0" y2="-21" stroke="#c47a2c" stroke-width="6" stroke-linecap="round"/>
+    <circle r="5" fill="#b0b8c0"/>
+  </g>
+</g>
+<text x="77" y="316" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">NEO V1.1</text>
+<text x="77" y="332" font-size="12" fill="#5c5c5c" text-anchor="middle">473 rpm per volt</text>
+<g transform="translate(199 262)">
+  <circle r="34" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <g class="mi-spin mi-neo">
+    <circle r="25" fill="#333333"/>
+    <line x1="0" y1="-4" x2="0" y2="-21" stroke="#c47a2c" stroke-width="6" stroke-linecap="round"/>
+    <circle r="5" fill="#b0b8c0"/>
+  </g>
+</g>
+<text x="199" y="316" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">NEO 2.0</text>
+<text x="199" y="332" font-size="12" fill="#5c5c5c" text-anchor="middle">473 rpm per volt</text>
+<g transform="translate(321 262)">
+  <circle r="34" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <g class="mi-spin mi-vtx">
+    <circle r="25" fill="#333333"/>
+    <line x1="0" y1="-4" x2="0" y2="-21" stroke="#c47a2c" stroke-width="6" stroke-linecap="round"/>
+    <circle r="5" fill="#b0b8c0"/>
+  </g>
+</g>
+<text x="321" y="316" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Vortex</text>
+<text x="321" y="332" font-size="12" fill="#5c5c5c" text-anchor="middle">565 rpm per volt</text>
+<g transform="translate(443 262)">
+  <circle r="34" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <g class="mi-spin mi-550">
+    <circle r="25" fill="#333333"/>
+    <line x1="0" y1="-4" x2="0" y2="-21" stroke="#c47a2c" stroke-width="6" stroke-linecap="round"/>
+    <circle r="5" fill="#b0b8c0"/>
+  </g>
+</g>
+<text x="443" y="316" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">NEO 550</text>
+<text x="443" y="332" font-size="12" fill="#5c5c5c" text-anchor="middle">917 rpm per volt</text>
+<path d="M24 340 V346 H252 V340" fill="none" stroke="#5c5c5c" stroke-width="1.2"/>
+<text x="24" y="362" font-size="12" font-weight="700" fill="#222222">spin alike: only a person can tell these two apart</text>
+<line x1="16" y1="376" x2="504" y2="376" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="396" font-size="13" fill="#222222">A controller can't tell which motor it drives, so someone has to say:</text>
+<text x="16" y="414" font-size="13" fill="#222222">free speed, torque per amp, the current limit and how fast it heats all differ.</text>
+<text x="16" y="432" font-size="12" fill="#5c5c5c">The feedforward test measures rpm per volt for the drive motors.</text>
+</svg>

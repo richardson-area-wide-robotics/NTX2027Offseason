@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 418" width="520" height="418" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bb-title bb-desc">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <title id="bb-title">Break-beam sensor</title>
-<desc id="bb-desc">Animated top view of a through-beam break-beam sensor on a ball path: an IR emitter on one wall faces a receiver on the other wall across the gap, with the invisible beam drawn as a dashed line. A ball rolls along the path, blocks the beam as it passes, then rolls on, in a loop. While the beam is clear the output is HIGH and DigitalInput reads true; while the ball breaks the beam the output is LOW and it reads false. Adafruit's 3 mm IR pair has an open-collector output that needs a pull-up, and the roboRIO has one. Inset, other kinds: retroreflective, with the emitter and receiver together and a reflector across; and diffuse, where the light bounces off the object itself. Note: sunlight can blind an IR receiver; shiny or dark objects change what reflective kinds see.</desc>
+<desc id="bb-desc">Animated top view of a through-beam break-beam sensor on a ball path: an IR emitter on one wall faces a receiver on the other wall across the gap, with the invisible beam drawn as a dashed line. A ball rolls along the path, blocks the beam as it passes, then rolls on, in a loop. While the beam is clear the output is HIGH and DigitalInput reads true; while the ball breaks the beam the output is LOW and it reads false. Adafruit's 3 mm IR pair has an open-collector output that needs a pull-up: the roboRIO has one, and on SystemCore's pull-down ports it needs its own. Inset, other kinds: retroreflective, with the emitter and receiver together and a reflector across; and diffuse, where the light bounces off the object itself. Note: sunlight can blind an IR receiver; shiny or dark objects change what reflective kinds see.</desc>
 <style>
 /* One 6 s loop: the ball fades in, rolls 12-88 %, fades out. It blocks the beam 40.7-59.3 %. */
 .ball{animation:ball 6s linear infinite}
@@ -64,10 +64,11 @@
   <text x="346" y="142" font-size="13" fill="#222222">reads <tspan font-weight="700" fill="#446ce3">false</tspan></text>
 </g>
 <g font-size="12" fill="#222222">
-  <text x="346" y="172" font-weight="700">Adafruit's 3 mm IR pair:</text>
-  <text x="346" y="188">open-collector output,</text>
-  <text x="346" y="204">needs a pull-up (the</text>
-  <text x="346" y="220">roboRIO has one).</text>
+  <text x="346" y="166" font-weight="700">Adafruit's 3 mm IR pair:</text>
+  <text x="346" y="182">open-collector output:</text>
+  <text x="346" y="198">needs a pull-up. The</text>
+  <text x="346" y="214">roboRIO has one; on</text>
+  <text x="346" y="230">SystemCore, add one.</text>
 </g>
 
 <line x1="16" y1="244" x2="504" y2="244" stroke="#d6d6d6" stroke-width="1"/>

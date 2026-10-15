@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 350" width="520" height="350" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="traction-title traction-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="traction-title">Traction: push past the grip and the wheel spins</title>
+<desc id="traction-desc">Animated. Left: a wheel with the weight on it presses on carpet that slides by as the robot drives. Right: two bars, the push the motor asks for and the push the robot gets, with a dashed limit line, grip times weight, the most the carpet can pass on. While the asked push grows up to the limit, both bars grow together and the wheel turns with the carpet. When the asked push goes past the limit, the extra turns red, the wheel breaks loose and spins fast, and the push the robot gets drops below the limit, because sliding friction is lower than gripping friction. Then the push eases off and it grips again.</desc>
+<style>
+.tr-wheel{transform-box:view-box;transform-origin:128px 160px;animation:tr-wheel 8s linear infinite}
+@keyframes tr-wheel{0%{transform:rotate(0deg)}46%{transform:rotate(126.5deg)}88%{transform:rotate(1227.0deg)}100%{transform:rotate(1260.0deg)}}
+.tr-ground{animation:tr-ground 8s linear infinite}
+@keyframes tr-ground{0%{transform:translateX(0px)}100%{transform:translateX(-240px)}}
+.tr-ask{transform-box:view-box;transform-origin:290px 0;transform:scaleX(1.000);animation:tr-ask 8s linear infinite}
+@keyframes tr-ask{0%{transform:scaleX(0.000)}6%{transform:scaleX(0.000)}46%{transform:scaleX(0.741)}60%{transform:scaleX(1.000)}84%{transform:scaleX(1.000)}88%{transform:scaleX(0.593)}95%{transform:scaleX(0.000)}100%{transform:scaleX(0.000)}}
+.tr-pass{transform-box:view-box;transform-origin:290px 0;transform:scaleX(0.593);animation:tr-pass 8s linear infinite}
+@keyframes tr-pass{0%{transform:scaleX(0.000)}6%{transform:scaleX(0.000)}46%{transform:scaleX(0.741)}50%{transform:scaleX(0.593)}88%{transform:scaleX(0.593)}95%{transform:scaleX(0.000)}100%{transform:scaleX(0.000)}}
+.tr-grip{opacity:0;animation:tr-grip 8s linear infinite}
+@keyframes tr-grip{0%,45.5%{opacity:1}46%,88%{opacity:0}88.5%,100%{opacity:1}}
+.tr-slip{animation:tr-slip 8s linear infinite}
+@keyframes tr-slip{0%,45.5%{opacity:0}46%,88%{opacity:1}88.5%,100%{opacity:0}}
+.tr-dust{animation:tr-dust 0.3s linear infinite alternate,tr-slip 8s linear infinite}
+@keyframes tr-dust{from{transform:translateX(0px)}to{transform:translateX(-6px)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">Traction: push past the grip and the wheel spins</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">The most push the carpet can pass on is grip × the weight on that wheel.</text>
+<path d="M128 66V98" stroke="#444444" stroke-width="3"/>
+<path d="M121 94L128 106L135 94Z" fill="#444444"/>
+<text x="138" y="80" font-size="12" fill="#222222" font-weight="700">weight on</text>
+<text x="138" y="95" font-size="12" fill="#222222" font-weight="700">this wheel</text>
+<defs><clipPath id="tr-clip"><rect x="16" y="210" width="248" height="16"/></clipPath></defs>
+<rect x="16" y="210" width="248" height="16" fill="#d9dee3"/>
+<g clip-path="url(#tr-clip)"><path class="tr-ground" d="M16 213v10M28 213v10M40 213v10M52 213v10M64 213v10M76 213v10M88 213v10M100 213v10M112 213v10M124 213v10M136 213v10M148 213v10M160 213v10M172 213v10M184 213v10M196 213v10M208 213v10M220 213v10M232 213v10M244 213v10M256 213v10M268 213v10M280 213v10M292 213v10M304 213v10M316 213v10M328 213v10M340 213v10M352 213v10M364 213v10M376 213v10M388 213v10M400 213v10M412 213v10M424 213v10M436 213v10M448 213v10M460 213v10M472 213v10M484 213v10M496 213v10M508 213v10" stroke="#7d8790" stroke-width="2"/></g>
+<line x1="16" y1="210" x2="264" y2="210" stroke="#444444" stroke-width="1.5"/>
+<text x="16" y="242" font-size="12" fill="#5c5c5c">carpet</text>
+<text x="264" y="242" font-size="12" fill="#5c5c5c" text-anchor="end">robot drives this way →</text>
+<g class="tr-slip"><g class="tr-dust" stroke="#b45309" stroke-width="2" stroke-linecap="round"><path d="M108 207l-20 -7M104 209l-28 -2M110 203l-14 -12"/></g></g>
+<g class="tr-slip" fill="none" stroke="#c62828" stroke-width="3" stroke-linecap="round"><path d="M71.6 139.5A60 60 0 0 1 107.5 103.6"/><path d="M184.4 139.5A60 60 0 0 1 180.0 190.0"/><path d="M173.0 187.0L180.0 190.0L182.0 182.0"/><path d="M99.5 104.6L107.5 103.6L104.5 111.6"/></g>
+<g class="tr-wheel"><circle cx="128" cy="160" r="50" fill="#3a3f45"/><circle cx="128" cy="160" r="40" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/><path d="M141.0 160.0L166.0 160.0M134.5 171.3L147.0 192.9M121.5 171.3L109.0 192.9M115.0 160.0L90.0 160.0M121.5 148.7L109.0 127.1M134.5 148.7L147.0 127.1" stroke="#444444" stroke-width="6" stroke-linecap="round"/><circle cx="128" cy="160" r="12" fill="#7d8790" stroke="#444444" stroke-width="1.5"/><circle cx="172" cy="160" r="3.5" fill="#ffffff"/></g>
+<circle cx="128" cy="160" r="4" fill="#444444"/>
+<text x="140" y="264" font-size="13" fill="#1a7f37" font-weight="700" text-anchor="middle" class="tr-grip">Gripping: the wheel turns with the carpet</text>
+<text x="140" y="264" font-size="13" fill="#c62828" font-weight="700" text-anchor="middle" class="tr-slip">Past the grip: the wheel spins</text>
+<text x="290" y="92" font-size="12" fill="#222222" font-weight="700">push the motor asks for</text>
+<rect x="290" y="100" width="189" height="20" fill="#f2f4f6" stroke="#b0b8c0"/>
+<defs><clipPath id="tr-over"><rect x="430" y="96" width="80" height="28"/></clipPath></defs>
+<rect class="tr-ask" x="290" y="100" width="189" height="20" fill="#446ce3" fill-opacity="0.85"/>
+<g clip-path="url(#tr-over)"><rect class="tr-ask" x="290" y="100" width="189" height="20" fill="#c62828"/></g>
+<text x="290" y="150" font-size="12" fill="#222222" font-weight="700">push the robot gets</text>
+<rect x="290" y="158" width="189" height="20" fill="#f2f4f6" stroke="#b0b8c0"/>
+<rect class="tr-pass" x="290" y="158" width="189" height="20" fill="#1a7f37" fill-opacity="0.85"/>
+<line x1="430" y1="84" x2="430" y2="188" stroke="#444444" stroke-width="2.5" stroke-dasharray="6 4"/>
+<text x="430" y="204" font-size="12" fill="#222222" font-weight="700" text-anchor="middle">grip × weight</text>
+<text x="430" y="219" font-size="12" fill="#5c5c5c" text-anchor="middle">the most the carpet passes</text>
+<text x="290" y="236" font-size="12" fill="#222222">A spinning wheel pushes less, not more:</text>
+<text x="290" y="251" font-size="12" fill="#222222">sliding friction is lower than gripping.</text>
+<line x1="16" y1="280" x2="504" y2="280" stroke="#e2e2e2"/>
+<text x="16" y="300" font-size="13" fill="#222222">Spinning also wears the tread, and the encoder counts distance the robot</text>
+<text x="16" y="318" font-size="13" fill="#222222">never traveled. Each corner carries a different share of the weight, so</text>
+<text x="16" y="336" font-size="13" fill="#222222">each slips at a different push: the lightest corner slips first.</text>
+</svg>

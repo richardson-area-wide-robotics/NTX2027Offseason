@@ -1,0 +1,311 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 418" width="520" height="418" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="kP-title kP-desc">
+<title id="kP-title">kP, the spring: push = kP × error</title>
+<desc id="kP-desc">Animated. A block sits on a floor, tied by a spring to a dashed target line. The block is pulled out to some distance from the target, held, then pulled out twice as far, held, and let go: it slides back to the target. A blue arrow on the block shows the push toward the target, and it is always proportional to the distance, the error: twice the error, twice the push, and no push on the target. Below, a straight-line graph of push against error, with a dot riding the line in step with the block, marks 1 times and 2 times. Footer: steering kP 0.01 means 1% of the battery per degree, so 10 degrees of error gives 0.1 times 12 V, 1.2 V.</desc>
+<style>
+.kp-blk, .kp-hd, .kp-tick { animation: kp-blk 8s linear infinite; }
+.kp-hd { animation-name: kp-hd; }
+.kp-spr, .kp-err { transform-box: view-box; transform-origin: 96px 0; animation: kp-spr 8s linear infinite; }
+.kp-sh { transform-box: view-box; transform-origin: 256px 0; animation: kp-sh 8s linear infinite; }
+.kp-dot { animation: kp-dot 8s linear infinite; }
+@keyframes kp-blk {
+  0% { transform: translateX(-320px); }
+  2% { transform: translateX(-320px); }
+  4% { transform: translateX(-320px); }
+  6% { transform: translateX(-320px); }
+  8% { transform: translateX(-315.5px); }
+  10% { transform: translateX(-303.4px); }
+  12% { transform: translateX(-285.4px); }
+  14% { transform: translateX(-263.7px); }
+  16% { transform: translateX(-240px); }
+  18% { transform: translateX(-216.3px); }
+  20% { transform: translateX(-194.6px); }
+  22% { transform: translateX(-176.6px); }
+  24% { transform: translateX(-164.5px); }
+  26% { transform: translateX(-160px); }
+  28% { transform: translateX(-160px); }
+  30% { transform: translateX(-160px); }
+  32% { transform: translateX(-160px); }
+  34% { transform: translateX(-160px); }
+  36% { transform: translateX(-160px); }
+  38% { transform: translateX(-160px); }
+  40% { transform: translateX(-160px); }
+  42% { transform: translateX(-155.5px); }
+  44% { transform: translateX(-143.4px); }
+  46% { transform: translateX(-125.4px); }
+  48% { transform: translateX(-103.7px); }
+  50% { transform: translateX(-80px); }
+  52% { transform: translateX(-56.3px); }
+  54% { transform: translateX(-34.6px); }
+  56% { transform: translateX(-16.6px); }
+  58% { transform: translateX(-4.5px); }
+  60% { transform: translateX(0px); }
+  62% { transform: translateX(0px); }
+  64% { transform: translateX(0px); }
+  66% { transform: translateX(0px); }
+  68% { transform: translateX(0px); }
+  70% { transform: translateX(0px); }
+  72% { transform: translateX(0px); }
+  74% { transform: translateX(0px); }
+  76% { transform: translateX(-7.5px); }
+  78% { transform: translateX(-27.9px); }
+  80% { transform: translateX(-58.4px); }
+  82% { transform: translateX(-96.2px); }
+  84% { transform: translateX(-138.2px); }
+  86% { transform: translateX(-181.8px); }
+  88% { transform: translateX(-223.8px); }
+  90% { transform: translateX(-261.6px); }
+  92% { transform: translateX(-292.1px); }
+  94% { transform: translateX(-312.5px); }
+  96% { transform: translateX(-320px); }
+  98% { transform: translateX(-320px); }
+  100% { transform: translateX(-320px); }
+}
+@keyframes kp-spr {
+  0% { transform: scaleX(0.0000); }
+  2% { transform: scaleX(0.0000); }
+  4% { transform: scaleX(0.0000); }
+  6% { transform: scaleX(0.0000); }
+  8% { transform: scaleX(0.0140); }
+  10% { transform: scaleX(0.0520); }
+  12% { transform: scaleX(0.1080); }
+  14% { transform: scaleX(0.1760); }
+  16% { transform: scaleX(0.2500); }
+  18% { transform: scaleX(0.3240); }
+  20% { transform: scaleX(0.3920); }
+  22% { transform: scaleX(0.4480); }
+  24% { transform: scaleX(0.4860); }
+  26% { transform: scaleX(0.5000); }
+  28% { transform: scaleX(0.5000); }
+  30% { transform: scaleX(0.5000); }
+  32% { transform: scaleX(0.5000); }
+  34% { transform: scaleX(0.5000); }
+  36% { transform: scaleX(0.5000); }
+  38% { transform: scaleX(0.5000); }
+  40% { transform: scaleX(0.5000); }
+  42% { transform: scaleX(0.5140); }
+  44% { transform: scaleX(0.5520); }
+  46% { transform: scaleX(0.6080); }
+  48% { transform: scaleX(0.6760); }
+  50% { transform: scaleX(0.7500); }
+  52% { transform: scaleX(0.8240); }
+  54% { transform: scaleX(0.8920); }
+  56% { transform: scaleX(0.9480); }
+  58% { transform: scaleX(0.9860); }
+  60% { transform: scaleX(1.0000); }
+  62% { transform: scaleX(1.0000); }
+  64% { transform: scaleX(1.0000); }
+  66% { transform: scaleX(1.0000); }
+  68% { transform: scaleX(1.0000); }
+  70% { transform: scaleX(1.0000); }
+  72% { transform: scaleX(1.0000); }
+  74% { transform: scaleX(1.0000); }
+  76% { transform: scaleX(0.9767); }
+  78% { transform: scaleX(0.9128); }
+  80% { transform: scaleX(0.8174); }
+  82% { transform: scaleX(0.6995); }
+  84% { transform: scaleX(0.5680); }
+  86% { transform: scaleX(0.4320); }
+  88% { transform: scaleX(0.3005); }
+  90% { transform: scaleX(0.1826); }
+  92% { transform: scaleX(0.0872); }
+  94% { transform: scaleX(0.0233); }
+  96% { transform: scaleX(0.0000); }
+  98% { transform: scaleX(0.0000); }
+  100% { transform: scaleX(0.0000); }
+}
+@keyframes kp-hd {
+  0% { transform: translateX(-160px); opacity: 0.00; }
+  2% { transform: translateX(-160px); opacity: 0.00; }
+  4% { transform: translateX(-160px); opacity: 0.00; }
+  6% { transform: translateX(-160px); opacity: 0.00; }
+  8% { transform: translateX(-157.8px); opacity: 0.15; }
+  10% { transform: translateX(-151.7px); opacity: 0.55; }
+  12% { transform: translateX(-142.7px); opacity: 1.00; }
+  14% { transform: translateX(-131.8px); opacity: 1.00; }
+  16% { transform: translateX(-120px); opacity: 1.00; }
+  18% { transform: translateX(-108.2px); opacity: 1.00; }
+  20% { transform: translateX(-97.3px); opacity: 1.00; }
+  22% { transform: translateX(-88.3px); opacity: 1.00; }
+  24% { transform: translateX(-82.2px); opacity: 1.00; }
+  26% { transform: translateX(-80px); opacity: 1.00; }
+  28% { transform: translateX(-80px); opacity: 1.00; }
+  30% { transform: translateX(-80px); opacity: 1.00; }
+  32% { transform: translateX(-80px); opacity: 1.00; }
+  34% { transform: translateX(-80px); opacity: 1.00; }
+  36% { transform: translateX(-80px); opacity: 1.00; }
+  38% { transform: translateX(-80px); opacity: 1.00; }
+  40% { transform: translateX(-80px); opacity: 1.00; }
+  42% { transform: translateX(-77.8px); opacity: 1.00; }
+  44% { transform: translateX(-71.7px); opacity: 1.00; }
+  46% { transform: translateX(-62.7px); opacity: 1.00; }
+  48% { transform: translateX(-51.8px); opacity: 1.00; }
+  50% { transform: translateX(-40px); opacity: 1.00; }
+  52% { transform: translateX(-28.2px); opacity: 1.00; }
+  54% { transform: translateX(-17.3px); opacity: 1.00; }
+  56% { transform: translateX(-8.3px); opacity: 1.00; }
+  58% { transform: translateX(-2.2px); opacity: 1.00; }
+  60% { transform: translateX(0px); opacity: 1.00; }
+  62% { transform: translateX(0px); opacity: 1.00; }
+  64% { transform: translateX(0px); opacity: 1.00; }
+  66% { transform: translateX(0px); opacity: 1.00; }
+  68% { transform: translateX(0px); opacity: 1.00; }
+  70% { transform: translateX(0px); opacity: 1.00; }
+  72% { transform: translateX(0px); opacity: 1.00; }
+  74% { transform: translateX(0px); opacity: 1.00; }
+  76% { transform: translateX(-3.7px); opacity: 1.00; }
+  78% { transform: translateX(-13.9px); opacity: 1.00; }
+  80% { transform: translateX(-29.2px); opacity: 1.00; }
+  82% { transform: translateX(-48.1px); opacity: 1.00; }
+  84% { transform: translateX(-69.1px); opacity: 1.00; }
+  86% { transform: translateX(-90.9px); opacity: 1.00; }
+  88% { transform: translateX(-111.9px); opacity: 1.00; }
+  90% { transform: translateX(-130.8px); opacity: 1.00; }
+  92% { transform: translateX(-146.1px); opacity: 0.93; }
+  94% { transform: translateX(-156.3px); opacity: 0.25; }
+  96% { transform: translateX(-160px); opacity: 0.00; }
+  98% { transform: translateX(-160px); opacity: 0.00; }
+  100% { transform: translateX(-160px); opacity: 0.00; }
+}
+@keyframes kp-sh {
+  0% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+  2% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+  4% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+  6% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+  8% { transform: translateX(-157.8px) scaleX(0.0140); opacity: 0.15; }
+  10% { transform: translateX(-151.7px) scaleX(0.0520); opacity: 0.55; }
+  12% { transform: translateX(-142.7px) scaleX(0.1080); opacity: 1.00; }
+  14% { transform: translateX(-131.8px) scaleX(0.1760); opacity: 1.00; }
+  16% { transform: translateX(-120px) scaleX(0.2500); opacity: 1.00; }
+  18% { transform: translateX(-108.2px) scaleX(0.3240); opacity: 1.00; }
+  20% { transform: translateX(-97.3px) scaleX(0.3920); opacity: 1.00; }
+  22% { transform: translateX(-88.3px) scaleX(0.4480); opacity: 1.00; }
+  24% { transform: translateX(-82.2px) scaleX(0.4860); opacity: 1.00; }
+  26% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  28% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  30% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  32% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  34% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  36% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  38% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  40% { transform: translateX(-80px) scaleX(0.5000); opacity: 1.00; }
+  42% { transform: translateX(-77.8px) scaleX(0.5140); opacity: 1.00; }
+  44% { transform: translateX(-71.7px) scaleX(0.5520); opacity: 1.00; }
+  46% { transform: translateX(-62.7px) scaleX(0.6080); opacity: 1.00; }
+  48% { transform: translateX(-51.8px) scaleX(0.6760); opacity: 1.00; }
+  50% { transform: translateX(-40px) scaleX(0.7500); opacity: 1.00; }
+  52% { transform: translateX(-28.2px) scaleX(0.8240); opacity: 1.00; }
+  54% { transform: translateX(-17.3px) scaleX(0.8920); opacity: 1.00; }
+  56% { transform: translateX(-8.3px) scaleX(0.9480); opacity: 1.00; }
+  58% { transform: translateX(-2.2px) scaleX(0.9860); opacity: 1.00; }
+  60% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  62% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  64% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  66% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  68% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  70% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  72% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  74% { transform: translateX(0px) scaleX(1.0000); opacity: 1.00; }
+  76% { transform: translateX(-3.7px) scaleX(0.9767); opacity: 1.00; }
+  78% { transform: translateX(-13.9px) scaleX(0.9128); opacity: 1.00; }
+  80% { transform: translateX(-29.2px) scaleX(0.8174); opacity: 1.00; }
+  82% { transform: translateX(-48.1px) scaleX(0.6995); opacity: 1.00; }
+  84% { transform: translateX(-69.1px) scaleX(0.5680); opacity: 1.00; }
+  86% { transform: translateX(-90.9px) scaleX(0.4320); opacity: 1.00; }
+  88% { transform: translateX(-111.9px) scaleX(0.3005); opacity: 1.00; }
+  90% { transform: translateX(-130.8px) scaleX(0.1826); opacity: 1.00; }
+  92% { transform: translateX(-146.1px) scaleX(0.0872); opacity: 0.93; }
+  94% { transform: translateX(-156.3px) scaleX(0.0233); opacity: 0.25; }
+  96% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+  98% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+  100% { transform: translateX(-160px) scaleX(0.0000); opacity: 0.00; }
+}
+@keyframes kp-dot {
+  0% { transform: translate(-320px, 96px); }
+  2% { transform: translate(-320px, 96px); }
+  4% { transform: translate(-320px, 96px); }
+  6% { transform: translate(-320px, 96px); }
+  8% { transform: translate(-315.5px, 94.7px); }
+  10% { transform: translate(-303.4px, 91px); }
+  12% { transform: translate(-285.4px, 85.6px); }
+  14% { transform: translate(-263.7px, 79.1px); }
+  16% { transform: translate(-240px, 72px); }
+  18% { transform: translate(-216.3px, 64.9px); }
+  20% { transform: translate(-194.6px, 58.4px); }
+  22% { transform: translate(-176.6px, 53px); }
+  24% { transform: translate(-164.5px, 49.3px); }
+  26% { transform: translate(-160px, 48px); }
+  28% { transform: translate(-160px, 48px); }
+  30% { transform: translate(-160px, 48px); }
+  32% { transform: translate(-160px, 48px); }
+  34% { transform: translate(-160px, 48px); }
+  36% { transform: translate(-160px, 48px); }
+  38% { transform: translate(-160px, 48px); }
+  40% { transform: translate(-160px, 48px); }
+  42% { transform: translate(-155.5px, 46.7px); }
+  44% { transform: translate(-143.4px, 43px); }
+  46% { transform: translate(-125.4px, 37.6px); }
+  48% { transform: translate(-103.7px, 31.1px); }
+  50% { transform: translate(-80px, 24px); }
+  52% { transform: translate(-56.3px, 16.9px); }
+  54% { transform: translate(-34.6px, 10.4px); }
+  56% { transform: translate(-16.6px, 5px); }
+  58% { transform: translate(-4.5px, 1.3px); }
+  60% { transform: translate(0px, -0px); }
+  62% { transform: translate(0px, -0px); }
+  64% { transform: translate(0px, -0px); }
+  66% { transform: translate(0px, -0px); }
+  68% { transform: translate(0px, -0px); }
+  70% { transform: translate(0px, -0px); }
+  72% { transform: translate(0px, -0px); }
+  74% { transform: translate(0px, -0px); }
+  76% { transform: translate(-7.5px, 2.2px); }
+  78% { transform: translate(-27.9px, 8.4px); }
+  80% { transform: translate(-58.4px, 17.5px); }
+  82% { transform: translate(-96.2px, 28.9px); }
+  84% { transform: translate(-138.2px, 41.5px); }
+  86% { transform: translate(-181.8px, 54.5px); }
+  88% { transform: translate(-223.8px, 67.1px); }
+  90% { transform: translate(-261.6px, 78.5px); }
+  92% { transform: translate(-292.1px, 87.6px); }
+  94% { transform: translate(-312.5px, 93.8px); }
+  96% { transform: translate(-320px, 96px); }
+  98% { transform: translate(-320px, 96px); }
+  100% { transform: translate(-320px, 96px); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">kP, the spring: push = kP × error</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">P is proportional: twice the error, twice the push.</text>
+<line x1="16" y1="150" x2="504" y2="150" stroke="#444444" stroke-width="1.6"/>
+<line x1="28" y1="150" x2="20" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="44" y1="150" x2="36" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="60" y1="150" x2="52" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="76" y1="150" x2="68" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="92" y1="150" x2="84" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="108" y1="150" x2="100" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="124" y1="150" x2="116" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="140" y1="150" x2="132" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="156" y1="150" x2="148" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="172" y1="150" x2="164" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="188" y1="150" x2="180" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="204" y1="150" x2="196" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="220" y1="150" x2="212" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="236" y1="150" x2="228" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="252" y1="150" x2="244" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="268" y1="150" x2="260" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="284" y1="150" x2="276" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="300" y1="150" x2="292" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="316" y1="150" x2="308" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="332" y1="150" x2="324" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="348" y1="150" x2="340" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="364" y1="150" x2="356" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="380" y1="150" x2="372" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="396" y1="150" x2="388" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="412" y1="150" x2="404" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="428" y1="150" x2="420" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="444" y1="150" x2="436" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="460" y1="150" x2="452" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="476" y1="150" x2="468" y2="158" stroke="#b0b8c0" stroke-width="1.2"/><line x1="492" y1="150" x2="484" y2="158" stroke="#b0b8c0" stroke-width="1.2"/>
+<g class="kp-spr"><path d="M96 130 L108 130 L119 119 L141 141 L163 119 L185 141 L207 119 L229 141 L251 119 L273 141 L295 119 L317 141 L339 119 L361 141 L383 119 L405 141 L416 130" fill="none" stroke="#444444" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g>
+<circle cx="96" cy="130" r="5" fill="#b0b8c0" stroke="#444444"/>
+<g class="kp-blk"><rect x="392" y="110" width="48" height="40" rx="4" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/><circle cx="416" cy="130" r="3" fill="#444444"/></g>
+<g class="kp-sh"><line x1="262" y1="96" x2="416" y2="96" stroke="#446ce3" stroke-width="4" vector-effect="non-scaling-stroke"/></g>
+<g class="kp-hd"><path d="M256 96 L268 88.8 L268 103.2Z" fill="#446ce3"/></g>
+<text x="104" y="84" font-size="13" fill="#446ce3" font-weight="700">push</text>
+<line x1="96" y1="70" x2="96" y2="172" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="96" y="64" font-size="12" fill="#446ce3" font-weight="700" text-anchor="middle">target</text>
+<g class="kp-err"><line x1="96" y1="170" x2="416" y2="170" stroke="#c62828" stroke-width="2" vector-effect="non-scaling-stroke"/></g>
+<g class="kp-blk"><line x1="416" y1="164" x2="416" y2="176" stroke="#c62828" stroke-width="2"/></g>
+<text x="88" y="174" font-size="12" fill="#c62828" font-weight="700" text-anchor="end">error</text>
+<text x="16" y="194" font-size="13" fill="#222222">Like a spring: the further from the target, the harder it pulls.</text>
+<line x1="150" y1="330" x2="150" y2="222" stroke="#444444" stroke-width="1.2"/>
+<line x1="150" y1="330" x2="490" y2="330" stroke="#444444" stroke-width="1.2"/>
+<path d="M310 330 V282 H150" fill="none" stroke="#9a9a9a" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="310" y="346" font-size="12" fill="#c62828" font-weight="700" text-anchor="middle">1×</text>
+<text x="144" y="286" font-size="12" fill="#446ce3" font-weight="700" text-anchor="end">1×</text>
+<path d="M470 330 V234 H150" fill="none" stroke="#9a9a9a" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="470" y="346" font-size="12" fill="#c62828" font-weight="700" text-anchor="middle">2×</text>
+<text x="144" y="238" font-size="12" fill="#446ce3" font-weight="700" text-anchor="end">2×</text>
+<line x1="150" y1="330" x2="486" y2="229.2" stroke="#446ce3" stroke-width="2.4"/>
+<text x="150" y="216" font-size="12" fill="#446ce3" font-weight="700" text-anchor="middle">push</text>
+<text x="320" y="362" font-size="12" fill="#c62828" font-weight="700" text-anchor="middle">error</text>
+<text x="162" y="262" font-size="13" fill="#446ce3" font-weight="700">push = kP × error</text>
+<text x="144" y="334" font-size="12" fill="#5c5c5c" text-anchor="end">0</text>
+<g class="kp-dot"><circle cx="470" cy="234" r="6" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+<line x1="16" y1="372" x2="504" y2="372" stroke="#e2e2e2"/>
+<text x="16" y="390" font-size="13" fill="#222222">In REV units, steering kP 0.01 means 1% of the battery per degree,</text>
+<text x="16" y="407" font-size="13" fill="#222222">so 10° of error gives 0.1 × 12 V = 1.2 V.</text>
+</svg>

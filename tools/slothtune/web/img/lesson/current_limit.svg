@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 394" width="520" height="394" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="cl-title cl-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="cl-title">Current limit: a ceiling on the motor's current</title>
+<desc id="cl-desc">Animated. Two graphs over time for a NEO V1.1 speeding up from a stop with its team limit of 60 A. Top: current. Without a limit (dotted gray) it would start far higher; with the limit (orange) it is held flat at the dashed 60 A line, then falls as the motor speeds up. Bottom: the voltage the SPARK applies, turned down at first to hold the limit and rising to full. A cursor with two dots sweeps across both. Beside them, the team limits: NEO 550 20 A, NEO V1.1 60 A, NEO 2.0 and Vortex 80 A.</desc>
+<style>
+.cl-fade { animation: cl-fade 6s linear infinite; }
+.cl-x { animation: cl-x 6s linear infinite; }
+.cl-yc { animation: cl-yc 6s linear infinite; }
+.cl-yv { animation: cl-yv 6s linear infinite; }
+@keyframes cl-fade {
+  0% { opacity: 0; }
+  4% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes cl-x {
+  0% { transform: translateX(-77.08px); }
+  2% { transform: translateX(-77.08px); }
+  4% { transform: translateX(-77.08px); }
+  6% { transform: translateX(-77.08px); }
+  8% { transform: translateX(-77.08px); }
+  10% { transform: translateX(-69.69px); }
+  12% { transform: translateX(-62.3px); }
+  14% { transform: translateX(-54.91px); }
+  16% { transform: translateX(-47.52px); }
+  18% { transform: translateX(-40.14px); }
+  20% { transform: translateX(-32.75px); }
+  22% { transform: translateX(-25.36px); }
+  24% { transform: translateX(-17.97px); }
+  26% { transform: translateX(-10.58px); }
+  28% { transform: translateX(-3.19px); }
+  30% { transform: translateX(4.2px); }
+  32% { transform: translateX(11.59px); }
+  32.545% { transform: translateX(13.6px); }
+  34% { transform: translateX(18.98px); }
+  36% { transform: translateX(26.36px); }
+  38% { transform: translateX(33.75px); }
+  40% { transform: translateX(41.14px); }
+  42% { transform: translateX(48.53px); }
+  44% { transform: translateX(55.92px); }
+  46% { transform: translateX(63.31px); }
+  48% { transform: translateX(70.7px); }
+  50% { transform: translateX(78.09px); }
+  52% { transform: translateX(85.48px); }
+  54% { transform: translateX(92.86px); }
+  56% { transform: translateX(100.25px); }
+  58% { transform: translateX(107.64px); }
+  60% { transform: translateX(115.03px); }
+  62% { transform: translateX(122.42px); }
+  64% { transform: translateX(129.81px); }
+  66% { transform: translateX(137.2px); }
+  68% { transform: translateX(144.59px); }
+  70% { transform: translateX(151.98px); }
+  72% { transform: translateX(159.36px); }
+  74% { transform: translateX(166.75px); }
+  76% { transform: translateX(174.14px); }
+  78% { transform: translateX(181.53px); }
+  80% { transform: translateX(188.92px); }
+  82% { transform: translateX(188.92px); }
+  84% { transform: translateX(188.92px); }
+  86% { transform: translateX(188.92px); }
+  88% { transform: translateX(188.92px); }
+  90% { transform: translateX(188.92px); }
+  92% { transform: translateX(188.92px); }
+  94% { transform: translateX(188.92px); }
+  96% { transform: translateX(188.92px); }
+  98% { transform: translateX(188.92px); }
+  100% { transform: translateX(188.92px); }
+}
+@keyframes cl-yc {
+  0% { transform: translateY(0px); }
+  2% { transform: translateY(0px); }
+  4% { transform: translateY(0px); }
+  6% { transform: translateY(0px); }
+  8% { transform: translateY(0px); }
+  10% { transform: translateY(0px); }
+  12% { transform: translateY(0px); }
+  14% { transform: translateY(0px); }
+  16% { transform: translateY(0px); }
+  18% { transform: translateY(0px); }
+  20% { transform: translateY(0px); }
+  22% { transform: translateY(0px); }
+  24% { transform: translateY(0px); }
+  26% { transform: translateY(0px); }
+  28% { transform: translateY(0px); }
+  30% { transform: translateY(0px); }
+  32% { transform: translateY(0px); }
+  32.545% { transform: translateY(0px); }
+  34% { transform: translateY(2.36px); }
+  36% { transform: translateY(5.44px); }
+  38% { transform: translateY(8.33px); }
+  40% { transform: translateY(11.06px); }
+  42% { transform: translateY(13.62px); }
+  44% { transform: translateY(16.03px); }
+  46% { transform: translateY(18.3px); }
+  48% { transform: translateY(20.43px); }
+  50% { transform: translateY(22.44px); }
+  52% { transform: translateY(24.33px); }
+  54% { transform: translateY(26.1px); }
+  56% { transform: translateY(27.77px); }
+  58% { transform: translateY(29.35px); }
+  60% { transform: translateY(30.82px); }
+  62% { transform: translateY(32.21px); }
+  64% { transform: translateY(33.52px); }
+  66% { transform: translateY(34.75px); }
+  68% { transform: translateY(35.91px); }
+  70% { transform: translateY(37px); }
+  72% { transform: translateY(38.03px); }
+  74% { transform: translateY(38.99px); }
+  76% { transform: translateY(39.9px); }
+  78% { transform: translateY(40.75px); }
+  80% { transform: translateY(41.55px); }
+  82% { transform: translateY(41.55px); }
+  84% { transform: translateY(41.55px); }
+  86% { transform: translateY(41.55px); }
+  88% { transform: translateY(41.55px); }
+  90% { transform: translateY(41.55px); }
+  92% { transform: translateY(41.55px); }
+  94% { transform: translateY(41.55px); }
+  96% { transform: translateY(41.55px); }
+  98% { transform: translateY(41.55px); }
+  100% { transform: translateY(41.55px); }
+}
+@keyframes cl-yv {
+  0% { transform: translateY(25.5px); }
+  2% { transform: translateY(25.5px); }
+  4% { transform: translateY(25.5px); }
+  6% { transform: translateY(25.5px); }
+  8% { transform: translateY(25.5px); }
+  10% { transform: translateY(23.06px); }
+  12% { transform: translateY(20.61px); }
+  14% { transform: translateY(18.17px); }
+  16% { transform: translateY(15.72px); }
+  18% { transform: translateY(13.28px); }
+  20% { transform: translateY(10.83px); }
+  22% { transform: translateY(8.39px); }
+  24% { transform: translateY(5.94px); }
+  26% { transform: translateY(3.5px); }
+  28% { transform: translateY(1.06px); }
+  30% { transform: translateY(-1.39px); }
+  32% { transform: translateY(-3.83px); }
+  32.545% { transform: translateY(-4.5px); }
+  34% { transform: translateY(-4.5px); }
+  36% { transform: translateY(-4.5px); }
+  38% { transform: translateY(-4.5px); }
+  40% { transform: translateY(-4.5px); }
+  42% { transform: translateY(-4.5px); }
+  44% { transform: translateY(-4.5px); }
+  46% { transform: translateY(-4.5px); }
+  48% { transform: translateY(-4.5px); }
+  50% { transform: translateY(-4.5px); }
+  52% { transform: translateY(-4.5px); }
+  54% { transform: translateY(-4.5px); }
+  56% { transform: translateY(-4.5px); }
+  58% { transform: translateY(-4.5px); }
+  60% { transform: translateY(-4.5px); }
+  62% { transform: translateY(-4.5px); }
+  64% { transform: translateY(-4.5px); }
+  66% { transform: translateY(-4.5px); }
+  68% { transform: translateY(-4.5px); }
+  70% { transform: translateY(-4.5px); }
+  72% { transform: translateY(-4.5px); }
+  74% { transform: translateY(-4.5px); }
+  76% { transform: translateY(-4.5px); }
+  78% { transform: translateY(-4.5px); }
+  80% { transform: translateY(-4.5px); }
+  82% { transform: translateY(-4.5px); }
+  84% { transform: translateY(-4.5px); }
+  86% { transform: translateY(-4.5px); }
+  88% { transform: translateY(-4.5px); }
+  90% { transform: translateY(-4.5px); }
+  92% { transform: translateY(-4.5px); }
+  94% { transform: translateY(-4.5px); }
+  96% { transform: translateY(-4.5px); }
+  98% { transform: translateY(-4.5px); }
+  100% { transform: translateY(-4.5px); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Current limit: a ceiling on the motor's current</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">The SPARK holds the current at a set value by turning the voltage down.</text>
+<rect x="64" y="84" width="90.68" height="206" fill="#446ce3" fill-opacity="0.08"/>
+<text x="64" y="78" font-size="12" font-weight="700" fill="#c2410c">current</text>
+<text x="116" y="78" font-size="12" fill="#5c5c5c">a NEO V1.1 speeding up from a stop</text>
+<path d="M64 84 V184 H334" fill="none" stroke="#444444" stroke-width="1.5"/>
+<line x1="64" y1="129.71" x2="330" y2="129.71" stroke="#446ce3" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="330" y="123.71" font-size="12" font-weight="700" fill="#446ce3" text-anchor="end">limit: 60 A</text>
+<path d="M64 89 L66 90.56 L68 92.09 L70 93.6 L72 95.08 L74 96.54 L76 97.98 L78 99.39 L80 100.78 L82 102.14 L84 103.48 L86 104.8 L88 106.1 L90 107.38 L92 108.64 L94 109.87 L96 111.09 L98 112.29 L100 113.46 L102 114.62 L104 115.76 L106 116.88 L108 117.98 L110 119.06 L112 120.13 L114 121.18 L116 122.21 L118 123.22 L120 124.22 L122 125.2 L124 126.16 L126 127.11 L128 128.04 L130 128.96 L132 129.87 L134 130.75 L136 131.63 L138 132.49 L140 133.33 L142 134.16 L144 134.98 L146 135.78 L148 136.58 L150 137.35 L152 138.12 L154 138.87 L154.68 139.13 L156 139.61 L158 140.34 L160 141.06 L162 141.76 L164 142.45 L166 143.14 L168 143.81 L170 144.47 L172 145.11 L174 145.75 L176 146.38 L178 147 L180 147.6 L182 148.2 L184 148.79 L186 149.37 L188 149.93 L190 150.49 L192 151.04 L194 151.58 L196 152.11 L198 152.64 L200 153.15 L202 153.66 L204 154.16 L206 154.65 L208 155.13 L210 155.6 L212 156.07 L214 156.53 L216 156.98 L218 157.42 L220 157.86 L222 158.28 L224 158.71 L226 159.12 L228 159.53 L230 159.93 L232 160.33 L234 160.71 L236 161.1 L238 161.47 L240 161.84 L242 162.2 L244 162.56 L246 162.91 L248 163.26 L250 163.6 L252 163.93 L254 164.26 L256 164.59 L258 164.91 L260 165.22 L262 165.53 L264 165.83 L266 166.13 L268 166.42 L270 166.71 L272 166.99 L274 167.27 L276 167.55 L278 167.82 L280 168.08 L282 168.34 L284 168.6 L286 168.85 L288 169.1 L290 169.35 L292 169.59 L294 169.82 L296 170.06 L298 170.28 L300 170.51 L302 170.73 L304 170.95 L306 171.16 L308 171.37 L310 171.58 L312 171.78 L314 171.98 L316 172.18 L318 172.38 L320 172.57 L322 172.75 L324 172.94 L326 173.12 L328 173.3 L330 173.47" fill="none" stroke="#9aa3ad" stroke-width="2" stroke-dasharray="2 4" stroke-linecap="round"/>
+<text x="86" y="99" font-size="12" fill="#5c5c5c">without a limit</text>
+<path d="M64 129.71 L66 129.71 L68 129.71 L70 129.71 L72 129.71 L74 129.71 L76 129.71 L78 129.71 L80 129.71 L82 129.71 L84 129.71 L86 129.71 L88 129.71 L90 129.71 L92 129.71 L94 129.71 L96 129.71 L98 129.71 L100 129.71 L102 129.71 L104 129.71 L106 129.71 L108 129.71 L110 129.71 L112 129.71 L114 129.71 L116 129.71 L118 129.71 L120 129.71 L122 129.71 L124 129.71 L126 129.71 L128 129.71 L130 129.71 L132 129.71 L134 129.71 L136 129.71 L138 129.71 L140 129.71 L142 129.71 L144 129.71 L146 129.71 L148 129.71 L150 129.71 L152 129.71 L154 129.71 L154.68 129.71 L156 130.3 L158 131.18 L160 132.05 L162 132.9 L164 133.74 L166 134.57 L168 135.38 L170 136.17 L172 136.96 L174 137.73 L176 138.49 L178 139.24 L180 139.97 L182 140.69 L184 141.4 L186 142.1 L188 142.79 L190 143.47 L192 144.13 L194 144.78 L196 145.43 L198 146.06 L200 146.68 L202 147.3 L204 147.9 L206 148.49 L208 149.07 L210 149.65 L212 150.21 L214 150.76 L216 151.31 L218 151.84 L220 152.37 L222 152.89 L224 153.4 L226 153.9 L228 154.4 L230 154.88 L232 155.36 L234 155.83 L236 156.29 L238 156.75 L240 157.19 L242 157.63 L244 158.07 L246 158.49 L248 158.91 L250 159.32 L252 159.73 L254 160.12 L256 160.52 L258 160.9 L260 161.28 L262 161.65 L264 162.02 L266 162.38 L268 162.74 L270 163.08 L272 163.43 L274 163.76 L276 164.1 L278 164.42 L280 164.74 L282 165.06 L284 165.37 L286 165.68 L288 165.98 L290 166.27 L292 166.56 L294 166.85 L296 167.13 L298 167.41 L300 167.68 L302 167.95 L304 168.21 L306 168.47 L308 168.73 L310 168.98 L312 169.22 L314 169.46 L316 169.7 L318 169.94 L320 170.17 L322 170.4 L324 170.62 L326 170.84 L328 171.05 L330 171.27" fill="none" stroke="#c2410c" stroke-width="2.8" stroke-linejoin="round"/>
+<text x="70" y="148" font-size="12" font-weight="700" fill="#222222">held at</text>
+<text x="70" y="162" font-size="12" font-weight="700" fill="#222222">the limit</text>
+<text x="64" y="208" font-size="12" font-weight="700" fill="#444444">voltage the SPARK applies</text>
+<path d="M64 214 V290 H334" fill="none" stroke="#444444" stroke-width="1.5"/>
+<line x1="64" y1="220" x2="330" y2="220" stroke="#9aa3ad" stroke-width="1.5" stroke-dasharray="2 4"/>
+<text x="330" y="214" font-size="12" fill="#5c5c5c" text-anchor="end">full</text>
+<path d="M64 250 L66 249.34 L68 248.68 L70 248.02 L72 247.35 L74 246.69 L76 246.03 L78 245.37 L80 244.71 L82 244.05 L84 243.38 L86 242.72 L88 242.06 L90 241.4 L92 240.74 L94 240.08 L96 239.41 L98 238.75 L100 238.09 L102 237.43 L104 236.77 L106 236.11 L108 235.44 L110 234.78 L112 234.12 L114 233.46 L116 232.8 L118 232.14 L120 231.47 L122 230.81 L124 230.15 L126 229.49 L128 228.83 L130 228.17 L132 227.5 L134 226.84 L136 226.18 L138 225.52 L140 224.86 L142 224.2 L144 223.53 L146 222.87 L148 222.21 L150 221.55 L152 220.89 L154 220.23 L154.68 220 L156 220 L158 220 L160 220 L162 220 L164 220 L166 220 L168 220 L170 220 L172 220 L174 220 L176 220 L178 220 L180 220 L182 220 L184 220 L186 220 L188 220 L190 220 L192 220 L194 220 L196 220 L198 220 L200 220 L202 220 L204 220 L206 220 L208 220 L210 220 L212 220 L214 220 L216 220 L218 220 L220 220 L222 220 L224 220 L226 220 L228 220 L230 220 L232 220 L234 220 L236 220 L238 220 L240 220 L242 220 L244 220 L246 220 L248 220 L250 220 L252 220 L254 220 L256 220 L258 220 L260 220 L262 220 L264 220 L266 220 L268 220 L270 220 L272 220 L274 220 L276 220 L278 220 L280 220 L282 220 L284 220 L286 220 L288 220 L290 220 L292 220 L294 220 L296 220 L298 220 L300 220 L302 220 L304 220 L306 220 L308 220 L310 220 L312 220 L314 220 L316 220 L318 220 L320 220 L322 220 L324 220 L326 220 L328 220 L330 220" fill="none" stroke="#444444" stroke-width="2.8" stroke-linejoin="round"/>
+<text x="70" y="268" font-size="12" font-weight="700" fill="#222222">turned</text>
+<text x="70" y="282" font-size="12" font-weight="700" fill="#222222">down</text>
+<text x="334" y="306" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<g class="cl-fade"><g class="cl-x">
+  <path d="M141.08 105 V184 M141.08 214 V290" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <g class="cl-yc"><circle cx="141.08" cy="129.71" r="6.5" fill="#c2410c" stroke="#ffffff" stroke-width="2"/></g>
+  <g class="cl-yv"><circle cx="141.08" cy="224.5" r="6.5" fill="#444444" stroke="#ffffff" stroke-width="2"/></g>
+</g></g>
+<text x="362" y="80" font-size="13" font-weight="700" fill="#222222">Team limits</text>
+<text x="362" y="104" font-size="12" fill="#222222">NEO 550</text>
+<rect x="362" y="110" width="25" height="13" rx="2" fill="#446ce3"/>
+<text x="393" y="121" font-size="12" font-weight="700" fill="#222222">20 A</text>
+<text x="362" y="142" font-size="12" font-weight="700" fill="#222222">NEO V1.1</text>
+<rect x="362" y="148" width="75" height="13" rx="2" fill="#446ce3"/>
+<text x="443" y="159" font-size="12" font-weight="700" fill="#222222">60 A</text>
+<text x="362" y="180" font-size="12" fill="#222222">NEO 2.0</text>
+<rect x="362" y="186" width="100" height="13" rx="2" fill="#446ce3"/>
+<text x="468" y="197" font-size="12" font-weight="700" fill="#222222">80 A</text>
+<text x="362" y="218" font-size="12" fill="#222222">Vortex</text>
+<rect x="362" y="224" width="100" height="13" rx="2" fill="#446ce3"/>
+<text x="468" y="235" font-size="12" font-weight="700" fill="#222222">80 A</text>
+<line x1="16" y1="322" x2="504" y2="322" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="342" font-size="13" fill="#222222">Current makes torque, torque makes acceleration, and heat.</text>
+<text x="16" y="361" font-size="13" fill="#222222">The limit protects the motor and the wheels' grip, and caps acceleration.</text>
+<text x="16" y="380" font-size="12" fill="#5c5c5c">On a drive motor, a limit above what the carpet can hold just spins the wheel.</text>
+</svg>

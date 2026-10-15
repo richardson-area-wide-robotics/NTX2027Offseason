@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 396" width="520" height="396" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="de-title de-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="de-title">Derate: half the current, a quarter of the heat</title>
+<desc id="de-desc">Animated. Left: a square whose side is the current and whose area is the heat. At full current it fills all four quarters; at half current it fills one, a quarter of the heat. A motor below keeps turning, slower while derated. Right: a graph of temperature rising to the line; there the current limit drops to half, and the temperature falls until it is 10 degrees (or 10 points) below the line, when the full limit comes back and the cycle repeats.</desc>
+<style>
+.de-x { animation: de-x 8s linear infinite; }
+.de-yt { animation: de-yt 8s linear infinite; }
+.de-yl { animation: de-yl 8s linear infinite; }
+.de-sq { transform-box: fill-box; transform-origin: 0% 100%; transform: scale(0.5); animation: de-sq 8s linear infinite; }
+.de-rf { animation: de-rf 8s linear infinite; }
+.de-rh { animation: de-rh 8s linear infinite; }
+.de-rot { transform-box: view-box; transform-origin: 0 0; animation: de-rot 8s linear infinite; }
+@keyframes de-x {
+  0% { transform: translateX(-168px); }
+  2% { transform: translateX(-163.2px); }
+  4% { transform: translateX(-158.4px); }
+  6% { transform: translateX(-153.6px); }
+  8% { transform: translateX(-148.8px); }
+  10% { transform: translateX(-144px); }
+  12% { transform: translateX(-139.2px); }
+  14% { transform: translateX(-134.4px); }
+  16% { transform: translateX(-129.6px); }
+  18% { transform: translateX(-124.8px); }
+  20% { transform: translateX(-120px); }
+  22% { transform: translateX(-115.2px); }
+  24% { transform: translateX(-110.4px); }
+  26% { transform: translateX(-105.6px); }
+  28% { transform: translateX(-100.8px); }
+  30% { transform: translateX(-96px); }
+  32% { transform: translateX(-91.2px); }
+  34% { transform: translateX(-86.4px); }
+  36% { transform: translateX(-81.6px); }
+  38% { transform: translateX(-76.8px); }
+  40% { transform: translateX(-72px); }
+  42% { transform: translateX(-67.2px); }
+  44% { transform: translateX(-62.4px); }
+  44.9% { transform: translateX(-60.24px); }
+  45% { transform: translateX(-60px); }
+  46% { transform: translateX(-57.6px); }
+  48% { transform: translateX(-52.8px); }
+  50% { transform: translateX(-48px); }
+  52% { transform: translateX(-43.2px); }
+  54% { transform: translateX(-38.4px); }
+  56% { transform: translateX(-33.6px); }
+  58% { transform: translateX(-28.8px); }
+  60% { transform: translateX(-24px); }
+  62% { transform: translateX(-19.2px); }
+  64% { transform: translateX(-14.4px); }
+  66% { transform: translateX(-9.6px); }
+  68% { transform: translateX(-4.8px); }
+  70% { transform: translateX(0px); }
+  72% { transform: translateX(4.8px); }
+  74% { transform: translateX(9.6px); }
+  76% { transform: translateX(14.4px); }
+  78% { transform: translateX(19.2px); }
+  80% { transform: translateX(24px); }
+  82% { transform: translateX(28.8px); }
+  84% { transform: translateX(33.6px); }
+  86% { transform: translateX(38.4px); }
+  88% { transform: translateX(43.2px); }
+  90% { transform: translateX(48px); }
+  92% { transform: translateX(52.8px); }
+  94% { transform: translateX(57.6px); }
+  96% { transform: translateX(62.4px); }
+  98% { transform: translateX(67.2px); }
+  99.9% { transform: translateX(71.76px); }
+  100% { transform: translateX(72px); }
+}
+@keyframes de-yt {
+  0% { transform: translateY(21.15px); }
+  2% { transform: translateY(16.52px); }
+  4% { transform: translateY(12.15px); }
+  6% { transform: translateY(8.02px); }
+  8% { transform: translateY(4.13px); }
+  10% { transform: translateY(0.46px); }
+  12% { transform: translateY(-3.01px); }
+  14% { transform: translateY(-6.29px); }
+  16% { transform: translateY(-9.38px); }
+  18% { transform: translateY(-12.29px); }
+  20% { transform: translateY(-15.05px); }
+  22% { transform: translateY(-17.64px); }
+  24% { transform: translateY(-20.1px); }
+  26% { transform: translateY(-22.41px); }
+  28% { transform: translateY(-24.6px); }
+  30% { transform: translateY(-26.66px); }
+  32% { transform: translateY(-28.6px); }
+  34% { transform: translateY(-30.44px); }
+  36% { transform: translateY(-32.18px); }
+  38% { transform: translateY(-33.81px); }
+  40% { transform: translateY(-35.36px); }
+  42% { transform: translateY(-36.82px); }
+  44% { transform: translateY(-38.19px); }
+  44.9% { transform: translateY(-38.79px); }
+  45% { transform: translateY(-38.85px); }
+  46% { transform: translateY(-36.69px); }
+  48% { transform: translateY(-32.57px); }
+  50% { transform: translateY(-28.67px); }
+  52% { transform: translateY(-25px); }
+  54% { transform: translateY(-21.53px); }
+  56% { transform: translateY(-18.26px); }
+  58% { transform: translateY(-15.18px); }
+  60% { transform: translateY(-12.27px); }
+  62% { transform: translateY(-9.52px); }
+  64% { transform: translateY(-6.93px); }
+  66% { transform: translateY(-4.48px); }
+  68% { transform: translateY(-2.18px); }
+  70% { transform: translateY(0px); }
+  72% { transform: translateY(2.05px); }
+  74% { transform: translateY(3.99px); }
+  76% { transform: translateY(5.82px); }
+  78% { transform: translateY(7.54px); }
+  80% { transform: translateY(9.17px); }
+  82% { transform: translateY(10.7px); }
+  84% { transform: translateY(12.15px); }
+  86% { transform: translateY(13.52px); }
+  88% { transform: translateY(14.81px); }
+  90% { transform: translateY(16.02px); }
+  92% { transform: translateY(17.17px); }
+  94% { transform: translateY(18.26px); }
+  96% { transform: translateY(19.28px); }
+  98% { transform: translateY(20.24px); }
+  99.9% { transform: translateY(21.11px); }
+  100% { transform: translateY(21.15px); }
+}
+@keyframes de-yl {
+  0% { transform: translateY(-27px); }
+  44.9% { transform: translateY(-27px); }
+  45% { transform: translateY(0px); }
+  99.9% { transform: translateY(0px); }
+  100% { transform: translateY(-27px); }
+}
+@keyframes de-sq {
+  0% { transform: scale(1); }
+  44.9% { transform: scale(1); }
+  45% { transform: scale(0.5); }
+  99.9% { transform: scale(0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes de-rf {
+  0% { opacity: 1; }
+  44.9% { opacity: 1; }
+  45% { opacity: 0.3; }
+  99.9% { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+@keyframes de-rh {
+  0% { opacity: 0.3; }
+  44.9% { opacity: 0.3; }
+  45% { opacity: 1; }
+  99.9% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+@keyframes de-rot {
+  0% { transform: rotate(0deg); }
+  45% { transform: rotate(720deg); }
+  100% { transform: rotate(1080deg); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Derate: half the current, a quarter of the heat</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">The guard halves a hot motor's current limit so it can cool while still working.</text>
+<text x="16" y="82" font-size="13" font-weight="700" fill="#222222">Heat grows as current squared</text>
+<rect x="30" y="96" width="96" height="96" fill="#fbf3f3"/>
+<rect class="de-sq" x="30" y="96" width="96" height="96" fill="#c62828" fill-opacity="0.85"/>
+<rect x="30" y="96" width="96" height="96" fill="none" stroke="#444444" stroke-width="1.4"/>
+<path d="M78 96 V192 M30 144 H126" stroke="#444444" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="16" y="212" font-size="12" fill="#5c5c5c">side = current, area = heat</text>
+<g class="de-rf">
+<text x="138" y="118" font-size="12" font-weight="700" fill="#222222">full current:</text>
+<text x="138" y="133" font-size="12" fill="#5c5c5c">4 squares of heat</text>
+</g>
+<g class="de-rh">
+<text x="138" y="172" font-size="12" font-weight="700" fill="#222222">half current:</text>
+<text x="138" y="187" font-size="12" fill="#5c5c5c">1 square of heat</text>
+</g>
+<g transform="translate(58 262)">
+  <circle r="30" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <g class="de-rot"><circle r="22" fill="#333333"/>
+    <line x1="0" y1="-4" x2="0" y2="-18" stroke="#c47a2c" stroke-width="5" stroke-linecap="round"/>
+    <circle r="4" fill="#b0b8c0"/></g>
+</g>
+<text x="98" y="258" font-size="12" font-weight="700" fill="#222222">keeps working,</text>
+<text x="98" y="273" font-size="12" fill="#5c5c5c">slower when derated</text>
+<text x="250" y="70" font-size="12" font-weight="700" fill="#222222">temperature</text>
+<path d="M250 76 V200 H494" fill="none" stroke="#444444" stroke-width="1.5"/>
+<line x1="250" y1="104" x2="490" y2="104" stroke="#c62828" stroke-width="2" stroke-dasharray="7 5"/>
+<text x="490" y="98" font-size="12" font-weight="700" fill="#c62828" text-anchor="end">the line</text>
+<line x1="250" y1="164" x2="490" y2="164" stroke="#5c5c5c" stroke-width="1.4" stroke-dasharray="4 4"/>
+<text x="490" y="181" font-size="12" fill="#5c5c5c" text-anchor="end">10 degrees (or 10 points) below</text>
+<path d="M250 164 L251.2 162.82 L252.4 161.65 L253.6 160.5 L254.8 159.37 L256 158.25 L257.2 157.15 L258.4 156.07 L259.6 155 L260.8 153.95 L262 152.91 L263.2 151.88 L264.4 150.87 L265.6 149.88 L266.8 148.9 L268 147.93 L269.2 146.98 L270.4 146.04 L271.6 145.12 L272.8 144.2 L274 143.31 L275.2 142.42 L276.4 141.55 L277.6 140.69 L278.8 139.84 L280 139 L281.2 138.18 L282.4 137.36 L283.6 136.56 L284.8 135.77 L286 135 L287.2 134.23 L288.4 133.47 L289.6 132.73 L290.8 131.99 L292 131.27 L293.2 130.56 L294.4 129.85 L295.6 129.16 L296.8 128.48 L298 127.8 L299.2 127.14 L300.4 126.49 L301.6 125.84 L302.8 125.21 L304 124.58 L305.2 123.96 L306.4 123.35 L307.6 122.75 L308.8 122.16 L310 121.58 L311.2 121 L312.4 120.44 L313.6 119.88 L314.8 119.33 L316 118.79 L317.2 118.25 L318.4 117.73 L319.6 117.21 L320.8 116.7 L322 116.19 L323.2 115.69 L324.4 115.2 L325.6 114.72 L326.8 114.25 L328 113.78 L329.2 113.31 L330.4 112.86 L331.6 112.41 L332.8 111.97 L334 111.53 L335.2 111.1 L336.4 110.67 L337.6 110.26 L338.8 109.84 L340 109.44 L341.2 109.04 L342.4 108.64 L343.6 108.25 L344.8 107.87 L346 107.49 L347.2 107.12 L348.4 106.75 L349.6 106.39 L350.8 106.03 L352 105.68 L353.2 105.34 L354.4 105 L355.6 104.66 L356.8 104.33 L358 104 L359.2 105.09 L360.4 106.16 L361.6 107.21 L362.8 108.25 L364 109.27 L365.2 110.28 L366.4 111.28 L367.6 112.26 L368.8 113.22 L370 114.18 L371.2 115.12 L372.4 116.04 L373.6 116.95 L374.8 117.85 L376 118.74 L377.2 119.61 L378.4 120.47 L379.6 121.32 L380.8 122.15 L382 122.98 L383.2 123.79 L384.4 124.59 L385.6 125.38 L386.8 126.15 L388 126.92 L389.2 127.67 L390.4 128.42 L391.6 129.15 L392.8 129.87 L394 130.58 L395.2 131.29 L396.4 131.98 L397.6 132.66 L398.8 133.33 L400 133.99 L401.2 134.65 L402.4 135.29 L403.6 135.92 L404.8 136.55 L406 137.16 L407.2 137.77 L408.4 138.37 L409.6 138.96 L410.8 139.54 L412 140.11 L413.2 140.67 L414.4 141.23 L415.6 141.78 L416.8 142.32 L418 142.85 L419.2 143.37 L420.4 143.89 L421.6 144.4 L422.8 144.9 L424 145.4 L425.2 145.89 L426.4 146.37 L427.6 146.84 L428.8 147.31 L430 147.77 L431.2 148.22 L432.4 148.67 L433.6 149.11 L434.8 149.54 L436 149.97 L437.2 150.39 L438.4 150.81 L439.6 151.22 L440.8 151.62 L442 152.02 L443.2 152.41 L444.4 152.8 L445.6 153.18 L446.8 153.56 L448 153.93 L449.2 154.29 L450.4 154.65 L451.6 155 L452.8 155.35 L454 155.7 L455.2 156.04 L456.4 156.37 L457.6 156.7 L458.8 157.02 L460 157.34 L461.2 157.66 L462.4 157.97 L463.6 158.28 L464.8 158.58 L466 158.88 L467.2 159.17 L468.4 159.46 L469.6 159.74 L470.8 160.02 L472 160.3 L473.2 160.57 L474.4 160.84 L475.6 161.11 L476.8 161.37 L478 161.62 L479.2 161.88 L480.4 162.13 L481.6 162.37 L482.8 162.62 L484 162.85 L485.2 163.09 L486.4 163.32 L487.6 163.55 L488.8 163.78 L490 164" fill="none" stroke="#c2410c" stroke-width="2.8" stroke-linejoin="round"/>
+<text x="250" y="220" font-size="12" font-weight="700" fill="#222222">current limit</text>
+<path d="M250 226 V290 H494" fill="none" stroke="#444444" stroke-width="1.5"/>
+<path d="M250 236 H358 V263 H490 V236" fill="none" stroke="#446ce3" stroke-width="2.5" stroke-dasharray="7 4"/>
+<text x="246" y="240" font-size="12" fill="#5c5c5c" text-anchor="end">full</text>
+<text x="246" y="267" font-size="12" fill="#5c5c5c" text-anchor="end">half</text>
+<text x="424" y="282" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">derated: half</text>
+<g class="de-x">
+  <line x1="418" y1="76" x2="418" y2="290" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <g class="de-yt"><circle cx="418" cy="142.85" r="6.5" fill="#c2410c" stroke="#ffffff" stroke-width="2"/></g>
+  <g class="de-yl"><circle cx="418" cy="263" r="6.5" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+</g>
+<line x1="16" y1="306" x2="504" y2="306" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="326" font-size="13" fill="#222222">Half the current is a quarter of the heat.</text>
+<text x="16" y="345" font-size="13" fill="#222222">The motor keeps working, slower, until it cools</text>
+<text x="16" y="364" font-size="13" fill="#222222">10 degrees (or 10 points) below the line.</text>
+<text x="16" y="383" font-size="12" fill="#5c5c5c">Nothing is saved to the controller's flash.</text>
+</svg>

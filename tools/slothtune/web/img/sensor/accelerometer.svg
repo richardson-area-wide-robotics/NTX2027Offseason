@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 460" width="520" height="460" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="acc-title acc-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="acc-title">How an accelerometer works</title>
+<desc id="acc-desc">Animated side view of the sensing part inside a MEMS accelerometer chip, drawn huge and simplified. A small blue proof mass hangs on springs between fixed anchors. Comb-like fingers on the mass sit between fixed fingers; when the mass shifts, the gaps change, and the chip reads the change in capacitance as how far it moved, which says the acceleration. The chip sits on the floor still and level: gravity pulls the mass down and it reads 1 g up/down, 0 sideways. It speeds up to the right: the mass lags behind, to the left, and the side reading shows +0.5 g. It brakes: the mass swings ahead, to the right, and the side reading shows -0.5 g. It stops and tilts 30 degrees: gravity now pulls partly sideways, the mass shifts toward the low side, and it reads 0.5 g sideways and 0.87 g up/down. Then it is still and level again. Notes: standing still it feels gravity, so it knows which way is down: tilt (pitch and roll). Gravity says nothing about which way the robot faces, so it can't fix a gyro's heading. On the robot: tipping warnings, and hits (a sudden spike is an impact). A gyro and an accelerometer together are an IMU (the Redux Canandgyro is one).</desc>
+<style>
+/* One 10 s loop:
+   0-18 %    still and level (gravity: the mass sags 1 g)
+   18-40 %   speeding up to the right (chip accelerates, the mass lags left)
+   40-62 %   braking (chip slows to a stop, the mass swings ahead)
+   63-86 %   tilted 30 deg about the chip's bottom-left corner (the mass shifts toward the low side)
+   86-100 %  still and level; the chip fades out on the right and back in at the start (87.5-93 %).
+   Scale: 1 g = 10 px of mass travel. The drawing itself is the frozen frame: at rest, level, 1 g. */
+.slide{animation:slide 10s linear infinite,fade 10s linear infinite}
+@keyframes slide{
+  0%,18%{transform:translateX(0px);animation-timing-function:cubic-bezier(.333,0,.667,.333)}
+  40%{transform:translateX(58px);animation-timing-function:cubic-bezier(.333,.667,.667,1)}
+  62%,89.9%{transform:translateX(116px)}
+  90%,100%{transform:translateX(0px)}
+}
+@keyframes fade{0%,87.5%{opacity:1}89.5%,90.5%{opacity:0}93%,100%{opacity:1}}
+.tilt{transform-box:fill-box;transform-origin:0% 100%;animation:tilt 10s ease-in-out infinite}
+@keyframes tilt{0%,63.5%{transform:rotate(0deg)}68.5%,81%{transform:rotate(-30deg)}86%,100%{transform:rotate(0deg)}}
+.mass{animation:mass 10s ease-in-out infinite}
+@keyframes mass{
+  0%,18%{transform:translate(0px,0px)}
+  20.5%,40%{transform:translate(-5px,0px)}
+  43%,62%{transform:translate(5px,0px)}
+  63.5%{transform:translate(0px,0px)}
+  68.5%,81%{transform:translate(-5px,-1.3px)}
+  86%,100%{transform:translate(0px,0px)}
+}
+/* Springs follow the mass: scaleY stretches or squeezes, skewX leans the free end sideways. */
+.sTop{transform-box:fill-box;transform-origin:50% 0%;animation:sTop 10s ease-in-out infinite}
+@keyframes sTop{
+  0%,18%{transform:skewX(0deg) scaleY(1)}
+  20.5%,40%{transform:skewX(-6.07deg) scaleY(1)}
+  43%,62%{transform:skewX(6.07deg) scaleY(1)}
+  63.5%{transform:skewX(0deg) scaleY(1)}
+  68.5%,81%{transform:skewX(-6.24deg) scaleY(.9723)}
+  86%,100%{transform:skewX(0deg) scaleY(1)}
+}
+.sBot{transform-box:fill-box;transform-origin:50% 100%;animation:sBot 10s ease-in-out infinite}
+@keyframes sBot{
+  0%,18%{transform:skewX(0deg) scaleY(1)}
+  20.5%,40%{transform:skewX(10.49deg) scaleY(1)}
+  43%,62%{transform:skewX(-10.49deg) scaleY(1)}
+  63.5%{transform:skewX(0deg) scaleY(1)}
+  68.5%,81%{transform:skewX(10.02deg) scaleY(1.0481)}
+  86%,100%{transform:skewX(0deg) scaleY(1)}
+}
+/* Readout bars (1 g = 80 px) */
+.sideBar{transform-box:fill-box;transform-origin:0% 50%;transform:scaleX(0);animation:sideBar 10s ease-in-out infinite}
+@keyframes sideBar{0%,18%{transform:scaleX(0)}20.5%,40%{transform:scaleX(.5)}43%,62%{transform:scaleX(-.5)}63.5%{transform:scaleX(0)}68.5%,81%{transform:scaleX(.5)}86%,100%{transform:scaleX(0)}}
+.udBar{transform-box:fill-box;transform-origin:0% 50%;animation:udBar 10s ease-in-out infinite}
+@keyframes udBar{0%,63.5%{transform:scaleX(1)}68.5%,81%{transform:scaleX(.866)}86%,100%{transform:scaleX(1)}}
+/* Status lines, values and arrows: they stay put; only their opacity changes. */
+.s1{animation:s1 10s linear infinite}
+@keyframes s1{0%,17.95%{opacity:1}18%,85.95%{opacity:0}86%,100%{opacity:1}}
+.s2,.aR{opacity:0;animation:s2 10s linear infinite}
+@keyframes s2{0%,17.95%{opacity:0}18%,39.95%{opacity:1}40%,100%{opacity:0}}
+.s3{opacity:0;animation:s3 10s linear infinite}
+@keyframes s3{0%,39.95%{opacity:0}40%,62.95%{opacity:1}63%,100%{opacity:0}}
+.aL{opacity:0;animation:aL 10s linear infinite}
+@keyframes aL{0%,39.95%{opacity:0}40%,61.95%{opacity:1}62%,100%{opacity:0}}
+.s4{opacity:0;animation:s4 10s linear infinite}
+@keyframes s4{0%,62.95%{opacity:0}63%,85.95%{opacity:1}86%,100%{opacity:0}}
+.ang{opacity:0;animation:ang 10s linear infinite}
+@keyframes ang{0%,68%{opacity:0}69.5%,80.5%{opacity:1}81.5%,100%{opacity:0}}
+.v0{animation:v0 10s linear infinite}
+@keyframes v0{0%,19.2%{opacity:1}19.25%,62.7%{opacity:0}62.75%,65.95%{opacity:1}66%,83.45%{opacity:0}83.5%,100%{opacity:1}}
+.vP{opacity:0;animation:vP 10s linear infinite}
+@keyframes vP{0%,19.2%{opacity:0}19.25%,41.45%{opacity:1}41.5%,65.95%{opacity:0}66%,83.45%{opacity:1}83.5%,100%{opacity:0}}
+.vN{opacity:0;animation:vN 10s linear infinite}
+@keyframes vN{0%,41.45%{opacity:0}41.5%,62.7%{opacity:1}62.75%,100%{opacity:0}}
+.u1{animation:u1 10s linear infinite}
+@keyframes u1{0%,65.95%{opacity:1}66%,83.45%{opacity:0}83.5%,100%{opacity:1}}
+.u87{opacity:0;animation:u87 10s linear infinite}
+@keyframes u87{0%,65.95%{opacity:0}66%,83.45%{opacity:1}83.5%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+
+<!-- Title -->
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">How an accelerometer works</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Inside the chip, drawn huge and simplified: a tiny "proof mass" hangs on springs.</text>
+
+<!-- Status line (switches with the phases) -->
+<g font-size="13" font-weight="700" fill="#222222">
+  <text class="s1" x="16" y="78">Still and level: gravity pulls <tspan fill="#446ce3">the mass</tspan> down: it reads 1 g</text>
+  <text class="s2" x="16" y="78">Speeding up to the right: <tspan fill="#446ce3">the mass</tspan> lags behind, to the left</text>
+  <text class="s3" x="16" y="78">Braking: <tspan fill="#446ce3">the mass</tspan> swings ahead</text>
+  <text class="s4" x="16" y="78">Tilted: gravity now pulls partly sideways</text>
+</g>
+
+<!-- Gravity (fixed: it always points straight down) -->
+<line x1="26" y1="96" x2="26" y2="122" stroke="#222222" stroke-width="1.6"/>
+<path d="M26 130 L21.5 121 L30.5 121 Z" fill="#222222"/>
+<text x="35" y="114" font-size="12" fill="#222222">gravity</text>
+
+<!-- Floor -->
+<line x1="16" y1="285.5" x2="300" y2="285.5" stroke="#444444" stroke-width="1.4"/>
+<g stroke="#b0b8c0" stroke-width="1.2">
+  <line x1="28" y1="287" x2="22" y2="293"/><line x1="42" y1="287" x2="36" y2="293"/><line x1="56" y1="287" x2="50" y2="293"/>
+  <line x1="70" y1="287" x2="64" y2="293"/><line x1="84" y1="287" x2="78" y2="293"/><line x1="98" y1="287" x2="92" y2="293"/>
+  <line x1="112" y1="287" x2="106" y2="293"/><line x1="126" y1="287" x2="120" y2="293"/><line x1="140" y1="287" x2="134" y2="293"/>
+  <line x1="154" y1="287" x2="148" y2="293"/><line x1="168" y1="287" x2="162" y2="293"/><line x1="182" y1="287" x2="176" y2="293"/>
+  <line x1="196" y1="287" x2="190" y2="293"/><line x1="210" y1="287" x2="204" y2="293"/><line x1="224" y1="287" x2="218" y2="293"/>
+  <line x1="238" y1="287" x2="232" y2="293"/><line x1="252" y1="287" x2="246" y2="293"/><line x1="266" y1="287" x2="260" y2="293"/>
+  <line x1="280" y1="287" x2="274" y2="293"/><line x1="294" y1="287" x2="288" y2="293"/>
+</g>
+
+<!-- Tilt angle, at the spot where the chip stops (shown only while tilted) -->
+<g class="ang">
+  <path d="M176 284 A36 36 0 0 0 171.18 266" fill="none" stroke="#5c5c5c" stroke-width="1.2"/>
+  <text x="181" y="280" font-size="12" fill="#5c5c5c">30°</text>
+</g>
+
+<!-- The chip: slides right (speeding up, then braking), then tilts on its bottom-left corner -->
+<g class="slide">
+  <!-- the chip's acceleration -->
+  <g class="aR">
+    <line x1="78" y1="131" x2="104" y2="131" stroke="#1a7f37" stroke-width="2.4"/>
+    <path d="M112 131 L103 126 L103 136 Z" fill="#1a7f37"/>
+  </g>
+  <g class="aL">
+    <line x1="84" y1="131" x2="110" y2="131" stroke="#1a7f37" stroke-width="2.4"/>
+    <path d="M76 131 L85 126 L85 136 Z" fill="#1a7f37"/>
+  </g>
+  <g class="tilt">
+    <!-- chip die -->
+    <rect x="24" y="144" width="140" height="140" rx="3" fill="#fafafa" stroke="#444444" stroke-width="1.6"/>
+    <!-- fixed anchors -->
+    <g fill="#444444">
+      <rect x="54" y="151" width="80" height="6"/>
+      <rect x="54" y="271" width="80" height="6"/>
+      <rect x="29" y="192" width="5" height="44"/>
+      <rect x="154" y="192" width="5" height="44"/>
+    </g>
+    <!-- fixed fingers -->
+    <g fill="#b0b8c0" stroke="#7d8790" stroke-width="0.6">
+      <rect x="56.5" y="157" width="3" height="31"/><rect x="78.5" y="157" width="3" height="31"/>
+      <rect x="106.5" y="157" width="3" height="31"/><rect x="128.5" y="157" width="3" height="31"/>
+      <rect x="56.5" y="250" width="3" height="21"/><rect x="78.5" y="250" width="3" height="21"/>
+      <rect x="106.5" y="250" width="3" height="21"/><rect x="128.5" y="250" width="3" height="21"/>
+      <rect x="34" y="196.5" width="24" height="3"/><rect x="34" y="228.5" width="24" height="3"/>
+      <rect x="130" y="196.5" width="24" height="3"/><rect x="130" y="228.5" width="24" height="3"/>
+    </g>
+    <!-- where the mass would sit with no force at all -->
+    <rect x="66" y="194" width="56" height="40" fill="none" stroke="#5c5c5c" stroke-width="1" stroke-dasharray="3 2"/>
+    <!-- springs: the top one stretched, the bottom one squeezed, by gravity -->
+    <path class="sTop" d="M94 157 V161 L90.5 163.5 L97.5 168.5 L90.5 173.5 L97.5 178.5 L90.5 183.5 L97.5 188.5 L90.5 193.5 L97.5 198.5 L94 201 V204" fill="none" stroke="#444444" stroke-width="1.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    <path class="sBot" d="M94 244 V246 L90.5 247.45 L97.5 250.32 L90.5 253.19 L97.5 256.06 L90.5 258.94 L97.5 261.81 L90.5 264.68 L97.5 267.55 L94 269 V271" fill="none" stroke="#444444" stroke-width="1.4" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>
+    <!-- the proof mass, with its comb fingers -->
+    <g class="mass">
+      <g fill="#446ce3">
+        <rect x="67.5" y="172" width="3" height="32"/><rect x="117.5" y="172" width="3" height="32"/>
+        <rect x="67.5" y="244" width="3" height="20"/><rect x="117.5" y="244" width="3" height="20"/>
+        <rect x="42" y="222.5" width="24" height="3"/><rect x="122" y="222.5" width="24" height="3"/>
+      </g>
+      <rect x="66" y="204" width="56" height="40" rx="2" fill="#446ce3" stroke="#2d4fb3" stroke-width="1.2"/>
+    </g>
+  </g>
+</g>
+
+<!-- Right column: what it reads -->
+<text x="316" y="98" font-size="13" font-weight="700" fill="#222222">What it reads</text>
+
+<text x="316" y="120" font-size="12" fill="#5c5c5c">side</text>
+<g font-size="14" font-weight="700" text-anchor="end">
+  <text class="v0" x="500" y="120" fill="#222222">0 g</text>
+  <text class="vP" x="500" y="120" fill="#446ce3">+0.5 g</text>
+  <text class="vN" x="500" y="120" fill="#446ce3">−0.5 g</text>
+</g>
+<rect x="320" y="126" width="180" height="14" rx="2" fill="#f4f4f4" stroke="#444444" stroke-width="1"/>
+<rect class="sideBar" x="410" y="128" width="80" height="10" fill="#446ce3"/>
+<line x1="410" y1="122" x2="410" y2="144" stroke="#222222" stroke-width="1.4"/>
+<g font-size="12" fill="#5c5c5c">
+  <text x="320" y="156">−1 g</text>
+  <text x="410" y="156" text-anchor="middle">0</text>
+  <text x="500" y="156" text-anchor="end">+1 g</text>
+</g>
+
+<text x="316" y="180" font-size="12" fill="#5c5c5c">up/down</text>
+<g font-size="14" font-weight="700" text-anchor="end" fill="#446ce3">
+  <text class="u1" x="500" y="180">1 g</text>
+  <text class="u87" x="500" y="180">0.87 g</text>
+</g>
+<rect x="320" y="186" width="180" height="14" rx="2" fill="#f4f4f4" stroke="#444444" stroke-width="1"/>
+<rect class="udBar" x="410" y="188" width="80" height="10" fill="#446ce3"/>
+<line x1="410" y1="182" x2="410" y2="204" stroke="#222222" stroke-width="1.4"/>
+<g font-size="12" fill="#5c5c5c">
+  <text x="320" y="216">−1 g</text>
+  <text x="410" y="216" text-anchor="middle">0</text>
+  <text x="500" y="216" text-anchor="end">+1 g</text>
+</g>
+
+<!-- Legend -->
+<g font-size="12" fill="#5c5c5c">
+  <rect x="316" y="229" width="11" height="11" fill="#446ce3" stroke="#2d4fb3"/>
+  <text x="332" y="239">proof mass</text>
+  <path d="M412 234.5 H414 L416 229.5 L419 239.5 L422 229.5 L425 239.5 L427 234.5 H430" fill="none" stroke="#444444" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="435" y="239">springs</text>
+  <rect x="318" y="247" width="7" height="11" fill="#444444"/>
+  <text x="332" y="257">fixed anchors</text>
+  <g fill="#b0b8c0" stroke="#7d8790" stroke-width="0.6">
+    <rect x="413" y="247" width="3" height="11"/><rect x="419" y="247" width="3" height="11"/><rect x="425" y="247" width="3" height="11"/>
+  </g>
+  <text x="435" y="257">fixed fingers</text>
+  <rect x="316.5" y="266" width="14" height="10" fill="none" stroke="#5c5c5c" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="336" y="275">where it sits with no force</text>
+  <line x1="316" y1="288.5" x2="326" y2="288.5" stroke="#1a7f37" stroke-width="2.4"/>
+  <path d="M332 288.5 L325 284.5 L325 292.5 Z" fill="#1a7f37"/>
+  <text x="336" y="293">the chip's acceleration</text>
+</g>
+
+<!-- How the chip turns the shift into a reading -->
+<g font-size="13" fill="#222222">
+  <text x="16" y="316">When the mass shifts, the gaps between the fingers change. The chip reads the</text>
+  <text x="16" y="333">change in capacitance as how far the mass moved, which says the acceleration.</text>
+</g>
+
+<line x1="16" y1="346" x2="504" y2="346" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Notes -->
+<g fill="#222222">
+  <circle cx="21" cy="362" r="2.5"/>
+  <circle cx="21" cy="384" r="2.5"/>
+  <circle cx="21" cy="423" r="2.5"/>
+  <circle cx="21" cy="445" r="2.5"/>
+</g>
+<g font-size="13" fill="#222222">
+  <text x="30" y="366">Standing still it feels gravity, so it knows which way is down: tilt (pitch and roll).</text>
+  <text x="30" y="388">Gravity says nothing about which way the robot faces,</text>
+  <text x="30" y="405">so it can't fix a gyro's heading.</text>
+  <text x="30" y="427"><tspan font-weight="700">On the robot:</tspan> tipping warnings, and hits (a sudden spike is an impact).</text>
+  <text x="30" y="449">A gyro and an accelerometer together are an <tspan font-weight="700">IMU</tspan> (the Redux Canandgyro is one).</text>
+</g>
+</svg>

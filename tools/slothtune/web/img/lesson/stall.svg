@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 390" width="520" height="390" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="st-title st-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="st-title">Stall: all heat, no work</title>
+<desc id="st-desc">Animated. Left: a motor swings an arm up into a hard stop and keeps pushing. It is at the current limit but not turning: a stall. The motor glows hotter. Right: two lights, turning and at the current limit; when the turning light goes out and the limit light comes on, a STALL badge lights. A power bar shows some work while the arm moves, then all heat and no work once it is stalled. Bottom: the stall timer fills, warning at 3 s, then derating, then cutting the motor at its limit, after which the arm drops back.</desc>
+<style>
+.st-arm { transform-box: view-box; transform-origin: 0 0; animation: st-arm 8s linear infinite; }
+.st-glow { opacity: 0.9; animation: st-glow 8s linear infinite; }
+.st-turn { opacity: 0; animation: st-turn 8s linear infinite; }
+.st-lim { animation: st-lim 8s linear infinite; }
+.st-work { transform-box: fill-box; transform-origin: 0% 50%; transform: scaleX(0); animation: st-work 8s linear infinite; }
+.st-pbar { animation: st-pbar 8s linear infinite; }
+.st-tim { transform-box: fill-box; transform-origin: 0% 50%; transform: scaleX(0.7); animation: st-tim 8s linear infinite; }
+.st-cw { animation: st-cw 8s linear infinite; }
+.st-cd { animation: st-cd 8s linear infinite; }
+.st-cc { animation: st-cc 8s linear infinite; }
+@keyframes st-arm {
+  0% { transform: rotate(42deg); animation-timing-function: cubic-bezier(.45,0,.75,.6); }
+  20% { transform: rotate(0deg); }
+  84% { transform: rotate(0deg); animation-timing-function: cubic-bezier(.5,0,.9,.5); }
+  97% { transform: rotate(42deg); }
+  100% { transform: rotate(42deg); }
+}
+@keyframes st-glow {
+  0% { opacity: 0.12; }
+  20% { opacity: 0.2; }
+  84% { opacity: 0.9; }
+  98% { opacity: 0.12; }
+  100% { opacity: 0.12; }
+}
+@keyframes st-turn {
+  0% { opacity: 1; }
+  19.9% { opacity: 1; }
+  20% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes st-lim {
+  0% { opacity: 0; }
+  19.9% { opacity: 0; }
+  20% { opacity: 1; }
+  84% { opacity: 1; }
+  84.1% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes st-work {
+  0% { transform: scaleX(0.5); }
+  17% { transform: scaleX(0.5); }
+  20% { transform: scaleX(0); }
+  100% { transform: scaleX(0); }
+}
+@keyframes st-pbar {
+  0% { opacity: 1; }
+  84% { opacity: 1; }
+  86% { opacity: 0.2; }
+  97% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+@keyframes st-tim {
+  0% { transform: scaleX(0); }
+  20% { transform: scaleX(0); }
+  84% { transform: scaleX(1); }
+  92% { transform: scaleX(1); }
+  96% { transform: scaleX(0); }
+  100% { transform: scaleX(0); }
+}
+@keyframes st-cw {
+  0% { opacity: 0.25; }
+  39.592% { opacity: 0.25; }
+  39.692% { opacity: 1; }
+  92% { opacity: 1; }
+  96% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+@keyframes st-cd {
+  0% { opacity: 0.25; }
+  59.285% { opacity: 0.25; }
+  59.385% { opacity: 1; }
+  92% { opacity: 1; }
+  96% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+@keyframes st-cc {
+  0% { opacity: 0.25; }
+  83.9% { opacity: 0.25; }
+  84% { opacity: 1; }
+  92% { opacity: 1; }
+  96% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Stall: all heat, no work</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">At the current limit but not turning: a jam, or pushing into a hard stop.</text>
+<g transform="translate(92 196) rotate(-32)">
+  <rect x="92" y="-32" width="40" height="24" fill="#444444"/>
+  <path d="M96 -32 l-6 -8 M106 -32 l-6 -8 M116 -32 l-6 -8 M126 -32 l-6 -8" stroke="#444444" stroke-width="1.6"/>
+</g>
+<text x="196" y="98" font-size="12" font-weight="700" fill="#222222">hard stop</text>
+<circle cx="92" cy="196" r="28" fill="#333333"/>
+<circle class="st-glow" cx="92" cy="196" r="28" fill="#c62828"/>
+<g transform="translate(92 196) rotate(-32)"><g class="st-arm">
+  <rect x="-8" y="-8" width="140" height="16" rx="8" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+</g></g>
+<circle cx="92" cy="196" r="6" fill="#444444"/>
+<text x="92" y="244" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">motor</text>
+<circle cx="272" cy="80" r="7" fill="#d0d0d0" stroke="#444444"/>
+<circle class="st-turn" cx="272" cy="80" r="7" fill="#1a7f37" stroke="#444444"/>
+<text x="286" y="85" font-size="13" fill="#222222">turning</text>
+<circle cx="272" cy="104" r="7" fill="#d0d0d0" stroke="#444444"/>
+<circle class="st-lim" cx="272" cy="104" r="7" fill="#b45309" stroke="#444444"/>
+<text x="286" y="109" font-size="13" fill="#222222">at the current limit</text>
+<g class="st-lim"><rect x="265" y="120" width="96" height="24" rx="12" fill="#c62828"/>
+<text x="313" y="137" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">STALL</text>
+</g>
+<text x="370" y="137" font-size="12" fill="#5c5c5c">when both</text>
+<text x="262" y="172" font-size="13" font-weight="700" fill="#222222">Where the power goes</text>
+<g class="st-pbar">
+  <rect x="262" y="182" width="242" height="22" fill="#c62828"/>
+  <rect class="st-work" x="262" y="182" width="242" height="22" fill="#1a7f37"/>
+  <rect x="262" y="182" width="242" height="22" fill="none" stroke="#444444" stroke-width="1.2"/>
+</g>
+<text x="262" y="222" font-size="12" font-weight="700" fill="#1a7f37">work</text>
+<text x="504" y="222" font-size="12" font-weight="700" fill="#c62828" text-anchor="end">heat</text>
+<text x="16" y="279" font-size="13" font-weight="700" fill="#222222">Stall timer</text>
+<rect x="110" y="266" width="390" height="18" fill="#f4f4f4"/>
+<rect class="st-tim" x="110" y="266" width="390" height="18" fill="#b45309" fill-opacity="0.85"/>
+<rect x="110" y="266" width="390" height="18" fill="none" stroke="#444444" stroke-width="1.2"/>
+<path d="M230 262 V288 M350 262 V288" stroke="#222222" stroke-width="1.6"/>
+<text x="230" y="304" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle" class="st-cw">warn at 3 s</text>
+<text x="350" y="304" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle" class="st-cd">derate</text>
+<text x="500" y="304" font-size="12" font-weight="700" fill="#c62828" text-anchor="end" class="st-cc">cut: its limit</text>
+<line x1="16" y1="320" x2="504" y2="320" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="340" font-size="13" fill="#222222">A stalled motor turns all its power into heat.</text>
+<text x="16" y="359" font-size="13" fill="#222222">Drive motors are exempt: they stall in every pushing match,</text>
+<text x="16" y="377" font-size="13" fill="#222222">and the heat estimate guards them.</text>
+</svg>

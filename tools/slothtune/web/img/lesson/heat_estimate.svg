@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 378" width="520" height="378" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="he-title he-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="he-title">Heat estimate: faster than the sensor</title>
+<desc id="he-desc">Animated. Left: a NEO 550 cut open, with the copper windings inside and the temperature sensor on the outside of the case. As time passes at 40 A the windings glow hotter while the sensor barely warms. Right: a graph of temperature over time. The heat estimate, worked out from the current, follows the windings' real temperature; the sensor reading lags tens of seconds behind. When the windings die the sensor still reads about 40 °C.</desc>
+<style>
+.he-fade { animation: he-fade 8s linear infinite; }
+.he-x { animation: he-x 8s linear infinite; }
+.he-ye { animation: he-ye 8s linear infinite; }
+.he-ys { animation: he-ys 8s linear infinite; }
+.he-gw { opacity: 0.9; animation: he-gw 8s linear infinite; }
+.he-gs { opacity: 0.283; animation: he-gs 8s linear infinite; }
+.he-die { animation: he-die 8s linear infinite; }
+@keyframes he-fade {
+  0% { opacity: 0; }
+  4% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes he-x {
+  0% { transform: translateX(-206px); }
+  2% { transform: translateX(-206px); }
+  4% { transform: translateX(-206px); }
+  6% { transform: translateX(-200.43px); }
+  8% { transform: translateX(-194.86px); }
+  10% { transform: translateX(-189.3px); }
+  12% { transform: translateX(-183.73px); }
+  14% { transform: translateX(-178.16px); }
+  16% { transform: translateX(-172.59px); }
+  18% { transform: translateX(-167.03px); }
+  20% { transform: translateX(-161.46px); }
+  22% { transform: translateX(-155.89px); }
+  24% { transform: translateX(-150.32px); }
+  26% { transform: translateX(-144.76px); }
+  28% { transform: translateX(-139.19px); }
+  30% { transform: translateX(-133.62px); }
+  32% { transform: translateX(-128.05px); }
+  34% { transform: translateX(-122.49px); }
+  36% { transform: translateX(-116.92px); }
+  38% { transform: translateX(-111.35px); }
+  40% { transform: translateX(-105.78px); }
+  42% { transform: translateX(-100.22px); }
+  44% { transform: translateX(-94.65px); }
+  46% { transform: translateX(-89.08px); }
+  48% { transform: translateX(-83.51px); }
+  50% { transform: translateX(-77.95px); }
+  52% { transform: translateX(-72.38px); }
+  54% { transform: translateX(-66.81px); }
+  56% { transform: translateX(-61.24px); }
+  58% { transform: translateX(-55.68px); }
+  60% { transform: translateX(-50.11px); }
+  62% { transform: translateX(-44.54px); }
+  64% { transform: translateX(-38.97px); }
+  66% { transform: translateX(-33.41px); }
+  68% { transform: translateX(-27.84px); }
+  70% { transform: translateX(-22.27px); }
+  72% { transform: translateX(-16.7px); }
+  74% { transform: translateX(-11.14px); }
+  76% { transform: translateX(-5.57px); }
+  78% { transform: translateX(0px); }
+  80% { transform: translateX(0px); }
+  82% { transform: translateX(0px); }
+  84% { transform: translateX(0px); }
+  86% { transform: translateX(0px); }
+  88% { transform: translateX(0px); }
+  90% { transform: translateX(0px); }
+  92% { transform: translateX(0px); }
+  94% { transform: translateX(0px); }
+  96% { transform: translateX(0px); }
+  98% { transform: translateX(0px); }
+  100% { transform: translateX(0px); }
+}
+@keyframes he-ye {
+  0% { transform: translateY(150px); }
+  2% { transform: translateY(150px); }
+  4% { transform: translateY(150px); }
+  6% { transform: translateY(142.05px); }
+  8% { transform: translateY(134.43px); }
+  10% { transform: translateY(127.13px); }
+  12% { transform: translateY(120.15px); }
+  14% { transform: translateY(113.46px); }
+  16% { transform: translateY(107.05px); }
+  18% { transform: translateY(100.91px); }
+  20% { transform: translateY(95.04px); }
+  22% { transform: translateY(89.41px); }
+  24% { transform: translateY(84.02px); }
+  26% { transform: translateY(78.86px); }
+  28% { transform: translateY(73.91px); }
+  30% { transform: translateY(69.18px); }
+  32% { transform: translateY(64.65px); }
+  34% { transform: translateY(60.3px); }
+  36% { transform: translateY(56.15px); }
+  38% { transform: translateY(52.16px); }
+  40% { transform: translateY(48.35px); }
+  42% { transform: translateY(44.7px); }
+  44% { transform: translateY(41.2px); }
+  46% { transform: translateY(37.85px); }
+  48% { transform: translateY(34.64px); }
+  50% { transform: translateY(31.57px); }
+  52% { transform: translateY(28.63px); }
+  54% { transform: translateY(25.81px); }
+  56% { transform: translateY(23.11px); }
+  58% { transform: translateY(20.53px); }
+  60% { transform: translateY(18.05px); }
+  62% { transform: translateY(15.68px); }
+  64% { transform: translateY(13.41px); }
+  66% { transform: translateY(11.24px); }
+  68% { transform: translateY(9.16px); }
+  70% { transform: translateY(7.17px); }
+  72% { transform: translateY(5.26px); }
+  74% { transform: translateY(3.43px); }
+  76% { transform: translateY(1.68px); }
+  78% { transform: translateY(0px); }
+  80% { transform: translateY(0px); }
+  82% { transform: translateY(0px); }
+  84% { transform: translateY(0px); }
+  86% { transform: translateY(0px); }
+  88% { transform: translateY(0px); }
+  90% { transform: translateY(0px); }
+  92% { transform: translateY(0px); }
+  94% { transform: translateY(0px); }
+  96% { transform: translateY(0px); }
+  98% { transform: translateY(0px); }
+  100% { transform: translateY(0px); }
+}
+@keyframes he-ys {
+  0% { transform: translateY(47.12px); }
+  2% { transform: translateY(47.12px); }
+  4% { transform: translateY(47.12px); }
+  6% { transform: translateY(47.12px); }
+  8% { transform: translateY(47px); }
+  10% { transform: translateY(46.68px); }
+  12% { transform: translateY(46.25px); }
+  14% { transform: translateY(45.71px); }
+  16% { transform: translateY(45.06px); }
+  18% { transform: translateY(44.33px); }
+  20% { transform: translateY(43.5px); }
+  22% { transform: translateY(42.6px); }
+  24% { transform: translateY(41.59px); }
+  26% { transform: translateY(40.54px); }
+  28% { transform: translateY(39.41px); }
+  30% { transform: translateY(38.23px); }
+  32% { transform: translateY(36.98px); }
+  34% { transform: translateY(35.69px); }
+  36% { transform: translateY(34.34px); }
+  38% { transform: translateY(32.95px); }
+  40% { transform: translateY(31.52px); }
+  42% { transform: translateY(30.05px); }
+  44% { transform: translateY(28.54px); }
+  46% { transform: translateY(27px); }
+  48% { transform: translateY(25.43px); }
+  50% { transform: translateY(23.84px); }
+  52% { transform: translateY(22.22px); }
+  54% { transform: translateY(20.58px); }
+  56% { transform: translateY(18.93px); }
+  58% { transform: translateY(17.25px); }
+  60% { transform: translateY(15.53px); }
+  62% { transform: translateY(13.83px); }
+  64% { transform: translateY(12.12px); }
+  66% { transform: translateY(10.4px); }
+  68% { transform: translateY(8.68px); }
+  70% { transform: translateY(6.95px); }
+  72% { transform: translateY(5.21px); }
+  74% { transform: translateY(3.47px); }
+  76% { transform: translateY(1.74px); }
+  78% { transform: translateY(0px); }
+  80% { transform: translateY(0px); }
+  82% { transform: translateY(0px); }
+  84% { transform: translateY(0px); }
+  86% { transform: translateY(0px); }
+  88% { transform: translateY(0px); }
+  90% { transform: translateY(0px); }
+  92% { transform: translateY(0px); }
+  94% { transform: translateY(0px); }
+  96% { transform: translateY(0px); }
+  98% { transform: translateY(0px); }
+  100% { transform: translateY(0px); }
+}
+@keyframes he-gw {
+  0% { opacity: 0; }
+  2% { opacity: 0; }
+  4% { opacity: 0; }
+  6% { opacity: 0.048; }
+  8% { opacity: 0.093; }
+  10% { opacity: 0.137; }
+  12% { opacity: 0.179; }
+  14% { opacity: 0.219; }
+  16% { opacity: 0.258; }
+  18% { opacity: 0.295; }
+  20% { opacity: 0.33; }
+  22% { opacity: 0.364; }
+  24% { opacity: 0.396; }
+  26% { opacity: 0.427; }
+  28% { opacity: 0.457; }
+  30% { opacity: 0.485; }
+  32% { opacity: 0.512; }
+  34% { opacity: 0.538; }
+  36% { opacity: 0.563; }
+  38% { opacity: 0.587; }
+  40% { opacity: 0.61; }
+  42% { opacity: 0.632; }
+  44% { opacity: 0.653; }
+  46% { opacity: 0.673; }
+  48% { opacity: 0.692; }
+  50% { opacity: 0.711; }
+  52% { opacity: 0.728; }
+  54% { opacity: 0.745; }
+  56% { opacity: 0.761; }
+  58% { opacity: 0.777; }
+  60% { opacity: 0.792; }
+  62% { opacity: 0.806; }
+  64% { opacity: 0.82; }
+  66% { opacity: 0.833; }
+  68% { opacity: 0.845; }
+  70% { opacity: 0.857; }
+  72% { opacity: 0.868; }
+  74% { opacity: 0.879; }
+  76% { opacity: 0.89; }
+  78% { opacity: 0.9; }
+  80% { opacity: 0.9; }
+  82% { opacity: 0.9; }
+  84% { opacity: 0.9; }
+  86% { opacity: 0.9; }
+  88% { opacity: 0.9; }
+  90% { opacity: 0.9; }
+  92% { opacity: 0.9; }
+  94% { opacity: 0.675; }
+  96% { opacity: 0.45; }
+  98% { opacity: 0.225; }
+  100% { opacity: 0; }
+}
+@keyframes he-gs {
+  0% { opacity: 0; }
+  2% { opacity: 0; }
+  4% { opacity: 0; }
+  6% { opacity: 0; }
+  8% { opacity: 0.001; }
+  10% { opacity: 0.003; }
+  12% { opacity: 0.005; }
+  14% { opacity: 0.009; }
+  16% { opacity: 0.012; }
+  18% { opacity: 0.017; }
+  20% { opacity: 0.022; }
+  22% { opacity: 0.027; }
+  24% { opacity: 0.033; }
+  26% { opacity: 0.04; }
+  28% { opacity: 0.046; }
+  30% { opacity: 0.053; }
+  32% { opacity: 0.061; }
+  34% { opacity: 0.069; }
+  36% { opacity: 0.077; }
+  38% { opacity: 0.085; }
+  40% { opacity: 0.094; }
+  42% { opacity: 0.102; }
+  44% { opacity: 0.112; }
+  46% { opacity: 0.121; }
+  48% { opacity: 0.13; }
+  50% { opacity: 0.14; }
+  52% { opacity: 0.149; }
+  54% { opacity: 0.159; }
+  56% { opacity: 0.169; }
+  58% { opacity: 0.179; }
+  60% { opacity: 0.19; }
+  62% { opacity: 0.2; }
+  64% { opacity: 0.21; }
+  66% { opacity: 0.22; }
+  68% { opacity: 0.231; }
+  70% { opacity: 0.241; }
+  72% { opacity: 0.251; }
+  74% { opacity: 0.262; }
+  76% { opacity: 0.272; }
+  78% { opacity: 0.283; }
+  80% { opacity: 0.283; }
+  82% { opacity: 0.283; }
+  84% { opacity: 0.283; }
+  86% { opacity: 0.283; }
+  88% { opacity: 0.283; }
+  90% { opacity: 0.283; }
+  92% { opacity: 0.283; }
+  94% { opacity: 0.212; }
+  96% { opacity: 0.141; }
+  98% { opacity: 0.071; }
+  100% { opacity: 0; }
+}
+@keyframes he-die {
+  0% { opacity: 0; }
+  77.9% { opacity: 0; }
+  78% { opacity: 1; }
+  92% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Heat estimate: faster than the sensor</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A NEO 550 at 40 A. The estimate follows the windings; the sensor lags.</text>
+<text x="16" y="84" font-size="12" font-weight="700" fill="#222222">temperature sensor</text>
+<text x="16" y="99" font-size="12" fill="#5c5c5c">(outside the windings)</text>
+<line x1="132" y1="104" x2="143" y2="121" stroke="#5c5c5c" stroke-width="1"/>
+<circle cx="100" cy="178" r="66" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<circle cx="100" cy="178" r="41" fill="none" stroke="#c47a2c" stroke-width="22"/>
+<circle class="he-gw" cx="100" cy="178" r="41" fill="none" stroke="#c62828" stroke-width="22"/>
+<line x1="130" y1="178" x2="152" y2="178" stroke="#ffffff" stroke-width="2"/>
+<line x1="122.98" y1="197.28" x2="139.83" y2="211.42" stroke="#ffffff" stroke-width="2"/>
+<line x1="105.21" y1="207.54" x2="109.03" y2="229.21" stroke="#ffffff" stroke-width="2"/>
+<line x1="85" y1="203.98" x2="74" y2="223.03" stroke="#ffffff" stroke-width="2"/>
+<line x1="71.81" y1="188.26" x2="51.14" y2="195.79" stroke="#ffffff" stroke-width="2"/>
+<line x1="71.81" y1="167.74" x2="51.14" y2="160.21" stroke="#ffffff" stroke-width="2"/>
+<line x1="85" y1="152.02" x2="74" y2="132.97" stroke="#ffffff" stroke-width="2"/>
+<line x1="105.21" y1="148.46" x2="109.03" y2="126.79" stroke="#ffffff" stroke-width="2"/>
+<line x1="122.98" y1="158.72" x2="139.83" y2="144.58" stroke="#ffffff" stroke-width="2"/>
+<circle cx="100" cy="178" r="22" fill="#333333"/>
+<rect x="138" y="121" width="20" height="13" rx="2" fill="#444444" stroke="#222222"/>
+<rect class="he-gs" x="138" y="121" width="20" height="13" rx="2" fill="#c2410c"/>
+<text x="100" y="264" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">windings (inside)</text>
+<text x="214" y="72" font-size="12" font-weight="700" fill="#222222">temperature</text>
+<path d="M214 80 V250 H424" fill="none" stroke="#444444" stroke-width="1.5"/>
+<text x="424" y="266" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<path d="M214 250 L216.06 247.02 L218.12 244.08 L220.18 241.19 L222.24 238.35 L224.3 235.55 L226.36 232.8 L228.42 230.09 L230.48 227.42 L232.54 224.79 L234.6 222.21 L236.66 219.67 L238.72 217.17 L240.78 214.71 L242.84 212.28 L244.9 209.9 L246.96 207.55 L249.02 205.24 L251.08 202.97 L253.14 200.73 L255.2 198.53 L257.26 196.36 L259.32 194.23 L261.38 192.13 L263.44 190.07 L265.5 188.04 L267.56 186.04 L269.62 184.07 L271.68 182.13 L273.74 180.23 L275.8 178.35 L277.86 176.51 L279.92 174.69 L281.98 172.9 L284.04 171.14 L286.1 169.41 L288.16 167.71 L290.22 166.03 L292.28 164.38 L294.34 162.76 L296.4 161.16 L298.46 159.58 L300.52 158.04 L302.58 156.51 L304.64 155.01 L306.7 153.54 L308.76 152.09 L310.82 150.66 L312.88 149.25 L314.94 147.87 L317 146.5 L319.06 145.16 L321.12 143.84 L323.18 142.55 L325.24 141.27 L327.3 140.01 L329.36 138.77 L331.42 137.56 L333.48 136.36 L335.54 135.18 L337.6 134.02 L339.66 132.88 L341.72 131.75 L343.78 130.64 L345.84 129.56 L347.9 128.48 L349.96 127.43 L352.02 126.39 L354.08 125.37 L356.14 124.37 L358.2 123.38 L360.26 122.4 L362.32 121.45 L364.38 120.5 L366.44 119.58 L368.5 118.66 L370.56 117.76 L372.62 116.88 L374.68 116.01 L376.74 115.15 L378.8 114.31 L380.86 113.48 L382.92 112.66 L384.98 111.86 L387.04 111.07 L389.1 110.29 L391.16 109.53 L393.22 108.77 L395.28 108.03 L397.34 107.3 L399.4 106.58 L401.46 105.88 L403.52 105.18 L405.58 104.5 L407.64 103.82 L409.7 103.16 L411.76 102.51 L413.82 101.87 L415.88 101.23 L417.94 100.61 L420 100" fill="none" stroke="#c62828" stroke-opacity="0.25" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M214 250 L216.06 247.02 L218.12 244.08 L220.18 241.19 L222.24 238.35 L224.3 235.55 L226.36 232.8 L228.42 230.09 L230.48 227.42 L232.54 224.79 L234.6 222.21 L236.66 219.67 L238.72 217.17 L240.78 214.71 L242.84 212.28 L244.9 209.9 L246.96 207.55 L249.02 205.24 L251.08 202.97 L253.14 200.73 L255.2 198.53 L257.26 196.36 L259.32 194.23 L261.38 192.13 L263.44 190.07 L265.5 188.04 L267.56 186.04 L269.62 184.07 L271.68 182.13 L273.74 180.23 L275.8 178.35 L277.86 176.51 L279.92 174.69 L281.98 172.9 L284.04 171.14 L286.1 169.41 L288.16 167.71 L290.22 166.03 L292.28 164.38 L294.34 162.76 L296.4 161.16 L298.46 159.58 L300.52 158.04 L302.58 156.51 L304.64 155.01 L306.7 153.54 L308.76 152.09 L310.82 150.66 L312.88 149.25 L314.94 147.87 L317 146.5 L319.06 145.16 L321.12 143.84 L323.18 142.55 L325.24 141.27 L327.3 140.01 L329.36 138.77 L331.42 137.56 L333.48 136.36 L335.54 135.18 L337.6 134.02 L339.66 132.88 L341.72 131.75 L343.78 130.64 L345.84 129.56 L347.9 128.48 L349.96 127.43 L352.02 126.39 L354.08 125.37 L356.14 124.37 L358.2 123.38 L360.26 122.4 L362.32 121.45 L364.38 120.5 L366.44 119.58 L368.5 118.66 L370.56 117.76 L372.62 116.88 L374.68 116.01 L376.74 115.15 L378.8 114.31 L380.86 113.48 L382.92 112.66 L384.98 111.86 L387.04 111.07 L389.1 110.29 L391.16 109.53 L393.22 108.77 L395.28 108.03 L397.34 107.3 L399.4 106.58 L401.46 105.88 L403.52 105.18 L405.58 104.5 L407.64 103.82 L409.7 103.16 L411.76 102.51 L413.82 101.87 L415.88 101.23 L417.94 100.61 L420 100" fill="none" stroke="#446ce3" stroke-width="2.5" stroke-linejoin="round"/>
+<path d="M214 250 L216.06 250 L218.12 250 L220.18 250 L222.24 250 L224.3 249.92 L226.36 249.82 L228.42 249.7 L230.48 249.57 L232.54 249.43 L234.6 249.26 L236.66 249.09 L238.72 248.9 L240.78 248.69 L242.84 248.47 L244.9 248.24 L246.96 247.99 L249.02 247.73 L251.08 247.46 L253.14 247.17 L255.2 246.88 L257.26 246.57 L259.32 246.25 L261.38 245.92 L263.44 245.58 L265.5 245.22 L267.56 244.86 L269.62 244.49 L271.68 244.11 L273.74 243.71 L275.8 243.31 L277.86 242.9 L279.92 242.48 L281.98 242.05 L284.04 241.62 L286.1 241.17 L288.16 240.72 L290.22 240.26 L292.28 239.79 L294.34 239.31 L296.4 238.83 L298.46 238.34 L300.52 237.85 L302.58 237.34 L304.64 236.84 L306.7 236.32 L308.76 235.8 L310.82 235.27 L312.88 234.74 L314.94 234.21 L317 233.66 L319.06 233.12 L321.12 232.56 L323.18 232.01 L325.24 231.44 L327.3 230.88 L329.36 230.31 L331.42 229.73 L333.48 229.15 L335.54 228.57 L337.6 227.99 L339.66 227.4 L341.72 226.8 L343.78 226.21 L345.84 225.61 L347.9 225.01 L349.96 224.4 L352.02 223.8 L354.08 223.18 L356.14 222.57 L358.2 221.96 L360.26 221.34 L362.32 220.72 L364.38 220.1 L366.44 219.47 L368.5 218.85 L370.56 218.22 L372.62 217.59 L374.68 216.96 L376.74 216.33 L378.8 215.7 L380.86 215.06 L382.92 214.43 L384.98 213.79 L387.04 213.15 L389.1 212.51 L391.16 211.87 L393.22 211.23 L395.28 210.59 L397.34 209.95 L399.4 209.31 L401.46 208.67 L403.52 208.02 L405.58 207.38 L407.64 206.74 L409.7 206.09 L411.76 205.45 L413.82 204.81 L415.88 204.16 L417.94 203.52 L420 202.88" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-linejoin="round"/>
+<line x1="259.16" y1="202.88" x2="408" y2="202.88" stroke="#5c5c5c" stroke-width="1.4" stroke-dasharray="4 3"/>
+<path d="M414 202.88 L406 207.28 L406 198.48Z" fill="#5c5c5c"/>
+<text x="345" y="193.88" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">lags tens of seconds</text>
+<text x="436" y="105" font-size="13" font-weight="700" fill="#c62828">dies</text>
+<text x="432" y="198.88" font-size="12" font-weight="700" fill="#c2410c">reads</text>
+<text x="432" y="213.88" font-size="12" font-weight="700" fill="#c2410c">about</text>
+<text x="432" y="228.88" font-size="12" font-weight="700" fill="#c2410c">40 °C</text>
+<g class="he-fade"><g class="he-x">
+  <line x1="420" y1="80" x2="420" y2="250" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <g class="he-ye"><circle cx="420" cy="100" r="6" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+  <g class="he-ys"><circle cx="420" cy="202.88" r="6" fill="#c2410c" stroke="#ffffff" stroke-width="2"/></g>
+</g></g>
+<g class="he-die">
+  <path d="M409 89 l22 22 M431 89 l-22 22" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M409 89 l22 22 M431 89 l-22 22" stroke="#c62828" stroke-width="4" stroke-linecap="round"/>
+</g>
+<line x1="16" y1="288" x2="36" y2="288" stroke="#c62828" stroke-opacity="0.25" stroke-width="10" stroke-linecap="round"/>
+<text x="44" y="292" font-size="12" fill="#222222">windings (real)</text>
+<line x1="150" y1="288" x2="170" y2="288" stroke="#446ce3" stroke-width="2.5"/>
+<text x="176" y="292" font-size="12" fill="#222222">heat estimate (from current)</text>
+<line x1="358" y1="288" x2="378" y2="288" stroke="#c2410c" stroke-width="2.5"/>
+<text x="384" y="292" font-size="12" fill="#222222">sensor reading</text>
+<line x1="16" y1="308" x2="504" y2="308" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="328" font-size="13" fill="#222222">Heat comes from current squared. The guard integrates it with a model</text>
+<text x="16" y="346" font-size="13" fill="#222222">fitted to REV's own burn-out tests: the only warning fast enough for a NEO 550.</text>
+<text x="16" y="365" font-size="12" fill="#5c5c5c">REV saw one die at 40 A while its sensor read about 40 °C.</text>
+</svg>

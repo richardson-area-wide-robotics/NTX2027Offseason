@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 562" width="520" height="562" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sv-title sv-desc">
+<title id="sv-title">How voltage is sensed</title>
+<desc id="sv-desc">Animated. A battery of up to about 13 V is too high for a chip's ADC input, which takes 3.3 V at most, so two resistors in series, a voltage divider, scale it down: Vout = Vin × R2 / (R1 + R2). The example values are R1 = 30 kilohms and R2 = 10 kilohms, a 4:1 divider, so 13 V becomes 3.25 V. In a loop, a load (motors) comes on, drawn as yellow current dots, and the battery's voltage sags from 12.8 V to 9.0 V, then recovers when the load goes off. Two bars on one scale show the battery voltage and the divided voltage, always a quarter of it and always under the 3.3 V line. The ADC readout steps with it, and the code multiplies by 4 to get the battery voltage back: for example, ADC 2.25 V × 4 = 9.0 V. Note: the ADC turns a voltage into a number in steps (its resolution): more bits, finer steps. Footer: this is how the robot controller, the PDH and each SPARK can report the battery voltage they see.</desc>
+<style>
+/* One 6 s loop. The battery is 12.8 V at rest; a load comes on from 0.5 s and the voltage sags to 9.0 V
+   (2.5-3.5 s), then recovers by 5.5 s. Sampled every 0.5 s: 12.8 12.8 12.2 10.6 9.4 9.0 9.0 9.0 9.6 11.0 12.2 12.8,
+   all even tenths, so a quarter of each is exact to 0.01 V. The bars pass through those values at those moments. */
+/* both bars: width = V / 12.8 V (the drawn width is the 12.8 V width) */
+.lvl { transform-box: fill-box; transform-origin: 0% 50%; animation: lvl 6s linear infinite; }
+@keyframes lvl {
+  0%, 8.3333% { transform: scaleX(1); } 16.6667% { transform: scaleX(0.9531); } 25% { transform: scaleX(0.8281); }
+  33.3333% { transform: scaleX(0.7344); } 41.6667%, 58.3333% { transform: scaleX(0.7031); } 66.6667% { transform: scaleX(0.75); }
+  75% { transform: scaleX(0.8594); } 83.3333% { transform: scaleX(0.9531); } 91.6667%, 100% { transform: scaleX(1); }
+}
+/* the load current: none at rest, full at 9.0 V (load = (12.8 - V) / 3.8) */
+.load { opacity: 0; animation: load 6s linear infinite; }
+@keyframes load {
+  0%, 8.3333% { opacity: 0; } 16.6667% { opacity: 0.16; } 25% { opacity: 0.58; } 33.3333% { opacity: 0.89; }
+  41.6667%, 58.3333% { opacity: 1; } 66.6667% { opacity: 0.84; } 75% { opacity: 0.47; } 83.3333% { opacity: 0.16; }
+  91.6667%, 100% { opacity: 0; }
+}
+/* dot travel is the running total of the load current: 235 px per loop = 10 dot gaps of 23.5 px,
+   and the loop path is 376 px = 16 gaps, so it wraps seamlessly */
+.flow { animation: flow 6s linear infinite; }
+@keyframes flow {
+  0%, 8.3333% { stroke-dashoffset: 0px; } 10.4167% { stroke-dashoffset: -0.19px; } 12.5% { stroke-dashoffset: -0.76px; }
+  14.5833% { stroke-dashoffset: -1.71px; } 16.6667% { stroke-dashoffset: -3.04px; } 18.75% { stroke-dashoffset: -5.06px; }
+  20.8333% { stroke-dashoffset: -8.1px; } 22.9167% { stroke-dashoffset: -12.16px; } 25% { stroke-dashoffset: -17.22px; }
+  27.0833% { stroke-dashoffset: -23.17px; } 29.1667% { stroke-dashoffset: -29.88px; } 31.25% { stroke-dashoffset: -37.35px; }
+  33.3333% { stroke-dashoffset: -45.58px; } 35.4167% { stroke-dashoffset: -54.32px; } 37.5% { stroke-dashoffset: -63.31px; }
+  39.5833% { stroke-dashoffset: -72.55px; } 41.6667% { stroke-dashoffset: -82.05px; } 43.75% { stroke-dashoffset: -91.67px; }
+  45.8333% { stroke-dashoffset: -101.29px; } 47.9167% { stroke-dashoffset: -110.92px; } 50% { stroke-dashoffset: -120.54px; }
+  52.0833% { stroke-dashoffset: -130.16px; } 54.1667% { stroke-dashoffset: -139.78px; } 56.25% { stroke-dashoffset: -149.41px; }
+  58.3333% { stroke-dashoffset: -159.03px; } 60.4167% { stroke-dashoffset: -168.46px; } 62.5% { stroke-dashoffset: -177.52px; }
+  64.5833% { stroke-dashoffset: -186.19px; } 66.6667% { stroke-dashoffset: -194.48px; } 68.75% { stroke-dashoffset: -202.14px; }
+  70.8333% { stroke-dashoffset: -208.92px; } 72.9167% { stroke-dashoffset: -214.8px; } 75% { stroke-dashoffset: -219.81px; }
+  77.0833% { stroke-dashoffset: -223.98px; } 79.1667% { stroke-dashoffset: -227.4px; } 81.25% { stroke-dashoffset: -230.06px; }
+  83.3333% { stroke-dashoffset: -231.96px; } 85.4167% { stroke-dashoffset: -233.29px; } 87.5% { stroke-dashoffset: -234.24px; }
+  89.5833% { stroke-dashoffset: -234.81px; } 91.6667%, 100% { stroke-dashoffset: -235px; }
+}
+/* every number: the ADC takes a sample every 0.5 s and holds it, so all the numbers step together.
+   Sample k shows from k x 0.5 s: one shared keyframe set, shifted by a negative delay. */
+.ro { opacity: 0; animation: ro 6s linear infinite; }
+.r0 { opacity: 1; }
+@keyframes ro { 0%, 8.3% { opacity: 1; } 8.32%, 100% { opacity: 0; } }
+.r1 { animation-delay: -5.5s; } .r2 { animation-delay: -5s; } .r3 { animation-delay: -4.5s; }
+.r4 { animation-delay: -4s; } .r5 { animation-delay: -3.5s; } .r6 { animation-delay: -3s; }
+.r7 { animation-delay: -2.5s; } .r8 { animation-delay: -2s; } .r9 { animation-delay: -1.5s; }
+.r10 { animation-delay: -1s; } .r11 { animation-delay: -0.5s; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">How voltage is sensed</text>
+<text x="16" y="44" font-size="12" fill="#5c5c5c">A load comes on and the battery's voltage sags, then recovers; watch each stage follow it.</text>
+<g font-size="13" fill="#222222">
+  <text x="16" y="68">The battery is up to about 13 V, too high for a chip's ADC input,</text>
+  <text x="16" y="85">which takes 3.3 V at most. Two resistors in series, a voltage divider,</text>
+  <text x="16" y="102">scale it down: <tspan font-weight="700">Vout = Vin × R2 / (R1 + R2)</tspan></text>
+</g>
+<text x="16" y="121" font-size="12" fill="#5c5c5c">Example values: R1 = 30 kΩ, R2 = 10 kΩ, so Vout = Vin × 10 / 40 = Vin ÷ 4 (a 4:1 divider).</text>
+
+<!-- ===== The circuit: battery, load and divider side by side between the + rail and ground ===== -->
+<g stroke="#444444" stroke-width="2.4" fill="none" stroke-linejoin="round">
+  <path d="M44 188 V150 H204 V160"/>
+  <path d="M44 214 V262 H204 V252"/>
+  <line x1="120" y1="150" x2="120" y2="190"/>
+  <line x1="120" y1="222" x2="120" y2="262"/>
+  <path d="M204 196 V216"/>
+  <path d="M204 160 L198 163 L210 169 L198 175 L210 181 L198 187 L210 193 L204 196"/>
+  <path d="M204 216 L198 219 L210 225 L198 231 L210 237 L198 243 L210 249 L204 252"/>
+  <line x1="204" y1="206" x2="296" y2="206"/>
+</g>
+<!-- the load current (yellow dots) runs round the battery-load loop -->
+<g class="load">
+  <g class="flow" fill="none" stroke-linecap="round" stroke-dasharray="0 23.5">
+    <path d="M44 150 H120 V262 H44 Z" stroke="#8a6a00" stroke-width="9"/>
+    <path d="M44 150 H120 V262 H44 Z" stroke="#f2c200" stroke-width="7"/>
+  </g>
+</g>
+<!-- battery: two cells, long plate + -->
+<rect x="26" y="187" width="36" height="28" fill="#ffffff"/>
+<g stroke="#444444">
+  <line x1="30" y1="188" x2="58" y2="188" stroke-width="2.4"/>
+  <line x1="37" y1="196" x2="51" y2="196" stroke-width="4.5"/>
+  <line x1="30" y1="206" x2="58" y2="206" stroke-width="2.4"/>
+  <line x1="37" y1="214" x2="51" y2="214" stroke-width="4.5"/>
+</g>
+<g font-size="13" font-weight="700" fill="#5c5c5c" text-anchor="middle">
+  <text x="70" y="186">+</text>
+  <text x="70" y="221">−</text>
+</g>
+<text x="52" y="143" font-size="12" font-weight="700" fill="#446ce3">Vin</text>
+<!-- load: a motor -->
+<circle cx="120" cy="206" r="16" fill="#eef1f4" stroke="#444444" stroke-width="2"/>
+<text x="120" y="211" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">M</text>
+<!-- divider labels and the tap -->
+<circle cx="204" cy="206" r="3.2" fill="#222222"/>
+<text x="218" y="176" font-size="13" font-weight="700" fill="#222222">R1</text>
+<text x="218" y="191" font-size="12" fill="#222222">30 kΩ</text>
+<text x="218" y="236" font-size="13" font-weight="700" fill="#222222">R2</text>
+<text x="218" y="251" font-size="12" fill="#222222">10 kΩ</text>
+<text x="258" y="200" font-size="12" font-weight="700" fill="#446ce3">Vout</text>
+
+<!-- ADC -->
+<rect x="296" y="180" width="60" height="52" rx="4" fill="#eef1f4" stroke="#444444" stroke-width="1.6"/>
+<text x="326" y="202" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">ADC</text>
+<path d="M305 226 H313 V222 H321 V218 H329 V214 H337 V210 H345 V207 H348" fill="none" stroke="#446ce3" stroke-width="1.6"/>
+<g fill="#446ce3">
+  <line x1="356" y1="206" x2="379" y2="206" stroke="#446ce3" stroke-width="2"/>
+  <path d="M378 201 L385 206 L378 211 Z"/>
+</g>
+<!-- the number -->
+<rect x="386" y="174" width="118" height="64" rx="6" fill="#eef3ff" stroke="#446ce3" stroke-width="1.6"/>
+
+<!-- captions -->
+<g font-size="12" fill="#222222" text-anchor="middle">
+  <text x="44" y="288" font-weight="700">battery</text>
+  <text x="120" y="288" font-weight="700">load</text>
+  <text x="120" y="303">motors</text>
+  <text x="222" y="288" font-weight="700">voltage divider</text>
+  <text x="222" y="303" fill="#5c5c5c">example values</text>
+  <text x="326" y="288" font-weight="700">ADC</text>
+  <text x="326" y="303">analog-to-digital</text>
+  <text x="326" y="318">converter</text>
+  <text x="445" y="288" font-weight="700">the code × 4</text>
+  <text x="445" y="303">undoes the divider</text>
+</g>
+
+<!-- ===== Both voltages on one scale ===== -->
+<text x="16" y="350" font-size="13" font-weight="700" fill="#222222">Both voltages on one scale</text>
+<g font-size="12" fill="#222222">
+  <text x="16" y="377">battery (Vin)</text>
+  <text x="16" y="403">divided (Vout)</text>
+</g>
+<rect x="124" y="366" width="312" height="14" fill="#ffffff" stroke="#c4c4c4"/>
+<rect x="124" y="392" width="312" height="14" fill="#ffffff" stroke="#c4c4c4"/>
+<rect class="lvl" x="124" y="366" width="307.2" height="14" fill="#446ce3"/>
+<rect class="lvl" x="124" y="392" width="76.8" height="14" fill="#446ce3"/>
+<line x1="203.2" y1="358" x2="203.2" y2="414" stroke="#e65100" stroke-width="1.6" stroke-dasharray="4 3"/>
+<text x="197" y="430" font-size="12" fill="#5c5c5c">↑ 3.3 V, the most the ADC input can take</text>
+
+<!-- every number, sampled together every 0.5 s -->
+<g text-anchor="end" font-size="13" font-weight="700" fill="#222222">
+  <g class="ro r0"><text x="504" y="377">12.8 V</text><text x="504" y="403">3.20 V</text></g>
+  <g class="ro r1"><text x="504" y="377">12.8 V</text><text x="504" y="403">3.20 V</text></g>
+  <g class="ro r2"><text x="504" y="377">12.2 V</text><text x="504" y="403">3.05 V</text></g>
+  <g class="ro r3"><text x="504" y="377">10.6 V</text><text x="504" y="403">2.65 V</text></g>
+  <g class="ro r4"><text x="504" y="377">9.4 V</text><text x="504" y="403">2.35 V</text></g>
+  <g class="ro r5"><text x="504" y="377">9.0 V</text><text x="504" y="403">2.25 V</text></g>
+  <g class="ro r6"><text x="504" y="377">9.0 V</text><text x="504" y="403">2.25 V</text></g>
+  <g class="ro r7"><text x="504" y="377">9.0 V</text><text x="504" y="403">2.25 V</text></g>
+  <g class="ro r8"><text x="504" y="377">9.6 V</text><text x="504" y="403">2.40 V</text></g>
+  <g class="ro r9"><text x="504" y="377">11.0 V</text><text x="504" y="403">2.75 V</text></g>
+  <g class="ro r10"><text x="504" y="377">12.2 V</text><text x="504" y="403">3.05 V</text></g>
+  <g class="ro r11"><text x="504" y="377">12.8 V</text><text x="504" y="403">3.20 V</text></g>
+</g>
+<g text-anchor="middle" fill="#222222">
+  <g class="ro r0"><text x="445" y="198" font-size="13">ADC 3.20 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 12.8 V</text></g>
+  <g class="ro r1"><text x="445" y="198" font-size="13">ADC 3.20 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 12.8 V</text></g>
+  <g class="ro r2"><text x="445" y="198" font-size="13">ADC 3.05 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 12.2 V</text></g>
+  <g class="ro r3"><text x="445" y="198" font-size="13">ADC 2.65 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 10.6 V</text></g>
+  <g class="ro r4"><text x="445" y="198" font-size="13">ADC 2.35 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 9.4 V</text></g>
+  <g class="ro r5"><text x="445" y="198" font-size="13">ADC 2.25 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 9.0 V</text></g>
+  <g class="ro r6"><text x="445" y="198" font-size="13">ADC 2.25 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 9.0 V</text></g>
+  <g class="ro r7"><text x="445" y="198" font-size="13">ADC 2.25 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 9.0 V</text></g>
+  <g class="ro r8"><text x="445" y="198" font-size="13">ADC 2.40 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 9.6 V</text></g>
+  <g class="ro r9"><text x="445" y="198" font-size="13">ADC 2.75 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 11.0 V</text></g>
+  <g class="ro r10"><text x="445" y="198" font-size="13">ADC 3.05 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 12.2 V</text></g>
+  <g class="ro r11"><text x="445" y="198" font-size="13">ADC 3.20 V × 4</text><text x="445" y="225" font-size="20" font-weight="700">= 12.8 V</text></g>
+</g>
+
+<!-- ===== Resolution ===== -->
+<rect x="16" y="446" width="488" height="56" rx="6" fill="#f4f7ff" stroke="#c9d5f5"/>
+<line x1="30" y1="492" x2="74" y2="456" stroke="#9aa3ab" stroke-width="1.4" stroke-dasharray="3 2"/>
+<path d="M30 492 H41 V483 H52 V474 H63 V465 H74 V456" fill="none" stroke="#446ce3" stroke-width="1.8"/>
+<g font-size="13" fill="#222222">
+  <text x="88" y="469">The ADC turns a voltage into a number <tspan font-weight="700">in steps</tspan> (its resolution):</text>
+  <text x="88" y="489">more bits, finer steps.</text>
+</g>
+
+<line x1="16" y1="516" x2="504" y2="516" stroke="#e2e2e2"/>
+<g font-size="12" fill="#222222">
+  <text x="16" y="534">This is how the robot controller, the PDH and each SPARK can report the</text>
+  <text x="16" y="550">battery voltage they see.</text>
+</g>
+</svg>

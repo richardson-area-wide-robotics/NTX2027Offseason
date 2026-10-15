@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 402" width="520" height="402" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sc-title sc-desc">
 <title id="sc-title">How current is sensed</title>
-<desc id="sc-desc">Animated. Current, drawn as moving yellow dots, flows along a wire through a shunt resistor of a few thousandths of an ohm. The current speeds up and slows down in a loop, between 40 A and 5 A. By Ohm's law, the small voltage across the shunt is current times resistance: 40 A through 0.001 ohm gives 0.04 V. A small bar shows that tiny voltage rising and falling with the current. A current-sense amplifier makes it bigger, shown by a taller bar that follows it. An ADC, an analog-to-digital converter, turns it into a number, and the readout steps through values such as 40.0 A, 22.5 A and 5.0 A. Side note: the other way is a Hall-effect sensor around the wire, which feels the current's magnetic field, with no resistor in the path. Footer: the PDH reads its channels with current-sense amplifiers; each SPARK senses the current in its motor's phases (REV).</desc>
+<desc id="sc-desc">Animated. Current, drawn as moving yellow dots, flows along a wire through a shunt resistor of a few thousandths of an ohm. The current speeds up and slows down in a loop, between 40 A and 5 A. By Ohm's law, the small voltage across the shunt is current times resistance: 40 A through 0.001 ohm gives 0.04 V. A small bar shows that tiny voltage rising and falling with the current, and its number steps with the readout: 0.040 V at 40.0 A, 0.014 V at 13.8 A, 0.005 V at 5.0 A. A current-sense amplifier makes it bigger, shown by a taller bar that follows it. An ADC, an analog-to-digital converter, turns it into a number, and the readout steps through values such as 40.0 A, 22.5 A and 5.0 A. Side note: the other way is a Hall-effect sensor around the wire, which feels the current's magnetic field, with no resistor in the path. Footer: the PDH reads its channels with current-sense amplifiers; each SPARK senses the current in its motor's phases (REV).</desc>
 <style>
 /* One 6 s loop. The current is 40 A at 0 s, eases down to 5 A at 3 s and back up:
    I = 22.5 + 17.5 cos(2 pi t / 6 s). Every moving part follows that one curve, sampled every 5 %.
@@ -84,7 +84,21 @@
   <text x="40" y="155">+</text>
   <text x="88" y="155">−</text>
 </g>
-<text x="64" y="180" font-size="12" fill="#5c5c5c" text-anchor="middle">0.04 V</text>
+<!-- the shunt voltage, V = I x 0.001 ohm: steps with the readout (same classes, same timing) -->
+<g font-size="12" fill="#5c5c5c" text-anchor="middle">
+  <text class="ro r0" x="64" y="180">0.040 V</text>
+  <text class="ro r1" x="64" y="180">0.038 V</text>
+  <text class="ro r2" x="64" y="180">0.031 V</text>
+  <text class="ro r3" x="64" y="180">0.023 V</text>
+  <text class="ro r4" x="64" y="180">0.014 V</text>
+  <text class="ro r5" x="64" y="180">0.007 V</text>
+  <text class="ro r6" x="64" y="180">0.005 V</text>
+  <text class="ro r7" x="64" y="180">0.007 V</text>
+  <text class="ro r8" x="64" y="180">0.014 V</text>
+  <text class="ro r9" x="64" y="180">0.023 V</text>
+  <text class="ro r10" x="64" y="180">0.031 V</text>
+  <text class="ro r11" x="64" y="180">0.038 V</text>
+</g>
 <rect x="56" y="186" width="16" height="16" fill="#ffffff" stroke="#c4c4c4"/>
 <rect class="lvl" x="56" y="186" width="16" height="16" fill="#446ce3"/>
 <line x1="46" y1="202" x2="82" y2="202" stroke="#444444" stroke-width="1.4"/>

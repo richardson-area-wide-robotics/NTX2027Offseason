@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="cm-title cm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="cm-title">Coast mode: turn the wheels by hand</title>
+<desc id="cm-desc">Animated. Left: a wheel. A hand push in brake mode turns it only a little, because the controller shorts the motor's windings and it resists being turned. In coast mode the same push spins it freely. Right: two cards, BRAKE with the windings shorted together and COAST with them left open; the active one is highlighted. Bottom: a timeline with a moving marker: brake before, coast only for the capture while the robot is disabled, then brake always put back.</desc>
+<style>
+.cm-wheel { transform-box: view-box; transform-origin: 0 0; animation: cm-wheel 8s linear infinite; }
+.cm-push { animation: cm-push 8s linear infinite; }
+.cm-hb { animation: cm-hb 8s linear infinite; }
+.cm-hc { opacity: 0; animation: cm-hc 8s linear infinite; }
+.cm-cur { animation: cm-cur 8s linear infinite; }
+@keyframes cm-wheel {
+  0% { transform: rotate(0deg); }
+  7% { transform: rotate(0deg); animation-timing-function: cubic-bezier(.2,.7,.4,1); }
+  15% { transform: rotate(14deg); }
+  34% { transform: rotate(14deg); animation-timing-function: cubic-bezier(.15,.55,.35,1); }
+  73% { transform: rotate(720deg); }
+  100% { transform: rotate(720deg); }
+}
+@keyframes cm-push {
+  0% { opacity: 0; }
+  5% { opacity: 0; }
+  7% { opacity: 1; }
+  14% { opacity: 1; }
+  17% { opacity: 0; }
+  31% { opacity: 0; }
+  33% { opacity: 1; }
+  39% { opacity: 1; }
+  42% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes cm-hb {
+  0% { opacity: 1; }
+  29.9% { opacity: 1; }
+  30% { opacity: 0; }
+  74.9% { opacity: 0; }
+  75% { opacity: 1; }
+  100% { opacity: 1; }
+}
+@keyframes cm-hc {
+  0% { opacity: 0; }
+  29.9% { opacity: 0; }
+  30% { opacity: 1; }
+  74.9% { opacity: 1; }
+  75% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes cm-cur {
+  0% { transform: translateX(0px); }
+  100% { transform: translateX(488px); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Coast mode: turn the wheels by hand</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Brake makes the motor resist being turned. Coast lets it spin freely.</text>
+<text x="118" y="80" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">push by hand</text>
+<g class="cm-push">
+  <path d="M41.79 138 A88 88 0 0 1 159.31 104.3" fill="none" stroke="#c2410c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M167.26 108.53 L151.28 108.75 L158.51 95.15Z" fill="#c2410c"/>
+</g>
+<g transform="translate(118 182)">
+  <circle r="72" fill="#333333"/>
+  <g class="cm-wheel">
+    <circle r="52" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+    <circle cx="0" cy="-30" r="9" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+    <circle cx="28.53" cy="-9.27" r="9" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+    <circle cx="17.63" cy="24.27" r="9" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+    <circle cx="-17.63" cy="24.27" r="9" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+    <circle cx="-28.53" cy="-9.27" r="9" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+    <circle r="11" fill="#444444"/>
+    <rect x="-6" y="-71" width="12" height="18" rx="2" fill="#c47a2c" stroke="#8a5216"/>
+  </g>
+</g>
+<text x="118" y="272" font-size="12" fill="#5c5c5c" text-anchor="middle">wheel</text>
+<rect x="262" y="66" width="242" height="80" rx="8" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.2"/>
+<rect class="cm-hb" x="262" y="66" width="242" height="80" rx="8" fill="#eef2fc" stroke="#446ce3" stroke-width="3"/>
+<text x="278" y="88" font-size="14" font-weight="700" fill="#222222">BRAKE</text>
+<circle cx="292" cy="116" r="13" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<text x="292" y="120" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">M</text>
+<line x1="305" y1="107" x2="334" y2="107" stroke="#c47a2c" stroke-width="2.4"/>
+<line x1="305" y1="116" x2="334" y2="116" stroke="#c47a2c" stroke-width="2.4"/>
+<line x1="305" y1="125" x2="334" y2="125" stroke="#c47a2c" stroke-width="2.4"/>
+<line x1="335" y1="104" x2="335" y2="128" stroke="#c47a2c" stroke-width="4.5" stroke-linecap="round"/>
+<text x="352" y="112" font-size="12" font-weight="700" fill="#222222">windings shorted</text>
+<text x="352" y="128" font-size="12" fill="#5c5c5c">resists being turned</text>
+<rect x="262" y="158" width="242" height="80" rx="8" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.2"/>
+<rect class="cm-hc" x="262" y="158" width="242" height="80" rx="8" fill="#eef2fc" stroke="#446ce3" stroke-width="3"/>
+<text x="278" y="180" font-size="14" font-weight="700" fill="#222222">COAST</text>
+<circle cx="292" cy="208" r="13" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<text x="292" y="212" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">M</text>
+<line x1="305" y1="199" x2="334" y2="199" stroke="#c47a2c" stroke-width="2.4"/>
+<line x1="305" y1="208" x2="334" y2="208" stroke="#c47a2c" stroke-width="2.4"/>
+<line x1="305" y1="217" x2="334" y2="217" stroke="#c47a2c" stroke-width="2.4"/>
+<circle cx="337" cy="199" r="3" fill="#ffffff" stroke="#c47a2c" stroke-width="1.8"/>
+<circle cx="337" cy="208" r="3" fill="#ffffff" stroke="#c47a2c" stroke-width="1.8"/>
+<circle cx="337" cy="217" r="3" fill="#ffffff" stroke="#c47a2c" stroke-width="1.8"/>
+<text x="352" y="204" font-size="12" font-weight="700" fill="#222222">windings open</text>
+<text x="352" y="220" font-size="12" fill="#5c5c5c">spins freely</text>
+<rect x="16" y="278" width="146.4" height="26" fill="#e9edf5" stroke="#444444" stroke-width="1.2"/>
+<rect x="162.4" y="278" width="219.6" height="26" fill="#fdf1e3" stroke="#444444" stroke-width="1.2"/>
+<rect x="382" y="278" width="122" height="26" fill="#e9edf5" stroke="#444444" stroke-width="1.2"/>
+<text x="89.2" y="296" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">BRAKE</text>
+<text x="272.2" y="296" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle">COAST</text>
+<text x="443" y="296" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">BRAKE</text>
+<text x="89.2" y="320" font-size="12" fill="#5c5c5c" text-anchor="middle">before</text>
+<text x="272.2" y="320" font-size="12" fill="#5c5c5c" text-anchor="middle">the capture, robot disabled</text>
+<text x="443" y="320" font-size="12" fill="#5c5c5c" text-anchor="middle">always put back</text>
+<g class="cm-cur"><line x1="16" y1="272" x2="16" y2="308" stroke="#c2410c" stroke-width="2.5"/>
+<path d="M10 266 H22 L16 274Z" fill="#c2410c"/></g>
+<line x1="16" y1="334" x2="504" y2="334" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="354" font-size="13" fill="#222222">Coast is only for a hand check or an offset capture, while disabled.</text>
+<text x="16" y="373" font-size="13" fill="#222222">Brake always comes back after, even if the capture is stopped early.</text>
+<text x="16" y="392" font-size="12" fill="#5c5c5c">Coast is never left on while enabled.</text>
+</svg>

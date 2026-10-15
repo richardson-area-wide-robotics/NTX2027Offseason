@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 414" width="520" height="414" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mb-title mb-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mb-title">What a motor's numbers mean</title>
+<desc id="mb-desc">Animated. A graph of a NEO V1.1 at 12 V: speed falls in a straight line from its free speed, 5676 rpm with no load, to zero at its stall torque, 1.92 ft·lb (2.6 N·m) and 105 A when held still. A green power-out curve under the line peaks at 406 W at half speed and half torque. An orange dot slides along the line between free speed and stall; two bars beside it show the power out, largest at the middle and zero at both ends, and the heat, which grows as current squared and is largest at stall.</desc>
+<style>
+.mb-x { animation: mb-x 8s linear infinite; }
+.mb-ys { animation: mb-ys 8s linear infinite; }
+.mb-yp { animation: mb-yp 8s linear infinite; }
+.mb-pow { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(1); animation: mb-pow 8s linear infinite; }
+.mb-heat { transform-box: fill-box; transform-origin: 50% 100%; transform: scaleY(0.25); animation: mb-heat 8s linear infinite; }
+@keyframes mb-x {
+  0% { transform: translateX(0px); }
+  2.5% { transform: translateX(0px); }
+  5% { transform: translateX(0px); }
+  7.5% { transform: translateX(0px); }
+  10% { transform: translateX(0px); }
+  12.5% { transform: translateX(15px); }
+  15% { transform: translateX(30px); }
+  17.5% { transform: translateX(45px); }
+  20% { transform: translateX(60px); }
+  22.5% { transform: translateX(75px); }
+  25% { transform: translateX(90px); }
+  27.5% { transform: translateX(105px); }
+  30% { transform: translateX(120px); }
+  32.5% { transform: translateX(120px); }
+  35% { transform: translateX(120px); }
+  37.5% { transform: translateX(120px); }
+  40% { transform: translateX(120px); }
+  42.5% { transform: translateX(120px); }
+  45% { transform: translateX(120px); }
+  47.5% { transform: translateX(100px); }
+  50% { transform: translateX(80px); }
+  52.5% { transform: translateX(60px); }
+  55% { transform: translateX(40px); }
+  57.5% { transform: translateX(20px); }
+  60% { transform: translateX(0px); }
+  62.5% { transform: translateX(-20px); }
+  65% { transform: translateX(-40px); }
+  67.5% { transform: translateX(-60px); }
+  70% { transform: translateX(-80px); }
+  72.5% { transform: translateX(-100px); }
+  75% { transform: translateX(-120px); }
+  77.5% { transform: translateX(-120px); }
+  80% { transform: translateX(-120px); }
+  82.5% { transform: translateX(-120px); }
+  85% { transform: translateX(-120px); }
+  87.5% { transform: translateX(-120px); }
+  88% { transform: translateX(-120px); }
+  90% { transform: translateX(-100px); }
+  92.5% { transform: translateX(-75px); }
+  95% { transform: translateX(-50px); }
+  97.5% { transform: translateX(-25px); }
+  100% { transform: translateX(0px); }
+}
+@keyframes mb-ys {
+  0% { transform: translateY(0px); }
+  2.5% { transform: translateY(0px); }
+  5% { transform: translateY(0px); }
+  7.5% { transform: translateY(0px); }
+  10% { transform: translateY(0px); }
+  12.5% { transform: translateY(11.25px); }
+  15% { transform: translateY(22.5px); }
+  17.5% { transform: translateY(33.75px); }
+  20% { transform: translateY(45px); }
+  22.5% { transform: translateY(56.25px); }
+  25% { transform: translateY(67.5px); }
+  27.5% { transform: translateY(78.75px); }
+  30% { transform: translateY(90px); }
+  32.5% { transform: translateY(90px); }
+  35% { transform: translateY(90px); }
+  37.5% { transform: translateY(90px); }
+  40% { transform: translateY(90px); }
+  42.5% { transform: translateY(90px); }
+  45% { transform: translateY(90px); }
+  47.5% { transform: translateY(75px); }
+  50% { transform: translateY(60px); }
+  52.5% { transform: translateY(45px); }
+  55% { transform: translateY(30px); }
+  57.5% { transform: translateY(15px); }
+  60% { transform: translateY(0px); }
+  62.5% { transform: translateY(-15px); }
+  65% { transform: translateY(-30px); }
+  67.5% { transform: translateY(-45px); }
+  70% { transform: translateY(-60px); }
+  72.5% { transform: translateY(-75px); }
+  75% { transform: translateY(-90px); }
+  77.5% { transform: translateY(-90px); }
+  80% { transform: translateY(-90px); }
+  82.5% { transform: translateY(-90px); }
+  85% { transform: translateY(-90px); }
+  87.5% { transform: translateY(-90px); }
+  88% { transform: translateY(-90px); }
+  90% { transform: translateY(-75px); }
+  92.5% { transform: translateY(-56.25px); }
+  95% { transform: translateY(-37.5px); }
+  97.5% { transform: translateY(-18.75px); }
+  100% { transform: translateY(0px); }
+}
+@keyframes mb-yp {
+  0% { transform: translateY(0px); }
+  2.5% { transform: translateY(0px); }
+  5% { transform: translateY(0px); }
+  7.5% { transform: translateY(0px); }
+  10% { transform: translateY(0px); }
+  12.5% { transform: translateY(0.66px); }
+  15% { transform: translateY(2.62px); }
+  17.5% { transform: translateY(5.91px); }
+  20% { transform: translateY(10.5px); }
+  22.5% { transform: translateY(16.41px); }
+  25% { transform: translateY(23.62px); }
+  27.5% { transform: translateY(32.16px); }
+  30% { transform: translateY(42px); }
+  32.5% { transform: translateY(42px); }
+  35% { transform: translateY(42px); }
+  37.5% { transform: translateY(42px); }
+  40% { transform: translateY(42px); }
+  42.5% { transform: translateY(42px); }
+  45% { transform: translateY(42px); }
+  47.5% { transform: translateY(29.17px); }
+  50% { transform: translateY(18.67px); }
+  52.5% { transform: translateY(10.5px); }
+  55% { transform: translateY(4.67px); }
+  57.5% { transform: translateY(1.17px); }
+  60% { transform: translateY(0px); }
+  62.5% { transform: translateY(1.17px); }
+  65% { transform: translateY(4.67px); }
+  67.5% { transform: translateY(10.5px); }
+  70% { transform: translateY(18.67px); }
+  72.5% { transform: translateY(29.17px); }
+  75% { transform: translateY(42px); }
+  77.5% { transform: translateY(42px); }
+  80% { transform: translateY(42px); }
+  82.5% { transform: translateY(42px); }
+  85% { transform: translateY(42px); }
+  87.5% { transform: translateY(42px); }
+  88% { transform: translateY(42px); }
+  90% { transform: translateY(29.17px); }
+  92.5% { transform: translateY(16.41px); }
+  95% { transform: translateY(7.29px); }
+  97.5% { transform: translateY(1.82px); }
+  100% { transform: translateY(0px); }
+}
+@keyframes mb-pow {
+  0% { transform: scaleY(1); }
+  2.5% { transform: scaleY(1); }
+  5% { transform: scaleY(1); }
+  7.5% { transform: scaleY(1); }
+  10% { transform: scaleY(1); }
+  12.5% { transform: scaleY(0.984); }
+  15% { transform: scaleY(0.938); }
+  17.5% { transform: scaleY(0.859); }
+  20% { transform: scaleY(0.75); }
+  22.5% { transform: scaleY(0.609); }
+  25% { transform: scaleY(0.438); }
+  27.5% { transform: scaleY(0.234); }
+  30% { transform: scaleY(0); }
+  32.5% { transform: scaleY(0); }
+  35% { transform: scaleY(0); }
+  37.5% { transform: scaleY(0); }
+  40% { transform: scaleY(0); }
+  42.5% { transform: scaleY(0); }
+  45% { transform: scaleY(0); }
+  47.5% { transform: scaleY(0.306); }
+  50% { transform: scaleY(0.556); }
+  52.5% { transform: scaleY(0.75); }
+  55% { transform: scaleY(0.889); }
+  57.5% { transform: scaleY(0.972); }
+  60% { transform: scaleY(1); }
+  62.5% { transform: scaleY(0.972); }
+  65% { transform: scaleY(0.889); }
+  67.5% { transform: scaleY(0.75); }
+  70% { transform: scaleY(0.556); }
+  72.5% { transform: scaleY(0.306); }
+  75% { transform: scaleY(0); }
+  77.5% { transform: scaleY(0); }
+  80% { transform: scaleY(0); }
+  82.5% { transform: scaleY(0); }
+  85% { transform: scaleY(0); }
+  87.5% { transform: scaleY(0); }
+  88% { transform: scaleY(0); }
+  90% { transform: scaleY(0.306); }
+  92.5% { transform: scaleY(0.609); }
+  95% { transform: scaleY(0.826); }
+  97.5% { transform: scaleY(0.957); }
+  100% { transform: scaleY(1); }
+}
+@keyframes mb-heat {
+  0% { transform: scaleY(0.25); }
+  2.5% { transform: scaleY(0.25); }
+  5% { transform: scaleY(0.25); }
+  7.5% { transform: scaleY(0.25); }
+  10% { transform: scaleY(0.25); }
+  12.5% { transform: scaleY(0.316); }
+  15% { transform: scaleY(0.391); }
+  17.5% { transform: scaleY(0.473); }
+  20% { transform: scaleY(0.562); }
+  22.5% { transform: scaleY(0.66); }
+  25% { transform: scaleY(0.766); }
+  27.5% { transform: scaleY(0.879); }
+  30% { transform: scaleY(1); }
+  32.5% { transform: scaleY(1); }
+  35% { transform: scaleY(1); }
+  37.5% { transform: scaleY(1); }
+  40% { transform: scaleY(1); }
+  42.5% { transform: scaleY(1); }
+  45% { transform: scaleY(1); }
+  47.5% { transform: scaleY(0.84); }
+  50% { transform: scaleY(0.694); }
+  52.5% { transform: scaleY(0.562); }
+  55% { transform: scaleY(0.444); }
+  57.5% { transform: scaleY(0.34); }
+  60% { transform: scaleY(0.25); }
+  62.5% { transform: scaleY(0.174); }
+  65% { transform: scaleY(0.111); }
+  67.5% { transform: scaleY(0.062); }
+  70% { transform: scaleY(0.028); }
+  72.5% { transform: scaleY(0.007); }
+  75% { transform: scaleY(0); }
+  77.5% { transform: scaleY(0); }
+  80% { transform: scaleY(0); }
+  82.5% { transform: scaleY(0); }
+  85% { transform: scaleY(0); }
+  87.5% { transform: scaleY(0); }
+  88% { transform: scaleY(0); }
+  90% { transform: scaleY(0.007); }
+  92.5% { transform: scaleY(0.035); }
+  95% { transform: scaleY(0.085); }
+  97.5% { transform: scaleY(0.157); }
+  100% { transform: scaleY(0.25); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">What a motor's numbers mean</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A NEO V1.1 at 12 V: the harder it pushes, the slower it turns.</text>
+<path d="M70 96 V290 H330" fill="none" stroke="#444444" stroke-width="1.5"/>
+<path d="M70 90 L74.4 98 L65.6 98Z" fill="#444444"/>
+<path d="M336 290 L328 294.4 L328 285.6Z" fill="#444444"/>
+<text x="62" y="114" font-size="12" font-weight="700" fill="#446ce3" text-anchor="end">speed</text>
+<text x="100" y="306" font-size="12" font-weight="700" fill="#222222">torque →</text>
+<path d="M70 200 H190 V290" fill="none" stroke="#5c5c5c" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="62" y="204" font-size="12" fill="#5c5c5c" text-anchor="end">half</text>
+<text x="190" y="306" font-size="12" fill="#5c5c5c" text-anchor="middle">half</text>
+<path d="M70 290 Q190 206 310 290" fill="none" stroke="#1a7f37" stroke-width="2.5"/>
+<text x="184" y="280" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="end">power out</text>
+<line x1="70" y1="110" x2="310" y2="290" stroke="#446ce3" stroke-width="3"/>
+<circle cx="70" cy="110" r="4.5" fill="#446ce3"/><circle cx="310" cy="290" r="4.5" fill="#446ce3"/>
+<text x="96" y="106" font-size="13" font-weight="700" fill="#222222">free speed</text>
+<text x="96" y="121" font-size="12" fill="#5c5c5c">5676 rpm, no load</text>
+<line x1="226" y1="170" x2="198" y2="195" stroke="#5c5c5c" stroke-width="1"/>
+<text x="228" y="160" font-size="13" font-weight="700" fill="#1a7f37">most power: 406 W</text>
+<text x="228" y="176" font-size="12" fill="#5c5c5c">half speed, half torque</text>
+<text x="334" y="308" font-size="13" font-weight="700" fill="#222222" text-anchor="end">stall: held still</text>
+<text x="334" y="323" font-size="12" fill="#5c5c5c" text-anchor="end">1.92 ft·lb (2.6 N·m), 105 A</text>
+<g class="mb-x">
+  <line x1="190" y1="128" x2="190" y2="290" stroke="#c2410c" stroke-width="1.2" stroke-dasharray="2 4" opacity="0.7"/>
+  <g class="mb-yp"><circle cx="190" cy="248" r="5.5" fill="#1a7f37" stroke="#ffffff" stroke-width="2"/></g>
+  <g class="mb-ys"><circle cx="190" cy="200" r="7.5" fill="#c2410c" stroke="#ffffff" stroke-width="2"/></g>
+</g>
+<text x="380" y="100" font-size="13" font-weight="700" fill="#222222">At the orange dot</text>
+<rect x="396" y="120" width="36" height="150" fill="#f4f6f4" stroke="#444444" stroke-width="1.2"/>
+<rect class="mb-pow" x="396" y="120" width="36" height="150" fill="#1a7f37"/>
+<rect x="456" y="120" width="36" height="150" fill="#f8f2f2" stroke="#444444" stroke-width="1.2"/>
+<rect class="mb-heat" x="456" y="120" width="36" height="150" fill="#c62828"/>
+<rect x="396" y="120" width="36" height="150" fill="none" stroke="#444444" stroke-width="1.2"/>
+<rect x="456" y="120" width="36" height="150" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="414" y="288" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">power out</text>
+<text x="474" y="288" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">heat</text>
+<text x="474" y="303" font-size="12" fill="#5c5c5c" text-anchor="middle">(current²)</text>
+<line x1="16" y1="342" x2="504" y2="342" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="362" font-size="13" fill="#222222">Volts decide how fast it can go: 473 rpm a volt × 12 V = 5676 rpm.</text>
+<text x="16" y="381" font-size="13" fill="#222222">Current makes the torque, and the heat, as current squared.</text>
+<text x="16" y="400" font-size="12" fill="#5c5c5c">A stalled motor does no work and makes the most heat.</text>
+</svg>

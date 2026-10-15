@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 412" width="520" height="412" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="rev_units-title rev_units-desc">
+<title id="rev_units-title">REV's units: a fraction of the battery, per 1 ms step</title>
+<desc id="rev_units-desc">Animated. Top: a battery with part of it filled; the filled fraction, the duty cycle, rises and falls. A SPARK's output is that fraction of the battery: kP is duty cycle per unit of error, and multiplying by the battery volts gives volts. Middle: a one second timeline, with its first sliver zoomed into 1 ms steps; a highlight steps from box to box, and each step the I sum grows by one more chunk, because REV adds the error once per 1 ms step. Bottom: kD looks at the change over one 1 ms step, 1/1000 of a second, so a REV kD is 1000 times WPILib's per-second kD; kI adds once per 1 ms step, so a REV kI is 1/1000 of WPILib's. The tool converts everything to volts on its graphs so the terms can be compared.</desc>
+<style>
+.ru-fill { transform-box: view-box; transform-origin: 20px 0; animation: ru-fill 8s ease-in-out infinite; }
+@keyframes ru-fill { 0%, 100% { transform: scaleX(0.5833); } 45%, 55% { transform: scaleX(1.3333); } }
+.ru-step { animation: ru-step 8s steps(8, end) infinite; }
+@keyframes ru-step { from { transform: translateX(0); } to { transform: translateX(320px); } }
+.ru-acc { transform-box: view-box; transform-origin: 0 300px; animation: ru-acc 8s steps(8, end) infinite; }
+@keyframes ru-acc { from { transform: scaleY(0.1250); } to { transform: scaleY(1.1250); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">REV's units: a fraction of the battery, per 1 ms step</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">That's why REV gains look different from WPILib's.</text>
+<text x="16" y="76" font-size="13" fill="#222222" font-weight="700">A SPARK's output is a fraction of the battery</text>
+<rect x="16" y="88" width="200" height="40" rx="5" fill="#ffffff" stroke="#444444" stroke-width="1.6"/>
+<rect x="216" y="99" width="8" height="18" rx="2" fill="#444444"/>
+<g class="ru-fill"><rect x="20" y="92" width="115.2" height="32" rx="3" fill="#446ce3" fill-opacity="0.85"/></g>
+<text x="16" y="146" font-size="12" fill="#446ce3" font-weight="700">filled part = duty cycle</text>
+<text x="248" y="100" font-size="13" fill="#222222"><tspan font-weight="700" fill="#446ce3">kP</tspan>: duty cycle per unit of error</text>
+<text x="248" y="117" font-size="12" fill="#5c5c5c">(degrees for steering: the code's units)</text>
+<text x="248" y="138" font-size="13" fill="#222222" font-weight="700">duty cycle × battery volts = volts</text>
+<line x1="16" y1="160" x2="504" y2="160" stroke="#e2e2e2"/>
+<text x="16" y="182" font-size="13" fill="#222222" font-weight="700"><tspan fill="#0f766e">kD</tspan> and <tspan fill="#7c3aed">kI</tspan> act once per 1 ms controller step</text>
+<rect x="16" y="194" width="488" height="12" fill="#b0b8c0" stroke="#444444"/>
+<rect x="16" y="194" width="4" height="12" fill="#222222"/>
+<text x="504" y="222" font-size="12" fill="#5c5c5c" text-anchor="end">1 second = 1000 steps of 1 ms</text>
+<path d="M16 206 L16 238 M20 206 L336 238" stroke="#5c5c5c" stroke-width="1" stroke-dasharray="3 3" fill="none"/>
+<rect x="16" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="36" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="56" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="76" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="96" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="116" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="136" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="156" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="176" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="196" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="216" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="236" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="256" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="276" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<rect x="296" y="238" width="40" height="40" fill="#ffffff" stroke="#444444"/>
+<text x="316" y="294" font-size="12" fill="#5c5c5c" text-anchor="middle">1 ms</text>
+<line x1="16" y1="250" x2="336" y2="268" stroke="#c62828" stroke-width="2.4"/>
+<g class="ru-step"><rect x="16" y="238" width="40" height="40" fill="#b0b8c0" fill-opacity="0.35" stroke="#222222" stroke-width="2.4"/></g>
+<text x="16" y="312" font-size="12" fill="#c62828" font-weight="700">the error, read once per step</text>
+<text x="432" y="250" font-size="12" fill="#7c3aed" font-weight="700">I: the error</text>
+<text x="432" y="265" font-size="12" fill="#7c3aed" font-weight="700">added once</text>
+<text x="432" y="280" font-size="12" fill="#7c3aed" font-weight="700">per step</text>
+<g class="ru-acc"><rect x="380" y="236" width="44" height="64" fill="#7c3aed" fill-opacity="0.85"/></g>
+<rect x="380" y="236" width="44" height="64" fill="none" stroke="#444444"/>
+<line x1="16" y1="326" x2="504" y2="326" stroke="#e2e2e2"/>
+<text x="16" y="346" font-size="13" fill="#222222"><tspan font-weight="700" fill="#0f766e">kD</tspan>: the change over one 1 ms step</text>
+<text x="16" y="363" font-size="12" fill="#222222">1 ms is 1/1000 of a second, so</text>
+<text x="16" y="380" font-size="13" fill="#0f766e" font-weight="700">REV kD = 1000 × WPILib's kD</text>
+<text x="266" y="346" font-size="13" fill="#222222"><tspan font-weight="700" fill="#7c3aed">kI</tspan>: added once per 1 ms step</text>
+<text x="266" y="363" font-size="12" fill="#222222">1000 times a second, so</text>
+<text x="266" y="380" font-size="13" fill="#7c3aed" font-weight="700">REV kI = 1/1000 of WPILib's kI</text>
+<text x="16" y="403" font-size="12" fill="#5c5c5c">The tool converts everything to volts on its graphs so the terms can be compared.</text>
+</svg>

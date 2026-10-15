@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 520 696" width="520" height="696" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="wl-title wl-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="wl-title">WAGO lever nuts: lift, insert, close</title>
+<desc id="wl-desc">Animated side view of a WAGO 221 lever nut with a clear housing. The orange lever lifts until it latches open, which opens the spring clamp inside; the stripped wire slides straight in until the bare copper stops at the back wall, with the insulation just inside the opening; the lever closes, the spring clamps the copper onto the current bar, and a green check appears; then tug the wire. Steps: 1 lift the lever until it latches open; 2 push the wire straight in until it stops at the back; 3 push the lever back down, flush with the housing; 4 look through the side, then give the wire a tug. Strip 0.43 in (11 mm), using the strip gauge printed on the side of the nut. Look through the clear side: copper reaches the back wall, insulation just inside the entry, no copper or strands outside, lever flush. Six bad connections, each marked with a red X: not fully in (heats up, cuts out); insulation in the clamp (no contact); bare copper outside (can short); stray strands outside (can short); lever not closed (wire not clamped); wrong wire size (won't grip or fit). The WAGO 221 Series takes 24-12 AWG (0.2-4 mm2) solid, stranded or fine-stranded wire, one lever per wire; the 221-413 is rated 32 A, 450 V (IEC) and 20 A, 600 V (UL). Lever terminals on devices use the same steps with their own strip length: REV PDH high-current channels are latching WAGO terminals, 24-8 AWG, strip 0.43-0.51 in (11-13 mm); CTRE PDP 2.0 outputs are lever-actuated WAGO terminals, 22-10 AWG, strip 3/8 in (9.5 mm).</desc>
+<style>
+/* One 8 s loop. Lever and spring clamp open 8-18 %, wire slides in 20-44 % and stops at the back wall,
+   lever and clamp close 50-60 %, check from 64 %, tug arrow 71-88 %, wire fades out 88-94 % and resets unseen.
+   With no animation every part sits at its finished, good position. */
+.lever { transform-box: view-box; transform-origin: 274px 177.5px; animation: lever 8s ease-in-out infinite; }
+@keyframes lever {
+  0%, 8% { transform: rotate(0deg); }
+  18%, 50% { transform: rotate(80deg); }
+  60%, 100% { transform: rotate(0deg); }
+}
+.spring { transform-box: view-box; transform-origin: 260px 234px; animation: spring 8s ease-in-out infinite; }
+@keyframes spring {
+  0%, 10% { transform: rotate(0deg); }
+  18%, 51% { transform: rotate(11deg); }
+  58%, 100% { transform: rotate(0deg); }
+}
+.wire { animation: wire 8s ease-in-out infinite; }
+@keyframes wire {
+  0% { transform: translateX(-127px); opacity: 0; }
+  4%, 20% { transform: translateX(-127px); opacity: 1; }
+  40% { transform: translateX(-10px); }
+  44%, 88% { transform: translateX(0px); opacity: 1; }
+  94% { transform: translateX(0px); opacity: 0; }
+  100% { transform: translateX(-127px); opacity: 0; }
+}
+.check { animation: check 8s linear infinite; }
+@keyframes check { 0%, 61% { opacity: 0; } 64%, 88% { opacity: 1; } 93%, 100% { opacity: 0; } }
+.tug { animation: tug 8s linear infinite; }
+@keyframes tug { 0%, 68% { opacity: 0; } 71%, 86% { opacity: 1; } 90%, 100% { opacity: 0; } }
+.push { opacity: 0; animation: push 8s linear infinite; }
+@keyframes push { 0%, 21% { opacity: 0; } 24%, 41% { opacity: 1; } 45%, 100% { opacity: 0; } }
+.hl1, .hl2, .hl3, .hl4 { opacity: 0; }
+.hl1 { animation: hl1 8s linear infinite; }
+@keyframes hl1 { 0%, 5% { opacity: 0; } 7%, 18% { opacity: 1; } 19.5%, 100% { opacity: 0; } }
+.hl2 { animation: hl2 8s linear infinite; }
+@keyframes hl2 { 0%, 19.5% { opacity: 0; } 21%, 45% { opacity: 1; } 47%, 100% { opacity: 0; } }
+.hl3 { animation: hl3 8s linear infinite; }
+@keyframes hl3 { 0%, 47% { opacity: 0; } 49%, 60% { opacity: 1; } 62%, 100% { opacity: 0; } }
+.hl4 { animation: hl4 8s linear infinite; }
+@keyframes hl4 { 0%, 61% { opacity: 0; } 63%, 88% { opacity: 1; } 91%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<defs>
+  <!-- Lever nut side view, cut away. Local units: entry face at x=0, top at y=0, about 7 px per mm. -->
+  <g id="wl-body">
+    <rect x="0" y="0" width="132" height="59" rx="6" fill="#eef5f9"/>
+    <rect x="46" y="47" width="66" height="5" fill="#b0b8c0" stroke="#7d8790" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  </g>
+  <!-- Back wall, entry channel and the clear housing wall drawn over the wire -->
+  <g id="wl-front">
+    <rect x="124" y="22" width="5" height="34" fill="#c3d3de"/>
+    <path d="M2 29 H44 M2 51 H44" fill="none" stroke="#a9bccb" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <rect x="0" y="0" width="132" height="59" rx="6" fill="#dbe8f1" opacity="0.3"/>
+    <path d="M0 28 V6 Q0 0 6 0 H126 Q132 0 132 6 V53 Q132 59 126 59 H6 Q0 59 0 53 V52" fill="none" stroke="#8aa1b1" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+  </g>
+  <!-- Spring clamp, closed: wraps the current bar and presses the copper down onto it -->
+  <path id="wl-spring" d="M110 52 C122 50 121 12 104 11 L78 11 Q68 11 67 19 L65 33" fill="none" stroke="#7d8790" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <g id="wl-lever">
+    <rect x="14" y="-9" width="116" height="9" rx="3" fill="#f28c28" stroke="#b55f12" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <circle cx="124" cy="-4.5" r="2.2" fill="#b55f12"/>
+  </g>
+  <g id="wl-x">
+    <line x1="-5" y1="-5" x2="5" y2="5"/>
+    <line x1="5" y1="-5" x2="-5" y2="5"/>
+  </g>
+  <g id="wl-cu" stroke="#c47a2c" stroke-width="2.9">
+    <line x1="46" y1="35.1" x2="123" y2="35.1"/>
+    <line x1="46" y1="38.4" x2="123" y2="38.4"/>
+    <line x1="46" y1="41.6" x2="123" y2="41.6"/>
+    <line x1="46" y1="44.9" x2="123" y2="44.9"/>
+  </g>
+</defs>
+
+<!-- Title -->
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">WAGO lever nuts: lift, insert, close</text>
+<g font-size="12" fill="#5c5c5c">
+  <text x="16" y="45">WAGO 221 Series: 24–12 AWG (0.2–4 mm²) solid, stranded or fine-stranded wire.</text>
+  <text x="16" y="60">One lever per wire. 221-413 rating: 32 A, 450 V (IEC); 20 A, 600 V (UL).</text>
+</g>
+
+<!-- Good connection heading -->
+<path d="M17 77 L21.5 81.5 L30 72" fill="none" stroke="#1a7f37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="36" y="84" font-size="14" font-weight="700" fill="#222222"><tspan fill="#1a7f37">Good</tspan> connection<tspan font-size="12" font-weight="400" fill="#5c5c5c"> · side view</tspan></text>
+
+<!-- Steps (still); a pale highlight follows the animation -->
+<rect class="hl1" x="300" y="92" width="204" height="34" rx="6" fill="#fde7d1"/>
+<rect class="hl2" x="300" y="131" width="204" height="34" rx="6" fill="#fde7d1"/>
+<rect class="hl3" x="300" y="170" width="204" height="34" rx="6" fill="#fde7d1"/>
+<rect class="hl4" x="300" y="209" width="204" height="34" rx="6" fill="#fde7d1"/>
+<g fill="#f28c28">
+  <circle cx="314" cy="109" r="9"/>
+  <circle cx="314" cy="148" r="9"/>
+  <circle cx="314" cy="187" r="9"/>
+  <circle cx="314" cy="226" r="9"/>
+</g>
+<g font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">
+  <text x="314" y="113">1</text>
+  <text x="314" y="152">2</text>
+  <text x="314" y="191">3</text>
+  <text x="314" y="230">4</text>
+</g>
+<g font-size="13" fill="#222222">
+  <text x="330" y="106">Lift the lever until it</text>
+  <text x="330" y="121">latches open.</text>
+  <text x="330" y="145">Push the wire straight in</text>
+  <text x="330" y="160">until it stops at the back.</text>
+  <text x="330" y="184">Push the lever back down,</text>
+  <text x="330" y="199">flush with the housing.</text>
+  <text x="330" y="223">Look through the side,</text>
+  <text x="330" y="238">then give the wire a tug.</text>
+</g>
+
+<!-- Labels and leaders for the side view (still) -->
+<g font-size="12" font-weight="700" fill="#222222">
+  <text x="16" y="192">spring clamp</text>
+  <text x="16" y="207">insulation</text>
+  <text x="229" y="258" text-anchor="middle">current bar</text>
+  <text x="270" y="258">back wall</text>
+</g>
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="96" y1="188" x2="234" y2="192.5"/>
+  <line x1="229" y1="247" x2="229" y2="236"/>
+  <line x1="276.5" y1="247" x2="276.5" y2="238"/>
+</g>
+
+<!-- Animated side view: housing back, wire, spring, clear front, lever -->
+<use xlink:href="#wl-body" transform="translate(150 182)"/>
+<g class="wire">
+  <rect x="-260" y="212" width="456" height="20" fill="#d32f2f" stroke="#444444" stroke-width="1"/>
+  <g stroke="#c47a2c" stroke-width="2.9">
+    <line x1="196" y1="217.1" x2="273" y2="217.1"/>
+    <line x1="196" y1="220.4" x2="273" y2="220.4"/>
+    <line x1="196" y1="223.6" x2="273" y2="223.6"/>
+    <line x1="196" y1="226.9" x2="273" y2="226.9"/>
+  </g>
+</g>
+<g class="spring">
+  <path d="M260 234 C272 232 271 194 254 193 L228 193 Q218 193 217 201 L215 215" fill="none" stroke="#7d8790" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<use xlink:href="#wl-front" transform="translate(150 182)"/>
+<g fill="#222222">
+  <circle cx="236" cy="193" r="2.5"/>
+  <circle cx="229" cy="234.5" r="2.5"/>
+  <circle cx="276.5" cy="237" r="2.5"/>
+</g>
+<g class="lever">
+  <rect x="164" y="173" width="116" height="9" rx="3" fill="#f28c28" stroke="#b55f12" stroke-width="1"/>
+  <path d="M170 175.5 V179.5 M174 175.5 V179.5 M178 175.5 V179.5" stroke="#b55f12" stroke-width="1"/>
+  <circle cx="274" cy="177.5" r="2.2" fill="#b55f12"/>
+</g>
+
+<!-- Push and tug arrows, below the wire -->
+<g class="push">
+  <line x1="30" y1="250" x2="89" y2="250" stroke="#5c5c5c" stroke-width="1.6"/>
+  <path d="M96 250 L88 246.5 L88 253.5 Z" fill="#5c5c5c"/>
+  <text x="102" y="254" font-size="12" fill="#5c5c5c">push straight in</text>
+</g>
+<g class="tug">
+  <line x1="37" y1="250" x2="96" y2="250" stroke="#5c5c5c" stroke-width="1.6"/>
+  <path d="M30 250 L38 246.5 L38 253.5 Z" fill="#5c5c5c"/>
+  <text x="102" y="254" font-size="12" fill="#5c5c5c">tug: it stays</text>
+</g>
+
+<!-- Finished: green check -->
+<g class="check">
+  <circle cx="172" cy="150" r="13" fill="#1a7f37"/>
+  <path d="M165.5 150.5 L170 155 L178.5 145.5" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="191" y="155" font-size="14" font-weight="700" fill="#1a7f37">Clamped</text>
+</g>
+
+<line x1="16" y1="268" x2="504" y2="268" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Strip length gauge -->
+<text x="16" y="290" font-size="15" font-weight="700" fill="#222222">Strip length</text>
+<rect x="16" y="300" width="108" height="16" fill="#2b2b2b" stroke="#444444" stroke-width="1"/>
+<g stroke="#c47a2c" stroke-width="2.6">
+  <line x1="124" y1="303.9" x2="212" y2="303.9"/>
+  <line x1="124" y1="306.6" x2="212" y2="306.6"/>
+  <line x1="124" y1="309.4" x2="212" y2="309.4"/>
+  <line x1="124" y1="312.1" x2="212" y2="312.1"/>
+</g>
+<g stroke="#5c5c5c" stroke-width="1" fill="none">
+  <line x1="124" y1="318" x2="124" y2="332"/>
+  <line x1="212" y1="318" x2="212" y2="332"/>
+  <line x1="131" y1="326" x2="205" y2="326"/>
+</g>
+<path d="M124 326 L131 322.5 L131 329.5 Z M212 326 L205 322.5 L205 329.5 Z" fill="#5c5c5c"/>
+<text x="168" y="346" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">0.43 in (11 mm)</text>
+<text x="16" y="362" font-size="12" fill="#5c5c5c">Use the strip gauge printed on the nut.</text>
+
+<!-- Look through the side -->
+<text x="270" y="290" font-size="15" font-weight="700" fill="#222222">Look through the clear side</text>
+<g fill="none" stroke="#1a7f37" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M272 305 L275.5 308.5 L282 301"/>
+  <path d="M272 321 L275.5 324.5 L282 317"/>
+  <path d="M272 337 L275.5 340.5 L282 333"/>
+  <path d="M272 353 L275.5 356.5 L282 349"/>
+</g>
+<g font-size="13" fill="#222222">
+  <text x="290" y="310">Copper reaches the back wall</text>
+  <text x="290" y="326">Insulation just inside the entry</text>
+  <text x="290" y="342">No copper or strands outside</text>
+  <text x="290" y="358">Lever flush with the housing</text>
+</g>
+
+<line x1="16" y1="372" x2="504" y2="372" stroke="#d6d6d6" stroke-width="1"/>
+
+<!-- Bad connections -->
+<text x="16" y="393" font-size="15" font-weight="700" fill="#222222">Bad connections</text>
+
+<!-- Bad 1: not fully in -->
+<rect x="16" y="403" width="240" height="72" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#wl-x" transform="translate(32 417)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(120 423) scale(0.56)">
+  <use xlink:href="#wl-body"/>
+  <rect x="-136" y="30" width="135" height="20" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <g stroke="#c47a2c" stroke-width="2.9">
+    <line x1="-1" y1="35.1" x2="76" y2="35.1"/>
+    <line x1="-1" y1="38.4" x2="76" y2="38.4"/>
+    <line x1="-1" y1="41.6" x2="76" y2="41.6"/>
+    <line x1="-1" y1="44.9" x2="76" y2="44.9"/>
+  </g>
+  <use xlink:href="#wl-spring"/>
+  <use xlink:href="#wl-front"/>
+  <use xlink:href="#wl-lever"/>
+  <ellipse cx="100" cy="40" rx="26" ry="15" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<text x="26" y="470" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Not fully in:</tspan> heats up, cuts out</text>
+
+<!-- Bad 2: insulation in the clamp -->
+<rect x="264" y="403" width="240" height="72" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#wl-x" transform="translate(280 417)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(368 423) scale(0.56)">
+  <use xlink:href="#wl-body"/>
+  <rect x="-136" y="30" width="232" height="20" fill="#2b2b2b" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <g stroke="#c47a2c" stroke-width="2.9">
+    <line x1="96" y1="35.1" x2="123" y2="35.1"/>
+    <line x1="96" y1="38.4" x2="123" y2="38.4"/>
+    <line x1="96" y1="41.6" x2="123" y2="41.6"/>
+    <line x1="96" y1="44.9" x2="123" y2="44.9"/>
+  </g>
+  <use xlink:href="#wl-spring" transform="rotate(4.5 110 52)"/>
+  <use xlink:href="#wl-front"/>
+  <use xlink:href="#wl-lever"/>
+  <ellipse cx="68" cy="31" rx="26" ry="15" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<text x="274" y="470" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Insulation in the clamp:</tspan> no contact</text>
+
+<!-- Bad 3: bare copper outside (stripped too long) -->
+<rect x="16" y="481" width="240" height="72" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#wl-x" transform="translate(32 495)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(120 501) scale(0.56)">
+  <use xlink:href="#wl-body"/>
+  <rect x="-136" y="30" width="106" height="20" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <g stroke="#c47a2c" stroke-width="2.9">
+    <line x1="-30" y1="35.1" x2="123" y2="35.1"/>
+    <line x1="-30" y1="38.4" x2="123" y2="38.4"/>
+    <line x1="-30" y1="41.6" x2="123" y2="41.6"/>
+    <line x1="-30" y1="44.9" x2="123" y2="44.9"/>
+  </g>
+  <use xlink:href="#wl-spring"/>
+  <use xlink:href="#wl-front"/>
+  <use xlink:href="#wl-lever"/>
+  <ellipse cx="-14" cy="40" rx="22" ry="15" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<text x="26" y="548" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Bare copper outside:</tspan> can short</text>
+
+<!-- Bad 4: stray strands outside -->
+<rect x="264" y="481" width="240" height="72" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#wl-x" transform="translate(280 495)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(368 501) scale(0.56)">
+  <use xlink:href="#wl-body"/>
+  <rect x="-136" y="30" width="176" height="20" fill="#2b2b2b" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <g stroke="#c47a2c" stroke-width="2.9">
+    <line x1="40" y1="36.5" x2="123" y2="36.5"/>
+    <line x1="40" y1="40" x2="123" y2="40"/>
+    <line x1="40" y1="43.5" x2="123" y2="43.5"/>
+  </g>
+  <use xlink:href="#wl-spring" transform="rotate(1.5 110 52)"/>
+  <use xlink:href="#wl-front"/>
+  <g fill="none" stroke="#c47a2c" stroke-width="2.6" stroke-linecap="round">
+    <path d="M10 31 C2 30 -8 24 -22 16"/>
+    <path d="M10 33 C0 31 -12 30 -26 26"/>
+    <path d="M10 49 C2 50 -8 55 -22 60"/>
+  </g>
+  <use xlink:href="#wl-lever"/>
+  <ellipse cx="-10" cy="38" rx="22" ry="25" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<text x="274" y="548" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Stray strands outside:</tspan> can short</text>
+
+<!-- Bad 5: lever not closed -->
+<rect x="16" y="559" width="240" height="72" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#wl-x" transform="translate(32 573)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(120 579) scale(0.56)">
+  <use xlink:href="#wl-body"/>
+  <rect x="-136" y="30" width="182" height="20" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <use xlink:href="#wl-cu"/>
+  <use xlink:href="#wl-spring" transform="rotate(5 110 52)"/>
+  <use xlink:href="#wl-front"/>
+  <use xlink:href="#wl-lever" transform="rotate(14 124 -4.5)"/>
+  <ellipse cx="36" cy="-24" rx="30" ry="11" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<text x="26" y="626" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Lever not closed:</tspan> wire not clamped</text>
+
+<!-- Bad 6: wrong wire size (too thin to be gripped) -->
+<rect x="264" y="559" width="240" height="72" rx="6" fill="#fff7f7" stroke="#efc9c9"/>
+<use xlink:href="#wl-x" transform="translate(280 573)" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<g transform="translate(368 579) scale(0.56)">
+  <use xlink:href="#wl-body"/>
+  <rect x="-136" y="39" width="182" height="10" fill="#2b2b2b" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+  <g stroke="#c47a2c" stroke-width="2.5">
+    <line x1="46" y1="42.75" x2="123" y2="42.75"/>
+    <line x1="46" y1="45.25" x2="123" y2="45.25"/>
+  </g>
+  <use xlink:href="#wl-spring"/>
+  <use xlink:href="#wl-front"/>
+  <use xlink:href="#wl-lever"/>
+  <ellipse cx="66" cy="37" rx="18" ry="12" fill="none" stroke="#c62828" stroke-width="2" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>
+</g>
+<text x="274" y="626" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Wrong wire size:</tspan> won't grip or fit</text>
+
+<!-- Lever terminals on devices -->
+<rect x="16" y="639" width="488" height="51" rx="6" fill="#f4f4f4" stroke="#d6d6d6"/>
+<text x="26" y="655" font-size="12" font-weight="700" fill="#222222">Lever terminals on devices: same steps, their own strip length.</text>
+<g font-size="12" fill="#222222">
+  <text x="26" y="670">REV PDH high-current: latching WAGOs, 24–8 AWG, strip 0.43–0.51 in (11–13 mm).</text>
+  <text x="26" y="685">CTRE PDP 2.0 outputs: lever-actuated WAGOs, 22–10 AWG, strip 3/8 in (9.5 mm).</text>
+</g>
+</svg>
