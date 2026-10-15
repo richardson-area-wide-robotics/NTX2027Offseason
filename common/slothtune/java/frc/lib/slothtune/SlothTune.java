@@ -190,6 +190,11 @@ public final class SlothTune {
   private final DoubleArrayPublisher liveVisionPose;
   private final DoubleArrayPublisher liveAccel;
   private final DoublePublisher liveHeading;
+  private final DoubleArrayPublisher liveGyroNumbers;
+  /** The heading last loop, and when, for the turn rate; and the rate, smoothed over a few loops. */
+  private double gyroLastDeg = Double.NaN;
+  private double gyroLastS = Double.NaN;
+  private double turnRateDegS = Double.NaN;
   private final DoublePublisher liveBus;
   private final DoublePublisher liveTimestamp;
   private final StringPublisher liveMode;
@@ -374,6 +379,7 @@ public final class SlothTune {
     liveVisionReject = nt.getStringTopic(SlothTuneTopics.LIVE_VISION_LAST_REJECT).publish();
     liveAccel = nt.getDoubleArrayTopic(SlothTuneTopics.LIVE_ACCEL).publish();
     liveHeading = nt.getDoubleTopic(SlothTuneTopics.LIVE_HEADING_DEG).publish();
+    liveGyroNumbers = nt.getDoubleArrayTopic(SlothTuneTopics.LIVE_GYRO_NUMBERS).publish();
     liveBus = nt.getDoubleTopic(SlothTuneTopics.LIVE_BUS_VOLTS).publish();
     liveTimestamp = nt.getDoubleTopic(SlothTuneTopics.LIVE_TIMESTAMP).publish();
     liveMode = nt.getStringTopic(SlothTuneTopics.LIVE_ROBOT_MODE).publish();
@@ -1720,6 +1726,25 @@ public final class SlothTune {
 
   // ------------------------------------------------------------------ telemetry
 
+  /**
+   * The gyro's numbers for the Live tab. The turn rate is the heading's change over each loop
+   * (wrapped across 180), smoothed over about 0.1 s, so it reads the same from any gyro and in the
+   * simulator.
+   */
+  private void publishGyroNumbers(double now) {
+    double h = io.headingDeg();
+    if (Double.isFinite(h) && Double.isFinite(gyroLastDeg) && now > gyroLastS) {
+      double d = ((h - gyroLastDeg + 540) % 360) - 180;
+      double rate = d / (now - gyroLastS);
+      turnRateDegS = Double.isFinite(turnRateDegS) ? turnRateDegS + 0.3 * (rate - turnRateDegS) : rate;
+    }
+    gyroLastDeg = h;
+    gyroLastS = now;
+    double[] tilt = io.gyroTiltDeg();
+    liveGyroNumbers.set(new double[] {h, turnRateDegS, tilt.length > 0 ? tilt[0] : Double.NaN,
+        tilt.length > 1 ? tilt[1] : Double.NaN});
+  }
+
   /** What a running test's live view shows, when the test records it. */
   static final List<String> LIVE_CHANNELS = List.of("pos", "vel", "sp", "goal", "cmd", "stage", "volts0");
 
@@ -1842,6 +1867,7 @@ public final class SlothTune {
     liveVisionPose.set(vp == null ? new double[0] : vp);
     liveAccel.set(io.accelMps2().orElse(new double[0]));
     liveHeading.set(io.headingDeg());
+    publishGyroNumbers(now);
     liveBus.set(io.busVolts());
     liveTimestamp.set(now);
     liveFms.set(signals.fmsAttached());

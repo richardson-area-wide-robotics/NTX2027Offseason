@@ -110,6 +110,7 @@ PIECE_VALUES = ROOT + "/Pieces/Values"
 HOLD_NAMES = ROOT + "/Holds/Names"
 HOLD_VALUES = ROOT + "/Holds/Values"
 LIVE_GYRO_DETAILS = LIVE + "GyroDetails"   # "name=value": temperature, firmware, sticky (a Canandgyro's)
+LIVE_GYRO_NUMBERS = LIVE + "GyroNumbers"   # heading deg, turn rate deg/s, roll deg, pitch deg
 LIVE_POSE = LIVE + "Pose"
 LIVE_VISION_POSE = LIVE + "VisionPose"
 

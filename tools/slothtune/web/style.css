@@ -337,6 +337,13 @@ pre.diff .add { color: var(--ok); } pre.diff .del { color: var(--bad); } pre.dif
    blue, the tester's or operator's orange; a button seen keeps a green ring. */
 .ct-pad { --press: var(--accent); width: 100%; max-width: 300px; height: auto; display: block; margin: 2px auto; }
 .ct-pad-key { margin: 2px 0 0; }
+/* The Live tab's gyro: its health, then its numbers in a row of small cells. */
+.gyro-strip { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; }
+.gyro-state { flex: 1 1 100%; font-size: 13px; }
+.gyro-state.bad { color: var(--bad); }
+.gyro-state.warn { color: var(--warn); }
+.gyro-cell { display: flex; flex-direction: column; min-width: 74px; }
+.gyro-cell b { font-size: 15px; }
 .sys-model-facts { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0; font-size: 13px; }
 .sys-model-facts b { font-weight: 600; }
 .ct-pad.role-driver { --press: var(--driver); }

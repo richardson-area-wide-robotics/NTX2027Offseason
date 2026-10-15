@@ -28,6 +28,10 @@
           <div id="flags" class="flags"><span class="hint">Not checking: no robot connected.</span></div>
         </div>
         <div class="panel">
+          <h3 data-tip="live.gyro">Gyro</h3>
+          <div class="gyro-strip" id="live-gyro" role="group" aria-label="The gyro"><span class="hint">Not connected.</span></div>
+        </div>
+        <div class="panel">
           <h3 data-tip="live.mods" id="mods-h">Modules</h3>
           <div id="mods" class="mods"></div>
         </div>
@@ -39,6 +43,41 @@
     </div>`;
 
   const svg = $("#robot", root);
+
+  // ---------------------------------------------------------------- the gyro
+  // Its health, then its numbers: heading (what field-relative driving and odometry turn on), how
+  // fast it is turning, its tilt as mounted, acceleration in the team's units, and its temperature.
+  // Built once; only the values change, ten times a second.
+  const GYRO_CELLS = [
+    ["heading", "Heading", "heading"], ["rate", "Turning", "rate"], ["pitch", "Pitch", "tilt"], ["roll", "Roll", "tilt"],
+    ["accel", "Acceleration", "accel"], ["temp", "Temperature", "temp"]];
+  function paintGyro(live) {
+    const box = $("#live-gyro", root);
+    const g = live.gyro || [], nums = live.gyro_numbers || [], det = live.gyro_details || {};
+    if (!g.length && !nums.length) return;
+    if (!box._built) {
+      box._built = true;
+      box.innerHTML = `<div class="gyro-state"></div>` + GYRO_CELLS.map(([k, label, tip]) =>
+        `<div class="gyro-cell" data-tip="live.gyro-${tip}"><span class="small muted">${label}</span><b class="mono" data-g="${k}">–</b></div>`).join("");
+    }
+    const [type, conn, cal, faults] = g;
+    const bad = conn && conn !== "connected", wait = cal === "calibrating";
+    const st = $(".gyro-state", box);
+    st.className = "gyro-state " + (bad ? "bad" : wait || faults ? "warn" : "ok");
+    st.innerHTML = `<b>${esc(type || "?")}</b>: ${esc(conn || "?")}`
+      + `${cal ? ` · ${esc(cal)}` : ""}${faults ? ` · <span class="warn-ink">${esc(faults)}</span>` : ""}`
+      + `${det.sticky ? ` · sticky: ${esc(det.sticky)}` : ""}`;
+    const ok = v => v != null && isFinite(v);
+    const a = live.accel || [];
+    const horiz = a.length >= 2 && ok(a[0]) && ok(a[1]) ? Math.hypot(a[0], a[1]) : NaN;
+    const set = (k, v) => { const e = $(`[data-g="${k}"]`, box); if (e.textContent !== v) e.textContent = v; };
+    set("heading", ok(nums[0]) ? `${fmt(nums[0], 1)}°` : ok(live.heading) ? `${fmt(live.heading, 1)}°` : "–");
+    set("rate", ok(nums[1]) ? `${fmt(Math.abs(nums[1]) < 0.5 ? 0 : nums[1], 0)}°/s` : "–");   // still reads 0, not -0
+    set("pitch", ok(nums[3]) ? `${fmt(nums[3], 1)}°` : "–");
+    set("roll", ok(nums[2]) ? `${fmt(nums[2], 1)}°` : "–");
+    set("accel", ok(horiz) ? U.accel(horiz, 1) : "–");
+    set("temp", ok(+det.temperature) ? `${fmt(+det.temperature, 0)} °C` : "–");
+  }
   $("[data-connect]", root).onclick = () => $("#connect").click();
   $$("[data-netcheck]", root).forEach(b => b.onclick = () => App.checkNetworks());
   let built = false, pods = [];
@@ -160,6 +199,8 @@
           ? ` · vision ${live.vision_counts[0]} accepted, ${live.vision_counts[1]} rejected`
             + (live.vision_last_reject ? ` (last: ${live.vision_last_reject})` : "") : "")
       : "";
+
+    paintGyro(live);
 
     const names = L.names || [];
     if (modsKey !== names.join("|")) buildMods(names);

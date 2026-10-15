@@ -331,6 +331,7 @@ class RobotLink:
             "gyro": list(self.get("str[]", C.LIVE_GYRO)),
             "gyro_details": dict(x.split("=", 1) for x in self.get("str[]", C.LIVE_GYRO_DETAILS) if "=" in x),
             "heading": self.get("double", C.LIVE_HEADING_DEG),
+            "gyro_numbers": list(self.get("double[]", C.LIVE_GYRO_NUMBERS)),
             "accel": list(self.get("double[]", C.LIVE_ACCEL)),
             "pose": list(self.get("double[]", C.LIVE_POSE)),
             "vision_pose": list(self.get("double[]", C.LIVE_VISION_POSE)),

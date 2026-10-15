@@ -160,6 +160,12 @@ public final class SlothTuneTopics {
   public static final String LIVE_ACCEL = LIVE + "AccelMps2";
   /** Gyro {@code {type, connected|NOT CONNECTED, calibrating|ready, faults}}. */
   public static final String LIVE_GYRO = LIVE + "Gyro";
+  /**
+   * The gyro's numbers, {@code {heading deg, turn rate deg/s, roll deg, pitch deg}}: heading as
+   * odometry uses it (counter-clockwise positive), its rate from the heading's own change, and the
+   * gyro's raw roll and pitch (how far it is mounted off level, on a level floor). NaN where unknown.
+   */
+  public static final String LIVE_GYRO_NUMBERS = LIVE + "GyroNumbers";
   /** Game-piece current sensors: names, "motor|mode|system" each, and {amps, detected, hasPiece, threshold} each. */
   public static final String PIECE_NAMES = ROOT + "/Pieces/Names";
   public static final String PIECE_INFO = ROOT + "/Pieces/Info";
