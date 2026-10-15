@@ -102,7 +102,7 @@ const AutoTuneUI = (() => {
         <h3 data-tip="autotune.panel">Auto-tune: ${esc(NAME[r.loop] || r.loop)}${r.target === "practice" ? " (practice pods)" : ""}</h3>
         <span class="chip ${CHIP[r.state] || ""}">${esc(WORD[r.state] || r.state)} · round ${Math.min(r.round + (active ? 1 : 0), r.max_rounds)} of ${r.max_rounds}</span></div>
       <p class="small ${r.state === "paused" ? "warn-ink" : ""}">${esc(r.message || "")}</p>
-      <table class="t small at-pods"><thead><tr><th>Pod</th><th data-tip="autotune.scores">Score each round</th><th>Now</th></tr></thead><tbody>
+      <table class="t small at-pods"><thead><tr><th>Pod</th><th data-tip="autotune.scores">Score each round</th><th data-tip="autotune.now" data-quiet>Now</th></tr></thead><tbody>
         ${r.pods.map(p => `<tr><td>${esc(podName(p.pod))}</td><td class="mono">${esc(scores(p))}</td>
           <td><span class="chip ${POD_CHIP[p.status] || ""}">${p.status === "tuning" ? "tuning" : p.status === "done" ? "done" : "stopped"}</span></td></tr>`).join("")}</tbody></table>
       ${reasons(r.pods)}

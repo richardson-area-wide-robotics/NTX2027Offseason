@@ -23,14 +23,14 @@
       <div class="stack" id="cfg-files">
         <div class="panel"><h2 data-tip="config.summary">${esc(L.project)} <span class="muted small">team ${esc(s.team)}</span></h2>
           <table class="t"><tbody>
-            <tr><th scope="row">Drive</th><td>${esc(s.drive_motor)} at ${s.drive_gear}:1 on ${s.wheel_diameter_in} in wheels</td></tr>
-            <tr><th scope="row">Steering</th><td>${esc(s.steer_motor)} at ${s.steer_gear}:1</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.sum-drive">Drive</span></th><td>${esc(s.drive_motor)} at ${s.drive_gear}:1 on ${s.wheel_diameter_in} in wheels</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.sum-steer">Steering</span></th><td>${esc(s.steer_motor)} at ${s.steer_gear}:1</td></tr>
             <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.topspeed">Module top speed</span></th><td class="mono">${U.speed(s.max_module_speed_mps)} (from motor free speed)</td></tr>
             <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.maxspeed">Speed given to YAGSL</span></th><td class="mono">${s.create_swerve_max_speed.value == null ? "?" : U.speed(s.create_swerve_max_speed.value)} <span class="muted">(${esc(s.create_swerve_max_speed.literal || "")})</span></td></tr>
             <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.kv">Nominal kV</span></th><td class="mono">${fmt(s.kv_nominal, 3)} V per m/s <span class="muted">(the code's units)</span></td></tr>
             <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.slip">Wheels slip at</span></th><td class="mono">${fmt(s.traction_current_a, 0)} A per motor <span class="muted">(${U.mass(s.mass_kg)}, ${esc(s.mass_source)})</span></td></tr>
-            <tr><th scope="row">Current limits</th><td class="mono">drive ${esc((s.current_limit || {}).drive)} A · steer ${esc((s.current_limit || {}).angle)} A</td></tr>
-            <tr><th scope="row">Ramp rates</th><td class="mono">drive ${esc((s.ramp || {}).drive)} s · steer ${esc((s.ramp || {}).angle)} s</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.sum-limits">Current limits</span></th><td class="mono">drive ${esc((s.current_limit || {}).drive)} A · steer ${esc((s.current_limit || {}).angle)} A</td></tr>
+            <tr><th scope="row"><span class="term" tabindex="0" data-tip="config.sum-ramp">Ramp rates</span></th><td class="mono">drive ${esc((s.ramp || {}).drive)} s · steer ${esc((s.ramp || {}).angle)} s</td></tr>
             <tr><th scope="row">Libraries</th><td class="small">${Object.entries(s.vendordeps || {}).map(([k, v]) => `${esc(k)} ${esc(v)}`).join(" · ")}</td></tr>
           </tbody></table></div>
         <div class="panel"><h3 data-tip="config.modules">Modules</h3><div class="tblwrap"><table class="t">
@@ -113,7 +113,7 @@
         steps: ["Close the PathPlanner app first: it writes its own values back when it closes.",
           "Press <b>Make PathPlanner match the code</b> and check the diff.", "Rows marked <b>measure it</b> (mass, moment of inertia) come from Calibrate: measure them there, then come back."],
         good: "every row the same; the named commands each registered (\"Shoot B\" is kept on purpose)." })}
-      <div class="pp-cols"><div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num">PathPlanner</th><th class="num">The code</th><th>From</th><th><span class="sr">Match</span></th></tr></thead><tbody>
+      <div class="pp-cols"><div class="tblwrap"><table class="t"><thead><tr><th>Setting</th><th class="num" data-tip="config.pp-pp" data-quiet>PathPlanner</th><th class="num" data-tip="config.pp-code" data-quiet>The code</th><th>From</th><th data-tip="config.pp-match" data-quiet><span class="sr">Match</span></th></tr></thead><tbody>
         ${(r.rows || []).slice().sort((a, b) => (a.status === "ok") - (b.status === "ok")).map(x => `<tr><td class="mono small">${esc(x.key)}</td><td class="num mono">${ppVal(x.key, x.pathplanner)}</td>
           <td class="num mono">${ppVal(x.key, x.code)}</td><td class="small">${esc(x.source)}</td>
           <td>${x.status === "ok" ? `<span class="muted small">✓ same</span>` : `<span class="chip ${STATUS[x.status] || ""}" ${x.status === "unknown" ? `data-tip="config.measure" data-quiet` : ""}>${esc(x.status === "unknown" ? "measure it" : x.status)}</span>`}</td></tr>`).join("")}

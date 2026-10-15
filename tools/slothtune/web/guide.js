@@ -125,7 +125,7 @@ const Guide = (() => {
           try {
             const doc = await App.runTest("capture", "ALL", { duration_s: 4, coast: 1 });
             const res = await App.api("/api/offsets", { file: doc._file });
-            shown.offsets = `<table class="t"><tr><th>Module</th><th class="num">Reads</th><th class="num">Offset now</th><th class="num">New offset</th><th></th></tr>${Object.entries(res).map(([n, r]) =>
+            shown.offsets = `<table class="t"><tr><th>Module</th><th class="num" data-tip="guide.off-reads" data-quiet>Reads</th><th class="num" data-tip="guide.off-now" data-quiet>Offset now</th><th class="num" data-tip="guide.off-new" data-quiet>New offset</th><th></th></tr>${Object.entries(res).map(([n, r]) =>
               `<tr><td>${abbr(n)}</td><td class="num">${fmt(r.reading_deg, 2)}°</td><td class="num">${fmt(r.old, 2)}°</td><td class="num">${fmt(r.new, 2)}°</td><td>${r.steady ? "" : "moved: capture again"}</td></tr>`).join("")}</table>`;
             paint();
             if (Object.values(res).every(r => r.steady) && await App.previewAndSave({ kind: "offsets", file: doc._file }, "Write the new offsets")) {

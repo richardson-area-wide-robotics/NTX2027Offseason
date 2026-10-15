@@ -552,7 +552,7 @@ const Tune = (() => {
     const S = p.summary, [u, f] = loopUnit(p.loop || ex.loop);
     const row = (label, lk, f) => `<tr><td><span class="term" data-learn="${lk}">${label}</span></td>${["measured", "replay", "predicted"].map(k => `<td class="num">${f(S[k] || {})}</td>`).join("")}</tr>`;
     const ms = v => v == null ? "–" : fmt(v * 1000, 0) + " ms";
-    box.innerHTML = `<table class="t"><thead><tr><th></th><th>This run</th><th>Model replay</th><th>Prediction</th></tr></thead><tbody>
+    box.innerHTML = `<table class="t"><thead><tr><th></th><th data-tip="tune.wi-run" data-quiet>This run</th><th data-tip="tune.wi-replay" data-quiet>Model replay</th><th data-tip="tune.wi-pred" data-quiet>Prediction</th></tr></thead><tbody>
       ${row("Rise", "rise_time", s => ms(s.rise_time))}
       ${row("Overshoot", "overshoot", s => s.overshoot_pct == null ? "–" : fmt(s.overshoot_pct, 1) + "%")}
       ${row("Settle", "settling_time", s => s.settled === false ? "never" : ms(s.settling_time))}
@@ -621,7 +621,7 @@ const Tune = (() => {
       }
     }
     const th = (label, lk) => `<th class="num"><span class="term" tabindex="0" data-learn="${lk}">${label}</span></th>`;
-    $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th class="num">Step (${u})</th>${th("Delay ms", "dead_time")}
+    $("#metrics", root).innerHTML = rows.length ? `<table class="t"><thead><tr><th>Module</th><th class="num" data-tip="tune.step" data-quiet>Step (${u})</th>${th("Delay ms", "dead_time")}
       ${th("Rise ms", "rise_time")}${th("Overshoot %", "overshoot")}${th("Settle ms", "settling_time")}${th(`Left over (${u})`, "steady_state_error")}${th("Swings", "oscillation")}${th("Flat out %", "saturation")}</tr></thead>
       <tbody>${rows.join("")}</tbody></table>` : "";
     $("#metrics-wrap", root).hidden = !rows.length;
@@ -749,7 +749,7 @@ const Tune = (() => {
       return d.length ? d.slice(0, 2).map(k => `${gainName(k)} → ${num(b[k] || 0)}`).join(", ") + (d.length > 2 ? ` +${d.length - 2}` : "") : "same gains";
     };
     $("#history", root).innerHTML = list.length ? `<table class="t"><caption class="sr">Earlier runs of this test</caption>
-      <thead><tr><th>When</th><th>Where</th><th class="num">Score</th><th>Changed</th></tr></thead><tbody>${list.map((x, i) => `<tr data-f="${esc(x.file)}">
+      <thead><tr><th>When</th><th>Where</th><th class="num" data-tip="tune.hist-score" data-quiet>Score</th><th data-tip="tune.hist-changed" data-quiet>Changed</th></tr></thead><tbody>${list.map((x, i) => `<tr data-f="${esc(x.file)}">
       <td class="nowrap"><button class="linkbtn" data-open="${esc(x.file)}">${esc(clock(x.saved))}</button></td><td>${x.practice ? "practice" : esc(whereWord(x.env || "").toLowerCase())}</td>
       <td class="num">${x.score == null || (x.outcome && x.outcome !== "DONE") ? "–" : x.score}</td><td class="small">${esc(changed(x, list[i + 1]))}</td></tr>`).join("")}</tbody></table>`
       : `<span class="hint">None yet for this test.</span>`;

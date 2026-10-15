@@ -179,7 +179,7 @@ const Bringup = (() => {
   function paintSensors(d) {
     const box = $("#br-sensors-body", root), S = sensorRows(d), can = App.connected();
     if (!S.length) { box.innerHTML = `<p class="hint">${d ? "No sensors in the design." : "Needs the design file."}</p>`; return; }
-    box.innerHTML = `<div class="tblwrap br-sensors"><table class="t"><thead><tr><th>Sensor</th><th>Port</th><th>Means</th><th>Now</th><th>Reads right</th></tr></thead><tbody>
+    box.innerHTML = `<div class="tblwrap br-sensors"><table class="t"><thead><tr><th>Sensor</th><th data-tip="br.port" data-quiet>Port</th><th>Means</th><th data-tip="br.now" data-quiet>Now</th><th data-tip="br.reads-right" data-quiet>Reads right</th></tr></thead><tbody>
         ${S.map(s => `<tr data-sname="${esc(s.name)}"><td><b>${esc(s.name)}</b> <span class="small muted">${s.extra ? "in the code, not in the design" : esc(s.subsystem || "")}</span></td>
           <td class="mono">${s.extra ? "" : `${esc(s.type)} ${esc([].concat(s.port).join(", "))}`}</td><td class="small">${esc(s.means || "")}</td>
           <td class="small" data-now></td>
@@ -286,7 +286,7 @@ const Bringup = (() => {
     const M = mechanism(d);
     if (!d || !M.length) { box.innerHTML = `<p class="hint">${d ? "No mechanism motors in the design." : "Needs the design file."}</p>`; return; }
     const marks = data.marks || {}, can = App.connected();
-    box.innerHTML = `<div class="tblwrap br-motors"><table class="t"><thead><tr><th>Motor</th><th class="num">CAN</th><th>Shaft</th><th>Positive is</th><th>Result</th><th></th></tr></thead><tbody>
+    box.innerHTML = `<div class="tblwrap br-motors"><table class="t"><thead><tr><th>Motor</th><th class="num" data-tip="br.can" data-quiet>CAN</th><th data-tip="br.shaft" data-quiet>Shaft</th><th data-tip="br.positive" data-quiet>Positive is</th><th data-tip="br.result" data-quiet>Result</th><th></th></tr></thead><tbody>
       ${M.map((m, i) => {
         const mk = marks["bu_motor:" + m.name], here = bit(m.name) != null, rep = last["m:" + m.name];
         return `<tr><td><b>${esc(m.name)}</b> <span class="small muted">${esc((m.motor || {}).type || "")}</span></td><td class="num">${esc((m.motor || {}).id ?? "")}</td>

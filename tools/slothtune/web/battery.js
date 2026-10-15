@@ -48,7 +48,7 @@ const Battery = (() => {
         (${r.rest_v >= 12.3 ? charge(r.rest_v) : `<b>${charge(r.rest_v)}</b>`}).</p>` : ""}
       <div class="row learn-row" style="flex-wrap:wrap"><span class="small muted" data-tip="battery.plug">Its plug and leads:</span>${Learn.chips(["crimp_sb50", "wire_gauge", "wire_loss"])}</div>
       <details class="batt-details"><summary>How each battery is doing</summary>
-        <div class="tblwrap"><table class="t"><thead><tr><th>Battery</th><th></th><th>Sag</th><th>At rest</th><th>Measured</th><th>Trend</th><th>From</th></tr></thead><tbody>
+        <div class="tblwrap"><table class="t"><thead><tr><th>Battery</th><th></th><th data-tip="battery.sag" data-quiet>Sag</th><th data-tip="battery.rest" data-quiet>At rest</th><th data-tip="battery.measured" data-quiet>Measured</th><th data-tip="battery.trend" data-quiet>Trend</th><th>From</th></tr></thead><tbody>
         ${r.batteries.filter(b => b.n).map(b => `<tr><td><b>${esc(b.id)}</b>${b.listed ? "" : ` <span class="muted small">off the list</span>`}</td>
           <td>${b.status ? `<span class="chip ${b.status === "good" ? "good" : b.status === "practice" ? "warn" : "bad"}">${WORDS[b.status]}</span>` : ""}</td>
           <td class="num">${b.mohm != null ? b.mohm + " mΩ" : "–"}</td><td class="num">${b.v_rest != null ? fmt(b.v_rest, 2) + " V" : "–"}</td>

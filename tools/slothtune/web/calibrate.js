@@ -133,7 +133,7 @@
             <figcaption class="small muted">The board: 9 × 11 in, 8 × 8 squares. Markers drawn for illustration; yours have their own patterns.</figcaption></figure>
           <div>
             <div id="cm-box" class="cm-box"></div>
-            <table class="t lens-set"><thead><tr><th>PhotonVision setting</th><th>Set to</th></tr></thead><tbody>
+            <table class="t lens-set"><thead><tr><th>PhotonVision setting</th><th data-tip="cal.lens-set" data-quiet>Set to</th></tr></thead><tbody>
               <tr><td>Board type</td><td class="mono">ChArUco</td></tr>
               <tr><td>Tag family</td><td class="mono">4x4</td></tr>
               <tr><td>Pattern spacing (a square)</td><td class="mono">1.00 in</td></tr>
@@ -247,7 +247,7 @@
     const out = $("#cg-tape-out", root);
     const r = await App.api("/api/geometry/tape", { wheelbase_in: $("#cg-wb", root).value, track_in: $("#cg-tw", root).value });
     if (!r.ok) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
-    out.innerHTML = (r.rows.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Module</th><th>Front / left now</th><th>From the tape</th><th></th></tr></thead><tbody>
+    out.innerHTML = (r.rows.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Module</th><th data-tip="cal.tape-now" data-quiet>Front / left now</th><th data-tip="cal.tape-new" data-quiet>From the tape</th><th></th></tr></thead><tbody>
         ${r.rows.map(x => `<tr><td>${esc(x.name)}</td><td class="num mono">${fmt(x.front, 3)} / ${fmt(x.left, 3)}</td>
           <td class="num mono">${fmt(x.new_front, 3)} / ${fmt(x.new_left, 3)}</td>
           <td>${x.change ? `<span class="chip warn">moves ${fmt(x.moved_in, 2)} in</span>` : `<span class="chip good">matches</span>`}</td></tr>`).join("")}
@@ -270,7 +270,7 @@
     wheels = r.ok ? r : null;
     if (!r.ok) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
     out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up push of about 10 ft with one worn wheel and one wheel turned a little. Nothing here can be saved.</div>` : ""}
-      ${r.rows.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Module</th><th>Encoder said</th><th>Wheel angle</th><th>Real diameter</th><th>Against the average</th></tr></thead><tbody>
+      ${r.rows.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Module</th><th data-tip="cal.wh-encoder" data-quiet>Encoder said</th><th data-tip="cal.wh-angle" data-quiet>Wheel angle</th><th data-tip="cal.wh-diameter" data-quiet>Real diameter</th><th data-tip="cal.wh-average" data-quiet>Against the average</th></tr></thead><tbody>
         ${r.rows.map(x => `<tr><td>${esc(x.name)}</td><td class="num mono">${U.length(x.encoder_m, 1)}</td><td class="num mono">${fmt(x.angle_deg, 1)}°</td>
           <td class="num mono">${fmt(x.diameter_in, 3)} in</td>
           <td class="num mono ${Math.abs(x.vs_average) > 0.01 ? "warn-ink" : ""}">${x.vs_average >= 0 ? "+" : ""}${fmt(x.vs_average * 100, 1)}%</td></tr>`).join("")}
@@ -342,7 +342,7 @@
         <span class="small muted" id="cg-msg"></span></div>
       <details class="cg-rates"><summary data-tip="cal.cg.rates">Canandgyro report rates</summary>
         <p class="small">How often it sends each reading over CAN. YAGSL resets the gyro to its factory settings at every startup, so the robot code sets these again each time (not saved on the gyro). Saved to slothtune.json; they take effect when the robot code restarts.</p>
-        <table class="t small"><thead><tr><th>Reading</th><th class="num">Every (ms)</th><th class="num">Redux default</th></tr></thead><tbody>
+        <table class="t small"><thead><tr><th>Reading</th><th class="num" data-tip="cal.cg.every" data-quiet>Every (ms)</th><th class="num" data-tip="cal.cg.default" data-quiet>Redux default</th></tr></thead><tbody>
           ${CG_RATES.map(([k, name, ours, redux]) => `<tr><td>${name}</td>
             <td class="num"><input type="number" min="0" max="${k === "statusFramePeriodMs" ? 16383 : 65535}" step="1" data-cg="${k}" value="${file[k] != null ? file[k] : ours}" style="width:6em" data-tip="cal.cg.rate"></td>
             <td class="num">${redux}</td></tr>`).join("")}</tbody></table>
@@ -516,7 +516,7 @@
 
   function paintSpots() {
     const box = $("#cc-spots", root);
-    box.innerHTML = spots.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>#</th><th>Side</th><th>Wall to center</th><th>Tag left</th><th>Tag height</th><th>Tag</th><th>Sightings</th><th></th></tr></thead><tbody>
+    box.innerHTML = spots.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>#</th><th>Side</th><th data-tip="cal.wall" data-quiet>Wall to center</th><th data-tip="cal.left" data-quiet>Tag left</th><th data-tip="cal.height" data-quiet>Tag height</th><th>Tag</th><th data-tip="cal.spot-sightings" data-quiet>Sightings</th><th></th></tr></thead><tbody>
       ${spots.map((s, i) => `<tr><td>${i + 1}</td><td>${esc(s.side)}</td><td class="num mono">${inch(s.distance_m)}</td><td class="num mono">${inch(s.lateral_m)}</td>
         <td class="num mono">${inch(s.height_m)}</td><td class="num">${s.tag_id}</td><td class="num">${s.count ?? (s.samples || []).length}</td>
         <td>${s.practice ? "" : `<button class="btn small" data-drop="${i}" data-tip="cal.drop" data-quiet aria-label="Remove spot ${i + 1}">Remove</button>`}</td></tr>`).join("")}
@@ -530,7 +530,7 @@
     if (!r.ok) { out.innerHTML = `<p class="hint">${esc(r.error)}</p>`; return; }
     const res = r.result, cur = r.current, truth = r.true_mount;
     out.innerHTML = `${r.practice ? `<div class="callout info">Practice: three made-up spots of a camera whose real mount is known (last column). Nothing here can be saved.</div>` : ""}
-      ${res ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th></th><th>Now in slothtune.json</th><th>Measured</th>${truth ? "<th>Really</th>" : ""}</tr></thead><tbody>
+      ${res ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th></th><th data-tip="cal.mount-now" data-quiet>Now in slothtune.json</th><th data-tip="cal.mount-measured" data-quiet>Measured</th>${truth ? `<th data-tip="cal.mount-really" data-quiet>Really</th>` : ""}</tr></thead><tbody>
         ${AXES.map(({ k, show }) => `<tr><td>${k}</td><td class="num mono">${cur && cur[k] != null ? show(cur[k]) : "–"}</td>
           <td class="num mono"><b>${show(res[k])}</b></td>${truth ? `<td class="num mono">${show(truth[k])}</td>` : ""}</tr>`).join("")}
       </tbody></table></div>
@@ -610,7 +610,7 @@
     const moved = (r.rows || []).filter(x => x.measured && (x.significant || !x.trusted));
     out.innerHTML = `${r.practice ? `<div class="callout info">Practice: a made-up drive on a field with three tags moved (1.6 in, 1.1 in, a 3° turn) and one on the wrong bracket. Nothing here can be saved.</div>` : ""}
       ${r.official ? fieldMap(r) : ""}
-      ${moved.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Tag</th><th>Moved</th><th>x / y / z (in)</th><th>Turned</th><th>±</th><th>Views</th><th></th></tr></thead><tbody>
+      ${moved.length ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th>Tag</th><th data-tip="cal.fs-moved" data-quiet>Moved</th><th data-tip="cal.fs-xyz" data-quiet>x / y / z (in)</th><th data-tip="cal.fs-turned" data-quiet>Turned</th><th data-tip="cal.fs-sigma" data-quiet>±</th><th data-tip="cal.fs-views" data-quiet>Views</th><th></th></tr></thead><tbody>
         ${moved.map(x => `<tr><td>${x.id}</td><td class="num mono">${cmIn(x.moved_cm)} in</td>
           <td class="num mono">${cmIn(x.dx_cm)} / ${cmIn(x.dy_cm)} / ${cmIn(x.dz_cm)}</td><td class="num mono">${fmt(x.turned_deg, 1)}°</td>
           <td class="num mono small">${cmIn(x.sigma_cm)} in, ${fmt(x.sigma_deg, 1)}°</td><td class="num">${x.views}</td>
@@ -650,8 +650,8 @@
     $("#nf-light", root).disabled = running;
     $("#nf-light-stop", root).hidden = !running;
     $("#nf-light-back", root).hidden = running || !L.before || !Object.keys(L.before).length;
-    out.innerHTML = L.trials && L.trials.length ? `<table class="t small"><thead><tr><th class="num">Gain</th><th class="num">Frames with a tag</th>
-        <th class="num">Tags a frame</th><th class="num">Ambiguity</th></tr></thead><tbody>${L.trials.map(t => `<tr class="${L.result && L.result.gain === t.gain ? "now" : ""}">
+    out.innerHTML = L.trials && L.trials.length ? `<table class="t small"><thead><tr><th class="num" data-tip="cal.nf-gain" data-quiet>Gain</th><th class="num" data-tip="cal.nf-seen" data-quiet>Frames with a tag</th>
+        <th class="num" data-tip="cal.nf-perframe" data-quiet>Tags a frame</th><th class="num" data-tip="cal.nf-ambiguity" data-quiet>Ambiguity</th></tr></thead><tbody>${L.trials.map(t => `<tr class="${L.result && L.result.gain === t.gain ? "now" : ""}">
         <td class="num">${t.gain}</td><td class="num">${Math.round(t.seen * 100)}%</td><td class="num">${fmt(t.tags, 1)}</td>
         <td class="num">${t.ambiguity == null ? "–" : fmt(t.ambiguity, 2)}</td></tr>`).join("")}</tbody></table>
         <p class="small muted">Exposure ${L.exposure_us} µs: a fast turn smears a tag by a few pixels at most.</p>` : "";

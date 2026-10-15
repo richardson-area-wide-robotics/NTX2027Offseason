@@ -143,7 +143,7 @@ const Wiring = (() => {
     out.innerHTML = `<p><b>${fmt(inches, 0)} in each way is ${fmt(2 * inches, 0)} in of ${g} AWG: ${num(me.mohm, 2)} mΩ.</b>
         At ${num(amps, 1)} A it loses <b>${num(me.v, 3)} V</b> (${fmt(pct, 1)}% of 12 V) and turns <b>${num(me.w, 2)} W</b> into heat in the wire.
         ${pct > 5 ? `<span class="warn-ink">More than 5% of the battery gone in the wire alone.</span>` : ""}</p>
-      <table class="t small wc-table"><thead><tr><th>Gauge</th><th class="num">Resistance</th><th class="num">Volts lost</th><th class="num">Heat</th></tr></thead><tbody>
+      <table class="t small wc-table"><thead><tr><th data-tip="wiring.wc-gauge" data-quiet>Gauge</th><th class="num" data-tip="wiring.wc-ohms" data-quiet>Resistance</th><th class="num" data-tip="wiring.wc-volts" data-quiet>Volts lost</th><th class="num" data-tip="wiring.wc-heat" data-quiet>Heat</th></tr></thead><tbody>
       ${[4, 6, 8, 10, 12, 14, 18, 22].map(run).map(x => `<tr class="${x.g === g ? "on" : ""}"><td>${x.g} AWG${x.g === g ? " ←" : ""}</td>
         <td class="num mono">${num(x.mohm, 2)} mΩ</td><td class="num mono">${num(x.v, 3)} V</td><td class="num mono">${num(x.w, 2)} W</td></tr>`).join("")}
       </tbody></table>`;
@@ -778,9 +778,9 @@ const Wiring = (() => {
     extra = (r.findings || []).filter(f => f.where);
     out.innerHTML = `
       ${r.practice ? `<div class="callout info">Practice data from a made-up robot, so nothing here can be saved. One motor is fed from somewhere else on purpose.</div>` : ""}
-      ${rows.length ? `<div class="tblwrap"><table class="t" style="width:auto;min-width:min(100%,640px)"><thead><tr><th>Motor</th><th>Found port</th>
+      ${rows.length ? `<div class="tblwrap"><table class="t" style="width:auto;min-width:min(100%,640px)"><thead><tr><th>Motor</th><th data-tip="wiring.pf-found" data-quiet>Found port</th>
           <th>${source === "log" ? `<span class="term" data-learn="battery_current">Match</span>` : `<span class="term" data-learn="battery_current">Rise</span>`}</th>
-          <th>In the map</th><th></th><th>Use</th></tr></thead><tbody>
+          <th data-tip="wiring.pf-map" data-quiet>In the map</th><th></th><th>Use</th></tr></thead><tbody>
         ${rows.map((x, i) => `<tr><td>${esc(x.name)}</td>
           <td class="num">${x.port != null ? x.port : x.port_guess != null && x.status !== "none" ? `<span class="muted">${x.port_guess}?</span>` : "–"}</td>
           <td class="num small">${x.rise_a != null ? fmt(x.rise_a, 2) + " A" : x.corr != null ? fmt(x.corr, 2) : ""}</td>

@@ -379,7 +379,7 @@
     $("#ct-labels", root).innerHTML = [...new Set(h.map(e => e.label))].map(l => `<option value="${esc(l)}">`).join("");
     const when = s => { const m = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(s || ""); return m ? `${+m[2]}/${+m[3]} ${m[4]}:${m[5]}` : ""; };
     $("#ct-history", root).innerHTML = h.length ? `<div class="tblwrap"><table class="t"><thead><tr><th>Joystick</th><th>When</th>
-      <th>Drift</th><th>Deadband needed</th><th></th><th>Problems</th></tr></thead><tbody>
+      <th data-tip="ct.h-drift" data-quiet>Drift</th><th data-tip="ct.h-deadband" data-quiet>Deadband needed</th><th></th><th>Problems</th></tr></thead><tbody>
       ${h.slice().reverse().map(e => `<tr><td>${esc(e.label)}</td><td class="small">${esc(when(e.when))}</td>
         <td class="num">${A_finite(e.worst_offset) ? fmt(e.worst_offset, 3) : "–"}</td><td class="num">${e.recommended_deadband != null ? fmt(e.recommended_deadband, 2) : "–"}</td>
         <td><span class="chip ${e.verdict === "error" ? "bad" : e.verdict === "warn" ? "warn" : "good"}">${e.verdict === "error" ? "problem" : e.verdict === "warn" ? "check" : "good"}</span></td>

@@ -544,13 +544,13 @@ const Systems = (() => {
         ${(m.findings || []).filter(f => f.level !== "info" || /kD|open loop|Not seen|level at/.test(f.title)).map(f =>
           `<div class="finding"><div class="head"><span class="level ${esc(f.level)}">${esc(f.level)}</span>
           <span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why || "")}</div></div>`).join("")}</div>` : ""}
-      ${rows.length ? `<table class="t" data-tip="sys.at-checks"><thead><tr><th>${term("check_runs", "Run")}</th><th class="num">How hard</th>
-        <th class="num">${term("overshoot", "Overshoot")}</th><th class="num">Model said</th><th>Settled</th><th class="num" data-tip="sys.at-cost">Cost, lower is better</th></tr></thead><tbody>
+      ${rows.length ? `<table class="t" data-tip="sys.at-checks"><thead><tr><th>${term("check_runs", "Run")}</th><th class="num" data-tip="sys.at-hard" data-quiet>How hard</th>
+        <th class="num">${term("overshoot", "Overshoot")}</th><th class="num" data-tip="sys.at-said" data-quiet>Model said</th><th data-tip="sys.at-settled" data-quiet>Settled</th><th class="num" data-tip="sys.at-cost">Cost, lower is better</th></tr></thead><tbody>
         ${rows.map(x => `<tr class="${x.best ? "best" : ""}"><td>${esc(x.name)}${x.best ? ` <span class="chip">best</span>` : ""}</td>
           <td class="num mono">${x.agg == null ? "–" : fmt(x.agg, 2) + "x"}</td><td class="num mono">${pct(x.meas.overshoot_pct)}</td>
           <td class="num mono">${x.pred ? pct(x.pred.overshoot_pct) : "–"}</td>
           <td>${x.meas.settled == null ? "–" : x.meas.settled ? "yes" : "no"}</td><td class="num mono">${x.cost == null ? "–" : fmt(x.cost, 1)}</td></tr>`).join("")}</tbody></table>` : ""}
-      ${changed.length && !live ? `<table class="t small" data-tip="sys.at-changes"><thead><tr><th>What it changes</th><th class="num">It had</th><th class="num">Now</th></tr></thead><tbody>
+      ${changed.length && !live ? `<table class="t small" data-tip="sys.at-changes"><thead><tr><th>What it changes</th><th class="num" data-tip="sys.at-had" data-quiet>It had</th><th class="num" data-tip="sys.at-now" data-quiet>Now</th></tr></thead><tbody>
         ${changed.map(([k, v]) => `<tr><td>${esc(k.split("/").pop())}</td><td class="num mono">${n4(before[k])}</td><td class="num mono">${n4(v)}</td></tr>`).join("")}</tbody></table>` : ""}
       <details class="small"><summary>How it works: the lessons</summary><div class="row learn-row" style="flex-wrap:wrap">${Learn.chips(MODEL_LESSONS.learn)}</div></details></div>`;
     more.hidden = false;
@@ -577,7 +577,7 @@ const Systems = (() => {
     const said = !live && r.message && r.reason && !r.message.includes(r.reason) ? `<p>${esc(r.message)}</p>` : "";
     more.hidden = !(said || r.rounds.length);
     more.innerHTML = `<div class="at-panel sys-at-panel">${said}
-      ${r.rounds.length ? `<table class="t"><thead><tr><th>Round</th>${show.map(k => `<th class="num">${esc(short(k))}</th>`).join("")}<th class="num" data-tip="sys.at-cost">Cost, lower is better</th><th>Then</th></tr></thead><tbody>
+      ${r.rounds.length ? `<table class="t"><thead><tr><th>Round</th>${show.map(k => `<th class="num" data-tip="sys.gain.${gainTipOf(short(k))}" data-quiet>${esc(short(k))}</th>`).join("")}<th class="num" data-tip="sys.at-cost">Cost, lower is better</th><th data-tip="sys.at-then" data-quiet>Then</th></tr></thead><tbody>
         ${r.rounds.map(x => `<tr class="${r.best && r.best.round === x.round ? "best" : ""}"><td>${x.round}${r.best && r.best.round === x.round ? " <span class=\"chip\">best</span>" : ""}</td>
           ${show.map(k => `<td class="num mono">${n4(x.gains[k])}</td>`).join("")}<td class="num mono">${x.cost == null ? "–" : fmt(x.cost, 1)}</td>
           <td>${esc(x.advice || "")}</td></tr>`).join("")}</tbody></table>` : ""}</div>`;
@@ -675,7 +675,7 @@ const Systems = (() => {
     const rep = lastPiece.report || {};
     const rows = (rep.pieces || []).map(p => `<tr><td>${p.piece}</td><td class="num">${p.peak_a == null ? "–" : p.peak_a.toFixed(1) + " A"}</td></tr>`).join("");
     out.innerHTML = `<p><b>${esc(rep.summary || "")}</b></p>
-      ${rows ? `<table class="t small pc-table"><thead><tr><th>Piece</th><th class="num">Held current</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
+      ${rows ? `<table class="t small pc-table"><thead><tr><th>Piece</th><th class="num" data-tip="sys.piece-held" data-quiet>Held current</th></tr></thead><tbody>${rows}</tbody></table>` : ""}
       ${(rep.findings || []).map(f => `<div class="finding"><div class="head"><span class="level ${f.level}">${f.level}</span><span class="title">${esc(f.title)}</span></div><div class="why">${esc(f.why)}</div></div>`).join("")}
       ${(rep.save || []).length ? `<button class="btn primary" id="pc-save" data-tip="sys.piece-save">Save to slothtune.json…</button>` : ""}`;
     const sv = $("#pc-save", out);
