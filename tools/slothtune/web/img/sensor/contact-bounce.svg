@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 372" width="520" height="372" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="cb-title cb-desc">
+<title id="cb-title">Contact bounce: one press, several changes</title>
+<desc id="cb-desc">Animated, slowed down. Left: a springy metal blade is pressed onto a contact; it hits, springs apart and hits again a few times before it stays closed. Right: what a roboRIO input reads at the same moments. The raw reading flips several times for one press; the debounced reading changes once, after the raw reading has stayed the same for a short time.</desc>
+<style>
+/* One 4 s loop, slowed down hugely: the blade hits at 14 %, bounces open three times, smaller each time,
+   stays closed from 24.2 %, and lets go at 70-76 %. The cursor sweeps the graph (8-30 % of the loop) in step. */
+.blade { transform-box: view-box; transform-origin: 48px 111px; animation: blade 4s linear infinite; }
+@keyframes blade {
+  0%, 10% { transform: rotate(-9deg); }
+  14%, 15% { transform: rotate(0deg); }
+  17% { transform: rotate(-3.2deg); }
+  19%, 19.8% { transform: rotate(0deg); }
+  21% { transform: rotate(-1.4deg); }
+  22.2%, 22.8% { transform: rotate(0deg); }
+  23.5% { transform: rotate(-0.5deg); }
+  24.2%, 70% { transform: rotate(0deg); }
+  76%, 100% { transform: rotate(-9deg); }
+}
+.push { animation: push 4s linear infinite; }
+@keyframes push {
+  0%, 10% { transform: translateY(-14px); }
+  14%, 70% { transform: translateY(0); }
+  76%, 100% { transform: translateY(-14px); }
+}
+.cursor { animation: cursor 4s linear infinite; }
+@keyframes cursor {
+  0%, 8% { transform: translateX(0); }
+  30%, 100% { transform: translateX(260px); }
+}
+.spark { opacity: 0; animation: spark 4s linear infinite; }
+@keyframes spark {
+  0%, 13.9% { opacity: 0; } 14%, 15% { opacity: 1; } 15.1%, 18.9% { opacity: 0; } 19%, 19.8% { opacity: 1; }
+  19.9%, 22.1% { opacity: 0; } 22.2%, 22.8% { opacity: 1; } 22.9%, 24.1% { opacity: 0; } 24.2%, 30% { opacity: 1; } 31%, 100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } .spark { opacity: 0; } }
+</style>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">Contact bounce: one press, several changes</text>
+<text x="16" y="45" font-size="12" fill="#5c5c5c">Slowed down hundreds of times: the real bounce is over in a few thousandths of a second.</text>
+
+<!-- the switch: a springy blade pressed onto a fixed contact -->
+<text x="16" y="72" font-size="13" font-weight="700" fill="#222222">Inside the switch</text>
+<g class="push">
+  <rect x="146" y="70" width="14" height="22" rx="3" fill="#b0b8c0" stroke="#444444"/>
+  <path d="M153 60 L153 68 M149 64 L153 68 L157 64" stroke="#5c5c5c" stroke-width="1.6" fill="none"/>
+</g>
+<text x="166" y="82" font-size="12" fill="#5c5c5c">pressed</text>
+<rect x="30" y="100" width="20" height="26" fill="#7d8790" stroke="#444444"/>
+<g class="blade">
+  <rect x="48" y="106" width="128" height="5" rx="2" fill="#c47a2c" stroke="#8a5216"/>
+  <circle cx="168" cy="112" r="3.2" fill="#c47a2c" stroke="#8a5216"/>
+</g>
+<rect x="156" y="115" width="28" height="9" fill="#c47a2c" stroke="#8a5216"/>
+<rect x="150" y="124" width="40" height="10" fill="#7d8790" stroke="#444444"/>
+<g class="spark" stroke="#e65100" stroke-width="1.6">
+  <line x1="168" y1="117" x2="182" y2="108"/><line x1="168" y1="117" x2="154" y2="108"/><line x1="168" y1="117" x2="168" y2="104"/>
+</g>
+<text x="20" y="152" font-size="12" fill="#5c5c5c">springy metal blade</text>
+<text x="140" y="152" font-size="12" fill="#5c5c5c">fixed contact</text>
+<text x="20" y="176" font-size="12" fill="#222222">It hits, springs apart,</text>
+<text x="20" y="192" font-size="12" fill="#222222">and hits again, smaller</text>
+<text x="20" y="208" font-size="12" fill="#222222">each time, like a dropped ball.</text>
+
+<!-- what the input reads, on the same slowed-down clock -->
+<text x="232" y="72" font-size="13" font-weight="700" fill="#222222">What the input reads</text>
+<text x="232" y="96" font-size="12" font-weight="700" fill="#446ce3">raw</text>
+<text x="232" y="112" font-size="12" fill="#5c5c5c">TRUE</text>
+<text x="232" y="138" font-size="12" fill="#5c5c5c">FALSE</text>
+<!-- raw: open (TRUE, pull-up) until the hit at 14 %; then closed-open-closed... ; x = 240 + (t - 8) * 11.82 -->
+<path d="M272 108 L311 108 L311 134 L323 134 L323 108 L370 108 L370 134 L380 134 L380 108 L409 108 L409 134 L416 134 L416 108 L425 108 L425 134 L500 134"
+  fill="none" stroke="#446ce3" stroke-width="2"/>
+<text x="232" y="176" font-size="12" font-weight="700" fill="#1a7f37">debounced</text>
+<text x="232" y="192" font-size="12" fill="#5c5c5c">TRUE</text>
+<text x="232" y="218" font-size="12" fill="#5c5c5c">FALSE</text>
+<!-- debounced: changes once, after the raw reading has held FALSE for the debounce time (24.2 % + 2.5 %) -->
+<path d="M272 188 L455 188 L455 214 L500 214" fill="none" stroke="#1a7f37" stroke-width="2"/>
+<path d="M425 226 L455 226 M425 222 L425 230 M455 222 L455 230" stroke="#5c5c5c" stroke-width="1.2"/>
+<text x="440" y="242" font-size="12" fill="#5c5c5c" text-anchor="middle">held steady</text>
+<path d="M311 146 L425 146 M311 142 L311 150 M425 142 L425 150" stroke="#5c5c5c" stroke-width="1.2"/>
+<text x="368" y="162" font-size="12" fill="#5c5c5c" text-anchor="middle">the bounce: a few ms</text>
+<g class="cursor"><line x1="240" y1="86" x2="240" y2="220" stroke="#e65100" stroke-width="1.4" stroke-dasharray="3 3"/></g>
+
+<line x1="16" y1="258" x2="504" y2="258" stroke="#e2e2e2"/>
+<g font-size="13" fill="#222222">
+  <text x="16" y="280">One press, and the raw reading flips <tspan font-weight="700">7 times</tspan>: code that toggles</text>
+  <text x="16" y="298">on every change turns the intake on, off, on... and lands wherever it stops.</text>
+  <text x="16" y="322"><tspan font-weight="700" fill="#1a7f37">Debounce:</tspan> believe a new reading only once it has held steady for</text>
+  <text x="16" y="340">a moment (WPILib's Debouncer, e.g. 0.05 s). Magnetic and optical</text>
+  <text x="16" y="358">sensors have no metal contacts, so they don't bounce this way.</text>
+</g>
+</svg>

@@ -94,7 +94,7 @@ const Battery = (() => {
     App.modal(`<h2>The team's batteries</h2>
       <p>The numbers written on your batteries, separated by commas. They become the choices here and in
       the dashboard's Battery drop-down after the next deploy. Retire one by leaving it out; its history is kept.</p>
-      <label class="gain">Battery numbers<input id="batt-list" value="${esc(ids.join(", "))}"></label>
+      <label class="gain" data-tip="battery.list">Battery numbers<input id="batt-list" value="${esc(ids.join(", "))}"></label>
       <div class="row"><button class="btn primary" id="batt-save">Save…</button><button class="btn" id="batt-cancel">Cancel</button></div>`,
     root => {
       $("#batt-cancel", root).onclick = () => App.closeModal();

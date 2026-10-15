@@ -551,7 +551,7 @@ const Wiring = (() => {
       ${chain.length < 2 ? `<p class="small muted">No devices on this bus yet. On another bus, pick this one in the list beside a device to move it here.</p>` : ""}
       <ol class="chain-edit" ${chain.length > 8 ? `style="grid-auto-flow:column;grid-template-rows:repeat(${Math.ceil(chain.length / 2)},auto)"` : ""}>${chain.map((n, i) => `<li>
         <span class="mono small">${i}</span><span>${esc(n)}</span>
-        ${n === "roboRIO" || n === "PDH" ? "<span></span><span></span>" : `<input type="number" min="0" max="23" placeholder="PDH" data-port="${esc(n)}" value="${editing.pdhPorts[n] ?? ""}" aria-label="PDH port for ${esc(n)}">
+        ${n === "roboRIO" || n === "PDH" ? "<span></span><span></span>" : `<input type="number" min="0" max="23" placeholder="PDH" data-port="${esc(n)}" value="${editing.pdhPorts[n] ?? ""}" aria-label="PDH port for ${esc(n)}" data-tip="wiring.port">
         <span><button class="btn small" data-up="${i}" ${i <= 1 ? "disabled" : ""} aria-label="Move up">↑</button><button class="btn small" data-down="${i}" ${i >= chain.length - 1 || chain[i + 1] === "PDH" ? "disabled" : ""} aria-label="Move down">↓</button>
           ${editing.buses.length > 1 ? `<select data-move="${esc(n)}" aria-label="Bus for ${esc(n)}" data-tip="wiring.bus-move">${editing.buses.map((b, j) =>
             `<option value="${j}" ${j === editBus ? "selected" : ""}>${esc(labelOf(b))}</option>`).join("")}</select>` : ""}</span>`}
@@ -749,7 +749,7 @@ const Wiring = (() => {
     try { folder = localStorage.getItem("slothtune.logfolder") || ""; } catch (e) { /* storage blocked */ }
     const box = $("#wf-logs", root);
     $("#wf-out", root).innerHTML = "";
-    box.innerHTML = `<div class="row" style="flex-wrap:wrap"><input id="wf-folder" style="min-width:22em" placeholder="Folder with .wpilog files" aria-label="Log folder" value="${esc(folder)}">
+    box.innerHTML = `<div class="row" style="flex-wrap:wrap"><input id="wf-folder" style="min-width:22em" placeholder="Folder with .wpilog files" aria-label="Log folder" value="${esc(folder)}" data-tip="wiring.logfolder">
       <button class="btn" id="wf-list">List logs</button></div><p class="hint">Best: a practice log where each mechanism ran on its own for a moment.</p><div id="wf-loglist"></div>`;
     const list = async () => {
       const f = $("#wf-folder", box).value;

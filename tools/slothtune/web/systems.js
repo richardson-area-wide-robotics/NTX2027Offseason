@@ -23,6 +23,10 @@ const Systems = (() => {
   const PH = { moi_kgm2: ["lb·in²", U.LB_PER_KG * U.IN_PER_M * U.IN_PER_M], load_kg: ["lb", U.LB_PER_KG],
     spool_diameter_m: ["in", U.IN_PER_M], arm_length_m: ["in", U.IN_PER_M] };
   const phIn = (typed, k) => shown(typed[k], PH[k][1]);
+  // Each live gain's tip, by the name the robot registers it under.
+  const GAIN_TIP = { kP: "kP", kI: "kI", kD: "kD", kS: "kS", kV: "kV", kA: "kA", kG: "kG", kCos: "kCos", iZone: "iZone",
+    mmCruise: "mmCruise", mmAccel: "mmAccel", vComp: "vComp", velMs: "velMs", velDepth: "velDepth" };
+  const gainTipOf = k => GAIN_TIP[k] || "other";
 
   root.innerHTML = `
     <div class="sys">
@@ -101,18 +105,18 @@ const Systems = (() => {
     const { label, k } = unit(s), rate = positional(s) ? "/s" : "";
     box.innerHTML = `
       <h3 data-tip="sys.physics">1. Its physics</h3>
-      <div class="row"><input id="sys-link" placeholder="Paste its ReCalc or AMBcalc link" value="${esc(val("link") || "")}" style="flex:1">
+      <div class="row"><input id="sys-link" data-tip="sys.link" placeholder="Paste its ReCalc or AMBcalc link" value="${esc(val("link") || "")}" style="flex:1">
         <button class="btn small" id="sys-read" data-tip="sys.read">Read it</button></div>
       <details ${typed.motor ? "open" : ""}><summary class="small">Or type the numbers (from the AMB spreadsheet)</summary>
         <div class="row small sys-typed">
-          <label>Motor <select data-ph="motor">${(data.motors || []).map(m => `<option ${typed.motor === m ? "selected" : ""}>${esc(m)}</option>`).join("")}</select></label>
-          <label>How many <input data-ph="count" type="number" min="1" value="${esc(typed.count ?? 1)}" style="width:4em"></label>
-          <label>Ratio <input data-ph="ratio" type="number" step="any" value="${esc(typed.ratio ?? "")}" placeholder="50" style="width:5em"></label>
-          ${kindNow === "flywheel" ? `<label>Inertia lb·in² <input data-ph="moi_kgm2" type="number" step="any" value="${phIn(typed, "moi_kgm2")}" style="width:6em"></label>`
-            : kindNow === "elevator" ? `<label>Load lb <input data-ph="load_kg" type="number" step="any" value="${phIn(typed, "load_kg")}" style="width:6em"></label>
-              <label>Spool diameter in <input data-ph="spool_diameter_m" type="number" step="any" value="${phIn(typed, "spool_diameter_m")}" style="width:6em"></label>`
-            : `<label>Arm length in <input data-ph="arm_length_m" type="number" step="any" value="${phIn(typed, "arm_length_m")}" style="width:6em"></label>
-              <label>Load lb <input data-ph="load_kg" type="number" step="any" value="${phIn(typed, "load_kg")}" style="width:6em"></label>`}
+          <label data-tip="sys.ph-motor">Motor <select data-ph="motor">${(data.motors || []).map(m => `<option ${typed.motor === m ? "selected" : ""}>${esc(m)}</option>`).join("")}</select></label>
+          <label data-tip="sys.ph-count">How many <input data-ph="count" type="number" min="1" value="${esc(typed.count ?? 1)}" style="width:4em"></label>
+          <label data-tip="sys.ph-ratio">Ratio <input data-ph="ratio" type="number" step="any" value="${esc(typed.ratio ?? "")}" placeholder="50" style="width:5em"></label>
+          ${kindNow === "flywheel" ? `<label data-tip="sys.ph-moi">Inertia lb·in² <input data-ph="moi_kgm2" type="number" step="any" value="${phIn(typed, "moi_kgm2")}" style="width:6em"></label>`
+            : kindNow === "elevator" ? `<label data-tip="sys.ph-load">Load lb <input data-ph="load_kg" type="number" step="any" value="${phIn(typed, "load_kg")}" style="width:6em"></label>
+              <label data-tip="sys.ph-spool">Spool diameter in <input data-ph="spool_diameter_m" type="number" step="any" value="${phIn(typed, "spool_diameter_m")}" style="width:6em"></label>`
+            : `<label data-tip="sys.ph-arm">Arm length in <input data-ph="arm_length_m" type="number" step="any" value="${phIn(typed, "arm_length_m")}" style="width:6em"></label>
+              <label data-tip="sys.ph-armload">Load lb <input data-ph="load_kg" type="number" step="any" value="${phIn(typed, "load_kg")}" style="width:6em"></label>`}
         </div></details>
       <p class="small">${s.physics_error ? `<span class="bad-ink">${esc(s.physics_error)}</span>` : !s.physics ? `<span class="muted">No physics yet.</span>`
         : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1) * k)} ${esc(label)}${rate}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per ${s.kind === "ELEVATOR" ? "meter" : "radian"})` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
@@ -121,13 +125,13 @@ const Systems = (() => {
         <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min * k)} to ${n4(s.max * k)} ${esc(label)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
           <button class="btn small" id="sys-limits" data-tip="sys.limits-run">Set limits by hand…</button></div>` : ""}
       <h3 data-tip="sys.top">${positional(s) ? "3" : "2"}. Its top speed</h3>
-      <div class="row small"><label>Team's maximum <input id="sys-vmax" type="number" step="any" value="${shown(val("maxVelocity"), k)}" style="width:6em"> ${esc(label)}${rate}</label>
-        <label>Max acceleration <input id="sys-amax" type="number" step="any" value="${shown(val("maxAccel"), k)}" style="width:6em"> ${esc(label)}/s${positional(s) ? "²" : ""}</label></div>
+      <div class="row small"><label data-tip="sys.vmax">Team's maximum <input id="sys-vmax" type="number" step="any" value="${shown(val("maxVelocity"), k)}" style="width:6em"> ${esc(label)}${rate}</label>
+        <label data-tip="sys.amax">Max acceleration <input id="sys-amax" type="number" step="any" value="${shown(val("maxAccel"), k)}" style="width:6em"> ${esc(label)}/s${positional(s) ? "²" : ""}</label></div>
       <div class="row"><button class="btn small ${Object.keys(edits).length ? "primary" : ""}" id="sys-save" data-tip="sys.save">Save settings…</button></div>
       ${Object.keys(s.gains || {}).length ? `<div class="row" style="justify-content:space-between"><h3 data-tip="sys.gains">Its gains, live</h3>
           <span class="row small"><span class="muted">Live only: Auto-tune's Save gains (slothtune.json) or the code keeps a value.</span>
           <button class="btn small" id="sys-apply" data-tip="sys.apply">Apply live</button></span></div>
-        <div class="gains sys-gains">${shownGains(s).map(([k, g]) => `<label class="gain">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
+        <div class="gains sys-gains">${shownGains(s).map(([k, g]) => `<label class="gain" data-tip="sys.gain.${gainTipOf(k)}">${esc(k)}<input type="number" step="any" data-g="${esc(k)}" value="${n4(g.value)}"></label>`).join("")}</div>` : ""}`;
     const ap = $("#sys-apply", box);
     if (ap) ap.onclick = async () => {
       const v = {};

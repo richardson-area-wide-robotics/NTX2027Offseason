@@ -75,6 +75,12 @@ class PageSmokeTest(unittest.TestCase):
                 pg.evaluate(f"App.show('{tab}')")
                 pg.wait_for_timeout(150)
             self.assertEqual(errors, [], "a tab threw as it painted")
+            # Every input box, drop-down and text area says what it is: a tip on it or around it.
+            bare = pg.evaluate("""[...document.querySelectorAll('main input, main select, main textarea')]
+              .filter(e => !['checkbox', 'radio', 'hidden', 'file', 'range'].includes((e.type || '').toLowerCase()))
+              .filter(e => !e.closest('[data-tip], [data-learn]'))
+              .map(e => (e.closest('.tab') || {}).id + ' ' + (e.id || e.name || e.getAttribute('data-ph') || e.getAttribute('data-g') || e.outerHTML.slice(0, 60)))""")
+            self.assertEqual(bare, [], "input boxes with no tip")
             keys = pg.evaluate("Object.keys(Learn.L)")
             self.assertGreater(len(keys), 100)
             broken = []

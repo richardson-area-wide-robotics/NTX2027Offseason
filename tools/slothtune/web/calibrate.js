@@ -344,7 +344,7 @@
         <p class="small">How often it sends each reading over CAN. YAGSL resets the gyro to its factory settings at every startup, so the robot code sets these again each time (not saved on the gyro). Saved to slothtune.json; they take effect when the robot code restarts.</p>
         <table class="t small"><thead><tr><th>Reading</th><th class="num">Every (ms)</th><th class="num">Redux default</th></tr></thead><tbody>
           ${CG_RATES.map(([k, name, ours, redux]) => `<tr><td>${name}</td>
-            <td class="num"><input type="number" min="0" max="${k === "statusFramePeriodMs" ? 16383 : 65535}" step="1" data-cg="${k}" value="${file[k] != null ? file[k] : ours}" style="width:6em"></td>
+            <td class="num"><input type="number" min="0" max="${k === "statusFramePeriodMs" ? 16383 : 65535}" step="1" data-cg="${k}" value="${file[k] != null ? file[k] : ours}" style="width:6em" data-tip="cal.cg.rate"></td>
             <td class="num">${redux}</td></tr>`).join("")}</tbody></table>
         <div class="row"><button class="btn" id="cg-save" data-tip="cal.cg.save">Save the report rates…</button></div>
       </details>` : `<p class="small muted">${fitted === "navX" ? "A navX calibrates itself when it powers on: keep the robot still for a few seconds after turning it on (its CAL light goes off when it's done)." : ""}</p>`}`;

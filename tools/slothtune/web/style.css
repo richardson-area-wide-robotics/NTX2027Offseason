@@ -451,6 +451,10 @@ th > .tipline, h2 > .tipline, h3 > .tipline, label > .tipline { margin-top: 2px;
   background: var(--panel); border-left: 1px solid var(--rule); padding: 16px; box-shadow: -8px 0 30px rgba(0, 0, 0, .15);
   display: grid; gap: 10px; align-content: start; }
 .learn-short { font-weight: 600; }
+/* Expanded: most of the screen, the text in a readable column and the drawings bigger. */
+.learn-drawer.wide { width: min(1180px, calc(100vw - 24px)); }
+.learn-drawer.wide > * { width: 100%; max-width: 920px; justify-self: center; }
+.learn-drawer.wide .learn-fig { max-width: 760px; justify-self: center; }
 .learn-unit { border-top: 1px solid var(--rule); padding-top: 8px; display: grid; gap: 6px; }
 .learn-unit.locked h3 { color: var(--muted); }
 .learn-list { display: flex; flex-wrap: wrap; gap: 6px; }

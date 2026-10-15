@@ -92,6 +92,23 @@ class TipsTest(unittest.TestCase):
             for s in (what, how):
                 self.assertEqual(uk.findall(s), [], f"{key}: {s}")
 
+    def test_every_input_box_has_a_tip(self):
+        # Stuart: an input box always says what it is. Its own data-tip, or a label around it that has one.
+        bare = []
+        for name, src in SOURCES.items():
+            if name in ("learn.js", "index.html"):
+                continue
+            for m in re.finditer(r"<(input|select|textarea)\b[^>]*>", src):
+                tag = m.group(0)
+                if re.search(r'type="(checkbox|radio|hidden|file|range)"', tag) or "data-tip" in tag:
+                    continue
+                before = src[max(0, m.start() - 400):m.start()]
+                lab = before.rfind("<label")
+                if lab >= 0 and "data-tip" in before[lab:before.find(">", lab) + 1]:
+                    continue
+                bare.append(f"{name}:{src[:m.start()].count(chr(10)) + 1}: {tag[:80]}")
+        self.assertEqual(bare, [], "input boxes with no tip")
+
     def test_no_hover_only_titles(self):
         # A title="" never shows on a tap or a keyboard focus, and is unreadable past a phrase.
         for name, src in SOURCES.items():

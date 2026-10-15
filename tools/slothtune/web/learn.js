@@ -80,7 +80,7 @@ const Learn = (() => {
     wpigyro: ["https://docs.wpilib.org/en/stable/docs/hardware/sensors/gyros-hardware.html", "WPILib: gyroscopes"],
     reduxgyro: ["https://docs.reduxrobotics.com/canandgyro/", "Redux Robotics: Canandgyro"],
     wpiprox: ["https://docs.wpilib.org/en/stable/docs/hardware/sensors/proximity-switches.html", "WPILib: proximity switches (NO and NC)"],
-    wpidio: ["https://docs.wpilib.org/en/stable/docs/hardware/sensors/digital-inputs-hardware.html", "WPILib: digital inputs"],
+    wpidio: ["https://docs.wpilib.org/en/latest/docs/hardware/sensors/digital-inputs-hardware.html", "WPILib: digital inputs (roboRIO and SystemCore)"],
     wikiphoto: ["https://en.wikipedia.org/wiki/Photoelectric_sensor", "Wikipedia: photoelectric (break-beam) sensors"],
     adabeam: ["https://learn.adafruit.com/ir-breakbeam-sensors", "Adafruit: IR break-beam sensors"],
     wikitof: ["https://en.wikipedia.org/wiki/Time-of-flight_camera", "Wikipedia: time of flight"],
@@ -91,31 +91,43 @@ const Learn = (() => {
     wpiapriltag: ["https://docs.wpilib.org/en/stable/docs/software/vision-processing/apriltag/apriltag-intro.html", "WPILib: what AprilTags are"],
     pv3d: ["https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/3D-tracking.html", "PhotonVision: 3D tracking and ambiguity"],
     pvmultitag: ["https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/multitag.html", "PhotonVision: MultiTag"],
+    wikipull: ["https://en.wikipedia.org/wiki/Pull-up_resistor", "Wikipedia: pull-up resistor"],
+    wpidebounce: ["https://docs.wpilib.org/en/stable/docs/software/advanced-controls/filters/debouncer.html", "WPILib: Debouncer"],
+    wikibounce: ["https://en.wikipedia.org/wiki/Switch#Contact_bounce", "Wikipedia: contact bounce"],
+    wikiaccel: ["https://en.wikipedia.org/wiki/Accelerometer", "Wikipedia: accelerometer"],
+    wikidivider: ["https://en.wikipedia.org/wiki/Voltage_divider", "Wikipedia: voltage divider"],
     cefrc: ["https://file.tavsys.net/control/controls-engineering-in-frc.pdf", "Tyler Veness: Controls Engineering in FRC (free book, PDF)"],
     cefrcgh: ["https://github.com/calcmogul/controls-engineering-in-frc", "Controls Engineering in FRC on GitHub: the book's source and its Python examples"],
   };
 
   // The course, in teaching order. "units" in a lesson tie it to the numbers the tool shows.
+  // The course, from the hardware up: what is on the robot and how it is wired, how it talks, driving
+  // and testing it safely, calibrating it, then control - feedforward before feedback, as WPILib
+  // teaches it - and tuning. Each lesson's Next follows this order within its unit.
   const UNITS = [
-    { id: "basics", title: "1. What a control loop is", lessons: ["control_loop", "setpoint", "measurement", "error", "control_effort"] },
-    { id: "ff", title: "2. Feedforward: answer before the question", lessons: ["feedforward", "kS", "kV", "kA", "kG", "r_squared"] },
-    { id: "fb", title: "3. Feedback: fix what feedforward missed", lessons: ["feedback", "kP", "kD", "kI", "integral_windup", "iZone", "rev_units"] },
-    { id: "read", title: "4. Reading a step response", lessons: ["step_response", "dead_time", "rise_time", "overshoot", "settling_time", "steady_state_error", "oscillation"] },
-    { id: "limits", title: "5. When the motor can't do what it's told", lessons: ["saturation", "current_limit", "traction", "voltage_sag", "ramp_rate"] },
-    { id: "sensors", title: "6. Sensors: how they work, and what the controller can see", lessons: ["hall_effect", "encoder_quadrature", "encoder_magnetic",
-      "quantization", "velocity_filter", "motor_encoder", "absolute_encoder", "offset", "inversion", "gear_ratio", "encoder_sync",
-      "gyro_mems", "limit_switch", "break_beam", "time_of_flight", "current_sensing", "apriltag_detect"] },
-    { id: "calibrate", title: "7. Calibrating: what each step does and why", lessons: ["hand_check", "coast_mode", "bevel_gear", "straight_edge", "hold_still", "redeploy", "wheel_size", "slip_current", "motor_inventory", "battery", "gyro", "moment_of_inertia", "pathplanner_model", "camera_mount", "field_survey"] },
-    { id: "swerve", title: "8. Swerve-specific", lessons: ["swerve_module", "carpet_scrub", "module_flip", "odometry", "field_relative", "vision_pose", "robot_mode", "environment", "deadman", "simulator", "what_if"] },
-    { id: "motors", title: "9. Motors: how they work, and keeping them alive", lessons: ["motor_basics", "brushed_brushless", "inrunner_outrunner", "pole_pairs",
-      "heat_estimate", "derate", "stall", "thermal_override"] },
-    { id: "wiring", title: "10. Wiring: CAN and power", lessons: ["wire_gauge", "wire_loss", "crimp_molex_sl", "crimp_powerpole", "crimp_sb50", "can_bus", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat",
-      "can_load", "can_fd", "can_termination", "power_path", "battery_current", "wiggle_test"] },
-    { id: "network", title: "11. The robot's network and NetworkTables", lessons: ["robot_network", "networktables", "nt_topics", "nt_timing", "dashboards"] },
-    { id: "controllers", title: "12. The drive team's joysticks", lessons: ["deadband", "stick_drift", "button_bounce"] },
-    { id: "model", title: "13. Measure, then compute: model-based tuning", lessons: ["model_tuning", "system_id", "hold_band", "least_squares",
+    { id: "motors", title: "1. Motors: how they work, and keeping them alive", lessons: ["motor_basics", "brushed_brushless", "inrunner_outrunner",
+      "pole_pairs", "motor_inventory", "coast_mode", "current_limit", "heat_estimate", "stall", "derate", "thermal_override"] },
+    { id: "sensors", title: "2. Sensors: how they work", lessons: ["pull_resistor", "limit_switch", "contact_bounce", "break_beam", "time_of_flight",
+      "hall_effect", "encoder_quadrature", "encoder_magnetic", "motor_encoder", "absolute_encoder", "offset", "inversion", "gear_ratio",
+      "encoder_sync", "quantization", "velocity_filter", "gyro_mems", "accelerometer", "gyro", "current_sensing"] },
+    { id: "wiring", title: "3. Power, wiring and CAN", lessons: ["battery", "power_path", "wire_gauge", "wire_loss", "battery_current",
+      "crimp_sb50", "crimp_powerpole", "can_bus", "crimp_molex_sl", "can_frame", "can_arbitration", "frc_can_id", "can_heartbeat",
+      "can_load", "can_fd", "can_termination", "wiggle_test"] },
+    { id: "network", title: "4. The robot's network and NetworkTables", lessons: ["robot_network", "networktables", "nt_topics", "nt_timing", "dashboards"] },
+    { id: "controllers", title: "5. The drive team's joysticks", lessons: ["deadband", "stick_drift", "button_bounce"] },
+    { id: "safety", title: "6. Running tests safely", lessons: ["robot_mode", "environment", "deadman", "simulator", "what_if"] },
+    { id: "swerve", title: "7. Swerve drive", lessons: ["swerve_module", "carpet_scrub", "module_flip", "odometry", "field_relative"] },
+    { id: "calibrate", title: "8. Calibrating: what each step does and why", lessons: ["hand_check", "bevel_gear", "straight_edge", "hold_still",
+      "redeploy", "wheel_size", "slip_current", "moment_of_inertia", "pathplanner_model"] },
+    { id: "vision", title: "9. Cameras and the field", lessons: ["apriltag_detect", "vision_pose", "camera_mount", "field_survey"] },
+    { id: "basics", title: "10. What a control loop is", lessons: ["control_loop", "setpoint", "measurement", "error", "control_effort"] },
+    { id: "ff", title: "11. Feedforward: answer before the question", lessons: ["feedforward", "kS", "kV", "kA", "kG", "r_squared"] },
+    { id: "fb", title: "12. Feedback: fix what feedforward missed", lessons: ["feedback", "kP", "kD", "kI", "integral_windup", "iZone", "rev_units"] },
+    { id: "read", title: "13. Reading a step response", lessons: ["step_response", "dead_time", "rise_time", "overshoot", "settling_time", "steady_state_error", "oscillation"] },
+    { id: "limits", title: "14. When the motor can't do what it's told", lessons: ["saturation", "traction", "voltage_sag", "ramp_rate"] },
+    { id: "model", title: "15. Measure, then compute: model-based tuning", lessons: ["model_tuning", "system_id", "hold_band", "least_squares",
       "lqr", "simc", "spark_modes", "maxmotion_limits", "voltage_compensation", "check_runs", "sim_vs_real"] },
-    { id: "profile", title: "14. Second order: motion profiles (after first-order tuning works)", locked: true,
+    { id: "profile", title: "16. Second order: motion profiles (after first-order tuning works)", locked: true,
       lessons: ["motion_profile", "trapezoid_profile", "cruise_velocity", "max_acceleration", "ff_uses_setpoint", "maxmotion_position", "maxmotion_velocity", "allowed_profile_error", "profiled_pid"] },
   ];
 
@@ -234,7 +246,7 @@ const Learn = (() => {
         "Xbox joysticks have no gyro, and the Driver Station doesn't read the gyro in a PlayStation joystick, so the drift that matters to the robot is the sticks'."] },
     button_bounce: { title: "Button bounce", short: "A worn button can make and break contact more than once in one press: the robot sees a double-tap.",
       body: ["A toggle - intake on, intake off - flips twice and ends where it started. The check counts each press and flags any two that come closer together than 30 ms, faster than a person can press.",
-        "The laptop sees the joystick every few milliseconds, so the shortest bounces can slip between readings; a joystick that bounces at all is worth replacing."] },
+        "The laptop sees the joystick every few milliseconds, so the shortest bounces can slip between readings; a joystick that bounces at all is worth replacing. What bounce is, and how code debounces it: see contact bounce."] },
     battery: { title: "The battery", short: "A \"12 V\" battery reads about 12.7 to 13 V charged and at rest, and less under load. How far it drops per amp - its sag, in milliohms - tells a healthy battery from a tired one.",
       body: ["The team's batteries are MK ES17-12s (REV sells them): 12 V nominal, 18 Ah when drained slowly over 20 hours but only about 6 Ah at 54 A, and about 12 mΩ inside when new (its datasheet). A match pulls 100 to 200 A in bursts.",
         "The voltage drops by resistance times current: 20 mΩ at 150 A is 3 V gone, so 12.7 V at rest becomes 9.7 V. The robot measures the battery together with everything between it and the PDH - the Anderson connector, the leads, the main breaker - so a healthy battery reads a few milliohms more here than on a battery tester.",
@@ -325,7 +337,7 @@ const Learn = (() => {
       body: ["The feedforward test fits volts = kS + kV × speed + kA × acceleration to every sample. R² says how much of what was measured that line explains.",
         "A slipping wheel, a bump in the carpet, a cable catching or someone touching the robot all add volts the line can't explain, and R² drops. Re-run it on clear carpet."], links: ["ff"] },
     robot_mode: { title: "Robot modes", short: "Disabled: nothing can move. Enabled: motors follow the code. E-stopped: off until the robot restarts. Only the Driver Station changes the mode.",
-      body: ["The Driver Station decides the mode, never this tool. Disabled is the safe state: the roboRIO sends no motor commands, which is why the hand check and the offsets are done disabled. Enabled lets the code drive the motors, which every tuning test needs.",
+      body: ["The Driver Station decides the mode, never this tool. Disabled is the safe state: the robot controller (roboRIO or SystemCore) sends no motor commands, which is why the hand check and the offsets are done disabled. Enabled lets the code drive the motors, which every tuning test needs.",
         "E-stop is final: the robot stays off until it is rebooted. In the Driver Station, Enter disables and the space bar e-stops. This tool's ABORT button and Esc stop a test without e-stopping the robot."] },
     odometry: { title: "Odometry", short: "Where the robot thinks it is, worked out from how far each wheel rolled and which way the gyro says it faces.",
       body: ["Every 20 ms the code adds up each module's wheel turns (times the wheel size) and angle, plus the gyro's heading, and moves its estimate of the robot's position. WPILib's directions: x is forward, y is left, and counter-clockwise turns are positive.",
@@ -386,11 +398,11 @@ const Learn = (() => {
       body: ["Sometimes losing the motor costs more than the motor. The override holds a heat SHUTOFF at DERATE instead, for at most 20 s, and never past a sensor 10 °C over shutoff or a 95% heat estimate."] },
 
     can_bus: { title: "The CAN bus", short: "One pair of twisted wires (CAN-H in the bus's own color, yellow on the first; CAN-L always green) daisy-chained through every controller. Every device hears every message.",
-      body: ["Each controller has a CAN ID and two CAN connections joined inside it, so the cable passes straight through - even when the controller has no power. The chain runs from the roboRIO to the far end, usually the PDH.",
+      body: ["Each controller has a CAN ID and two CAN connections joined inside it, so the cable passes straight through - even when the controller has no power. The chain runs from the robot controller (roboRIO or SystemCore) to the far end, usually the PDH.",
         "That pass-through is the key to finding faults. One device missing while its neighbors are heard means that device (its power, or the controller). Everything past one point missing together means the cable or a plug at that point.",
         "CAN has no idea of position, so the order along the cable can't be read from the robot: someone checks it by eye once, and the map remembers it."], links: ["frccan"] },
     can_termination: { title: "CAN termination", short: "A 120 ohm resistor at each end of the CAN chain stops signals echoing back. Exactly two: about 60 ohms measured across the bus, power off.",
-      body: ["A fast signal reaching the open end of a wire bounces back and garbles the next bits. A 120 ohm terminator at each end soaks it up. The roboRIO has one built in; the PDH has one you switch on.",
+      body: ["A fast signal reaching the open end of a wire bounces back and garbles the next bits. A 120 ohm terminator at each end soaks it up. A roboRIO has one built in (SystemCore has one on each of its buses); the PDH has one you switch on.",
         "With every device powered off, a multimeter across CAN-H and CAN-L reads both in parallel: about 60 ohms. 120 means one end is missing (or the cable is broken between you and it); 40 means one too many; near zero is a short.",
         "To tell a missing terminator from one that is fitted but not working, measure at the far end twice: with its terminator in, then out. 60 then 120: both work. 120 then 120: the far one does nothing (a switch not fully across, a terminator not seated). 120 then OL: the far one works and the cable back to the robot controller is broken.",
         "Bad termination shows up as CAN errors and, at worst, the bus shutting itself down (bus-off)."], links: ["frcterm"] },
@@ -455,24 +467,48 @@ const Learn = (() => {
       body: ["A gyro measures turning rate and integrates it: heading is the sum of every little turn since it was zeroed. Small errors add up. A gyro that reads 1% short is 3.6 degrees off after one full turn, and 36 degrees after ten.",
         "Where it sits doesn't matter for the heading: every part of a rigid robot turns by the same angle. What matters is that it calibrates while the robot is completely still after power-on, sits level and firm, and is checked: a minute standing still shows drift; full turns back to a line show scale.",
         "AprilTags fix heading whenever they are seen, so a camera hides a small gyro error. Without one, the gyro is all the robot has."] },
-    gyro_mems: { title: "How a gyro feels turning", short: "A tiny mass in the chip vibrates; when the robot turns, the Coriolis effect pushes it sideways, and that push is the turn rate.",
-      figure: { src: "img/sensor/gyro-mems.svg", alt: "A vibrating mass on springs in a chip; when the chip turns, the mass is pushed sideways, and the heading changes only while it turns", caption: "The sideways push is the turn rate; heading is that rate added up." },
-      body: ["Inside a MEMS gyro a tiny mass vibrates back and forth on springs. When the chip turns, the Coriolis effect pushes the vibrating mass sideways; the chip measures that push, and it is proportional to how fast it is turning.",
-        "So a gyro measures turn rate. Heading is that rate added up over time - and every tiny error adds up with it, so a gyro <b>drifts</b>. Temperature changes it too.",
-        "An accelerometer is the gyro's partner: a mass on a spring that leans when the chip speeds up. Standing still it feels gravity, 1 g, so it knows which way is down - how the robot knows it is tipping.",
-        "The Redux Canandgyro combines the two. It calibrates when it powers up still (its light yellow); Redux says to leave it still at least 7 s. It drifts about 0.2 degrees an hour standing still and 0.25 degrees a minute moving, and reads up to 2000 degrees a second over CAN."],
+    gyro_mems: { title: "How a gyro works", short: "A tiny mass in the chip vibrates; when the robot turns, the Coriolis effect pushes it sideways in step with its vibration, and the size of that wiggle is the turn rate.",
+      figure: { src: "img/sensor/gyro-mems.svg", alt: "A vibrating mass on springs in a chip; when the chip turns, the mass also wiggles sideways in step with its vibration, and the heading changes only while it turns", caption: "The sideways wiggle's size is the turn rate; heading is that rate added up." },
+      body: ["Inside a MEMS gyro a tiny mass is kept vibrating back and forth on springs. When the chip turns, the Coriolis effect pushes the moving mass sideways - one way as it swings out, the other way as it swings back, because the push follows its motion. So turning adds a small sideways wiggle in step with the vibration.",
+        "The push is the mass's speed times the turn rate, so the size of that wiggle says how fast the chip is turning, and which way it goes compared with the vibration says which direction. The chip measures it the way it measures everything in there: comb-like fingers on the mass move closer to or farther from fixed ones, and the change in capacitance between them is read as motion.",
+        "So a gyro measures turn rate. Heading is that rate added up over time - and every tiny error adds up with it, so a gyro <b>drifts</b>. Temperature changes it too, which is why it calibrates sitting still.",
+        "Its partner, the accelerometer, feels gravity and so corrects tilt - but gravity says nothing about which way the robot faces, so heading drift is the gyro's alone. AprilTag sightings are what correct heading.",
+        "The Redux Canandgyro is both in one (an IMU). It calibrates when it powers up still (its light yellow); Redux says to leave it still at least 7 s. It drifts about 0.2 degrees an hour standing still and 0.25 degrees a minute moving, and reads up to 2000 degrees a second over CAN."],
       links: ["wikimems", "wpigyro", "reduxgyro"] },
-    limit_switch: { title: "Touch and magnetic limit switches", short: "A switch the mechanism presses, or a magnet sensor it passes. A roboRIO input reads true while its circuit is open.",
-      figure: { src: "img/sensor/limit-switch.svg", alt: "A lever switch wired to a roboRIO input with its pull-up resistor: normally open and normally closed, what each reads pressed and not, and a magnetic limit switch seeing a magnet", caption: "Wire it normally closed and a broken wire reads as pressed: the safe way to fail." },
-      body: ["Every roboRIO digital input has a pull-up resistor inside: with nothing connected it reads high, so DigitalInput.get() is true when the circuit is open. A switch is wired between the input and ground.",
-        "A <b>normally open</b> switch closes when pressed: true when free, false when pressed. A <b>normally closed</b> one opens when pressed: false when free, true when pressed. WPILib calls normally closed safer: a broken or unplugged wire reads as pressed, so the mechanism stops instead of driving through its limit.",
-        "Metal contacts bounce: they make and break a few times in the first milliseconds. Code that counts presses should wait for the reading to settle.",
+    accelerometer: { title: "How an accelerometer works", short: "A tiny mass on springs inside the chip lags when it speeds up and sags toward gravity; the chip measures how far it moved.",
+      body: ["Inside a MEMS accelerometer a tiny mass (the proof mass) hangs on springs. Speed the chip up and the mass lags behind, stretching the springs; slow it down and the mass swings ahead. Comb-like fingers on the mass sit between fixed ones, and the chip reads how the gaps change (the capacitance) as how far the mass moved: that is the acceleration.",
+        "Gravity pulls on the mass too, so standing still it reads 1 g, pointing up - the support holding it against gravity. In free fall it would read zero. Tip the chip and part of gravity points sideways: that is how it measures tilt (pitch and roll).",
+        "Gravity says nothing about which way the robot faces, so an accelerometer can't correct a gyro's heading. Together they make an IMU (inertial measurement unit); the Redux Canandgyro is one, reading up to 16 g.",
+        "On the robot: a sudden spike is a hit - the tool's impact stop watches for one - and a steady sideways reading while still means the robot is tipping. It measures acceleration, not speed: adding it up into a speed drifts even faster than a gyro's heading."],
+      links: ["wikiaccel", "reduxgyro"] },
+    pull_resistor: { title: "Pull-up and pull-down resistors", short: "A resistor that gently holds an input high (pull-up) or low (pull-down) when nothing else drives it, so a switch has something to switch against.",
+      figure: { src: "img/sensor/pull-resistor.svg", alt: "A floating input reading at random; a pull-up circuit and a pull-down circuit, each with a switch closing and opening and the reading changing", caption: "Same switch, opposite readings: a roboRIO pulls up, SystemCore pulls down." },
+      body: ["An input pin connected to nothing - <b>floating</b> - picks up stray electrical noise and reads high or low at random. A resistor from the pin to the supply (a <b>pull-up</b>) or to ground (a <b>pull-down</b>) gives it a steady reading when nothing else is connected.",
+        "A switch then overrides it: with a pull-up, closing a switch to ground pulls the pin low; with a pull-down, closing a switch to the supply pulls it high. The resistor is large, so only a tiny current flows while the switch is closed.",
+        "The two robot controllers differ. A roboRIO's digital inputs have pull-ups inside: wire a switch between signal and ground, and it reads true when open, false when closed. SystemCore's Smart I/O ports (3.3 V) have pull-downs instead: wire a switch between signal and 3.3 V, and it reads false when open, true when closed (WPILib).",
+        "So the same switch reads the opposite way on the two, and code written for one reads backwards on the other. WPILib warns that sensors made for the roboRIO's ports may not work on SystemCore's without different wiring.",
+        "Some sensors can only pull a line low (an open-collector or open-drain output, like a common break-beam receiver): they need a pull-up to read high. A roboRIO has one; on SystemCore's pull-down ports such a sensor needs its own - check its docs."],
+      links: ["wpidio", "wikipull"] },
+    limit_switch: { title: "Touch and magnetic limit switches", short: "A switch the mechanism presses, or a magnet sensor it passes. Which way it reads depends on the controller: see pull-up and pull-down resistors.",
+      figure: { src: "img/sensor/limit-switch.svg", alt: "A lever switch wired to a roboRIO input with its pull-up resistor: normally open and normally closed, what each reads pressed and not, and a magnetic limit switch seeing a magnet", caption: "Drawn on a roboRIO (pull-up). Wire it normally closed and a broken wire reads as pressed: the safe way to fail." },
+      body: ["A limit switch tells the robot a mechanism has reached the end of its travel. A touch switch is pressed by the mechanism; a magnetic one sees a magnet on it go by.",
+        "A <b>normally open</b> switch closes when pressed; a <b>normally closed</b> one opens when pressed. On a roboRIO (pull-ups) a normally open switch reads true when free and false when pressed; on SystemCore (pull-downs, the switch wired to 3.3 V) it reads the other way.",
+        "WPILib calls normally closed safer: a broken or unplugged wire looks exactly like the switch being pressed, on either controller, so the mechanism stops instead of driving through its limit.",
+        "Metal contacts bounce when they close - see contact bounce - so code that counts presses should debounce.",
         "A magnetic limit switch has no contacts to wear or bounce: REV's uses Hall sensors that see either pole of its magnet about 0.4 in (10 mm) away, and pulls its output low when it does."],
       links: ["wpiprox", "wpidio", "revmaglimit"] },
+    contact_bounce: { title: "Contact bounce, and debouncing", short: "Metal contacts are springy: one press hits, bounces apart and hits again a few times in a few thousandths of a second, so the input sees several changes.",
+      figure: { src: "img/sensor/contact-bounce.svg", alt: "A springy contact blade hitting a fixed contact and bouncing apart three times; beside it, the raw reading flipping seven times and the debounced reading changing once", caption: "One press, seven raw changes; the debounced reading changes once, after it holds steady." },
+      body: ["When two metal contacts snap together they don't just stop. They are springy, so they hit, spring apart and hit again, smaller each time, like a dropped ball. It is all over in a few thousandths of a second - far too quick to see or feel.",
+        "A person presses once, but the input reads closed, open, closed, open... Code that toggles something on every change - intake on, intake off - may flip it several times and end wherever the bounce stops. Code that counts presses counts too many.",
+        "A robot loop reads its inputs once every 20 ms, so it usually misses most of a bounce, but it can still catch one reading mid-bounce. Anything that counts every edge (a counter, or an interrupt) sees all of it.",
+        "<b>Debouncing</b> fixes it: only believe a new reading once it has stayed the same for a moment. WPILib's Debouncer does that (for example, a change must last 0.05 s), and a command Trigger can debounce too.",
+        "Magnetic (Hall) and optical sensors have no metal contacts, so they don't bounce this way. A Hall switch held right at its trigger distance could flicker instead; built-in hysteresis prevents that (REV's magnetic limit switch: about 0.2 in, 5 mm)."],
+      links: ["wpidebounce", "wikibounce"] },
     break_beam: { title: "Break-beam sensors", short: "A beam of light across a gap; a game piece breaking it says the piece is there.",
       figure: { src: "img/sensor/break-beam.svg", alt: "An infrared emitter and receiver across a gap; a ball rolls through and breaks the beam, and the output changes", caption: "Beam clear: high. Beam broken: low." },
       body: ["A <b>through-beam</b> sensor has an emitter on one side and a receiver on the other; a piece between them blocks the beam. A <b>retroreflective</b> one has both on one side and a reflector across the gap; a <b>diffuse</b> one sees light bounced off the piece itself.",
-        "A common one (Adafruit's 3 mm infrared pair) sees about 10 in (25 cm) and pulls its output low when the beam is broken, so on a roboRIO input - which has its pull-up - it reads false when blocked.",
+        "A common one (Adafruit's 3 mm infrared pair) sees about 10 in (25 cm). Its receiver can only pull its line low (open collector), which it does when the beam is broken: on a roboRIO input (with its pull-up) it reads false when blocked. On SystemCore's pull-down ports it needs its own pull-up - see pull-up and pull-down resistors.",
         "Sunlight can blind an infrared receiver, and shiny or dark pieces change what the reflective kinds see. Aim through-beams across the piece's path where nothing else crosses."],
       links: ["wikiphoto", "adabeam", "wpidio"] },
     time_of_flight: { title: "Time-of-flight distance sensors", short: "It fires a pulse of invisible light and times the echo: distance = speed of light x time / 2.",
@@ -482,11 +518,14 @@ const Learn = (() => {
         "In FRC: Grapple's LaserCAN (up to 4 m, CAN, 10-50 Hz), CTRE's CANrange (1-300 cm, CAN, up to 100 Hz; it can stand in for a beam break or limit switch), Playing With Fusion's (up to 4 m, CAN, 50 Hz) and REV's 2m Distance Sensor (5-200 cm, I2C).",
         "Its beam spreads into a cone (a field of view), so mount it where the cone sees only the target, not the floor or the robot's own frame."],
       links: ["wikitof", "canrange", "revdist"] },
-    current_sensing: { title: "How current is measured", short: "The PDH measures what each port draws from the battery; each SPARK measures the current in its motor. Below full output they differ.",
-      body: ["The usual way to measure current is a tiny resistor in the path: by Ohm's law the voltage across it is proportional to the current. The other way is a Hall sensor that feels the current's magnetic field. REV doesn't say which its parts use.",
-        "The PDH reads each channel with current-sense chips, one per group of four channels: its big channels 0-127.9 A in 0.125 A steps, its small ones 0-31.94 A in 0.0625 A steps.",
-        "A SPARK measures the current in the motor's phases, so its current limit limits the motor's current. That is not what the PDH sees: below full output a controller draws less from the battery than flows in the motor (see battery-side current)."],
-      links: ["revpdh", "wikicurrent"] },
+    current_sensing: { title: "How current and voltage are sensed", short: "Current: the tiny voltage across a very small resistor in the path. Voltage: two resistors scale it down to what a converter chip can read. Both end as numbers from an ADC.",
+      figure: { src: "img/power/sense-current.svg", alt: "Current through a tiny shunt resistor makes a small voltage, an amplifier makes it bigger, and an ADC turns it into a number of amps", caption: "Current: V = I x R across a very small resistor, amplified, then counted." },
+      body: ["Chips can only measure voltages, and only small ones, with an <b>ADC</b> (analog-to-digital converter) that turns a voltage into a number in steps - more bits, finer steps. Everything else is about turning what you want to know into a small voltage.",
+        "<b>Current:</b> put a tiny resistor (a shunt, thousandths of an ohm) in the path. By Ohm's law the voltage across it is the current times its resistance: 40 A through 0.001 ohm is just 0.04 V. A current-sense amplifier makes that bigger, and the ADC reads it. The other way is a Hall-effect sensor that feels the current's magnetic field, with nothing in the path. REV doesn't say which its parts use.",
+        "The PDH reads its channels with current-sense amplifiers, one per group of four: its big channels 0-127.9 A in 0.125 A steps, its small ones 0-31.94 A in 0.0625 A steps. A SPARK senses the current in its motor's phases, so its current limit limits the motor's current - not what the PDH sees, which below full output is less (see battery-side current).",
+        "<b>Voltage:</b> a battery's 13 V is too much for an ADC's input, so two resistors in series - a voltage divider - scale it down first (the output is the input times R2 / (R1 + R2)), and the code multiplies the reading back up.",
+        "That is how the robot controller (roboRIO or SystemCore), the PDH and each SPARK report the battery voltage they see. Each sees it after its own wires and joints, so under load they read a little differently - the gaps are the power path's losses."],
+      links: ["revpdh", "wikicurrent", "wikidivider"] },
     apriltag_detect: { title: "How a camera finds a tag", short: "It finds the tag's black square, reads its pattern of squares, and from where the four corners land in the picture works out where the camera must be.",
       body: ["The camera's picture goes to gray, gets smaller to save time, and is split into black and white; the processor looks for four-sided shapes, then reads the grid of squares inside each (6 by 6 in FRC's tag family) to get the tag's number.",
         "Knowing the tag's real size and the camera's lens (its calibration), the four corners' places in the picture say where the camera is relative to the tag. Two different poses can put the corners in almost the same spots - <b>ambiguity</b>: PhotonVision suggests ignoring single tags with ambiguity over 0.2.",
@@ -536,7 +575,7 @@ const Learn = (() => {
     allowed_profile_error: { title: "Allowed profile error", short: "If the mechanism falls this far behind the plan, MAXMotion re-plans from where it really is.",
       body: ["Small: re-plans often, consistent motion, harder to see a bad tune. Large: shows the tune honestly but can lurch when it finally re-plans."], links: ["mmpos"] },
     profiled_pid: { title: "ProfiledPIDController", short: "WPILib's PID with a built-in trapezoid: you give a goal, it follows the moving setpoint.",
-      body: ["The goal is where you want to end up; getSetpoint() is where the plan says to be now - feed its velocity to the feedforward. It runs on the roboRIO at 50 Hz, so it suits slower mechanisms better than a 1 kHz steering loop."], links: ["profiled"] },
+      body: ["The goal is where you want to end up; getSetpoint() is where the plan says to be now - feed its velocity to the feedforward. It runs on the robot controller (roboRIO or SystemCore) once every 20 ms loop, so it suits slower mechanisms better than a 1 kHz steering loop."], links: ["profiled"] },
 
     // ---------------------------------------------------------------- CAN in depth
     can_frame: { title: "A CAN message", short: "An ID that says who sent it and what it is, up to 8 bytes of data, and a checksum. Every device hears every message and keeps the ones it wants.",
@@ -572,7 +611,7 @@ const Learn = (() => {
 
     // ---------------------------------------------------------------- the network and NetworkTables
     robot_network: { title: "The robot's network", short: "The radio makes a small network: the robot controller at 10.TE.AM.2 and the Driver Station, dashboards, coprocessors and this laptop on it.",
-      body: ["Your team number sets the addresses: team 1745 is 10.17.45.x. The robot controller is at .2 (and answers to roboRIO-1745-FRC.local), the radio at .1, and the laptops get addresses from the radio.",
+      body: ["Your team number sets the addresses: team 1745 is 10.17.45.x. The robot controller is at .2 (a roboRIO also answers to roboRIO-1745-FRC.local), the radio at .1, and the laptops get addresses from the radio.",
         "A laptop on the robot's network and the internet at once (Wi-Fi plus a cable, or a VPN) has to choose which network each message goes to. Get that wrong and the tool can't reach the robot, or the internet stops. Check the networks reads it all and says what to fix.",
         "Everything on this network talks with IP: the Driver Station's control packets, NetworkTables, camera streams and this tool."],
       links: ["netbasics", "netip", "frcradio"] },
@@ -633,7 +672,7 @@ const Learn = (() => {
     spark_modes: { title: "Which gains a SPARK uses", short: "Each mode uses only some gains. Position: kP, kD, kS and gravity. Velocity: kP, kI, kS and kV. MAXMotion: kS, kV and kA (plus gravity for position) and its profile, on top of PID.",
       body: ["REV applies kV only where it knows a target speed (Velocity and MAXMotion), and kA only in MAXMotion, the one mode that plans an acceleration. In plain Position mode the SPARK gets only a position, so a measured kV does nothing there: kP has to carry the mechanism along. (Code that sends its own feedforward with each position can still use kV, but in the code, not the SPARK.)",
         "The robot tells the tool which mode the code last ran each SPARK in, and the tool computes only the gains that mode uses. A shooter that idles at zero output between shots still counts as Velocity once it has shot.",
-        "One exception: in plain Position the SPARK has no target speed to point kS with. It is reported to push kS by the error's sign, and a kS pushed that way makes a mechanism dither or hunt around its target (CTRE warns the same). WPILib's and CTRE's advice: sign kS by a motion profile's speed - MAXMotion, or a profile on the roboRIO sending its feedforward. So in plain Position the tool sets kS to 0, and kP carries it.",
+        "One exception: in plain Position the SPARK has no target speed to point kS with. It is reported to push kS by the error's sign, and a kS pushed that way makes a mechanism dither or hunt around its target (CTRE warns the same). WPILib's and CTRE's advice: sign kS by a motion profile's speed - MAXMotion, or a profile on the robot controller (roboRIO or SystemCore) sending its feedforward. So in plain Position the tool sets kS to 0, and kP carries it.",
         "kP, kI and kD are in REV's units (output fraction per unit of error; kD and kI per 1 ms step). kS and kG are in volts. kV is volts per unit of speed and kA volts per unit of acceleration; REV's speed unit is RPM unless the code's velocity conversion factor changes it."],
       links: ["revunits", "mmpos", "revvel"] },
     maxmotion_limits: { title: "MAXMotion's limits from the model", short: "Plan with 80% of the battery the robot really has, then take 80% of the top speed that gives: the cruise speed and acceleration the motor can deliver, with the rest kept for feedback.",
@@ -661,7 +700,8 @@ const Learn = (() => {
   // Phrases in plain text that link to a lesson, longest first. Used for guide steps and advice.
   const TERMS = [
     ["AWG", "wire_gauge"], ["Powerpole", "crimp_powerpole"], ["SB50", "crimp_sb50"], ["Anderson connector", "crimp_sb50"], ["Molex", "crimp_molex_sl"],
-    ["Hall sensor", "hall_effect"], ["quadrature", "encoder_quadrature"], ["Coriolis", "gyro_mems"], ["limit switch", "limit_switch"],
+    ["Hall sensor", "hall_effect"], ["quadrature", "encoder_quadrature"], ["Coriolis", "gyro_mems"], ["accelerometer", "accelerometer"], ["pull-up", "pull_resistor"],
+    ["pull-down", "pull_resistor"], ["debounc", "contact_bounce"], ["bounce", "contact_bounce"], ["limit switch", "limit_switch"],
     ["break-beam", "break_beam"], ["beam break", "break_beam"], ["time-of-flight", "time_of_flight"], ["pole pair", "pole_pairs"],
     ["brushless", "brushed_brushless"], ["outrunner", "inrunner_outrunner"], ["free speed", "motor_basics"], ["stall torque", "motor_basics"],
     ["static friction", "kS"], ["feedforward", "feedforward"], ["dead time", "dead_time"], ["rise time", "rise_time"],
@@ -812,6 +852,13 @@ const Learn = (() => {
   drawer.setAttribute("aria-label", "Control theory lessons");
   drawer.hidden = true;
   document.body.appendChild(drawer);
+  // Expand: the lesson takes most of the screen (its drawings at full size); Shrink puts it back at
+  // the side. Remembered for this viewer; Esc or the close button hides it either way.
+  try { drawer.classList.toggle("wide", localStorage.getItem("slothtune.learn.wide") === "on"); } catch (e) { /* storage blocked */ }
+  const wideBtn = () => {
+    const on = drawer.classList.contains("wide");
+    return `<button class="btn small" data-lwide="1" aria-pressed="${on}">${on ? "Shrink" : "Expand"}</button>`;
+  };
 
   function lessonHtml(key) {
     const l = L[key];
@@ -820,7 +867,7 @@ const Learn = (() => {
     const next = unit && unit.lessons[idx + 1];
     return `<div class="row" style="justify-content:space-between">
         <button class="btn small" data-lindex="1">← All lessons</button>
-        <button class="btn small" data-lclose="1" aria-label="Close lessons">✕</button></div>
+        <span class="row">${wideBtn()}<button class="btn small" data-lclose="1" aria-label="Close lessons">✕</button></span></div>
       ${unit ? `<div class="muted small">${esc(unit.title)}</div>` : ""}
       <h2>${esc(l.title)}</h2>
       <p class="learn-short">${esc(l.short)}</p>
@@ -837,8 +884,8 @@ const Learn = (() => {
 
   function indexHtml() {
     return `<div class="row" style="justify-content:space-between"><h2>Lessons</h2>
-        <button class="btn small" data-lclose="1" aria-label="Close lessons">✕</button></div>
-      <p class="small muted">In WPILib's order: feedforward, then feedback. Every underlined word in the tool opens one of these.</p>
+        <span class="row">${wideBtn()}<button class="btn small" data-lclose="1" aria-label="Close lessons">✕</button></span></div>
+      <p class="small muted">From the hardware up: motors, sensors and wiring first, then the network, driving and testing safely, calibrating, and then control - feedforward before feedback, as WPILib teaches it. Every underlined word in the tool opens one of these.</p>
       ${UNITS.map(u => `<div class="learn-unit ${u.locked && !secondOrderReady() ? "locked" : ""}"><h3>${esc(u.title)}</h3>
         ${u.locked && !secondOrderReady() ? `<p class="small muted">Unlocks once steering and drive pass their first-order targets in the Guide. You can still read ahead.</p>` : ""}
         <div class="learn-list">${u.lessons.map(k => `<button class="btn small" data-lesson="${k}">${esc(L[k].title)}</button>`).join("")}</div></div>`).join("")}`;
@@ -864,6 +911,12 @@ const Learn = (() => {
   drawer.addEventListener("click", e => {
     if (e.target.closest("[data-lclose]")) closeDrawer();
     else if (e.target.closest("[data-lindex]")) open(null);
+    else if (e.target.closest("[data-lwide]")) {
+      const on = !drawer.classList.contains("wide");
+      drawer.classList.toggle("wide", on);
+      try { localStorage.setItem("slothtune.learn.wide", on ? "on" : "off"); } catch (err) { /* storage blocked */ }
+      $$("[data-lwide]", drawer).forEach(b => { b.textContent = on ? "Shrink" : "Expand"; b.setAttribute("aria-pressed", String(on)); });
+    }
   });
 
   // ---------------------------------------------------------------- helpers for other tabs

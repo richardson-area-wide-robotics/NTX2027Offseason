@@ -155,7 +155,7 @@ const Bringup = (() => {
   }
 
   function note(question, then) {
-    App.modal(`<h2>${esc(question)}</h2><textarea id="br-note" rows="3" style="width:100%" autofocus></textarea>
+    App.modal(`<h2>${esc(question)}</h2><textarea id="br-note" rows="3" style="width:100%" autofocus data-tip="br.note"></textarea>
       <div class="row"><button class="btn primary" id="br-note-ok">Record it</button><button class="btn" id="br-note-x">Cancel</button></div>`, m => {
       $("#br-note-x", m).onclick = () => App.closeModal();
       $("#br-note-ok", m).onclick = () => { const t = $("#br-note", m).value.trim(); App.closeModal(); if (t) then(t); };
@@ -358,9 +358,9 @@ const Bringup = (() => {
     const paintRows = m => {
       $("#bb-rows", m).innerHTML = B.map((b, i) => `<tr>
         <td><span class="bus-swatch" style="--c:${esc((data.colors || {})[b.color] || "#999")}" aria-hidden="true"></span></td>
-        <td><input data-bl="${i}" value="${esc(b.label || "")}" placeholder="Drive train" aria-label="What people call bus ${i + 1}"></td>
-        <td><input data-bn="${i}" value="${esc(b.name || "")}" style="width:7em" aria-label="Bus ${i + 1} in the code"></td>
-        <td><select data-bc="${i}" aria-label="Bus ${i + 1} cable color">${colors.map(c => `<option value="${c}" ${b.color === c ? "selected" : ""}
+        <td><input data-bl="${i}" value="${esc(b.label || "")}" placeholder="Drive train" aria-label="What people call bus ${i + 1}" data-tip="br.bus-label"></td>
+        <td><input data-bn="${i}" value="${esc(b.name || "")}" style="width:7em" aria-label="Bus ${i + 1} in the code" data-tip="br.bus-name"></td>
+        <td><select data-bc="${i}" aria-label="Bus ${i + 1} cable color" data-tip="br.bus-color">${colors.map(c => `<option value="${c}" ${b.color === c ? "selected" : ""}
           ${B.some((x, j) => j !== i && x.color === c) ? "disabled" : ""}>${c === "lightblue" ? "light blue" : c} / green</option>`).join("")}</select></td></tr>`).join("");
       $$("[data-bl]", m).forEach(x => x.onchange = () => { B[+x.dataset.bl].label = x.value.trim(); });
       $$("[data-bn]", m).forEach(x => x.onchange = () => { B[+x.dataset.bn].name = x.value.trim() || B[+x.dataset.bn].name; });

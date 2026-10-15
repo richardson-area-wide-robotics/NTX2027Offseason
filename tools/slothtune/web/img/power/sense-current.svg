@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 402" width="520" height="402" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sc-title sc-desc">
+<title id="sc-title">How current is sensed</title>
+<desc id="sc-desc">Animated. Current, drawn as moving yellow dots, flows along a wire through a shunt resistor of a few thousandths of an ohm. The current speeds up and slows down in a loop, between 40 A and 5 A. By Ohm's law, the small voltage across the shunt is current times resistance: 40 A through 0.001 ohm gives 0.04 V. A small bar shows that tiny voltage rising and falling with the current. A current-sense amplifier makes it bigger, shown by a taller bar that follows it. An ADC, an analog-to-digital converter, turns it into a number, and the readout steps through values such as 40.0 A, 22.5 A and 5.0 A. Side note: the other way is a Hall-effect sensor around the wire, which feels the current's magnetic field, with no resistor in the path. Footer: the PDH reads its channels with current-sense amplifiers; each SPARK senses the current in its motor's phases (REV).</desc>
+<style>
+/* One 6 s loop. The current is 40 A at 0 s, eases down to 5 A at 3 s and back up:
+   I = 22.5 + 17.5 cos(2 pi t / 6 s). Every moving part follows that one curve, sampled every 5 %.
+   Dot travel is the running total of the current (240 px per loop = 10 dot gaps, so it wraps seamlessly). */
+.flow { animation: flow 6s linear infinite; }
+@keyframes flow {
+  0% { transform: translateX(0px); } 5% { transform: translateX(21.18px); } 10% { transform: translateX(41.46px); }
+  15% { transform: translateX(60.04px); } 20% { transform: translateX(76.26px); } 25% { transform: translateX(89.71px); }
+  30% { transform: translateX(100.26px); } 35% { transform: translateX(108.04px); } 40% { transform: translateX(113.46px); }
+  45% { transform: translateX(117.18px); } 50% { transform: translateX(120px); } 55% { transform: translateX(122.82px); }
+  60% { transform: translateX(126.54px); } 65% { transform: translateX(131.96px); } 70% { transform: translateX(139.74px); }
+  75% { transform: translateX(150.29px); } 80% { transform: translateX(163.74px); } 85% { transform: translateX(179.96px); }
+  90% { transform: translateX(198.54px); } 95% { transform: translateX(218.82px); } 100% { transform: translateX(240px); }
+}
+/* both voltage bars: height = I / 40 A */
+.lvl { transform-box: fill-box; transform-origin: 50% 100%; animation: lvl 6s linear infinite; }
+@keyframes lvl {
+  0% { transform: scaleY(1); } 5% { transform: scaleY(0.9785); } 10% { transform: scaleY(0.9165); }
+  15% { transform: scaleY(0.8198); } 20% { transform: scaleY(0.6978); } 25% { transform: scaleY(0.5625); }
+  30% { transform: scaleY(0.4273); } 35% { transform: scaleY(0.3053); } 40% { transform: scaleY(0.2085); }
+  45% { transform: scaleY(0.1465); } 50% { transform: scaleY(0.125); } 55% { transform: scaleY(0.1465); }
+  60% { transform: scaleY(0.2085); } 65% { transform: scaleY(0.3053); } 70% { transform: scaleY(0.4273); }
+  75% { transform: scaleY(0.5625); } 80% { transform: scaleY(0.6978); } 85% { transform: scaleY(0.8198); }
+  90% { transform: scaleY(0.9165); } 95% { transform: scaleY(0.9785); } 100% { transform: scaleY(1); }
+}
+/* the magnetic field around the wire is stronger with more current */
+.field { animation: field 6s linear infinite; }
+@keyframes field {
+  0% { opacity: 1; } 5% { opacity: 0.98; } 10% { opacity: 0.92; } 15% { opacity: 0.84; } 20% { opacity: 0.72; }
+  25% { opacity: 0.6; } 30% { opacity: 0.48; } 35% { opacity: 0.37; } 40% { opacity: 0.28; } 45% { opacity: 0.22; }
+  50% { opacity: 0.2; } 55% { opacity: 0.22; } 60% { opacity: 0.28; } 65% { opacity: 0.37; } 70% { opacity: 0.48; }
+  75% { opacity: 0.6; } 80% { opacity: 0.72; } 85% { opacity: 0.84; } 90% { opacity: 0.92; } 95% { opacity: 0.98; } 100% { opacity: 1; }
+}
+/* the readout: the ADC takes a sample every 0.5 s and holds it, so the number steps.
+   Readout k shows from k x 0.5 s: one shared keyframe set, shifted by a negative delay. */
+.ro { opacity: 0; animation: ro 6s linear infinite; }
+.r0 { opacity: 1; }
+@keyframes ro { 0%, 8.3% { opacity: 1; } 8.32%, 100% { opacity: 0; } }
+.r1 { animation-delay: -5.5s; } .r2 { animation-delay: -5s; } .r3 { animation-delay: -4.5s; }
+.r4 { animation-delay: -4s; } .r5 { animation-delay: -3.5s; } .r6 { animation-delay: -3s; }
+.r7 { animation-delay: -2.5s; } .r8 { animation-delay: -2s; } .r9 { animation-delay: -1.5s; }
+.r10 { animation-delay: -1s; } .r11 { animation-delay: -0.5s; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<defs>
+  <clipPath id="sc-wire"><rect x="16" y="93" width="488" height="18"/></clipPath>
+</defs>
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="16" y="26" font-size="16" font-weight="700" fill="#222222">How current is sensed</text>
+<text x="16" y="44" font-size="12" fill="#5c5c5c">The current rises and falls in a loop; watch each stage follow it.</text>
+
+<!-- ===== The wire and the shunt ===== -->
+<text x="16" y="66" font-size="13" font-weight="700" fill="#222222">shunt resistor</text>
+<text x="16" y="82" font-size="12" fill="#5c5c5c">a few thousandths of an ohm</text>
+<text x="232" y="66" font-size="13" font-weight="700" fill="#222222">Ohm's law: V = I × R</text>
+<text x="232" y="82" font-size="12" fill="#222222">Example: 40 A × 0.001 Ω = 0.04 V</text>
+<g stroke="#444444" fill="none">
+  <line x1="16" y1="102" x2="36" y2="102" stroke-width="4"/>
+  <line x1="92" y1="102" x2="504" y2="102" stroke-width="4"/>
+  <path d="M36 102 L40 95 L46 109 L52 95 L58 109 L64 95 L70 109 L76 95 L82 109 L88 95 L92 102" stroke-width="2.4" stroke-linejoin="round"/>
+</g>
+<g clip-path="url(#sc-wire)">
+  <g class="flow" fill="none" stroke-linecap="round" stroke-dasharray="0 24">
+    <line x1="-224" y1="102" x2="520" y2="102" stroke="#8a6a00" stroke-width="9"/>
+    <line x1="-224" y1="102" x2="520" y2="102" stroke="#f2c200" stroke-width="7"/>
+  </g>
+</g>
+<text x="502" y="124" font-size="12" fill="#5c5c5c" text-anchor="end">current (yellow dots) →</text>
+<!-- sense taps on each end of the shunt -->
+<g stroke="#444444" stroke-width="1.4">
+  <line x1="36" y1="102" x2="36" y2="138"/>
+  <line x1="92" y1="102" x2="92" y2="138"/>
+</g>
+<circle cx="36" cy="102" r="2.6" fill="#222222"/>
+<circle cx="92" cy="102" r="2.6" fill="#222222"/>
+
+<!-- ===== 1. the tiny voltage across the shunt ===== -->
+<rect x="28" y="138" width="72" height="76" rx="6" fill="#f7f7f7" stroke="#444444" stroke-width="1.4"/>
+<g font-size="13" font-weight="700" fill="#5c5c5c" text-anchor="middle">
+  <text x="40" y="155">+</text>
+  <text x="88" y="155">−</text>
+</g>
+<text x="64" y="180" font-size="12" fill="#5c5c5c" text-anchor="middle">0.04 V</text>
+<rect x="56" y="186" width="16" height="16" fill="#ffffff" stroke="#c4c4c4"/>
+<rect class="lvl" x="56" y="186" width="16" height="16" fill="#446ce3"/>
+<line x1="46" y1="202" x2="82" y2="202" stroke="#444444" stroke-width="1.4"/>
+
+<!-- arrows and the amplifier -->
+<g fill="#446ce3">
+  <line x1="100" y1="176" x2="121" y2="176" stroke="#446ce3" stroke-width="2"/>
+  <path d="M120 171 L127 176 L120 181 Z"/>
+  <line x1="182" y1="176" x2="203" y2="176" stroke="#446ce3" stroke-width="2"/>
+  <path d="M202 171 L209 176 L202 181 Z"/>
+  <line x1="266" y1="176" x2="289" y2="176" stroke="#446ce3" stroke-width="2"/>
+  <path d="M288 171 L295 176 L288 181 Z"/>
+  <line x1="356" y1="176" x2="379" y2="176" stroke="#446ce3" stroke-width="2"/>
+  <path d="M378 171 L385 176 L378 181 Z"/>
+</g>
+<path d="M128 146 L182 176 L128 206 Z" fill="#eef1f4" stroke="#444444" stroke-width="1.6" stroke-linejoin="round"/>
+
+<!-- ===== 2. the bigger voltage ===== -->
+<rect x="210" y="138" width="56" height="76" rx="6" fill="#f7f7f7" stroke="#444444" stroke-width="1.4"/>
+<rect x="230" y="146" width="16" height="56" fill="#ffffff" stroke="#c4c4c4"/>
+<rect class="lvl" x="230" y="146" width="16" height="56" fill="#446ce3"/>
+<line x1="220" y1="202" x2="256" y2="202" stroke="#444444" stroke-width="1.4"/>
+
+<!-- ===== 3. ADC ===== -->
+<rect x="296" y="150" width="60" height="52" rx="4" fill="#eef1f4" stroke="#444444" stroke-width="1.6"/>
+<text x="326" y="172" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">ADC</text>
+<path d="M305 196 H313 V192 H321 V188 H329 V184 H337 V180 H345 V177 H348" fill="none" stroke="#446ce3" stroke-width="1.6"/>
+
+<!-- ===== 4. the number ===== -->
+<rect x="386" y="150" width="114" height="52" rx="6" fill="#eef3ff" stroke="#446ce3" stroke-width="1.6"/>
+<g font-size="20" font-weight="700" fill="#222222" text-anchor="middle">
+  <text class="ro r0" x="443" y="183">40.0 A</text>
+  <text class="ro r1" x="443" y="183">37.7 A</text>
+  <text class="ro r2" x="443" y="183">31.3 A</text>
+  <text class="ro r3" x="443" y="183">22.5 A</text>
+  <text class="ro r4" x="443" y="183">13.8 A</text>
+  <text class="ro r5" x="443" y="183">7.3 A</text>
+  <text class="ro r6" x="443" y="183">5.0 A</text>
+  <text class="ro r7" x="443" y="183">7.3 A</text>
+  <text class="ro r8" x="443" y="183">13.8 A</text>
+  <text class="ro r9" x="443" y="183">22.5 A</text>
+  <text class="ro r10" x="443" y="183">31.3 A</text>
+  <text class="ro r11" x="443" y="183">37.7 A</text>
+</g>
+
+<!-- captions -->
+<g font-size="12" fill="#222222" text-anchor="middle">
+  <text x="64" y="232" font-weight="700">tiny voltage</text>
+  <text x="64" y="247">across the shunt</text>
+  <text x="155" y="232" font-weight="700">current-sense</text>
+  <text x="155" y="247">amplifier makes</text>
+  <text x="155" y="262">it bigger</text>
+  <text x="238" y="232" font-weight="700">bigger</text>
+  <text x="238" y="247">voltage</text>
+  <text x="326" y="232" font-weight="700">ADC</text>
+  <text x="326" y="247">analog-to-digital</text>
+  <text x="326" y="262">converter</text>
+  <text x="443" y="232" font-weight="700">a number</text>
+</g>
+
+<!-- ===== The other way: Hall effect ===== -->
+<rect x="16" y="278" width="488" height="62" rx="6" fill="#f4f7ff" stroke="#c9d5f5"/>
+<g class="field" fill="none" stroke="#446ce3" stroke-width="1.4" stroke-dasharray="3 3">
+  <circle cx="56" cy="309" r="12"/>
+  <circle cx="56" cy="309" r="17"/>
+</g>
+<path d="M78.55 300.79 A24 24 0 1 0 78.55 317.21" fill="none" stroke="#7d8790" stroke-width="6"/>
+<rect x="76" y="304" width="9" height="10" fill="#222222"/>
+<circle cx="56" cy="309" r="7" fill="#c47a2c" stroke="#8a5216" stroke-width="1.2"/>
+<circle cx="56" cy="309" r="2" fill="#222222"/>
+<g font-size="13" fill="#222222">
+  <text x="100" y="300"><tspan font-weight="700">The other way:</tspan> a Hall-effect sensor around the wire</text>
+  <text x="100" y="316">feels the current's magnetic field, with no resistor</text>
+  <text x="100" y="332">in the path.</text>
+</g>
+
+<line x1="16" y1="354" x2="504" y2="354" stroke="#e2e2e2"/>
+<g font-size="12" fill="#222222">
+  <text x="16" y="372">The PDH reads its channels with current-sense amplifiers; each SPARK</text>
+  <text x="16" y="388">senses the current in its motor's phases (REV).</text>
+</g>
+</svg>

@@ -63,7 +63,7 @@
 
 <!-- Status line (left column) -->
 <text class="still" x="16" y="78" font-size="13" font-weight="700" fill="#222222">Still: the mass only vibrates</text>
-<text class="turning" x="16" y="78" font-size="13" font-weight="700" fill="#222222">Turning: the mass is <tspan fill="#446ce3">pushed sideways</tspan> too</text>
+<text class="turning" x="16" y="78" font-size="13" font-weight="700" fill="#222222">Turning: the mass also <tspan fill="#446ce3">wiggles sideways</tspan></text>
 
 <!-- Turning platform carrying the chip -->
 <g class="plat">
@@ -132,7 +132,7 @@
   <text x="46" y="337">always vibrates</text>
   <line x1="149" y1="328" x2="149" y2="338" stroke="#446ce3" stroke-width="1.4"/>
   <path d="M149 324 L146 330 L152 330 Z M149 342 L146 336 L152 336 Z" fill="#446ce3"/>
-  <text x="158" y="337">pushed only when turning</text>
+  <text x="158" y="337">sideways wiggle: only when turning</text>
 </g>
 
 <!-- Right column: turn rate -->
@@ -197,8 +197,8 @@
   <circle cx="21" cy="429" r="2.5"/>
 </g>
 <g font-size="13" fill="#222222">
-  <text x="30" y="372">A vibrating mass gets pushed sideways when the chip turns</text>
-  <text x="30" y="389">(the Coriolis effect): that push is the turn rate.</text>
+  <text x="30" y="372">Turning, the Coriolis effect pushes the swinging mass sideways,</text>
+  <text x="30" y="389">back and forth with each swing: how far says how fast it turns.</text>
   <text x="30" y="411">Heading is the rate added up, so any tiny error adds up too: drift.</text>
   <text x="30" y="433"><tspan font-weight="700">Redux Canandgyro:</tspan> calibrate it still for at least 7 s; drift about</text>
   <text x="30" y="450">0.2 deg an hour still, 0.25 deg a minute moving.</text>
