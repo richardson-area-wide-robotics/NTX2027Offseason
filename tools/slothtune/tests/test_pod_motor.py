@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from slothtune import advisor, plant, rehearse, runs
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 
 START = {"Drive/kP": 0.0005, "Drive/kI": 0.0, "Drive/kD": 0.0, "Drive/RampS": 0.0,
@@ -58,6 +59,7 @@ class AdviceOnAVortexTest(unittest.TestCase):
 
 
 class PracticeApiTest(unittest.TestCase):
+    @needs_robots
     def test_the_apps_practice_runs_use_the_robots_drive_motor(self):
         from slothtune import server
         with tempfile.TemporaryDirectory() as d, mock.patch.object(runs, "RUNS", d):

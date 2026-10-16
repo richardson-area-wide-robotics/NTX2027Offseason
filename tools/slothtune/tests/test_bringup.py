@@ -3,6 +3,7 @@
 import unittest
 
 from slothtune import advisor, bringup
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 
 def run(motors, env="BLOCKS", outcome="DONE", message="", pdh=None, duty=0.08):
@@ -143,6 +144,7 @@ class SensorsReportTest(unittest.TestCase):
 
 
 class ReportTest(unittest.TestCase):
+    @needs_robots
     def test_the_report_is_written_from_the_evidence(self):
         import os
         from slothtune import design as D, setup as SP, yagslcfg as Y

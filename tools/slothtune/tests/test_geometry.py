@@ -4,10 +4,12 @@ import os
 import unittest
 
 from slothtune import geometry as G, plant, yagslcfg
+from slothtune.robotrepo import ROBOTS, needs_robots, skip_module_without_robots
+skip_module_without_robots()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEA = yagslcfg.Project(os.path.join(REPO, "Peashooter"))
+PEA = yagslcfg.Project(os.path.join(ROBOTS, "Peashooter"))
 NAMES = ["frontleft", "frontright", "backleft", "backright"]
 
 

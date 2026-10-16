@@ -7,11 +7,12 @@ import tempfile
 import unittest
 
 from slothtune import ppcheck as P, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEA = os.path.join(REPO, "Peashooter")
-BLACK = os.path.join(REPO, "Black team")
+PEA = os.path.join(ROBOTS, "Peashooter")
+BLACK = os.path.join(ROBOTS, "Black team")
 
 
 def titles(r):
@@ -19,6 +20,7 @@ def titles(r):
 
 
 class RealRobotsTest(unittest.TestCase):
+    @needs_robots
     def test_peashooter_today(self):
         # Made to match on this branch (decision 15); mass and MOI wait for measurement.
         r = P.check(Y.Project(PEA))
@@ -32,6 +34,7 @@ class RealRobotsTest(unittest.TestCase):
                       titles(r))
         self.assertNotIn("loads auto 'W auto'", titles(r), "Robot.java's auto exists")
 
+    @needs_robots
     def test_black_team_has_no_pathplanner(self):
         r = P.check(Y.Project(BLACK))
         self.assertFalse(r["used"])
@@ -55,6 +58,7 @@ class PlantedTest(unittest.TestCase):
         with open(p, "w", encoding="utf-8") as fh:
             json.dump(d, fh, indent=2)
 
+    @needs_robots
     def test_the_fix_makes_the_model_match_and_touches_nothing_else(self):
         p = Y.Project(self.dir)
         before = open(P.settings_path(p), encoding="utf-8").read()
@@ -69,6 +73,7 @@ class PlantedTest(unittest.TestCase):
             self.assertEqual(new[k], old[k], f"{k} is not the fix's business")
         self.assertEqual(new["flModuleX"], 0.3048)
 
+    @needs_robots
     def test_a_weighed_and_measured_robot_is_compared_and_fixed(self):
         tune = os.path.join(self.dir, "src", "main", "deploy", "swerve", "slothtune.json")
         text = open(tune, encoding="utf-8").read()
@@ -79,6 +84,7 @@ class PlantedTest(unittest.TestCase):
         self.assertEqual((rows["robotMass"]["status"], rows["robotMass"]["code"]), ("differs", 52.5))
         self.assertIn(("robotMOI", 5.1), P.check(p)["fixes"])
 
+    @needs_robots
     def test_names_that_dont_line_up(self):
         def missing_path(d):
             d["command"]["data"]["commands"].append({"type": "path", "data": {"pathName": "gone path"}})
@@ -93,6 +99,7 @@ class PlantedTest(unittest.TestCase):
         self.assertNotIn("'Shoot B'", t.replace("Named command 'Shoot B' is registered", ""), "registered now")
         self.assertIn("The code loads auto 'W Auto', which doesn't exist", t, "names are case-sensitive")
 
+    @needs_robots
     def test_path_limits_beyond_the_robot(self):
         def fast(d):
             d["useDefaultConstraints"] = False
@@ -106,6 +113,7 @@ class PlantedTest(unittest.TestCase):
         speed = next(f for f in r["findings"] if f["title"].startswith("Path 'hub shoot': speed limit"))
         self.assertIn("PathPlanner has it as 6 m/s", speed["why"])
 
+    @needs_robots
     def test_no_settings_file(self):
         os.remove(os.path.join(self.pp, "settings.json"))
         r = P.check(Y.Project(self.dir))

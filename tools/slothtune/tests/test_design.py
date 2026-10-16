@@ -6,6 +6,7 @@ import os
 import unittest
 
 from slothtune import design as D, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -80,10 +81,11 @@ class DesignCheckTest(unittest.TestCase):
         self.assertTrue(any("not a controller_motor pair" in t for t in titles(F, "error")))
 
 
+@needs_robots
 class DesignAgainstCodeTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.p = Y.Project(os.path.join(REPO, "Peashooter"))
+        cls.p = Y.Project(os.path.join(ROBOTS, "Peashooter"))
         cls.draft = D.from_code(cls.p)
 
     def test_a_draft_from_the_code_names_every_motor(self):

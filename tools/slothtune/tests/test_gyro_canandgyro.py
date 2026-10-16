@@ -8,10 +8,11 @@ import tempfile
 import unittest
 
 from slothtune import yagslcfg
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEASHOOTER = os.path.join(REPO, "Peashooter")
+PEASHOOTER = os.path.join(ROBOTS, "Peashooter")
 
 
 class LintTest(unittest.TestCase):
@@ -27,17 +28,20 @@ class LintTest(unittest.TestCase):
                 json.dump(sd, fh)
             return {x["id"]: x for x in yagslcfg.lint(yagslcfg.Project(p))}
 
+    @needs_robots
     def test_a_new_canandgyro_on_id_0(self):
         f = self.lint_with({"type": "canandgyro", "id": 0, "canbus": ""})
         self.assertEqual(f["canandgyro_id_0"]["level"], "warn")
         self.assertIn("Alchemist", f["canandgyro_id_0"]["why"])
         self.assertNotIn("imu_spi_2027", f, "a CAN gyro works on SystemCore")
 
+    @needs_robots
     def test_yagsl_ignores_its_bus(self):
         f = self.lint_with({"type": "canandgyro", "id": 12, "canbus": "canivore"})
         self.assertIn("canandgyro_canbus", f)
         self.assertNotIn("canandgyro_id_0", f)
 
+    @needs_robots
     def test_the_navx_is_unchanged(self):
         f = self.lint_with({"type": "navx_spi", "id": 0, "canbus": None})
         self.assertIn("imu_spi_2027", f)

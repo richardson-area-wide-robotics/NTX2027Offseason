@@ -4,11 +4,13 @@ import os
 import unittest
 
 from slothtune import wiring as W, yagslcfg
+from slothtune.robotrepo import ROBOTS, needs_robots, skip_module_without_robots
+skip_module_without_robots()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEA = yagslcfg.Project(os.path.join(REPO, "Peashooter"))
-BLACK = yagslcfg.Project(os.path.join(REPO, "Black team"))
+PEA = yagslcfg.Project(os.path.join(ROBOTS, "Peashooter"))
+BLACK = yagslcfg.Project(os.path.join(ROBOTS, "Black team"))
 
 CHAIN = ["roboRIO", "FL drive", "FL steer", "FR drive", "FR steer", "Shooter", "PDH"]
 

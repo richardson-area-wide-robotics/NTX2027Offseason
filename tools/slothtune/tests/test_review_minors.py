@@ -5,6 +5,7 @@ import os
 import unittest
 
 from slothtune import advisor, battery, diagnose, ppcheck, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -22,13 +23,14 @@ def capture(seconds, drift_deg_per_min):
 
 
 class ProtectionOffTest(unittest.TestCase):
+    @needs_robots
     def test_a_guard_switched_off_is_a_lint_error(self):
         import json
         import shutil
         import tempfile
         with tempfile.TemporaryDirectory() as d:
             dst = os.path.join(d, "robot")
-            shutil.copytree(os.path.join(REPO, "Peashooter"), dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
+            shutil.copytree(os.path.join(ROBOTS, "Peashooter"), dst, ignore=shutil.ignore_patterns("build", ".gradle", "bin"))
             p = os.path.join(dst, "src", "main", "deploy", "swerve", "slothtune.json")
             with open(p, encoding="utf-8") as fh:
                 data = json.load(fh)
@@ -145,8 +147,9 @@ class BatteryPathTest(unittest.TestCase):
 
 
 class TurnAccelTest(unittest.TestCase):
+    @needs_robots
     def test_turning_uses_the_moment_of_inertia(self):
-        p = Y.Project(os.path.join(REPO, "Peashooter"))
+        p = Y.Project(os.path.join(ROBOTS, "Peashooter"))
         c = ppcheck.capabilities(p)
         mass, _ = p.mass()
         moi, _ = p.moi()

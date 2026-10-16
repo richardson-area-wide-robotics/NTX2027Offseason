@@ -6,6 +6,7 @@ import os
 import unittest
 
 from slothtune import designcheck as K, designlinks as D, ppcheck, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -14,7 +15,7 @@ AMB = ("https://ambcalc.com/drivetrain?=&motor=NEO+Vortex&ilim=60&g1a=14&g1b=50&
 
 
 def pea():
-    return Y.Project(os.path.join(REPO, "Peashooter"))
+    return Y.Project(os.path.join(ROBOTS, "Peashooter"))
 
 
 def ids(F):
@@ -28,6 +29,7 @@ class DesignMassTest(unittest.TestCase):
         self.assertIn("cof", d["assumed"])
         self.assertNotIn("wheel_diameter_m", d["assumed"])
 
+    @needs_robots
     def test_a_design_never_writes_the_robots_mass(self):
         for url in (AMB, AMB + "&weight=120"):
             out = K.evaluate(url, pea())
@@ -35,6 +37,7 @@ class DesignMassTest(unittest.TestCase):
         t = " | ".join(f["title"] for f in K.evaluate(AMB, pea())["findings"])
         self.assertIn("doesn't set the robot's weight", t)
 
+    @needs_robots
     def test_a_saved_design_with_a_weight_stands_in_until_the_robot_is_weighed(self):
         p = pea()
         p.data["slothtune.json"] = dict(p.data["slothtune.json"], robotMassKg=None,
@@ -49,12 +52,14 @@ class DesignMassTest(unittest.TestCase):
 
 
 class LintTest(unittest.TestCase):
+    @needs_robots
     def test_a_setpoint_past_free_speed_is_an_error(self):
         F = [f for f in Y.lint(pea()) if f["id"] == "setpoint_unreachable"]
         self.assertEqual(len(F), 1)
         self.assertIn("9999 rpm", F[0]["title"])
         self.assertIn("6784", F[0]["title"])
 
+    @needs_robots
     def test_modules_with_different_motors_offsets_out_of_a_turn_and_a_ratio_rev_doesnt_sell(self):
         p = pea()
         names = p.module_names()
@@ -69,20 +74,23 @@ class LintTest(unittest.TestCase):
         self.assertIn("offset_out_of_range", got)
         self.assertIn("drive_ratio_not_sold", got)
 
+    @needs_robots
     def test_the_real_robots_pass_the_module_checks(self):
         for robot in ("Peashooter", "Black team"):
-            got = ids(Y.lint(Y.Project(os.path.join(REPO, robot))))
+            got = ids(Y.lint(Y.Project(os.path.join(ROBOTS, robot))))
             for x in ("modules_mixed_drive_types", "modules_mixed_angle_types", "offset_out_of_range", "drive_ratio_not_sold"):
                 self.assertNotIn(x, got, robot)
 
 
 class KnownUnregisteredTest(unittest.TestCase):
+    @needs_robots
     def test_shoot_b_is_a_warning_not_an_error(self):
         F = [f for f in ppcheck.check(pea())["findings"] if f["kind"] == "names" and "never registers" in f["title"]]
         self.assertTrue(F)
         self.assertTrue(all(f["level"] == "warn" for f in F), F)
         self.assertIn("kept on purpose", F[0]["title"])
 
+    @needs_robots
     def test_without_the_list_it_is_an_error(self):
         p = pea()
         p.data["slothtune.json"] = {k: v for k, v in p.data["slothtune.json"].items() if k != "pathplanner"}
@@ -91,11 +99,13 @@ class KnownUnregisteredTest(unittest.TestCase):
 
 
 class CanIdTest(unittest.TestCase):
+    @needs_robots
     def test_a_constant_can_id_is_resolved(self):
-        p = Y.Project(os.path.join(REPO, "Black team"))
+        p = Y.Project(os.path.join(ROBOTS, "Black team"))
         users = [u for us in p.can_ids().values() for u in us]
         self.assertTrue(any(u.startswith("Intake.java") for u in users), users)
 
+    @needs_robots
     def test_a_duplicate_through_a_constant_is_an_error(self):
         p = pea()
         p.java = dict(p.java)
@@ -120,6 +130,7 @@ class GyroSignTest(unittest.TestCase):
         self.assertEqual(advisor.hand_check(self._cap(down), "gyro")["gyro"]["heading"]["verdict"], "INVERTED")
         self.assertEqual(advisor.hand_check(self._cap([0.0] * 100), "gyro")["gyro"]["heading"]["verdict"], "NO_MOTION")
 
+    @needs_robots
     def test_an_inverted_gyro_gets_the_one_setting_that_flips_it(self):
         from unittest import mock
         from slothtune import server

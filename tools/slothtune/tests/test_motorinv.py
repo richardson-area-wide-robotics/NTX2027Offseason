@@ -8,11 +8,12 @@ import unittest
 from unittest import mock
 
 from slothtune import advisor, motorinv as M, plant, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEA = os.path.join(REPO, "Peashooter")
-BLACK = os.path.join(REPO, "Black team")
+PEA = os.path.join(ROBOTS, "Peashooter")
+BLACK = os.path.join(ROBOTS, "Black team")
 
 
 def rows(r):
@@ -24,6 +25,7 @@ def titles(r):
 
 
 class RealRobotsTest(unittest.TestCase):
+    @needs_robots
     def test_peashooter_every_motor_is_named(self):
         r = M.table(Y.Project(PEA))
         x = rows(r)
@@ -39,6 +41,7 @@ class RealRobotsTest(unittest.TestCase):
         self.assertTrue(all(v["status"] == "ok" for v in x.values()))
         self.assertEqual(r["choices"], list(M.CHOICES))
 
+    @needs_robots
     def test_black_team_every_motor_is_named(self):
         r = M.table(Y.Project(BLACK))
         x = rows(r)
@@ -49,6 +52,7 @@ class RealRobotsTest(unittest.TestCase):
 
 
 class RobotReportsTest(unittest.TestCase):
+    @needs_robots
     def test_a_controller_that_is_not_what_the_code_creates(self):
         live = [{"name": "frontleft drive", "controller": "SPARK MAX", "firmware": "25.1.0"},
                 {"name": "frontright drive", "controller": "SPARK Flex", "firmware": "25.1.0"}]
@@ -62,14 +66,17 @@ class RobotReportsTest(unittest.TestCase):
         self.assertIn("the YAGSL type starts sparkmax_", r["findings"][0]["why"])
         self.assertIn("Vortex on a SPARK MAX", titles(r), "fine only with a Solo Adapter")
 
+    @needs_robots
     def test_a_controller_that_cannot_say_is_no_finding(self):
         r = M.table(Y.Project(PEA), [{"name": "frontleft drive", "controller": ""}])
         self.assertEqual(r["findings"], [])
 
+    @needs_robots
     def test_a_subsystem_controller_names_the_class_to_create(self):
         r = M.table(Y.Project(PEA), [{"name": "Spindexter", "controller": "SPARK Flex"}])
         self.assertIn("Fix it in Feeder.java: new SparkMax(...) becomes new SparkFlex(...).", r["findings"][0]["why"])
 
+    @needs_robots
     def test_the_motor_guard_names_a_motor_nothing_else_does(self):
         # When the code's watch() call can't be read, only the robot's guard knows the motor.
         with mock.patch.object(M, "code_kinds", return_value={}):
@@ -96,6 +103,7 @@ class PlantedTest(unittest.TestCase):
         with open(p, "w", encoding="utf-8") as f:
             json.dump(d, f, indent=2)
 
+    @needs_robots
     def test_the_inventory_disagrees_with_the_yagsl_type(self):
         self.edit_json("slothtune.json", lambda d: d["motors"].update(drive="NEO V1.1"))
         r = M.table(Y.Project(self.dir))
@@ -104,12 +112,14 @@ class PlantedTest(unittest.TestCase):
         self.assertEqual(x["frontleft drive"]["status"], "bad")
         self.assertIn("frontleft drive: YAGSL models a NEO Vortex, the motor inventory says NEO V1.1", titles(r))
 
+    @needs_robots
     def test_one_motor_named_by_its_full_name_wins_over_its_group(self):
         self.edit_json("slothtune.json", lambda d: d["motors"].update({"backleft drive": "NEO 2.0"}))
         x = rows(M.table(Y.Project(self.dir)))
         self.assertEqual(x["backleft drive"]["motor"], "NEO 2.0")
         self.assertEqual(x["frontleft drive"]["motor"], "NEO Vortex")
 
+    @needs_robots
     def test_a_motor_nobody_names(self):
         def plant_(d):
             d["angle"]["type"] = "sparkmax"
@@ -122,6 +132,7 @@ class PlantedTest(unittest.TestCase):
         self.assertEqual(x["frontleft steer"]["motor_source"], "not said anywhere")
         self.assertIn("Motor not named: frontleft steer, frontright steer", titles(r))
 
+    @needs_robots
     def test_a_drive_ff_that_measures_another_motor(self):
         measured = {"label": "NEO", "kind": "neo", "rpm_per_volt": 446.0}
         r = M.table(Y.Project(self.dir), measured=measured)
@@ -134,6 +145,7 @@ class PlantedTest(unittest.TestCase):
     def fix(self, r, label):
         return next(f for f in r["findings"] if f["title"].startswith(f"Set the swerve {label} motors' YAGSL type"))
 
+    @needs_robots
     def test_a_measured_motor_gets_a_one_click_fix_for_every_module_file(self):
         measured = {"label": "NEO", "kind": "neo", "rpm_per_volt": 446.0}
         f = self.fix(M.table(Y.Project(self.dir), measured=measured), "drive")
@@ -146,24 +158,28 @@ class PlantedTest(unittest.TestCase):
         p = Y.Project(self.dir)
         self.assertTrue(all(p.writable(e["file"]) for e in f["edits"]))
 
+    @needs_robots
     def test_the_controller_the_robot_reports_wins_over_the_code(self):
         live = [{"name": f"{m} drive", "controller": "SPARK MAX"} for m in ("frontleft", "frontright", "backleft", "backright")]
         f = self.fix(M.table(Y.Project(self.dir), live), "drive")
         self.assertEqual(f["edits"][0]["value"], "sparkmax_vortex", "a Vortex on a SPARK MAX, as the robot says")
         self.assertIn("the robot reports a SPARK MAX", f["why"])
 
+    @needs_robots
     def test_the_inventory_names_the_motor_when_nothing_measured_it(self):
         self.edit_json("slothtune.json", lambda d: d["motors"].update(drive="NEO V1.1"))
         f = self.fix(M.table(Y.Project(self.dir)), "drive")
         self.assertEqual(f["edits"][0]["value"], "sparkflex_neo")
         self.assertIn("If the inventory is what's wrong", f["why"])
 
+    @needs_robots
     def test_one_module_out_of_step_is_the_only_file_changed(self):
         self.edit_json("modules/backleft.json", lambda d: d["angle"].update(type="sparkmax_neo"))
         f = self.fix(M.table(Y.Project(self.dir)), "steering")
         self.assertEqual([e["file"] for e in f["edits"]], ["modules/backleft.json"])
         self.assertEqual(f["edits"][0]["value"], "sparkmax_neo550")
 
+    @needs_robots
     def test_a_speed_only_a_neo550_reaches_sets_the_steering_type(self):
         for m in ("frontleft", "frontright", "backleft", "backright"):
             self.edit_json(f"modules/{m}.json", lambda d: d["angle"].update(type="sparkmax_neo"))
@@ -173,6 +189,7 @@ class PlantedTest(unittest.TestCase):
         self.assertEqual({e["value"] for e in f["edits"]}, {"sparkmax_neo550"})
         self.assertEqual(len(f["edits"]), 4)
 
+    @needs_robots
     def test_a_drive_ff_that_agrees(self):
         measured = {"label": "NEO Vortex", "kind": "vortex", "rpm_per_volt": 531.0}
         r = M.table(Y.Project(self.dir), measured=measured)

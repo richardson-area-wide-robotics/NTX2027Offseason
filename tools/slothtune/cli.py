@@ -103,7 +103,7 @@ def print_report(out, rep):
 
 
 def project_dirs():
-    return yagslcfg.find_projects(REPO)
+    return yagslcfg.find_projects(runs.ROBOTS)
 
 
 class CliError(Exception):
@@ -137,7 +137,7 @@ def open_link(args, out):
         team = L.team_from_project(resolve_project(args.project).path)
     if not team:
         # No --project: every robot in this repo is the same team, so try its address first.
-        for path in yagslcfg.find_projects(REPO):
+        for path in yagslcfg.find_projects(runs.ROBOTS):
             team = L.team_from_project(path)
             if team:
                 break
@@ -1039,7 +1039,7 @@ def cmd_dslog(args, out):
 
 def _version_checks(camera_version):
     from . import versions
-    projects = [(os.path.basename(p), p, None) for p in yagslcfg.find_projects(REPO) if os.path.basename(p) != "Examples"]
+    projects = [(os.path.basename(p), p, None) for p in yagslcfg.find_projects(runs.ROBOTS) if os.path.basename(p) != "Examples"]
     return versions.checks(projects, camera_version)
 
 
@@ -1073,7 +1073,7 @@ def cmd_netcheck(args, out):
         # No robot named: try each robot's team in this repo, and report the one this laptop is on.
         # Projects sharing a number are named together; Examples (simulator only) last.
         robots = {}
-        for p in sorted(yagslcfg.find_projects(REPO), key=lambda d: os.path.basename(d) == "Examples"):
+        for p in sorted(yagslcfg.find_projects(runs.ROBOTS), key=lambda d: os.path.basename(d) == "Examples"):
             t = L.team_from_project(p)
             if t:
                 robots.setdefault(t, []).append(os.path.basename(p))

@@ -9,6 +9,7 @@ from contextlib import redirect_stdout
 from unittest import mock
 
 from slothtune import advisor, cli, contract as C, plant
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -57,6 +58,7 @@ class CommandLineTest(unittest.TestCase):
         code, doc = run_cli("analyze", "no-such-run.json")
         self.assertEqual(doc["code"], "NOT_FOUND")
 
+    @needs_robots
     def test_config_refuses_text_where_the_file_has_a_number(self):
         code, doc = run_cli("config", "--project", "Peashooter", "--file", "modules/physicalproperties.json",
                             "--path", "conversionFactors.drive.diameter", "--value", "x1.0163")

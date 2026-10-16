@@ -6,10 +6,12 @@ import unittest
 from urllib.parse import quote
 
 from slothtune import designcheck as K, logsummary, motorinv, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots, skip_module_without_robots
+skip_module_without_robots()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEA = Y.Project(os.path.join(REPO, "Peashooter"))
+PEA = Y.Project(os.path.join(ROBOTS, "Peashooter"))
 SHOOTER = ["Shooter leader", "Shooter follower"]
 
 

@@ -12,6 +12,7 @@ from contextlib import redirect_stdout
 from http.server import ThreadingHTTPServer
 
 from slothtune import advisor, cli, contract as C, server, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -172,8 +173,9 @@ class ActionsTest(unittest.TestCase):
 
 
 class SavesTest(unittest.TestCase):
+    @needs_robots
     def test_a_save_only_writes_the_robots_config_files(self):
-        p = Y.Project(os.path.join(REPO, "Peashooter"))
+        p = Y.Project(os.path.join(ROBOTS, "Peashooter"))
         for ok in ("swervedrive.json", "modules/frontleft.json", "modules/physicalproperties.json", "slothtune.json"):
             self.assertTrue(p.writable(ok), ok)
         for bad in ("../src/main/java/frc/robot/Robot.java", "../../build.gradle.json", "/etc/x.json",

@@ -6,11 +6,13 @@ import unittest
 
 from slothtune import advisor, systems as SY, yagslcfg
 from slothtune.tests.test_mechanics import ARM, recalc
+from slothtune.robotrepo import ROBOTS, needs_robots, skip_module_without_robots
+skip_module_without_robots()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
-PEA = yagslcfg.Project(os.path.join(REPO, "Peashooter"))
-EXA = yagslcfg.Project(os.path.join(REPO, "Examples"))
+PEA = yagslcfg.Project(os.path.join(ROBOTS, "Peashooter"))
+EXA = yagslcfg.Project(os.path.join(ROBOTS, "Examples"))
 
 PIVOT = {"name": "Intake pivot", "kind": "PIVOT", "units": "motor rotations", "motors": ["Intake pivot"],
          "min": 0.0, "max": 17.8}
@@ -79,7 +81,7 @@ class InCodeTest(unittest.TestCase):
 
     def test_black_team_registers_its_shooter(self):
         # Its intake runs open loop: a subsystem with nothing to tune.
-        self.assertEqual(SY.in_code(yagslcfg.Project(os.path.join(REPO, "Black team"))), {"Shooter": "FLYWHEEL"})
+        self.assertEqual(SY.in_code(yagslcfg.Project(os.path.join(ROBOTS, "Black team"))), {"Shooter": "FLYWHEEL"})
 
     def test_a_system_runs_summary_names_its_mechanism(self):
         import json

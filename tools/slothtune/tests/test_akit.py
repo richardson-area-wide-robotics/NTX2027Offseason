@@ -7,6 +7,7 @@ import tempfile
 import unittest
 
 from slothtune import akit, plant, yagslcfg
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -68,7 +69,7 @@ class LayoutTest(unittest.TestCase):
         src = open(JAVA, encoding="utf-8").read()
         recorded = set(re.findall(r'Logger\.recordOutput\("([^"]+)"', src))
         recorded |= {"Motors/" + suffix for suffix in re.findall(r'b \+ "(\w+)"', src)}
-        for d in yagslcfg.find_projects(REPO):
+        for d in yagslcfg.find_projects(ROBOTS):
             lay = akit.layout(yagslcfg.Project(d))
             self.assertEqual(lay["version"], "26.0.0")
             tabs = lay["hubs"][0]["state"]["tabs"]["tabs"]
@@ -88,8 +89,9 @@ class LayoutTest(unittest.TestCase):
                     else:
                         self.assertIn(rest, recorded, k)
 
+    @needs_robots
     def test_mechanism_motors_are_found_in_robot_code(self):
-        pea = yagslcfg.Project(os.path.join(REPO, "Peashooter"))
+        pea = yagslcfg.Project(os.path.join(ROBOTS, "Peashooter"))
         self.assertIn("Spindexter", akit.mechanism_motors(pea))
         self.assertIn("Shooter leader", akit.mechanism_motors(pea))
 

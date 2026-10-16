@@ -82,7 +82,7 @@ class Session:
 
     # ------------------------------------------------------------------ project
     def set_project(self, name):
-        for d in yagslcfg.find_projects(runs.REPO):
+        for d in yagslcfg.find_projects(runs.ROBOTS):
             if os.path.basename(d) == name:
                 self.project = yagslcfg.Project(d)
                 lim = self.project.phys.get("currentLimit", {})
@@ -235,7 +235,7 @@ S = Session()
 
 
 def api_projects(_):
-    names = [os.path.basename(d) for d in yagslcfg.find_projects(runs.REPO)]
+    names = [os.path.basename(d) for d in yagslcfg.find_projects(runs.ROBOTS)]
     return {"projects": names, "current": S.project.name if S.project else None}
 
 
@@ -2199,7 +2199,7 @@ def main(args):
     if getattr(args, "project", None):
         S.set_project(os.path.basename(args.project))
     else:
-        projects = yagslcfg.find_projects(runs.REPO)
+        projects = yagslcfg.find_projects(runs.ROBOTS)
         if projects:
             S.set_project(os.path.basename(projects[0]))
     port = getattr(args, "port", 5806)

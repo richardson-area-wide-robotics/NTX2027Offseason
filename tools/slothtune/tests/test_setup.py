@@ -9,6 +9,7 @@ from contextlib import redirect_stdout
 from unittest import mock
 
 from slothtune import cli, progress, server, setup as SP, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -179,9 +180,10 @@ class PartTest(unittest.TestCase):
         self.assertEqual(jobs(p)["type"], "done")
         self.assertEqual([j["go"] for j in p["jobs"] if j["id"] == "module"], [{"part": "module", "which": "frontleft"}])
 
+    @needs_robots
     def test_the_real_robots_have_every_plan(self):
         for robot in ("Peashooter", "Black team", "Examples"):
-            p = Y.Project(os.path.join(REPO, robot))
+            p = Y.Project(os.path.join(ROBOTS, robot))
             c = SP.gather(p)
             for fn in SP.TOOLS.values():
                 plan = fn(c)
@@ -326,10 +328,11 @@ class ServerTest(unittest.TestCase):
         self.patch = mock.patch.object(progress, "PATH", os.path.join(self.tmp, "progress.json"))
         self.patch.start()
         self.addCleanup(self.patch.stop)
-        self.proj = mock.patch.object(server.S, "project", Y.Project(os.path.join(REPO, "Peashooter")))
+        self.proj = mock.patch.object(server.S, "project", Y.Project(os.path.join(ROBOTS, "Peashooter")))
         self.proj.start()
         self.addCleanup(self.proj.stop)
 
+    @needs_robots
     def test_the_floor_needs_bumpers(self):
         class Link:
             def set_environment(self, *a):
@@ -345,10 +348,12 @@ class ServerTest(unittest.TestCase):
             self.assertTrue(server.api_env({"mode": "FIELD", "space_forward": 3, "space_side": 1.5, "bumpers": True})["ok"])
             self.assertTrue(server.api_env({"mode": "BLOCKS"})["ok"], "blocks never asks")
 
+    @needs_robots
     def test_mechanism_choices_come_from_the_code_before_connecting(self):
         kinds = {k["kind"]: k for k in server.api_parts()["kinds"]}
         self.assertEqual(kinds["system"]["choices"], ["Intake pivot", "Shooter"])
 
+    @needs_robots
     def test_start_mark_and_stop_a_part(self):
         self.assertIsNone(server.api_part_plan({"kind": "module", "which": "frontleft"})["started"])
         self.assertFalse(server.api_part_start({"kind": "module"})["ok"], "which module?")
@@ -361,6 +366,7 @@ class ServerTest(unittest.TestCase):
         server.api_part_stop({"kind": "module", "which": "frontleft"})
         self.assertEqual(server.api_parts()["active"], [])
 
+    @needs_robots
     def test_an_unstarted_part_previews_its_jobs_with_nothing_counted(self):
         server.api_mark({"key": "cal_health", "result": "pass", "detail": "All green."})
         p = server.api_part_plan({"kind": "module", "which": "frontleft"})
@@ -369,6 +375,7 @@ class ServerTest(unittest.TestCase):
         self.assertTrue(p["jobs"], "the jobs it would ask for")
         self.assertNotIn("done", jobs(p).values(), "a health check from before the part changed never counts")
 
+    @needs_robots
     def test_the_simulator_never_counts(self):
         sim = mock.Mock()
         sim.is_connected.return_value = True
@@ -381,6 +388,7 @@ class ServerTest(unittest.TestCase):
         self.assertNotIn("cal_positions", prog)
         self.assertEqual(prog["parts"]["module:frontleft"]["marks"], {})
 
+    @needs_robots
     def test_a_tools_mark_and_its_card(self):
         self.assertFalse(server.api_mark({"key": "geometry", "result": "pass"})["ok"], "only the tools' own keys")
         server.api_mark({"key": "cal_positions", "result": "pass", "detail": "Matches the files."})
@@ -388,6 +396,7 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(jobs(p)["positions"], "done")
         self.assertEqual(p["next"]["id"], "gyro", "wheels and spin wait; the gyro is next")
 
+    @needs_robots
     def test_a_parts_offset_writes_only_its_module(self):
         res = {"frontleft": {"new": 12.0}, "frontright": {"new": 99.0}}
         with mock.patch.object(server.runs, "load", return_value={}), \
@@ -397,6 +406,7 @@ class ServerTest(unittest.TestCase):
         self.assertEqual(len(every), 2)
         self.assertEqual(one, [("modules/frontleft.json", ("absoluteEncoderOffset",), 12.0)])
 
+    @needs_robots
     def test_bringup_drafts_a_design_file_and_saves_it_only_through_the_preview(self):
         from slothtune import design as D
         r = server.api_bringup()
@@ -411,10 +421,12 @@ class ServerTest(unittest.TestCase):
         self.assertFalse(server.api_save_preview({"kind": "design", "design": {"robot": "x"}})["ok"], "not a design file")
         self.assertFalse(os.path.exists(D.path(server.S.project)), "a preview writes nothing")
 
+    @needs_robots
     def test_bringup_marks_are_kept(self):
         self.assertTrue(server.api_mark({"key": "bu_motor:Tower", "result": "pass", "detail": "right way"})["ok"])
         self.assertEqual(progress.load("Peashooter")["bu_motor:Tower"]["result"], "pass")
 
+    @needs_robots
     def test_the_cli_starts_a_part_and_says_whats_next(self):
         buf = io.StringIO()
         with redirect_stdout(buf):
@@ -429,12 +441,14 @@ class ServerTest(unittest.TestCase):
             cli.main(["setup", "--project", "Peashooter", *argv, "--json"])
         return json.loads(buf.getvalue())
 
+    @needs_robots
     def test_the_cli_takes_the_robots_short_names(self):
         d = self.cli_json("--part", "module:FL")
         self.assertEqual(d["part"], "module:frontleft", "FL is frontleft, as the tuner and the robot accept")
         self.assertTrue(d["preview"], "not started: its jobs, and how to start it")
         self.assertIn("--start", d["hint"])
 
+    @needs_robots
     def test_the_cli_names_the_robots_parts_when_one_is_wrong(self):
         d = self.cli_json("--part", "module:nope")
         self.assertEqual((d["ok"], d["code"]), (False, "BAD_ARGS"))

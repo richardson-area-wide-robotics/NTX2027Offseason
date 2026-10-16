@@ -16,6 +16,8 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 RUNS = os.path.join(HERE, "runs")
 REPO = os.path.dirname(os.path.dirname(HERE))
+# Where the robot projects are: this repo, unless SLOTHTUNE_ROBOT_REPO says otherwise.
+from .robotrepo import ROBOTS  # noqa: E402
 
 
 # Ledgers that aren't runs live apart, so nothing reading runs/*.json mistakes one for a run.

@@ -8,12 +8,13 @@ import tempfile
 import unittest
 
 from slothtune import advisor, diagnose, monitor, rehearse, yagslcfg
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PKG = os.path.dirname(HERE)
 REPO = os.path.dirname(os.path.dirname(PKG))
-BLACK = os.path.join(REPO, "Black team")
-PEA = os.path.join(REPO, "Peashooter")
+BLACK = os.path.join(ROBOTS, "Black team")
+PEA = os.path.join(ROBOTS, "Peashooter")
 
 
 class AdvisorConvergesTest(unittest.TestCase):
@@ -59,6 +60,7 @@ class LintRealRobotsTest(unittest.TestCase):
     def ids(self, path):
         return {f["id"] for f in yagslcfg.lint(yagslcfg.Project(path))}
 
+    @needs_robots
     def test_black_team(self):
         ids = self.ids(BLACK)
         for expected in ("drive_inversion_mixed", "offsets_duplicate", "steer_ramp",
@@ -66,6 +68,7 @@ class LintRealRobotsTest(unittest.TestCase):
             self.assertIn(expected, ids)
         self.assertNotIn("max_speed_unreal", ids)
 
+    @needs_robots
     def test_peashooter(self):
         ids = self.ids(PEA)
         # PathPlanner's robot model was made to match on this branch; "Shoot B" stays unregistered.
@@ -74,6 +77,7 @@ class LintRealRobotsTest(unittest.TestCase):
         self.assertNotIn("drive_inversion_mixed", ids)
         self.assertNotIn("max_speed_unreal", ids, "fixed: createSwerveDrive(MAX_SPEED = 3.9)")
 
+    @needs_robots
     def test_an_impossible_max_speed_is_caught(self):
         with tempfile.TemporaryDirectory() as tmp:
             dst = os.path.join(tmp, "robot")
@@ -85,6 +89,7 @@ class LintRealRobotsTest(unittest.TestCase):
                 fh.write(src.replace("createSwerveDrive(MAX_SPEED,", "createSwerveDrive(40,"))
             self.assertIn("max_speed_unreal", self.ids(dst))
 
+    @needs_robots
     def test_physics(self):
         p = yagslcfg.Project(PEA)
         self.assertAlmostEqual(p.max_module_speed(), 4.921, delta=0.01, msg="Vortex at 5.5:1, 3 in")
@@ -103,6 +108,7 @@ class JsonEditTest(unittest.TestCase):
         out = yagslcfg.json_set('{"a": 1}', ("b", "c"), True)
         self.assertIn('"c": true', out)
 
+    @needs_robots
     def test_editing_a_copy_of_a_real_project(self):
         tmp = tempfile.mkdtemp()
         try:

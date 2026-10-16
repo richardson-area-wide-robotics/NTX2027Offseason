@@ -6,6 +6,7 @@ import time
 import unittest
 
 from slothtune import newfield, photon, photonfake
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 
 class MessagePackTest(unittest.TestCase):
@@ -152,6 +153,7 @@ class MountTest(unittest.TestCase):
 
 
 class ServerTest(unittest.TestCase):
+    @needs_robots
     def test_connect_and_compare_with_photonlib(self):
         from slothtune import server
         fake = photonfake.FakePhoton(version="v2026.3.3")

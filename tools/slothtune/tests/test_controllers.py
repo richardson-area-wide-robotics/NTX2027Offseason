@@ -6,6 +6,7 @@ import random
 import unittest
 
 from slothtune import controllers as C, yagslcfg as Y
+from slothtune.robotrepo import ROBOTS, needs_robots
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(HERE)))
@@ -154,27 +155,30 @@ class ButtonsTest(unittest.TestCase):
 
 
 class CodeTest(unittest.TestCase):
+    @needs_robots
     def test_both_robots_deadbands(self):
-        pea = C.code_deadbands(Y.Project(os.path.join(REPO, "Peashooter")))
-        black = C.code_deadbands(Y.Project(os.path.join(REPO, "Black team")))
+        pea = C.code_deadbands(Y.Project(os.path.join(ROBOTS, "Peashooter")))
+        black = C.code_deadbands(Y.Project(os.path.join(ROBOTS, "Black team")))
         self.assertEqual({d["value"] for d in pea}, {0.1})
         self.assertEqual({d["file"] for d in pea}, {"Robot.java"})
         self.assertEqual({d["value"] for d in black}, {0.08})
 
+    @needs_robots
     def test_the_axes_each_robot_reads(self):
-        pea = Y.Project(os.path.join(REPO, "Peashooter"))
+        pea = Y.Project(os.path.join(ROBOTS, "Peashooter"))
         # Peashooter names its axes: a round deadband on the left stick, right X on its own.
         db = C.code_deadbands(pea)
         self.assertEqual([d["axes"] for d in db if d.get("round")], [[0, 1]])
         self.assertEqual([d["axis"] for d in db if not d.get("round")], [2])
         self.assertEqual(C.axes_read(pea), [0, 1, 2], "left X, left Y, right X; never right Y")
-        black = Y.Project(os.path.join(REPO, "Black team"))
+        black = Y.Project(os.path.join(ROBOTS, "Black team"))
         self.assertEqual({d["axis"] for d in C.code_deadbands(black)}, {None}, "suppliers passed in from Robot.java")
         self.assertEqual(C.axes_read(black), [0, 1, 2])
 
+    @needs_robots
     def test_both_robots_deadband_the_left_stick_round(self):
         for robot, value in (("Peashooter", 0.1), ("Black team", 0.08)):
-            p = Y.Project(os.path.join(REPO, robot))
+            p = Y.Project(os.path.join(ROBOTS, robot))
             self.assertEqual(C.round_sticks(C.code_deadbands(p), C.axes_read(p)), {"left": value}, robot)
             self.assertEqual(C.stick_deadbands(p), {"left": {"value": value, "round": True},
                                                     "right": {"value": value, "round": False}}, robot)
