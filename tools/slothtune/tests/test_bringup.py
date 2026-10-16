@@ -148,8 +148,7 @@ class ReportTest(unittest.TestCase):
     def test_the_report_is_written_from_the_evidence(self):
         import os
         from slothtune import design as D, setup as SP, yagslcfg as Y
-        here = os.path.dirname(os.path.abspath(__file__))
-        p = Y.Project(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(here))), "Peashooter"))
+        p = Y.Project(os.path.join(ROBOTS, "Peashooter"))
         d = D.from_code(p)
         c = {"project": p, "robot": p.name, "connected": False, "live_motors": [], "runs": [], "lint": [], "pp": None,
              "inventory": {"rows": [], "findings": []}, "controllers": [], "wiring_saved": False,
