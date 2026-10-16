@@ -7,6 +7,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.numbers.N2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.pathplanner.lib.commands.FollowPathCommand;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -69,6 +70,13 @@ public class Robot extends LoggedRobot {
     NamedCommands.registerCommand("Unload Feeder", feeder.load(false));
 
     drive.setupPathPlanner();
+    // The auto is built here, at boot, not when auto starts. The first path command after a boot
+    // has to load every PathPlanner class, and building the auto reads its files: done in
+    // autonomousInit, that held up the first auto after every boot (the second always worked).
+    // The warmup follows a made-up path in the background while disabled so that loading is done
+    // before the match; it never drives the robot (PathPlanner's docs: pathplanner.dev).
+    autonomousCommand = AutoBuilder.buildAuto("W auto");
+    CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
 
     // The left stick is deadbanded by its distance from center (a round deadband), not each axis on
     // its own, so a gentle diagonal push keeps both axes instead of snapping to a straight line.
@@ -107,8 +115,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
-    autonomousCommand = AutoBuilder.buildAuto("W auto");
-    if (autonomousCommand != null) { autonomousCommand.schedule(); }
+    if (autonomousCommand != null) { CommandScheduler.getInstance().schedule(autonomousCommand); }
   }
 
   @Override
