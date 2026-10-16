@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 394" width="520" height="394" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="ws-title ws-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="ws-title">Wheel size</title>
+<desc id="ws-desc">Animated. A robot seen from the side is pushed along the floor from a start tape to an end tape; the tape measure says 117.6 in. Below, an orange bar shows the taped 117.6 in, and a blue bar grows with the robot, showing what odometry counts. It grows a little faster than the robot moves and ends at 120.0 in, a red sliver past the end of the tape: the wheels are 2% smaller than the code thinks. At the top, a worn wheel is drawn smaller than the dashed 3 in on the drawing; one wheel turn moves the robot pi times the diameter.</desc>
+<style>
+.ws-bot{transform:translateX(360px);animation:ws-bot 8s ease-in-out infinite}
+@keyframes ws-bot{0%{opacity:1;transform:translateX(0px)}8%{opacity:1;transform:translateX(0px)}62%{opacity:1;transform:translateX(360px)}88%{opacity:1;transform:translateX(360px)}91%{opacity:0;transform:translateX(360px)}93%{opacity:0;transform:translateX(0px)}100%{opacity:1;transform:translateX(0px)}}
+.ws-wh{transform-box:fill-box;transform-origin:center;animation:ws-wh 8s ease-in-out infinite}
+@keyframes ws-wh{0%{transform:rotate(0deg)}8%{transform:rotate(0deg)}62%{transform:rotate(1719deg)}91%{transform:rotate(1719deg)}93%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.ws-odo{transform-box:view-box;transform-origin:120px 278px;animation:ws-odo 8s ease-in-out infinite}
+@keyframes ws-odo{0%{opacity:1;transform:scaleX(0)}8%{opacity:1;transform:scaleX(0)}62%{opacity:1;transform:scaleX(1)}88%{opacity:1;transform:scaleX(1)}91%{opacity:0;transform:scaleX(1)}93%{opacity:0;transform:scaleX(0)}100%{opacity:1;transform:scaleX(0)}}
+.ws-x{opacity:1;animation:ws-x 8s linear infinite}
+@keyframes ws-x{0%{opacity:0}60%{opacity:0}63%{opacity:1}88%{opacity:1}91%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Wheel size</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Push the robot over a taped distance and compare it with what odometry says.</text>
+<circle cx="48" cy="92" r="26" fill="none" stroke="#5c5c5c" stroke-width="1.5" stroke-dasharray="4 3"/>
+<circle cx="48" cy="92" r="21" fill="#3a3f45"/>
+<circle cx="48" cy="92" r="8" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<text x="86" y="88" font-size="12" fill="#5c5c5c">dashed: the 3 in on the drawing</text>
+<text x="86" y="106" font-size="12" font-weight="700" fill="#222222">solid: worn tread, smaller</text>
+<text x="300" y="88" font-size="13" fill="#222222">One wheel turn moves the robot</text>
+<text x="300" y="106" font-size="13" font-weight="700" fill="#222222">π × the diameter.</text>
+<rect x="16" y="196" width="488" height="8" fill="#d9dee3"/>
+<line x1="16" y1="196" x2="504" y2="196" stroke="#444444" stroke-width="1.5"/>
+<line x1="120" y1="136" x2="120" y2="193" stroke="#c2410c" stroke-width="1.2" stroke-dasharray="3 3"/>
+<rect x="117" y="193" width="6" height="11" fill="#c2410c"/>
+<text x="120" y="130" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">start tape</text>
+<line x1="480" y1="136" x2="480" y2="193" stroke="#c2410c" stroke-width="1.2" stroke-dasharray="3 3"/>
+<rect x="477" y="193" width="6" height="11" fill="#c2410c"/>
+<text x="480" y="130" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">end tape</text>
+<g class="ws-bot"><rect x="30" y="148" width="90" height="26" rx="3" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/><rect x="38" y="140" width="40" height="8" rx="2" fill="#8a939c" stroke="#444444" stroke-width="1"/><line x1="4" y1="161" x2="19.8" y2="161" stroke="#444444" stroke-width="3"/><path d="M27 161L18 165.95L18 156.05Z" fill="#444444"/><g class="ws-wh"><circle cx="48" cy="184" r="12" fill="#3a3f45"/><line x1="48" y1="184" x2="48" y2="175" stroke="#b0b8c0" stroke-width="2.5"/><line x1="48" y1="184" x2="55.79" y2="188.5" stroke="#b0b8c0" stroke-width="2.5"/><line x1="48" y1="184" x2="40.21" y2="188.5" stroke="#b0b8c0" stroke-width="2.5"/><circle cx="48" cy="184" r="3" fill="#b0b8c0"/></g><g class="ws-wh"><circle cx="102" cy="184" r="12" fill="#3a3f45"/><line x1="102" y1="184" x2="102" y2="175" stroke="#b0b8c0" stroke-width="2.5"/><line x1="102" y1="184" x2="109.79" y2="188.5" stroke="#b0b8c0" stroke-width="2.5"/><line x1="102" y1="184" x2="94.21" y2="188.5" stroke="#b0b8c0" stroke-width="2.5"/><circle cx="102" cy="184" r="3" fill="#b0b8c0"/></g></g>
+<line x1="480" y1="226" x2="480" y2="292" stroke="#5c5c5c" stroke-width="1" stroke-dasharray="2 3"/>
+<text x="120" y="226" font-size="12" font-weight="700" fill="#c2410c">tape measure: 117.6 in</text>
+<rect x="120" y="232" width="360" height="12" fill="#c2410c" fill-opacity="0.85"/>
+<text x="120" y="266" font-size="12" font-weight="700" fill="#446ce3">odometry says: 120.0 in</text>
+<rect x="120" y="272" width="360" height="12" fill="#f2f4f6" stroke="#d6d6d6" stroke-width="1"/>
+<rect class="ws-odo" x="120" y="272" width="367.35" height="12" fill="#446ce3" fill-opacity="0.85"/>
+<rect class="ws-x" x="480" y="272" width="7.35" height="12" fill="#c62828"/>
+<text x="16" y="314" font-size="13" font-weight="700" fill="#222222">If the tape says 117.6 in where odometry says 120.0 in,</text>
+<text x="16" y="332" font-size="13" font-weight="700" fill="#222222">the wheels are 2% smaller than the code thinks.</text>
+<line x1="16" y1="346" x2="504" y2="346" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="366" font-size="13" fill="#222222">A wheel 2% smaller makes every distance, speed and auto 2% off. Tread</text>
+<text x="16" y="384" font-size="13" fill="#222222">wears through a season, so the real diameter shrinks.</text>
+</svg>

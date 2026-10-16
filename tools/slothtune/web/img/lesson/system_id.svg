@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="system_id-title system_id-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="system_id-title">The measuring run</title>
+<desc id="system_id-desc">Animated, two tests drawn one after the other under the equation V = kS × direction + kV × speed + kA × acceleration + kG. In each, the green volts we set are on top and the orange speed we record is below. Left, a slow sweep (quasistatic): the volts climb slowly and the speed follows, so acceleration stays near zero and the volts show friction and back-EMF; the kS and kV terms light up. Right, a quick step (dynamic): the volts jump and the speed shoots up, so acceleration is large and the volts show inertia; the kA term lights up. Gravity shows in both: going up an elevator needs kG extra volts, going down it gets kG for free. The robot program keeps running; only the mechanism's own control code is set aside.</desc>
+<style>
+.sid-t1{animation:sid-t1 8s linear infinite}
+@keyframes sid-t1{0%,4%{fill:#222222}6%,42%{fill:#446ce3}44%,100%{fill:#222222}}
+.sid-t2{animation:sid-t2 8s linear infinite}
+@keyframes sid-t2{0%,46%{fill:#222222}48%,90%{fill:#446ce3}92%,100%{fill:#222222}}
+.sid-w0{animation:sid-w0 8s linear infinite}
+@keyframes sid-w0{0%,4%{transform:translateX(-198px)}40%,100%{transform:translateX(0px)}}
+.sid-cur0{opacity:0;animation:sid-cur0 8s linear infinite}
+@keyframes sid-cur0{0%,3.5%{opacity:0;transform:translateX(0px)}4%{opacity:1;transform:translateX(0px)}40%{opacity:1;transform:translateX(190px)}41.5%,100%{opacity:0;transform:translateX(190px)}}
+.sid-f0{animation:sid-f0 8s linear infinite}
+@keyframes sid-f0{0%,96%{opacity:1}99%,100%{opacity:0}}
+.sid-w1{animation:sid-w1 8s linear infinite}
+@keyframes sid-w1{0%,46%{transform:translateX(-198px)}80%,100%{transform:translateX(0px)}}
+.sid-cur1{opacity:0;animation:sid-cur1 8s linear infinite}
+@keyframes sid-cur1{0%,45.5%{opacity:0;transform:translateX(0px)}46%{opacity:1;transform:translateX(0px)}80%{opacity:1;transform:translateX(190px)}81.5%,100%{opacity:0;transform:translateX(190px)}}
+.sid-f1{animation:sid-f1 8s linear infinite}
+@keyframes sid-f1{0%,96%{opacity:1}99%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The measuring run</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Drive the motor with known volts and record what it does.</text>
+
+<text x="260" y="78" font-size="14" fill="#222222" text-anchor="middle" font-weight="700">V = <tspan class="sid-t1">kS × direction + kV × speed</tspan> + <tspan class="sid-t2">kA × acceleration</tspan> + kG</text>
+<text x="16" y="146" font-size="12" font-weight="700" fill="#1a7f37">volts</text>
+<text x="16" y="162" font-size="12" fill="#5c5c5c">we set</text>
+<text x="16" y="232" font-size="12" font-weight="700" fill="#c2410c">speed</text>
+<text x="16" y="248" font-size="12" fill="#5c5c5c">we record</text>
+<text x="80" y="106" font-size="13" font-weight="700" fill="#222222">Slow sweep<tspan font-weight="400" font-size="12" fill="#5c5c5c"> (quasistatic)</tspan></text>
+<path d="M80 116V180H270" fill="none" stroke="#444444" stroke-width="1.3"/>
+<path d="M80 202V266H270" fill="none" stroke="#444444" stroke-width="1.3"/>
+<clipPath id="sid-c0"><rect class="sid-w0" x="80" y="110" width="190" height="160"/></clipPath>
+<g class="sid-f0" clip-path="url(#sid-c0)"><path d="M80 178 L264 124" fill="none" stroke="#1a7f37" stroke-width="2.6"/><path d="M80 264 L107.6 264 L264 212" fill="none" stroke="#c2410c" stroke-width="2.6" stroke-linejoin="round"/></g>
+<line class="sid-cur0" x1="80" y1="112" x2="80" y2="268" stroke="#b0b8c0" stroke-width="1.5"/>
+<text x="310" y="106" font-size="13" font-weight="700" fill="#222222">Quick step<tspan font-weight="400" font-size="12" fill="#5c5c5c"> (dynamic)</tspan></text>
+<path d="M310 116V180H500" fill="none" stroke="#444444" stroke-width="1.3"/>
+<path d="M310 202V266H500" fill="none" stroke="#444444" stroke-width="1.3"/>
+<clipPath id="sid-c1"><rect class="sid-w1" x="310" y="110" width="190" height="160"/></clipPath>
+<g class="sid-f1" clip-path="url(#sid-c1)"><path d="M310 178 L322 178 L322 132 L494 132" fill="none" stroke="#1a7f37" stroke-width="2.6"/><path d="M310 264 L322 264 L323 262 L325 258.3 L327 254.9 L329 251.7 L331 248.8 L333 246.1 L335 243.5 L337 241.2 L339 239 L341 237 L343 235.2 L345 233.5 L347 231.9 L349 230.4 L351 229 L353 227.8 L355 226.6 L357 225.5 L359 224.5 L361 223.6 L363 222.7 L365 221.9 L367 221.2 L369 220.5 L371 219.9 L373 219.3 L375 218.8 L377 218.3 L379 217.8 L381 217.4 L383 217 L385 216.6 L387 216.3 L389 216 L391 215.7 L393 215.4 L395 215.1 L397 214.9 L399 214.7 L401 214.5 L403 214.3 L405 214.1 L407 214 L409 213.8 L411 213.7 L413 213.6 L415 213.5 L417 213.3 L419 213.2 L421 213.2 L423 213.1 L425 213 L427 212.9 L429 212.8 L431 212.8 L433 212.7 L435 212.7 L437 212.6 L439 212.6 L441 212.5 L443 212.5 L445 212.5 L447 212.4 L449 212.4 L451 212.4 L453 212.3 L455 212.3 L457 212.3 L459 212.3 L461 212.2 L463 212.2 L465 212.2 L467 212.2 L469 212.2 L471 212.2 L473 212.2 L475 212.1 L477 212.1 L479 212.1 L481 212.1 L483 212.1 L485 212.1 L487 212.1 L489 212.1 L491 212.1 L493 212.1" fill="none" stroke="#c2410c" stroke-width="2.6" stroke-linejoin="round"/></g>
+<line class="sid-cur1" x1="310" y1="112" x2="310" y2="268" stroke="#b0b8c0" stroke-width="1.5"/>
+<text x="175" y="290" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">acceleration near zero</text>
+<text x="175" y="307" font-size="12" fill="#222222" text-anchor="middle">volts show friction and back-EMF</text>
+<text x="405" y="290" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">acceleration large</text>
+<text x="405" y="307" font-size="12" fill="#222222" text-anchor="middle">volts show inertia</text>
+<line x1="16" y1="324" x2="504" y2="324" stroke="#d6d6d6"/>
+<text x="16" y="344" font-size="13" fill="#222222">Gravity shows in both: going up an elevator needs kG extra volts;</text>
+<text x="16" y="362" font-size="13" fill="#222222">going down, it gets kG for free.</text>
+<text x="16" y="386" font-size="12" fill="#5c5c5c">The robot program keeps running; only the mechanism's own control code is set aside.</text>
+</svg>

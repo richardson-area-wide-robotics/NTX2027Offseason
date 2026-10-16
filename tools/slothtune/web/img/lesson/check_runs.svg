@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 392" width="520" height="392" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="check_runs-title check_runs-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="check_runs-title">Check runs: how hard to push</title>
+<desc id="check_runs-desc">Animated, four step tests drawn one after another. Baseline, the gains it had: a slow gray line, the one to beat. 1.00x, the model's own gains: a clean rise, so it goes harder. 1.6x, harder: it overshoots and rings, too hard. Between the two best: quick and clean, the best, so it is kept and outlined in green. Below, a how-hard scale runs from half to double, with walls marked never past at both ends, and ticks at 0.6x softer, 1.00x, 1.6x harder and between; a dot appears on it for each check. It ends on the best; if that can't beat the baseline, it puts back every gain it started with and says why. Four checks at most.</desc>
+<style>
+.cr-w0{animation:cr-w0 8s linear infinite}
+@keyframes cr-w0{0%,4%{transform:translateX(-104px)}16%,100%{transform:translateX(0px)}}
+.cr-f0{animation:cr-f0 8s linear infinite}
+@keyframes cr-f0{0%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-v0{animation:cr-v0 8s linear infinite}
+@keyframes cr-v0{0%,16%{opacity:0}17.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-w1{animation:cr-w1 8s linear infinite}
+@keyframes cr-w1{0%,22%{transform:translateX(-104px)}34%,100%{transform:translateX(0px)}}
+.cr-f1{animation:cr-f1 8s linear infinite}
+@keyframes cr-f1{0%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-v1{animation:cr-v1 8s linear infinite}
+@keyframes cr-v1{0%,34%{opacity:0}35.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-w2{animation:cr-w2 8s linear infinite}
+@keyframes cr-w2{0%,40%{transform:translateX(-104px)}52%,100%{transform:translateX(0px)}}
+.cr-f2{animation:cr-f2 8s linear infinite}
+@keyframes cr-f2{0%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-v2{animation:cr-v2 8s linear infinite}
+@keyframes cr-v2{0%,52%{opacity:0}53.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-w3{animation:cr-w3 8s linear infinite}
+@keyframes cr-w3{0%,58%{transform:translateX(-104px)}70%,100%{transform:translateX(0px)}}
+.cr-f3{animation:cr-f3 8s linear infinite}
+@keyframes cr-f3{0%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-v3{animation:cr-v3 8s linear infinite}
+@keyframes cr-v3{0%,70%{opacity:0}71.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-keep{animation:cr-keep 8s linear infinite}
+@keyframes cr-keep{0%,74%{opacity:0}75.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-d0{animation:cr-d0 8s linear infinite}
+@keyframes cr-d0{0%,22%{opacity:0}23.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-d1{animation:cr-d1 8s linear infinite}
+@keyframes cr-d1{0%,40%{opacity:0}41.5%,96%{opacity:1}99%,100%{opacity:0}}
+.cr-d2{animation:cr-d2 8s linear infinite}
+@keyframes cr-d2{0%,58%{opacity:0}59.5%,96%{opacity:1}99%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Check runs: how hard to push</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Try the model's gains softer and harder, and keep whichever does best.</text>
+
+<rect x="16" y="62" width="115" height="150" rx="8" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.2"/>
+<text x="73.5" y="82" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">Baseline</text>
+<text x="73.5" y="98" font-size="12" fill="#5c5c5c" text-anchor="middle">the gains it had</text>
+<path d="M26 108V172H122" fill="none" stroke="#444444" stroke-width="1.2"/>
+<clipPath id="cr-c0"><rect class="cr-w0" x="26" y="102" width="96" height="72"/></clipPath>
+<g class="cr-f0" clip-path="url(#cr-c0)"><path d="M26 166 L34 166 L34 124 L120 124" fill="none" stroke="#446ce3" stroke-width="1.6" stroke-dasharray="5 3"/><path d="M26 166 L34 166 L35 164.9 L36 163.9 L37 162.9 L38 161.9 L39 160.9 L40 160 L41 159.1 L42 158.2 L43 157.3 L44 156.4 L45 155.6 L46 154.8 L47 154 L48 153.3 L49 152.5 L50 151.8 L51 151.1 L52 150.4 L53 149.7 L54 149 L55 148.4 L56 147.8 L57 147.2 L58 146.6 L59 146 L60 145.5 L61 144.9 L62 144.4 L63 143.9 L64 143.3 L65 142.9 L66 142.4 L67 141.9 L68 141.4 L69 141 L70 140.6 L71 140.1 L72 139.7 L73 139.3 L74 138.9 L75 138.6 L76 138.2 L77 137.8 L78 137.5 L79 137.1 L80 136.8 L81 136.5 L82 136.2 L83 135.8 L84 135.5 L85 135.2 L86 135 L87 134.7 L88 134.4 L89 134.1 L90 133.9 L91 133.6 L92 133.4 L93 133.1 L94 132.9 L95 132.7 L96 132.5 L97 132.2 L98 132 L99 131.8 L100 131.6 L101 131.4 L102 131.2 L103 131.1 L104 130.9 L105 130.7 L106 130.5 L107 130.4 L108 130.2 L109 130 L110 129.9 L111 129.7 L112 129.6 L113 129.5 L114 129.3 L115 129.2 L116 129 L117 128.9 L118 128.8 L119 128.7 L120 128.6" fill="none" stroke="#8a939c" stroke-width="2.4" stroke-linejoin="round"/></g>
+<g class="cr-v0"><text x="73.5" y="198" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">the one to beat</text></g>
+<rect x="139" y="62" width="115" height="150" rx="8" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.2"/>
+<text x="196.5" y="82" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">1.00x</text>
+<text x="196.5" y="98" font-size="12" fill="#5c5c5c" text-anchor="middle">the model's own</text>
+<path d="M149 108V172H245" fill="none" stroke="#444444" stroke-width="1.2"/>
+<clipPath id="cr-c1"><rect class="cr-w1" x="149" y="102" width="96" height="72"/></clipPath>
+<g class="cr-f1" clip-path="url(#cr-c1)"><path d="M149 166 L157 166 L157 124 L243 124" fill="none" stroke="#446ce3" stroke-width="1.6" stroke-dasharray="5 3"/><path d="M149 166 L157 166 L158 165.6 L159 164.4 L160 162.8 L161 160.8 L162 158.6 L163 156.3 L164 154 L165 151.7 L166 149.4 L167 147.3 L168 145.2 L169 143.3 L170 141.5 L171 139.8 L172 138.2 L173 136.8 L174 135.5 L175 134.3 L176 133.2 L177 132.2 L178 131.3 L179 130.5 L180 129.8 L181 129.2 L182 128.6 L183 128.1 L184 127.6 L185 127.2 L186 126.8 L187 126.5 L188 126.2 L189 125.9 L190 125.7 L191 125.5 L192 125.3 L193 125.2 L194 125 L195 124.9 L196 124.8 L197 124.7 L198 124.6 L199 124.5 L200 124.5 L201 124.4 L202 124.4 L203 124.3 L204 124.3 L205 124.2 L206 124.2 L207 124.2 L208 124.2 L209 124.1 L210 124.1 L211 124.1 L212 124.1 L213 124.1 L214 124.1 L215 124.1 L216 124.1 L217 124 L218 124 L219 124 L220 124 L221 124 L222 124 L223 124 L224 124 L225 124 L226 124 L227 124 L228 124 L229 124 L230 124 L231 124 L232 124 L233 124 L234 124 L235 124 L236 124 L237 124 L238 124 L239 124 L240 124 L241 124 L242 124 L243 124" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linejoin="round"/></g>
+<g class="cr-v1"><text x="196.5" y="198" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">clean: go harder</text></g>
+<rect x="262" y="62" width="115" height="150" rx="8" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.2"/>
+<text x="319.5" y="82" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">1.6x</text>
+<text x="319.5" y="98" font-size="12" fill="#5c5c5c" text-anchor="middle">harder</text>
+<path d="M272 108V172H368" fill="none" stroke="#444444" stroke-width="1.2"/>
+<clipPath id="cr-c2"><rect class="cr-w2" x="272" y="102" width="96" height="72"/></clipPath>
+<g class="cr-f2" clip-path="url(#cr-c2)"><path d="M272 166 L280 166 L280 124 L366 124" fill="none" stroke="#446ce3" stroke-width="1.6" stroke-dasharray="5 3"/><path d="M272 166 L280 166 L281 164.5 L282 160.2 L283 154 L284 146.6 L285 138.6 L286 130.7 L287 123.5 L288 117.3 L289 112.6 L290 109.3 L291 107.6 L292 107.2 L293 108.2 L294 110.1 L295 112.8 L296 115.8 L297 119 L298 122.1 L299 124.9 L300 127.2 L301 129 L302 130.1 L303 130.7 L304 130.6 L305 130.1 L306 129.3 L307 128.2 L308 126.9 L309 125.6 L310 124.4 L311 123.4 L312 122.5 L313 121.9 L314 121.5 L315 121.3 L316 121.4 L317 121.6 L318 122 L319 122.5 L320 123 L321 123.5 L322 124 L323 124.4 L324 124.7 L325 124.9 L326 125 L327 125.1 L328 125 L329 124.9 L330 124.8 L331 124.6 L332 124.4 L333 124.2 L334 124 L335 123.8 L336 123.7 L337 123.6 L338 123.6 L339 123.6 L340 123.6 L341 123.7 L342 123.7 L343 123.8 L344 123.9 L345 124 L346 124 L347 124.1 L348 124.1 L349 124.2 L350 124.2 L351 124.2 L352 124.2 L353 124.1 L354 124.1 L355 124.1 L356 124 L357 124 L358 124 L359 124 L360 123.9 L361 123.9 L362 123.9 L363 123.9 L364 123.9 L365 123.9 L366 124" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linejoin="round"/></g>
+<g class="cr-v2"><text x="319.5" y="198" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">rang: too hard</text></g>
+<rect x="385" y="62" width="115" height="150" rx="8" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.2"/>
+<text x="442.5" y="82" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">Between</text>
+<text x="442.5" y="98" font-size="12" fill="#5c5c5c" text-anchor="middle">the two best</text>
+<path d="M395 108V172H491" fill="none" stroke="#444444" stroke-width="1.2"/>
+<clipPath id="cr-c3"><rect class="cr-w3" x="395" y="102" width="96" height="72"/></clipPath>
+<g class="cr-f3" clip-path="url(#cr-c3)"><path d="M395 166 L403 166 L403 124 L489 124" fill="none" stroke="#446ce3" stroke-width="1.6" stroke-dasharray="5 3"/><path d="M395 166 L403 166 L404 165.1 L405 162.8 L406 159.5 L407 155.8 L408 151.9 L409 148 L410 144.3 L411 140.9 L412 137.8 L413 135 L414 132.6 L415 130.6 L416 128.9 L417 127.5 L418 126.4 L419 125.5 L420 124.8 L421 124.3 L422 124 L423 123.7 L424 123.5 L425 123.4 L426 123.4 L427 123.4 L428 123.4 L429 123.4 L430 123.5 L431 123.5 L432 123.6 L433 123.7 L434 123.7 L435 123.8 L436 123.8 L437 123.8 L438 123.9 L439 123.9 L440 123.9 L441 124 L442 124 L443 124 L444 124 L445 124 L446 124 L447 124 L448 124 L449 124 L450 124 L451 124 L452 124 L453 124 L454 124 L455 124 L456 124 L457 124 L458 124 L459 124 L460 124 L461 124 L462 124 L463 124 L464 124 L465 124 L466 124 L467 124 L468 124 L469 124 L470 124 L471 124 L472 124 L473 124 L474 124 L475 124 L476 124 L477 124 L478 124 L479 124 L480 124 L481 124 L482 124 L483 124 L484 124 L485 124 L486 124 L487 124 L488 124 L489 124" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linejoin="round"/></g>
+<g class="cr-v3"><text x="442.5" y="198" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">best: keep it</text></g>
+<rect class="cr-keep" x="385" y="62" width="115" height="150" rx="8" fill="none" stroke="#1a7f37" stroke-width="3"/>
+<line x1="60.0" y1="252" x2="460.0" y2="252" stroke="#444444" stroke-width="2"/>
+<line x1="60.0" y1="240" x2="60.0" y2="264" stroke="#c62828" stroke-width="4"/>
+<text x="60" y="234" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">never past</text>
+<line x1="460.0" y1="240" x2="460.0" y2="264" stroke="#c62828" stroke-width="4"/>
+<text x="460" y="234" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">never past</text>
+<text x="60" y="280" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">half</text>
+<text x="460" y="280" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">double</text>
+<line x1="112.6" y1="246" x2="112.6" y2="258" stroke="#444444" stroke-width="1.6"/>
+<text x="112.6" y="280" font-size="12" fill="#222222" text-anchor="middle">0.6x softer</text>
+<line x1="260" y1="246" x2="260" y2="258" stroke="#444444" stroke-width="1.6"/>
+<text x="260" y="280" font-size="12" fill="#222222" text-anchor="middle">1.00x</text>
+<line x1="395.6" y1="246" x2="395.6" y2="258" stroke="#444444" stroke-width="1.6"/>
+<text x="395.6" y="280" font-size="12" fill="#222222" text-anchor="middle">1.6x harder</text>
+<line x1="335.7" y1="246" x2="335.7" y2="258" stroke="#444444" stroke-width="1.6"/>
+<text x="335.7" y="234" font-size="12" fill="#222222" text-anchor="middle">between</text>
+
+<circle class="cr-d0" cx="260" cy="252" r="6.5" fill="#1a7f37" stroke="#ffffff" stroke-width="2"/>
+<circle class="cr-d1" cx="395.6" cy="252" r="6.5" fill="#c62828" stroke="#ffffff" stroke-width="2"/>
+<circle class="cr-d2" cx="335.7" cy="252" r="8" fill="#1a7f37" stroke="#ffffff" stroke-width="2"/>
+<line x1="16" y1="300" x2="504" y2="300" stroke="#d6d6d6"/>
+<text x="16" y="320" font-size="13" fill="#222222">It ends on the best. If that can't beat the baseline, it puts back</text>
+<text x="16" y="338" font-size="13" fill="#222222">every gain it started with and says why.</text>
+<text x="16" y="362" font-size="12" fill="#5c5c5c">If a check overshot or rang more than the model said, or buzzed, it goes softer;</text>
+<text x="16" y="378" font-size="12" fill="#5c5c5c">if it was clean, harder. Four checks at most.</text>
+</svg>

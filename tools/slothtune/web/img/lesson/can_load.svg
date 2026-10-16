@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 344" width="520" height="344" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="can_load-title can_load-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="can_load-title">CAN bus load</title>
+<desc id="can_load-desc">Animated. A bar shows how busy the CAN bus is, from 0 to 100%; 1 Mbit/s carries about 7,000 full-size messages a second. Twenty SPARK tiles light up one at a time, and each adds about 2% to the bar, roughly 150 messages a second each, so twenty SPARKs fill about 40%. Then more messages push it past the line at about 80% busy, where messages start arriving late: arbitration makes the higher IDs wait, so their data arrives late and jittery. Waiting is not an error; errors come from the wires.</desc>
+<style>
+.cl-t0{opacity:1;animation:cl-t0 8s linear infinite}
+@keyframes cl-t0{0%{opacity:1}3%{opacity:1}6%{opacity:0}7.7%{opacity:0}8%{opacity:1}100%{opacity:1}}
+.cl-t1{opacity:1;animation:cl-t1 8s linear infinite}
+@keyframes cl-t1{0%{opacity:1}3%{opacity:1}6%{opacity:0}9.7%{opacity:0}10%{opacity:1}100%{opacity:1}}
+.cl-t2{opacity:1;animation:cl-t2 8s linear infinite}
+@keyframes cl-t2{0%{opacity:1}3%{opacity:1}6%{opacity:0}11.7%{opacity:0}12%{opacity:1}100%{opacity:1}}
+.cl-t3{opacity:1;animation:cl-t3 8s linear infinite}
+@keyframes cl-t3{0%{opacity:1}3%{opacity:1}6%{opacity:0}13.7%{opacity:0}14%{opacity:1}100%{opacity:1}}
+.cl-t4{opacity:1;animation:cl-t4 8s linear infinite}
+@keyframes cl-t4{0%{opacity:1}3%{opacity:1}6%{opacity:0}15.7%{opacity:0}16%{opacity:1}100%{opacity:1}}
+.cl-t5{opacity:1;animation:cl-t5 8s linear infinite}
+@keyframes cl-t5{0%{opacity:1}3%{opacity:1}6%{opacity:0}17.7%{opacity:0}18%{opacity:1}100%{opacity:1}}
+.cl-t6{opacity:1;animation:cl-t6 8s linear infinite}
+@keyframes cl-t6{0%{opacity:1}3%{opacity:1}6%{opacity:0}19.7%{opacity:0}20%{opacity:1}100%{opacity:1}}
+.cl-t7{opacity:1;animation:cl-t7 8s linear infinite}
+@keyframes cl-t7{0%{opacity:1}3%{opacity:1}6%{opacity:0}21.7%{opacity:0}22%{opacity:1}100%{opacity:1}}
+.cl-t8{opacity:1;animation:cl-t8 8s linear infinite}
+@keyframes cl-t8{0%{opacity:1}3%{opacity:1}6%{opacity:0}23.7%{opacity:0}24%{opacity:1}100%{opacity:1}}
+.cl-t9{opacity:1;animation:cl-t9 8s linear infinite}
+@keyframes cl-t9{0%{opacity:1}3%{opacity:1}6%{opacity:0}25.7%{opacity:0}26%{opacity:1}100%{opacity:1}}
+.cl-t10{opacity:1;animation:cl-t10 8s linear infinite}
+@keyframes cl-t10{0%{opacity:1}3%{opacity:1}6%{opacity:0}27.7%{opacity:0}28%{opacity:1}100%{opacity:1}}
+.cl-t11{opacity:1;animation:cl-t11 8s linear infinite}
+@keyframes cl-t11{0%{opacity:1}3%{opacity:1}6%{opacity:0}29.7%{opacity:0}30%{opacity:1}100%{opacity:1}}
+.cl-t12{opacity:1;animation:cl-t12 8s linear infinite}
+@keyframes cl-t12{0%{opacity:1}3%{opacity:1}6%{opacity:0}31.7%{opacity:0}32%{opacity:1}100%{opacity:1}}
+.cl-t13{opacity:1;animation:cl-t13 8s linear infinite}
+@keyframes cl-t13{0%{opacity:1}3%{opacity:1}6%{opacity:0}33.7%{opacity:0}34%{opacity:1}100%{opacity:1}}
+.cl-t14{opacity:1;animation:cl-t14 8s linear infinite}
+@keyframes cl-t14{0%{opacity:1}3%{opacity:1}6%{opacity:0}35.7%{opacity:0}36%{opacity:1}100%{opacity:1}}
+.cl-t15{opacity:1;animation:cl-t15 8s linear infinite}
+@keyframes cl-t15{0%{opacity:1}3%{opacity:1}6%{opacity:0}37.7%{opacity:0}38%{opacity:1}100%{opacity:1}}
+.cl-t16{opacity:1;animation:cl-t16 8s linear infinite}
+@keyframes cl-t16{0%{opacity:1}3%{opacity:1}6%{opacity:0}39.7%{opacity:0}40%{opacity:1}100%{opacity:1}}
+.cl-t17{opacity:1;animation:cl-t17 8s linear infinite}
+@keyframes cl-t17{0%{opacity:1}3%{opacity:1}6%{opacity:0}41.7%{opacity:0}42%{opacity:1}100%{opacity:1}}
+.cl-t18{opacity:1;animation:cl-t18 8s linear infinite}
+@keyframes cl-t18{0%{opacity:1}3%{opacity:1}6%{opacity:0}43.7%{opacity:0}44%{opacity:1}100%{opacity:1}}
+.cl-t19{opacity:1;animation:cl-t19 8s linear infinite}
+@keyframes cl-t19{0%{opacity:1}3%{opacity:1}6%{opacity:0}45.7%{opacity:0}46%{opacity:1}100%{opacity:1}}
+.cl-bar{transform-box:fill-box;transform-origin:0% 50%;transform:scaleX(0.4);animation:cl-bar 8s linear infinite}
+@keyframes cl-bar{0%{transform:scaleX(0.4)}3%{transform:scaleX(0.4)}6%{transform:scaleX(0.001)}7.7%{transform:scaleX(0.001)}8%{transform:scaleX(0.020)}9.7%{transform:scaleX(0.020)}10%{transform:scaleX(0.040)}11.7%{transform:scaleX(0.040)}12%{transform:scaleX(0.060)}13.7%{transform:scaleX(0.060)}14%{transform:scaleX(0.080)}15.7%{transform:scaleX(0.080)}16%{transform:scaleX(0.100)}17.7%{transform:scaleX(0.100)}18%{transform:scaleX(0.120)}19.7%{transform:scaleX(0.120)}20%{transform:scaleX(0.140)}21.7%{transform:scaleX(0.140)}22%{transform:scaleX(0.160)}23.7%{transform:scaleX(0.160)}24%{transform:scaleX(0.180)}25.7%{transform:scaleX(0.180)}26%{transform:scaleX(0.200)}27.7%{transform:scaleX(0.200)}28%{transform:scaleX(0.220)}29.7%{transform:scaleX(0.220)}30%{transform:scaleX(0.240)}31.7%{transform:scaleX(0.240)}32%{transform:scaleX(0.260)}33.7%{transform:scaleX(0.260)}34%{transform:scaleX(0.280)}35.7%{transform:scaleX(0.280)}36%{transform:scaleX(0.300)}37.7%{transform:scaleX(0.300)}38%{transform:scaleX(0.320)}39.7%{transform:scaleX(0.320)}40%{transform:scaleX(0.340)}41.7%{transform:scaleX(0.340)}42%{transform:scaleX(0.360)}43.7%{transform:scaleX(0.360)}44%{transform:scaleX(0.380)}45.7%{transform:scaleX(0.380)}46%{transform:scaleX(0.400)}100%{transform:scaleX(0.4)}}
+.cl-more{transform-box:fill-box;transform-origin:0% 50%;animation:cl-more 8s linear infinite}
+@keyframes cl-more{0%{opacity:1;transform:scaleX(1)}3%{opacity:1;transform:scaleX(1)}6%{opacity:0;transform:scaleX(0.001)}55%{opacity:0;transform:scaleX(0.001)}55.4%{opacity:1;transform:scaleX(0.02)}75%{opacity:1;transform:scaleX(1)}100%{opacity:1;transform:scaleX(1)}}
+.cl-twenty{opacity:1;animation:cl-twenty 8s linear infinite}
+@keyframes cl-twenty{0%{opacity:1}3%{opacity:1}6%{opacity:0}47.7%{opacity:0}48%{opacity:1}100%{opacity:1}}
+.cl-late{opacity:1;animation:cl-late 8s linear infinite}
+@keyframes cl-late{0%{opacity:1}3%{opacity:1}6%{opacity:0}70.7%{opacity:0}71%{opacity:1}100%{opacity:1}}
+.cl-mlab{opacity:1;animation:cl-mlab 8s linear infinite}
+@keyframes cl-mlab{0%{opacity:1}3%{opacity:1}6%{opacity:0}70.7%{opacity:0}71%{opacity:1}100%{opacity:1}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">CAN bus load</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">1 Mbit/s carries about 7,000 full-size messages a second.</text>
+<text x="16" y="76" font-size="13" font-weight="700" fill="#222222">How busy the bus is</text>
+<text x="504" y="76" font-size="12" fill="#5c5c5c" text-anchor="end">the Driver Station calls it CAN utilization</text>
+<rect x="30" y="86" width="460" height="36" fill="#f4f4f4"/>
+<rect class="cl-bar" x="30" y="86" width="460" height="36" fill="#1a7f37"/>
+<defs><pattern id="cl-hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#d5dbe0"/><line x1="0" y1="0" x2="0" y2="8" stroke="#b0b8c0" stroke-width="4"/></pattern></defs>
+<rect class="cl-more" x="214.0" y="86" width="230.0" height="36" fill="url(#cl-hatch)"/>
+<rect x="30" y="86" width="460" height="36" fill="none" stroke="#444444" stroke-width="1.4"/>
+<text x="122" y="109" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle" class="cl-twenty">20 SPARKs</text>
+<text x="306" y="109" font-size="12" font-weight="700" fill="#222222" text-anchor="middle" class="cl-mlab">more messages</text>
+<line x1="398.0" y1="86" x2="398.0" y2="128" stroke="#c62828" stroke-width="2.5" stroke-dasharray="5 3"/>
+<line x1="30.0" y1="122" x2="30.0" y2="128" stroke="#444444" stroke-width="1.2"/>
+<text x="30" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">0</text>
+<line x1="214.0" y1="122" x2="214.0" y2="128" stroke="#444444" stroke-width="1.2"/>
+<text x="214" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">40%</text>
+<line x1="398.0" y1="122" x2="398.0" y2="128" stroke="#444444" stroke-width="1.2"/>
+<text x="398" y="142" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">80%</text>
+<line x1="490.0" y1="122" x2="490.0" y2="128" stroke="#444444" stroke-width="1.2"/>
+<text x="490" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">100%</text>
+<text x="122" y="166" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle" class="cl-twenty">twenty SPARKs: about 40%</text>
+<text x="504" y="160" font-size="12" font-weight="700" fill="#c62828" text-anchor="end" class="cl-late">past about 80% busy:</text>
+<text x="504" y="176" font-size="12" font-weight="700" fill="#c62828" text-anchor="end" class="cl-late">messages start arriving late</text>
+<text x="16" y="200" font-size="12" font-weight="700" fill="#222222">Each SPARK: roughly 150 messages a second, about 2% of the bus</text>
+<rect x="34" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t0" x="34" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="80" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t1" x="80" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="126" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t2" x="126" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="172" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t3" x="172" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="218" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t4" x="218" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="264" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t5" x="264" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="310" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t6" x="310" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="356" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t7" x="356" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="402" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t8" x="402" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="448" y="210" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t9" x="448" y="210" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="34" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t10" x="34" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="80" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t11" x="80" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="126" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t12" x="126" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="172" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t13" x="172" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="218" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t14" x="218" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="264" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t15" x="264" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="310" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t16" x="310" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="356" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t17" x="356" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="402" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t18" x="402" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<rect x="448" y="238" width="38" height="22" rx="4" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="cl-t19" x="448" y="238" width="38" height="22" rx="4" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<line x1="16" y1="274" x2="504" y2="274" stroke="#e2e2e2"/>
+<text x="16" y="296" font-size="13" fill="#222222">Near full, arbitration makes the higher IDs wait: late, jittery data.</text>
+<text x="16" y="316" font-size="12" fill="#5c5c5c">Waiting is not an error. Errors come from the wires: a loose plug, a bad</text>
+<text x="16" y="332" font-size="12" fill="#5c5c5c">terminator, noise. The CAN load test runs the bus busy on purpose to find them.</text>
+</svg>

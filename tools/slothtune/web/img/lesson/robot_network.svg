@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 410" width="520" height="410" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="rn-title rn-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="rn-title">The robot's network</title>
+<desc id="rn-desc">Animated. A dashed outline marks the robot. Inside it, the radio at 10.17.45.1 sits in the middle, wired to the robot controller (roboRIO or SystemCore) at 10.17.45.2 and to a coprocessor. Outside it, the Driver Station laptop (Driver Station and dashboards) and this laptop (Sloth Tune) both connect to the radio and get their 10.17.45.x addresses from it. Blue dots, one message at a time, travel from a laptop or the coprocessor to the radio and on to where they are going; the radio glows each time one passes through. Team 1745's number becomes the 17 and 45 in every address.</desc>
+<style>
+.rn-p0 { transform: translate(272px, 147.5px); animation: rn-p0 8s linear infinite; }
+@keyframes rn-p0 {
+  0% { transform: translate(192px, 143px); opacity: 0; }
+  1.5% { transform: translate(211.2px, 144.08px); opacity: 1; }
+  12.5% { transform: translate(352px, 152px); opacity: 1; }
+  23.5% { transform: translate(316.48px, 219.2px); opacity: 1; }
+  24% { transform: translate(315px, 222px); opacity: 1; }
+  25% { transform: translate(315px, 222px); opacity: 0; }
+  100% { transform: translate(315px, 222px); opacity: 0; }
+}
+.rn-p1 { transform: translate(333.5px, 187px); animation: rn-p1 8s linear infinite; }
+@keyframes rn-p1 {
+  0% { transform: translate(315px, 222px); opacity: 0; }
+  25% { transform: translate(315px, 222px); opacity: 0; }
+  26.5% { transform: translate(319.44px, 213.6px); opacity: 1; }
+  37.5% { transform: translate(352px, 152px); opacity: 1; }
+  48.5% { transform: translate(198.4px, 228.8px); opacity: 1; }
+  49% { transform: translate(192px, 232px); opacity: 1; }
+  50% { transform: translate(192px, 232px); opacity: 0; }
+  100% { transform: translate(192px, 232px); opacity: 0; }
+}
+.rn-p2 { transform: translate(401px, 187px); animation: rn-p2 8s linear infinite; }
+@keyframes rn-p2 {
+  0% { transform: translate(450px, 222px); opacity: 0; }
+  50% { transform: translate(450px, 222px); opacity: 0; }
+  51.5% { transform: translate(438.24px, 213.6px); opacity: 1; }
+  62.5% { transform: translate(352px, 152px); opacity: 1; }
+  73.5% { transform: translate(198.4px, 143.36px); opacity: 1; }
+  74% { transform: translate(192px, 143px); opacity: 1; }
+  75% { transform: translate(192px, 143px); opacity: 0; }
+  100% { transform: translate(192px, 143px); opacity: 0; }
+}
+.rn-p3 { transform: translate(272px, 192px); animation: rn-p3 8s linear infinite; }
+@keyframes rn-p3 {
+  0% { transform: translate(192px, 232px); opacity: 0; }
+  75% { transform: translate(192px, 232px); opacity: 0; }
+  76.5% { transform: translate(211.2px, 222.4px); opacity: 1; }
+  87.5% { transform: translate(352px, 152px); opacity: 1; }
+  98.5% { transform: translate(316.48px, 219.2px); opacity: 1; }
+  99% { transform: translate(315px, 222px); opacity: 1; }
+  100% { transform: translate(315px, 222px); opacity: 0; }
+}
+.rn-ring { opacity: 0; animation: rn-ring 2s linear infinite; }
+@keyframes rn-ring {
+  0% { opacity: 0; }
+  40% { opacity: 0; }
+  50% { opacity: 1; }
+  68% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">The robot's network</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">The radio makes a small network, and everything on it talks IP.</text>
+<text x="16" y="82" font-size="16" font-weight="700" fill="#222222">team <tspan fill="#446ce3">17</tspan><tspan fill="#1a7f37">45</tspan>  →  10.<tspan fill="#446ce3">17</tspan>.<tspan fill="#1a7f37">45</tspan>.x</text>
+<text x="236" y="82" font-size="12" fill="#5c5c5c">Your team number sets the addresses.</text>
+<rect x="212" y="100" width="292" height="204" rx="12" fill="#f6f7f8" stroke="#9aa3ad" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="222" y="118" font-size="12" fill="#5c5c5c">on the robot</text>
+<line x1="192" y1="143" x2="352" y2="152" stroke="#444444" stroke-width="2"/>
+<line x1="192" y1="232" x2="352" y2="152" stroke="#444444" stroke-width="2"/>
+<line x1="315" y1="222" x2="352" y2="152" stroke="#444444" stroke-width="2"/>
+<line x1="450" y1="222" x2="352" y2="152" stroke="#444444" stroke-width="2"/>
+<g class="rn-p0"><circle r="6.5" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+<g class="rn-p1"><circle r="6.5" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+<g class="rn-p2"><circle r="6.5" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+<g class="rn-p3"><circle r="6.5" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+<path d="M318 126 L311 110 M386 126 L393 110" stroke="#444444" stroke-width="2.5" stroke-linecap="round"/>
+<rect class="rn-ring" x="294" y="120" width="116" height="64" rx="10" fill="none" stroke="#446ce3" stroke-width="3"/>
+<rect x="300" y="126" width="104" height="52" rx="7" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<text x="352" y="147" font-size="13" fill="#222222" font-weight="700" text-anchor="middle">radio</text>
+<text x="352" y="166" font-size="13" fill="#446ce3" font-weight="700" text-anchor="middle">10.17.45.1</text>
+<rect x="240" y="222" width="150" height="72" rx="7" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<text x="315" y="242" font-size="13" fill="#222222" font-weight="700" text-anchor="middle">robot controller</text>
+<text x="315" y="259" font-size="12" fill="#5c5c5c" text-anchor="middle">roboRIO or SystemCore</text>
+<text x="315" y="281" font-size="13" fill="#446ce3" font-weight="700" text-anchor="middle">10.17.45.2</text>
+<rect x="400" y="222" width="100" height="72" rx="7" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<text x="450" y="250" font-size="13" fill="#222222" font-weight="700" text-anchor="middle">coprocessor</text>
+<text x="450" y="272" font-size="13" fill="#446ce3" font-weight="700" text-anchor="middle">10.17.45.x</text>
+<rect x="16" y="112" width="176" height="62" rx="5" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<path d="M10 174 H198 L190 184 H18 Z" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<text x="26" y="132" font-size="13" fill="#222222" font-weight="700">Driver Station laptop</text>
+<text x="26" y="149" font-size="12" fill="#5c5c5c">Driver Station, dashboards</text>
+<text x="26" y="167" font-size="13" fill="#446ce3" font-weight="700">10.17.45.x</text><text x="106" y="167" font-size="12" fill="#5c5c5c">from the radio</text>
+<rect x="16" y="201" width="176" height="62" rx="5" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<path d="M10 263 H198 L190 273 H18 Z" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<text x="26" y="221" font-size="13" fill="#222222" font-weight="700">this laptop</text>
+<text x="26" y="238" font-size="12" fill="#5c5c5c">Sloth Tune</text>
+<text x="26" y="256" font-size="13" fill="#446ce3" font-weight="700">10.17.45.x</text><text x="106" y="256" font-size="12" fill="#5c5c5c">from the radio</text>
+<line x1="16" y1="318" x2="504" y2="318" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="338" font-size="13" fill="#222222">The robot controller is at .2 and the radio at .1; the laptops get</text>
+<text x="16" y="356" font-size="13" fill="#222222">their addresses from the radio.</text>
+<text x="16" y="373" font-size="12" fill="#5c5c5c">A roboRIO also answers to roboRIO-1745-FRC.local.</text>
+<text x="16" y="390" font-size="12" fill="#5c5c5c">Each dot is a message: control packets, NetworkTables, camera streams.</text>
+</svg>

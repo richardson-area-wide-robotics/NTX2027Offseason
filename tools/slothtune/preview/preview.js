@@ -112,4 +112,12 @@
   let start = "tools";
   try { start = localStorage.getItem("pv.view") || "tools"; } catch (err) { /* storage blocked */ }
   view(start);
+  // The ribbon's height comes off the tool's work area (preview.css), and the open "About" closes on
+  // a click elsewhere or Escape.
+  const ribbon = document.querySelector(".pv-ribbon"), about_ = document.querySelector(".pv-about");
+  const fit = () => document.documentElement.style.setProperty("--pv-h", Math.ceil(ribbon.getBoundingClientRect().height) + "px");
+  fit();
+  addEventListener("resize", fit);
+  document.addEventListener("click", ev => { if (about_ && about_.open && !about_.contains(ev.target)) about_.open = false; });
+  document.addEventListener("keydown", ev => { if (ev.key === "Escape" && about_) about_.open = false; });
 })();

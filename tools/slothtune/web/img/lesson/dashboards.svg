@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="db-title db-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="db-title">Dashboards</title>
+<desc id="db-desc">Animated. At the top, the robot publishes one value; a dot in a small gauge slides back and forth as the value changes. Dashed lines flow down from the robot to three dashboards, which all show that same value at the same moment, each its own way. Elastic, for the drive team in a match, shows one big, simple bar that grows and shrinks. AdvantageScope, for engineers, shows a graph scrolling past, live or from a log afterwards. This tool shows the value on a scale next to a green band for what it should be, and says in range or out of range.</desc>
+<style>
+.db-g { transform: translate(41.8px, 0px); animation: db-g 8s linear infinite; }
+@keyframes db-g {
+  0% { transform: translate(41.8px, 0px); }
+  1.25% { transform: translate(44.71px, 0px); }
+  2.5% { transform: translate(47.54px, 0px); }
+  3.75% { transform: translate(50.22px, 0px); }
+  5% { transform: translate(52.68px, 0px); }
+  6.25% { transform: translate(54.86px, 0px); }
+  7.5% { transform: translate(56.72px, 0px); }
+  8.75% { transform: translate(58.22px, 0px); }
+  10% { transform: translate(59.37px, 0px); }
+  11.25% { transform: translate(60.16px, 0px); }
+  12.5% { transform: translate(60.61px, 0px); }
+  13.75% { transform: translate(60.76px, 0px); }
+  15% { transform: translate(60.66px, 0px); }
+  16.25% { transform: translate(60.36px, 0px); }
+  17.5% { transform: translate(59.93px, 0px); }
+  18.75% { transform: translate(59.42px, 0px); }
+  20% { transform: translate(58.91px, 0px); }
+  21.25% { transform: translate(58.45px, 0px); }
+  22.5% { transform: translate(58.08px, 0px); }
+  23.75% { transform: translate(57.84px, 0px); }
+  25% { transform: translate(57.76px, 0px); }
+  26.25% { transform: translate(57.84px, 0px); }
+  27.5% { transform: translate(58.08px, 0px); }
+  28.75% { transform: translate(58.45px, 0px); }
+  30% { transform: translate(58.91px, 0px); }
+  31.25% { transform: translate(59.42px, 0px); }
+  32.5% { transform: translate(59.93px, 0px); }
+  33.75% { transform: translate(60.36px, 0px); }
+  35% { transform: translate(60.66px, 0px); }
+  36.25% { transform: translate(60.76px, 0px); }
+  37.5% { transform: translate(60.61px, 0px); }
+  38.75% { transform: translate(60.16px, 0px); }
+  40% { transform: translate(59.37px, 0px); }
+  41.25% { transform: translate(58.22px, 0px); }
+  42.5% { transform: translate(56.72px, 0px); }
+  43.75% { transform: translate(54.86px, 0px); }
+  45% { transform: translate(52.68px, 0px); }
+  46.25% { transform: translate(50.22px, 0px); }
+  47.5% { transform: translate(47.54px, 0px); }
+  48.75% { transform: translate(44.71px, 0px); }
+  50% { transform: translate(41.8px, 0px); }
+  51.25% { transform: translate(38.89px, 0px); }
+  52.5% { transform: translate(36.06px, 0px); }
+  53.75% { transform: translate(33.38px, 0px); }
+  55% { transform: translate(30.92px, 0px); }
+  56.25% { transform: translate(28.74px, 0px); }
+  57.5% { transform: translate(26.88px, 0px); }
+  58.75% { transform: translate(25.38px, 0px); }
+  60% { transform: translate(24.23px, 0px); }
+  61.25% { transform: translate(23.44px, 0px); }
+  62.5% { transform: translate(22.99px, 0px); }
+  63.75% { transform: translate(22.84px, 0px); }
+  65% { transform: translate(22.94px, 0px); }
+  66.25% { transform: translate(23.24px, 0px); }
+  67.5% { transform: translate(23.67px, 0px); }
+  68.75% { transform: translate(24.18px, 0px); }
+  70% { transform: translate(24.69px, 0px); }
+  71.25% { transform: translate(25.15px, 0px); }
+  72.5% { transform: translate(25.52px, 0px); }
+  73.75% { transform: translate(25.76px, 0px); }
+  75% { transform: translate(25.84px, 0px); }
+  76.25% { transform: translate(25.76px, 0px); }
+  77.5% { transform: translate(25.52px, 0px); }
+  78.75% { transform: translate(25.15px, 0px); }
+  80% { transform: translate(24.69px, 0px); }
+  81.25% { transform: translate(24.18px, 0px); }
+  82.5% { transform: translate(23.67px, 0px); }
+  83.75% { transform: translate(23.24px, 0px); }
+  85% { transform: translate(22.94px, 0px); }
+  86.25% { transform: translate(22.84px, 0px); }
+  87.5% { transform: translate(22.99px, 0px); }
+  88.75% { transform: translate(23.44px, 0px); }
+  90% { transform: translate(24.23px, 0px); }
+  91.25% { transform: translate(25.38px, 0px); }
+  92.5% { transform: translate(26.88px, 0px); }
+  93.75% { transform: translate(28.74px, 0px); }
+  95% { transform: translate(30.92px, 0px); }
+  96.25% { transform: translate(33.38px, 0px); }
+  97.5% { transform: translate(36.06px, 0px); }
+  98.75% { transform: translate(38.89px, 0px); }
+  100% { transform: translate(41.8px, 0px); }
+}
+.db-bar { transform-box: fill-box; transform-origin: 0 50%; transform: scaleX(0.55); animation: db-bar 8s linear infinite; }
+@keyframes db-bar {
+  0% { transform: scaleX(0.550); }
+  1.25% { transform: scaleX(0.588); }
+  2.5% { transform: scaleX(0.626); }
+  3.75% { transform: scaleX(0.661); }
+  5% { transform: scaleX(0.693); }
+  6.25% { transform: scaleX(0.722); }
+  7.5% { transform: scaleX(0.746); }
+  8.75% { transform: scaleX(0.766); }
+  10% { transform: scaleX(0.781); }
+  11.25% { transform: scaleX(0.792); }
+  12.5% { transform: scaleX(0.797); }
+  13.75% { transform: scaleX(0.799); }
+  15% { transform: scaleX(0.798); }
+  16.25% { transform: scaleX(0.794); }
+  17.5% { transform: scaleX(0.789); }
+  18.75% { transform: scaleX(0.782); }
+  20% { transform: scaleX(0.775); }
+  21.25% { transform: scaleX(0.769); }
+  22.5% { transform: scaleX(0.764); }
+  23.75% { transform: scaleX(0.761); }
+  25% { transform: scaleX(0.760); }
+  26.25% { transform: scaleX(0.761); }
+  27.5% { transform: scaleX(0.764); }
+  28.75% { transform: scaleX(0.769); }
+  30% { transform: scaleX(0.775); }
+  31.25% { transform: scaleX(0.782); }
+  32.5% { transform: scaleX(0.789); }
+  33.75% { transform: scaleX(0.794); }
+  35% { transform: scaleX(0.798); }
+  36.25% { transform: scaleX(0.799); }
+  37.5% { transform: scaleX(0.797); }
+  38.75% { transform: scaleX(0.792); }
+  40% { transform: scaleX(0.781); }
+  41.25% { transform: scaleX(0.766); }
+  42.5% { transform: scaleX(0.746); }
+  43.75% { transform: scaleX(0.722); }
+  45% { transform: scaleX(0.693); }
+  46.25% { transform: scaleX(0.661); }
+  47.5% { transform: scaleX(0.626); }
+  48.75% { transform: scaleX(0.588); }
+  50% { transform: scaleX(0.550); }
+  51.25% { transform: scaleX(0.512); }
+  52.5% { transform: scaleX(0.474); }
+  53.75% { transform: scaleX(0.439); }
+  55% { transform: scaleX(0.407); }
+  56.25% { transform: scaleX(0.378); }
+  57.5% { transform: scaleX(0.354); }
+  58.75% { transform: scaleX(0.334); }
+  60% { transform: scaleX(0.319); }
+  61.25% { transform: scaleX(0.308); }
+  62.5% { transform: scaleX(0.303); }
+  63.75% { transform: scaleX(0.301); }
+  65% { transform: scaleX(0.302); }
+  66.25% { transform: scaleX(0.306); }
+  67.5% { transform: scaleX(0.311); }
+  68.75% { transform: scaleX(0.318); }
+  70% { transform: scaleX(0.325); }
+  71.25% { transform: scaleX(0.331); }
+  72.5% { transform: scaleX(0.336); }
+  73.75% { transform: scaleX(0.339); }
+  75% { transform: scaleX(0.340); }
+  76.25% { transform: scaleX(0.339); }
+  77.5% { transform: scaleX(0.336); }
+  78.75% { transform: scaleX(0.331); }
+  80% { transform: scaleX(0.325); }
+  81.25% { transform: scaleX(0.318); }
+  82.5% { transform: scaleX(0.311); }
+  83.75% { transform: scaleX(0.306); }
+  85% { transform: scaleX(0.302); }
+  86.25% { transform: scaleX(0.301); }
+  87.5% { transform: scaleX(0.303); }
+  88.75% { transform: scaleX(0.308); }
+  90% { transform: scaleX(0.319); }
+  91.25% { transform: scaleX(0.334); }
+  92.5% { transform: scaleX(0.354); }
+  93.75% { transform: scaleX(0.378); }
+  95% { transform: scaleX(0.407); }
+  96.25% { transform: scaleX(0.439); }
+  97.5% { transform: scaleX(0.474); }
+  98.75% { transform: scaleX(0.512); }
+  100% { transform: scaleX(0.550); }
+}
+.db-scroll { animation: db-scroll 8s linear infinite; }
+@keyframes db-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-128px); }
+}
+.db-now { transform: translate(0px, -35.2px); animation: db-now 8s linear infinite; }
+@keyframes db-now {
+  0% { transform: translate(0px, -35.2px); }
+  1.25% { transform: translate(0px, -37.65px); }
+  2.5% { transform: translate(0px, -40.04px); }
+  3.75% { transform: translate(0px, -42.29px); }
+  5% { transform: translate(0px, -44.36px); }
+  6.25% { transform: translate(0px, -46.2px); }
+  7.5% { transform: translate(0px, -47.76px); }
+  8.75% { transform: translate(0px, -49.03px); }
+  10% { transform: translate(0px, -49.99px); }
+  11.25% { transform: translate(0px, -50.66px); }
+  12.5% { transform: translate(0px, -51.04px); }
+  13.75% { transform: translate(0px, -51.17px); }
+  15% { transform: translate(0px, -51.08px); }
+  16.25% { transform: translate(0px, -50.83px); }
+  17.5% { transform: translate(0px, -50.47px); }
+  18.75% { transform: translate(0px, -50.04px); }
+  20% { transform: translate(0px, -49.61px); }
+  21.25% { transform: translate(0px, -49.22px); }
+  22.5% { transform: translate(0px, -48.91px); }
+  23.75% { transform: translate(0px, -48.71px); }
+  25% { transform: translate(0px, -48.64px); }
+  26.25% { transform: translate(0px, -48.71px); }
+  27.5% { transform: translate(0px, -48.91px); }
+  28.75% { transform: translate(0px, -49.22px); }
+  30% { transform: translate(0px, -49.61px); }
+  31.25% { transform: translate(0px, -50.04px); }
+  32.5% { transform: translate(0px, -50.47px); }
+  33.75% { transform: translate(0px, -50.83px); }
+  35% { transform: translate(0px, -51.08px); }
+  36.25% { transform: translate(0px, -51.17px); }
+  37.5% { transform: translate(0px, -51.04px); }
+  38.75% { transform: translate(0px, -50.66px); }
+  40% { transform: translate(0px, -49.99px); }
+  41.25% { transform: translate(0px, -49.03px); }
+  42.5% { transform: translate(0px, -47.76px); }
+  43.75% { transform: translate(0px, -46.2px); }
+  45% { transform: translate(0px, -44.36px); }
+  46.25% { transform: translate(0px, -42.29px); }
+  47.5% { transform: translate(0px, -40.04px); }
+  48.75% { transform: translate(0px, -37.65px); }
+  50% { transform: translate(0px, -35.2px); }
+  51.25% { transform: translate(0px, -32.75px); }
+  52.5% { transform: translate(0px, -30.36px); }
+  53.75% { transform: translate(0px, -28.11px); }
+  55% { transform: translate(0px, -26.04px); }
+  56.25% { transform: translate(0px, -24.2px); }
+  57.5% { transform: translate(0px, -22.64px); }
+  58.75% { transform: translate(0px, -21.37px); }
+  60% { transform: translate(0px, -20.41px); }
+  61.25% { transform: translate(0px, -19.74px); }
+  62.5% { transform: translate(0px, -19.36px); }
+  63.75% { transform: translate(0px, -19.23px); }
+  65% { transform: translate(0px, -19.32px); }
+  66.25% { transform: translate(0px, -19.57px); }
+  67.5% { transform: translate(0px, -19.93px); }
+  68.75% { transform: translate(0px, -20.36px); }
+  70% { transform: translate(0px, -20.79px); }
+  71.25% { transform: translate(0px, -21.18px); }
+  72.5% { transform: translate(0px, -21.49px); }
+  73.75% { transform: translate(0px, -21.69px); }
+  75% { transform: translate(0px, -21.76px); }
+  76.25% { transform: translate(0px, -21.69px); }
+  77.5% { transform: translate(0px, -21.49px); }
+  78.75% { transform: translate(0px, -21.18px); }
+  80% { transform: translate(0px, -20.79px); }
+  81.25% { transform: translate(0px, -20.36px); }
+  82.5% { transform: translate(0px, -19.93px); }
+  83.75% { transform: translate(0px, -19.57px); }
+  85% { transform: translate(0px, -19.32px); }
+  86.25% { transform: translate(0px, -19.23px); }
+  87.5% { transform: translate(0px, -19.36px); }
+  88.75% { transform: translate(0px, -19.74px); }
+  90% { transform: translate(0px, -20.41px); }
+  91.25% { transform: translate(0px, -21.37px); }
+  92.5% { transform: translate(0px, -22.64px); }
+  93.75% { transform: translate(0px, -24.2px); }
+  95% { transform: translate(0px, -26.04px); }
+  96.25% { transform: translate(0px, -28.11px); }
+  97.5% { transform: translate(0px, -30.36px); }
+  98.75% { transform: translate(0px, -32.75px); }
+  100% { transform: translate(0px, -35.2px); }
+}
+.db-m { transform: translate(66px, 0px); animation: db-m 8s linear infinite; }
+@keyframes db-m {
+  0% { transform: translate(66px, 0px); }
+  1.25% { transform: translate(70.6px, 0px); }
+  2.5% { transform: translate(75.07px, 0px); }
+  3.75% { transform: translate(79.3px, 0px); }
+  5% { transform: translate(83.18px, 0px); }
+  6.25% { transform: translate(86.62px, 0px); }
+  7.5% { transform: translate(89.55px, 0px); }
+  8.75% { transform: translate(91.93px, 0px); }
+  10% { transform: translate(93.74px, 0px); }
+  11.25% { transform: translate(94.98px, 0px); }
+  12.5% { transform: translate(95.7px, 0px); }
+  13.75% { transform: translate(95.94px, 0px); }
+  15% { transform: translate(95.78px, 0px); }
+  16.25% { transform: translate(95.31px, 0px); }
+  17.5% { transform: translate(94.62px, 0px); }
+  18.75% { transform: translate(93.83px, 0px); }
+  20% { transform: translate(93.02px, 0px); }
+  21.25% { transform: translate(92.28px, 0px); }
+  22.5% { transform: translate(91.7px, 0px); }
+  23.75% { transform: translate(91.33px, 0px); }
+  25% { transform: translate(91.2px, 0px); }
+  26.25% { transform: translate(91.33px, 0px); }
+  27.5% { transform: translate(91.7px, 0px); }
+  28.75% { transform: translate(92.28px, 0px); }
+  30% { transform: translate(93.02px, 0px); }
+  31.25% { transform: translate(93.83px, 0px); }
+  32.5% { transform: translate(94.62px, 0px); }
+  33.75% { transform: translate(95.31px, 0px); }
+  35% { transform: translate(95.78px, 0px); }
+  36.25% { transform: translate(95.94px, 0px); }
+  37.5% { transform: translate(95.7px, 0px); }
+  38.75% { transform: translate(94.98px, 0px); }
+  40% { transform: translate(93.74px, 0px); }
+  41.25% { transform: translate(91.93px, 0px); }
+  42.5% { transform: translate(89.55px, 0px); }
+  43.75% { transform: translate(86.62px, 0px); }
+  45% { transform: translate(83.18px, 0px); }
+  46.25% { transform: translate(79.3px, 0px); }
+  47.5% { transform: translate(75.07px, 0px); }
+  48.75% { transform: translate(70.6px, 0px); }
+  50% { transform: translate(66px, 0px); }
+  51.25% { transform: translate(61.4px, 0px); }
+  52.5% { transform: translate(56.93px, 0px); }
+  53.75% { transform: translate(52.7px, 0px); }
+  55% { transform: translate(48.82px, 0px); }
+  56.25% { transform: translate(45.38px, 0px); }
+  57.5% { transform: translate(42.45px, 0px); }
+  58.75% { transform: translate(40.07px, 0px); }
+  60% { transform: translate(38.26px, 0px); }
+  61.25% { transform: translate(37.02px, 0px); }
+  62.5% { transform: translate(36.3px, 0px); }
+  63.75% { transform: translate(36.06px, 0px); }
+  65% { transform: translate(36.22px, 0px); }
+  66.25% { transform: translate(36.69px, 0px); }
+  67.5% { transform: translate(37.38px, 0px); }
+  68.75% { transform: translate(38.17px, 0px); }
+  70% { transform: translate(38.98px, 0px); }
+  71.25% { transform: translate(39.72px, 0px); }
+  72.5% { transform: translate(40.3px, 0px); }
+  73.75% { transform: translate(40.67px, 0px); }
+  75% { transform: translate(40.8px, 0px); }
+  76.25% { transform: translate(40.67px, 0px); }
+  77.5% { transform: translate(40.3px, 0px); }
+  78.75% { transform: translate(39.72px, 0px); }
+  80% { transform: translate(38.98px, 0px); }
+  81.25% { transform: translate(38.17px, 0px); }
+  82.5% { transform: translate(37.38px, 0px); }
+  83.75% { transform: translate(36.69px, 0px); }
+  85% { transform: translate(36.22px, 0px); }
+  86.25% { transform: translate(36.06px, 0px); }
+  87.5% { transform: translate(36.3px, 0px); }
+  88.75% { transform: translate(37.02px, 0px); }
+  90% { transform: translate(38.26px, 0px); }
+  91.25% { transform: translate(40.07px, 0px); }
+  92.5% { transform: translate(42.45px, 0px); }
+  93.75% { transform: translate(45.38px, 0px); }
+  95% { transform: translate(48.82px, 0px); }
+  96.25% { transform: translate(52.7px, 0px); }
+  97.5% { transform: translate(56.93px, 0px); }
+  98.75% { transform: translate(61.4px, 0px); }
+  100% { transform: translate(66px, 0px); }
+}
+.db-ok { opacity: 1; animation: db-ok 8s linear infinite; }
+@keyframes db-ok {
+  0% { opacity: 1; }
+  52.9% { opacity: 1; }
+  54.1% { opacity: 0; }
+  96.15% { opacity: 0; }
+  97.35% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.db-bad { opacity: 0; animation: db-bad 8s linear infinite; }
+@keyframes db-bad {
+  0% { opacity: 0; }
+  52.9% { opacity: 0; }
+  54.1% { opacity: 1; }
+  96.15% { opacity: 1; }
+  97.35% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.db-flow { animation: db-flow 8s linear infinite; }
+@keyframes db-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -80; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">Dashboards: the same values, drawn different ways</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Elastic, AdvantageScope and this tool are all NetworkTables clients.</text>
+<rect x="150" y="60" width="220" height="52" rx="8" fill="#f6f7f8" stroke="#444444" stroke-width="1.5"/>
+<text x="162" y="81" font-size="13" fill="#222222" font-weight="700">robot</text>
+<text x="162" y="99" font-size="12" fill="#5c5c5c">publishes a value</text>
+<line x1="280" y1="88" x2="356" y2="88" stroke="#b0b8c0" stroke-width="5" stroke-linecap="round"/>
+<g class="db-g"><circle cx="280" cy="88" r="6" fill="#446ce3" stroke="#ffffff" stroke-width="2"/></g>
+<path class="db-flow" d="M260 112 L92 140" fill="none" stroke="#446ce3" stroke-width="2" stroke-dasharray="4 6"/>
+<path class="db-flow" d="M260 112 L260 140" fill="none" stroke="#446ce3" stroke-width="2" stroke-dasharray="4 6"/>
+<path class="db-flow" d="M260 112 L428 140" fill="none" stroke="#446ce3" stroke-width="2" stroke-dasharray="4 6"/>
+<rect x="16" y="140" width="152" height="156" rx="8" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<path d="M16 166 V148 A8 8 0 0 1 24 140 H160 A8 8 0 0 1 168 148 V166 Z" fill="#eef2fb" stroke="#444444" stroke-width="1.5"/>
+<text x="26" y="158" font-size="13" fill="#222222" font-weight="700">Elastic</text>
+<text x="26" y="183" font-size="12" fill="#5c5c5c">drive team: big, simple</text>
+<text x="26" y="198" font-size="12" fill="#5c5c5c">widgets, in a match</text>
+<rect x="184" y="140" width="152" height="156" rx="8" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<path d="M184 166 V148 A8 8 0 0 1 192 140 H328 A8 8 0 0 1 336 148 V166 Z" fill="#eef2fb" stroke="#444444" stroke-width="1.5"/>
+<text x="194" y="158" font-size="13" fill="#222222" font-weight="700">AdvantageScope</text>
+<text x="194" y="183" font-size="12" fill="#5c5c5c">engineers: graphs, live</text>
+<text x="194" y="198" font-size="12" fill="#5c5c5c">or from a log afterwards</text>
+<rect x="352" y="140" width="152" height="156" rx="8" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<path d="M352 166 V148 A8 8 0 0 1 360 140 H496 A8 8 0 0 1 504 148 V166 Z" fill="#eef2fb" stroke="#444444" stroke-width="1.5"/>
+<text x="362" y="158" font-size="13" fill="#222222" font-weight="700">This tool</text>
+<text x="362" y="183" font-size="12" fill="#5c5c5c">also reads the code:</text>
+<text x="362" y="198" font-size="12" fill="#5c5c5c">what it should be</text>
+<rect x="28" y="216" width="128" height="46" rx="4" fill="#f1f3f5" stroke="#444444" stroke-width="1.2"/>
+<rect class="db-bar" x="28" y="216" width="128" height="46" rx="4" fill="#446ce3"/>
+<rect x="28" y="216" width="128" height="46" rx="4" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="92" y="284" font-size="12" fill="#5c5c5c" text-anchor="middle">one big widget</text>
+<clipPath id="db-plot"><rect x="196" y="204" width="128" height="76"/></clipPath>
+<rect x="196" y="204" width="128" height="76" fill="#fafbfc" stroke="#444444" stroke-width="1.2"/>
+<line x1="196" y1="258" x2="324" y2="258" stroke="#e6e8eb" stroke-width="1"/>
+<line x1="196" y1="242" x2="324" y2="242" stroke="#e6e8eb" stroke-width="1"/>
+<line x1="196" y1="226" x2="324" y2="226" stroke="#e6e8eb" stroke-width="1"/>
+<g clip-path="url(#db-plot)"><path class="db-scroll" d="M196 238.8 L197.6 236.35 L199.2 233.96 L200.8 231.71 L202.4 229.64 L204 227.8 L205.6 226.24 L207.2 224.97 L208.8 224.01 L210.4 223.34 L212 222.96 L213.6 222.83 L215.2 222.92 L216.8 223.17 L218.4 223.53 L220 223.96 L221.6 224.39 L223.2 224.78 L224.8 225.09 L226.4 225.29 L228 225.36 L229.6 225.29 L231.2 225.09 L232.8 224.78 L234.4 224.39 L236 223.96 L237.6 223.53 L239.2 223.17 L240.8 222.92 L242.4 222.83 L244 222.96 L245.6 223.34 L247.2 224.01 L248.8 224.97 L250.4 226.24 L252 227.8 L253.6 229.64 L255.2 231.71 L256.8 233.96 L258.4 236.35 L260 238.8 L261.6 241.25 L263.2 243.64 L264.8 245.89 L266.4 247.96 L268 249.8 L269.6 251.36 L271.2 252.63 L272.8 253.59 L274.4 254.26 L276 254.64 L277.6 254.77 L279.2 254.68 L280.8 254.43 L282.4 254.07 L284 253.64 L285.6 253.21 L287.2 252.82 L288.8 252.51 L290.4 252.31 L292 252.24 L293.6 252.31 L295.2 252.51 L296.8 252.82 L298.4 253.21 L300 253.64 L301.6 254.07 L303.2 254.43 L304.8 254.68 L306.4 254.77 L308 254.64 L309.6 254.26 L311.2 253.59 L312.8 252.63 L314.4 251.36 L316 249.8 L317.6 247.96 L319.2 245.89 L320.8 243.64 L322.4 241.25 L324 238.8 L325.6 236.35 L327.2 233.96 L328.8 231.71 L330.4 229.64 L332 227.8 L333.6 226.24 L335.2 224.97 L336.8 224.01 L338.4 223.34 L340 222.96 L341.6 222.83 L343.2 222.92 L344.8 223.17 L346.4 223.53 L348 223.96 L349.6 224.39 L351.2 224.78 L352.8 225.09 L354.4 225.29 L356 225.36 L357.6 225.29 L359.2 225.09 L360.8 224.78 L362.4 224.39 L364 223.96 L365.6 223.53 L367.2 223.17 L368.8 222.92 L370.4 222.83 L372 222.96 L373.6 223.34 L375.2 224.01 L376.8 224.97 L378.4 226.24 L380 227.8 L381.6 229.64 L383.2 231.71 L384.8 233.96 L386.4 236.35 L388 238.8 L389.6 241.25 L391.2 243.64 L392.8 245.89 L394.4 247.96 L396 249.8 L397.6 251.36 L399.2 252.63 L400.8 253.59 L402.4 254.26 L404 254.64 L405.6 254.77 L407.2 254.68 L408.8 254.43 L410.4 254.07 L412 253.64 L413.6 253.21 L415.2 252.82 L416.8 252.51 L418.4 252.31 L420 252.24 L421.6 252.31 L423.2 252.51 L424.8 252.82 L426.4 253.21 L428 253.64 L429.6 254.07 L431.2 254.43 L432.8 254.68 L434.4 254.77 L436 254.64 L437.6 254.26 L439.2 253.59 L440.8 252.63 L442.4 251.36 L444 249.8 L445.6 247.96 L447.2 245.89 L448.8 243.64 L450.4 241.25 L452 238.8" fill="none" stroke="#446ce3" stroke-width="2.2" stroke-linejoin="round"/></g>
+<g class="db-now"><circle cx="324" cy="274" r="4.5" fill="#446ce3" stroke="#ffffff" stroke-width="1.5"/></g>
+<text x="324" y="290" font-size="12" fill="#5c5c5c" text-anchor="end">now</text><text x="196" y="290" font-size="12" fill="#5c5c5c">time →</text>
+<rect x="422" y="226" width="42" height="20" fill="#1a7f37" fill-opacity="0.18" stroke="#1a7f37" stroke-width="1.2"/>
+<text x="443" y="221" font-size="12" fill="#1a7f37" font-weight="700" text-anchor="middle">should be</text>
+<line x1="368" y1="236" x2="488" y2="236" stroke="#444444" stroke-width="2"/>
+<g class="db-m"><path d="M368 248 L362 258 H374 Z" fill="#446ce3"/><line x1="368" y1="224" x2="368" y2="248" stroke="#446ce3" stroke-width="2.5"/></g>
+<g class="db-ok"><text x="428" y="280" font-size="12" fill="#1a7f37" font-weight="700" text-anchor="middle">✓ in range</text></g>
+<g class="db-bad"><text x="428" y="280" font-size="12" fill="#b45309" font-weight="700" text-anchor="middle">! out of range</text></g>
+<line x1="16" y1="310" x2="504" y2="310" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="330" font-size="13" fill="#222222">They draw whatever topics the robot publishes: one value, three looks.</text>
+<text x="16" y="347" font-size="12" fill="#5c5c5c">This tool also reads the robot's code and files on this laptop, so it says</text>
+<text x="16" y="364" font-size="12" fill="#5c5c5c">not only what a number is but what it should be.</text>
+<text x="16" y="381" font-size="12" fill="#5c5c5c">Shuffleboard, the older one, leaves WPILib in 2027.</text>
+</svg>

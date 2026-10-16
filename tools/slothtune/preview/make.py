@@ -358,10 +358,13 @@ def build(rec_dir=REC, site=SITE, web=WEB):
     body = body.replace(f'<script src="{first}"></script>', f'<script src="mock.js"></script>\n<script src="{first}"></script>', 1)
     body = body.replace(f'<script src="{last}"></script>', f'<script src="{last}"></script>\n<script src="preview.js"></script>', 1)
     project = next((p["body"].get("name") for p in rec["post"] if p["path"] == "/api/project"), "the robot")
+    # One line, so the tool below it keeps its full height: the long story is behind "About".
     ribbon = f"""<div class="pv-ribbon">
   <span class="pv-tag">Preview</span>
-  <span class="pv-note">Recorded from the real tool, connected to {project}'s robot code in the simulator, {_when(rec["recorded"])}.
-    The robot replays the steering test it ran. Buttons that would move the robot or save a file say so instead.{(" " + html_escape(rec["note"])) if rec.get("note") else ""}</span>
+  <span class="pv-note">Recorded from the real tool in {project}'s simulator, {_when(rec["recorded"])}. Buttons that would move the robot or save a file say so instead.</span>
+  <details class="pv-about"><summary>About this preview</summary>
+    <div class="pv-about-body">Recorded from the real tool, connected to {project}'s robot code in the simulator, {_when(rec["recorded"])}.
+    The robot replays the steering test it ran. Buttons that would move the robot or save a file say so instead.{(" " + html_escape(rec["note"])) if rec.get("note") else ""}</div></details>
   <span class="pv-seg" role="group" aria-label="Show">
     <button data-pv="tools" aria-pressed="true">Sloth Tune (laptop)</button>
     <button data-pv="elastic" aria-pressed="false">Elastic (Driver Station)</button>

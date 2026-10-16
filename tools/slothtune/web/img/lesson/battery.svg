@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 414" width="520" height="414" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="battery-title battery-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="battery-title">The battery: volts drop under load</title>
+<desc id="battery-desc">Animated. A battery drawn as a steady 12.7 V source behind a small resistance inside it, 20 milliohms, wired to the robot's motors. When the motors pull 150 A, current dots flow around the loop and a bar of the volts at the battery's terminals shrinks from 12.7 V to 9.7 V: 20 milliohms times 150 A is 3 V lost inside. When the motors stop, the bar returns to 12.7 V at rest. Below, a scale of sag in milliohms: good up to 20, practice up to 28, retire above; a new battery is about 12. A loose Anderson connector or breaker bolt looks exactly like a tired battery, so check those first.</desc>
+<style>
+.bt-flow{stroke-dashoffset:0;animation:bt-flow 8s linear infinite}
+@keyframes bt-flow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-320}}
+.bt-on{animation:bt-on 8s linear infinite}
+@keyframes bt-on{0%{opacity:1}38%{opacity:1}44%{opacity:0}84%{opacity:0}90%{opacity:1}100%{opacity:1}}
+.bt-dim{animation:bt-dim 8s linear infinite}
+@keyframes bt-dim{0%{opacity:1}38%{opacity:1}44%{opacity:0.25}84%{opacity:0.25}90%{opacity:1}100%{opacity:1}}
+.bt-off{opacity:0;animation:bt-off 8s linear infinite}
+@keyframes bt-off{0%{opacity:0}38%{opacity:0}44%{opacity:1}84%{opacity:1}90%{opacity:0}100%{opacity:0}}
+.bt-v{transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0.7638);animation:bt-v 8s linear infinite}
+@keyframes bt-v{0%{transform:scaleY(0.7638)}38%{transform:scaleY(0.7638)}44%{transform:scaleY(1)}84%{transform:scaleY(1)}90%{transform:scaleY(0.7638)}100%{transform:scaleY(0.7638)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The battery: volts drop under load</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Inside it: a steady voltage behind a small resistance. Current through that costs volts.</text>
+<rect x="20" y="78" width="150" height="154" rx="8" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="30" y="98" font-size="13" font-weight="700" fill="#222222">battery</text>
+<path d="M56 144 V112 H84 M132 112 H170 M56 180 V212 H170" fill="none" stroke="#444444" stroke-width="2"/>
+<path d="M180 112 H262 V146 M262 194 V212 H180" fill="none" stroke="#444444" stroke-width="2"/>
+<rect x="170" y="106" width="10" height="12" fill="#b0b8c0" stroke="#444444"/>
+<rect x="170" y="206" width="10" height="12" fill="#b0b8c0" stroke="#444444"/>
+<text x="190" y="104" font-size="13" font-weight="700" fill="#222222">+</text>
+<text x="190" y="230" font-size="13" font-weight="700" fill="#222222">−</text>
+<g class="bt-on"><path class="bt-flow" d="M180 112 H262 V212 H56 V112 H180" fill="none" stroke="#446ce3" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 15.9"/></g>
+<circle cx="56" cy="162" r="18" fill="#ffffff" stroke="#444444" stroke-width="2"/>
+<text x="56" y="158" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">+</text>
+<text x="56" y="175" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">−</text>
+<text x="82" y="167" font-size="13" font-weight="700" fill="#222222">12.7 V</text>
+<rect x="84" y="104" width="48" height="16" fill="#f4f4f4"/>
+<path d="M84 112 L88 106 L96 118 L104 106 L112 118 L120 106 L128 118 L132 112" fill="none" stroke="#444444" stroke-width="2" stroke-linejoin="round"/>
+<path class="bt-on" d="M84 112 L88 106 L96 118 L104 106 L112 118 L120 106 L128 118 L132 112" fill="none" stroke="#b45309" stroke-width="2.6" stroke-linejoin="round"/>
+<text x="108" y="98" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle">20 mΩ</text>
+<circle cx="262" cy="170" r="24" fill="#ffffff" stroke="#333333" stroke-width="2"/>
+<text x="262" y="175" font-size="15" font-weight="700" fill="#333333" text-anchor="middle">M</text>
+<text x="294" y="162" font-size="13" font-weight="700" fill="#222222">motors</text>
+<text x="294" y="180" font-size="13" font-weight="700" fill="#c62828" class="bt-on" data-ov="amps">150 A</text>
+<text x="294" y="180" font-size="13" font-weight="700" fill="#5c5c5c" class="bt-off" data-ov="amps">off: 0 A</text>
+<text x="370" y="68" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">volts at its terminals</text>
+<rect x="350" y="79.6" width="40" height="152.4" fill="#f4f4f4"/>
+<rect class="bt-v" x="350" y="79.6" width="40" height="152.4" fill="#1a7f37"/>
+<rect class="bt-on" x="350" y="79.6" width="40" height="36" fill="#c62828"/>
+<rect x="350" y="79.6" width="40" height="152.4" fill="none" stroke="#444444" stroke-width="1.2"/>
+<path d="M344 232 H396 M390 79.6 H397 M390 115.6 H397" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="344" y="236" font-size="12" fill="#5c5c5c" text-anchor="end">0 V</text>
+<text x="401" y="84" font-size="13" font-weight="700" fill="#222222">12.7 V at rest</text>
+<text x="401" y="102" font-size="12" font-weight="700" fill="#c62828" class="bt-dim">3 V lost inside</text>
+<text x="401" y="120" font-size="12" font-weight="700" fill="#1a7f37" class="bt-dim">9.7 V under load</text>
+<text x="16" y="258" font-size="13" fill="#222222">20 mΩ × 150 A = 3 V lost inside, so 12.7 V at rest becomes 9.7 V.</text>
+<text x="16" y="276" font-size="12" fill="#5c5c5c">A match pulls 100 to 200 A in bursts.</text>
+<line x1="16" y1="290" x2="504" y2="290" stroke="#e2e2e2"/>
+<text x="16" y="312" font-size="13" font-weight="700" fill="#222222">Its sag, in milliohms, tells a healthy battery from a tired one:</text>
+<rect x="30" y="324" width="262.9" height="22" fill="#1a7f37"/>
+<rect x="292.9" y="324" width="105.1" height="22" fill="#b45309"/>
+<rect x="398.0" y="324" width="92.0" height="22" fill="#c62828"/>
+<text x="161.429" y="340" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">good</text>
+<text x="345.429" y="340" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">practice</text>
+<text x="444" y="340" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">retire</text>
+<path d="M30 346 V352 M187.7 346 V352 M292.9 346 V352 M398.0 346 V352" stroke="#444444" stroke-width="1.2"/>
+<text x="30" y="366" font-size="12" fill="#5c5c5c" text-anchor="middle">0</text>
+<text x="187.714" y="366" font-size="12" fill="#5c5c5c" text-anchor="middle">12: new</text>
+<text x="292.857" y="366" font-size="12" fill="#5c5c5c" text-anchor="middle">20</text>
+<text x="398" y="366" font-size="12" fill="#5c5c5c" text-anchor="middle">28</text>
+<text x="490" y="366" font-size="12" fill="#5c5c5c" text-anchor="end">milliohms</text>
+<text x="16" y="388" font-size="12" fill="#5c5c5c">A loose Anderson connector or breaker bolt looks exactly like a tired</text>
+<text x="16" y="404" font-size="12" fill="#5c5c5c">battery, so check those first.</text>
+</svg>

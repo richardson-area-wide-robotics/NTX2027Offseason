@@ -2,13 +2,21 @@
    Elastic window on the Driver Station laptop. Elastic is a dark app, so the replica stays dark in
    either theme; its colors and sizes come from Elastic's source (draggable_widget_container.dart,
    network_alerts.dart, dropdown_chooser.dart, text_display.dart) and a screenshot from its docs. */
-.pv-ribbon { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 8px 16px;
+.pv-ribbon { display: flex; align-items: center; gap: 12px; padding: 4px 16px; position: relative; z-index: 45;
   background: var(--info-bg); color: var(--ink); border-bottom: 1px solid var(--rule); font-size: 13px; line-height: 1.4; }
+/* The tool measures its header and tab bar; the ribbon above them comes off its work area too
+   (preview.js measures it into --pv-h), so a section that fits the real tool fits here. */
+:root { --pv-h: 0px; --work-h: calc(100dvh - var(--pv-h) - var(--top-h) - var(--bar-h) - 2 * var(--gap)); }
+.learn-drawer { top: calc(var(--pv-h) + var(--top-h, 0px) + var(--bar-h, 0px)); }
+.pv-about { flex: none; position: relative; }
+.pv-about summary { cursor: pointer; color: var(--accent); white-space: nowrap; }
+.pv-about-body { position: absolute; right: 0; top: calc(100% + 8px); width: min(620px, 90vw); padding: 10px 14px;
+  background: var(--panel); color: var(--ink); border: 1px solid var(--edge); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .25); }
 .pv-ribbon .pv-tag { font-weight: 700; letter-spacing: .06em; text-transform: uppercase; font-size: 11px;
   background: var(--info); color: var(--on-state); padding: 2px 8px; border-radius: 999px; }
-.pv-ribbon .pv-note { flex: 1 1 320px; min-width: 0; color: var(--ink); }
+.pv-ribbon .pv-note { flex: 1 1 auto; min-width: 0; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pv-seg { display: inline-flex; border: 1px solid var(--edge); border-radius: 8px; overflow: hidden; background: var(--panel); }
-.pv-seg button { border: 0; background: transparent; padding: 6px 12px; cursor: pointer; color: var(--ink); white-space: nowrap; }
+.pv-seg button { border: 0; background: transparent; padding: 4px 12px; cursor: pointer; color: var(--ink); white-space: nowrap; }
 .pv-seg button + button { border-left: 1px solid var(--edge); }
 .pv-seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .pv-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }

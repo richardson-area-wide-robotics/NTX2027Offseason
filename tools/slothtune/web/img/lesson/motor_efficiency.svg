@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 444" width="520" height="444" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="me-title me-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="me-title">Power in, power out, and heat</title>
+<desc id="me-desc">Animated. A power-flow diagram for a NEO V1.1 at 12 V. A blue arrow, power in (volts times amps), enters the motor and splits into a green arrow, power out (torque times speed), that drives a wheel, and a wavy red arrow, heat, rising out of the copper windings. It cycles through three points. Spinning free: about 1.8 A, about 22 W in, almost nothing out and a little heat, with the wheel spinning fastest. At its most power, half its free speed: about half of what goes in comes out as work and the rest is heat, with the wheel at half speed. Stalled: 105 A, about 1,260 W in, nothing out and all 1,260 W as heat; the wheel is still and the windings glow hot. Below: power in = power out + heat, and efficiency = power out divided by power in.</desc>
+<style>
+.me-s1 { opacity: 0; animation: me-s1 9s ease-in-out infinite; }
+.me-s2 { opacity: 1; animation: me-s2 9s ease-in-out infinite; }
+.me-s3 { opacity: 0; animation: me-s3 9s ease-in-out infinite; }
+.me-in { transform-box: fill-box; transform-origin: 50% 50%; transform: scaleY(0.5); animation: me-in 9s ease-in-out infinite; }
+.me-out { transform-box: fill-box; transform-origin: 50% 50%; transform: scaleY(1); animation: me-out 9s ease-in-out infinite; }
+.me-glow { opacity: 0.45; animation: me-glow 9s linear infinite; }
+.me-halo { opacity: 0.2; animation: me-halo 9s linear infinite; }
+.me-wheel { transform-box: view-box; transform-origin: 452px 240px; animation: me-spin 9s linear infinite; }
+.me-fin { opacity: 0.55; animation: me-fin 9s ease-in-out infinite, me-flow 9s linear infinite; }
+.me-fout { opacity: 0.55; animation: me-fout 9s ease-in-out infinite, me-flow 9s linear infinite; }
+.me-fheat { opacity: 0.6; animation: me-fheat 9s ease-in-out infinite, me-flow 9s linear infinite; }
+.me-t1 { opacity: 0; animation: me-t1 9s linear infinite; }
+.me-t2 { opacity: 1; animation: me-t2 9s linear infinite; }
+.me-t3 { opacity: 0; animation: me-t3 9s linear infinite; }
+@keyframes me-t1 {
+  0% { opacity: 1; }
+  27.78% { opacity: 1; }
+  30.56% { opacity: 0; }
+  97.22% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes me-t2 {
+  0% { opacity: 0; }
+  30.56% { opacity: 0; }
+  33.33% { opacity: 1; }
+  61.11% { opacity: 1; }
+  63.89% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes me-t3 {
+  0% { opacity: 0; }
+  63.89% { opacity: 0; }
+  66.67% { opacity: 1; }
+  94.44% { opacity: 1; }
+  97.22% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes me-s1 {
+  0% { opacity: 1; }
+  27.78% { opacity: 1; }
+  33.33% { opacity: 0; }
+  61.11% { opacity: 0; }
+  66.67% { opacity: 0; }
+  94.44% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes me-s2 {
+  0% { opacity: 0; }
+  27.78% { opacity: 0; }
+  33.33% { opacity: 1; }
+  61.11% { opacity: 1; }
+  66.67% { opacity: 0; }
+  94.44% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes me-s3 {
+  0% { opacity: 0; }
+  27.78% { opacity: 0; }
+  33.33% { opacity: 0; }
+  61.11% { opacity: 0; }
+  66.67% { opacity: 1; }
+  94.44% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes me-in {
+  0% { transform: scaleY(0.0625); }
+  27.78% { transform: scaleY(0.0625); }
+  33.33% { transform: scaleY(0.5); }
+  61.11% { transform: scaleY(0.5); }
+  66.67% { transform: scaleY(1.0); }
+  94.44% { transform: scaleY(1.0); }
+  100% { transform: scaleY(0.0625); }
+}
+@keyframes me-out {
+  0% { transform: scaleY(0.075); }
+  27.78% { transform: scaleY(0.075); }
+  33.33% { transform: scaleY(1.0); }
+  61.11% { transform: scaleY(1.0); }
+  66.67% { transform: scaleY(0.0); }
+  94.44% { transform: scaleY(0.0); }
+  100% { transform: scaleY(0.075); }
+}
+@keyframes me-fin {
+  0% { opacity: 0; }
+  27.78% { opacity: 0; }
+  33.33% { opacity: 0.55; }
+  61.11% { opacity: 0.55; }
+  66.67% { opacity: 0.65; }
+  94.44% { opacity: 0.65; }
+  100% { opacity: 0; }
+}
+@keyframes me-fout {
+  0% { opacity: 0; }
+  27.78% { opacity: 0; }
+  33.33% { opacity: 0.55; }
+  61.11% { opacity: 0.55; }
+  66.67% { opacity: 0; }
+  94.44% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@keyframes me-fheat {
+  0% { opacity: 0; }
+  27.78% { opacity: 0; }
+  33.33% { opacity: 0.6; }
+  61.11% { opacity: 0.6; }
+  66.67% { opacity: 0.7; }
+  94.44% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+@keyframes me-glow {
+  0% { opacity: 0.08; }
+  27.78% { opacity: 0.08; }
+  33.33% { opacity: 0.45; }
+  61.11% { opacity: 0.45; }
+  66.67% { opacity: 0.72; }
+  94.44% { opacity: 0.95; }
+  100% { opacity: 0.08; }
+}
+@keyframes me-halo {
+  0% { opacity: 0; }
+  27.78% { opacity: 0; }
+  33.33% { opacity: 0.2; }
+  61.11% { opacity: 0.2; }
+  66.67% { opacity: 0.4; }
+  94.44% { opacity: 0.7; }
+  100% { opacity: 0; }
+}
+@keyframes me-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -360; }
+}
+@keyframes me-spin {
+  0% { transform: rotate(0.0deg); }
+  1.11% { transform: rotate(48.0deg); }
+  2.22% { transform: rotate(96.0deg); }
+  3.33% { transform: rotate(144.0deg); }
+  4.44% { transform: rotate(192.0deg); }
+  5.56% { transform: rotate(240.0deg); }
+  6.67% { transform: rotate(288.0deg); }
+  7.78% { transform: rotate(336.0deg); }
+  8.89% { transform: rotate(384.0deg); }
+  10% { transform: rotate(432.0deg); }
+  11.11% { transform: rotate(480.0deg); }
+  12.22% { transform: rotate(528.0deg); }
+  13.33% { transform: rotate(576.0deg); }
+  14.44% { transform: rotate(624.0deg); }
+  15.56% { transform: rotate(672.0deg); }
+  16.67% { transform: rotate(720.0deg); }
+  17.78% { transform: rotate(768.0deg); }
+  18.89% { transform: rotate(816.0deg); }
+  20% { transform: rotate(864.0deg); }
+  21.11% { transform: rotate(912.0deg); }
+  22.22% { transform: rotate(960.0deg); }
+  23.33% { transform: rotate(1008.0deg); }
+  24.44% { transform: rotate(1056.0deg); }
+  25.56% { transform: rotate(1104.0deg); }
+  26.67% { transform: rotate(1152.0deg); }
+  27.78% { transform: rotate(1200.0deg); }
+  28.89% { transform: rotate(1245.6deg); }
+  30% { transform: rotate(1286.4deg); }
+  31.11% { transform: rotate(1322.4deg); }
+  32.22% { transform: rotate(1353.6deg); }
+  33.33% { transform: rotate(1380.0deg); }
+  34.44% { transform: rotate(1404.0deg); }
+  35.56% { transform: rotate(1428.0deg); }
+  36.67% { transform: rotate(1452.0deg); }
+  37.78% { transform: rotate(1476.0deg); }
+  38.89% { transform: rotate(1500.0deg); }
+  40% { transform: rotate(1524.0deg); }
+  41.11% { transform: rotate(1548.0deg); }
+  42.22% { transform: rotate(1572.0deg); }
+  43.33% { transform: rotate(1596.0deg); }
+  44.44% { transform: rotate(1620.0deg); }
+  45.56% { transform: rotate(1644.0deg); }
+  46.67% { transform: rotate(1668.0deg); }
+  47.78% { transform: rotate(1692.0deg); }
+  48.89% { transform: rotate(1716.0deg); }
+  50% { transform: rotate(1740.0deg); }
+  51.11% { transform: rotate(1764.0deg); }
+  52.22% { transform: rotate(1788.0deg); }
+  53.33% { transform: rotate(1812.0deg); }
+  54.44% { transform: rotate(1836.0deg); }
+  55.56% { transform: rotate(1860.0deg); }
+  56.67% { transform: rotate(1884.0deg); }
+  57.78% { transform: rotate(1908.0deg); }
+  58.89% { transform: rotate(1932.0deg); }
+  60% { transform: rotate(1956.0deg); }
+  61.11% { transform: rotate(1980.0deg); }
+  62.22% { transform: rotate(2001.6deg); }
+  63.33% { transform: rotate(2018.4deg); }
+  64.44% { transform: rotate(2030.4deg); }
+  65.56% { transform: rotate(2037.6deg); }
+  66.67% { transform: rotate(2040.0deg); }
+  67.78% { transform: rotate(2040.0deg); }
+  68.89% { transform: rotate(2040.0deg); }
+  70% { transform: rotate(2040.0deg); }
+  71.11% { transform: rotate(2040.0deg); }
+  72.22% { transform: rotate(2040.0deg); }
+  73.33% { transform: rotate(2040.0deg); }
+  74.44% { transform: rotate(2040.0deg); }
+  75.56% { transform: rotate(2040.0deg); }
+  76.67% { transform: rotate(2040.0deg); }
+  77.78% { transform: rotate(2040.0deg); }
+  78.89% { transform: rotate(2040.0deg); }
+  80% { transform: rotate(2040.0deg); }
+  81.11% { transform: rotate(2040.0deg); }
+  82.22% { transform: rotate(2040.0deg); }
+  83.33% { transform: rotate(2040.0deg); }
+  84.44% { transform: rotate(2040.0deg); }
+  85.56% { transform: rotate(2040.0deg); }
+  86.67% { transform: rotate(2040.0deg); }
+  87.78% { transform: rotate(2040.0deg); }
+  88.89% { transform: rotate(2040.0deg); }
+  90% { transform: rotate(2040.0deg); }
+  91.11% { transform: rotate(2040.0deg); }
+  92.22% { transform: rotate(2040.0deg); }
+  93.33% { transform: rotate(2040.0deg); }
+  94.44% { transform: rotate(2040.0deg); }
+  95.56% { transform: rotate(2044.8deg); }
+  96.67% { transform: rotate(2059.2deg); }
+  97.78% { transform: rotate(2083.2deg); }
+  98.89% { transform: rotate(2116.8deg); }
+  100% { transform: rotate(2160.0deg); }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Power in, power out, and heat</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A NEO V1.1 at 12 V. Whatever goes in comes out as work or turns into heat.</text>
+<rect x="16" y="56" width="156" height="38" rx="8" fill="#f4f4f4" stroke="#e2e2e2"/>
+<rect class="me-s1" x="16" y="56" width="156" height="38" rx="8" fill="#e8eefc" stroke="#446ce3" stroke-width="2"/>
+<text x="28" y="72" font-size="13" font-weight="700" fill="#222222">1. Spinning free</text>
+<text x="28" y="87" font-size="12" fill="#5c5c5c">no load: fastest</text>
+<rect x="182" y="56" width="156" height="38" rx="8" fill="#f4f4f4" stroke="#e2e2e2"/>
+<rect class="me-s2" x="182" y="56" width="156" height="38" rx="8" fill="#e8eefc" stroke="#446ce3" stroke-width="2"/>
+<text x="194" y="72" font-size="13" font-weight="700" fill="#222222">2. Its most power</text>
+<text x="194" y="87" font-size="12" fill="#5c5c5c">half its free speed</text>
+<rect x="348" y="56" width="156" height="38" rx="8" fill="#f4f4f4" stroke="#e2e2e2"/>
+<rect class="me-s3" x="348" y="56" width="156" height="38" rx="8" fill="#e8eefc" stroke="#446ce3" stroke-width="2"/>
+<text x="360" y="72" font-size="13" font-weight="700" fill="#222222">3. Stalled</text>
+<text x="360" y="87" font-size="12" fill="#5c5c5c">held still: no speed</text>
+<path class="me-s1" d="M258.2 206.0 L258.2 190.0 L260.0 188.0 L261.7 186.0 L263.0 184.0 L263.9 182.0 L264.2 180.0 L264.1 178.0 L263.3 176.0 L262.2 174.0 L260.6 172.0 L258.9 170.0 L257.0 168.0 L255.3 166.0 L253.9 164.0 L252.9 162.0 L252.3 160.0 L252.3 158.0 L252.9 156.0 L253.9 154.0 L255.3 152.0 L257.0 150.0 L258.9 148.0 L260.6 146.0 L262.2 144.0 L263.3 142.0 L264.1 140.0 L264.2 138.0 L263.9 136.0 L263.0 134.0 L261.7 132.0 L260.0 130.0 L258.2 128.0 L251.2 128.0 L260.0 116.0 L268.8 128.0 L261.8 128.0 L263.5 130.0 L265.2 132.0 L266.5 134.0 L267.4 136.0 L267.7 138.0 L267.6 140.0 L266.8 142.0 L265.7 144.0 L264.1 146.0 L262.4 148.0 L260.5 150.0 L258.8 152.0 L257.4 154.0 L256.4 156.0 L255.8 158.0 L255.8 160.0 L256.4 162.0 L257.4 164.0 L258.8 166.0 L260.5 168.0 L262.4 170.0 L264.1 172.0 L265.7 174.0 L266.8 176.0 L267.6 178.0 L267.7 180.0 L267.4 182.0 L266.5 184.0 L265.2 186.0 L263.5 188.0 L261.8 190.0 L261.8 206.0Z" fill="#c62828"/>
+<path class="me-s2" d="M250.0 206.0 L250.0 190.0 L251.8 188.0 L253.4 186.0 L254.7 184.0 L255.6 182.0 L256.0 180.0 L255.8 178.0 L255.1 176.0 L253.9 174.0 L252.4 172.0 L250.6 170.0 L248.8 168.0 L247.1 166.0 L245.7 164.0 L244.6 162.0 L244.1 160.0 L244.1 158.0 L244.6 156.0 L245.7 154.0 L247.1 152.0 L248.8 150.0 L250.6 148.0 L252.4 146.0 L253.9 144.0 L255.1 142.0 L255.8 140.0 L256.0 138.0 L255.6 136.0 L254.7 134.0 L253.4 132.0 L251.8 130.0 L250.0 128.0 L243.0 128.0 L260.0 104.0 L277.0 128.0 L270.0 128.0 L271.8 130.0 L273.4 132.0 L274.7 134.0 L275.6 136.0 L276.0 138.0 L275.8 140.0 L275.1 142.0 L273.9 144.0 L272.4 146.0 L270.6 148.0 L268.8 150.0 L267.1 152.0 L265.7 154.0 L264.6 156.0 L264.1 158.0 L264.1 160.0 L264.6 162.0 L265.7 164.0 L267.1 166.0 L268.8 168.0 L270.6 170.0 L272.4 172.0 L273.9 174.0 L275.1 176.0 L275.8 178.0 L276.0 180.0 L275.6 182.0 L274.7 184.0 L273.4 186.0 L271.8 188.0 L270.0 190.0 L270.0 206.0Z" fill="#c62828"/>
+<path class="me-s3" d="M220.0 206.0 L220.0 190.0 L221.8 188.0 L223.4 186.0 L224.7 184.0 L225.6 182.0 L226.0 180.0 L225.8 178.0 L225.1 176.0 L223.9 174.0 L222.4 172.0 L220.6 170.0 L218.8 168.0 L217.1 166.0 L215.7 164.0 L214.6 162.0 L214.1 160.0 L214.1 158.0 L214.6 156.0 L215.7 154.0 L217.1 152.0 L218.8 150.0 L220.6 148.0 L222.4 146.0 L223.9 144.0 L225.1 142.0 L225.8 140.0 L226.0 138.0 L225.6 136.0 L224.7 134.0 L223.4 132.0 L221.8 130.0 L220.0 128.0 L204.0 128.0 L260.0 104.0 L316.0 128.0 L300.0 128.0 L301.8 130.0 L303.4 132.0 L304.7 134.0 L305.6 136.0 L306.0 138.0 L305.8 140.0 L305.1 142.0 L303.9 144.0 L302.4 146.0 L300.6 148.0 L298.8 150.0 L297.1 152.0 L295.7 154.0 L294.6 156.0 L294.1 158.0 L294.1 160.0 L294.6 162.0 L295.7 164.0 L297.1 166.0 L298.8 168.0 L300.6 170.0 L302.4 172.0 L303.9 174.0 L305.1 176.0 L305.8 178.0 L306.0 180.0 L305.6 182.0 L304.7 184.0 L303.4 186.0 L301.8 188.0 L300.0 190.0 L300.0 206.0Z" fill="#c62828"/>
+<path class="me-fheat" d="M260.0 200.0 L260.0 198.0 L260.0 196.0 L260.0 194.0 L260.0 192.0 L260.0 190.0 L261.8 188.0 L263.4 186.0 L264.7 184.0 L265.6 182.0 L266.0 180.0 L265.8 178.0 L265.1 176.0 L263.9 174.0 L262.4 172.0 L260.6 170.0 L258.8 168.0 L257.1 166.0 L255.7 164.0 L254.6 162.0 L254.1 160.0 L254.1 158.0 L254.6 156.0 L255.7 154.0 L257.1 152.0 L258.8 150.0 L260.6 148.0 L262.4 146.0 L263.9 144.0 L265.1 142.0 L265.8 140.0 L266.0 138.0 L265.6 136.0 L264.7 134.0 L263.4 132.0" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 12"/>
+<rect class="me-halo" x="193" y="183" width="134" height="114" rx="20" fill="#c62828"/>
+<path class="me-in" d="M16 200.0 H212 V280.0 H16 L34 240Z" fill="#446ce3"/>
+<path class="me-fin" d="M40 240 H196" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 12"/>
+<rect x="314" y="236" width="138" height="8" fill="#b0b8c0" stroke="#444444" stroke-width="1"/>
+<path class="me-out" d="M310 230.0 H390 V222 L406 240 L390 258 V250.0 H310Z" fill="#1a7f37" fill-opacity="0.9"/>
+<path class="me-fout" d="M326 240 H384" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="6 12"/>
+<g class="me-wheel">
+  <circle cx="452" cy="240" r="44" fill="#333333"/>
+  <circle cx="452" cy="240" r="33" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+  <line x1="452.0" y1="231.0" x2="452.0" y2="208.0" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+  <line x1="460.6" y1="237.2" x2="482.4" y2="230.1" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+  <line x1="457.3" y1="247.3" x2="470.8" y2="265.9" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+  <line x1="446.7" y1="247.3" x2="433.2" y2="265.9" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+  <line x1="443.4" y1="237.2" x2="421.6" y2="230.1" stroke="#444444" stroke-width="4" stroke-linecap="round"/>
+  <rect x="449" y="198" width="6" height="8" rx="1.5" fill="#ffffff"/>
+  <circle cx="452" cy="240" r="9" fill="#444444"/>
+  <circle cx="452" cy="240" r="3.5" fill="#b0b8c0"/>
+</g>
+<rect x="200" y="190" width="120" height="100" rx="14" fill="#333333" stroke="#111111" stroke-width="1.2"/>
+<rect x="214" y="206" width="92" height="68" rx="4" fill="#c47a2c"/>
+<path d="M220 208 V272 M227 208 V272 M234 208 V272 M241 208 V272 M248 208 V272 M255 208 V272 M262 208 V272 M269 208 V272 M276 208 V272 M283 208 V272 M290 208 V272 M297 208 V272" stroke="#8a5a1e" stroke-width="2"/>
+<rect class="me-glow" x="214" y="206" width="92" height="68" rx="4" fill="#c62828"/>
+<rect x="228" y="229" width="64" height="20" rx="4" fill="#333333" fill-opacity="0.8"/>
+<text x="260" y="244" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">windings</text>
+<text x="260" y="306" font-size="12" fill="#5c5c5c" text-anchor="middle">motor</text>
+<text x="16" y="176" font-size="14" font-weight="700" fill="#446ce3">power in</text>
+<text x="16" y="193" font-size="12" fill="#5c5c5c">volts × amps</text>
+<g class="me-t1">
+  <text x="16" y="306" font-size="13" font-weight="700" fill="#222222" data-ov="in1">12 V × 1.8 A</text>
+  <text x="16" y="323" font-size="13" font-weight="700" fill="#446ce3" data-ov="in2">= about 22 W in</text>
+</g>
+<g class="me-t2">
+  <text x="16" y="306" font-size="13" font-weight="700" fill="#222222" data-ov="in1">12 V × more amps</text>
+  <text x="16" y="323" font-size="13" font-weight="700" fill="#446ce3" data-ov="in2">= more power in</text>
+</g>
+<g class="me-t3">
+  <text x="16" y="306" font-size="13" font-weight="700" fill="#222222" data-ov="in1">12 V × 105 A</text>
+  <text x="16" y="323" font-size="13" font-weight="700" fill="#446ce3" data-ov="in2">= about 1,260 W in</text>
+</g>
+<text x="336" y="118" font-size="14" font-weight="700" fill="#c62828">heat</text>
+<text x="336" y="134" font-size="12" fill="#5c5c5c">mostly current² × resistance</text>
+<text x="336" y="149" font-size="12" fill="#5c5c5c">in the copper windings</text>
+<text class="me-t1" x="336" y="169" font-size="13" font-weight="700" fill="#c62828" data-ov="heat">a little</text>
+<text class="me-t2" x="336" y="169" font-size="13" font-weight="700" fill="#c62828" data-ov="heat">the rest: about half</text>
+<text class="me-t3" x="336" y="169" font-size="13" font-weight="700" fill="#c62828" data-ov="heat">all 1,260 W</text>
+<text x="336" y="306" font-size="14" font-weight="700" fill="#1a7f37">power out</text>
+<text x="414" y="306" font-size="12" fill="#5c5c5c">torque × speed</text>
+<text class="me-t1" x="336" y="323" font-size="13" font-weight="700" fill="#1a7f37" data-ov="out">almost nothing</text>
+<text class="me-t2" x="336" y="323" font-size="13" font-weight="700" fill="#1a7f37" data-ov="out">about half of what goes in</text>
+<text class="me-t3" x="336" y="323" font-size="13" font-weight="700" fill="#1a7f37" data-ov="out">0 W: no work done</text>
+<line x1="16" y1="340" x2="504" y2="340" stroke="#d6d6d6" stroke-width="1"/>
+<text x="260" y="370" font-size="22" font-weight="700" fill="#222222" text-anchor="middle"><tspan fill="#446ce3">power in</tspan> = <tspan fill="#1a7f37">power out</tspan> + <tspan fill="#c62828">heat</tspan></text>
+<text x="16" y="398" font-size="14" fill="#222222"><tspan font-weight="700">efficiency</tspan> = power out ÷ power in</text>
+<text class="me-t1" x="504" y="398" font-size="14" font-weight="700" fill="#222222" text-anchor="end" data-ov="eff">here: almost none</text>
+<text class="me-t2" x="504" y="398" font-size="14" font-weight="700" fill="#222222" text-anchor="end" data-ov="eff">here: about half</text>
+<text class="me-t3" x="504" y="398" font-size="14" font-weight="700" fill="#222222" text-anchor="end" data-ov="eff">here: none</text>
+<text x="16" y="424" font-size="12" fill="#5c5c5c">Twice the current, four times the heat: that is why a stall cooks a motor in seconds.</text>
+</svg>

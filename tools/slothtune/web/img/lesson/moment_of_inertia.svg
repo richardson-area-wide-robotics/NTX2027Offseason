@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 394" width="520" height="394" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mi-title mi-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mi-title">Moment of inertia</title>
+<desc id="mi-desc">Animated. Two robots seen from above carry the same four weights and get the same twist. On the left the weights sit near the center, on a small dotted circle: the robot spins up quickly and turns a full circle. On the right the same weights sit out at the bumpers, on a big dotted circle: the robot spins up slowly and turns much less in the same time. Moment of inertia adds up mass times distance squared from the center, so weight far from the center counts much more.</desc>
+<style>
+.mi-l{transform-box:view-box;transform-origin:130px 170px;animation:mi-l 8s ease-in-out infinite}
+@keyframes mi-l{0%{transform:rotate(0deg)}10%{transform:rotate(0deg)}80%{transform:rotate(720deg)}100%{transform:rotate(720deg)}}
+.mi-r{transform-box:view-box;transform-origin:390px 170px;animation:mi-r 8s ease-in-out infinite}
+@keyframes mi-r{0%{transform:rotate(0deg)}10%{transform:rotate(0deg)}80%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Moment of inertia</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Mass says how hard a robot is to push; moment of inertia says how hard it is to turn.</text>
+<g class="mi-l"><rect x="70" y="110" width="120" height="120" rx="6" fill="#f7f8f9" stroke="#444444" stroke-width="9"/><line x1="86" y1="110" x2="174" y2="110" stroke="#ffffff" stroke-width="3.5"/><circle cx="90" cy="130" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="90" cy="130" r="4" fill="#444444"/><circle cx="90" cy="210" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="90" cy="210" r="4" fill="#444444"/><circle cx="170" cy="130" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="170" cy="130" r="4" fill="#444444"/><circle cx="170" cy="210" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="170" cy="210" r="4" fill="#444444"/><rect x="110" y="150" width="16" height="16" rx="2" fill="#333333"/><rect x="134" y="150" width="16" height="16" rx="2" fill="#333333"/><rect x="110" y="174" width="16" height="16" rx="2" fill="#333333"/><rect x="134" y="174" width="16" height="16" rx="2" fill="#333333"/></g>
+<g class="mi-r"><rect x="330" y="110" width="120" height="120" rx="6" fill="#f7f8f9" stroke="#444444" stroke-width="9"/><line x1="346" y1="110" x2="434" y2="110" stroke="#ffffff" stroke-width="3.5"/><circle cx="350" cy="130" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="350" cy="130" r="4" fill="#444444"/><circle cx="350" cy="210" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="350" cy="210" r="4" fill="#444444"/><circle cx="430" cy="130" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="430" cy="130" r="4" fill="#444444"/><circle cx="430" cy="210" r="11" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="430" cy="210" r="4" fill="#444444"/><rect x="382" y="118" width="16" height="16" rx="2" fill="#333333"/><rect x="426" y="162" width="16" height="16" rx="2" fill="#333333"/><rect x="382" y="206" width="16" height="16" rx="2" fill="#333333"/><rect x="338" y="162" width="16" height="16" rx="2" fill="#333333"/></g>
+<circle cx="130" cy="170" r="17" fill="none" stroke="#b45309" stroke-width="1.5" stroke-dasharray="2 3"/>
+<circle cx="390" cy="170" r="44" fill="none" stroke="#b45309" stroke-width="1.5" stroke-dasharray="2 3"/>
+<path d="M36.03 135.8A100 100 0 0 1 87.74 79.37" fill="none" stroke="#446ce3" stroke-width="3"/><path d="M87.74 79.37L80.33 89.5L75.21 78.53Z" fill="#446ce3"/>
+<path d="M223.97 204.2A100 100 0 0 1 172.26 260.63" fill="none" stroke="#446ce3" stroke-width="3"/><path d="M172.26 260.63L179.67 250.5L184.79 261.47Z" fill="#446ce3"/>
+<text x="130" y="66" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">same twist</text>
+<path d="M296.03 135.8A100 100 0 0 1 347.74 79.37" fill="none" stroke="#446ce3" stroke-width="3"/><path d="M347.74 79.37L340.33 89.5L335.21 78.53Z" fill="#446ce3"/>
+<path d="M483.97 204.2A100 100 0 0 1 432.26 260.63" fill="none" stroke="#446ce3" stroke-width="3"/><path d="M432.26 260.63L439.67 250.5L444.79 261.47Z" fill="#446ce3"/>
+<text x="390" y="66" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">same twist</text>
+<text x="130" y="292" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">Weight near the center:</text>
+<text x="130" y="309" font-size="12" fill="#222222" text-anchor="middle">spins up quickly</text>
+<text x="390" y="292" font-size="13" font-weight="700" fill="#b45309" text-anchor="middle">Same weight at the bumpers:</text>
+<text x="390" y="309" font-size="12" fill="#222222" text-anchor="middle">spins up slowly</text>
+<line x1="16" y1="324" x2="504" y2="324" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="344" font-size="13" fill="#222222">Each pound counts its mass × distance² from the center (lb·in² here):</text>
+<text x="16" y="362" font-size="13" fill="#222222">a pound at the bumper moves fast; a pound at the center barely moves.</text>
+<text x="16" y="380" font-size="12" fill="#5c5c5c">PathPlanner needs it to know how quickly the robot can start and stop rotating.</text>
+</svg>

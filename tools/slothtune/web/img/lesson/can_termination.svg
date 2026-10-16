@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 392" width="520" height="392" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="can_termination-title can_termination-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="can_termination-title">CAN termination: soak up the echo</title>
+<desc id="can_termination-desc">Animated. Two CAN cables, each with a signal bump traveling along it. Top, with no terminator at the far end: the bump reaches the open end and bounces back as an echo, which runs into the next bit and garbles it. Bottom, with a 120 ohm terminator at each end: each bump is soaked up at the far end and nothing comes back. The robot controller has one built in (a roboRIO, and SystemCore on each of its buses); the PDH has one you switch on. With every device powered off, a meter across CAN-H and CAN-L reads the two in parallel: about 60 ohms is exactly two, 120 means one end is missing or the cable to it is broken, 40 means one too many, near zero is a short.</desc>
+<style>
+.ta-p1{opacity:0;animation:ta-p1 8s linear infinite}
+@keyframes ta-p1{0%{opacity:0;transform:translateX(0.0px)}1.5%{opacity:0;transform:translateX(0.0px)}2%{opacity:1;transform:translateX(0.0px)}35%{opacity:1;transform:translateX(380.0px)}35.3%{opacity:0;transform:translateX(380.0px)}100%{opacity:0;transform:translateX(380.0px)}}
+.ta-echo{transform:translateX(-140px);animation:ta-echo 8s linear infinite}
+@keyframes ta-echo{0%{opacity:0;transform:translateX(0.0px)}35%{opacity:0;transform:translateX(0.0px)}35.3%{opacity:1;transform:translateX(0.0px)}68%{opacity:1;transform:translateX(-380.0px)}70%{opacity:0;transform:translateX(-380.0px)}100%{opacity:0;transform:translateX(-380.0px)}}
+.ta-p2{opacity:0;animation:ta-p2 8s linear infinite}
+@keyframes ta-p2{0%{opacity:0;transform:translateX(0.0px)}44.5%{opacity:0;transform:translateX(0.0px)}45%{opacity:1;transform:translateX(0.0px)}56.5%{opacity:1;transform:translateX(132.4px)}56.8%{opacity:0;transform:translateX(132.4px)}100%{opacity:0;transform:translateX(132.4px)}}
+.ta-jag{opacity:0;animation:ta-jag 8s linear infinite}
+@keyframes ta-jag{0%{opacity:0;transform:translateX(0.0px)}56.5%{opacity:0;transform:translateX(0.0px)}56.8%{opacity:1;transform:translateX(0.0px)}66.5%{opacity:1;transform:translateX(115.2px)}72.5%{opacity:0;transform:translateX(184.2px)}100%{opacity:0;transform:translateX(184.2px)}}
+.ta-garb{opacity:0;animation:ta-garb 8s linear infinite}
+@keyframes ta-garb{0%{opacity:0}56.5%{opacity:0}57.5%{opacity:1}90%{opacity:1}93%{opacity:0}100%{opacity:0}}
+.tb-p1{opacity:0;animation:tb-p1 8s linear infinite}
+@keyframes tb-p1{0%{opacity:0;transform:translateX(0.0px)}1.5%{opacity:0;transform:translateX(0.0px)}2%{opacity:1;transform:translateX(0.0px)}35%{opacity:1;transform:translateX(376.0px)}38%{opacity:0;transform:translateX(384.0px)}100%{opacity:0;transform:translateX(384.0px)}}
+.tb-p2{opacity:0;animation:tb-p2 8s linear infinite}
+@keyframes tb-p2{0%{opacity:0;transform:translateX(0.0px)}44.5%{opacity:0;transform:translateX(0.0px)}45%{opacity:1;transform:translateX(0.0px)}78%{opacity:1;transform:translateX(376.0px)}81%{opacity:0;transform:translateX(384.0px)}100%{opacity:0;transform:translateX(384.0px)}}
+.tb-glow{opacity:0;animation:tb-glow 8s linear infinite}
+@keyframes tb-glow{0%{opacity:0}35%{opacity:0}36%{opacity:1}42%{opacity:0}78%{opacity:0}79%{opacity:1}85%{opacity:0}100%{opacity:0}}
+.tb-p1{transform:translateX(330px);opacity:1}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">CAN termination: soak up the echo</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A fast signal that reaches an open end of the wire bounces back.</text>
+<text x="16" y="82" font-size="13" font-weight="700" fill="#c62828">No terminator at the far end</text>
+<path d="M30 112 H440 M30 120 H440" stroke="#5c5c5c" stroke-width="2.5"/>
+<rect x="24" y="106" width="12" height="20" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.6"/><path d="M30 108 l-3 3 l6 3 l-6 3 l6 3 l-6 3 l3 1" fill="none" stroke="#444444" stroke-width="1.2"/>
+<circle cx="443" cy="112" r="3" fill="#ffffff" stroke="#5c5c5c" stroke-width="2"/><circle cx="443" cy="120" r="3" fill="#ffffff" stroke="#5c5c5c" stroke-width="2"/>
+<text x="452" y="120" font-size="12" font-weight="700" fill="#c62828">open end</text>
+<g transform="translate(60,110)"><path class="ta-p1" d="M-22 0 C-12 0 -8 -18 0 -18 C8 -18 12 0 22 0 Z" fill="#446ce3" fill-opacity="0.75"/><path class="ta-p2" d="M-22 0 C-12 0 -8 -18 0 -18 C8 -18 12 0 22 0 Z" fill="#446ce3" fill-opacity="0.75"/></g>
+<g transform="translate(440,110)"><path class="ta-echo" d="M-22 0 C-12 0 -8 -18 0 -18 C8 -18 12 0 22 0 Z" fill="#c62828" fill-opacity="0.75"/></g>
+<g transform="translate(192.4,110)"><path class="ta-jag" d="M-22 0 L-15 -9 L-9 -2 L-3 -15 L3 -4 L9 -12 L15 -3 L22 0 Z" fill="#c62828" fill-opacity="0.5" stroke="#c62828" stroke-width="1.5"/></g>
+<text x="432" y="142" font-size="12" font-weight="700" fill="#c62828" text-anchor="end">← the echo comes back</text>
+<text x="192.424" y="142" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle" class="ta-garb">garbles the next bit</text>
+<text x="16" y="166" font-size="13" font-weight="700" fill="#1a7f37">A 120 Ω terminator at each end</text>
+<path d="M30 196 H448 M30 204 H448" stroke="#5c5c5c" stroke-width="2.5"/>
+<rect x="24" y="190" width="12" height="20" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.6"/><path d="M30 192 l-3 3 l6 3 l-6 3 l6 3 l-6 3 l3 1" fill="none" stroke="#444444" stroke-width="1.2"/>
+<rect x="448" y="190" width="12" height="20" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.6"/><path d="M454 192 l-3 3 l6 3 l-6 3 l6 3 l-6 3 l3 1" fill="none" stroke="#444444" stroke-width="1.2"/>
+<circle class="tb-glow" cx="454" cy="200" r="16" fill="#1a7f37" fill-opacity="0.3"/>
+<g transform="translate(60,194)"><path class="tb-p1" d="M-22 0 C-12 0 -8 -18 0 -18 C8 -18 12 0 22 0 Z" fill="#446ce3" fill-opacity="0.75"/><path class="tb-p2" d="M-22 0 C-12 0 -8 -18 0 -18 C8 -18 12 0 22 0 Z" fill="#446ce3" fill-opacity="0.75"/></g>
+<text x="468" y="204" font-size="12" font-weight="700" fill="#1a7f37">soaked</text>
+<text x="468" y="218" font-size="12" font-weight="700" fill="#1a7f37">up</text>
+<text x="16" y="230" font-size="12" fill="#5c5c5c">roboRIO or SystemCore: built in</text>
+<text x="452" y="230" font-size="12" fill="#5c5c5c" text-anchor="end">PDH: one you switch on</text>
+<line x1="16" y1="250" x2="504" y2="250" stroke="#e2e2e2"/>
+<text x="16" y="272" font-size="13" font-weight="700" fill="#222222">Exactly two. Check with every device powered off:</text>
+<text x="16" y="290" font-size="13" fill="#222222">a meter across CAN-H and CAN-L reads both ends in parallel.</text>
+<text x="28" y="316" font-size="13" font-weight="700" fill="#1a7f37">about 60 Ω</text>
+<text x="122" y="316" font-size="13" fill="#222222">exactly two: good</text>
+<text x="28" y="336" font-size="13" font-weight="700" fill="#b45309">120 Ω</text>
+<text x="122" y="336" font-size="13" fill="#222222">one end missing (or the cable to it is broken)</text>
+<text x="28" y="356" font-size="13" font-weight="700" fill="#b45309">40 Ω</text>
+<text x="122" y="356" font-size="13" fill="#222222">one too many</text>
+<text x="28" y="376" font-size="13" font-weight="700" fill="#c62828">near 0</text>
+<text x="122" y="376" font-size="13" fill="#222222">a short</text>
+</svg>

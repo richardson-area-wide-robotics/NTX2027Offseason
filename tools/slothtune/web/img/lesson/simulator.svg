@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 420" width="520" height="420" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sim-title sim-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="sim-title">The simulator: your code, pretend physics</title>
+<desc id="sim-desc">Animated. At the top, one card: your robot code. Arrows carry the same code to two places. Left, the simulator on this laptop, with a physics model of the drivetrain: its graph draws a smooth measured curve that rises to the dashed setpoint, because its sensors are perfect: no noise, no backlash, no carpet, no battery sag. Right, the real robot: its graph draws the same kind of curve, but jagged with noise. Below: nothing real moves in the simulator, so it is a good place to learn each test and check code changes; gains that pass there still need tuning on the robot, so simulator runs never tick a Guide step.</desc>
+<style>
+.sim-tr { stroke-dasharray: 1000; animation: sim-tr 8s linear infinite; }
+@keyframes sim-tr { 0%, 14% { stroke-dashoffset: 1000; opacity: 1; } 70%, 92% { stroke-dashoffset: 0; opacity: 1; } 97%, 100% { stroke-dashoffset: 0; opacity: 0; } }
+.sim-d1 { opacity: 0; animation: sim-d1 8s ease-in-out infinite; }
+@keyframes sim-d1 { 0% { transform: translate(0px, 0px); opacity: 0; } 2% { transform: translate(0px, 0px); opacity: 1; } 12% { transform: translate(-70px, 26px); opacity: 1; } 14%, 100% { transform: translate(-70px, 26px); opacity: 0; } }
+.sim-d2 { opacity: 0; animation: sim-d2 8s ease-in-out infinite; }
+@keyframes sim-d2 { 0% { transform: translate(0px, 0px); opacity: 0; } 2% { transform: translate(0px, 0px); opacity: 1; } 12% { transform: translate(70px, 26px); opacity: 1; } 14%, 100% { transform: translate(70px, 26px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The simulator: your code, pretend physics</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Safe for learning the tool. Its numbers are never the real robot's.</text>
+<rect x="185" y="58" width="150" height="50" rx="6" fill="#ffffff" stroke="#444444" stroke-width="1.5"/>
+<text x="260" y="77" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">your robot code</text>
+<rect x="200" y="85" width="64" height="4" rx="2" fill="#c9ced4"/><rect x="212" y="93" width="96" height="4" rx="2" fill="#c9ced4"/><rect x="212" y="101" width="54" height="3" rx="1.5" fill="#c9ced4"/>
+<line x1="222" y1="110" x2="160" y2="133" stroke="#444444" stroke-width="1.8"/><path d="M152 136L158.69 128.18L162.18 137.55Z" fill="#444444"/><line x1="298" y1="110" x2="360" y2="133" stroke="#444444" stroke-width="1.8"/><path d="M368 136L357.82 137.55L361.31 128.18Z" fill="#444444"/>
+<circle class="sim-d1" cx="222" cy="110" r="4.5" fill="#446ce3"/><circle class="sim-d2" cx="298" cy="110" r="4.5" fill="#446ce3"/>
+<text x="260" y="130" font-size="12" fill="#5c5c5c" text-anchor="middle">the same code</text>
+<rect x="26" y="140" width="24" height="15" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.5"/><path d="M22 157H54L51 161H25Z" fill="#444444"/>
+<text x="60" y="156" font-size="13" font-weight="700" fill="#222222">Simulator: this laptop</text>
+<rect x="276" y="143" width="32" height="9" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><circle cx="283" cy="155" r="4.5" fill="#3a3f45"/><circle cx="301" cy="155" r="4.5" fill="#3a3f45"/>
+<text x="316" y="156" font-size="13" font-weight="700" fill="#222222">The real robot</text>
+<rect x="26" y="168" width="220" height="118" rx="6" fill="#fbfbfc" stroke="#b0b8c0" stroke-width="1.2"/>
+<path d="M60 176V266H238" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="66" y="186" font-size="12" fill="#5c5c5c">speed</text>
+<text x="238" y="281" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<path d="M60 266H77.8V194H238" fill="none" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="238" y="188" font-size="12" font-weight="700" fill="#446ce3" text-anchor="end">setpoint</text>
+<path class="sim-tr" pathLength="1000" d="M60 266L61.48 266L62.97 266L64.45 266L65.93 266L67.42 266L68.9 266L70.38 266L71.87 266L73.35 266L74.83 266L76.32 266L77.8 266L79.28 261.53L80.77 257.34L82.25 253.4L83.73 249.72L85.22 246.26L86.7 243.01L88.18 239.97L89.67 237.11L91.15 234.44L92.63 231.93L94.12 229.57L95.6 227.36L97.08 225.29L98.57 223.35L100.05 221.53L101.53 219.82L103.02 218.21L104.5 216.71L105.98 215.3L107.47 213.98L108.95 212.74L110.43 211.57L111.92 210.48L113.4 209.46L114.88 208.5L116.37 207.6L117.85 206.75L119.33 205.96L120.82 205.22L122.3 204.52L123.78 203.87L125.27 203.26L126.75 202.68L128.23 202.14L129.72 201.64L131.2 201.16L132.68 200.72L134.17 200.3L135.65 199.91L137.13 199.54L138.62 199.2L140.1 198.88L141.58 198.57L143.07 198.29L144.55 198.02L146.03 197.77L147.52 197.54L149 197.32L150.48 197.11L151.97 196.92L153.45 196.74L154.93 196.57L156.42 196.41L157.9 196.26L159.38 196.12L160.87 195.99L162.35 195.86L163.83 195.75L165.32 195.64L166.8 195.54L168.28 195.44L169.77 195.35L171.25 195.27L172.73 195.19L174.22 195.12L175.7 195.05L177.18 194.98L178.67 194.92L180.15 194.86L181.63 194.81L183.12 194.76L184.6 194.71L186.08 194.67L187.57 194.63L189.05 194.59L190.53 194.55L192.02 194.52L193.5 194.49L194.98 194.46L196.47 194.43L197.95 194.4L199.43 194.38L200.92 194.35L202.4 194.33L203.88 194.31L205.37 194.29L206.85 194.27L208.33 194.26L209.82 194.24L211.3 194.22L212.78 194.21L214.27 194.2L215.75 194.19L217.23 194.17L218.72 194.16L220.2 194.15L221.68 194.14L223.17 194.13L224.65 194.13L226.13 194.12L227.62 194.11L229.1 194.1L230.58 194.1L232.07 194.09L233.55 194.09L235.03 194.08L236.52 194.08L238 194.07" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linejoin="round"/>
+<text x="236" y="252" font-size="12" font-weight="700" fill="#c2410c" text-anchor="end">measured</text>
+<text x="136" y="304" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Perfect sensors:</text>
+<text x="136" y="320" font-size="12" fill="#222222" text-anchor="middle">no noise, no backlash,</text>
+<text x="136" y="336" font-size="12" fill="#222222" text-anchor="middle">no carpet, no battery sag</text>
+<rect x="274" y="168" width="220" height="118" rx="6" fill="#fbfbfc" stroke="#b0b8c0" stroke-width="1.2"/>
+<path d="M308 176V266H486" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="314" y="186" font-size="12" fill="#5c5c5c">speed</text>
+<text x="486" y="281" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<path d="M308 266H325.8V194H486" fill="none" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="486" y="188" font-size="12" font-weight="700" fill="#446ce3" text-anchor="end">setpoint</text>
+<path class="sim-tr" pathLength="1000" d="M308 266L309.48 266L310.97 266L312.45 266L313.93 266L315.42 266L316.9 266L318.38 266L319.87 266L321.35 266L322.83 266L324.32 266L325.8 265.98L327.28 263.03L328.77 258.8L330.25 253.25L331.73 247.86L333.22 246.53L334.7 240.64L336.18 238.2L337.67 238.34L339.15 235.9L340.63 233.29L342.12 229L343.6 225.61L345.08 223.43L346.57 223.96L348.05 222.84L349.53 220.62L351.02 218.54L352.5 217.23L353.98 216.2L355.47 214.79L356.95 211.54L358.43 211.9L359.92 209.28L361.4 210.05L362.88 209.67L364.37 206.84L365.85 206.47L367.33 204.23L368.82 204.34L370.3 204.17L371.78 204.39L373.27 203.15L374.75 204.76L376.23 201.63L377.72 200.64L379.2 199.86L380.68 200.96L382.17 200.47L383.65 199.04L385.13 200.14L386.62 200.37L388.1 200.64L389.58 196.97L391.07 198.39L392.55 197.21L394.03 197.81L395.52 198.94L397 199.32L398.48 199.13L399.97 197.75L401.45 195.17L402.93 196.36L404.42 195.38L405.9 195.89L407.38 195.67L408.87 196.55L410.35 197.08L411.83 197.19L413.32 194.84L414.8 195.23L416.28 193.38L417.77 195.51L419.25 195.63L420.73 195.89L422.22 195.77L423.7 194.72L425.18 194.42L426.67 193.22L428.15 195.52L429.63 195.84L431.12 194.98L432.6 194.84L434.08 196.57L435.57 194.08L437.05 193.59L438.53 194.36L440.02 193.45L441.5 193.7L442.98 194.37L444.47 195.84L445.95 195.46L447.43 195.09L448.92 193L450.4 192.04L451.88 192.84L453.37 193.72L454.85 195.85L456.33 195.39L457.82 193.29L459.3 192.72L460.78 194.51L462.27 194.02L463.75 195.19L465.23 196.35L466.72 194.19L468.2 193.28L469.68 194.34L471.17 193.18L472.65 192.61L474.13 194.69L475.62 195.03L477.1 193.69L478.58 195.76L480.07 194.58L481.55 193.23L483.03 192.65L484.52 193.55L486 194.72" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linejoin="round"/>
+<text x="484" y="252" font-size="12" font-weight="700" fill="#c2410c" text-anchor="end">measured</text>
+<text x="384" y="304" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">The real thing:</text>
+<text x="384" y="320" font-size="12" fill="#222222" text-anchor="middle">noise, backlash,</text>
+<text x="384" y="336" font-size="12" fill="#222222" text-anchor="middle">carpet, battery sag</text>
+<line x1="16" y1="350" x2="504" y2="350" stroke="#e2e2e2"/>
+<text x="16" y="370" font-size="13" fill="#222222">Nothing real moves: a good place to learn each test and check code changes.</text>
+<text x="16" y="388" font-size="13" fill="#222222">Gains that pass here still have to be tuned on the robot,</text>
+<text x="16" y="406" font-size="13" font-weight="700" fill="#222222">so simulator runs never tick a Guide step.</text>
+</svg>

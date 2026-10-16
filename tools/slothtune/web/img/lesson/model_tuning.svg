@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 400" width="520" height="400" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="model_tuning-title model_tuning-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="model_tuning-title">Measure, then compute</title>
+<desc id="model_tuning-desc">Animated, four numbered steps lit in turn. 1, Measure once: a green volts step goes in and an orange line shows how the mechanism moves. 2, Fit four numbers: tiles kS, kV, kA and kG appear, for friction, back-EMF, inertia and gravity. 3, Compute the gains: an arrow labeled math turns the four numbers into gains. 4, Check with a step test: the new gains, in orange, are drawn against the old gains, in gray; if they beat the old gains the best are kept, if not the old gains go back. Guess-and-retry, changing a gain, running, looking and changing again, is slow and can wander.</desc>
+<style>
+.mt-hl0{opacity:0;animation:mt-hl0 8s linear infinite}
+@keyframes mt-hl0{0%,4%{opacity:0}5.5%,24.5%{opacity:1}26%,100%{opacity:0}}
+.mt-hl1{opacity:0;animation:mt-hl1 8s linear infinite}
+@keyframes mt-hl1{0%,27%{opacity:0}28.5%,47.5%{opacity:1}49%,100%{opacity:0}}
+.mt-hl2{opacity:0;animation:mt-hl2 8s linear infinite}
+@keyframes mt-hl2{0%,50%{opacity:0}51.5%,70.5%{opacity:1}72%,100%{opacity:0}}
+.mt-hl3{opacity:0;animation:mt-hl3 8s linear infinite}
+@keyframes mt-hl3{0%,73%{opacity:0}74.5%,93.5%{opacity:1}95%,100%{opacity:0}}
+.mt-w1{animation:mt-w1 8s linear infinite}
+@keyframes mt-w1{0%,6%{transform:translateX(-94px)}22%,100%{transform:translateX(0px)}}
+.mt-f1{animation:mt-f1 8s linear infinite}
+@keyframes mt-f1{0%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-n0{animation:mt-n0 8s linear infinite}
+@keyframes mt-n0{0%,30%{opacity:0}31.5%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-n1{animation:mt-n1 8s linear infinite}
+@keyframes mt-n1{0%,34%{opacity:0}35.5%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-n2{animation:mt-n2 8s linear infinite}
+@keyframes mt-n2{0%,38%{opacity:0}39.5%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-n3{animation:mt-n3 8s linear infinite}
+@keyframes mt-n3{0%,42%{opacity:0}43.5%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-g1{animation:mt-g1 8s linear infinite}
+@keyframes mt-g1{0%,53%{opacity:0}54.5%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-g2{animation:mt-g2 8s linear infinite}
+@keyframes mt-g2{0%,58%{opacity:0}59.5%,96%{opacity:1}99%,100%{opacity:0}}
+.mt-w4{animation:mt-w4 8s linear infinite}
+@keyframes mt-w4{0%,75%{transform:translateX(-114px)}91%,100%{transform:translateX(0px)}}
+.mt-f4{animation:mt-f4 8s linear infinite}
+@keyframes mt-f4{0%,96%{opacity:1}99%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Measure, then compute</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Measure how the mechanism answers known volts, then work the gains out by math.</text>
+
+<rect x="16" y="62" width="488" height="72" rx="8" fill="#f6f7f9" stroke="#e2e2e2"/>
+<rect class="mt-hl0" x="16" y="62" width="488" height="72" rx="8" fill="rgba(68,108,227,0.13)" stroke="#446ce3" stroke-width="1.5"/>
+<circle cx="38" cy="98" r="12" fill="#446ce3"/><text x="38" y="102.3" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="226" y="87" font-size="14" font-weight="700" fill="#222222">Measure once</text>
+<text x="226" y="106" font-size="13" fill="#222222">Drive the motor by known volts and</text>
+<text x="226" y="123" font-size="13" fill="#222222">record how the mechanism moves.</text>
+<rect x="16" y="138" width="488" height="72" rx="8" fill="#f6f7f9" stroke="#e2e2e2"/>
+<rect class="mt-hl1" x="16" y="138" width="488" height="72" rx="8" fill="rgba(68,108,227,0.13)" stroke="#446ce3" stroke-width="1.5"/>
+<circle cx="38" cy="174" r="12" fill="#446ce3"/><text x="38" y="178.3" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="226" y="163" font-size="14" font-weight="700" fill="#222222">Fit four numbers</text>
+<text x="226" y="182" font-size="13" fill="#222222">friction (kS), back-EMF (kV),</text>
+<text x="226" y="199" font-size="13" fill="#222222">inertia (kA) and gravity (kG)</text>
+<rect x="16" y="214" width="488" height="72" rx="8" fill="#f6f7f9" stroke="#e2e2e2"/>
+<rect class="mt-hl2" x="16" y="214" width="488" height="72" rx="8" fill="rgba(68,108,227,0.13)" stroke="#446ce3" stroke-width="1.5"/>
+<circle cx="38" cy="250" r="12" fill="#446ce3"/><text x="38" y="254.3" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="226" y="239" font-size="14" font-weight="700" fill="#222222">Compute the gains</text>
+<text x="226" y="258" font-size="13" fill="#222222">Every gain follows from those</text>
+<text x="226" y="275" font-size="13" fill="#222222">four numbers by math.</text>
+<rect x="16" y="290" width="488" height="72" rx="8" fill="#f6f7f9" stroke="#e2e2e2"/>
+<rect class="mt-hl3" x="16" y="290" width="488" height="72" rx="8" fill="rgba(68,108,227,0.13)" stroke="#446ce3" stroke-width="1.5"/>
+<circle cx="38" cy="326" r="12" fill="#446ce3"/><text x="38" y="330.3" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="226" y="315" font-size="14" font-weight="700" fill="#222222">Check with a step test</text>
+<text x="226" y="334" font-size="13" fill="#222222">Beats the old gains? Keep the best.</text>
+<text x="226" y="351" font-size="13" fill="#222222">Can't? Put the old gains back.</text>
+<path d="M66 72V124H152" fill="none" stroke="#444444" stroke-width="1.3"/>
+<clipPath id="mt-c1"><rect class="mt-w1" x="66" y="62" width="86" height="72"/></clipPath>
+<g class="mt-f1" clip-path="url(#mt-c1)"><path d="M66 122 L80 122 L80 100 L150 100" fill="none" stroke="#1a7f37" stroke-width="2.5"/><path d="M66 122 L80 122 L81 119.6 L83 115.2 L85 111.3 L87 107.8 L89 104.7 L91 101.9 L93 99.4 L95 97.1 L97 95.1 L99 93.3 L101 91.7 L103 90.3 L105 89 L107 87.8 L109 86.8 L111 85.9 L113 85 L115 84.3 L117 83.6 L119 83 L121 82.5 L123 82 L125 81.6 L127 81.2 L129 80.9 L131 80.6 L133 80.3 L135 80.1 L137 79.9 L139 79.7 L141 79.5 L143 79.3 L145 79.2 L147 79.1 L149 79" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-linejoin="round"/></g>
+<text x="158" y="104" font-size="12" font-weight="700" fill="#1a7f37">volts</text>
+<text x="158" y="84" font-size="12" font-weight="700" fill="#c2410c">motion</text>
+<g class="mt-n0"><rect x="66" y="158" width="30" height="32" rx="5" fill="#ffffff" stroke="#446ce3" stroke-width="1.8"/><text x="81" y="179" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">kS</text></g>
+<g class="mt-n1"><rect x="102" y="158" width="30" height="32" rx="5" fill="#ffffff" stroke="#446ce3" stroke-width="1.8"/><text x="117" y="179" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">kV</text></g>
+<g class="mt-n2"><rect x="138" y="158" width="30" height="32" rx="5" fill="#ffffff" stroke="#446ce3" stroke-width="1.8"/><text x="153" y="179" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">kA</text></g>
+<g class="mt-n3"><rect x="174" y="158" width="30" height="32" rx="5" fill="#ffffff" stroke="#446ce3" stroke-width="1.8"/><text x="189" y="179" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">kG</text></g>
+<text x="66" y="236" font-size="12" font-weight="700" fill="#222222">kS kV kA kG</text>
+<g class="mt-g1"><line x1="104" y1="242" x2="104" y2="254" stroke="#446ce3" stroke-width="2.2"/><path d="M99.8 253.3L104 261L108.2 253.3Z" fill="#446ce3"/></g>
+<text x="114" y="256" font-size="12" fill="#5c5c5c">math</text>
+<g class="mt-g2"><rect x="70" y="263" width="68" height="20" rx="10" fill="#446ce3"/><text x="104" y="277.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">gains</text></g>
+<path d="M66 298V354H172" fill="none" stroke="#444444" stroke-width="1.3"/>
+<clipPath id="mt-c4"><rect class="mt-w4" x="66" y="290" width="106" height="72"/></clipPath>
+<g class="mt-f4" clip-path="url(#mt-c4)"><path d="M66 350 L76 350 L76 310 L170 310" fill="none" stroke="#446ce3" stroke-width="1.8" stroke-dasharray="5 3"/><path d="M66 350 L76 350 L77 349.4 L79 348.3 L81 347.2 L83 346.2 L85 345.2 L87 344.2 L89 343.2 L91 342.3 L93 341.4 L95 340.5 L97 339.6 L99 338.8 L101 338 L103 337.2 L105 336.4 L107 335.7 L109 335 L111 334.3 L113 333.6 L115 332.9 L117 332.3 L119 331.6 L121 331 L123 330.4 L125 329.9 L127 329.3 L129 328.8 L131 328.2 L133 327.7 L135 327.2 L137 326.7 L139 326.3 L141 325.8 L143 325.4 L145 324.9 L147 324.5 L149 324.1 L151 323.7 L153 323.3 L155 322.9 L157 322.6 L159 322.2 L161 321.9 L163 321.5 L165 321.2 L167 320.9 L169 320.6" fill="none" stroke="#8a939c" stroke-width="2.4" stroke-linejoin="round"/><path d="M66 350 L76 350 L77 349.9 L79 349.2 L81 347.8 L83 346.1 L85 343.9 L87 341.6 L89 339.1 L91 336.5 L93 333.8 L95 331.3 L97 328.7 L99 326.4 L101 324.1 L103 322 L105 320 L107 318.2 L109 316.6 L111 315.2 L113 313.9 L115 312.8 L117 311.8 L119 311 L121 310.3 L123 309.7 L125 309.3 L127 308.9 L129 308.6 L131 308.4 L133 308.3 L135 308.2 L137 308.2 L139 308.2 L141 308.2 L143 308.3 L145 308.4 L147 308.5 L149 308.6 L151 308.7 L153 308.8 L155 308.9 L157 309 L159 309.2 L161 309.3 L163 309.4 L165 309.5 L167 309.6 L169 309.6" fill="none" stroke="#c2410c" stroke-width="2.4" stroke-linejoin="round"/></g>
+<text x="177" y="311" font-size="12" font-weight="700" fill="#c2410c">new</text>
+<text x="177" y="330" font-size="12" font-weight="700" fill="#5c5c5c">old</text>
+<text x="16" y="386" font-size="12" fill="#5c5c5c">Guess-and-retry (change a gain, run, look, again) is slow and can wander.</text>
+</svg>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 416" width="520" height="416" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="dm-title dm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="dm-title">Deadman: the robot moves only while it is held</title>
+<desc id="dm-desc">Animated. Left: a game controller seen from above, the tester's joystick on Driver Station port 1, with its right bumper marked. A finger presses the right bumper and it lights up blue; right: a wheel spins while it is held, with the label 'held: it may move'. When the finger lets go, the wheel stops at once and the label reads 'let go: it stops'. Below, a timeline traces the same thing: the held line steps up and down, and the wheel speed is up only while the bumper is held, falling to zero right after it is let go. At the bottom: the on-screen Hold to run button, used with the mouse or a finger, is also allowed; a keyboard key is never used, because in the Driver Station the space bar is E-STOP.</desc>
+<style>
+.dm-finger { transform: translateY(0px); animation: dm-finger 8s linear infinite; }
+@keyframes dm-finger { 0%, 13% { transform: translateY(-10px); } 15%, 58.5% { transform: translateY(0px); } 60.5%, 100% { transform: translateY(-10px); } }
+.dm-on { opacity: 1; animation: dm-on 8s linear infinite; }
+@keyframes dm-on { 0%, 14% { opacity: 0; } 15%, 59.5% { opacity: 1; } 60.5%, 100% { opacity: 0; } }
+.dm-off { opacity: 0; animation: dm-off 8s linear infinite; }
+@keyframes dm-off { 0%, 14% { opacity: 1; } 15%, 59.5% { opacity: 0; } 60.5%, 100% { opacity: 1; } }
+.dm-spin { transform-box: view-box; transform-origin: 0 0; animation: dm-spin 8s linear infinite; }
+@keyframes dm-spin { 0%, 15% { transform: rotate(0deg); } 18.5% { transform: rotate(29deg); } 22% { transform: rotate(117deg); } 60% { transform: rotate(1390deg); } 61.5% { transform: rotate(1427deg); } 63%, 100% { transform: rotate(1440deg); } }
+.dm-cur { opacity: 0; animation: dm-cur 8s linear infinite; }
+@keyframes dm-cur { 0% { transform: translateX(0px); opacity: 1; } 97% { transform: translateX(358.9px); opacity: 1; } 99%, 100% { transform: translateX(370px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Deadman: the robot moves only while it is held</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Let go and it stops. Prefer the bumper: stand where you see every wheel.</text>
+<path d="M58 152C58 134 74 126 94 126H166C186 126 202 134 202 152L212 206C215 222 202 230 190 222L172 202H88L70 222C58 230 45 222 48 206Z" fill="#e6e9ec" stroke="#444444" stroke-width="2"/>
+<rect x="68" y="112" width="50" height="14" rx="7" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/>
+<rect x="142" y="112" width="50" height="14" rx="7" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/>
+<rect class="dm-on" x="142" y="112" width="50" height="14" rx="7" fill="#446ce3" stroke="#444444" stroke-width="1.5"/>
+<circle cx="100" cy="158" r="13" fill="#5d646b" stroke="#444444" stroke-width="1.5"/><circle cx="150" cy="184" r="13" fill="#5d646b" stroke="#444444" stroke-width="1.5"/><path d="M104 178v18M95 187h18" stroke="#5d646b" stroke-width="5" stroke-linecap="round"/><circle cx="172" cy="146" r="5" fill="#9aa3ad"/><circle cx="164" cy="154" r="5" fill="#9aa3ad"/><circle cx="180" cy="154" r="5" fill="#9aa3ad"/><circle cx="172" cy="162" r="5" fill="#9aa3ad"/>
+<g class="dm-finger"><rect x="156" y="64" width="22" height="50" rx="11" fill="#f0d2b6" stroke="#444444" stroke-width="1.5"/><rect x="160" y="96" width="14" height="13" rx="5" fill="#f8e6d8" stroke="#444444" stroke-width="1"/></g>
+<line x1="193" y1="119" x2="205" y2="110" stroke="#444444" stroke-width="1.2"/>
+<text x="208" y="106" font-size="13" font-weight="700" fill="#446ce3">right bumper</text>
+<text x="208" y="122" font-size="12" fill="#222222">the tester's joystick,</text>
+<text x="208" y="137" font-size="12" fill="#5c5c5c">Driver Station port 1</text>
+<g transform="translate(424 148)"><g class="dm-spin"><circle r="44" fill="#3a3f45"/><circle r="34.32" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M10.67 6.16L25.91 14.96M0 12.32L0 29.92M-10.67 6.16L-25.91 14.96M-10.67 -6.16L-25.91 -14.96M0 -12.32L0 -29.92M10.67 -6.16L25.91 -14.96" stroke="#444444" stroke-width="5.28" stroke-linecap="round"/><circle r="10.56" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="39.16" r="3.08" fill="#ffffff"/></g></g>
+<g class="dm-on"><g><path d="M373.26 129.53A54 54 0 0 1 433.29 94.81" fill="none" stroke="#446ce3" stroke-width="2.5"/><path d="M437.98 95.84L429.08 98.12L431.41 89.42Z" fill="#446ce3"/></g><g><path d="M474.74 166.47A54 54 0 0 1 414.71 201.19" fill="none" stroke="#446ce3" stroke-width="2.5"/><path d="M410.02 200.16L418.92 197.88L416.59 206.58Z" fill="#446ce3"/></g></g>
+<text x="424" y="226" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle" class="dm-on">held: it may move</text>
+<text x="424" y="226" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle" class="dm-off">let go: it stops</text>
+<rect x="185.5" y="248" width="166.5" height="80" fill="#eaf5ed"/>
+<text x="185.5" y="243" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">press</text>
+<text x="352" y="243" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">let go</text>
+<path d="M130 274H500M130 324H500" stroke="#d6d6d6" stroke-width="1"/>
+<text x="120" y="270" font-size="12" font-weight="700" fill="#222222" text-anchor="end">held</text>
+<text x="120" y="314" font-size="12" font-weight="700" fill="#222222" text-anchor="end">wheel speed</text>
+<path d="M130 274H185.5V256H352V274H500" fill="none" stroke="#446ce3" stroke-width="2.5"/>
+<path d="M130 324H185.5C193.5 324 199.4 298 211.4 298H352C356 298 360.1 324 363.1 324H500" fill="none" stroke="#c2410c" stroke-width="2.5"/>
+<text x="369.1" y="314" font-size="12" font-weight="700" fill="#c62828">stops</text>
+<text x="500" y="342" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<line class="dm-cur" x1="130" y1="248" x2="130" y2="330" stroke="#444444" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="16" y1="352" x2="504" y2="352" stroke="#e2e2e2"/>
+<rect x="16" y="364" width="92" height="32" rx="6" fill="#446ce3"/>
+<text x="62" y="385" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Hold to run</text>
+<text x="118" y="374" font-size="12" font-weight="700" fill="#1a7f37">Also OK: Hold to run</text>
+<text x="118" y="390" font-size="12" fill="#222222">on screen, with the</text>
+<text x="118" y="406" font-size="12" fill="#222222">mouse or a finger.</text>
+<rect x="268" y="364" width="84" height="32" rx="5" fill="#f2f4f6" stroke="#444444" stroke-width="1.5"/>
+<text x="310" y="385" font-size="12" fill="#222222" text-anchor="middle">space bar</text>
+<circle cx="350" cy="364" r="9" fill="#c62828"/><path d="M346 360L354 368M354 360L346 368" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+<text x="368" y="374" font-size="12" font-weight="700" fill="#c62828">Never a key: in the</text>
+<text x="368" y="390" font-size="12" fill="#222222">Driver Station the</text>
+<text x="368" y="406" font-size="12" fill="#222222">space bar is E-STOP.</text>
+</svg>

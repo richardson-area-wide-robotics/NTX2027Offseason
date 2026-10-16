@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 448" width="520" height="448" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="fr-title fr-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="fr-title">Field-relative: away from you means away from you</title>
+<desc id="fr-desc">Animated. Two fields seen from above, the driver at the bottom of each. In both, the driver pushes the stick away from them while the robot turns half a turn. Left, field-relative, using the gyro, whose heading dial turns with the robot: the robot goes straight away from the driver the whole time, whichever way it faces. Right, robot-relative, skipping the gyro: forward is wherever the robot's front points, so the same push curves it around to the side and back toward the driver. Below: it needs the gyro heading to be right; a gyro that counts backwards, or a heading zeroed while the robot faced sideways, sends every push the wrong way; trying both is a quick way to tell a gyro problem from a module problem.</desc>
+<style>
+.fr-l { transform-box: view-box; transform-origin: 0 0; transform: translate(134.0px, 128.0px) rotate(180.0deg); animation: fr-l 8s linear infinite; }
+.fr-r { transform-box: view-box; transform-origin: 0 0; transform: translate(415.1px, 268.0px) rotate(180.0deg); animation: fr-r 8s linear infinite; }
+.fr-dial { transform-box: view-box; transform-origin: 0 0; transform: rotate(180deg); animation: fr-dial 8s linear infinite; }
+.fr-tr { stroke-dasharray: 1000 1000; stroke-dashoffset: 0; animation: fr-tr 8s linear infinite; }
+.fr-fade { animation: fr-fade 8s linear infinite; }
+@keyframes fr-fade { 0%, 86% { opacity: 1; } 89%, 95% { opacity: 0; } 99%, 100% { opacity: 1; } }
+.fr-stick { transform: translateY(-9px); animation: fr-stick 8s linear infinite; }
+@keyframes fr-stick { 0%, 4% { transform: translateY(0px); } 6%, 70% { transform: translateY(-9px); } 72%, 100% { transform: translateY(0px); } }
+@keyframes fr-l {
+  0% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  1% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  2% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  3% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  4% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  5% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  6% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  7% { transform: translate(134.0px, 267.9px) rotate(0.1deg); }
+  8% { transform: translate(134.0px, 267.6px) rotate(0.5deg); }
+  9% { transform: translate(134.0px, 267.1px) rotate(1.1deg); }
+  10% { transform: translate(134.0px, 266.4px) rotate(2.0deg); }
+  11% { transform: translate(134.0px, 265.6px) rotate(3.1deg); }
+  12% { transform: translate(134.0px, 264.5px) rotate(4.4deg); }
+  13% { transform: translate(134.0px, 263.3px) rotate(6.0deg); }
+  14% { transform: translate(134.0px, 262.0px) rotate(7.7deg); }
+  15% { transform: translate(134.0px, 260.5px) rotate(9.7deg); }
+  16% { transform: translate(134.0px, 258.8px) rotate(11.8deg); }
+  17% { transform: translate(134.0px, 257.0px) rotate(14.1deg); }
+  18% { transform: translate(134.0px, 255.1px) rotate(16.6deg); }
+  19% { transform: translate(134.0px, 253.0px) rotate(19.3deg); }
+  20% { transform: translate(134.0px, 250.8px) rotate(22.1deg); }
+  21% { transform: translate(134.0px, 248.5px) rotate(25.0deg); }
+  22% { transform: translate(134.0px, 246.1px) rotate(28.1deg); }
+  23% { transform: translate(134.0px, 243.6px) rotate(31.4deg); }
+  24% { transform: translate(134.0px, 241.0px) rotate(34.7deg); }
+  25% { transform: translate(134.0px, 238.3px) rotate(38.2deg); }
+  26% { transform: translate(134.0px, 235.5px) rotate(41.7deg); }
+  27% { transform: translate(134.0px, 232.7px) rotate(45.4deg); }
+  28% { transform: translate(134.0px, 229.7px) rotate(49.2deg); }
+  29% { transform: translate(134.0px, 226.8px) rotate(53.0deg); }
+  30% { transform: translate(134.0px, 223.7px) rotate(57.0deg); }
+  31% { transform: translate(134.0px, 220.6px) rotate(60.9deg); }
+  32% { transform: translate(134.0px, 217.5px) rotate(65.0deg); }
+  33% { transform: translate(134.0px, 214.3px) rotate(69.1deg); }
+  34% { transform: translate(134.0px, 211.1px) rotate(73.2deg); }
+  35% { transform: translate(134.0px, 207.8px) rotate(77.4deg); }
+  36% { transform: translate(134.0px, 204.6px) rotate(81.6deg); }
+  37% { transform: translate(134.0px, 201.3px) rotate(85.8deg); }
+  38% { transform: translate(134.0px, 198.0px) rotate(90.0deg); }
+  39% { transform: translate(134.0px, 194.7px) rotate(94.2deg); }
+  40% { transform: translate(134.0px, 191.4px) rotate(98.4deg); }
+  41% { transform: translate(134.0px, 188.2px) rotate(102.6deg); }
+  42% { transform: translate(134.0px, 184.9px) rotate(106.8deg); }
+  43% { transform: translate(134.0px, 181.7px) rotate(110.9deg); }
+  44% { transform: translate(134.0px, 178.5px) rotate(115.0deg); }
+  45% { transform: translate(134.0px, 175.4px) rotate(119.1deg); }
+  46% { transform: translate(134.0px, 172.3px) rotate(123.0deg); }
+  47% { transform: translate(134.0px, 169.2px) rotate(127.0deg); }
+  48% { transform: translate(134.0px, 166.3px) rotate(130.8deg); }
+  49% { transform: translate(134.0px, 163.3px) rotate(134.6deg); }
+  50% { transform: translate(134.0px, 160.5px) rotate(138.3deg); }
+  51% { transform: translate(134.0px, 157.7px) rotate(141.8deg); }
+  52% { transform: translate(134.0px, 155.0px) rotate(145.3deg); }
+  53% { transform: translate(134.0px, 152.4px) rotate(148.6deg); }
+  54% { transform: translate(134.0px, 149.9px) rotate(151.9deg); }
+  55% { transform: translate(134.0px, 147.5px) rotate(155.0deg); }
+  56% { transform: translate(134.0px, 145.2px) rotate(157.9deg); }
+  57% { transform: translate(134.0px, 143.0px) rotate(160.7deg); }
+  58% { transform: translate(134.0px, 140.9px) rotate(163.4deg); }
+  59% { transform: translate(134.0px, 139.0px) rotate(165.9deg); }
+  60% { transform: translate(134.0px, 137.2px) rotate(168.2deg); }
+  61% { transform: translate(134.0px, 135.5px) rotate(170.3deg); }
+  62% { transform: translate(134.0px, 134.0px) rotate(172.3deg); }
+  63% { transform: translate(134.0px, 132.7px) rotate(174.0deg); }
+  64% { transform: translate(134.0px, 131.5px) rotate(175.6deg); }
+  65% { transform: translate(134.0px, 130.4px) rotate(176.9deg); }
+  66% { transform: translate(134.0px, 129.6px) rotate(178.0deg); }
+  67% { transform: translate(134.0px, 128.9px) rotate(178.9deg); }
+  68% { transform: translate(134.0px, 128.4px) rotate(179.5deg); }
+  69% { transform: translate(134.0px, 128.1px) rotate(179.9deg); }
+  70% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  71% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  72% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  73% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  74% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  75% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  76% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  77% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  78% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  79% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  80% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  81% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  82% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  83% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  84% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  85% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  86% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  87% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  88% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  89% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  90% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  91% { transform: translate(134.0px, 128.0px) rotate(180.0deg); }
+  92% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  93% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  94% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  95% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  96% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  97% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  98% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  99% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+  100% { transform: translate(134.0px, 268.0px) rotate(0.0deg); }
+}
+@keyframes fr-r {
+  0% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  1% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  2% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  3% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  4% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  5% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  6% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  7% { transform: translate(326.0px, 267.9px) rotate(0.1deg); }
+  8% { transform: translate(326.0px, 267.6px) rotate(0.5deg); }
+  9% { transform: translate(326.0px, 267.1px) rotate(1.1deg); }
+  10% { transform: translate(326.0px, 266.4px) rotate(2.0deg); }
+  11% { transform: translate(326.1px, 265.6px) rotate(3.1deg); }
+  12% { transform: translate(326.1px, 264.5px) rotate(4.4deg); }
+  13% { transform: translate(326.2px, 263.4px) rotate(6.0deg); }
+  14% { transform: translate(326.4px, 262.0px) rotate(7.7deg); }
+  15% { transform: translate(326.6px, 260.5px) rotate(9.7deg); }
+  16% { transform: translate(326.9px, 258.9px) rotate(11.8deg); }
+  17% { transform: translate(327.3px, 257.1px) rotate(14.1deg); }
+  18% { transform: translate(327.9px, 255.3px) rotate(16.6deg); }
+  19% { transform: translate(328.5px, 253.3px) rotate(19.3deg); }
+  20% { transform: translate(329.3px, 251.3px) rotate(22.1deg); }
+  21% { transform: translate(330.2px, 249.1px) rotate(25.0deg); }
+  22% { transform: translate(331.3px, 247.0px) rotate(28.1deg); }
+  23% { transform: translate(332.5px, 244.8px) rotate(31.4deg); }
+  24% { transform: translate(333.9px, 242.6px) rotate(34.7deg); }
+  25% { transform: translate(335.5px, 240.5px) rotate(38.2deg); }
+  26% { transform: translate(337.3px, 238.3px) rotate(41.7deg); }
+  27% { transform: translate(339.3px, 236.3px) rotate(45.4deg); }
+  28% { transform: translate(341.4px, 234.3px) rotate(49.2deg); }
+  29% { transform: translate(343.8px, 232.4px) rotate(53.0deg); }
+  30% { transform: translate(346.3px, 230.6px) rotate(57.0deg); }
+  31% { transform: translate(348.9px, 229.0px) rotate(60.9deg); }
+  32% { transform: translate(351.7px, 227.6px) rotate(65.0deg); }
+  33% { transform: translate(354.6px, 226.4px) rotate(69.1deg); }
+  34% { transform: translate(357.7px, 225.3px) rotate(73.2deg); }
+  35% { transform: translate(360.8px, 224.5px) rotate(77.4deg); }
+  36% { transform: translate(364.0px, 223.9px) rotate(81.6deg); }
+  37% { transform: translate(367.3px, 223.6px) rotate(85.8deg); }
+  38% { transform: translate(370.6px, 223.4px) rotate(90.0deg); }
+  39% { transform: translate(373.8px, 223.6px) rotate(94.2deg); }
+  40% { transform: translate(377.1px, 223.9px) rotate(98.4deg); }
+  41% { transform: translate(380.3px, 224.5px) rotate(102.6deg); }
+  42% { transform: translate(383.4px, 225.3px) rotate(106.8deg); }
+  43% { transform: translate(386.5px, 226.4px) rotate(110.9deg); }
+  44% { transform: translate(389.4px, 227.6px) rotate(115.0deg); }
+  45% { transform: translate(392.2px, 229.0px) rotate(119.1deg); }
+  46% { transform: translate(394.9px, 230.6px) rotate(123.0deg); }
+  47% { transform: translate(397.4px, 232.4px) rotate(127.0deg); }
+  48% { transform: translate(399.7px, 234.3px) rotate(130.8deg); }
+  49% { transform: translate(401.8px, 236.3px) rotate(134.6deg); }
+  50% { transform: translate(403.8px, 238.3px) rotate(138.3deg); }
+  51% { transform: translate(405.6px, 240.5px) rotate(141.8deg); }
+  52% { transform: translate(407.2px, 242.6px) rotate(145.3deg); }
+  53% { transform: translate(408.6px, 244.8px) rotate(148.6deg); }
+  54% { transform: translate(409.9px, 247.0px) rotate(151.9deg); }
+  55% { transform: translate(410.9px, 249.1px) rotate(155.0deg); }
+  56% { transform: translate(411.9px, 251.3px) rotate(157.9deg); }
+  57% { transform: translate(412.6px, 253.3px) rotate(160.7deg); }
+  58% { transform: translate(413.3px, 255.3px) rotate(163.4deg); }
+  59% { transform: translate(413.8px, 257.1px) rotate(165.9deg); }
+  60% { transform: translate(414.2px, 258.9px) rotate(168.2deg); }
+  61% { transform: translate(414.5px, 260.5px) rotate(170.3deg); }
+  62% { transform: translate(414.7px, 262.0px) rotate(172.3deg); }
+  63% { transform: translate(414.9px, 263.4px) rotate(174.0deg); }
+  64% { transform: translate(415.0px, 264.5px) rotate(175.6deg); }
+  65% { transform: translate(415.1px, 265.6px) rotate(176.9deg); }
+  66% { transform: translate(415.1px, 266.4px) rotate(178.0deg); }
+  67% { transform: translate(415.1px, 267.1px) rotate(178.9deg); }
+  68% { transform: translate(415.1px, 267.6px) rotate(179.5deg); }
+  69% { transform: translate(415.1px, 267.9px) rotate(179.9deg); }
+  70% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  71% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  72% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  73% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  74% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  75% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  76% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  77% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  78% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  79% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  80% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  81% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  82% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  83% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  84% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  85% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  86% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  87% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  88% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  89% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  90% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  91% { transform: translate(415.1px, 268.0px) rotate(180.0deg); }
+  92% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  93% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  94% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  95% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  96% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  97% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  98% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  99% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+  100% { transform: translate(326.0px, 268.0px) rotate(0.0deg); }
+}
+@keyframes fr-dial {
+  0% { transform: rotate(0.0deg); }
+  1% { transform: rotate(0.0deg); }
+  2% { transform: rotate(0.0deg); }
+  3% { transform: rotate(0.0deg); }
+  4% { transform: rotate(0.0deg); }
+  5% { transform: rotate(0.0deg); }
+  6% { transform: rotate(0.0deg); }
+  7% { transform: rotate(0.1deg); }
+  8% { transform: rotate(0.5deg); }
+  9% { transform: rotate(1.1deg); }
+  10% { transform: rotate(2.0deg); }
+  11% { transform: rotate(3.1deg); }
+  12% { transform: rotate(4.4deg); }
+  13% { transform: rotate(6.0deg); }
+  14% { transform: rotate(7.7deg); }
+  15% { transform: rotate(9.7deg); }
+  16% { transform: rotate(11.8deg); }
+  17% { transform: rotate(14.1deg); }
+  18% { transform: rotate(16.6deg); }
+  19% { transform: rotate(19.3deg); }
+  20% { transform: rotate(22.1deg); }
+  21% { transform: rotate(25.0deg); }
+  22% { transform: rotate(28.1deg); }
+  23% { transform: rotate(31.4deg); }
+  24% { transform: rotate(34.7deg); }
+  25% { transform: rotate(38.2deg); }
+  26% { transform: rotate(41.7deg); }
+  27% { transform: rotate(45.4deg); }
+  28% { transform: rotate(49.2deg); }
+  29% { transform: rotate(53.0deg); }
+  30% { transform: rotate(57.0deg); }
+  31% { transform: rotate(60.9deg); }
+  32% { transform: rotate(65.0deg); }
+  33% { transform: rotate(69.1deg); }
+  34% { transform: rotate(73.2deg); }
+  35% { transform: rotate(77.4deg); }
+  36% { transform: rotate(81.6deg); }
+  37% { transform: rotate(85.8deg); }
+  38% { transform: rotate(90.0deg); }
+  39% { transform: rotate(94.2deg); }
+  40% { transform: rotate(98.4deg); }
+  41% { transform: rotate(102.6deg); }
+  42% { transform: rotate(106.8deg); }
+  43% { transform: rotate(110.9deg); }
+  44% { transform: rotate(115.0deg); }
+  45% { transform: rotate(119.1deg); }
+  46% { transform: rotate(123.0deg); }
+  47% { transform: rotate(127.0deg); }
+  48% { transform: rotate(130.8deg); }
+  49% { transform: rotate(134.6deg); }
+  50% { transform: rotate(138.3deg); }
+  51% { transform: rotate(141.8deg); }
+  52% { transform: rotate(145.3deg); }
+  53% { transform: rotate(148.6deg); }
+  54% { transform: rotate(151.9deg); }
+  55% { transform: rotate(155.0deg); }
+  56% { transform: rotate(157.9deg); }
+  57% { transform: rotate(160.7deg); }
+  58% { transform: rotate(163.4deg); }
+  59% { transform: rotate(165.9deg); }
+  60% { transform: rotate(168.2deg); }
+  61% { transform: rotate(170.3deg); }
+  62% { transform: rotate(172.3deg); }
+  63% { transform: rotate(174.0deg); }
+  64% { transform: rotate(175.6deg); }
+  65% { transform: rotate(176.9deg); }
+  66% { transform: rotate(178.0deg); }
+  67% { transform: rotate(178.9deg); }
+  68% { transform: rotate(179.5deg); }
+  69% { transform: rotate(179.9deg); }
+  70% { transform: rotate(180.0deg); }
+  71% { transform: rotate(180.0deg); }
+  72% { transform: rotate(180.0deg); }
+  73% { transform: rotate(180.0deg); }
+  74% { transform: rotate(180.0deg); }
+  75% { transform: rotate(180.0deg); }
+  76% { transform: rotate(180.0deg); }
+  77% { transform: rotate(180.0deg); }
+  78% { transform: rotate(180.0deg); }
+  79% { transform: rotate(180.0deg); }
+  80% { transform: rotate(180.0deg); }
+  81% { transform: rotate(180.0deg); }
+  82% { transform: rotate(180.0deg); }
+  83% { transform: rotate(180.0deg); }
+  84% { transform: rotate(180.0deg); }
+  85% { transform: rotate(180.0deg); }
+  86% { transform: rotate(180.0deg); }
+  87% { transform: rotate(180.0deg); }
+  88% { transform: rotate(180.0deg); }
+  89% { transform: rotate(180.0deg); }
+  90% { transform: rotate(180.0deg); }
+  91% { transform: rotate(180.0deg); }
+  92% { transform: rotate(0.0deg); }
+  93% { transform: rotate(0.0deg); }
+  94% { transform: rotate(0.0deg); }
+  95% { transform: rotate(0.0deg); }
+  96% { transform: rotate(0.0deg); }
+  97% { transform: rotate(0.0deg); }
+  98% { transform: rotate(0.0deg); }
+  99% { transform: rotate(0.0deg); }
+  100% { transform: rotate(0.0deg); }
+}
+@keyframes fr-tr {
+  0% { stroke-dashoffset: 1000.0; }
+  1% { stroke-dashoffset: 1000.0; }
+  2% { stroke-dashoffset: 1000.0; }
+  3% { stroke-dashoffset: 1000.0; }
+  4% { stroke-dashoffset: 1000.0; }
+  5% { stroke-dashoffset: 1000.0; }
+  6% { stroke-dashoffset: 1000.0; }
+  7% { stroke-dashoffset: 999.3; }
+  8% { stroke-dashoffset: 997.1; }
+  9% { stroke-dashoffset: 993.6; }
+  10% { stroke-dashoffset: 988.8; }
+  11% { stroke-dashoffset: 982.6; }
+  12% { stroke-dashoffset: 975.3; }
+  13% { stroke-dashoffset: 966.7; }
+  14% { stroke-dashoffset: 957.0; }
+  15% { stroke-dashoffset: 946.2; }
+  16% { stroke-dashoffset: 934.4; }
+  17% { stroke-dashoffset: 921.5; }
+  18% { stroke-dashoffset: 907.7; }
+  19% { stroke-dashoffset: 893.0; }
+  20% { stroke-dashoffset: 877.4; }
+  21% { stroke-dashoffset: 861.0; }
+  22% { stroke-dashoffset: 843.8; }
+  23% { stroke-dashoffset: 825.8; }
+  24% { stroke-dashoffset: 807.2; }
+  25% { stroke-dashoffset: 787.9; }
+  26% { stroke-dashoffset: 768.1; }
+  27% { stroke-dashoffset: 747.7; }
+  28% { stroke-dashoffset: 726.7; }
+  29% { stroke-dashoffset: 705.4; }
+  30% { stroke-dashoffset: 683.6; }
+  31% { stroke-dashoffset: 661.4; }
+  32% { stroke-dashoffset: 639.0; }
+  33% { stroke-dashoffset: 616.2; }
+  34% { stroke-dashoffset: 593.3; }
+  35% { stroke-dashoffset: 570.1; }
+  36% { stroke-dashoffset: 546.8; }
+  37% { stroke-dashoffset: 523.4; }
+  38% { stroke-dashoffset: 500.0; }
+  39% { stroke-dashoffset: 476.6; }
+  40% { stroke-dashoffset: 453.2; }
+  41% { stroke-dashoffset: 429.9; }
+  42% { stroke-dashoffset: 406.7; }
+  43% { stroke-dashoffset: 383.8; }
+  44% { stroke-dashoffset: 361.0; }
+  45% { stroke-dashoffset: 338.6; }
+  46% { stroke-dashoffset: 316.4; }
+  47% { stroke-dashoffset: 294.6; }
+  48% { stroke-dashoffset: 273.3; }
+  49% { stroke-dashoffset: 252.3; }
+  50% { stroke-dashoffset: 231.9; }
+  51% { stroke-dashoffset: 212.1; }
+  52% { stroke-dashoffset: 192.8; }
+  53% { stroke-dashoffset: 174.2; }
+  54% { stroke-dashoffset: 156.2; }
+  55% { stroke-dashoffset: 139.0; }
+  56% { stroke-dashoffset: 122.6; }
+  57% { stroke-dashoffset: 107.0; }
+  58% { stroke-dashoffset: 92.3; }
+  59% { stroke-dashoffset: 78.5; }
+  60% { stroke-dashoffset: 65.6; }
+  61% { stroke-dashoffset: 53.8; }
+  62% { stroke-dashoffset: 43.0; }
+  63% { stroke-dashoffset: 33.3; }
+  64% { stroke-dashoffset: 24.7; }
+  65% { stroke-dashoffset: 17.4; }
+  66% { stroke-dashoffset: 11.2; }
+  67% { stroke-dashoffset: 6.4; }
+  68% { stroke-dashoffset: 2.9; }
+  69% { stroke-dashoffset: 0.7; }
+  70% { stroke-dashoffset: 0.0; }
+  71% { stroke-dashoffset: 0.0; }
+  72% { stroke-dashoffset: 0.0; }
+  73% { stroke-dashoffset: 0.0; }
+  74% { stroke-dashoffset: 0.0; }
+  75% { stroke-dashoffset: 0.0; }
+  76% { stroke-dashoffset: 0.0; }
+  77% { stroke-dashoffset: 0.0; }
+  78% { stroke-dashoffset: 0.0; }
+  79% { stroke-dashoffset: 0.0; }
+  80% { stroke-dashoffset: 0.0; }
+  81% { stroke-dashoffset: 0.0; }
+  82% { stroke-dashoffset: 0.0; }
+  83% { stroke-dashoffset: 0.0; }
+  84% { stroke-dashoffset: 0.0; }
+  85% { stroke-dashoffset: 0.0; }
+  86% { stroke-dashoffset: 0.0; }
+  87% { stroke-dashoffset: 0.0; }
+  88% { stroke-dashoffset: 0.0; }
+  89% { stroke-dashoffset: 0.0; }
+  90% { stroke-dashoffset: 0.0; }
+  91% { stroke-dashoffset: 0.0; }
+  92% { stroke-dashoffset: 1000.0; }
+  93% { stroke-dashoffset: 1000.0; }
+  94% { stroke-dashoffset: 1000.0; }
+  95% { stroke-dashoffset: 1000.0; }
+  96% { stroke-dashoffset: 1000.0; }
+  97% { stroke-dashoffset: 1000.0; }
+  98% { stroke-dashoffset: 1000.0; }
+  99% { stroke-dashoffset: 1000.0; }
+  100% { stroke-dashoffset: 1000.0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Field-relative: away from you means away from you</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Push the stick away from you; the robot goes away from you, whichever way it faces.</text>
+<text x="134" y="74" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Field-relative: uses the gyro</text>
+<text x="134" y="90" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">away from you, whichever way it faces</text>
+<text x="386" y="74" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Robot-relative: skips the gyro</text>
+<text x="386" y="90" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">forward is wherever its front points</text>
+<rect x="16" y="100" width="236" height="200" rx="6" fill="#f6f7f9" stroke="#b0b8c0" stroke-width="1.2"/>
+<line x1="16" y1="304" x2="252" y2="304" stroke="#444444" stroke-width="4"/>
+<rect x="268" y="100" width="236" height="200" rx="6" fill="#f6f7f9" stroke="#b0b8c0" stroke-width="1.2"/>
+<line x1="268" y1="304" x2="504" y2="304" stroke="#444444" stroke-width="4"/>
+<text x="244" y="118" font-size="12" fill="#5c5c5c" text-anchor="end">while it turns</text>
+<text x="496" y="118" font-size="12" fill="#5c5c5c" text-anchor="end">while it turns</text>
+<circle cx="48" cy="134" r="16" fill="#ffffff" stroke="#444444" stroke-width="1.5"/><g transform="translate(48 134)"><g class="fr-dial"><path d="M0 -13L-4 0H4Z" fill="#446ce3"/><circle r="2.5" fill="#444444"/></g></g>
+<text x="48" y="166" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">gyro</text>
+<g class="fr-fade"><path class="fr-tr" pathLength="1000" d="M134 268V128" fill="none" stroke="#1a7f37" stroke-width="4" stroke-opacity="0.55" stroke-linecap="round"/><path class="fr-tr" pathLength="1000" d="M326 268A44.56 44.56 0 0 1 415.13 268" fill="none" stroke="#5c5c5c" stroke-width="4" stroke-opacity="0.45" stroke-linecap="round"/></g>
+<g class="fr-fade"><g class="fr-l"><rect x="-18" y="-18" width="36" height="36" rx="4" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/><rect x="-18" y="-18" width="36" height="7" rx="2" fill="#444444"/><path d="M0 -9L-7 3H7Z" fill="#444444"/></g><g class="fr-r"><rect x="-18" y="-18" width="36" height="36" rx="4" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/><rect x="-18" y="-18" width="36" height="7" rx="2" fill="#444444"/><path d="M0 -9L-7 3H7Z" fill="#444444"/></g></g>
+<circle cx="134" cy="334" r="17" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/><circle class="fr-stick" cx="134" cy="334" r="8" fill="#444444"/><line x1="164" y1="346" x2="164" y2="330" stroke="#446ce3" stroke-width="2.5"/><path d="M164 320L169 329L159 329Z" fill="#446ce3"/><text x="134" y="370" font-size="12" fill="#222222" text-anchor="middle">the stick, pushed away from you</text>
+<circle cx="386" cy="334" r="17" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/><circle class="fr-stick" cx="386" cy="334" r="8" fill="#444444"/><line x1="416" y1="346" x2="416" y2="330" stroke="#446ce3" stroke-width="2.5"/><path d="M416 320L421 329L411 329Z" fill="#446ce3"/><text x="386" y="370" font-size="12" fill="#222222" text-anchor="middle">the stick, pushed away from you</text>
+<line x1="16" y1="384" x2="504" y2="384" stroke="#e2e2e2"/>
+<text x="16" y="402" font-size="13" fill="#222222">It needs the right gyro heading: a gyro that counts backwards, or one</text>
+<text x="16" y="420" font-size="13" fill="#222222">zeroed while the robot faced sideways, sends every push the wrong way.</text>
+<text x="16" y="438" font-size="12" fill="#5c5c5c">Trying both is a quick way to tell a gyro problem from a module problem.</text>
+</svg>

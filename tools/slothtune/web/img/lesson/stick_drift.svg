@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 392" width="520" height="392" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sd-title sd-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="sd-title">Stick drift</title>
+<desc id="sd-desc">Animated. Left: a thumbstick seen from above, with a dashed deadband circle at its center. Nobody is touching it. At first it rests a little off center but inside the deadband, which is fine. Then it is flicked hard, springs back, and settles off center outside the deadband. Right: a robot lined up on a target. While the stick rests outside the deadband the robot creeps sideways on its own, and its line to the target turns from lined up to a miss. Another flick lets the stick settle back inside the deadband and the robot stops.</desc>
+<style>
+.sd-cap { transform: translate(27px, 6px); animation: sd-cap 8s linear infinite; }
+@keyframes sd-cap {
+  0% { transform: translate(5px, -4px); }
+  12.5% { transform: translate(5px, -4px); }
+  15.5% { transform: translate(60px, -18px); }
+  18.5% { transform: translate(-14px, 10px); }
+  21% { transform: translate(36px, 2px); }
+  23% { transform: translate(20px, 8px); }
+  25% { transform: translate(29px, 5px); }
+  27% { transform: translate(27px, 6px); }
+  70% { transform: translate(27px, 6px); }
+  73% { transform: translate(-58px, 22px); }
+  76% { transform: translate(16px, -10px); }
+  78.5% { transform: translate(-8px, 2px); }
+  80.5% { transform: translate(9px, -7px); }
+  82.5% { transform: translate(3px, -2px); }
+  84.5% { transform: translate(5px, -4px); }
+  100% { transform: translate(5px, -4px); }
+}
+.sd-bot { transform: translate(34.5px, 0px); animation: sd-bot 8s linear infinite; }
+@keyframes sd-bot {
+  0% { transform: translate(0px, 0px); opacity: 1; }
+  27% { transform: translate(0px, 0px); opacity: 1; }
+  84.5% { transform: translate(46px, 0px); opacity: 1; }
+  88% { transform: translate(46px, 0px); opacity: 1; }
+  91% { transform: translate(46px, 0px); opacity: 0; }
+  92% { transform: translate(0px, 0px); opacity: 0; }
+  95% { transform: translate(0px, 0px); opacity: 1; }
+  100% { transform: translate(0px, 0px); opacity: 1; }
+}
+.sd-in { opacity: 0; animation: sd-in 8s linear infinite; }
+@keyframes sd-in {
+  0% { opacity: 1; }
+  12% { opacity: 1; }
+  14% { opacity: 0; }
+  85% { opacity: 0; }
+  87% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.sd-out { opacity: 1; animation: sd-out 8s linear infinite; }
+@keyframes sd-out {
+  0% { opacity: 0; }
+  26% { opacity: 0; }
+  28% { opacity: 1; }
+  84% { opacity: 1; }
+  86% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.sd-lined { opacity: 0; animation: sd-lined 8s linear infinite; }
+@keyframes sd-lined {
+  0% { opacity: 1; }
+  36% { opacity: 1; }
+  40% { opacity: 0; }
+  88% { opacity: 0; }
+  90% { opacity: 0; }
+  95% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.sd-miss, .sd-aimbad { opacity: 1; animation: sd-miss 8s linear infinite; }
+@keyframes sd-miss {
+  0% { opacity: 0; }
+  40% { opacity: 0; }
+  44% { opacity: 1; }
+  88% { opacity: 1; }
+  91% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">Stick drift: at rest, but not at zero</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A stick that reads a little pushed when nobody touches it.</text>
+<text x="126" y="82" font-size="13" fill="#222222" font-weight="700" text-anchor="middle">nobody touching it</text>
+<circle cx="126" cy="184" r="84" fill="#f6f7f8" stroke="#444444" stroke-width="2"/>
+<circle cx="126" cy="184" r="18" fill="#446ce3" fill-opacity="0.12" stroke="#446ce3" stroke-width="1.5" stroke-dasharray="4 3"/>
+<path d="M96 184 H156 M126 154 V214" stroke="#c9c9c9" stroke-width="1"/>
+<circle cx="126" cy="184" r="2.5" fill="#444444"/>
+<text x="126" y="234" font-size="12" fill="#446ce3" font-weight="700" text-anchor="middle">deadband</text>
+<text x="92" y="188" font-size="12" fill="#5c5c5c" text-anchor="end">zero</text>
+<g class="sd-cap"><circle cx="126" cy="184" r="22" fill="#b0b8c0" fill-opacity="0.9" stroke="#444444" stroke-width="1.5"/><circle cx="126" cy="184" r="14" fill="#c9d0d6" stroke="#444444" stroke-width="0.8"/><circle cx="126" cy="184" r="4.5" fill="#c62828"/></g>
+<g class="sd-in"><text x="126" y="292" font-size="12" fill="#1a7f37" font-weight="700" text-anchor="middle">rests inside the deadband: fine</text></g>
+<g class="sd-out"><text x="126" y="292" font-size="12" fill="#c62828" font-weight="700" text-anchor="middle">rests outside it: the robot creeps</text></g>
+<rect x="262" y="66" width="242" height="230" rx="8" fill="#f6f7f8" stroke="#9aa3ad" stroke-width="1.5"/>
+<text x="272" y="84" font-size="12" fill="#5c5c5c">on the field</text>
+<rect x="361" y="94" width="44" height="12" rx="2" fill="#446ce3" stroke="#444444" stroke-width="1.2"/>
+<text x="413" y="104" font-size="12" fill="#5c5c5c">target</text>
+<g class="sd-bot">
+<line x1="383" y1="210" x2="383" y2="112" stroke="#1a7f37" stroke-width="2" stroke-dasharray="5 4"/>
+<line class="sd-aimbad" x1="383" y1="210" x2="383" y2="112" stroke="#c62828" stroke-width="2.4" stroke-dasharray="5 4"/>
+<rect x="361" y="210" width="44" height="44" rx="4" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/>
+<path d="M375 222 L383 214 L391 222" fill="none" stroke="#444444" stroke-width="2"/>
+</g>
+<line x1="383" y1="262" x2="383" y2="272" stroke="#444444" stroke-width="1.2"/><text x="383" y="286" font-size="12" fill="#5c5c5c" text-anchor="middle">where it was lined up</text>
+<g class="sd-lined"><text x="373" y="160" font-size="12" fill="#1a7f37" font-weight="700" text-anchor="end">lined up</text></g>
+<g class="sd-miss"><text x="373" y="160" font-size="12" fill="#c62828" font-weight="700" text-anchor="end">creeping: a miss</text></g>
+<line x1="16" y1="308" x2="504" y2="308" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="328" font-size="13" fill="#222222">Check every joystick at the start of an event and after it's dropped.</text>
+<text x="16" y="346" font-size="13" fill="#222222">A stick can rest fine and come back off center after a hard flick,</text>
+<text x="16" y="364" font-size="13" fill="#222222">so the check flicks each stick and watches where the spring leaves it.</text>
+<text x="16" y="381" font-size="12" fill="#5c5c5c">Wear and dirt make it worse over a season.</text>
+</svg>

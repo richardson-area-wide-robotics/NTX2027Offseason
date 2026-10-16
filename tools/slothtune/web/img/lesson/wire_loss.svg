@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 372" width="520" height="372" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="wire_loss-title wire_loss-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="wire_loss-title">Lost volts and heat in a wire</title>
+<desc id="wire_loss-desc">Animated. A 3 ft lead of 12 AWG runs from a PDH port at 12 V to a motor controller: current goes out on the red wire and comes back on the black one, so it is 6 ft of wire, about 9.5 milliohms. At 40 A, current dots flow and the wire glows a little: 0.38 V is lost, so the controller sees 11.6 V, and the wire makes 15 W of heat. Then the current rises to a stalled NEO's 105 A: the dots move faster, the wire glows hot and 1 V is lost. Volts lost is current times resistance; heat is current squared times resistance, so double the current makes four times the heat. Twice the length doubles both; three gauges thicker halves both.</desc>
+<style>
+.wl-flow{animation:wl-flow 8s linear infinite}
+@keyframes wl-flow{0%{stroke-dashoffset:0}45%{stroke-dashoffset:-144}50%{stroke-dashoffset:-173}95%{stroke-dashoffset:-551}100%{stroke-dashoffset:-576}}
+.wl-a{animation:wl-a 8s linear infinite}
+@keyframes wl-a{0%{opacity:1}45%{opacity:1}50%{opacity:0}95%{opacity:0}100%{opacity:1}}
+.wl-b{opacity:0;animation:wl-b 8s linear infinite}
+@keyframes wl-b{0%{opacity:0}45%{opacity:0}50%{opacity:1}95%{opacity:1}100%{opacity:0}}
+.wl-ra{animation:wl-ra 8s linear infinite}
+@keyframes wl-ra{0%{opacity:1}45%{opacity:1}50%{opacity:0.3}95%{opacity:0.3}100%{opacity:1}}
+.wl-rb{animation:wl-rb 8s linear infinite}
+@keyframes wl-rb{0%{opacity:0.3}45%{opacity:0.3}50%{opacity:1}95%{opacity:1}100%{opacity:0.3}}
+.wl-glow{opacity:0.22;animation:wl-glow 8s linear infinite}
+@keyframes wl-glow{0%{opacity:0.22}45%{opacity:0.22}50%{opacity:0.8}95%{opacity:0.8}100%{opacity:0.22}}
+.wl-heat{opacity:0;animation:wl-heat 8s linear infinite}
+@keyframes wl-heat{0%{opacity:0;transform:translateY(0px)}48%{opacity:0;transform:translateY(0px)}55%{opacity:1;transform:translateY(-3px)}62%{opacity:0.4;transform:translateY(-6px)}69%{opacity:1;transform:translateY(-3px)}76%{opacity:0.4;transform:translateY(-6px)}83%{opacity:1;transform:translateY(-3px)}92%{opacity:0;transform:translateY(-6px)}100%{opacity:0;transform:translateY(0px)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Lost volts and heat in a wire</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Every wire is a small resistor, and the current has to go out and come back.</text>
+<path d="M100 64 V76 M420 64 V76 M100 70 H420" fill="none" stroke="#5c5c5c" stroke-width="1"/>
+<rect x="200" y="60" width="120" height="20" fill="#ffffff"/>
+<text x="260" y="74" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">3 ft lead, 12 AWG</text>
+<path class="wl-glow" d="M100 122 H420 M100 158 H420" fill="none" stroke="#b45309" stroke-width="20"/>
+<path d="M100 122 H420" fill="none" stroke="#d0352b" stroke-width="6"/>
+<path d="M420 158 H100" fill="none" stroke="#333333" stroke-width="6"/>
+<path class="wl-flow" d="M100 122 H420" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 15.9"/>
+<path class="wl-flow" d="M420 158 H100" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 15.9"/>
+<path class="wl-heat" d="M196 110 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+<path class="wl-heat" d="M256 110 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+<path class="wl-heat" d="M316 110 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+<path class="wl-heat" d="M376 110 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"/>
+<rect x="16" y="98" width="84" height="84" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="58" y="130" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">PDH</text>
+<text x="58" y="156" font-size="15" font-weight="700" fill="#1a7f37" text-anchor="middle">12 V</text>
+<rect x="420" y="98" width="84" height="84" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="462" y="130" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">controller</text>
+<text x="462" y="156" font-size="15" font-weight="700" fill="#1a7f37" text-anchor="middle" class="wl-a" data-ov="cv">11.6 V</text>
+<text x="462" y="156" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle" class="wl-b" data-ov="cv">1 V lost</text>
+<text x="112" y="112" font-size="12" font-weight="700" fill="#222222">out →</text>
+<text x="112" y="180" font-size="12" font-weight="700" fill="#222222">← back</text>
+<text x="260" y="145" font-size="13" font-weight="700" fill="#222222" text-anchor="middle" class="wl-a" data-ov="amps">40 A</text>
+<text x="260" y="145" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle" class="wl-b" data-ov="amps">105 A: a stalled NEO</text>
+<text x="260" y="200" font-size="12" fill="#5c5c5c" text-anchor="middle">6 ft of wire at about 1.6 mΩ a foot: 9.5 mΩ</text>
+<g class="wl-ra"><rect x="16" y="214" width="488" height="48" rx="6" fill="#f4f4f4" stroke="#e2e2e2"/>
+<text x="28" y="234" font-size="13" font-weight="700" fill="#222222">At 40 A: 0.38 V lost and 15 W of heat in the wire</text>
+<text x="28" y="252" font-size="12" fill="#5c5c5c">The controller sees 11.6 V when the PDH has 12.</text>
+</g>
+<g class="wl-rb"><rect x="16" y="270" width="488" height="48" rx="6" fill="#f4f4f4" stroke="#e2e2e2"/>
+<text x="28" y="290" font-size="13" font-weight="700" fill="#c62828">At a stalled NEO's 105 A: 1 V lost</text>
+<text x="28" y="308" font-size="12" fill="#5c5c5c">Double the current, four times the heat: the leads get hot fast.</text>
+</g>
+<text x="16" y="342" font-size="13" font-weight="700" fill="#222222">Volts lost = I × R.   Heat in the wire = I² × R.</text>
+<text x="16" y="360" font-size="12" fill="#5c5c5c">Twice the length: twice the volts lost and heat. Three gauges thicker: half of both.</text>
+</svg>

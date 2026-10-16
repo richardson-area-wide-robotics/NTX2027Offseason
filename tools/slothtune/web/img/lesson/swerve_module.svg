@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" width="520" height="380" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sm-title sm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="sm-title">Swerve module: every corner steers and drives</title>
+<desc id="sm-desc">Animated. Left: a swerve robot seen from above, with a module at each corner; each module's wheel steers. Text under it: 4 corners times 2 loops is 8 loops for the robot. Right, one corner up close, in two steps. Step 1, steering, an angle: seen from above, the wheel turns until it lines up with a dashed target angle, and every corner of the robot turns with it; this is a position loop, like WPILib's turret tutorial. Step 2, drive, a speed: the wheel, seen from the side, spins, and the tread of the top-view wheel rolls; this is a velocity loop, like its flywheel tutorial. Then the wheels stop and steer back. Below: tune steering first, because a drive loop can't be judged while the wheel points the wrong way.</desc>
+<style>
+.sm-steer { transform-box: view-box; transform-origin: 0 0; transform: rotate(45deg); animation: sm-steer 8s infinite; }
+@keyframes sm-steer {
+  0%, 8% { transform: rotate(0deg); animation-timing-function: ease-out; }
+  30% { transform: rotate(45deg); animation-timing-function: linear; }
+  86% { transform: rotate(45deg); animation-timing-function: ease-in-out; }
+  96%, 100% { transform: rotate(0deg); }
+}
+.sm-tread { animation: sm-tread 8s linear infinite; }
+@keyframes sm-tread { 0%, 32% { transform: translateY(0px); } 80%, 100% { transform: translateY(-64px); } }
+.sm-drive { transform-box: view-box; transform-origin: 0 0; animation: sm-drive 8s linear infinite; }
+@keyframes sm-drive { 0%, 32% { transform: rotate(0deg); } 34% { transform: rotate(10deg); } 78% { transform: rotate(710deg); } 80%, 100% { transform: rotate(720deg); } }
+.sm-h1 { opacity: 0; animation: sm-h1 8s linear infinite; }
+@keyframes sm-h1 { 0%, 7% { opacity: 0; } 9%, 30% { opacity: 1; } 32%, 100% { opacity: 0; } }
+.sm-h2 { opacity: 0; animation: sm-h2 8s linear infinite; }
+@keyframes sm-h2 { 0%, 31% { opacity: 0; } 33%, 80% { opacity: 1; } 82%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Swerve module: every corner steers and drives</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Two loops per corner: steering (an angle) and drive (a speed).</text>
+<rect x="36" y="82" width="160" height="160" rx="10" fill="#f2f4f6" stroke="#444444" stroke-width="2"/>
+<path d="M116 88L109 100H123Z" fill="#444444"/>
+<text x="116" y="76" font-size="12" fill="#5c5c5c" text-anchor="middle">front</text>
+<circle cx="64" cy="110" r="20" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/><g transform="translate(64 110)"><g class="sm-steer"><rect x="-6" y="-15" width="12" height="30" rx="3" fill="#3a3f45"/><circle r="2.5" fill="#b0b8c0"/></g></g>
+<circle cx="168" cy="110" r="20" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/><g transform="translate(168 110)"><g class="sm-steer"><rect x="-6" y="-15" width="12" height="30" rx="3" fill="#3a3f45"/><circle r="2.5" fill="#b0b8c0"/></g></g>
+<circle cx="64" cy="214" r="20" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/><g transform="translate(64 214)"><g class="sm-steer"><rect x="-6" y="-15" width="12" height="30" rx="3" fill="#3a3f45"/><circle r="2.5" fill="#b0b8c0"/></g></g>
+<circle cx="168" cy="214" r="20" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/><g transform="translate(168 214)"><g class="sm-steer"><rect x="-6" y="-15" width="12" height="30" rx="3" fill="#3a3f45"/><circle r="2.5" fill="#b0b8c0"/></g></g>
+<circle cx="168" cy="110" r="27" fill="none" stroke="#446ce3" stroke-width="1.5" stroke-dasharray="4 3"/>
+<line x1="194" y1="104" x2="236" y2="96" stroke="#446ce3" stroke-width="1.5" stroke-dasharray="4 3"/>
+<text x="116" y="266" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">4 corners × 2 loops</text>
+<text x="116" y="284" font-size="13" fill="#222222" text-anchor="middle">= 8 loops for the robot</text>
+<rect x="236" y="60" width="268" height="122" rx="8" fill="#f7f9fc" stroke="#e2e2e2"/>
+<rect class="sm-h1" x="236" y="60" width="268" height="122" rx="8" fill="#edf2fd" stroke="#446ce3" stroke-width="2.5"/>
+<rect x="236" y="190" width="268" height="122" rx="8" fill="#f7f9fc" stroke="#e2e2e2"/>
+<rect class="sm-h2" x="236" y="190" width="268" height="122" rx="8" fill="#edf2fd" stroke="#0f766e" stroke-width="2.5"/>
+<circle cx="300" cy="121" r="42" fill="#e6e9ec" stroke="#444444" stroke-width="1.5"/>
+<line x1="261.82" y1="159.18" x2="338.18" y2="82.82" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 4"/>
+<clipPath id="sm-wclip"><rect x="-12" y="-32" width="24" height="64" rx="5"/></clipPath>
+<g transform="translate(300 121)"><g class="sm-steer"><rect x="-12" y="-32" width="24" height="64" rx="5" fill="#3a3f45"/><g clip-path="url(#sm-wclip)"><g class="sm-tread"><path d="M-12 -40H12M-12 -32H12M-12 -24H12M-12 -16H12M-12 -8H12M-12 0H12M-12 8H12M-12 16H12M-12 24H12M-12 32H12M-12 40H12M-12 48H12M-12 56H12M-12 64H12M-12 72H12M-12 80H12M-12 88H12M-12 96H12M-12 104H12" stroke="#5d646b" stroke-width="2"/></g></g><circle r="4" fill="#b0b8c0"/><path d="M0 -27L-5 -19H5Z" fill="#ffffff"/></g></g>
+<circle cx="250" cy="74" r="9" fill="#446ce3"/><text x="250" y="78.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="358" y="84" font-size="13" font-weight="700" fill="#446ce3">Steering: an angle</text>
+<text x="358" y="103" font-size="12" fill="#222222">a position loop,</text>
+<text x="358" y="119" font-size="12" fill="#222222">like WPILib's turret</text>
+<text x="358" y="135" font-size="12" fill="#222222">tutorial</text>
+<text x="358" y="157" font-size="12" fill="#5c5c5c">dashed: the target</text>
+<line x1="256" y1="280" x2="344" y2="280" stroke="#444444" stroke-width="1.5"/><path d="M266 280l-6 7M278 280l-6 7M290 280l-6 7M302 280l-6 7M314 280l-6 7M326 280l-6 7M338 280l-6 7" stroke="#b0b8c0" stroke-width="1.2"/>
+<g transform="translate(300 244)"><g class="sm-drive"><circle r="35" fill="#3a3f45"/><circle r="27.3" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M8.49 4.9L20.61 11.9M0 9.8L0 23.8M-8.49 4.9L-20.61 11.9M-8.49 -4.9L-20.61 -11.9M0 -9.8L0 -23.8M8.49 -4.9L20.61 -11.9" stroke="#444444" stroke-width="4.2" stroke-linecap="round"/><circle r="8.4" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="31.15" r="2.45" fill="#ffffff"/></g></g>
+<g><path d="M259.59 229.29A43 43 0 0 1 302.7 201.09" fill="none" stroke="#0f766e" stroke-width="2.5"/><path d="M307.47 201.65L298.81 204.7L300.37 195.83Z" fill="#0f766e"/></g>
+<circle cx="250" cy="204" r="9" fill="#0f766e"/><text x="250" y="208.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="358" y="214" font-size="13" font-weight="700" fill="#0f766e">Drive: a speed</text>
+<text x="358" y="233" font-size="12" fill="#222222">a velocity loop,</text>
+<text x="358" y="249" font-size="12" fill="#222222">like its flywheel</text>
+<text x="358" y="265" font-size="12" fill="#222222">tutorial</text>
+<line x1="16" y1="330" x2="504" y2="330" stroke="#e2e2e2"/>
+<text x="16" y="350" font-size="13" fill="#222222"><tspan font-weight="700">Tune steering first:</tspan> a drive loop can't be judged while the wheel</text>
+<text x="16" y="368" font-size="13" fill="#222222">points the wrong way.</text>
+</svg>

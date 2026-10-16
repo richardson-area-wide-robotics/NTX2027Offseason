@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="frc_can_id-title frc_can_id-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="frc_can_id-title">FRC's CAN ID: four parts</title>
+<desc id="frc_can_id-desc">Animated. FRC's 29-bit CAN ID drawn as a strip of 29 cells split into four parts, most important first: device type, 5 bits; manufacturer, 8 bits; which message, 10 bits (FRC calls it the API); and device number, 6 bits, 0 to 63. The example is a SPARK set to number 5 sending its status 0: type 2 (motor controller), maker 5 (REV), message status 0, number 5. A highlight steps through the parts one at a time and stops on the device number, which is all the "CAN ID" you set on a SPARK is. Other types: 4 gyro, 8 power distribution, 9 pneumatics; other makers: 1 NI, 4 CTRE, 11 Playing With Fusion, 14 Redux. A REV and a CTRE motor controller can both be number 5 because their makers differ; two SPARKs at the same number collide.</desc>
+<style>
+.fi-h0{opacity:0;animation:fi-h0 8s linear infinite}
+@keyframes fi-h0{0%{opacity:0}3%{opacity:0}4%{opacity:1}21%{opacity:1}22%{opacity:0}100%{opacity:0}}
+.fi-h1{opacity:0;animation:fi-h1 8s linear infinite}
+@keyframes fi-h1{0%{opacity:0}21%{opacity:0}22%{opacity:1}39%{opacity:1}40%{opacity:0}100%{opacity:0}}
+.fi-h2{opacity:0;animation:fi-h2 8s linear infinite}
+@keyframes fi-h2{0%{opacity:0}39%{opacity:0}40%{opacity:1}57%{opacity:1}58%{opacity:0}100%{opacity:0}}
+.fi-h3{opacity:1;animation:fi-h3 8s linear infinite}
+@keyframes fi-h3{0%{opacity:0}57%{opacity:0}58%{opacity:1}95%{opacity:1}96%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">FRC's CAN ID: four parts</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">29 bits, most important first. The “CAN ID” you set on a SPARK is only the last part.</text>
+<text x="16" y="78" font-size="12" font-weight="700" fill="#222222">Example: a SPARK set to number 5, sending its status 0</text>
+<rect x="16.0" y="90" width="16.8" height="36" fill="#446ce3" fill-opacity="0.16" stroke="#446ce3" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="32.8" y="90" width="16.8" height="36" fill="#446ce3" fill-opacity="0.16" stroke="#446ce3" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="49.6" y="90" width="16.8" height="36" fill="#446ce3" fill-opacity="0.16" stroke="#446ce3" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="66.4" y="90" width="16.8" height="36" fill="#446ce3" fill-opacity="0.16" stroke="#446ce3" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="83.2" y="90" width="16.8" height="36" fill="#446ce3" fill-opacity="0.16" stroke="#446ce3" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="16.0" y="90" width="84.0" height="36" fill="none" stroke="#446ce3" stroke-width="2"/>
+<rect x="47.0" y="98" width="22" height="20" rx="4" fill="#ffffff" stroke="#446ce3" stroke-width="1"/>
+<text x="58" y="113" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">2</text>
+<text x="58" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">5 bits</text>
+<rect class="fi-h0" x="13.0" y="86" width="90.0" height="44" rx="4" fill="none" stroke="#222222" stroke-width="3"/>
+<rect class="fi-h0" x="10" y="152" width="500" height="38" rx="6" fill="#446ce3" fill-opacity="0.10" stroke="#446ce3" stroke-width="1.5"/>
+<rect x="18" y="158" width="12" height="12" rx="2" fill="#446ce3"/>
+<text x="38" y="168" font-size="12" font-weight="700" fill="#222222">device type, 5 bits:  2 = motor controller</text>
+<text x="38" y="184" font-size="12" fill="#5c5c5c">others: 4 gyro, 8 power distribution, 9 pneumatics</text>
+<rect x="100.0" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="116.8" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="133.6" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="150.4" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="167.2" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="184.0" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="200.8" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="217.6" y="90" width="16.8" height="36" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="100.0" y="90" width="134.4" height="36" fill="none" stroke="#b45309" stroke-width="2"/>
+<rect x="136.2" y="98" width="62" height="20" rx="4" fill="#ffffff" stroke="#b45309" stroke-width="1"/>
+<text x="167.2" y="113" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">5: REV</text>
+<text x="167.2" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">8 bits</text>
+<rect class="fi-h1" x="97.0" y="86" width="140.4" height="44" rx="4" fill="none" stroke="#222222" stroke-width="3"/>
+<rect class="fi-h1" x="10" y="192" width="500" height="38" rx="6" fill="#b45309" fill-opacity="0.10" stroke="#b45309" stroke-width="1.5"/>
+<rect x="18" y="198" width="12" height="12" rx="2" fill="#b45309"/>
+<text x="38" y="208" font-size="12" font-weight="700" fill="#222222">manufacturer, 8 bits:  5 = REV</text>
+<text x="38" y="224" font-size="12" fill="#5c5c5c">others: 1 NI, 4 CTRE, 11 Playing With Fusion, 14 Redux</text>
+<rect x="234.4" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="251.2" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="268.0" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="284.8" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="301.6" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="318.4" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="335.2" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="352.0" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="368.8" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="385.6" y="90" width="16.8" height="36" fill="#6b7785" fill-opacity="0.16" stroke="#6b7785" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="234.4" y="90" width="168.0" height="36" fill="none" stroke="#6b7785" stroke-width="2"/>
+<rect x="279.4" y="98" width="78" height="20" rx="4" fill="#ffffff" stroke="#6b7785" stroke-width="1"/>
+<text x="318.4" y="113" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">status 0</text>
+<text x="318.4" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">10 bits</text>
+<rect class="fi-h2" x="231.4" y="86" width="174.0" height="44" rx="4" fill="none" stroke="#222222" stroke-width="3"/>
+<rect class="fi-h2" x="10" y="232" width="500" height="38" rx="6" fill="#6b7785" fill-opacity="0.10" stroke="#6b7785" stroke-width="1.5"/>
+<rect x="18" y="238" width="12" height="12" rx="2" fill="#6b7785"/>
+<text x="38" y="248" font-size="12" font-weight="700" fill="#222222">which message, 10 bits:  a SPARK's status 0</text>
+<text x="38" y="264" font-size="12" fill="#5c5c5c">FRC calls this the API: just the message's number</text>
+<rect x="402.4" y="90" width="16.8" height="36" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="419.2" y="90" width="16.8" height="36" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="436.0" y="90" width="16.8" height="36" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="452.8" y="90" width="16.8" height="36" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="469.6" y="90" width="16.8" height="36" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="486.4" y="90" width="16.8" height="36" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-opacity="0.5" stroke-width="1"/>
+<rect x="402.4" y="90" width="100.8" height="36" fill="none" stroke="#1a7f37" stroke-width="2"/>
+<rect x="441.8" y="98" width="22" height="20" rx="4" fill="#ffffff" stroke="#1a7f37" stroke-width="1"/>
+<text x="452.8" y="113" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">5</text>
+<text x="452.8" y="142" font-size="12" fill="#5c5c5c" text-anchor="middle">6 bits</text>
+<rect class="fi-h3" x="399.4" y="86" width="106.8" height="44" rx="4" fill="none" stroke="#222222" stroke-width="3"/>
+<rect class="fi-h3" x="10" y="272" width="500" height="38" rx="6" fill="#1a7f37" fill-opacity="0.10" stroke="#1a7f37" stroke-width="1.5"/>
+<rect x="18" y="278" width="12" height="12" rx="2" fill="#1a7f37"/>
+<text x="38" y="288" font-size="13" font-weight="700" fill="#1a7f37">device number, 6 bits:  5</text>
+<text x="38" y="304" font-size="12" fill="#5c5c5c">the “CAN ID” you set on a SPARK: 0 to 63</text>
+<line x1="16" y1="320" x2="504" y2="320" stroke="#e2e2e2"/>
+<text x="16" y="342" font-size="13" fill="#222222">Two devices can share a number when their type or maker differs:</text>
+<text x="16" y="360" font-size="13" fill="#222222">a REV and a CTRE motor controller can both be number 5.</text>
+<text x="16" y="382" font-size="13" font-weight="700" fill="#c62828">Two SPARKs at the same number collide: both answer the same messages.</text>
+</svg>

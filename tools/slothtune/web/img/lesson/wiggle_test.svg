@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" width="520" height="380" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="wiggle_test-title wiggle_test-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="wiggle_test-title">The wiggle test</title>
+<desc id="wiggle_test-desc">Animated. With the robot on and disabled, a marker moves along the CAN chain from the robot controller (roboRIO or SystemCore) past three SPARKs, and each plug is wiggled in turn, steps 1 to 4. Below, a chart of the loops that saw an error is drawn as the test goes. Steps 1 and 2 change nothing. Wiggling plug 3, the input of the second SPARK, makes the two SPARKs past it flicker off the bus and the error chart spike; step 4 is quiet again. So the step that made something happen marks the bad connection: plug 3. Loose plugs and cracked wires usually work fine when nothing moves. Go in order along the CAN chain, then each controller's power leads, then the main power, and keep hands out while the robot is enabled.</desc>
+<style>
+.wt-mark{transform:translateX(263px);animation:wt-mark 8s linear infinite}
+@keyframes wt-mark{0%{opacity:0;transform:translateX(109px)}2%{opacity:1;transform:translateX(109px)}4%{opacity:1;transform:translateX(109px)}22%{opacity:1;transform:translateX(109px)}23%{opacity:1;transform:translateX(145px)}41%{opacity:1;transform:translateX(145px)}42%{opacity:1;transform:translateX(263px)}60%{opacity:1;transform:translateX(263px)}61%{opacity:1;transform:translateX(381px)}79%{opacity:1;transform:translateX(381px)}83%{opacity:1;transform:translateX(263px)}96%{opacity:1;transform:translateX(263px)}100%{opacity:0;transform:translateX(263px)}}
+.wt-p0{transform-box:fill-box;transform-origin:50% 50%;animation:wt-p0 8s linear infinite}
+@keyframes wt-p0{0%{transform:rotate(0deg)}4.5%{transform:rotate(0deg)}5.5%{transform:rotate(12deg)}6.75%{transform:rotate(-12deg)}8%{transform:rotate(12deg)}9.25%{transform:rotate(-12deg)}10.5%{transform:rotate(12deg)}11.75%{transform:rotate(-12deg)}13%{transform:rotate(12deg)}14.25%{transform:rotate(-12deg)}15.5%{transform:rotate(12deg)}16.75%{transform:rotate(-12deg)}18%{transform:rotate(12deg)}19.25%{transform:rotate(-12deg)}20.5%{transform:rotate(12deg)}22%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.wt-p1{transform-box:fill-box;transform-origin:50% 50%;animation:wt-p1 8s linear infinite}
+@keyframes wt-p1{0%{transform:rotate(0deg)}23.5%{transform:rotate(0deg)}24.5%{transform:rotate(12deg)}25.75%{transform:rotate(-12deg)}27%{transform:rotate(12deg)}28.25%{transform:rotate(-12deg)}29.5%{transform:rotate(12deg)}30.75%{transform:rotate(-12deg)}32%{transform:rotate(12deg)}33.25%{transform:rotate(-12deg)}34.5%{transform:rotate(12deg)}35.75%{transform:rotate(-12deg)}37%{transform:rotate(12deg)}38.25%{transform:rotate(-12deg)}39.5%{transform:rotate(12deg)}41%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.wt-p2{transform-box:fill-box;transform-origin:50% 50%;animation:wt-p2 8s linear infinite}
+@keyframes wt-p2{0%{transform:rotate(0deg)}42.5%{transform:rotate(0deg)}43.5%{transform:rotate(12deg)}44.75%{transform:rotate(-12deg)}46%{transform:rotate(12deg)}47.25%{transform:rotate(-12deg)}48.5%{transform:rotate(12deg)}49.75%{transform:rotate(-12deg)}51%{transform:rotate(12deg)}52.25%{transform:rotate(-12deg)}53.5%{transform:rotate(12deg)}54.75%{transform:rotate(-12deg)}56%{transform:rotate(12deg)}57.25%{transform:rotate(-12deg)}58.5%{transform:rotate(12deg)}60%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.wt-p3{transform-box:fill-box;transform-origin:50% 50%;animation:wt-p3 8s linear infinite}
+@keyframes wt-p3{0%{transform:rotate(0deg)}61.5%{transform:rotate(0deg)}62.5%{transform:rotate(12deg)}63.75%{transform:rotate(-12deg)}65%{transform:rotate(12deg)}66.25%{transform:rotate(-12deg)}67.5%{transform:rotate(12deg)}68.75%{transform:rotate(-12deg)}70%{transform:rotate(12deg)}71.25%{transform:rotate(-12deg)}72.5%{transform:rotate(12deg)}73.75%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}76.25%{transform:rotate(-12deg)}77.5%{transform:rotate(12deg)}79%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.wt-ring{animation:wt-ring 8s linear infinite}
+@keyframes wt-ring{0%{opacity:0}43%{opacity:0}44%{opacity:1}96%{opacity:1}100%{opacity:0}}
+.wt-res{animation:wt-res 8s linear infinite}
+@keyframes wt-res{0%{opacity:0}80%{opacity:0}82%{opacity:1}96%{opacity:1}100%{opacity:0}}
+.wt-drop{animation:wt-drop 8s linear infinite}
+@keyframes wt-drop{0%{opacity:0}43.5%{opacity:0}44%{opacity:1}45.6%{opacity:1}45.8%{opacity:0}47.4%{opacity:0}47.6%{opacity:1}49.2%{opacity:1}49.4%{opacity:0}51%{opacity:0}51.2%{opacity:1}52.8%{opacity:1}53%{opacity:0}54.6%{opacity:0}54.8%{opacity:1}56.4%{opacity:1}56.6%{opacity:0}58.2%{opacity:0}58.4%{opacity:1}60%{opacity:1}61%{opacity:0}100%{opacity:0}}
+.wt-cov{transform:translateX(450px);animation:wt-cov 8s linear infinite}
+@keyframes wt-cov{0%{transform:translateX(0px)}4%{transform:translateX(0px)}80%{transform:translateX(440px)}100%{transform:translateX(440px)}}
+.wt-cur{opacity:0;animation:wt-cur 8s linear infinite}
+@keyframes wt-cur{0%{opacity:1;transform:translateX(0px)}4%{opacity:1;transform:translateX(0px)}80%{opacity:1;transform:translateX(440px)}81%{opacity:0;transform:translateX(440px)}100%{opacity:0;transform:translateX(440px)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The wiggle test</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Robot on and disabled: gently move each plug in turn while a tool watches.</text>
+<path d="M104 101 H386 M104 107 H386" stroke="#5c5c5c" stroke-width="2.5"/>
+<rect x="16" y="78" width="88" height="52" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="60" y="100" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">roboRIO or</text>
+<text x="60" y="117" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SystemCore</text>
+<rect x="150" y="78" width="72" height="52" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="181" y="109" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<circle cx="210" cy="104" r="6" fill="#1a7f37" stroke="#444444" stroke-width="1"/>
+<rect x="268" y="78" width="72" height="52" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="299" y="109" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<circle cx="328" cy="104" r="6" fill="#1a7f37" stroke="#444444" stroke-width="1"/>
+<circle class="wt-drop" cx="328" cy="104" r="6" fill="#c62828" stroke="#444444" stroke-width="1"/>
+<rect x="386" y="78" width="72" height="52" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="417" y="109" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<circle cx="446" cy="104" r="6" fill="#1a7f37" stroke="#444444" stroke-width="1"/>
+<circle class="wt-drop" cx="446" cy="104" r="6" fill="#c62828" stroke="#444444" stroke-width="1"/>
+<rect class="wt-p0" x="104" y="93" width="10" height="22" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<circle cx="109" cy="150" r="10" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<text x="109" y="155" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">1</text>
+<rect class="wt-p1" x="140" y="93" width="10" height="22" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<circle cx="145" cy="150" r="10" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<text x="145" y="155" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">2</text>
+<rect class="wt-p2" x="258" y="93" width="10" height="22" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<circle cx="263" cy="150" r="10" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<text x="263" y="155" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">3</text>
+<rect class="wt-p3" x="376" y="93" width="10" height="22" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<circle cx="381" cy="150" r="10" fill="#ffffff" stroke="#444444" stroke-width="1.4"/>
+<text x="381" y="155" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">4</text>
+<circle class="wt-ring" cx="263" cy="104" r="14" fill="none" stroke="#c62828" stroke-width="3"/>
+<circle cx="420" cy="150" r="6" fill="#1a7f37" stroke="#444444" stroke-width="1"/>
+<text x="432" y="155" font-size="12" fill="#5c5c5c">on the bus</text>
+<g class="wt-mark"><path d="M-14 64 Q0 54 14 64" fill="none" stroke="#446ce3" stroke-width="2.5"/><path d="M-18 60 L-14 67 L-9 61 Z M18 60 L14 67 L9 61 Z" fill="#446ce3"/></g>
+<text x="16" y="155" font-size="12" fill="#5c5c5c">step</text>
+<line x1="16" y1="174" x2="504" y2="174" stroke="#e2e2e2"/>
+<text x="16" y="194" font-size="13" font-weight="700" fill="#222222">The tool counts every loop that saw an error</text>
+<text x="16" y="211" font-size="12" fill="#5c5c5c">(a controller dropped off the bus, rebooted, or saw its supply dip; CAN errors)</text>
+<path d="M40 222 V272 H480" fill="none" stroke="#444444" stroke-width="1.2"/>
+<line x1="150.0" y1="226" x2="150.0" y2="272" stroke="#e2e2e2" stroke-width="1.2"/>
+<line x1="260.0" y1="226" x2="260.0" y2="272" stroke="#e2e2e2" stroke-width="1.2"/>
+<line x1="370.0" y1="226" x2="370.0" y2="272" stroke="#e2e2e2" stroke-width="1.2"/>
+<text x="95" y="288" font-size="12" fill="#5c5c5c" text-anchor="middle">step 1</text>
+<text x="205" y="288" font-size="12" fill="#5c5c5c" text-anchor="middle">step 2</text>
+<text x="315" y="288" font-size="12" fill="#5c5c5c" text-anchor="middle">step 3</text>
+<text x="425" y="288" font-size="12" fill="#5c5c5c" text-anchor="middle">step 4</text>
+<rect x="268.0" y="261" width="5" height="10" fill="#c62828"/>
+<rect x="277.0" y="237" width="5" height="34" fill="#c62828"/>
+<rect x="286.0" y="253" width="5" height="18" fill="#c62828"/>
+<rect x="295.0" y="227" width="5" height="44" fill="#c62828"/>
+<rect x="304.0" y="263" width="5" height="8" fill="#c62828"/>
+<rect x="313.0" y="245" width="5" height="26" fill="#c62828"/>
+<rect x="322.0" y="257" width="5" height="14" fill="#c62828"/>
+<rect x="331.0" y="233" width="5" height="38" fill="#c62828"/>
+<rect x="340.0" y="249" width="5" height="22" fill="#c62828"/>
+<rect x="349.0" y="241" width="5" height="30" fill="#c62828"/>
+<rect x="358.0" y="259" width="5" height="12" fill="#c62828"/>
+<rect class="wt-cov" x="41" y="219" width="444" height="52.3" fill="#ffffff"/>
+<line class="wt-cur" x1="40" y1="220" x2="40" y2="272" stroke="#446ce3" stroke-width="2"/>
+<text x="16" y="314" font-size="13" font-weight="700" fill="#c62828" class="wt-res">Step 3 made something happen: the bad connection is plug 3.</text>
+<text x="16" y="338" font-size="12" fill="#5c5c5c">Loose plugs and cracked wires work fine until something moves. Go in order:</text>
+<text x="16" y="354" font-size="12" fill="#5c5c5c">the CAN chain, then each controller's power leads, then the main power.</text>
+<text x="16" y="370" font-size="12" font-weight="700" fill="#222222">Keep hands out while the robot is enabled.</text>
+</svg>

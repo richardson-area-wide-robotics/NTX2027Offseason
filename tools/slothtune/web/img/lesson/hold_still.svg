@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 384" width="520" height="384" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="hs-title hs-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="hs-title">Why hold still</title>
+<desc id="hs-desc">Animated. Two charts fill in, dot by dot, with an encoder's readings over a few seconds. Held still: the readings only flicker by the last bit, the dashed average sits in the middle, the shaded spread is tiny, and the capture agrees and saves the offset. Bumped partway: the readings jump to a new level, the average lands between the two, a blurred position the wheel was never at, the spread is too big, and the capture asks again.</desc>
+<style>
+.hs-d0{opacity:1;animation:hs-d0 8s linear infinite}
+@keyframes hs-d0{0%{opacity:0}6%{opacity:0}6.8%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d1{opacity:1;animation:hs-d1 8s linear infinite}
+@keyframes hs-d1{0%{opacity:0}8.6%{opacity:0}9.4%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d2{opacity:1;animation:hs-d2 8s linear infinite}
+@keyframes hs-d2{0%{opacity:0}11.2%{opacity:0}12%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d3{opacity:1;animation:hs-d3 8s linear infinite}
+@keyframes hs-d3{0%{opacity:0}13.8%{opacity:0}14.6%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d4{opacity:1;animation:hs-d4 8s linear infinite}
+@keyframes hs-d4{0%{opacity:0}16.4%{opacity:0}17.2%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d5{opacity:1;animation:hs-d5 8s linear infinite}
+@keyframes hs-d5{0%{opacity:0}19%{opacity:0}19.8%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d6{opacity:1;animation:hs-d6 8s linear infinite}
+@keyframes hs-d6{0%{opacity:0}21.6%{opacity:0}22.4%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d7{opacity:1;animation:hs-d7 8s linear infinite}
+@keyframes hs-d7{0%{opacity:0}24.2%{opacity:0}25%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d8{opacity:1;animation:hs-d8 8s linear infinite}
+@keyframes hs-d8{0%{opacity:0}26.8%{opacity:0}27.6%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d9{opacity:1;animation:hs-d9 8s linear infinite}
+@keyframes hs-d9{0%{opacity:0}29.4%{opacity:0}30.2%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d10{opacity:1;animation:hs-d10 8s linear infinite}
+@keyframes hs-d10{0%{opacity:0}32%{opacity:0}32.8%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d11{opacity:1;animation:hs-d11 8s linear infinite}
+@keyframes hs-d11{0%{opacity:0}34.6%{opacity:0}35.4%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d12{opacity:1;animation:hs-d12 8s linear infinite}
+@keyframes hs-d12{0%{opacity:0}37.2%{opacity:0}38%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d13{opacity:1;animation:hs-d13 8s linear infinite}
+@keyframes hs-d13{0%{opacity:0}39.8%{opacity:0}40.6%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d14{opacity:1;animation:hs-d14 8s linear infinite}
+@keyframes hs-d14{0%{opacity:0}42.4%{opacity:0}43.2%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d15{opacity:1;animation:hs-d15 8s linear infinite}
+@keyframes hs-d15{0%{opacity:0}45%{opacity:0}45.8%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d16{opacity:1;animation:hs-d16 8s linear infinite}
+@keyframes hs-d16{0%{opacity:0}47.6%{opacity:0}48.4%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d17{opacity:1;animation:hs-d17 8s linear infinite}
+@keyframes hs-d17{0%{opacity:0}50.2%{opacity:0}51%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d18{opacity:1;animation:hs-d18 8s linear infinite}
+@keyframes hs-d18{0%{opacity:0}52.8%{opacity:0}53.6%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-d19{opacity:1;animation:hs-d19 8s linear infinite}
+@keyframes hs-d19{0%{opacity:0}55.4%{opacity:0}56.2%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-cur{opacity:0;animation:hs-cur 8s linear infinite}
+@keyframes hs-cur{0%{opacity:0;transform:translateX(0px)}5%{opacity:0;transform:translateX(0px)}6%{opacity:1;transform:translateX(0px)}55.4%{opacity:1;transform:translateX(285px)}57%{opacity:0;transform:translateX(285px)}100%{opacity:0;transform:translateX(285px)}}
+.hs-res{opacity:1;animation:hs-res 8s linear infinite}
+@keyframes hs-res{0%{opacity:0}58%{opacity:0}62%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.hs-bump{opacity:1;animation:hs-bump 8s linear infinite}
+@keyframes hs-bump{0%{opacity:0}29.4%{opacity:0}30.2%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Why hold still</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">The capture averages a few seconds of readings and checks they agree.</text>
+<text x="70" y="80" font-size="13" font-weight="700" fill="#1a7f37">Held still</text>
+<rect x="70" y="88" width="302" height="60" fill="#fafbfc" stroke="#d6d6d6" stroke-width="1"/>
+<text x="62" y="122" font-size="12" fill="#5c5c5c" text-anchor="end">reading</text>
+<g class="hs-res"><rect x="71" y="113" width="300" height="10" fill="#1a7f37" fill-opacity="0.13"/><line x1="71" y1="117.8" x2="371" y2="117.8" stroke="#1a7f37" stroke-width="2.5" stroke-dasharray="7 4"/></g>
+<circle class="hs-d0" cx="77" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d1" cx="92" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d2" cx="107" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d3" cx="122" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d4" cx="137" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d5" cx="152" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d6" cx="167" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d7" cx="182" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d8" cx="197" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d9" cx="212" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d10" cx="227" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d11" cx="242" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d12" cx="257" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d13" cx="272" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d14" cx="287" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d15" cx="302" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d16" cx="317" cy="116" r="3.5" fill="#c2410c"/>
+<circle class="hs-d17" cx="332" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d18" cx="347" cy="120" r="3.5" fill="#c2410c"/>
+<circle class="hs-d19" cx="362" cy="116" r="3.5" fill="#c2410c"/>
+<g class="hs-res">
+<text x="388" y="110" font-size="13" font-weight="700" fill="#1a7f37">Agrees ✓</text>
+<text x="388" y="127" font-size="12" fill="#222222">offset saved</text>
+</g>
+<text x="70" y="180" font-size="13" font-weight="700" fill="#c62828">Bumped partway</text>
+<rect x="70" y="188" width="302" height="68" fill="#fafbfc" stroke="#d6d6d6" stroke-width="1"/>
+<text x="62" y="226" font-size="12" fill="#5c5c5c" text-anchor="end">reading</text>
+<g class="hs-res"><rect x="71" y="199" width="300" height="40" fill="#c62828" fill-opacity="0.13"/><line x1="71" y1="220.3" x2="371" y2="220.3" stroke="#c62828" stroke-width="2.5" stroke-dasharray="7 4"/></g>
+<circle class="hs-d0" cx="77" cy="202" r="3.5" fill="#c2410c"/>
+<circle class="hs-d1" cx="92" cy="206" r="3.5" fill="#c2410c"/>
+<circle class="hs-d2" cx="107" cy="202" r="3.5" fill="#c2410c"/>
+<circle class="hs-d3" cx="122" cy="202" r="3.5" fill="#c2410c"/>
+<circle class="hs-d4" cx="137" cy="206" r="3.5" fill="#c2410c"/>
+<circle class="hs-d5" cx="152" cy="202" r="3.5" fill="#c2410c"/>
+<circle class="hs-d6" cx="167" cy="206" r="3.5" fill="#c2410c"/>
+<circle class="hs-d7" cx="182" cy="206" r="3.5" fill="#c2410c"/>
+<circle class="hs-d8" cx="197" cy="202" r="3.5" fill="#c2410c"/>
+<circle class="hs-d9" cx="212" cy="236" r="3.5" fill="#c2410c"/>
+<circle class="hs-d10" cx="227" cy="232" r="3.5" fill="#c2410c"/>
+<circle class="hs-d11" cx="242" cy="232" r="3.5" fill="#c2410c"/>
+<circle class="hs-d12" cx="257" cy="236" r="3.5" fill="#c2410c"/>
+<circle class="hs-d13" cx="272" cy="232" r="3.5" fill="#c2410c"/>
+<circle class="hs-d14" cx="287" cy="236" r="3.5" fill="#c2410c"/>
+<circle class="hs-d15" cx="302" cy="232" r="3.5" fill="#c2410c"/>
+<circle class="hs-d16" cx="317" cy="232" r="3.5" fill="#c2410c"/>
+<circle class="hs-d17" cx="332" cy="236" r="3.5" fill="#c2410c"/>
+<circle class="hs-d18" cx="347" cy="236" r="3.5" fill="#c2410c"/>
+<circle class="hs-d19" cx="362" cy="232" r="3.5" fill="#c2410c"/>
+<g class="hs-res">
+<text x="388" y="210" font-size="13" font-weight="700" fill="#c62828">Moved ✗</text>
+<text x="388" y="227" font-size="12" fill="#222222">blurred average,</text>
+<text x="388" y="244" font-size="12" fill="#222222">so it asks again</text>
+</g>
+<g class="hs-bump"><line x1="204.5" y1="258" x2="204.5" y2="264" stroke="#c62828" stroke-width="2"/><text x="204.5" y="277" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">bumped here</text></g>
+<text x="372" y="277" font-size="12" fill="#5c5c5c" text-anchor="end">a few seconds →</text>
+<path class="hs-cur" d="M77 88V148M77 188V256" fill="none" stroke="#446ce3" stroke-width="1.5"/>
+<line x1="70" y1="296" x2="96" y2="296" stroke="#222222" stroke-width="2.5" stroke-dasharray="7 4"/>
+<text x="102" y="300" font-size="12" fill="#222222">the average</text>
+<rect x="186" y="290" width="26" height="12" fill="#9aa3ad" fill-opacity="0.35"/>
+<text x="218" y="300" font-size="12" fill="#222222">the spread: do the readings agree?</text>
+<line x1="16" y1="316" x2="504" y2="316" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="336" font-size="13" fill="#222222">Averaging removes the encoder's last-bit flicker. Checking the spread</text>
+<text x="16" y="354" font-size="13" fill="#222222">catches a bumped wheel. Both make the offset the real position, not a</text>
+<text x="16" y="372" font-size="13" fill="#222222">moment's guess.</text>
+</svg>

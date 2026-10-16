@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" width="520" height="380" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="power_path-title power_path-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="power_path-title">The power path</title>
+<desc id="power_path-desc">Animated. Current flows from the battery on a red wire through the main breaker to the PDH, out through a breaker on each port and along a red lead to each of three motor controllers, and back on black wires. Every joint on the way, each crimp, Wago and screw terminal, is drawn as a dot: a small resistor. A good feed loses about 0.6 V at 40 A. The third controller's feed has a loose joint that can lose several volts: when it pulls hard, that controller sees a low supply and warns, then reboots and drops off the CAN bus while it restarts. One controller rebooting points at its own feed; many at once points upstream, at the battery or main breaker.</desc>
+<style>
+.pp-flow{animation:pp-flow 8s linear infinite}
+@keyframes pp-flow{0%{stroke-dashoffset:0}100%{stroke-dashoffset:-480}}
+.pp-ok3{opacity:0;animation:pp-ok3 8s linear infinite}
+@keyframes pp-ok3{0%{opacity:1}30%{opacity:1}34%{opacity:0}84%{opacity:0}88%{opacity:1}100%{opacity:1}}
+.pp-low3{animation:pp-low3 8s linear infinite}
+@keyframes pp-low3{0%{opacity:0}30%{opacity:0}34%{opacity:1}58%{opacity:1}62%{opacity:0}100%{opacity:0}}
+.pp-reb3{opacity:0;animation:pp-reb3 8s linear infinite}
+@keyframes pp-reb3{0%{opacity:0}58%{opacity:0}62%{opacity:1}84%{opacity:1}88%{opacity:0}100%{opacity:0}}
+.pp-box3{animation:pp-box3 8s linear infinite}
+@keyframes pp-box3{0%{opacity:1}58%{opacity:1}62%{opacity:0.3}84%{opacity:0.3}88%{opacity:1}100%{opacity:1}}
+.pp-feed3{animation:pp-feed3 8s linear infinite}
+@keyframes pp-feed3{0%{opacity:1}58%{opacity:1}61%{opacity:0}85%{opacity:0}88%{opacity:1}100%{opacity:1}}
+.pp-glow{animation:pp-glow 8s linear infinite}
+@keyframes pp-glow{0%{opacity:0}30%{opacity:0}34%{opacity:1}40%{opacity:0.35}46%{opacity:1}52%{opacity:0.35}58%{opacity:1}62%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The power path</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Current goes out on red to each controller and comes back on black.</text>
+<path d="M72 130 H186" fill="none" stroke="#d0352b" stroke-width="5"/>
+<path d="M186 170 H72" fill="none" stroke="#333333" stroke-width="5"/>
+<path class="pp-flow" d="M72 130 H186" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/>
+<path class="pp-flow" d="M186 170 H72" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/>
+<path d="M246 98 H404" fill="none" stroke="#d0352b" stroke-width="5"/>
+<path d="M404 110 H246" fill="none" stroke="#333333" stroke-width="5"/>
+<g><path class="pp-flow" d="M246 98 H404" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/><path class="pp-flow" d="M404 110 H246" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/></g>
+<path d="M246 166 H404" fill="none" stroke="#d0352b" stroke-width="5"/>
+<path d="M404 178 H246" fill="none" stroke="#333333" stroke-width="5"/>
+<g><path class="pp-flow" d="M246 166 H404" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/><path class="pp-flow" d="M404 178 H246" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/></g>
+<path d="M246 234 H404" fill="none" stroke="#d0352b" stroke-width="5"/>
+<path d="M404 246 H246" fill="none" stroke="#333333" stroke-width="5"/>
+<g class="pp-feed3"><path class="pp-flow" d="M246 234 H404" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/><path class="pp-flow" d="M404 246 H246" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="0.1 15.9"/></g>
+<rect x="16" y="108" width="56" height="84" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="44" y="155" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">battery</text>
+<rect x="100" y="119" width="44" height="22" rx="3" fill="#ffffff" stroke="#444444" stroke-width="1.6"/>
+<path d="M108 136 L136 124" stroke="#444444" stroke-width="1.6"/>
+<text x="122" y="110" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">main breaker</text>
+<rect x="186" y="76" width="60" height="192" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="207" y="98" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">PDH</text>
+<rect x="228" y="93" width="16" height="10" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<rect x="228" y="161" width="16" height="10" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<rect x="228" y="229" width="16" height="10" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<text x="216" y="288" font-size="12" fill="#5c5c5c" text-anchor="middle">a breaker per port</text>
+<path d="M236 239 V276" stroke="#5c5c5c" stroke-width="1" fill="none"/>
+<g><rect x="404" y="83" width="96" height="42" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="452" y="101" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">controller</text>
+</g>
+<text x="452" y="117" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">OK</text>
+<g><rect x="404" y="151" width="96" height="42" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="452" y="169" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">controller</text>
+</g>
+<text x="452" y="185" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">OK</text>
+<g class="pp-box3"><rect x="404" y="219" width="96" height="42" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="452" y="237" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">controller</text>
+</g>
+<text x="452" y="253" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle" class="pp-ok3" data-ov="st3">OK</text>
+<text x="452" y="253" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle" class="pp-low3" data-ov="st3">low supply!</text>
+<text x="452" y="253" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle" class="pp-reb3" data-ov="st3">rebooting</text>
+<text x="500" y="290" font-size="12" font-weight="700" fill="#c62828" text-anchor="end" class="pp-reb3">gone from the CAN bus</text>
+<circle cx="76" cy="130" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="100" cy="130" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="144" cy="130" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="182" cy="130" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="76" cy="170" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="182" cy="170" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="250" cy="98" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="250" cy="110" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="400" cy="98" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="400" cy="110" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="250" cy="166" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="250" cy="178" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="400" cy="166" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="400" cy="178" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="250" cy="234" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="250" cy="246" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="400" cy="234" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle cx="400" cy="246" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<circle class="pp-glow" cx="400" cy="234" r="11" fill="#c62828" fill-opacity="0.25"/>
+<circle cx="400" cy="234" r="6" fill="none" stroke="#c62828" stroke-width="2.4"/>
+<text x="254" y="78" font-size="12" font-weight="700" fill="#1a7f37">good feed: about 0.6 V</text>
+<text x="254" y="92" font-size="12" font-weight="700" fill="#1a7f37">lost at 40 A</text>
+<text x="254" y="272" font-size="12" font-weight="700" fill="#c62828">loose joint: several volts lost</text>
+<path d="M392 244 L330 260" stroke="#c62828" stroke-width="1" fill="none"/>
+<circle cx="24" cy="222" r="3.6" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<text x="34" y="226" font-size="12" font-weight="700" fill="#222222">a joint: a small resistor</text>
+<text x="34" y="242" font-size="12" fill="#5c5c5c">(crimp, Wago or</text>
+<text x="34" y="258" font-size="12" fill="#5c5c5c">screw terminal)</text>
+<line x1="16" y1="304" x2="504" y2="304" stroke="#e2e2e2"/>
+<text x="16" y="326" font-size="13" fill="#222222">Volts lost = current × resistance (V = I × R): a bad joint adds a lot.</text>
+<text x="16" y="346" font-size="13" fill="#222222">One controller rebooting points at its own feed; many at once points</text>
+<text x="16" y="364" font-size="13" fill="#222222">upstream, at the battery or main breaker.</text>
+</svg>

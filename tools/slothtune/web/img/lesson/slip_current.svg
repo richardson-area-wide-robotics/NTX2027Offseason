@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 362" width="520" height="362" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="sc-title sc-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="sc-title">Slip current</title>
+<desc id="sc-desc">Animated. Left, a robot seen from the side with its bumper flat against a wall, so it cannot move. An orange push arrow grows slowly. Right, a graph draws itself over time: while the wheels grip they stay still, the wheel speed stays at zero and the drive current climbs. The moment the wheel slips it spins, its speed jumps, and that wheel is cut at once, so its current drops to zero. The highest current before the slip is marked as the breakaway current, and a green dashed line just below it, at 90%, is where the drive current limit goes.</desc>
+<style>
+.sc-cov{transform:translateX(237px);animation:sc-cov 8s linear infinite}
+@keyframes sc-cov{0%{transform:translateX(0px)}8%{transform:translateX(0px)}72%{transform:translateX(237px)}95%{transform:translateX(237px)}96%{transform:translateX(0px)}100%{transform:translateX(0px)}}
+.sc-cur{opacity:0;animation:sc-cur 8s linear infinite}
+@keyframes sc-cur{0%{opacity:0;transform:translateX(0px)}7%{opacity:0;transform:translateX(0px)}8%{opacity:1;transform:translateX(0px)}72%{opacity:1;transform:translateX(237px)}74%{opacity:0;transform:translateX(237px)}100%{opacity:0;transform:translateX(237px)}}
+.sc-wh{transform-box:fill-box;transform-origin:center;animation:sc-wh 8s linear infinite}
+@keyframes sc-wh{0%{transform:rotate(0deg)}50.94%{transform:rotate(0deg);animation-timing-function:cubic-bezier(0.15,0.7,0.4,1)}58%{transform:rotate(720deg)}100%{transform:rotate(720deg)}}
+.sc-shaft{transform-box:view-box;transform-origin:68px 156px;animation:sc-shaft 8s linear infinite}
+@keyframes sc-shaft{0%{transform:scaleX(0)}8%{transform:scaleX(0)}50.94%{transform:scaleX(1)}51.94%{transform:scaleX(0)}100%{transform:scaleX(0)}}
+.sc-head{animation:sc-head 8s linear infinite}
+@keyframes sc-head{0%{opacity:0;transform:translateX(-96px)}7%{opacity:0;transform:translateX(-96px)}8%{opacity:1;transform:translateX(-96px)}50.94%{opacity:1;transform:translateX(0px)}51.94%{opacity:0;transform:translateX(-96px)}100%{opacity:0;transform:translateX(-96px)}}
+.sc-tr{opacity:1;animation:sc-tr 8s linear infinite}
+@keyframes sc-tr{0%{opacity:1}92%{opacity:1}95%{opacity:0}97%{opacity:1}100%{opacity:1}}
+.sc-slip{opacity:0;animation:sc-slip 8s linear infinite}
+@keyframes sc-slip{0%{opacity:0}50.94%{opacity:0}51.54%{opacity:1}56%{opacity:1}58%{opacity:0}100%{opacity:0}}
+.sc-brk{opacity:1;animation:sc-brk 8s linear infinite}
+@keyframes sc-brk{0%{opacity:0}73%{opacity:0}76%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.sc-lim{opacity:1;animation:sc-lim 8s linear infinite}
+@keyframes sc-lim{0%{opacity:0}79%{opacity:0}82%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.sc-h1{opacity:0;animation:sc-h1 8s linear infinite}
+@keyframes sc-h1{0%{opacity:0}6.5%{opacity:0}8%{opacity:1}50.94%{opacity:1}52.44%{opacity:0}100%{opacity:0}}
+.sc-h2{opacity:0;animation:sc-h2 8s linear infinite}
+@keyframes sc-h2{0%{opacity:0}50.94%{opacity:0}52.44%{opacity:1}72%{opacity:1}73.5%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Slip current</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Bumper against a wall, then a slowly rising push until a wheel breaks loose.</text>
+<rect x="206" y="70" width="14" height="136" fill="#c9ced4" stroke="#444444" stroke-width="1.2"/>
+<text x="213" y="222" font-size="12" fill="#5c5c5c" text-anchor="middle">wall</text>
+<rect x="16" y="196" width="190" height="10" fill="#d9dee3"/>
+<line x1="16" y1="196" x2="206" y2="196" stroke="#444444" stroke-width="1.5"/>
+<rect x="56" y="140" width="134" height="34" rx="3" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<rect x="190" y="146" width="16" height="34" rx="3" fill="#444444"/>
+<text x="118" y="132" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">push</text>
+<rect class="sc-shaft" x="68" y="152" width="96" height="8" fill="#c2410c"/>
+<path class="sc-head" d="M180 156L164 146V166Z" fill="#c2410c"/>
+<g><circle cx="84" cy="180" r="16" fill="#3a3f45"/><line x1="84" y1="180" x2="84" y2="168" stroke="#b0b8c0" stroke-width="3"/><line x1="84" y1="180" x2="94.39" y2="186" stroke="#b0b8c0" stroke-width="3"/><line x1="84" y1="180" x2="73.61" y2="186" stroke="#b0b8c0" stroke-width="3"/><circle cx="84" cy="180" r="4" fill="#b0b8c0"/></g>
+<g class="sc-wh"><circle cx="160" cy="180" r="16" fill="#3a3f45"/><line x1="160" y1="180" x2="160" y2="168" stroke="#b0b8c0" stroke-width="3"/><line x1="160" y1="180" x2="170.39" y2="186" stroke="#b0b8c0" stroke-width="3"/><line x1="160" y1="180" x2="149.61" y2="186" stroke="#b0b8c0" stroke-width="3"/><circle cx="160" cy="180" r="4" fill="#b0b8c0"/></g>
+<g class="sc-slip" stroke="#c62828" stroke-width="2.5" stroke-linecap="round" fill="none"><path d="M138 193l-16 -5M136 197h-22M141 189l-10 -10"/></g>
+<text x="16" y="232" font-size="12" font-weight="700" fill="#222222">Bumper flat against a wall:</text>
+<text x="16" y="248" font-size="12" fill="#222222">the robot cannot move.</text>
+<g class="sc-tr"><path d="M258 222L418 112L423 222H496" fill="none" stroke="#c2410c" stroke-width="3" stroke-linejoin="round"/><path d="M258 220H418L421 160C433 160 440 205 456 218L496 220" fill="none" stroke="#446ce3" stroke-width="3" stroke-linejoin="round"/></g>
+<rect class="sc-cov" x="259" y="82" width="241" height="143" fill="#ffffff"/>
+<line class="sc-cur" x1="259" y1="86" x2="259" y2="222" stroke="#444444" stroke-width="1" stroke-dasharray="2 2"/>
+<path d="M258 86V222H496" fill="none" stroke="#444444" stroke-width="1.5"/>
+<path d="M258 80L262.4 88L253.6 88Z" fill="#444444"/>
+<path d="M502 222L494 226.4L494 217.6Z" fill="#444444"/>
+<line x1="252" y1="68" x2="272" y2="68" stroke="#c2410c" stroke-width="3"/>
+<text x="278" y="72" font-size="12" fill="#222222">drive current</text>
+<line x1="380" y1="68" x2="400" y2="68" stroke="#446ce3" stroke-width="3"/>
+<text x="406" y="72" font-size="12" fill="#222222">wheel speed</text>
+<text x="496" y="238" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<g class="sc-brk"><line x1="258" y1="112" x2="418" y2="112" stroke="#c2410c" stroke-width="1.2" stroke-dasharray="4 3"/><circle cx="418" cy="112" r="5" fill="#c2410c" stroke="#ffffff" stroke-width="2"/><text x="264" y="105" font-size="12" font-weight="700" fill="#c2410c">breakaway current</text></g>
+<g class="sc-lim"><line x1="258" y1="123" x2="496" y2="123" stroke="#1a7f37" stroke-width="2" stroke-dasharray="6 4"/><text x="432" y="140" font-size="12" font-weight="700" fill="#1a7f37">limit: 90%</text></g>
+<rect class="sc-h1" x="252" y="244" width="252" height="19" rx="4" fill="#e8eefc"/>
+<rect class="sc-h2" x="252" y="264" width="252" height="19" rx="4" fill="#e8eefc"/>
+<text x="258" y="258" font-size="12" fill="#222222"><tspan font-weight="700" fill="#1a7f37">Grips:</tspan> wheel still, current climbs.</text>
+<text x="258" y="278" font-size="12" fill="#222222"><tspan font-weight="700" fill="#c62828">Slips:</tspan> speed jumps, wheel cut at once.</text>
+<line x1="16" y1="296" x2="504" y2="296" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="316" font-size="13" fill="#222222">The limit is set to 90% of the weakest corner, and never above the team's</text>
+<text x="16" y="334" font-size="13" fill="#222222">policy for the motor. Measured on your carpet, not guessed: carpets differ</text>
+<text x="16" y="352" font-size="13" fill="#222222">between venues and tread wears.</text>
+</svg>

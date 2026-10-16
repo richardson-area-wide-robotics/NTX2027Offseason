@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 426" width="520" height="426" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="wi-title wi-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="wi-title">What if: your own run, replayed with new gains</title>
+<desc id="wi-desc">Animated. Four steps across the top light up in turn: 1, your run, the step you ran; 2, fit a model, kS, kV and kA from that run; 3, replay it with the same gains and see whether it matches; 4, new gains, the same setpoints run on the model with the SPARK's own controller rules. Below, a graph of speed over time with a dashed setpoint step: your measured run draws in orange; the replay with the same gains draws in dashed gray almost on top of it, and a label says a close match means you can trust the prediction more; then the prediction with your new gains draws in teal, rising faster with a small overshoot. Below: the model leaves out backlash, battery sag and grip changes, so treat a big change as a hint and run it for real; the robot has the final word.</desc>
+<style>
+.wi-b1 { opacity: 0; animation: wi-b1 8s linear infinite; }
+@keyframes wi-b1 { 0% { opacity: 0; } 1.5%, 22% { opacity: 1; } 24%, 100% { opacity: 0; } }
+.wi-b2 { opacity: 0; animation: wi-b2 8s linear infinite; }
+@keyframes wi-b2 { 0%, 22% { opacity: 0; } 24%, 36% { opacity: 1; } 38%, 100% { opacity: 0; } }
+.wi-b3 { opacity: 0; animation: wi-b3 8s linear infinite; }
+@keyframes wi-b3 { 0%, 36% { opacity: 0; } 38%, 58% { opacity: 1; } 60%, 100% { opacity: 0; } }
+.wi-b4 { opacity: 0; animation: wi-b4 8s linear infinite; }
+@keyframes wi-b4 { 0%, 58% { opacity: 0; } 60%, 84% { opacity: 1; } 86%, 100% { opacity: 0; } }
+.wi-w1, .wi-w2, .wi-w3 { transform: translateX(0px); }
+.wi-w1 { animation: wi-w1 8s linear infinite; }
+@keyframes wi-w1 { 0%, 2% { transform: translateX(-440px); } 20%, 100% { transform: translateX(0px); } }
+.wi-w2 { animation: wi-w2 8s linear infinite; }
+@keyframes wi-w2 { 0%, 38% { transform: translateX(-440px); } 54%, 100% { transform: translateX(0px); } }
+.wi-w3 { animation: wi-w3 8s linear infinite; }
+@keyframes wi-w3 { 0%, 60% { transform: translateX(-440px); } 78%, 100% { transform: translateX(0px); } }
+.wi-fade { animation: wi-fade 8s linear infinite; }
+@keyframes wi-fade { 0%, 92% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.wi-lbl { opacity: 1; animation: wi-lbl 8s linear infinite; }
+@keyframes wi-lbl { 0%, 54% { opacity: 0; } 56%, 92% { opacity: 1; } 97%, 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">What if: your own run, replayed with new gains</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Good for direction and rough size. The robot has the final word.</text>
+<rect x="16" y="60" width="111" height="64" rx="6" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="wi-b1" x="16" y="60" width="111" height="64" rx="6" fill="#edf2fd" stroke="#446ce3" stroke-width="2.5"/>
+<text x="24" y="79" font-size="13" font-weight="700" fill="#222222">1 Your run</text>
+<text x="24" y="97" font-size="12" fill="#222222">the step you ran</text>
+<path d="M131 85L137 92L131 99" fill="none" stroke="#5c5c5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="141" y="60" width="111" height="64" rx="6" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="wi-b2" x="141" y="60" width="111" height="64" rx="6" fill="#edf2fd" stroke="#446ce3" stroke-width="2.5"/>
+<text x="149" y="79" font-size="13" font-weight="700" fill="#222222">2 Fit a model</text>
+<text x="149" y="97" font-size="12" fill="#222222">kS, kV and kA</text>
+<text x="149" y="113" font-size="12" fill="#222222">from that run</text>
+<path d="M256 85L262 92L256 99" fill="none" stroke="#5c5c5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="266" y="60" width="111" height="64" rx="6" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="wi-b3" x="266" y="60" width="111" height="64" rx="6" fill="#edf2fd" stroke="#446ce3" stroke-width="2.5"/>
+<text x="274" y="79" font-size="13" font-weight="700" fill="#222222">3 Replay it</text>
+<text x="274" y="97" font-size="12" fill="#222222">same gains:</text>
+<text x="274" y="113" font-size="12" fill="#222222">does it match?</text>
+<path d="M381 85L387 92L381 99" fill="none" stroke="#5c5c5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="391" y="60" width="111" height="64" rx="6" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="wi-b4" x="391" y="60" width="111" height="64" rx="6" fill="#edf2fd" stroke="#446ce3" stroke-width="2.5"/>
+<text x="399" y="79" font-size="13" font-weight="700" fill="#222222">4 New gains</text>
+<text x="399" y="97" font-size="12" fill="#222222">same setpoints,</text>
+<text x="399" y="113" font-size="12" fill="#222222">SPARK's own rules</text>
+<path d="M70 150V324H500" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="62" y="162" font-size="12" fill="#5c5c5c" text-anchor="end">speed</text>
+<text x="500" y="340" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<path d="M70 324H104.4V184H500" fill="none" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="110.4" y="177" font-size="12" font-weight="700" fill="#446ce3">setpoint</text>
+<clipPath id="wi-c1"><rect class="wi-w1" x="70" y="140" width="440" height="190"/></clipPath>
+<g class="wi-fade" clip-path="url(#wi-c1)"><path d="M70 324L72.69 324L75.38 324L78.06 324L80.75 324L83.44 324L86.12 324L88.81 324L91.5 324L94.19 324L96.88 324L99.56 324L102.25 324L104.94 322.97L107.62 317.96L110.31 313.43L113 308.88L115.69 303.75L118.38 299.67L121.06 296.09L123.75 291.48L126.44 287.15L129.12 283.22L131.81 280.21L134.5 276.72L137.19 273.42L139.88 270.16L142.56 266.79L145.25 264.86L147.94 261.47L150.62 258.66L153.31 255.92L156 253.51L158.69 251.09L161.38 247.45L164.06 245.95L166.75 243.64L169.44 242.21L172.12 240.12L174.81 237.15L177.5 235.02L180.19 233.91L182.88 232.67L185.56 229.68L188.25 229.22L190.94 226.83L193.62 224.76L196.31 223.34L199 222.16L201.69 221.6L204.38 220.04L207.06 218.82L209.75 217.65L212.44 215.41L215.12 214.31L217.81 212.84L220.5 212.25L223.19 210.97L225.88 210.63L228.56 208.84L231.25 209.51L233.94 208.23L236.62 206.31L239.31 206.85L242 205.66L244.69 204.89L247.38 204.58L250.06 202.76L252.75 203.21L255.44 201.04L258.12 200.68L260.81 200.95L263.5 199.25L266.19 198.94L268.88 198.59L271.56 198.15L274.25 196.93L276.94 196.52L279.62 196.47L282.31 196.26L285 195.07L287.69 195.86L290.38 195.31L293.06 195.44L295.75 194.17L298.44 193.29L301.12 193.9L303.81 193.07L306.5 192.63L309.19 192.61L311.88 192.95L314.56 192.12L317.25 190.97L319.94 191.13L322.62 191.52L325.31 190.67L328 191.37L330.69 190.29L333.38 190.08L336.06 189.79L338.75 190.3L341.44 188.81L344.12 188.64L346.81 189.85L349.5 188.32L352.19 188.33L354.88 189.03L357.56 188.83L360.25 188.08L362.94 188.05L365.62 188.07L368.31 188.13L371 187.76L373.69 188.11L376.38 187.76L379.06 187.44L381.75 186.31L384.44 186.76L387.12 187.16L389.81 186.01L392.5 185.91L395.19 185.91L397.88 187.07L400.56 186.84L403.25 186.21L405.94 186.81L408.62 185.97L411.31 186.02L414 185.97L416.69 185.39L419.38 186.19L422.06 185.7L424.75 184.98L427.44 185.98L430.12 185.56L432.81 185.97L435.5 185L438.19 185.85L440.88 185.38L443.56 185.76L446.25 184.52L448.94 184.47L451.62 184.73L454.31 185.09L457 184.33L459.69 185.13L462.38 185.35L465.06 185.02L467.75 185.25L470.44 185.71L473.12 185.48L475.81 184.49L478.5 185.18L481.19 185.05L483.88 185.23L486.56 185.43L489.25 185.11L491.94 184.78L494.62 185.17L497.31 185.25L500 184.48" fill="none" stroke="#c2410c" stroke-width="2.6" stroke-linejoin="round"/></g>
+<clipPath id="wi-c2"><rect class="wi-w2" x="70" y="140" width="440" height="190"/></clipPath>
+<g class="wi-fade" clip-path="url(#wi-c2)"><path d="M70 324L72.69 324L75.38 324L78.06 324L80.75 324L83.44 324L86.12 324L88.81 324L91.5 324L94.19 324L96.88 324L99.56 324L102.25 324L104.94 322.89L107.62 317.49L110.31 312.29L113 307.31L115.69 302.52L118.38 297.92L121.06 293.5L123.75 289.25L126.44 285.18L129.12 281.26L131.81 277.5L134.5 273.89L137.19 270.42L139.88 267.09L142.56 263.88L145.25 260.81L147.94 257.86L150.62 255.02L153.31 252.3L156 249.68L158.69 247.17L161.38 244.76L164.06 242.44L166.75 240.21L169.44 238.07L172.12 236.02L174.81 234.05L177.5 232.15L180.19 230.33L182.88 228.58L185.56 226.9L188.25 225.29L190.94 223.74L193.62 222.26L196.31 220.83L199 219.45L201.69 218.14L204.38 216.87L207.06 215.65L209.75 214.49L212.44 213.36L215.12 212.29L217.81 211.25L220.5 210.26L223.19 209.3L225.88 208.39L228.56 207.51L231.25 206.66L233.94 205.85L236.62 205.07L239.31 204.32L242 203.6L244.69 202.91L247.38 202.24L250.06 201.6L252.75 200.99L255.44 200.4L258.12 199.84L260.81 199.29L263.5 198.77L266.19 198.27L268.88 197.79L271.56 197.33L274.25 196.88L276.94 196.46L279.62 196.05L282.31 195.66L285 195.28L287.69 194.92L290.38 194.57L293.06 194.23L295.75 193.91L298.44 193.6L301.12 193.31L303.81 193.02L306.5 192.75L309.19 192.48L311.88 192.23L314.56 191.99L317.25 191.76L319.94 191.53L322.62 191.32L325.31 191.11L328 190.91L330.69 190.72L333.38 190.54L336.06 190.37L338.75 190.2L341.44 190.04L344.12 189.88L346.81 189.73L349.5 189.59L352.19 189.45L354.88 189.32L357.56 189.19L360.25 189.07L362.94 188.95L365.62 188.84L368.31 188.73L371 188.63L373.69 188.53L376.38 188.43L379.06 188.34L381.75 188.25L384.44 188.16L387.12 188.08L389.81 188L392.5 187.93L395.19 187.86L397.88 187.79L400.56 187.72L403.25 187.66L405.94 187.6L408.62 187.54L411.31 187.48L414 187.42L416.69 187.37L419.38 187.32L422.06 187.27L424.75 187.23L427.44 187.18L430.12 187.14L432.81 187.1L435.5 187.06L438.19 187.02L440.88 186.99L443.56 186.95L446.25 186.92L448.94 186.88L451.62 186.85L454.31 186.82L457 186.8L459.69 186.77L462.38 186.74L465.06 186.72L467.75 186.69L470.44 186.67L473.12 186.65L475.81 186.62L478.5 186.6L481.19 186.58L483.88 186.56L486.56 186.55L489.25 186.53L491.94 186.51L494.62 186.5L497.31 186.48L500 186.46" fill="none" stroke="#5c5c5c" stroke-width="2.2" stroke-dasharray="7 4" stroke-linejoin="round"/></g>
+<clipPath id="wi-c3"><rect class="wi-w3" x="70" y="140" width="440" height="190"/></clipPath>
+<g class="wi-fade" clip-path="url(#wi-c3)"><path d="M70 324L72.69 324L75.38 324L78.06 324L80.75 324L83.44 324L86.12 324L88.81 324L91.5 324L94.19 324L96.88 324L99.56 324L102.25 324L104.94 323.97L107.62 322.91L110.31 320.5L113 316.9L115.69 312.28L118.38 306.8L121.06 300.62L123.75 293.88L126.44 286.72L129.12 279.25L131.81 271.59L134.5 263.85L137.19 256.11L139.88 248.45L142.56 240.95L145.25 233.68L147.94 226.68L150.62 219.99L153.31 213.66L156 207.71L158.69 202.17L161.38 197.05L164.06 192.35L166.75 188.08L169.44 184.23L172.12 180.81L174.81 177.8L177.5 175.19L180.19 172.96L182.88 171.1L185.56 169.57L188.25 168.37L190.94 167.47L193.62 166.84L196.31 166.47L199 166.32L201.69 166.38L204.38 166.61L207.06 167.01L209.75 167.55L212.44 168.2L215.12 168.94L217.81 169.77L220.5 170.65L223.19 171.58L225.88 172.54L228.56 173.52L231.25 174.5L233.94 175.47L236.62 176.43L239.31 177.36L242 178.26L244.69 179.12L247.38 179.94L250.06 180.71L252.75 181.43L255.44 182.1L258.12 182.71L260.81 183.27L263.5 183.78L266.19 184.23L268.88 184.64L271.56 184.99L274.25 185.29L276.94 185.54L279.62 185.75L282.31 185.92L285 186.05L287.69 186.14L290.38 186.2L293.06 186.23L295.75 186.23L298.44 186.21L301.12 186.17L303.81 186.11L306.5 186.03L309.19 185.94L311.88 185.84L314.56 185.73L317.25 185.62L319.94 185.5L322.62 185.37L325.31 185.25L328 185.13L330.69 185.01L333.38 184.89L336.06 184.77L338.75 184.66L341.44 184.55L344.12 184.45L346.81 184.36L349.5 184.27L352.19 184.19L354.88 184.12L357.56 184.05L360.25 183.99L362.94 183.94L365.62 183.89L368.31 183.85L371 183.82L373.69 183.79L376.38 183.77L379.06 183.75L381.75 183.73L384.44 183.72L387.12 183.72L389.81 183.72L392.5 183.72L395.19 183.72L397.88 183.73L400.56 183.74L403.25 183.75L405.94 183.76L408.62 183.78L411.31 183.79L414 183.8L416.69 183.82L419.38 183.84L422.06 183.85L424.75 183.87L427.44 183.88L430.12 183.9L432.81 183.91L435.5 183.92L438.19 183.94L440.88 183.95L443.56 183.96L446.25 183.97L448.94 183.98L451.62 183.99L454.31 184L457 184.01L459.69 184.01L462.38 184.02L465.06 184.02L467.75 184.03L470.44 184.03L473.12 184.03L475.81 184.03L478.5 184.03L481.19 184.04L483.88 184.04L486.56 184.04L489.25 184.04L491.94 184.03L494.62 184.03L497.31 184.03L500 184.03" fill="none" stroke="#0f766e" stroke-width="2.6" stroke-linejoin="round"/></g>
+<text x="300" y="262" font-size="12" font-weight="700" fill="#1a7f37" class="wi-lbl">replay ≈ your run:</text>
+<text x="300" y="278" font-size="12" font-weight="700" fill="#1a7f37" class="wi-lbl">trust the prediction more</text>
+<line x1="16" y1="352" x2="40" y2="352" stroke="#c2410c" stroke-width="2.6"/><text x="46" y="356" font-size="12" fill="#222222">your run</text>
+<line x1="116" y1="352" x2="140" y2="352" stroke="#5c5c5c" stroke-width="2.2" stroke-dasharray="7 4"/><text x="146" y="356" font-size="12" fill="#222222">replay, same gains</text>
+<line x1="278" y1="352" x2="302" y2="352" stroke="#0f766e" stroke-width="2.6"/><text x="308" y="356" font-size="12" fill="#222222">new gains: the prediction</text>
+<line x1="16" y1="370" x2="504" y2="370" stroke="#e2e2e2"/>
+<text x="16" y="390" font-size="13" fill="#222222">It leaves out backlash, battery sag and grip changes: treat a big change</text>
+<text x="16" y="408" font-size="13" fill="#222222">as a hint, and run it for real.</text>
+</svg>

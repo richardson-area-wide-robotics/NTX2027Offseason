@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 348" width="520" height="348" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="can_heartbeat-title can_heartbeat-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="can_heartbeat-title">The robot's heartbeat</title>
+<desc id="can_heartbeat-desc">Animated, slowed down. The robot controller (roboRIO or SystemCore) sends a heartbeat that says enabled down the CAN cable every 20 ms, drawn as a dot running past three SPARK motor controllers, each driving a spinning wheel. A bar under each SPARK shows the time since it last heard one; each heartbeat resets it. Then the cable breaks between the first and second SPARK: heartbeats stop reaching the two past the break, their bars fill to 100 ms, and each stops its own motor, while the first SPARK, still hearing them, keeps running. When the cable is whole again the heartbeats return and all three run. A motor controller that misses the heartbeat for 100 ms acts as if the robot was disabled, so a broken cable stops only the controllers past the break.</desc>
+<style>
+.hb-bar0{transform-box:fill-box;transform-origin:0% 50%;animation:hb-bar0 8s linear infinite}
+@keyframes hb-bar0{0%{transform:scaleX(0.163)}1.031%{transform:scaleX(0.196)}1.156%{transform:scaleX(0.001)}7.281%{transform:scaleX(0.196)}7.406%{transform:scaleX(0.001)}13.531%{transform:scaleX(0.196)}13.656%{transform:scaleX(0.001)}19.781%{transform:scaleX(0.196)}19.906%{transform:scaleX(0.001)}26.031%{transform:scaleX(0.196)}26.156%{transform:scaleX(0.001)}32.281%{transform:scaleX(0.196)}32.406%{transform:scaleX(0.001)}38.531%{transform:scaleX(0.196)}38.656%{transform:scaleX(0.001)}44.781%{transform:scaleX(0.196)}44.906%{transform:scaleX(0.001)}51.031%{transform:scaleX(0.196)}51.156%{transform:scaleX(0.001)}57.281%{transform:scaleX(0.196)}57.406%{transform:scaleX(0.001)}63.531%{transform:scaleX(0.196)}63.656%{transform:scaleX(0.001)}69.781%{transform:scaleX(0.196)}69.906%{transform:scaleX(0.001)}76.031%{transform:scaleX(0.196)}76.156%{transform:scaleX(0.001)}82.281%{transform:scaleX(0.196)}82.406%{transform:scaleX(0.001)}88.531%{transform:scaleX(0.196)}88.656%{transform:scaleX(0.001)}94.781%{transform:scaleX(0.196)}94.906%{transform:scaleX(0.001)}100%{transform:scaleX(0.163)}}
+.hb-bar1{transform-box:fill-box;transform-origin:0% 50%;animation:hb-bar1 8s linear infinite}
+@keyframes hb-bar1{0%{transform:scaleX(0.110)}2.698%{transform:scaleX(0.196)}2.823%{transform:scaleX(0.001)}8.948%{transform:scaleX(0.196)}9.073%{transform:scaleX(0.001)}15.198%{transform:scaleX(0.196)}15.323%{transform:scaleX(0.001)}21.448%{transform:scaleX(0.196)}21.573%{transform:scaleX(0.001)}52.823%{transform:scaleX(1.000)}83.948%{transform:scaleX(1.000)}84.073%{transform:scaleX(0.001)}90.198%{transform:scaleX(0.196)}90.323%{transform:scaleX(0.001)}96.448%{transform:scaleX(0.196)}96.573%{transform:scaleX(0.001)}100%{transform:scaleX(0.110)}}
+.hb-bar2{transform-box:fill-box;transform-origin:0% 50%;animation:hb-bar2 8s linear infinite}
+@keyframes hb-bar2{0%{transform:scaleX(0.056)}4.364%{transform:scaleX(0.196)}4.489%{transform:scaleX(0.001)}10.614%{transform:scaleX(0.196)}10.739%{transform:scaleX(0.001)}16.864%{transform:scaleX(0.196)}16.989%{transform:scaleX(0.001)}23.114%{transform:scaleX(0.196)}23.239%{transform:scaleX(0.001)}54.489%{transform:scaleX(1.000)}85.614%{transform:scaleX(1.000)}85.739%{transform:scaleX(0.001)}91.864%{transform:scaleX(0.196)}91.989%{transform:scaleX(0.001)}98.114%{transform:scaleX(0.196)}98.239%{transform:scaleX(0.001)}100%{transform:scaleX(0.056)}}
+.hb-bar0{transform:scaleX(0.2)}
+.hb-bar1,.hb-bar2{transform:scaleX(1)}
+.hb-m0{transform-box:fill-box;transform-origin:50% 50%;animation:hb-m0 8s linear infinite}
+@keyframes hb-m0{0%{transform:rotate(0deg)}100%{transform:rotate(1440deg)}}
+.hb-m1{transform-box:fill-box;transform-origin:50% 50%;animation:hb-m1 8s linear infinite}
+@keyframes hb-m1{0%{transform:rotate(0deg)}52.823%{transform:rotate(760.6deg)}84.073%{transform:rotate(760.6deg)}100%{transform:rotate(990deg)}}
+.hb-run1{opacity:0;animation:hb-run1 8s linear infinite}
+@keyframes hb-run1{0%{opacity:1}52.423%{opacity:1}52.823%{opacity:0}83.673%{opacity:0}84.073%{opacity:1}100%{opacity:1}}
+.hb-stop1{animation:hb-stop1 8s linear infinite}
+@keyframes hb-stop1{0%{opacity:0}52.423%{opacity:0}52.823%{opacity:1}83.673%{opacity:1}84.073%{opacity:0}100%{opacity:0}}
+.hb-m2{transform-box:fill-box;transform-origin:50% 50%;animation:hb-m2 8s linear infinite}
+@keyframes hb-m2{0%{transform:rotate(0deg)}54.489%{transform:rotate(784.6deg)}85.739%{transform:rotate(784.6deg)}100%{transform:rotate(990deg)}}
+.hb-run2{opacity:0;animation:hb-run2 8s linear infinite}
+@keyframes hb-run2{0%{opacity:1}54.089%{opacity:1}54.489%{opacity:0}85.339%{opacity:0}85.739%{opacity:1}100%{opacity:1}}
+.hb-stop2{animation:hb-stop2 8s linear infinite}
+@keyframes hb-stop2{0%{opacity:0}54.089%{opacity:0}54.489%{opacity:1}85.339%{opacity:1}85.739%{opacity:0}100%{opacity:0}}
+.hb-pa{opacity:0;animation:hb-pa 0.5s linear infinite}
+@keyframes hb-pa{0%{opacity:1;transform:translateX(0px)}31.83%{opacity:1;transform:translateX(148px)}31.93%{opacity:0;transform:translateX(148px)}100%{opacity:0;transform:translateX(148px)}}
+.hb-pb{opacity:0;animation:hb-pb 8s linear infinite}
+@keyframes hb-pb{0%{opacity:0;transform:translateX(0px)}1.939%{opacity:0;transform:translateX(0px)}1.989%{opacity:1;transform:translateX(0px)}5%{opacity:1;transform:translateX(224px)}5.05%{opacity:0;transform:translateX(224px)}8.189%{opacity:0;transform:translateX(0px)}8.239%{opacity:1;transform:translateX(0px)}11.25%{opacity:1;transform:translateX(224px)}11.3%{opacity:0;transform:translateX(224px)}14.439%{opacity:0;transform:translateX(0px)}14.489%{opacity:1;transform:translateX(0px)}17.5%{opacity:1;transform:translateX(224px)}17.55%{opacity:0;transform:translateX(224px)}20.689%{opacity:0;transform:translateX(0px)}20.739%{opacity:1;transform:translateX(0px)}23.75%{opacity:1;transform:translateX(224px)}23.8%{opacity:0;transform:translateX(224px)}83.189%{opacity:0;transform:translateX(0px)}83.239%{opacity:1;transform:translateX(0px)}86.25%{opacity:1;transform:translateX(224px)}86.3%{opacity:0;transform:translateX(224px)}89.439%{opacity:0;transform:translateX(0px)}89.489%{opacity:1;transform:translateX(0px)}92.5%{opacity:1;transform:translateX(224px)}92.55%{opacity:0;transform:translateX(224px)}95.689%{opacity:0;transform:translateX(0px)}95.739%{opacity:1;transform:translateX(0px)}98.75%{opacity:1;transform:translateX(224px)}98.8%{opacity:0;transform:translateX(224px)}100%{opacity:0;transform:translateX(0px)}}
+.hb-brk{animation:hb-brk 8s linear infinite}
+@keyframes hb-brk{0%{opacity:0}21.375%{opacity:0}21.875%{opacity:1}78.125%{opacity:1}78.625%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The robot's heartbeat</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Every 20 ms the robot controller says whether motors may run. Shown slowed down.</text>
+<path d="M112 117 H484 M112 123 H484" stroke="#5c5c5c" stroke-width="2.5"/>
+<rect x="16" y="88" width="96" height="64" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<path d="M100 117 H112 M100 123 H112" stroke="#444444" stroke-width="1"/>
+<text x="64" y="108" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">roboRIO or</text>
+<text x="64" y="144" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SystemCore</text>
+<rect x="160" y="88" width="76" height="64" rx="6" fill="#f4f4f4" fill-opacity="0.85" stroke="#444444" stroke-width="1.6"/>
+<text x="198" y="144" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<rect x="160" y="160" width="76" height="10" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+<rect class="hb-bar0" x="160" y="160" width="76" height="10" fill="#b45309"/>
+<rect x="160" y="160" width="76" height="10" fill="none" stroke="#444444" stroke-width="1"/>
+<path d="M198 172 V190" stroke="#444444" stroke-width="1.5"/>
+<g class="hb-m0"><circle cx="198" cy="212" r="20" fill="#ffffff" stroke="#333333" stroke-width="3"/><path d="M178 212 H218 M198 192 V232" stroke="#333333" stroke-width="3"/><circle cx="198" cy="212" r="4" fill="#333333"/></g>
+<text x="198" y="252" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">running</text>
+<rect x="284" y="88" width="76" height="64" rx="6" fill="#f4f4f4" fill-opacity="0.85" stroke="#444444" stroke-width="1.6"/>
+<text x="322" y="144" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<rect x="284" y="160" width="76" height="10" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+<rect class="hb-bar1" x="284" y="160" width="76" height="10" fill="#b45309"/>
+<rect x="284" y="160" width="76" height="10" fill="none" stroke="#444444" stroke-width="1"/>
+<path d="M322 172 V190" stroke="#444444" stroke-width="1.5"/>
+<g class="hb-m1"><circle cx="322" cy="212" r="20" fill="#ffffff" stroke="#333333" stroke-width="3"/><path d="M302 212 H342 M322 192 V232" stroke="#333333" stroke-width="3"/><circle cx="322" cy="212" r="4" fill="#333333"/></g>
+<text x="322" y="252" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle" class="hb-run1" data-ov="st1">running</text>
+<text x="322" y="252" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle" class="hb-stop1" data-ov="st1">stopped itself</text>
+<rect x="408" y="88" width="76" height="64" rx="6" fill="#f4f4f4" fill-opacity="0.85" stroke="#444444" stroke-width="1.6"/>
+<text x="446" y="144" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<rect x="408" y="160" width="76" height="10" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+<rect class="hb-bar2" x="408" y="160" width="76" height="10" fill="#b45309"/>
+<rect x="408" y="160" width="76" height="10" fill="none" stroke="#444444" stroke-width="1"/>
+<path d="M446 172 V190" stroke="#444444" stroke-width="1.5"/>
+<g class="hb-m2"><circle cx="446" cy="212" r="20" fill="#ffffff" stroke="#333333" stroke-width="3"/><path d="M426 212 H466 M446 192 V232" stroke="#333333" stroke-width="3"/><circle cx="446" cy="212" r="4" fill="#333333"/></g>
+<text x="446" y="252" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle" class="hb-run2" data-ov="st2">running</text>
+<text x="446" y="252" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle" class="hb-stop2" data-ov="st2">stopped itself</text>
+<circle class="hb-pa" cx="112" cy="120" r="7" fill="#446ce3" stroke="#ffffff" stroke-width="2"/>
+<circle class="hb-pb" cx="260" cy="120" r="7" fill="#446ce3" stroke="#ffffff" stroke-width="2"/>
+<g class="hb-brk"><rect x="253" y="108" width="14" height="24" fill="#ffffff"/><path d="M253 106 l7 7 l-7 7 l7 7 l-7 7 M267 106 l-7 7 l7 7 l-7 7 l7 7" fill="none" stroke="#c62828" stroke-width="2.5"/><text x="260" y="80" font-size="12" font-weight="700" fill="#c62828" text-anchor="middle">cable breaks</text></g>
+<circle cx="24" cy="176" r="7" fill="#446ce3"/>
+<text x="36" y="180" font-size="12" font-weight="700" fill="#222222">heartbeat</text>
+<text x="16" y="198" font-size="12" fill="#5c5c5c">bar: time since</text>
+<text x="16" y="214" font-size="12" fill="#5c5c5c">it last heard one;</text>
+<text x="16" y="230" font-size="12" fill="#5c5c5c">full = 100 ms</text>
+<line x1="16" y1="268" x2="504" y2="268" stroke="#e2e2e2"/>
+<text x="16" y="290" font-size="13" fill="#222222">A motor controller that misses the heartbeat for 100 ms stops itself,</text>
+<text x="16" y="308" font-size="13" fill="#222222">as if the robot was disabled. A broken cable stops only the ones past it.</text>
+<text x="16" y="328" font-size="12" fill="#5c5c5c">That is why a cable fault looks like a motor that randomly stops.</text>
+</svg>

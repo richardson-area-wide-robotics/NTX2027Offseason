@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 350" width="520" height="350" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="tp-title tp-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="tp-title">Topics and tables</title>
+<desc id="tp-desc">Animated. The name /SlothTune/Systems/Names is split into three pieces, and each piece lights up in turn together with its place in a folder tree below: SlothTune is a table, a folder; Systems is a table inside it; Names is a topic inside that, one value. The tree lines grow from each folder to the next. A card for the topic Names shows its type, string array, which never changes, and that each value carries the time it was published, in microseconds.</desc>
+<style>
+.tp-h1 { opacity: 0; animation: tp-h1 8s linear infinite; }
+@keyframes tp-h1 {
+  0% { opacity: 0; }
+  3% { opacity: 0; }
+  6% { opacity: 1; }
+  25% { opacity: 1; }
+  28% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.tp-h2 { opacity: 0; animation: tp-h2 8s linear infinite; }
+@keyframes tp-h2 {
+  0% { opacity: 0; }
+  28% { opacity: 0; }
+  31% { opacity: 1; }
+  50% { opacity: 1; }
+  53% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.tp-h3 { opacity: 0; animation: tp-h3 8s linear infinite; }
+@keyframes tp-h3 {
+  0% { opacity: 0; }
+  53% { opacity: 0; }
+  56% { opacity: 1; }
+  90% { opacity: 1; }
+  94% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.tp-hc { opacity: 0; animation: tp-hc 8s linear infinite; }
+@keyframes tp-hc {
+  0% { opacity: 0; }
+  60% { opacity: 0; }
+  64% { opacity: 1; }
+  90% { opacity: 1; }
+  94% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.tp-c1 { stroke-dasharray: 147; stroke-dashoffset: 0; animation: tp-c1 8s linear infinite; }
+@keyframes tp-c1 {
+  0% { stroke-dashoffset: 147; opacity: 1; }
+  26% { stroke-dashoffset: 147; opacity: 1; }
+  32% { stroke-dashoffset: 0; opacity: 1; }
+  92% { stroke-dashoffset: 0; opacity: 1; }
+  97% { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 147; opacity: 0; }
+}
+.tp-c2 { stroke-dasharray: 132; stroke-dashoffset: 0; animation: tp-c2 8s linear infinite; }
+@keyframes tp-c2 {
+  0% { stroke-dashoffset: 132; opacity: 1; }
+  51% { stroke-dashoffset: 132; opacity: 1; }
+  57% { stroke-dashoffset: 0; opacity: 1; }
+  92% { stroke-dashoffset: 0; opacity: 1; }
+  97% { stroke-dashoffset: 0; opacity: 0; }
+  100% { stroke-dashoffset: 132; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">Topics and tables: names like file paths</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">A topic is one named value with a fixed type. Tables are just the folders.</text>
+<rect class="tp-h1" x="13" y="59" width="126" height="38" rx="8" fill="#446ce3" fill-opacity="0.12" stroke="#446ce3" stroke-width="3"/>
+<rect x="16" y="62" width="120" height="32" rx="6" fill="#ffffff" stroke="#444444" stroke-width="1.3"/>
+<text x="76" y="84" font-size="16" fill="#222222" font-weight="700" text-anchor="middle">/SlothTune</text>
+<rect class="tp-h2" x="137" y="59" width="110" height="38" rx="8" fill="#446ce3" fill-opacity="0.12" stroke="#446ce3" stroke-width="3"/>
+<rect x="140" y="62" width="104" height="32" rx="6" fill="#ffffff" stroke="#444444" stroke-width="1.3"/>
+<text x="192" y="84" font-size="16" fill="#222222" font-weight="700" text-anchor="middle">/Systems</text>
+<rect class="tp-h3" x="245" y="59" width="94" height="38" rx="8" fill="#446ce3" fill-opacity="0.12" stroke="#446ce3" stroke-width="3"/>
+<rect x="248" y="62" width="88" height="32" rx="6" fill="#ffffff" stroke="#444444" stroke-width="1.3"/>
+<text x="292" y="84" font-size="16" fill="#222222" font-weight="700" text-anchor="middle">/Names</text>
+<text x="346" y="83" font-size="12" fill="#5c5c5c">← one topic's full name</text>
+<path class="tp-c1" d="M39 141 V181 H146" fill="none" stroke="#444444" stroke-width="1.6"/>
+<path class="tp-c2" d="M163 193 V234 H254" fill="none" stroke="#444444" stroke-width="1.6"/>
+<rect class="tp-h1" x="16" y="112" width="140" height="44" rx="7" fill="#446ce3" fill-opacity="0.1" stroke="#446ce3" stroke-width="2.5"/>
+<path d="M24 122 V140 H54 V124 H38 L35 120 H26 Z" fill="#f2c94c" stroke="#9a7b1c" stroke-width="1.2"/>
+<text x="62" y="132" font-size="13" fill="#222222" font-weight="700">SlothTune</text>
+<text x="62" y="148" font-size="12" fill="#5c5c5c">table = folder</text>
+<rect class="tp-h2" x="140" y="164" width="140" height="44" rx="7" fill="#446ce3" fill-opacity="0.1" stroke="#446ce3" stroke-width="2.5"/>
+<path d="M148 174 V192 H178 V176 H162 L159 172 H150 Z" fill="#f2c94c" stroke="#9a7b1c" stroke-width="1.2"/>
+<text x="186" y="184" font-size="13" fill="#222222" font-weight="700">Systems</text>
+<text x="186" y="200" font-size="12" fill="#5c5c5c">table = folder</text>
+<rect class="tp-h3" x="248" y="214" width="148" height="44" rx="7" fill="#446ce3" fill-opacity="0.1" stroke="#446ce3" stroke-width="2.5"/>
+<path d="M256 220 H270 L278 228 V248 H256 Z" fill="#ffffff" stroke="#444444" stroke-width="1.3"/><path d="M270 220 V228 H278" fill="none" stroke="#444444" stroke-width="1.1"/><path d="M260 234 H274 M260 239 H274 M260 244 H270" stroke="#9aa3ad" stroke-width="1.2"/>
+<text x="286" y="233" font-size="13" fill="#222222" font-weight="700">Names</text>
+<text x="286" y="249" font-size="12" fill="#5c5c5c">topic = one value</text>
+<rect class="tp-hc" x="316" y="102" width="192" height="108" rx="10" fill="none" stroke="#446ce3" stroke-width="3"/>
+<rect x="320" y="106" width="184" height="100" rx="7" fill="#ffffff" stroke="#444444" stroke-width="1.3"/>
+<text x="332" y="126" font-size="13" fill="#222222" font-weight="700">the topic Names</text>
+<rect x="333" y="141" width="12" height="10" rx="1.5" fill="#444444"/><path d="M335.5 141 V137.5 A3.5 3.5 0 0 1 342.5 137.5 V141" fill="none" stroke="#444444" stroke-width="1.6"/>
+<text x="352" y="150" font-size="13" fill="#222222">type: string array</text>
+<text x="352" y="166" font-size="12" fill="#5c5c5c">never changes</text>
+<text x="332" y="186" font-size="12" fill="#222222">each value carries the time</text>
+<text x="332" y="200" font-size="12" fill="#222222">it was published (µs)</text>
+<path d="M300 214 Q306 206 318 204" fill="none" stroke="#9aa3ad" stroke-width="1.4"/>
+<line x1="16" y1="274" x2="504" y2="274" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="294" font-size="13" fill="#222222">A topic's type never changes: boolean, integer, float or double,</text>
+<text x="16" y="312" font-size="13" fill="#222222">string, raw bytes, or an array of one of those.</text>
+<text x="16" y="329" font-size="12" fill="#5c5c5c">The slashes make a tree: /SlothTune holds Systems, which holds Names.</text>
+</svg>

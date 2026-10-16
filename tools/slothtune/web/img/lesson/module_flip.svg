@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 418" width="520" height="418" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mf-title mf-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mf-title">Module optimization: never turn more than 90°</title>
+<desc id="mf-desc">Animated. Two wheels seen from above, each with a white triangle marking its front, both starting pointed up inside a light green half circle that marks 90 degrees either way. Both must send the robot the same way: the green arrow, pointing 170 degrees around, almost straight back. Left, crossed out as never done: the wheel turns the long way, 170 degrees, a big red arc, and only then drives forward. Right, what happens instead: the wheel turns the short way, just 10 degrees, and drives backward, its tread rolling toward the back, so the robot goes the same way much sooner. Below: pointing 170 degrees the other way is the same as pointing 10 degrees and driving in reverse; YAGSL does this automatically, so steering never needs to move far.</desc>
+<style>
+.mf-rl { transform-box: view-box; transform-origin: 0 0; transform: rotate(170deg); animation: mf-rl 8s linear infinite; }
+@keyframes mf-rl { 0%, 6% { transform: rotate(0deg); } 50%, 90% { transform: rotate(170deg); } 91%, 100% { transform: rotate(0deg); } }
+.mf-rr { transform-box: view-box; transform-origin: 0 0; transform: rotate(-10deg); animation: mf-rr 8s linear infinite; }
+@keyframes mf-rr { 0%, 6% { transform: rotate(0deg); } 14%, 90% { transform: rotate(-10deg); } 91%, 100% { transform: rotate(0deg); } }
+.mf-al { stroke-dasharray: 170 170; stroke-dashoffset: 0; animation: mf-al 8s linear infinite; }
+@keyframes mf-al { 0%, 6% { stroke-dashoffset: 170; } 50%, 90% { stroke-dashoffset: 0; } 91%, 100% { stroke-dashoffset: 170; } }
+.mf-ar { stroke-dasharray: 10 10; stroke-dashoffset: 0; animation: mf-ar 8s linear infinite; }
+@keyframes mf-ar { 0%, 6% { stroke-dashoffset: 10; } 14%, 90% { stroke-dashoffset: 0; } 91%, 100% { stroke-dashoffset: 10; } }
+.mf-tl { animation: mf-tl 8s linear infinite; }
+@keyframes mf-tl { 0%, 50% { transform: translateY(0px); } 84%, 100% { transform: translateY(-60px); } }
+.mf-tr { animation: mf-tr 8s linear infinite; }
+@keyframes mf-tr { 0%, 14% { transform: translateY(0px); } 84%, 100% { transform: translateY(120px); } }
+.mf-gl { opacity: 1; animation: mf-gl 8s linear infinite; }
+@keyframes mf-gl { 0%, 50% { opacity: 0; } 52%, 92% { opacity: 1; } 93%, 100% { opacity: 0; } }
+.mf-gr { opacity: 1; animation: mf-gr 8s linear infinite; }
+@keyframes mf-gr { 0%, 14% { opacity: 0; } 16%, 92% { opacity: 1; } 93%, 100% { opacity: 0; } }
+.mf-fade { animation: mf-fade 8s linear infinite; }
+@keyframes mf-fade { 0%, 86% { opacity: 1; } 89%, 95% { opacity: 0; } 99%, 100% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Module optimization: never turn more than 90°</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Past 90°, the wheel turns the short way and drives backward instead.</text>
+<text x="134" y="72" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle">Never: the long way</text>
+<text x="134" y="88" font-size="12" fill="#222222" text-anchor="middle">turn 170°, drive forward</text>
+<text x="386" y="72" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">Instead: the short way</text>
+<text x="386" y="88" font-size="12" fill="#222222" text-anchor="middle">turn 10°, drive backward</text>
+<rect x="16" y="98" width="236" height="200" rx="8" fill="#f7f9fc" stroke="#e2e2e2"/>
+<path d="M60 184A74 74 0 0 1 208 184Z" fill="#eaf5ed" stroke-width="1.2"/>
+<text x="56" y="188" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="end">90°</text>
+<text x="212" y="188" font-size="12" font-weight="700" fill="#1a7f37">90°</text>
+<g class="mf-fade"><path class="mf-al" pathLength="170" d="M134 130A54 54 0 0 1 143.38 237.18" fill="none" stroke="#c62828" stroke-width="4"/><clipPath id="mf-cl"><rect x="-13" y="-35" width="26" height="70" rx="6"/></clipPath><g transform="translate(134 184)"><g class="mf-rl"><rect x="-13" y="-35" width="26" height="70" rx="6" fill="#3a3f45"/><g clip-path="url(#mf-cl)"><g class="mf-tl"><path d="M-13 -43H13M-13 -33H13M-13 -23H13M-13 -13H13M-13 -3H13M-13 7H13M-13 17H13M-13 27H13M-13 37H13M-13 47H13M-13 57H13M-13 67H13M-13 77H13M-13 87H13" stroke="#5d646b" stroke-width="2"/></g></g><path d="M0 -31L-7 -20H7Z" fill="#ffffff"/><circle r="4" fill="#b0b8c0"/><path d="M4 -54L-7 -47.5L-7 -60.5Z" fill="#c62828"/></g></g><g class="mf-gl"><line x1="145.11" y1="247.03" x2="151.02" y2="280.51" stroke="#1a7f37" stroke-width="4"/><path d="M152.41 288.39L142.27 276.98L158.03 274.2Z" fill="#1a7f37"/><text x="122" y="266" font-size="12" font-weight="700" fill="#222222" text-anchor="end">drives forward</text>
+</g></g>
+<text x="180" y="234" font-size="12" font-weight="700" fill="#c62828">turns 170°</text>
+<rect x="268" y="98" width="236" height="200" rx="8" fill="#f7f9fc" stroke="#e2e2e2"/>
+<path d="M312 184A74 74 0 0 1 460 184Z" fill="#eaf5ed" stroke-width="1.2"/>
+<text x="308" y="188" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="end">90°</text>
+<text x="464" y="188" font-size="12" font-weight="700" fill="#1a7f37">90°</text>
+<g class="mf-fade"><path class="mf-ar" pathLength="10" d="M386 130A54 54 0 0 0 376.62 130.82" fill="none" stroke="#1a7f37" stroke-width="4"/><clipPath id="mf-cr"><rect x="-13" y="-35" width="26" height="70" rx="6"/></clipPath><g transform="translate(386 184)"><g class="mf-rr"><rect x="-13" y="-35" width="26" height="70" rx="6" fill="#3a3f45"/><g clip-path="url(#mf-cr)"><g class="mf-tr"><path d="M-13 -155H13M-13 -145H13M-13 -135H13M-13 -125H13M-13 -115H13M-13 -105H13M-13 -95H13M-13 -85H13M-13 -75H13M-13 -65H13M-13 -55H13M-13 -45H13M-13 -35H13M-13 -25H13M-13 -15H13M-13 -5H13M-13 5H13M-13 15H13M-13 25H13M-13 35H13" stroke="#5d646b" stroke-width="2"/></g></g><path d="M0 -31L-7 -20H7Z" fill="#ffffff"/><circle r="4" fill="#b0b8c0"/><path d="M-4 -54L7 -60.5L7 -47.5Z" fill="#1a7f37"/></g></g><g class="mf-gr"><line x1="397.11" y1="247.03" x2="403.02" y2="280.51" stroke="#1a7f37" stroke-width="4"/><path d="M404.41 288.39L394.27 276.98L410.03 274.2Z" fill="#1a7f37"/><text x="374" y="266" font-size="12" font-weight="700" fill="#222222" text-anchor="end">drives backward</text>
+</g></g>
+<text x="364" y="124" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="end">turns only 10°</text>
+<line x1="16" y1="314" x2="504" y2="314" stroke="#e2e2e2"/>
+<text x="16" y="334" font-size="13" fill="#222222">Pointing 170° the other way is the same as pointing 10° and driving</text>
+<text x="16" y="352" font-size="13" fill="#222222">in reverse. YAGSL does this automatically, so steering never needs</text>
+<text x="16" y="370" font-size="13" fill="#222222">to move far.</text>
+<text x="16" y="392" font-size="12" fill="#5c5c5c">White triangle: the wheel's front. Green arrow: where the robot goes,</text>
+<text x="16" y="408" font-size="12" fill="#5c5c5c">the same in both.</text>
+</svg>

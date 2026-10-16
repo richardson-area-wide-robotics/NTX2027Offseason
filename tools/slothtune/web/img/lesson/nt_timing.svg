@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 384" width="520" height="384" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="tm-title tm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="tm-title">How fresh a value is</title>
+<desc id="tm-desc">Animated. A graph of one value against time. The blue line is the value on the robot, as it happens: it rises quickly, overshoots a little, settles, dips briefly and comes back, then falls. The orange line is what a dashboard shows: it moves in steps, and each step comes a little after the blue line, because the changes are collected and sent in a batch about every 100 ms, marked by an envelope under the time axis that lights up as each batch goes. The brief dip comes and goes between two sends, so the dashboard never shows it. A cursor sweeps left to right, drawing both lines.</desc>
+<style>
+.tm-wipe { animation: tm-wipe 8s linear infinite; }
+@keyframes tm-wipe {
+  0% { transform: translateX(-420px); }
+  80% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+.tm-fade { animation: tm-fade 8s linear infinite; }
+@keyframes tm-fade {
+  0% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.tm-cur { opacity: 0; animation: tm-cur 8s linear infinite; }
+@keyframes tm-cur {
+  0% { transform: translateX(0); opacity: 1; }
+  80% { transform: translateX(420px); opacity: 1; }
+  84% { transform: translateX(420px); opacity: 0; }
+  100% { transform: translateX(420px); opacity: 0; }
+}
+.tm-note { animation: tm-note 8s linear infinite; }
+@keyframes tm-note {
+  0% { opacity: 0; }
+  50.29% { opacity: 0; }
+  52.29% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.tm-e0 { animation: tm-e0 8s linear infinite; }
+@keyframes tm-e0 {
+  0% { opacity: 0.25; }
+  7.62% { opacity: 0.25; }
+  8.62% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+.tm-e1 { animation: tm-e1 8s linear infinite; }
+@keyframes tm-e1 {
+  0% { opacity: 0.25; }
+  22.86% { opacity: 0.25; }
+  23.86% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+.tm-e2 { animation: tm-e2 8s linear infinite; }
+@keyframes tm-e2 {
+  0% { opacity: 0.25; }
+  38.1% { opacity: 0.25; }
+  39.1% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+.tm-e3 { animation: tm-e3 8s linear infinite; }
+@keyframes tm-e3 {
+  0% { opacity: 0.25; }
+  53.33% { opacity: 0.25; }
+  54.33% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+.tm-e4 { animation: tm-e4 8s linear infinite; }
+@keyframes tm-e4 {
+  0% { opacity: 0.25; }
+  68.57% { opacity: 0.25; }
+  69.57% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0.25; }
+  100% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">How fresh a value is</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Changes go out in batches, about every 100 ms, so a dashboard is a little behind.</text>
+<line x1="16" y1="68" x2="40" y2="68" stroke="#446ce3" stroke-width="3"/><text x="46" y="72" font-size="12" fill="#222222">on the robot, as it happens</text>
+<line x1="250" y1="68" x2="274" y2="68" stroke="#b45309" stroke-width="3"/><text x="280" y="72" font-size="12" fill="#222222">on the dashboard</text>
+<line x1="110" y1="88" x2="110" y2="226" stroke="#c9c9c9" stroke-width="1" stroke-dasharray="3 3"/>
+<g class="tm-e0"><rect x="100" y="232" width="20" height="14" rx="1.5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/><path d="M100 232 L110 240 L120 232" fill="none" stroke="#b45309" stroke-width="1.5"/></g>
+<line x1="190" y1="88" x2="190" y2="226" stroke="#c9c9c9" stroke-width="1" stroke-dasharray="3 3"/>
+<g class="tm-e1"><rect x="180" y="232" width="20" height="14" rx="1.5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/><path d="M180 232 L190 240 L200 232" fill="none" stroke="#b45309" stroke-width="1.5"/></g>
+<line x1="270" y1="88" x2="270" y2="226" stroke="#c9c9c9" stroke-width="1" stroke-dasharray="3 3"/>
+<g class="tm-e2"><rect x="260" y="232" width="20" height="14" rx="1.5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/><path d="M260 232 L270 240 L280 232" fill="none" stroke="#b45309" stroke-width="1.5"/></g>
+<line x1="350" y1="88" x2="350" y2="226" stroke="#c9c9c9" stroke-width="1" stroke-dasharray="3 3"/>
+<g class="tm-e3"><rect x="340" y="232" width="20" height="14" rx="1.5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/><path d="M340 232 L350 240 L360 232" fill="none" stroke="#b45309" stroke-width="1.5"/></g>
+<line x1="430" y1="88" x2="430" y2="226" stroke="#c9c9c9" stroke-width="1" stroke-dasharray="3 3"/>
+<g class="tm-e4"><rect x="420" y="232" width="20" height="14" rx="1.5" fill="#ffffff" stroke="#b45309" stroke-width="1.5"/><path d="M420 232 L430 240 L440 232" fill="none" stroke="#b45309" stroke-width="1.5"/></g>
+<path d="M70 86 V226 H490" fill="none" stroke="#444444" stroke-width="1.4"/>
+<text x="64" y="98" font-size="12" fill="#5c5c5c" text-anchor="end">value</text>
+<text x="490" y="274" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
+<text x="16" y="243" font-size="12" fill="#b45309" font-weight="700">sent:</text>
+<path d="M190 256 V262 H270 V256" fill="none" stroke="#5c5c5c" stroke-width="1.2"/>
+<text x="230" y="276" font-size="12" fill="#222222" font-weight="700" text-anchor="middle">about 100 ms</text>
+<clipPath id="tm-reveal"><rect class="tm-wipe" x="70" y="76" width="420" height="160"/></clipPath>
+<g class="tm-fade" clip-path="url(#tm-reveal)">
+<path d="M70 210.4 L71 210.4 L72 210.4 L73 210.4 L74 210.4 L75 210.4 L76 210.4 L77 210.4 L78 210.4 L79 210.4 L80 210.4 L81 210.4 L82 210.4 L83 210.4 L84 210.4 L85 210.4 L86 210.4 L87 210.4 L88 210.4 L89 210.4 L90 210.4 L91 210.4 L92 210.4 L93 210.4 L94 210.4 L95 210.4 L96 210.4 L97 210.29 L98 209.98 L99 209.47 L100 208.8 L101 207.96 L102 206.98 L103 205.86 L104 204.62 L105 203.28 L106 201.84 L107 200.31 L108 198.71 L109 197.04 L110 195.32 L111 193.54 L112 191.73 L113 189.88 L114 188.01 L115 186.12 L116 184.21 L117 182.3 L118 180.38 L119 178.47 L120 176.56 L121 174.67 L122 172.79 L123 170.93 L124 169.1 L125 167.28 L126 165.5 L127 163.74 L128 162.02 L129 160.33 L130 158.68 L131 157.07 L132 155.49 L133 153.96 L134 152.46 L135 151.01 L136 149.59 L137 148.22 L138 146.9 L139 145.61 L140 144.37 L141 143.17 L142 142.01 L143 140.9 L144 139.82 L145 138.79 L146 137.8 L147 136.85 L148 135.94 L149 135.07 L150 134.24 L151 133.44 L152 132.69 L153 131.96 L154 131.28 L155 130.62 L156 130 L157 129.42 L158 128.86 L159 128.34 L160 127.84 L161 127.37 L162 126.93 L163 126.52 L164 126.13 L165 125.77 L166 125.43 L167 125.12 L168 124.83 L169 124.55 L170 124.3 L171 124.07 L172 123.86 L173 123.66 L174 123.48 L175 123.32 L176 123.17 L177 123.04 L178 122.92 L179 122.81 L180 122.72 L181 122.63 L182 122.56 L183 122.5 L184 122.45 L185 122.41 L186 122.37 L187 122.35 L188 122.33 L189 122.32 L190 122.31 L191 122.31 L192 122.32 L193 122.33 L194 122.35 L195 122.37 L196 122.4 L197 122.43 L198 122.46 L199 122.49 L200 122.53 L201 122.57 L202 122.61 L203 122.66 L204 122.7 L205 122.75 L206 122.8 L207 122.85 L208 122.9 L209 122.95 L210 123 L211 123.05 L212 123.1 L213 123.15 L214 123.2 L215 123.25 L216 123.3 L217 123.35 L218 123.4 L219 123.45 L220 123.5 L221 123.55 L222 123.59 L223 123.64 L224 123.68 L225 123.72 L226 123.77 L227 123.81 L228 123.85 L229 123.89 L230 123.92 L231 123.96 L232 124 L233 124.03 L234 124.07 L235 124.1 L236 124.13 L237 124.16 L238 124.19 L239 124.22 L240 124.24 L241 124.27 L242 124.29 L243 124.32 L244 124.34 L245 124.36 L246 124.38 L247 124.4 L248 124.42 L249 124.44 L250 124.45 L251 124.47 L252 124.48 L253 124.5 L254 124.51 L255 124.52 L256 124.53 L257 124.55 L258 124.56 L259 124.57 L260 124.58 L261 124.58 L262 124.59 L263 124.6 L264 124.61 L265 124.61 L266 124.62 L267 124.62 L268 124.63 L269 124.63 L270 124.64 L271 124.64 L272 124.64 L273 124.65 L274 124.65 L275 124.65 L276 124.66 L277 124.66 L278 124.67 L279 124.68 L280 124.7 L281 124.72 L282 124.75 L283 124.8 L284 124.87 L285 124.98 L286 125.12 L287 125.33 L288 125.61 L289 125.99 L290 126.49 L291 127.14 L292 127.97 L293 129.01 L294 130.29 L295 131.83 L296 133.65 L297 135.76 L298 138.16 L299 140.81 L300 143.69 L301 146.74 L302 149.88 L303 153.01 L304 156.04 L305 158.86 L306 161.35 L307 163.41 L308 164.96 L309 165.91 L310 166.23 L311 165.91 L312 164.95 L313 163.41 L314 161.34 L315 158.85 L316 156.03 L317 152.99 L318 149.86 L319 146.72 L320 143.67 L321 140.79 L322 138.13 L323 135.73 L324 133.61 L325 131.79 L326 130.25 L327 128.97 L328 127.92 L329 127.09 L330 126.44 L331 125.94 L332 125.56 L333 125.28 L334 125.07 L335 124.92 L336 124.82 L337 124.75 L338 124.7 L339 124.66 L340 124.64 L341 124.63 L342 124.62 L343 124.61 L344 124.61 L345 124.61 L346 124.6 L347 124.6 L348 124.6 L349 124.6 L350 124.6 L351 124.6 L352 124.6 L353 124.6 L354 124.6 L355 124.6 L356 124.6 L357 124.6 L358 124.6 L359 124.6 L360 124.6 L361 124.6 L362 124.6 L363 124.6 L364 124.6 L365 124.6 L366 124.6 L367 124.6 L368 124.6 L369 124.6 L370 124.6 L371 124.6 L372 124.6 L373 124.6 L374 124.6 L375 124.6 L376 124.6 L377 124.6 L378 124.6 L379 124.6 L380 124.6 L381 124.61 L382 124.64 L383 124.7 L384 124.78 L385 124.88 L386 125 L387 125.14 L388 125.29 L389 125.47 L390 125.67 L391 125.88 L392 126.11 L393 126.36 L394 126.63 L395 126.91 L396 127.21 L397 127.52 L398 127.84 L399 128.18 L400 128.54 L401 128.9 L402 129.28 L403 129.67 L404 130.07 L405 130.48 L406 130.91 L407 131.34 L408 131.78 L409 132.23 L410 132.69 L411 133.15 L412 133.63 L413 134.11 L414 134.59 L415 135.09 L416 135.58 L417 136.08 L418 136.59 L419 137.1 L420 137.61 L421 138.13 L422 138.64 L423 139.16 L424 139.68 L425 140.2 L426 140.72 L427 141.24 L428 141.76 L429 142.27 L430 142.79 L431 143.3 L432 143.81 L433 144.32 L434 144.82 L435 145.31 L436 145.81 L437 146.29 L438 146.77 L439 147.25 L440 147.71 L441 148.17 L442 148.62 L443 149.06 L444 149.49 L445 149.92 L446 150.33 L447 150.73 L448 151.12 L449 151.5 L450 151.86 L451 152.22 L452 152.56 L453 152.88 L454 153.19 L455 153.49 L456 153.77 L457 154.04 L458 154.28 L459 154.52 L460 154.73 L461 154.93 L462 155.1 L463 155.26 L464 155.4 L465 155.52 L466 155.62 L467 155.7 L468 155.75 L469 155.79 L470 155.8 L471 155.8 L472 155.8 L473 155.8 L474 155.8 L475 155.8 L476 155.8 L477 155.8 L478 155.8 L479 155.8 L480 155.8 L481 155.8 L482 155.8 L483 155.8 L484 155.8 L485 155.8 L486 155.8 L487 155.8 L488 155.8 L489 155.8 L490 155.8" fill="none" stroke="#446ce3" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M70 210.4 L124 210.4 L124 195.32 L204 195.32 L204 122.31 L284 122.31 L284 124.64 L364 124.64 L364 124.6 L444 124.6 L444 142.79 L490 142.79" fill="none" stroke="#b45309" stroke-width="2.6" stroke-linejoin="round"/>
+<circle cx="110" cy="195.32" r="3.5" fill="#b45309" stroke="#ffffff" stroke-width="1.2"/>
+<circle cx="190" cy="122.31" r="3.5" fill="#b45309" stroke="#ffffff" stroke-width="1.2"/>
+<circle cx="270" cy="124.64" r="3.5" fill="#b45309" stroke="#ffffff" stroke-width="1.2"/>
+<circle cx="350" cy="124.6" r="3.5" fill="#b45309" stroke="#ffffff" stroke-width="1.2"/>
+<circle cx="430" cy="142.79" r="3.5" fill="#b45309" stroke="#ffffff" stroke-width="1.2"/>
+</g>
+<g class="tm-note"><rect x="226" y="186" width="168" height="33" fill="#ffffff"/><line x1="310" y1="186" x2="310" y2="172.23" stroke="#5c5c5c" stroke-width="1.2"/><text x="310" y="199" font-size="12" fill="#5c5c5c" text-anchor="middle">came and went between sends:</text><text x="310" y="214" font-size="12" fill="#5c5c5c" text-anchor="middle">the dashboard never saw it</text></g>
+<g class="tm-cur"><line x1="70" y1="86" x2="70" y2="226" stroke="#444444" stroke-width="1.4" stroke-dasharray="4 3"/></g>
+<line x1="16" y1="290" x2="504" y2="290" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="310" font-size="13" fill="#222222">Each batch carries the newest value and the time it was published.</text>
+<text x="16" y="328" font-size="13" fill="#222222">A reader can ask for faster, or for every value (sendAll).</text>
+<text x="16" y="345" font-size="12" fill="#5c5c5c">So the tool's tests record on the robot, a row every robot loop,</text>
+<text x="16" y="362" font-size="12" fill="#5c5c5c">and send the whole run afterwards.</text>
+</svg>

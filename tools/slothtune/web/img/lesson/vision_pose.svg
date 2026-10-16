@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 398" width="520" height="398" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="vp-title vp-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="vp-title">Vision pose</title>
+<desc id="vp-desc">Animated, four steps, on a field seen from above. One: the robot's camera sees an AprilTag on the wall. Two: the tag's place on the field is known, so a dot travels back from the tag to the camera: that says where the camera is. Three: an orange arrow, the camera mount, goes from the camera to the robot's center: that says where the robot is, the vision pose. Four: odometry's dashed estimate, a little off, is pulled toward the vision pose as the code blends it in. The code accepts a sighting only when it is believable: close enough, clear enough, and not far from where odometry already puts the robot.</desc>
+<style>
+.vp-h1{opacity:0;animation:vp-h1 8s linear infinite}
+@keyframes vp-h1{0%{opacity:0}3.5%{opacity:0}5%{opacity:1}20%{opacity:1}21.5%{opacity:0}100%{opacity:0}}
+.vp-h2{opacity:0;animation:vp-h2 8s linear infinite}
+@keyframes vp-h2{0%{opacity:0}21.5%{opacity:0}23%{opacity:1}38%{opacity:1}39.5%{opacity:0}100%{opacity:0}}
+.vp-h3{opacity:0;animation:vp-h3 8s linear infinite}
+@keyframes vp-h3{0%{opacity:0}39.5%{opacity:0}41%{opacity:1}54%{opacity:1}55.5%{opacity:0}100%{opacity:0}}
+.vp-h4{opacity:0;animation:vp-h4 8s linear infinite}
+@keyframes vp-h4{0%{opacity:0}55.5%{opacity:0}57%{opacity:1}90%{opacity:1}91.5%{opacity:0}100%{opacity:0}}
+.vp-sl{stroke-dashoffset:0;animation:vp-sl 8s linear infinite}
+@keyframes vp-sl{0%{opacity:1;stroke-dashoffset:100}5%{opacity:1;stroke-dashoffset:100}17%{opacity:1;stroke-dashoffset:0}90%{opacity:1;stroke-dashoffset:0}94%{opacity:0;stroke-dashoffset:0}95%{opacity:0;stroke-dashoffset:100}100%{opacity:1;stroke-dashoffset:100}}
+.vp-dot{opacity:0;animation:vp-dot 8s ease-in-out infinite}
+@keyframes vp-dot{0%{opacity:0;transform:translate(0px,0px)}22%{opacity:0;transform:translate(0px,0px)}23%{opacity:1;transform:translate(0px,0px)}35%{opacity:1;transform:translate(-232px,78px)}37%{opacity:0;transform:translate(-232px,78px)}100%{opacity:0;transform:translate(-232px,78px)}}
+.vp-cg{opacity:0;animation:vp-cg 8s linear infinite}
+@keyframes vp-cg{0%{opacity:0}34%{opacity:0}36%{opacity:1}40%{opacity:1}44%{opacity:0}100%{opacity:0}}
+.vp-ml{stroke-dashoffset:0;animation:vp-ml 8s linear infinite}
+@keyframes vp-ml{0%{opacity:1;stroke-dashoffset:100}42%{opacity:1;stroke-dashoffset:100}50%{opacity:1;stroke-dashoffset:0}90%{opacity:1;stroke-dashoffset:0}94%{opacity:0;stroke-dashoffset:0}95%{opacity:0;stroke-dashoffset:100}100%{opacity:1;stroke-dashoffset:100}}
+.vp-mh{opacity:1;animation:vp-mh 8s linear infinite}
+@keyframes vp-mh{0%{opacity:0}49%{opacity:0}51%{opacity:1}90%{opacity:1}94%{opacity:0}100%{opacity:0}}
+.vp-pose{opacity:1;animation:vp-pose 8s linear infinite}
+@keyframes vp-pose{0%{opacity:0}56%{opacity:0}60%{opacity:1}90%{opacity:1}94%{opacity:0}100%{opacity:0}}
+.vp-gh{animation:vp-gh 8s ease-in-out infinite}
+@keyframes vp-gh{0%{opacity:1;transform:translate(0px,0px)}62%{opacity:1;transform:translate(0px,0px)}80%{opacity:1;transform:translate(-35.2px,-14.4px)}88%{opacity:1;transform:translate(-35.2px,-14.4px)}91%{opacity:0;transform:translate(-35.2px,-14.4px)}93%{opacity:0;transform:translate(0px,0px)}100%{opacity:1;transform:translate(0px,0px)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Vision pose</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Every tag's place on the field is known, so seeing one tells the code where the robot is.</text>
+<rect x="16" y="60" width="488" height="176" fill="#eef0f2" stroke="#444444" stroke-width="1.2"/>
+<rect x="16" y="60" width="488" height="8" fill="#444444"/>
+<rect x="394" y="69" width="16" height="16" fill="#ffffff" stroke="#111111" stroke-width="1"/><rect x="396" y="71" width="12" height="12" fill="#111111"/><rect x="398" y="73" width="4" height="4" fill="#ffffff"/><rect x="402" y="77" width="4" height="4" fill="#ffffff"/>
+<text x="386" y="82" font-size="12" font-weight="700" fill="#222222" text-anchor="end">tag: its spot on the field is known</text>
+<path class="vp-sl" d="M170 155L402 77" pathLength="100" stroke-dasharray="100" fill="none" stroke="#446ce3" stroke-width="2.5"/>
+<text x="230" y="220" font-size="12" fill="#5c5c5c">odometry's estimate</text>
+<rect x="122" y="148" width="56" height="56" rx="4" fill="#b0b8c0" stroke="#444444" stroke-width="3"/>
+<path d="M150 154L144 164H156Z" fill="#ffffff"/>
+<rect x="163" y="150" width="14" height="10" rx="2" fill="#446ce3"/>
+<circle class="vp-cg" cx="170" cy="155" r="12" fill="none" stroke="#446ce3" stroke-width="2.5"/>
+<path class="vp-ml" d="M170 155L155 171" pathLength="100" stroke-dasharray="100" fill="none" stroke="#c2410c" stroke-width="2.5"/>
+<path d="M151 175L153.55 166.23L159.77 172.45Z" fill="#c2410c" class="vp-mh"/>
+<text x="150" y="140" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">camera mount</text>
+<rect class="vp-gh" x="166" y="166" width="56" height="56" rx="4" fill="none" stroke="#5c5c5c" stroke-width="1.6" stroke-dasharray="5 4"/>
+<g class="vp-pose"><circle cx="150" cy="176" r="10" fill="none" stroke="#446ce3" stroke-width="3"/><circle cx="150" cy="176" r="3" fill="#446ce3"/></g>
+<text x="112" y="180" font-size="12" font-weight="700" fill="#446ce3" text-anchor="end">vision pose</text>
+<circle class="vp-dot" cx="402" cy="77" r="5" fill="#446ce3" stroke="#ffffff" stroke-width="2"/>
+<rect class="vp-h1" x="12" y="244" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="253.5" r="9" fill="#446ce3"/>
+<text x="26" y="258" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="42" y="258" font-size="13" fill="#222222">The camera sees the tag.</text>
+<rect class="vp-h2" x="12" y="264" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="273.5" r="9" fill="#446ce3"/>
+<text x="26" y="278" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="42" y="278" font-size="13" fill="#222222">The tag's known spot says where the camera is.</text>
+<rect class="vp-h3" x="12" y="284" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="293.5" r="9" fill="#446ce3"/>
+<text x="26" y="298" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="42" y="298" font-size="13" fill="#222222">The camera's mount says where the robot is.</text>
+<rect class="vp-h4" x="12" y="304" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="313.5" r="9" fill="#446ce3"/>
+<text x="26" y="318" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="42" y="318" font-size="13" fill="#222222">The code blends that into odometry.</text>
+<line x1="16" y1="334" x2="504" y2="334" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="354" font-size="12" fill="#5c5c5c">The code accepts a sighting only when it is believable: close enough, clear</text>
+<text x="16" y="370" font-size="12" fill="#5c5c5c">enough, and not far from where odometry already puts the robot. The Live</text>
+<text x="16" y="386" font-size="12" fill="#5c5c5c">tab counts the ones it rejects.</text>
+</svg>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 356" width="520" height="356" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bg-title bg-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="bg-title">Bevel gear direction</title>
+<desc id="bg-desc">Animated. A robot seen from above, front at the top, with four MAXSwerve modules. Each wheel has its bevel gear, in blue, on one side. Three modules have the bevel gear facing the robot's left and green arrows: they drive forwards. The front-right one was captured the other way, bevel gear on the right, so its offset is 180 degrees off and its red arrow drives backwards while the others drive forwards. It turns 180 degrees until its bevel gear faces left, is captured again, and its arrow turns green and points forwards like the others.</desc>
+<style>
+.bg-fade{animation:bg-fade 8s linear infinite}
+@keyframes bg-fade{0%{opacity:1}90%{opacity:1}93%{opacity:0}97%{opacity:0}100%{opacity:1}}
+.bg-rot{transform-box:view-box;transform-origin:204px 130px;transform:rotate(180deg);animation:bg-rot 8s ease-in-out infinite}
+@keyframes bg-rot{0%{transform:rotate(180deg)}38%{transform:rotate(180deg)}52%{transform:rotate(360deg)}93%{transform:rotate(360deg)}94%{transform:rotate(180deg)}100%{transform:rotate(180deg)}}
+.bg-red{opacity:1;animation:bg-red 8s linear infinite}
+@keyframes bg-red{0%{opacity:1}40%{opacity:1}47%{opacity:0}93%{opacity:0}94%{opacity:1}100%{opacity:1}}
+.bg-sw{opacity:1;animation:bg-sw 8s linear infinite}
+@keyframes bg-sw{0%{opacity:1}40%{opacity:1}44%{opacity:0}94%{opacity:0}97%{opacity:1}100%{opacity:1}}
+.bg-sf{opacity:0;animation:bg-sf 8s linear infinite}
+@keyframes bg-sf{0%{opacity:0}48%{opacity:0}52%{opacity:1}89%{opacity:1}92%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Bevel gear direction</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Straight ahead and straight backwards look the same from above.</text>
+<rect x="75" y="89" width="170" height="170" fill="#f7f8f9" stroke="#b0b8c0" stroke-width="10"/>
+<rect x="70" y="84" width="180" height="180" fill="none" stroke="#444444" stroke-width="1"/>
+<rect x="80" y="94" width="160" height="160" fill="none" stroke="#444444" stroke-width="1"/>
+<line x1="160" y1="80" x2="160" y2="65.2" stroke="#222222" stroke-width="2.5"/><path d="M160 58L164.95 67L155.05 67Z" fill="#222222"/>
+<text x="168" y="72" font-size="12" font-weight="700" fill="#222222">front</text>
+<text x="18" y="158" font-size="12" fill="#5c5c5c">robot's</text>
+<text x="18" y="175" font-size="13" font-weight="700" fill="#222222">LEFT</text>
+<line x1="62" y1="186" x2="25.2" y2="186" stroke="#222222" stroke-width="2.5"/><path d="M18 186L27 181.05L27 190.95Z" fill="#222222"/>
+<circle cx="116" cy="130" r="30" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/>
+<rect x="109" y="109" width="14" height="42" rx="3" fill="#3a3f45"/><rect x="100" y="121" width="9" height="18" fill="#446ce3"/><path d="M100 125.5h3M100 130h3M100 134.5h3" stroke="#ffffff" stroke-width="1.5"/><line x1="133" y1="149" x2="133" y2="117" stroke="#1a7f37" stroke-width="3"/><path d="M133 109L138.5 119L127.5 119Z" fill="#1a7f37"/>
+<circle cx="204" cy="130" r="30" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/>
+<g class="bg-fade"><g class="bg-rot"><rect x="197" y="109" width="14" height="42" rx="3" fill="#3a3f45"/><rect x="188" y="121" width="9" height="18" fill="#446ce3"/><path d="M188 125.5h3M188 130h3M188 134.5h3" stroke="#ffffff" stroke-width="1.5"/><line x1="221" y1="149" x2="221" y2="117" stroke="#1a7f37" stroke-width="3"/><path d="M221 109L226.5 119L215.5 119Z" fill="#1a7f37"/><g class="bg-red"><line x1="221" y1="149" x2="221" y2="117" stroke="#c62828" stroke-width="3"/><path d="M221 109L226.5 119L215.5 119Z" fill="#c62828"/></g></g></g>
+<circle cx="116" cy="218" r="30" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/>
+<rect x="109" y="197" width="14" height="42" rx="3" fill="#3a3f45"/><rect x="100" y="209" width="9" height="18" fill="#446ce3"/><path d="M100 213.5h3M100 218h3M100 222.5h3" stroke="#ffffff" stroke-width="1.5"/><line x1="133" y1="237" x2="133" y2="205" stroke="#1a7f37" stroke-width="3"/><path d="M133 197L138.5 207L127.5 207Z" fill="#1a7f37"/>
+<circle cx="204" cy="218" r="30" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/>
+<rect x="197" y="197" width="14" height="42" rx="3" fill="#3a3f45"/><rect x="188" y="209" width="9" height="18" fill="#446ce3"/><path d="M188 213.5h3M188 218h3M188 222.5h3" stroke="#ffffff" stroke-width="1.5"/><line x1="221" y1="237" x2="221" y2="205" stroke="#1a7f37" stroke-width="3"/><path d="M221 197L226.5 207L215.5 207Z" fill="#1a7f37"/>
+<text x="272" y="92" font-size="13" font-weight="700" fill="#222222">Capture every module</text>
+<text x="272" y="110" font-size="13" font-weight="700" fill="#222222">with its bevel gear facing</text>
+<text x="272" y="128" font-size="13" font-weight="700" fill="#222222">the robot's LEFT.</text>
+<rect x="274" y="146" width="9" height="18" fill="#446ce3"/>
+<text x="292" y="160" font-size="12" fill="#222222">bevel gear</text>
+<line x1="278.5" y1="194" x2="278.5" y2="181.2" stroke="#1a7f37" stroke-width="3"/><path d="M278.5 174L283.45 183L273.55 183Z" fill="#1a7f37"/>
+<text x="292" y="189" font-size="12" font-weight="700" fill="#1a7f37">drives forwards</text>
+<line x1="278.5" y1="200" x2="278.5" y2="212.8" stroke="#c62828" stroke-width="3"/><path d="M278.5 220L273.55 211L283.45 211Z" fill="#c62828"/>
+<text x="292" y="215" font-size="12" font-weight="700" fill="#c62828">drives backwards</text>
+<text x="272" y="246" font-size="12" font-weight="700" fill="#c62828" class="bg-sw">One captured the other way:</text>
+<text x="272" y="262" font-size="12" fill="#222222" class="bg-sw">its offset is 180° off.</text>
+<text x="272" y="246" font-size="12" font-weight="700" fill="#1a7f37" class="bg-sf">Turned to bevel gear LEFT</text>
+<text x="272" y="262" font-size="12" fill="#222222" class="bg-sf">and captured again: fixed.</text>
+<line x1="16" y1="284" x2="504" y2="284" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="304" font-size="13" fill="#222222">Straight ahead and straight backwards look identical from above.</text>
+<text x="16" y="322" font-size="13" fill="#222222">A module captured the other way drives backwards whenever the others</text>
+<text x="16" y="340" font-size="13" fill="#222222">drive forwards: the 'one wheel drives backwards' symptom in disguise.</text>
+</svg>

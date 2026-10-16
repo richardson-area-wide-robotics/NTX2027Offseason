@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 392" width="520" height="392" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="rm-title rm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="rm-title">Robot modes: only the Driver Station switches them</title>
+<desc id="rm-desc">Animated. At the top, two boxes: the Driver Station, with a green check, switches the robot's mode; Sloth Tune, this tool, with a red cross, never does. Below, three cards, each with a wheel: Disabled (nothing can move, the safe state), Enabled (motors follow the code) and E-stopped (off until the robot restarts, with a red lock). A highlight starts on Disabled; the Driver Station flashes and the enable arrow takes it to Enabled, where the wheel spins; the Driver Station flashes again and the space bar arrow takes it to E-stopped, where the wheel stays still; then the reboot arrow, the only way out of e-stop, brings it back to Disabled. An Enter arrow leads from Enabled back to Disabled. Text below: disabled, the roboRIO or SystemCore sends no motor commands, so the hand check and the offsets are done disabled; every tuning test needs Enabled; Sloth Tune's ABORT button and Esc stop a test without e-stopping.</desc>
+<style>
+.rm-hd { opacity: 1; animation: rm-hd 8s linear infinite; }
+@keyframes rm-hd { 0%, 20% { opacity: 1; } 22%, 88% { opacity: 0; } 90%, 100% { opacity: 1; } }
+.rm-he { opacity: 0; animation: rm-he 8s linear infinite; }
+@keyframes rm-he { 0%, 21% { opacity: 0; } 23%, 50% { opacity: 1; } 52%, 100% { opacity: 0; } }
+.rm-hs { opacity: 0; animation: rm-hs 8s linear infinite; }
+@keyframes rm-hs { 0%, 51% { opacity: 0; } 53%, 84% { opacity: 1; } 86%, 100% { opacity: 0; } }
+.rm-fe { opacity: 0; animation: rm-fe 8s linear infinite; }
+@keyframes rm-fe { 0%, 18% { opacity: 0; } 19.5%, 24% { opacity: 1; } 26%, 100% { opacity: 0; } }
+.rm-fs { opacity: 0; animation: rm-fs 8s linear infinite; }
+@keyframes rm-fs { 0%, 48% { opacity: 0; } 49.5%, 54% { opacity: 1; } 56%, 100% { opacity: 0; } }
+.rm-fr { opacity: 0; animation: rm-fr 8s linear infinite; }
+@keyframes rm-fr { 0%, 83% { opacity: 0; } 84.5%, 91% { opacity: 1; } 93%, 100% { opacity: 0; } }
+.rm-ds { opacity: 0; animation: rm-ds 8s linear infinite; }
+@keyframes rm-ds { 0%, 18% { opacity: 0; } 19.5%, 24% { opacity: 1; } 26%, 48% { opacity: 0; } 49.5%, 54% { opacity: 1; } 56%, 100% { opacity: 0; } }
+.rm-spin { transform-box: view-box; transform-origin: 0 0; animation: rm-spin 8s linear infinite; }
+@keyframes rm-spin { 0%, 23% { transform: rotate(0deg); } 26% { transform: rotate(40deg); } 47% { transform: rotate(680deg); } 50%, 100% { transform: rotate(720deg); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Robot modes: only the Driver Station switches them</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Disabled is the safe state. E-stop is final: off until the robot restarts.</text>
+<rect x="16" y="60" width="236" height="44" rx="6" fill="#f5f7fb" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect class="rm-ds" x="16" y="60" width="236" height="44" rx="6" fill="none" stroke="#446ce3" stroke-width="3"/>
+<rect x="28" y="68" width="32" height="21" rx="2" fill="#ffffff" stroke="#444444" stroke-width="1.5"/><path d="M23 91H65L61 96H27Z" fill="#444444"/>
+<text x="72" y="79" font-size="13" font-weight="700" fill="#222222">Driver Station</text>
+<text x="72" y="95" font-size="12" fill="#5c5c5c">switches the mode</text>
+<path d="M222 82L229 89L242 74" fill="none" stroke="#1a7f37" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="268" y="60" width="236" height="44" rx="6" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.2"/>
+<text x="282" y="79" font-size="13" font-weight="700" fill="#222222">Sloth Tune (this tool)</text>
+<text x="282" y="95" font-size="12" fill="#5c5c5c">never switches the mode</text>
+<path d="M477 75L491 89M491 75L477 89" stroke="#c62828" stroke-width="3" stroke-linecap="round"/>
+<rect x="16" y="122" width="124" height="142" rx="8" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.5"/>
+<rect class="rm-hd" x="16" y="122" width="124" height="142" rx="8" fill="#eaf5ed" stroke="#1a7f37" stroke-width="3"/>
+<text x="78" y="146" font-size="14" font-weight="700" fill="#1a7f37" text-anchor="middle">Disabled</text>
+<g transform="translate(78 194)"><g><circle r="26" fill="#3a3f45"/><circle r="20.28" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M6.3 3.64L15.31 8.84M0 7.28L0 17.68M-6.3 3.64L-15.31 8.84M-6.3 -3.64L-15.31 -8.84M0 -7.28L0 -17.68M6.3 -3.64L15.31 -8.84" stroke="#444444" stroke-width="3.12" stroke-linecap="round"/><circle r="6.24" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="23.14" r="2.2" fill="#ffffff"/></g></g>
+<text x="78" y="242" font-size="12" fill="#222222" text-anchor="middle">nothing can move</text>
+<text x="78" y="257" font-size="12" fill="#5c5c5c" text-anchor="middle">the safe state</text>
+<rect x="198" y="122" width="124" height="142" rx="8" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.5"/>
+<rect class="rm-he" x="198" y="122" width="124" height="142" rx="8" fill="#edf2fd" stroke="#446ce3" stroke-width="3"/>
+<text x="260" y="146" font-size="14" font-weight="700" fill="#446ce3" text-anchor="middle">Enabled</text>
+<g transform="translate(260 194)"><g class="rm-spin"><circle r="26" fill="#3a3f45"/><circle r="20.28" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M6.3 3.64L15.31 8.84M0 7.28L0 17.68M-6.3 3.64L-15.31 8.84M-6.3 -3.64L-15.31 -8.84M0 -7.28L0 -17.68M6.3 -3.64L15.31 -8.84" stroke="#444444" stroke-width="3.12" stroke-linecap="round"/><circle r="6.24" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="23.14" r="2.2" fill="#ffffff"/></g></g>
+<text x="260" y="242" font-size="12" fill="#222222" text-anchor="middle">motors follow</text>
+<text x="260" y="257" font-size="12" fill="#222222" text-anchor="middle">the code</text>
+<rect x="380" y="122" width="124" height="142" rx="8" fill="#ffffff" stroke="#b0b8c0" stroke-width="1.5"/>
+<rect class="rm-hs" x="380" y="122" width="124" height="142" rx="8" fill="#fbeaea" stroke="#c62828" stroke-width="3"/>
+<text x="442" y="146" font-size="14" font-weight="700" fill="#c62828" text-anchor="middle">E-stopped</text>
+<g transform="translate(442 194)"><g><circle r="26" fill="#3a3f45"/><circle r="20.28" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M6.3 3.64L15.31 8.84M0 7.28L0 17.68M-6.3 3.64L-15.31 8.84M-6.3 -3.64L-15.31 -8.84M0 -7.28L0 -17.68M6.3 -3.64L15.31 -8.84" stroke="#444444" stroke-width="3.12" stroke-linecap="round"/><circle r="6.24" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="23.14" r="2.2" fill="#ffffff"/></g></g>
+<text x="442" y="242" font-size="12" fill="#222222" text-anchor="middle">off until the</text>
+<text x="442" y="257" font-size="12" fill="#222222" text-anchor="middle">robot restarts</text>
+<g transform="translate(472 214)"><path d="M-5 -3V-8A5 5 0 0 1 5 -8V-3" fill="none" stroke="#c62828" stroke-width="2.5"/><rect x="-8" y="-3" width="16" height="12" rx="2" fill="#c62828" stroke="#ffffff" stroke-width="1"/></g>
+<g><line x1="145" y1="176" x2="186" y2="176" stroke="#5c5c5c" stroke-width="1.8"/><path d="M193 176L184 181L184 171Z" fill="#5c5c5c"/></g>
+<g class="rm-fe"><line x1="145" y1="176" x2="186" y2="176" stroke="#446ce3" stroke-width="3.5"/><path d="M193 176L184 181L184 171Z" fill="#446ce3"/></g>
+<text x="169" y="167" font-size="12" fill="#222222" text-anchor="middle">enable</text>
+<g><line x1="193" y1="214" x2="152" y2="214" stroke="#5c5c5c" stroke-width="1.8"/><path d="M145 214L154 209L154 219Z" fill="#5c5c5c"/></g>
+<text x="169" y="232" font-size="12" fill="#222222" text-anchor="middle">Enter</text>
+<g><line x1="327" y1="204" x2="368" y2="204" stroke="#5c5c5c" stroke-width="1.8"/><path d="M375 204L366 209L366 199Z" fill="#5c5c5c"/></g>
+<g class="rm-fs"><line x1="327" y1="204" x2="368" y2="204" stroke="#c62828" stroke-width="3.5"/><path d="M375 204L366 209L366 199Z" fill="#c62828"/></g>
+<text x="351" y="181" font-size="12" fill="#222222" text-anchor="middle">space</text>
+<text x="351" y="195" font-size="12" fill="#222222" text-anchor="middle">bar</text>
+<g><path d="M442 264V288H78V272" fill="none" stroke="#5c5c5c" stroke-width="1.8"/><path d="M78 265L83 274L73 274Z" fill="#5c5c5c"/></g>
+<g class="rm-fr"><path d="M442 264V288H78V272" fill="none" stroke="#1a7f37" stroke-width="3.5"/><path d="M78 265L83 274L73 274Z" fill="#1a7f37"/></g>
+<text x="260" y="306" font-size="12" fill="#222222" text-anchor="middle"><tspan font-weight="700">reboot the robot:</tspan> the only way out of e-stop</text>
+<line x1="16" y1="320" x2="504" y2="320" stroke="#e2e2e2"/>
+<text x="16" y="340" font-size="13" fill="#222222">Disabled: the roboRIO or SystemCore sends no motor commands, so the hand</text>
+<text x="16" y="358" font-size="13" fill="#222222">check and the offsets are done disabled. Every tuning test needs Enabled.</text>
+<text x="16" y="377" font-size="12" fill="#5c5c5c">Sloth Tune's ABORT button and Esc stop a test without e-stopping the robot.</text>
+</svg>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 440" width="520" height="440" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="env-title env-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="env-title">Where the robot is changes the safety rules</title>
+<desc id="env-desc">Animated. Three rows, one for each place the robot can be. On blocks: the robot's frame sits on a block with its wheels off the floor; the wheels spin and the robot stays put. Rule: if the gyro or cameras see motion, or a wheel works like it carries weight, it is not on blocks and the test stops. On the floor: the robot drives forward and back inside a dashed space budget. Rule: the space budget is enforced and an impact stops everything. Simulator: a small robot drives on a laptop screen; it all happens on the computer. Below: on blocks and on the floor a deadman must be held, because 'on blocks' is only what someone told the tool.</desc>
+<style>
+.env-spin { transform-box: view-box; transform-origin: 0 0; animation: env-spin 8s linear infinite; }
+@keyframes env-spin { from { transform: rotate(0deg); } to { transform: rotate(2880deg); } }
+.env-drive { animation: env-drive 8s ease-in-out infinite; }
+@keyframes env-drive { 0%, 8% { transform: translateX(0px); } 46%, 54% { transform: translateX(56px); } 92%, 100% { transform: translateX(0px); } }
+.env-roll { transform-box: view-box; transform-origin: 0 0; animation: env-roll 8s ease-in-out infinite; }
+@keyframes env-roll { 0%, 8% { transform: rotate(0deg); } 46%, 54% { transform: rotate(246.8deg); } 92%, 100% { transform: rotate(0deg); } }
+.env-sdrive { animation: env-sdrive 8s ease-in-out infinite; }
+@keyframes env-sdrive { 0%, 8% { transform: translateX(0px); } 46%, 54% { transform: translateX(44px); } 92%, 100% { transform: translateX(0px); } }
+.env-sroll { transform-box: view-box; transform-origin: 0 0; animation: env-sroll 8s ease-in-out infinite; }
+@keyframes env-sroll { 0%, 8% { transform: rotate(0deg); } 46%, 54% { transform: rotate(420.2deg); } 92%, 100% { transform: rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Where the robot is changes the safety rules</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">On blocks, on the floor, or in the simulator: the tool's rules change with it.</text>
+<rect x="16" y="60" width="200" height="100" rx="6" fill="#f6f7f9" stroke="#e2e2e2"/>
+<rect x="16" y="168" width="200" height="100" rx="6" fill="#f6f7f9" stroke="#e2e2e2"/>
+<rect x="16" y="276" width="200" height="100" rx="6" fill="#f6f7f9" stroke="#e2e2e2"/>
+<line x1="24" y1="146" x2="208" y2="146" stroke="#444444" stroke-width="1.5"/><path d="M34 146l-6 7M46 146l-6 7M58 146l-6 7M70 146l-6 7M82 146l-6 7M94 146l-6 7M106 146l-6 7M118 146l-6 7M130 146l-6 7M142 146l-6 7M154 146l-6 7M166 146l-6 7M178 146l-6 7M190 146l-6 7M202 146l-6 7" stroke="#b0b8c0" stroke-width="1.2"/>
+<rect x="84" y="116" width="52" height="30" fill="#d9dee3" stroke="#444444" stroke-width="1.5"/>
+<text x="110" y="136" font-size="12" fill="#5c5c5c" text-anchor="middle">block</text>
+<rect x="44" y="100" width="132" height="16" rx="3" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/>
+<g transform="translate(62 116)"><g class="env-spin"><circle r="13" fill="#3a3f45"/><circle r="10.14" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M3.15 1.82L7.66 4.42M0 3.64L0 8.84M-3.15 1.82L-7.66 4.42M-3.15 -1.82L-7.66 -4.42M0 -3.64L0 -8.84M3.15 -1.82L7.66 -4.42" stroke="#444444" stroke-width="2" stroke-linecap="round"/><circle r="3.12" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="11.57" r="2.2" fill="#ffffff"/></g></g>
+<g transform="translate(158 116)"><g class="env-spin"><circle r="13" fill="#3a3f45"/><circle r="10.14" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M3.15 1.82L7.66 4.42M0 3.64L0 8.84M-3.15 1.82L-7.66 4.42M-3.15 -1.82L-7.66 -4.42M0 -3.64L0 -8.84M3.15 -1.82L7.66 -4.42" stroke="#444444" stroke-width="2" stroke-linecap="round"/><circle r="3.12" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="11.57" r="2.2" fill="#ffffff"/></g></g>
+<g><path d="M139.21 109.16A20 20 0 0 1 160.77 96.19" fill="none" stroke="#444444" stroke-width="1.8"/><path d="M164.84 97.21L156.89 98.57L159.63 91.05Z" fill="#444444"/></g>
+<text x="232" y="82" font-size="14" font-weight="700" fill="#222222">On blocks</text>
+<text x="232" y="102" font-size="13" fill="#222222">The wheels spin and the robot stays put.</text>
+<text x="232" y="122" font-size="12" fill="#b45309">If the gyro or cameras see motion,</text>
+<text x="232" y="138" font-size="12" fill="#b45309">or a wheel works like it carries weight,</text>
+<text x="232" y="154" font-size="12" font-weight="700" fill="#b45309">it is not on blocks: the test stops.</text>
+<line x1="24" y1="254" x2="208" y2="254" stroke="#444444" stroke-width="1.5"/><path d="M34 254l-6 7M46 254l-6 7M58 254l-6 7M70 254l-6 7M82 254l-6 7M94 254l-6 7M106 254l-6 7M118 254l-6 7M130 254l-6 7M142 254l-6 7M154 254l-6 7M166 254l-6 7M178 254l-6 7M190 254l-6 7M202 254l-6 7" stroke="#b0b8c0" stroke-width="1.2"/>
+<path d="M28 190V254M204 190V254" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="4 3"/>
+<line x1="36" y1="202" x2="196" y2="202" stroke="#5c5c5c" stroke-width="1.2"/><path d="M30 202L37 198L37 206Z" fill="#5c5c5c"/><path d="M202 202L195 206L195 198Z" fill="#5c5c5c"/>
+<text x="116" y="195" font-size="12" fill="#5c5c5c" text-anchor="middle">space budget</text>
+<g class="env-drive"><rect x="34" y="222" width="110" height="16" rx="3" fill="#b0b8c0" stroke="#444444" stroke-width="1.5"/><g transform="translate(50 241)"><g class="env-roll"><circle r="13" fill="#3a3f45"/><circle r="10.14" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M3.15 1.82L7.66 4.42M0 3.64L0 8.84M-3.15 1.82L-7.66 4.42M-3.15 -1.82L-7.66 -4.42M0 -3.64L0 -8.84M3.15 -1.82L7.66 -4.42" stroke="#444444" stroke-width="2" stroke-linecap="round"/><circle r="3.12" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="11.57" r="2.2" fill="#ffffff"/></g></g><g transform="translate(128 241)"><g class="env-roll"><circle r="13" fill="#3a3f45"/><circle r="10.14" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M3.15 1.82L7.66 4.42M0 3.64L0 8.84M-3.15 1.82L-7.66 4.42M-3.15 -1.82L-7.66 -4.42M0 -3.64L0 -8.84M3.15 -1.82L7.66 -4.42" stroke="#444444" stroke-width="2" stroke-linecap="round"/><circle r="3.12" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="11.57" r="2.2" fill="#ffffff"/></g></g></g>
+<text x="232" y="190" font-size="14" font-weight="700" fill="#222222">On the floor</text>
+<text x="232" y="210" font-size="13" fill="#222222">It really drives.</text>
+<text x="232" y="230" font-size="12" fill="#b45309">A space budget is enforced, and an</text>
+<text x="232" y="246" font-size="12" font-weight="700" fill="#b45309">impact stops everything.</text>
+<rect x="58" y="286" width="116" height="66" rx="4" fill="#ffffff" stroke="#444444" stroke-width="2"/><rect x="64" y="292" width="104" height="54" fill="#eef3fd"/><path d="M44 354H188L182 364H50Z" fill="#444444"/>
+<line x1="68" y1="338" x2="164" y2="338" stroke="#5c5c5c" stroke-width="1.2"/>
+<g class="env-sdrive"><rect x="72" y="320" width="44" height="9" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1"/><g transform="translate(80 332)"><g class="env-sroll"><circle r="6" fill="#3a3f45"/><circle r="4.68" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M1.45 0.84L3.53 2.04M0 1.68L0 4.08M-1.45 0.84L-3.53 2.04M-1.45 -0.84L-3.53 -2.04M0 -1.68L0 -4.08M1.45 -0.84L3.53 -2.04" stroke="#444444" stroke-width="2" stroke-linecap="round"/><circle r="1.44" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="5.34" r="2.2" fill="#ffffff"/></g></g><g transform="translate(108 332)"><g class="env-sroll"><circle r="6" fill="#3a3f45"/><circle r="4.68" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/><path d="M1.45 0.84L3.53 2.04M0 1.68L0 4.08M-1.45 0.84L-3.53 2.04M-1.45 -0.84L-3.53 -2.04M0 -1.68L0 -4.08M1.45 -0.84L3.53 -2.04" stroke="#444444" stroke-width="2" stroke-linecap="round"/><circle r="1.44" fill="#7d8790" stroke="#444444" stroke-width="1.2"/><circle cx="5.34" r="2.2" fill="#ffffff"/></g></g></g>
+<text x="232" y="298" font-size="14" font-weight="700" fill="#222222">Simulator</text>
+<text x="232" y="318" font-size="13" fill="#222222">It all happens on the computer.</text>
+<line x1="16" y1="388" x2="504" y2="388" stroke="#e2e2e2"/>
+<text x="16" y="408" font-size="13" fill="#222222"><tspan font-weight="700">On blocks and on the floor, a deadman must be held:</tspan></text>
+<text x="16" y="426" font-size="13" fill="#222222">“on blocks” is only what someone told the tool.</text>
+</svg>

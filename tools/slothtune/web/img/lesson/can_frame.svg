@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 372" width="520" height="372" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="can_frame-title can_frame-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="can_frame-title">A CAN message: its parts</title>
+<desc id="can_frame-desc">Animated. One CAN message, a frame, drawn as a strip sent from left to right: the ID, which says who sent it and what it is; the length; up to 8 bytes of data; a checksum (a 15-bit CRC); and an acknowledge bit. A cursor sends it bit by bit while the bus below glows, then a listener sets the acknowledge bit to say it heard a good message. Every device on the bus hears it: the robot controller (roboRIO or SystemCore) keeps it because it listens for that ID, and another SPARK ignores it. At 1 megabit a second, a full message takes about 0.13 ms. It is a broadcast, like a group chat.</desc>
+<style>
+.cf-cov{opacity:0;animation:cf-cov 8s linear infinite}
+@keyframes cf-cov{0%{opacity:0;transform:translateX(0px)}8%{opacity:0;transform:translateX(0px)}10%{opacity:1;transform:translateX(0px)}60%{opacity:1;transform:translateX(488px)}62%{opacity:0;transform:translateX(488px)}100%{opacity:0;transform:translateX(488px)}}
+.cf-ack{animation:cf-ack 8s linear infinite}
+@keyframes cf-ack{0%{opacity:1}8%{opacity:1}10%{opacity:0}60%{opacity:0}62%{opacity:1}100%{opacity:1}}
+.cf-resp{animation:cf-resp 8s linear infinite}
+@keyframes cf-resp{0%{opacity:1}8%{opacity:1}10%{opacity:0}64%{opacity:0}67%{opacity:1}100%{opacity:1}}
+.cf-bus{opacity:0;animation:cf-bus 8s linear infinite}
+@keyframes cf-bus{0%{opacity:0}10%{opacity:0}11%{opacity:1}60%{opacity:1}62%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">A CAN message: its parts</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Sent one bit after another at 1 megabit a second: a full message takes about 0.13 ms.</text>
+<rect x="16" y="78" width="132" height="40" fill="#446ce3" fill-opacity="0.16" stroke="#446ce3" stroke-width="1.6"/>
+<text x="82" y="103" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">ID</text>
+<rect x="148" y="78" width="52" height="40" fill="#5c5c5c" fill-opacity="0.16" stroke="#5c5c5c" stroke-width="1.6"/>
+<text x="174" y="103" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">length</text>
+<rect x="200" y="78" width="208" height="40" fill="#1a7f37" fill-opacity="0.16" stroke="#1a7f37" stroke-width="1.6"/>
+<line x1="226" y1="84" x2="226" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<line x1="252" y1="84" x2="252" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<line x1="278" y1="84" x2="278" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<line x1="304" y1="84" x2="304" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<line x1="330" y1="84" x2="330" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<line x1="356" y1="84" x2="356" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<line x1="382" y1="84" x2="382" y2="112" stroke="#1a7f37" stroke-width="1.2"/>
+<rect x="408" y="78" width="64" height="40" fill="#b45309" fill-opacity="0.16" stroke="#b45309" stroke-width="1.6"/>
+<text x="440" y="103" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">CRC</text>
+<rect x="472" y="78" width="32" height="40" fill="#5c5c5c" fill-opacity="0.16" stroke="#5c5c5c" stroke-width="1.6"/>
+<text x="488" y="103" font-size="12" font-weight="700" fill="#222222" text-anchor="middle" data-ov="ack">ack</text>
+<g class="cf-ack"><rect x="472" y="78" width="32" height="40" fill="#1a7f37"/><text x="488" y="103" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle" data-ov="ack">ack</text>
+</g>
+<g class="cf-cov"><rect x="16" y="74" width="490" height="48" fill="#ffffff" fill-opacity="0.85"/><line x1="16" y1="72" x2="16" y2="124" stroke="#446ce3" stroke-width="3"/></g>
+<path d="M82.0 118 V128 M304.0 118 V128 M440.0 118 V146 M488 118 V164" stroke="#5c5c5c" stroke-width="1" fill="none"/>
+<text x="16" y="142" font-size="12" font-weight="700" fill="#222222">who sent it, and what it is</text>
+<text x="304" y="142" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">data: up to 8 bytes</text>
+<text x="478" y="160" font-size="12" font-weight="700" fill="#222222" text-anchor="end">checksum (15-bit CRC)</text>
+<text x="504" y="178" font-size="12" font-weight="700" fill="#222222" text-anchor="end">ack: a listener sets it to say it heard a good message</text>
+<line x1="16" y1="194" x2="504" y2="194" stroke="#e2e2e2"/>
+<text x="16" y="216" font-size="13" font-weight="700" fill="#222222">Every device hears it, and keeps the ones it wants.</text>
+<path class="cf-bus" d="M24 236 H496" stroke="#446ce3" stroke-width="16" stroke-opacity="0.35"/>
+<path d="M24 232 H496 M24 240 H496" stroke="#5c5c5c" stroke-width="3"/>
+<text x="496" y="223" font-size="12" fill="#5c5c5c" text-anchor="end">the CAN pair</text>
+<path d="M96.0 242 V252" stroke="#444444" stroke-width="2"/>
+<rect x="48" y="252" width="96" height="44" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="96" y="270" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<text x="96" y="287" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">sends its status</text>
+<path d="M270.0 242 V252" stroke="#444444" stroke-width="2"/>
+<rect x="195" y="252" width="150" height="44" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="270" y="270" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">roboRIO or</text>
+<text x="270" y="287" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SystemCore</text>
+<path d="M436.0 242 V252" stroke="#444444" stroke-width="2"/>
+<rect x="388" y="252" width="96" height="44" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="436" y="270" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">another</text>
+<text x="436" y="287" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<g class="cf-resp"><text x="270" y="316" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">keeps it: it listens for this ID</text>
+<text x="436" y="316" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">not for it: ignores it</text>
+</g>
+<text x="16" y="352" font-size="13" fill="#222222">Nobody addresses a message to anyone: it is a broadcast, like a group chat.</text>
+</svg>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" width="520" height="380" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="rd-title rd-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="rd-title">Why redeploy</title>
+<desc id="rd-desc">Animated, three steps. One: the tool writes new values into the JSON files on the laptop; the file's value bar turns from gray, old, to blue, new. Two: deploying copies the file across to the robot controller, the roboRIO or SystemCore, whose copy turns blue, while the robot code still shows the old gray value. Three: the robot code restarts and reads the file once, at startup, and only then does its value turn blue. 'Apply live' changes vanish at the next restart; only the files are permanent, and the commit makes them the team's.</desc>
+<style>
+.rd-h1{opacity:0;animation:rd-h1 8s linear infinite}
+@keyframes rd-h1{0%{opacity:0}3.5%{opacity:0}5%{opacity:1}24%{opacity:1}25.5%{opacity:0}100%{opacity:0}}
+.rd-h2{opacity:0;animation:rd-h2 8s linear infinite}
+@keyframes rd-h2{0%{opacity:0}26.5%{opacity:0}28%{opacity:1}49%{opacity:1}50.5%{opacity:0}100%{opacity:0}}
+.rd-h3{opacity:0;animation:rd-h3 8s linear infinite}
+@keyframes rd-h3{0%{opacity:0}51.5%{opacity:0}53%{opacity:1}88%{opacity:1}89.5%{opacity:0}100%{opacity:0}}
+.rd-lnew{opacity:1;animation:rd-lnew 8s linear infinite}
+@keyframes rd-lnew{0%{opacity:0}8%{opacity:0}13%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.rd-copy{opacity:0;animation:rd-copy 8s ease-in-out infinite}
+@keyframes rd-copy{0%{opacity:0;transform:translate(0px,0px)}29%{opacity:0;transform:translate(0px,0px)}31%{opacity:1;transform:translate(0px,0px)}46%{opacity:1;transform:translate(298px,6px)}48%{opacity:0;transform:translate(298px,6px)}100%{opacity:0;transform:translate(298px,6px)}}
+.rd-rnew{opacity:1;animation:rd-rnew 8s linear infinite}
+@keyframes rd-rnew{0%{opacity:0}46%{opacity:0}48%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.rd-rs{transform-box:view-box;transform-origin:453px 174px;animation:rd-rs 8s ease-in-out infinite}
+@keyframes rd-rs{0%{transform:rotate(0deg)}54%{transform:rotate(0deg)}62%{transform:rotate(360deg)}100%{transform:rotate(360deg)}}
+.rd-dim{opacity:0;animation:rd-dim 8s linear infinite}
+@keyframes rd-dim{0%{opacity:0}54%{opacity:0}56%{opacity:0.75}62%{opacity:0.75}64%{opacity:0}100%{opacity:0}}
+.rd-dot{opacity:0;animation:rd-dot 8s linear infinite}
+@keyframes rd-dot{0%{opacity:0;transform:translateX(0px)}64%{opacity:0;transform:translateX(0px)}65%{opacity:1;transform:translateX(0px)}70%{opacity:1;transform:translateX(16px)}71%{opacity:0;transform:translateX(16px)}100%{opacity:0;transform:translateX(16px)}}
+.rd-cnew{opacity:1;animation:rd-cnew 8s linear infinite}
+@keyframes rd-cnew{0%{opacity:0}70%{opacity:0}72%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Why redeploy</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Offsets and gains live in JSON files that the robot reads once, at startup.</text>
+<rect x="24" y="70" width="160" height="104" rx="6" fill="#333333"/>
+<rect x="31" y="77" width="146" height="90" fill="#f4f6f8"/>
+<path d="M14 174H194L184 186H24Z" fill="#9aa3ad" stroke="#444444" stroke-width="1"/>
+<path d="M44 92H80L92 104V152H44Z" fill="#ffffff" stroke="#444444" stroke-width="1.4"/><path d="M80 92V104H92" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/><text x="51" y="114" font-size="13" font-weight="700" fill="#5c5c5c">{ }</text><rect x="52" y="122" width="32" height="4" fill="#c9ced4"/><rect x="52" y="130" width="24" height="4" fill="#c9ced4"/><rect x="52" y="139" width="32" height="6" fill="#9aa3ad"/><rect class="rd-lnew" x="52" y="139" width="32" height="6" fill="#446ce3"/>
+<text x="102" y="118" font-size="12" font-weight="700" fill="#222222">JSON</text>
+<text x="102" y="134" font-size="12" font-weight="700" fill="#222222">files</text>
+<text x="104" y="204" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">laptop</text>
+<line x1="198" y1="128" x2="316" y2="128" stroke="#444444" stroke-width="2"/><path d="M324 128L314 133.5L314 122.5Z" fill="#444444"/>
+<text x="261" y="118" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">deploy</text>
+<rect x="328" y="66" width="176" height="124" rx="8" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/>
+<text x="416" y="84" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">roboRIO or SystemCore</text>
+<path d="M342 98H378L390 110V158H342Z" fill="#ffffff" stroke="#444444" stroke-width="1.4"/><path d="M378 98V110H390" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/><text x="349" y="120" font-size="13" font-weight="700" fill="#5c5c5c">{ }</text><rect x="350" y="128" width="32" height="4" fill="#c9ced4"/><rect x="350" y="136" width="24" height="4" fill="#c9ced4"/><rect x="350" y="145" width="32" height="6" fill="#9aa3ad"/><rect class="rd-rnew" x="350" y="145" width="32" height="6" fill="#446ce3"/>
+<rect x="414" y="102" width="78" height="54" rx="6" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<text x="453" y="121" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">robot</text>
+<text x="453" y="136" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">code</text>
+<rect x="427" y="143" width="52" height="6" fill="#9aa3ad"/>
+<rect class="rd-cnew" x="427" y="143" width="52" height="6" fill="#446ce3"/>
+<rect class="rd-dim" x="414" y="102" width="78" height="54" rx="6" fill="#ffffff"/>
+<line x1="392" y1="128" x2="407.4" y2="128" stroke="#444444" stroke-width="1.8"/><path d="M413 128L406 131.85L406 124.15Z" fill="#444444"/>
+<circle class="rd-dot" cx="394" cy="128" r="4" fill="#446ce3"/>
+<g class="rd-rs"><path d="M457 167.07A8 8 0 1 1 447.86 167.87" fill="none" stroke="#444444" stroke-width="2"/><path d="M447.86 167.87L445.38 174.26L441.14 169.2Z" fill="#444444"/></g>
+<text x="435" y="178" font-size="12" fill="#5c5c5c" text-anchor="end">restart</text>
+<g class="rd-copy"><path d="M44 92H80L92 104V152H44Z" fill="#ffffff" stroke="#444444" stroke-width="1.4"/><path d="M80 92V104H92" fill="#e9ecef" stroke="#444444" stroke-width="1.2"/><text x="51" y="114" font-size="13" font-weight="700" fill="#5c5c5c">{ }</text><rect x="52" y="122" width="32" height="4" fill="#c9ced4"/><rect x="52" y="130" width="24" height="4" fill="#c9ced4"/><rect x="52" y="139" width="32" height="6" fill="#446ce3"/></g>
+<rect x="16" y="214" width="24" height="8" fill="#9aa3ad"/>
+<text x="46" y="222" font-size="12" fill="#222222">old values</text>
+<rect x="140" y="214" width="24" height="8" fill="#446ce3"/>
+<text x="170" y="222" font-size="12" fill="#222222">new values</text>
+<rect class="rd-h1" x="12" y="238" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="247.5" r="9" fill="#446ce3"/>
+<text x="26" y="252" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="42" y="252" font-size="13" fill="#222222">The tool writes the files on the laptop.</text>
+<rect class="rd-h2" x="12" y="260" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="269.5" r="9" fill="#446ce3"/>
+<text x="26" y="274" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="42" y="274" font-size="13" fill="#222222">Deploying copies them to the robot.</text>
+<rect class="rd-h3" x="12" y="282" width="492" height="20" rx="4" fill="#e8eefc"/>
+<circle cx="26" cy="291.5" r="9" fill="#446ce3"/>
+<text x="26" y="296" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="42" y="296" font-size="13" fill="#222222">The robot reads them when its code starts.</text>
+<line x1="16" y1="314" x2="504" y2="314" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="334" font-size="13" fill="#222222">Changing the files does nothing until the code is deployed and restarted.</text>
+<text x="16" y="352" font-size="12" fill="#5c5c5c">'Apply live' changes vanish at the next restart: only the files are permanent,</text>
+<text x="16" y="368" font-size="12" fill="#5c5c5c">and the commit makes them the team's.</text>
+</svg>

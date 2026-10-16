@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 384" width="520" height="384" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="at-title at-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="at-title">How a camera finds a tag</title>
+<desc id="at-desc">Animated, four steps. In the camera's picture of an AprilTag seen at an angle: one, the tag's black square is outlined; two, its four corners are marked; three, the 6 by 6 squares inside it are read row by row, which gives the tag's number; four, lines run from the four corners back to the camera: from where the corners land in the picture, the tag's real size and the lens, the camera works out where it is. Ambiguity: two poses can put the corners in almost the same spots; PhotonVision suggests ignoring single tags with ambiguity over 0.2.</desc>
+<style>
+.at-h1{opacity:0;animation:at-h1 8s linear infinite}
+@keyframes at-h1{0%{opacity:0}3.5%{opacity:0}5%{opacity:1}20%{opacity:1}21.5%{opacity:0}100%{opacity:0}}
+.at-h2{opacity:0;animation:at-h2 8s linear infinite}
+@keyframes at-h2{0%{opacity:0}22.5%{opacity:0}24%{opacity:1}38%{opacity:1}39.5%{opacity:0}100%{opacity:0}}
+.at-h3{opacity:0;animation:at-h3 8s linear infinite}
+@keyframes at-h3{0%{opacity:0}40.5%{opacity:0}42%{opacity:1}62%{opacity:1}63.5%{opacity:0}100%{opacity:0}}
+.at-h4{opacity:0;animation:at-h4 8s linear infinite}
+@keyframes at-h4{0%{opacity:0}64.5%{opacity:0}66%{opacity:1}90%{opacity:1}91.5%{opacity:0}100%{opacity:0}}
+.at-ol{stroke-dashoffset:0;animation:at-ol 8s linear infinite}
+@keyframes at-ol{0%{opacity:1;stroke-dashoffset:100}5%{opacity:1;stroke-dashoffset:100}16%{opacity:1;stroke-dashoffset:0}92%{opacity:1;stroke-dashoffset:0}96%{opacity:0;stroke-dashoffset:0}97%{opacity:0;stroke-dashoffset:100}100%{opacity:1;stroke-dashoffset:100}}
+.at-c0{opacity:1;animation:at-c0 8s linear infinite}
+@keyframes at-c0{0%{opacity:0}25%{opacity:0}26.5%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.at-c1{opacity:1;animation:at-c1 8s linear infinite}
+@keyframes at-c1{0%{opacity:0}28%{opacity:0}29.5%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.at-c2{opacity:1;animation:at-c2 8s linear infinite}
+@keyframes at-c2{0%{opacity:0}31%{opacity:0}32.5%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.at-c3{opacity:1;animation:at-c3 8s linear infinite}
+@keyframes at-c3{0%{opacity:0}34%{opacity:0}35.5%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.at-grid{opacity:1;animation:at-grid 8s linear infinite}
+@keyframes at-grid{0%{opacity:0}42%{opacity:0}44%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.at-r0{opacity:0;animation:at-r0 8s linear infinite}
+@keyframes at-r0{0%{opacity:0}43%{opacity:0}44%{opacity:1}46%{opacity:1}47%{opacity:0}100%{opacity:0}}
+.at-r1{opacity:0;animation:at-r1 8s linear infinite}
+@keyframes at-r1{0%{opacity:0}46%{opacity:0}47%{opacity:1}49%{opacity:1}50%{opacity:0}100%{opacity:0}}
+.at-r2{opacity:0;animation:at-r2 8s linear infinite}
+@keyframes at-r2{0%{opacity:0}49%{opacity:0}50%{opacity:1}52%{opacity:1}53%{opacity:0}100%{opacity:0}}
+.at-r3{opacity:0;animation:at-r3 8s linear infinite}
+@keyframes at-r3{0%{opacity:0}52%{opacity:0}53%{opacity:1}55%{opacity:1}56%{opacity:0}100%{opacity:0}}
+.at-r4{opacity:0;animation:at-r4 8s linear infinite}
+@keyframes at-r4{0%{opacity:0}55%{opacity:0}56%{opacity:1}58%{opacity:1}59%{opacity:0}100%{opacity:0}}
+.at-r5{opacity:0;animation:at-r5 8s linear infinite}
+@keyframes at-r5{0%{opacity:0}58%{opacity:0}59%{opacity:1}61%{opacity:1}62%{opacity:0}100%{opacity:0}}
+.at-ray{opacity:1;animation:at-ray 8s linear infinite}
+@keyframes at-ray{0%{opacity:0}66%{opacity:0}71%{opacity:1}92%{opacity:1}96%{opacity:0}100%{opacity:0}}
+.at-cam{opacity:0;animation:at-cam 8s linear infinite}
+@keyframes at-cam{0%{opacity:0}71%{opacity:0}74%{opacity:1}89%{opacity:1}92%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">How a camera finds a tag</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">It finds the black square, reads the squares inside, and uses the four corners.</text>
+<rect x="16" y="62" width="264" height="196" fill="#e7e4df" stroke="#444444" stroke-width="1.4"/>
+<text x="16" y="276" font-size="12" fill="#5c5c5c">the camera's picture</text>
+<path d="M83.52 83.73L230.56 67.12L223.72 243.97L89.35 225.98Z" fill="#ffffff" stroke="#c9c9c9" stroke-width="1"/>
+<path d="M96 98L212 88L208 226L100 214Z" fill="#111111"/>
+<path d="M108.79 112.62L121.58 111.85L121.9 127.6L109.22 128.04Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M134.92 111.05L148.87 110.22L148.96 126.68L135.14 127.15Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M148.87 110.22L163.44 109.34L163.4 126.19L148.96 126.68Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M178.7 108.43L194.69 107.47L194.34 125.13L178.51 125.67Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M121.9 127.6L135.14 127.15L135.35 142.97L122.22 143.08Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M135.14 127.15L148.96 126.68L149.05 142.85L135.35 142.97Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M178.51 125.67L194.34 125.13L194 142.45L178.33 142.59Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M109.64 143.19L122.22 143.08L122.54 158.3L110.05 158.1Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M122.22 143.08L135.35 142.97L135.55 158.51L122.54 158.3Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M149.05 142.85L163.36 142.72L163.32 158.95L149.13 158.72Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M135.55 158.51L149.13 158.72L149.22 174.32L135.75 173.78Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M149.13 158.72L163.32 158.95L163.28 174.89L149.22 174.32Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M163.32 158.95L178.15 159.19L177.97 175.48L163.28 174.89Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M110.46 172.75L122.84 173.25L123.15 187.96L110.86 187.17Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M149.22 174.32L163.28 174.89L163.24 190.54L149.3 189.64Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M177.97 175.48L193.34 176.1L193.01 192.46L177.79 191.48Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M123.15 187.96L135.95 188.78L136.15 203.54L123.45 202.42Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M135.95 188.78L149.3 189.64L149.39 204.7L136.15 203.54Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M163.24 190.54L177.79 191.48L177.62 207.18L163.2 205.91Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path d="M177.79 191.48L193.01 192.46L192.7 208.51L177.62 207.18Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.6"/>
+<path class="at-r0" d="M108.79 112.62L194.69 107.47L194.34 125.13L109.22 128.04Z" fill="#446ce3" fill-opacity="0.45"/>
+<path class="at-r1" d="M109.22 128.04L194.34 125.13L194 142.45L109.64 143.19Z" fill="#446ce3" fill-opacity="0.45"/>
+<path class="at-r2" d="M109.64 143.19L194 142.45L193.67 159.44L110.05 158.1Z" fill="#446ce3" fill-opacity="0.45"/>
+<path class="at-r3" d="M110.05 158.1L193.67 159.44L193.34 176.1L110.46 172.75Z" fill="#446ce3" fill-opacity="0.45"/>
+<path class="at-r4" d="M110.46 172.75L193.34 176.1L193.01 192.46L110.86 187.17Z" fill="#446ce3" fill-opacity="0.45"/>
+<path class="at-r5" d="M110.86 187.17L193.01 192.46L192.7 208.51L111.25 201.34Z" fill="#446ce3" fill-opacity="0.45"/>
+<path class="at-grid" d="M108.79 112.62L111.25 201.34M108.79 112.62L194.69 107.47M121.58 111.85L123.45 202.42M109.22 128.04L194.34 125.13M134.92 111.05L136.15 203.54M109.64 143.19L194 142.45M148.87 110.22L149.39 204.7M110.05 158.1L193.67 159.44M163.44 109.34L163.2 205.91M110.46 172.75L193.34 176.1M178.7 108.43L177.62 207.18M110.86 187.17L193.01 192.46M194.69 107.47L192.7 208.51M111.25 201.34L192.7 208.51" fill="none" stroke="#446ce3" stroke-width="1"/>
+<path class="at-ol" d="M96 98L212 88L208 226L100 214Z" pathLength="100" stroke-dasharray="100" fill="none" stroke="#446ce3" stroke-width="3" stroke-linejoin="round"/>
+<path class="at-ray" d="M96 98L148 292M212 88L148 292M208 226L148 292M100 214L148 292" fill="none" stroke="#446ce3" stroke-width="1.5" stroke-dasharray="5 4"/>
+<circle class="at-c0" cx="96" cy="98" r="6" fill="#c2410c" stroke="#ffffff" stroke-width="2"/>
+<circle class="at-c1" cx="212" cy="88" r="6" fill="#c2410c" stroke="#ffffff" stroke-width="2"/>
+<circle class="at-c2" cx="208" cy="226" r="6" fill="#c2410c" stroke="#ffffff" stroke-width="2"/>
+<circle class="at-c3" cx="100" cy="214" r="6" fill="#c2410c" stroke="#ffffff" stroke-width="2"/>
+<rect x="126" y="292" width="44" height="22" rx="4" fill="#333333"/>
+<circle cx="148" cy="292" r="8" fill="#2c2f33" stroke="#b0b8c0" stroke-width="2"/>
+<circle class="at-cam" cx="148" cy="292" r="15" fill="none" stroke="#446ce3" stroke-width="2.5"/>
+<text x="180" y="306" font-size="12" font-weight="700" fill="#446ce3">the camera</text>
+<rect class="at-h1" x="292" y="75" width="212" height="21" rx="4" fill="#e8eefc"/>
+<circle cx="306" cy="85.5" r="9" fill="#446ce3"/>
+<text x="306" y="90" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="322" y="90" font-size="12" fill="#222222">Find the black square.</text>
+<rect class="at-h2" x="292" y="115" width="212" height="21" rx="4" fill="#e8eefc"/>
+<circle cx="306" cy="125.5" r="9" fill="#446ce3"/>
+<text x="306" y="130" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="322" y="130" font-size="12" fill="#222222">Mark its four corners.</text>
+<rect class="at-h3" x="292" y="155" width="212" height="37" rx="4" fill="#e8eefc"/>
+<circle cx="306" cy="165.5" r="9" fill="#446ce3"/>
+<text x="306" y="170" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="322" y="170" font-size="12" fill="#222222">Read the 6 by 6 squares</text>
+<text x="322" y="186" font-size="12" fill="#222222">inside: the tag's number.</text>
+<rect class="at-h4" x="292" y="211" width="212" height="53" rx="4" fill="#e8eefc"/>
+<circle cx="306" cy="221.5" r="9" fill="#446ce3"/>
+<text x="306" y="226" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="322" y="226" font-size="12" fill="#222222">From where the corners land,</text>
+<text x="322" y="242" font-size="12" fill="#222222">the tag's real size and the</text>
+<text x="322" y="258" font-size="12" fill="#222222">lens: where the camera is.</text>
+<line x1="16" y1="322" x2="504" y2="322" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="342" font-size="12" fill="#5c5c5c">Ambiguity: two poses can put the corners in almost the same spots.</text>
+<text x="16" y="358" font-size="12" fill="#5c5c5c">PhotonVision suggests ignoring single tags with ambiguity over 0.2.</text>
+<text x="16" y="374" font-size="12" fill="#5c5c5c">Seeing several tags at once removes it.</text>
+</svg>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 388" width="520" height="388" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="bb-title bb-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="bb-title">Button bounce</title>
+<desc id="bb-desc">Animated and slowed way down. Left: a finger presses a button once and lets go. Right, on the same clock: the finger's trace shows one press. What the robot reads shows the contact made, broken and made again, so it counts two presses, numbered 1 and 2, closer together than 30 ms, which the check flags. Below, an intake toggle flips on at the first press and off at the second, so it ends where it started. A cursor sweeps across all three rows.</desc>
+<style>
+.bb-wipe { animation: bb-wipe 8s linear infinite; }
+@keyframes bb-wipe {
+  0% { transform: translateX(-296px); }
+  5% { transform: translateX(-296px); }
+  80% { transform: translateX(0); }
+  100% { transform: translateX(0); }
+}
+.bb-fade { animation: bb-fade 8s linear infinite; }
+@keyframes bb-fade {
+  0% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.bb-cur { opacity: 0; animation: bb-cur 8s linear infinite; }
+@keyframes bb-cur {
+  0% { transform: translateX(0); opacity: 0; }
+  4% { transform: translateX(0); opacity: 0; }
+  5% { transform: translateX(0); opacity: 1; }
+  80% { transform: translateX(296px); opacity: 1; }
+  84% { transform: translateX(296px); opacity: 0; }
+  100% { transform: translateX(296px); opacity: 0; }
+}
+.bb-press { animation: bb-press 8s linear infinite; }
+@keyframes bb-press {
+  0% { transform: translateY(0); }
+  17.48% { transform: translateY(0); }
+  18.68% { transform: translateY(9px); }
+  62.26% { transform: translateY(9px); }
+  63.46% { transform: translateY(0); }
+  100% { transform: translateY(0); }
+}
+.bb-n0 { animation: bb-n0 8s linear infinite; }
+@keyframes bb-n0 {
+  0% { opacity: 0; }
+  18.68% { opacity: 0; }
+  19.48% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.bb-n1 { animation: bb-n1 8s linear infinite; }
+@keyframes bb-n1 {
+  0% { opacity: 0; }
+  26.28% { opacity: 0; }
+  27.08% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.bb-flag { animation: bb-flag 8s linear infinite; }
+@keyframes bb-flag {
+  0% { opacity: 0; }
+  26.28% { opacity: 0; }
+  27.78% { opacity: 1; }
+  90% { opacity: 1; }
+  97% { opacity: 0; }
+  100% { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" fill="#222222" font-weight="700">Button bounce: one press, read as two</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Slowed way down: a worn button can make and break contact more than once.</text>
+<text x="16" y="80" font-size="13" fill="#222222" font-weight="700">one press</text>
+<g class="bb-press"><rect x="62" y="141" width="52" height="16" rx="4" fill="#446ce3" stroke="#444444" stroke-width="1.3"/><path d="M72 141 V100 A16 16 0 0 1 104 100 V141 Z" fill="#f1d3b5" stroke="#444444" stroke-width="1.3"/><path d="M78 100 A10 10 0 0 1 98 100 V108 H78 Z" fill="#fbe9dc" stroke="#c9a283" stroke-width="1"/></g>
+<rect x="40" y="156" width="96" height="28" rx="3" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<text x="88" y="204" font-size="12" fill="#5c5c5c" text-anchor="middle">button</text>
+<text x="196" y="76" font-size="13" fill="#222222" font-weight="700">the finger: one press</text>
+<text x="340" y="92" font-size="12" fill="#5c5c5c" text-anchor="middle">pressed</text><text x="204" y="113" font-size="12" fill="#5c5c5c">released</text>
+<text x="196" y="142" font-size="13" fill="#446ce3" font-weight="700">what the robot reads: two presses</text>
+<path d="M254 202 V208 H284 V202" fill="none" stroke="#c62828" stroke-width="1.3"/>
+<g class="bb-flag"><text x="254" y="223" font-size="12" fill="#c62828" font-weight="700">2 presses closer than 30 ms: flagged</text></g>
+<text x="196" y="250" font-size="13" fill="#222222" font-weight="700">intake toggle</text>
+<text x="196" y="302" font-size="12" fill="#5c5c5c">on, then off again: it ends where it started</text>
+<clipPath id="bb-reveal"><rect class="bb-wipe" x="200" y="88" width="296" height="200"/></clipPath>
+<g class="bb-fade" clip-path="url(#bb-reveal)">
+<path d="M200 118 H254 V97 H426 V118 H496" fill="none" stroke="#222222" stroke-width="2.2"/>
+<path d="M200 190 H254 V169 H270 V190 H284 V169 H426 V190 H496" fill="none" stroke="#446ce3" stroke-width="2.4"/>
+<rect x="200" y="260" width="54" height="24" fill="#e9e9e9" stroke="#444444" stroke-width="1"/>
+<rect x="254" y="260" width="30" height="24" fill="#1a7f37" stroke="#444444" stroke-width="1"/>
+<rect x="284" y="260" width="212" height="24" fill="#e9e9e9" stroke="#444444" stroke-width="1"/>
+<text x="227" y="277" font-size="12" fill="#5c5c5c" font-weight="700" text-anchor="middle">OFF</text><text x="269" y="277" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle">ON</text><text x="390" y="277" font-size="12" fill="#5c5c5c" font-weight="700" text-anchor="middle">OFF</text>
+</g>
+<g class="bb-n0"><circle cx="254" cy="158" r="8" fill="#446ce3"/><text x="254" y="162.5" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle">1</text></g>
+<g class="bb-n1"><circle cx="284" cy="158" r="8" fill="#446ce3"/><text x="284" y="162.5" font-size="12" fill="#ffffff" font-weight="700" text-anchor="middle">2</text></g>
+<g class="bb-cur"><line x1="200" y1="88" x2="200" y2="286" stroke="#444444" stroke-width="1.4" stroke-dasharray="4 3"/></g>
+<line x1="16" y1="316" x2="504" y2="316" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="336" font-size="13" fill="#222222">The check counts each press and flags any two closer than 30 ms:</text>
+<text x="16" y="354" font-size="13" fill="#222222">faster than a person can press. A joystick that bounces at all</text>
+<text x="16" y="372" font-size="13" fill="#222222">is worth replacing.</text>
+</svg>

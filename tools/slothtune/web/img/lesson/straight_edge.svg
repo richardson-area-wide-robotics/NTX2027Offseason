@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 358" width="520" height="358" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="se-title se-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="se-title">Why a straight-edge</title>
+<desc id="se-desc">Animated. A robot seen from above, front at the top, with its four wheels pointing roughly forward but each a few degrees crooked, as eyes leave them. A straight-edge comes in and is held against both wheels of the front pair; they turn until they sit flat against it, and two orange measurements from the front frame rail to the edge, one at each end, come out the same. Then the edge moves to the back pair, those wheels line up too, and the measurements from the back rail match. Eyes are good to 2-3 degrees, 4-6 in of drift per 10 ft; the straight-edge gets well under a degree.</desc>
+<style>
+.se-scene{animation:se-scene 8s linear infinite}
+@keyframes se-scene{0%{opacity:1}88%{opacity:1}92%{opacity:0}95%{opacity:0}100%{opacity:1}}
+.se-edge{animation:se-edge 8s ease-in-out infinite}
+@keyframes se-edge{0%{opacity:0;transform:translateY(14px)}5%{opacity:1;transform:translateY(14px)}16%{opacity:1;transform:translateY(0px)}40%{opacity:1;transform:translateY(0px)}54%{opacity:1;transform:translateY(52px)}92%{opacity:1;transform:translateY(52px)}93%{opacity:0;transform:translateY(14px)}100%{opacity:0;transform:translateY(14px)}}
+.se-fl{transform-box:view-box;transform-origin:90px 135px;animation:se-fl 8s ease-in-out infinite}
+@keyframes se-fl{0%{transform:rotate(8deg)}9%{transform:rotate(8deg)}16%{transform:rotate(0deg)}92%{transform:rotate(0deg)}93%{transform:rotate(8deg)}100%{transform:rotate(8deg)}}
+.se-fr{transform-box:view-box;transform-origin:200px 135px;animation:se-fr 8s ease-in-out infinite}
+@keyframes se-fr{0%{transform:rotate(-6deg)}9%{transform:rotate(-6deg)}16%{transform:rotate(0deg)}92%{transform:rotate(0deg)}93%{transform:rotate(-6deg)}100%{transform:rotate(-6deg)}}
+.se-bl{transform-box:view-box;transform-origin:90px 235px;animation:se-bl 8s ease-in-out infinite}
+@keyframes se-bl{0%{transform:rotate(-7deg)}49%{transform:rotate(-7deg)}55%{transform:rotate(0deg)}92%{transform:rotate(0deg)}93%{transform:rotate(-7deg)}100%{transform:rotate(-7deg)}}
+.se-br{transform-box:view-box;transform-origin:200px 235px;animation:se-br 8s ease-in-out infinite}
+@keyframes se-br{0%{transform:rotate(5deg)}49%{transform:rotate(5deg)}55%{transform:rotate(0deg)}92%{transform:rotate(0deg)}93%{transform:rotate(5deg)}100%{transform:rotate(5deg)}}
+.se-fd{opacity:1;animation:se-fd 8s linear infinite}
+@keyframes se-fd{0%{opacity:0}17%{opacity:0}20%{opacity:1}40%{opacity:1}43%{opacity:0}100%{opacity:0}}
+.se-bd{opacity:0;animation:se-bd 8s linear infinite}
+@keyframes se-bd{0%{opacity:0}56%{opacity:0}59%{opacity:1}84%{opacity:1}87%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Why a straight-edge</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Eyes are good to 2-3°. A straight-edge across a pair of wheels gets well under a degree.</text>
+<text x="40" y="72" font-size="12" fill="#5c5c5c">frame rail</text>
+<line x1="145" y1="79" x2="145" y2="65.2" stroke="#222222" stroke-width="2.5"/><path d="M145 58L149.95 67L140.05 67Z" fill="#222222"/>
+<text x="153" y="72" font-size="12" font-weight="700" fill="#222222">front</text>
+<g class="se-scene">
+<rect x="45" y="85" width="200" height="200" fill="#f7f8f9" stroke="#b0b8c0" stroke-width="10"/>
+<rect x="40" y="80" width="210" height="210" fill="none" stroke="#444444" stroke-width="1"/>
+<rect x="50" y="90" width="190" height="190" fill="none" stroke="#444444" stroke-width="1"/>
+<g class="se-fl"><rect x="82" y="115" width="16" height="40" rx="3" fill="#3a3f45"/><rect x="88" y="118" width="4" height="6" fill="#ffffff"/></g>
+<g class="se-fr"><rect x="192" y="115" width="16" height="40" rx="3" fill="#3a3f45"/><rect x="198" y="118" width="4" height="6" fill="#ffffff"/></g>
+<g class="se-bl"><rect x="82" y="215" width="16" height="40" rx="3" fill="#3a3f45"/><rect x="88" y="218" width="4" height="6" fill="#ffffff"/></g>
+<g class="se-br"><rect x="192" y="215" width="16" height="40" rx="3" fill="#3a3f45"/><rect x="198" y="218" width="4" height="6" fill="#ffffff"/></g>
+<g class="se-edge"><rect x="56" y="155" width="178" height="8" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/></g>
+<g class="se-fd"><line x1="66" y1="96.4" x2="66" y2="148.6" stroke="#c2410c" stroke-width="2"/><path d="M66 155L61.6 147L70.4 147Z" fill="#c2410c"/><path d="M66 90L70.4 98L61.6 98Z" fill="#c2410c"/><line x1="224" y1="96.4" x2="224" y2="148.6" stroke="#c2410c" stroke-width="2"/><path d="M224 155L219.6 147L228.4 147Z" fill="#c2410c"/><path d="M224 90L228.4 98L219.6 98Z" fill="#c2410c"/><text x="145" y="119" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">same at</text><text x="145" y="133" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">both ends</text></g>
+<g class="se-bd"><line x1="66" y1="221.4" x2="66" y2="273.6" stroke="#c2410c" stroke-width="2"/><path d="M66 280L61.6 272L70.4 272Z" fill="#c2410c"/><path d="M66 215L70.4 223L61.6 223Z" fill="#c2410c"/><line x1="224" y1="221.4" x2="224" y2="273.6" stroke="#c2410c" stroke-width="2"/><path d="M224 280L219.6 272L228.4 272Z" fill="#c2410c"/><path d="M224 215L228.4 223L219.6 223Z" fill="#c2410c"/><text x="145" y="244" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">same at</text><text x="145" y="258" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">both ends</text></g>
+</g>
+<text x="270" y="96" font-size="13" font-weight="700" fill="#b45309">By eye: 2-3° off</text>
+<text x="270" y="114" font-size="12" fill="#222222">4-6 in of drift per 10 ft</text>
+<text x="270" y="144" font-size="13" font-weight="700" fill="#1a7f37">Straight-edge: well under 1°</text>
+<text x="270" y="162" font-size="12" fill="#222222">1° is about 2 in of drift per 10 ft</text>
+<text x="270" y="196" font-size="12" font-weight="700" fill="#222222">1. Square the edge to the frame:</text>
+<text x="270" y="212" font-size="12" fill="#222222">the same distance from the rail</text>
+<text x="270" y="228" font-size="12" fill="#222222">at both ends.</text>
+<text x="270" y="252" font-size="12" font-weight="700" fill="#222222">2. Hold it against the front pair,</text>
+<text x="270" y="268" font-size="12" fill="#222222">then the back pair.</text>
+<rect x="270" y="283" width="34" height="8" rx="2" fill="#b0b8c0" stroke="#444444" stroke-width="1.2"/>
+<text x="312" y="291" font-size="12" fill="#5c5c5c">a level or a piece of extrusion</text>
+<line x1="16" y1="306" x2="504" y2="306" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="326" font-size="13" fill="#222222">A skewed edge lines the two wheels up with each other, but not with</text>
+<text x="16" y="344" font-size="13" fill="#222222">the robot, and both get the same wrong offset.</text>
+</svg>

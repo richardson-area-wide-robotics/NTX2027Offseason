@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 464" width="520" height="464" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="cm-title cm-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="cm-title">Where the camera sits</title>
+<desc id="cm-desc">Animated. Top left, a robot seen from above: orange measurements appear from the robot center to the camera, forward and sideways, and the camera's view swings from straight ahead to the angle it really points. Top right, the same robot from the side: an orange measurement shows how far up the lens sits, and the view tilts up. That is the one fixed transform from robot center to camera lens. Below, a ray 1 degree off from where the code thinks the camera points draws out from the camera: the gap grows with distance, about 2 in at 10 ft and nearly 3 in at 13 ft.</desc>
+<style>
+.cm-d1{opacity:1;animation:cm-d1 8s linear infinite}
+@keyframes cm-d1{0%{opacity:0}6%{opacity:0}9%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.cm-d2{opacity:1;animation:cm-d2 8s linear infinite}
+@keyframes cm-d2{0%{opacity:0}12%{opacity:0}15%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.cm-d3{opacity:1;animation:cm-d3 8s linear infinite}
+@keyframes cm-d3{0%{opacity:0}18%{opacity:0}21%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.cm-an{opacity:1;animation:cm-an 8s linear infinite}
+@keyframes cm-an{0%{opacity:0}40%{opacity:0}44%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.cm-ca{transform-box:view-box;transform-origin:176px 124px;animation:cm-ca 8s ease-in-out infinite}
+@keyframes cm-ca{0%{opacity:1;transform:rotate(-30deg)}26%{opacity:1;transform:rotate(-30deg)}40%{opacity:1;transform:rotate(0deg)}92%{opacity:1;transform:rotate(0deg)}95%{opacity:0;transform:rotate(0deg)}96%{opacity:0;transform:rotate(-30deg)}100%{opacity:1;transform:rotate(-30deg)}}
+.cm-cb{transform-box:view-box;transform-origin:400px 140px;animation:cm-cb 8s ease-in-out infinite}
+@keyframes cm-cb{0%{opacity:1;transform:rotate(15deg)}26%{opacity:1;transform:rotate(15deg)}40%{opacity:1;transform:rotate(0deg)}92%{opacity:1;transform:rotate(0deg)}95%{opacity:0;transform:rotate(0deg)}96%{opacity:0;transform:rotate(15deg)}100%{opacity:1;transform:rotate(15deg)}}
+.cm-ray{stroke-dashoffset:0;animation:cm-ray 8s linear infinite}
+@keyframes cm-ray{0%{opacity:1;stroke-dashoffset:100}48%{opacity:1;stroke-dashoffset:100}74%{opacity:1;stroke-dashoffset:0}92%{opacity:1;stroke-dashoffset:0}95%{opacity:0;stroke-dashoffset:0}96%{opacity:0;stroke-dashoffset:100}100%{opacity:1;stroke-dashoffset:100}}
+.cm-g10{opacity:1;animation:cm-g10 8s linear infinite}
+@keyframes cm-g10{0%{opacity:0}67%{opacity:0}69%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+.cm-g13{opacity:1;animation:cm-g13 8s linear infinite}
+@keyframes cm-g13{0%{opacity:0}73%{opacity:0}75%{opacity:1}92%{opacity:1}95%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Where the camera sits</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">One fixed transform: robot center to camera lens.</text>
+<line x1="258" y1="62" x2="258" y2="262" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="74" font-size="13" font-weight="700" fill="#222222">From above</text>
+<text x="44" y="96" font-size="12" fill="#5c5c5c">front ↑</text>
+<rect x="44" y="104" width="160" height="140" rx="4" fill="#f7f8f9" stroke="#444444" stroke-width="3"/>
+<line x1="176" y1="124" x2="176" y2="78" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="3 3"/>
+<g class="cm-ca"><path d="M176 124L188.06 67.27L219.1 85.19Z" fill="#446ce3" fill-opacity="0.15" stroke="#446ce3" stroke-width="1.2"/><g transform="rotate(30 176 124)"><rect x="169" y="118" width="14" height="12" rx="2" fill="#446ce3"/></g></g>
+<g class="cm-an"><path d="M176 92A32 32 0 0 1 192 96.29" fill="none" stroke="#446ce3" stroke-width="2"/><text x="170" y="92" font-size="12" font-weight="700" fill="#446ce3" text-anchor="end">angle</text></g>
+<path d="M118 174H130M124 168V180" stroke="#222222" stroke-width="2"/>
+<text x="124" y="232" font-size="12" fill="#5c5c5c" text-anchor="middle">robot center</text>
+<g class="cm-d1"><line x1="124" y1="174" x2="124" y2="131.4" stroke="#c2410c" stroke-width="2"/><path d="M124 125L128.4 133L119.6 133Z" fill="#c2410c"/><text x="118" y="154" font-size="12" font-weight="700" fill="#c2410c" text-anchor="end">forward</text></g>
+<g class="cm-d2"><line x1="124" y1="124" x2="159.6" y2="124" stroke="#c2410c" stroke-width="2"/><path d="M166 124L158 128.4L158 119.6Z" fill="#c2410c"/><text x="130" y="146" font-size="12" font-weight="700" fill="#c2410c">sideways</text></g>
+<text x="272" y="74" font-size="13" font-weight="700" fill="#222222">From the side</text>
+<line x1="268" y1="236" x2="504" y2="236" stroke="#444444" stroke-width="1.5"/>
+<rect x="300" y="198" width="120" height="24" rx="3" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/>
+<circle cx="322" cy="224" r="12" fill="#3a3f45"/><circle cx="322" cy="224" r="3" fill="#b0b8c0"/>
+<circle cx="398" cy="224" r="12" fill="#3a3f45"/><circle cx="398" cy="224" r="3" fill="#b0b8c0"/>
+<rect x="391" y="146" width="6" height="52" fill="#8a939c" stroke="#444444" stroke-width="1"/>
+<path d="M354 236H366M360 230V242" stroke="#222222" stroke-width="2"/>
+<text x="360" y="256" font-size="12" fill="#5c5c5c" text-anchor="middle">robot center</text>
+<line x1="400" y1="140" x2="496" y2="140" stroke="#5c5c5c" stroke-width="1.2" stroke-dasharray="3 3"/>
+<g class="cm-cb"><path d="M400 140L460 103.95L469.99 141.22Z" fill="#446ce3" fill-opacity="0.15" stroke="#446ce3" stroke-width="1.2"/><g transform="rotate(-15 400 140)"><rect x="390" y="134" width="18" height="12" rx="2" fill="#446ce3"/></g></g>
+<g class="cm-an"><path d="M481.14 118.26A84 84 0 0 1 484 140" fill="none" stroke="#446ce3" stroke-width="2"/><text x="486" y="128" font-size="12" font-weight="700" fill="#446ce3">tilt</text></g>
+<g class="cm-d3"><line x1="286" y1="140" x2="388" y2="140" stroke="#c2410c" stroke-width="1" stroke-dasharray="2 3"/><line x1="286" y1="236" x2="286" y2="147.4" stroke="#c2410c" stroke-width="2"/><path d="M286 141L290.4 149L281.6 149Z" fill="#c2410c"/><text x="292" y="188" font-size="12" font-weight="700" fill="#c2410c">up</text></g>
+<text x="16" y="280" font-size="12" fill="#222222">Where it sits: forward, sideways, up. Which way it points: its angle and tilt.</text>
+<line x1="16" y1="294" x2="504" y2="294" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="314" font-size="13" font-weight="700" fill="#222222">One degree the code doesn't know about grows with distance:</text>
+<line x1="16" y1="330" x2="40" y2="330" stroke="#5c5c5c" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="46" y="334" font-size="12" fill="#222222">where the code thinks it points</text>
+<line x1="262" y1="330" x2="286" y2="330" stroke="#446ce3" stroke-width="2.5"/>
+<text x="292" y="334" font-size="12" fill="#222222">where it really points: 1° off</text>
+<rect x="22" y="361" width="22" height="14" rx="2" fill="#446ce3"/>
+<line x1="46" y1="368" x2="446" y2="368" stroke="#5c5c5c" stroke-width="1.5" stroke-dasharray="5 4"/>
+<path class="cm-ray" d="M46 368L446 344" pathLength="100" stroke-dasharray="100" fill="none" stroke="#446ce3" stroke-width="2.5"/>
+<line x1="353.69" y1="371" x2="353.69" y2="377" stroke="#444444" stroke-width="1.5"/>
+<g class="cm-g10"><path d="M348.69 368H358.69M353.69 368V349.54M348.69 349.54H358.69" stroke="#c2410c" stroke-width="2.2" fill="none"/></g>
+<text x="353.69" y="392" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">10 ft:</text>
+<text x="353.69" y="408" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">about 2 in</text>
+<line x1="446" y1="371" x2="446" y2="377" stroke="#444444" stroke-width="1.5"/>
+<g class="cm-g13"><path d="M441 368H451M446 368V344M441 344H451" stroke="#c2410c" stroke-width="2.2" fill="none"/></g>
+<text x="446" y="392" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">13 ft:</text>
+<text x="446" y="408" font-size="12" font-weight="700" fill="#c2410c" text-anchor="middle">nearly 3 in</text>
+<text x="16" y="400" font-size="12" fill="#5c5c5c">(angle drawn larger)</text>
+<line x1="16" y1="418" x2="504" y2="418" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="438" font-size="13" fill="#222222">A position error moves every pose by the same distance. A tag on a wall</text>
+<text x="16" y="456" font-size="13" fill="#222222">at a measured spot gives the mount from the camera itself.</text>
+</svg>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 382" width="520" height="382" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="hc-title hc-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="hc-title">The hand check</title>
+<desc id="hc-desc">Animated. With the robot disabled and nothing powered, a swerve module seen from above is turned by hand one way, then back. Beside it, two markers on scales, the steering motor's encoder and the absolute encoder, move together toward plus while it turns one way and back toward minus as it turns back: each sensor counts the way the code expects, and the two agree 1.00 to 1. A different number means the gear ratio in the code is not the module's real one.</desc>
+<style>
+.hc-mod{transform-box:view-box;transform-origin:128px 196px;animation:hc-mod 8s ease-in-out infinite}
+@keyframes hc-mod{0%{transform:rotate(0deg)}8%{transform:rotate(0deg)}42%{transform:rotate(-90deg)}54%{transform:rotate(-90deg)}88%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.hc-mk{animation:hc-mk 8s ease-in-out infinite}
+@keyframes hc-mk{0%{transform:translateX(0px)}8%{transform:translateX(0px)}42%{transform:translateX(80px)}54%{transform:translateX(80px)}88%{transform:translateX(0px)}100%{transform:translateX(0px)}}
+.hc-h1{opacity:0;animation:hc-h1 8s linear infinite}
+@keyframes hc-h1{0%{opacity:0}7%{opacity:0}10%{opacity:1}50%{opacity:1}53%{opacity:0}100%{opacity:0}}
+.hc-h2{opacity:0;animation:hc-h2 8s linear infinite}
+@keyframes hc-h2{0%{opacity:0}53%{opacity:0}56%{opacity:1}88%{opacity:1}91%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The hand check</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Robot disabled, nothing powered: turn it by hand and watch every sensor count.</text>
+<rect x="16" y="60" width="190" height="24" rx="12" fill="#eaf4ec" stroke="#1a7f37" stroke-width="1.2"/>
+<text x="111" y="76.5" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">DISABLED: nothing powered</text>
+<text x="128" y="106" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">turned by hand, both ways</text>
+<path d="M56.72 159.68A80 80 0 0 1 199.28 159.68" fill="none" stroke="#222222" stroke-width="2.5"/><path d="M199.28 159.68L188.9 152.63L199.68 147.13Z" fill="#222222"/><path d="M56.72 159.68L56.32 147.13L67.1 152.63Z" fill="#222222"/>
+<rect x="68" y="136" width="120" height="120" rx="12" fill="#e9ecef" stroke="#444444" stroke-width="1.4"/>
+<circle cx="79" cy="147" r="3.5" fill="#444444"/>
+<circle cx="177" cy="147" r="3.5" fill="#444444"/>
+<circle cx="79" cy="245" r="3.5" fill="#444444"/>
+<circle cx="177" cy="245" r="3.5" fill="#444444"/>
+<g class="hc-mod"><circle cx="128" cy="196" r="50" fill="#b0b8c0" stroke="#444444" stroke-width="1.4"/><rect x="114" y="156" width="28" height="80" rx="6" fill="#3a3f45"/><line x1="116" y1="166" x2="140" y2="166" stroke="#565c63" stroke-width="2"/><line x1="116" y1="176" x2="140" y2="176" stroke="#565c63" stroke-width="2"/><line x1="116" y1="186" x2="140" y2="186" stroke="#565c63" stroke-width="2"/><line x1="116" y1="196" x2="140" y2="196" stroke="#565c63" stroke-width="2"/><line x1="116" y1="206" x2="140" y2="206" stroke="#565c63" stroke-width="2"/><line x1="116" y1="216" x2="140" y2="216" stroke="#565c63" stroke-width="2"/><line x1="116" y1="226" x2="140" y2="226" stroke="#565c63" stroke-width="2"/><rect x="104" y="186" width="10" height="20" fill="#8a939c" stroke="#444444" stroke-width="1"/><path d="M128 160L120.5 173H135.5Z" fill="#ffffff"/></g>
+<circle cx="128" cy="196" r="4" fill="#444444"/>
+<text x="128" y="280" font-size="12" fill="#5c5c5c" text-anchor="middle">Nothing can run away.</text>
+<text x="276" y="100" font-size="13" font-weight="700" fill="#446ce3">steering motor encoder</text>
+<line x1="290" y1="126" x2="470" y2="126" stroke="#444444" stroke-width="1.5"/>
+<line x1="290" y1="121" x2="290" y2="131" stroke="#444444" stroke-width="1.2"/>
+<line x1="335" y1="121" x2="335" y2="131" stroke="#444444" stroke-width="1.2"/>
+<line x1="425" y1="121" x2="425" y2="131" stroke="#444444" stroke-width="1.2"/>
+<line x1="470" y1="121" x2="470" y2="131" stroke="#444444" stroke-width="1.2"/>
+<line x1="380" y1="118" x2="380" y2="134" stroke="#444444" stroke-width="1.5"/>
+<text x="281" y="131" font-size="14" font-weight="700" fill="#5c5c5c" text-anchor="middle">−</text>
+<text x="480" y="131" font-size="14" font-weight="700" fill="#5c5c5c" text-anchor="middle">+</text>
+<g class="hc-mk"><path d="M380 120L373 108H387Z" fill="#446ce3"/><line x1="380" y1="119" x2="380" y2="135" stroke="#446ce3" stroke-width="3"/></g>
+<text x="276" y="166" font-size="13" font-weight="700" fill="#c2410c">absolute encoder</text>
+<line x1="290" y1="192" x2="470" y2="192" stroke="#444444" stroke-width="1.5"/>
+<line x1="290" y1="187" x2="290" y2="197" stroke="#444444" stroke-width="1.2"/>
+<line x1="335" y1="187" x2="335" y2="197" stroke="#444444" stroke-width="1.2"/>
+<line x1="425" y1="187" x2="425" y2="197" stroke="#444444" stroke-width="1.2"/>
+<line x1="470" y1="187" x2="470" y2="197" stroke="#444444" stroke-width="1.2"/>
+<line x1="380" y1="184" x2="380" y2="200" stroke="#444444" stroke-width="1.5"/>
+<text x="281" y="197" font-size="14" font-weight="700" fill="#5c5c5c" text-anchor="middle">−</text>
+<text x="480" y="197" font-size="14" font-weight="700" fill="#5c5c5c" text-anchor="middle">+</text>
+<g class="hc-mk"><path d="M380 186L373 174H387Z" fill="#c2410c"/><line x1="380" y1="185" x2="380" y2="201" stroke="#c2410c" stroke-width="3"/></g>
+<rect x="276" y="214" width="228" height="30" rx="6" fill="#eaf4ec" stroke="#1a7f37" stroke-width="1.2"/>
+<text x="390" y="234" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">They agree: 1.00 to 1 ✓</text>
+<rect class="hc-h1" x="270" y="258" width="234" height="20" rx="4" fill="#e8eefc"/>
+<rect class="hc-h2" x="270" y="280" width="234" height="20" rx="4" fill="#e8eefc"/>
+<text x="278" y="272" font-size="12" fill="#222222">Turn it one way: both count up.</text>
+<text x="278" y="294" font-size="12" fill="#222222">Turn it back: both count down.</text>
+<line x1="16" y1="312" x2="504" y2="312" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="332" font-size="13" fill="#222222">Every later test assumes it knows which way is positive.</text>
+<text x="16" y="350" font-size="13" fill="#222222">Any number other than 1.00 to 1 means the gear ratio in the code is</text>
+<text x="16" y="368" font-size="13" fill="#222222">not the module's real one.</text>
+</svg>
