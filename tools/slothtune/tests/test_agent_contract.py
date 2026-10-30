@@ -23,7 +23,8 @@ def robot_messages():
     """Every refusal and abort sentence the robot code can send, from its source."""
     out = []
     for path in glob.glob(os.path.join(JAVA, "*.java")):
-        src = open(path, encoding="utf-8").read()
+        with open(path, encoding="utf-8") as fh:
+            src = fh.read()
         for m in re.finditer(r'(?:Verdict\.abort|finish\(State\.ABORTED,)\s*\(?\s*(?:String\.format\()?\s*"([^"]+)"', src):
             out.append(m.group(1))
         if path.endswith(("SafetySupervisor.java", "Procedure.java")) or "Procedure" in path:
@@ -48,7 +49,8 @@ class StopCodeTest(unittest.TestCase):
 
 
 class BriefTest(unittest.TestCase):
-    BRIEF = open(os.path.join(REPO, "docs", "AGENT_TUNING.md"), encoding="utf-8").read()
+    with open(os.path.join(REPO, "docs", "AGENT_TUNING.md"), encoding="utf-8") as fh:
+        BRIEF = fh.read()
 
     def test_the_brief_explains_every_code(self):
         for _, code in C.STOP_CODES:

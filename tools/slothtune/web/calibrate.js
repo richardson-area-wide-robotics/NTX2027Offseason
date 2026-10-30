@@ -569,7 +569,8 @@
   // ---------------------------------------------------------------- field survey
   async function surveyState() {
     const r = await App.api("/api/survey/state");
-    $("#fs-state", root).textContent = `${r.running ? "Recording: " : ""}${r.sightings} sightings, ${r.views} views with two or more tags, ${r.tags.length} tags seen`;
+    // A dropped connection pauses the recording: said here, so a gap in the sweep isn't a mystery.
+    $("#fs-state", root).textContent = `${r.running ? "Recording: " : ""}${r.sightings} sightings, ${r.views} views with two or more tags, ${r.tags.length} tags seen${r.dropped ? ". " + r.dropped : ""}`;
     $("#fs-start", root).disabled = r.running;
     $("#fs-stop", root).disabled = !r.running;
     if (!r.running) { clearInterval(surveyTimer); surveyTimer = null; }

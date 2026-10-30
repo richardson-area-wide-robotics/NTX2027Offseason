@@ -149,6 +149,7 @@ class StopCodeTest(unittest.TestCase):
 
 
 class DeadmanTopicTest(unittest.TestCase):
+    @unittest.skipIf(__import__("slothtune.link", fromlist=["ntcore"]).ntcore is None, "needs pyntcore (tools/requirements.txt)")
     def test_only_the_gui_publishes_the_deadman(self):
         from slothtune import link as L
         lk = L.RobotLink(["127.0.0.2"], client_name="test")

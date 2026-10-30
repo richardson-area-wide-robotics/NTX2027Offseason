@@ -86,8 +86,9 @@ final class PieceSenseProcedure implements Procedure {
       return "Pick the mechanism that runs it, registered with a goal (Systems tab).";
     }
     if (y.kind.positional) {
-      if (!y.hasLimits()) {
-        return "Set the limits of " + y.name + " first (Systems tab, Limits).";
+      String notReady = y.notReady();  // limits, then homed this boot
+      if (notReady != null) {
+        return notReady;
       }
       double v = SystemStepProcedure.cap(ctx.args.get("vmax", 0, 0, 1e6), y.maxVelocity);
       double a = SystemStepProcedure.cap(ctx.args.get("amax", 0, 0, 1e7), y.maxAccel);
@@ -260,13 +261,7 @@ final class PieceSenseProcedure implements Procedure {
   @Override
   public void end(TestContext ctx, boolean aborted) {
     try {
-      if (sys.stop != null) {
-        sys.stop.run();
-      } else if (sys.kind.positional) {
-        sys.goal.accept(sys.position.getAsDouble());
-      } else {
-        sys.goal.accept(0);
-      }
+      SystemStepProcedure.stopSystem(ctx, sys);  // the team's stop; its motors to zero if that throws
     } finally {
       if (owner != null) {
         owner.release();

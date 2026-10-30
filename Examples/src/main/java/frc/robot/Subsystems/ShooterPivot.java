@@ -181,6 +181,7 @@ public class ShooterPivot extends SubsystemBase {
   /** The Systems tab: its angle in degrees from the absolute encoder, through its own loop. */
   public void tuneWith(SlothTune tune) {
     tune.system("Shooter pivot", TunableSystem.Kind.PIVOT)
+        .absolute()  // its angle is the SPARK's absolute encoder: it never needs homing
         .units("degrees")
         .position(angle::getPosition)
         .velocity(angle::getVelocity)

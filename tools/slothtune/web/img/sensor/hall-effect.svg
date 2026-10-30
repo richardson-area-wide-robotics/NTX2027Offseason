@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 404" width="520" height="404" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="he-title he-desc">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <title id="he-title">The Hall effect</title>
-<desc id="he-desc">Animated. A thin plate carries a current from left to right, drawn as dots moving along it. A magnet above the plate moves in close and back out on a loop. While the magnet is close, the moving charges are pushed toward one edge of the plate, a voltmeter wired across the plate's two sides swings up, and a switch output lamp turns on. When the magnet moves away, the charges spread back out, the voltage falls and the lamp turns off. A magnetic field pushes moving charges sideways: a small voltage across the plate, growing with the field. Three in a NEO tell its controller where the rotor is; one in REV's magnetic limit switch sees a magnet 10 mm away (either pole).</desc>
+<desc id="he-desc">Animated. A thin plate carries a current from left to right, drawn as dots moving along it. A magnet above the plate moves in close and back out on a loop. While the magnet is close, the moving charges are pushed toward one edge of the plate, a voltmeter wired across the plate's two sides swings up, and a switch output lamp turns on. When the magnet moves away, the charges spread back out, the voltage falls and the lamp turns off. A magnetic field pushes moving charges sideways: a small voltage across the plate, growing with the field. Three in a NEO tell its controller where the rotor is; one in REV's magnetic limit switch sees a magnet about 0.4 in (10 mm) away (either pole).</desc>
 <style>
   .magnet { transform: translateY(0px); animation: he-mag 6s linear infinite; }
   @keyframes he-mag {
@@ -197,6 +197,6 @@
   <text x="30" y="332">A magnetic field pushes moving charges sideways: a small voltage</text>
   <text x="30" y="350">across the plate, growing with the field.</text>
   <text x="30" y="374">Three in a NEO tell its controller where the rotor is; one in REV's</text>
-  <text x="30" y="392">magnetic limit switch sees a magnet 10 mm away (either pole).</text>
+  <text x="30" y="392">magnetic limit switch sees a magnet 0.4 in (10 mm) away (either pole).</text>
 </g>
 </svg>

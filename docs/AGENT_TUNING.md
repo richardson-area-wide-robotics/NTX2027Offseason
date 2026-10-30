@@ -19,6 +19,8 @@ yours, and nothing in the tools will stop you from breaking them:
 2. **Only set the environment you were told.** `env --mode BLOCKS` only when a person says every
    wheel is off the ground. `env --mode FIELD --space <in> --side <in> --bumpers` only with
    distances a person measured (in inches), and only once a person has said the bumpers are on. Never guess, and never change the mode to make a refused test run.
+   The GUI tells the robot UNSET each time it connects and whenever the robot code restarts, so an
+   `ENV_UNSET` after either means asking a person again, not setting back what was there.
 3. **Never write to the repository without a person's OK.** `save gains`, `config` and `offsets`
    show a diff without `--yes`. Show that diff to a person and wait for an explicit yes before adding
    `--yes`. Never commit or push.
@@ -123,6 +125,9 @@ disabled; ends on `stop` or after `duration_s`), `can_load` (3 s quiet, 8 s with
 controllers' status frames sped up, 2 s quiet: counts CAN errors and bus-offs; moves nothing; a clean
 result does not prove the termination, the meter check does), `system_limits` (a person moves a
 pivot or elevator by hand to both ends, robot disabled, its motors coasting: those are its limits),
+`system_home` (a person holds a pivot or elevator still at one of its ends, robot disabled, arg `end` 0 lower or 1
+upper: its saved limits move into this boot's encoder readings; a mechanism on a relative encoder is refused by every
+test until it is homed or its limits are set by hand this boot),
 `system_step` (a registered mechanism's own closed loop, its goal moved along a path no faster than
 `vmax` nor `amax`; refuses a pivot or elevator without limits, stops it past them or too fast; its
 report's `next` is one change to the mechanism's own `Name/k` gains, `options` the rest in order, `cost`
@@ -224,6 +229,11 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `NO_CAN_STATUS` | The robot code can't read the CAN bus's status, so the load test has nothing to count. |
 | `NO_SYSTEM_HOOK` | The robot code registers that mechanism without a goal to set. A programmer adds `.goal(...)`. |
 | `NO_LIMITS` | A pivot or elevator without limits: run `system_limits` with a person moving it by hand. Never invent them. |
+| `NOT_HOMED` | A pivot or elevator on a relative encoder hasn't been homed this boot, so its saved limits may be in the wrong place. A person runs `system_home` (holding it at one end) or `system_limits`. Never home it yourself by guessing the end. |
+| `HOMING_MOVED` | It moved while `system_home` read it: a person holds it still at its end and homes it again. |
+| `SENSOR_LOST` | The code's position reading dropped out (NaN, or no reading at all): a sensor or its CAN messages. A person checks its wiring and CAN ID before anything runs on the mechanism. |
+| `ENABLED_BY_HAND` | The robot was enabled while a person had their hands on the mechanism (limits by hand, homing): the test stopped and nothing was saved. Tell the person; never enable during those tests. |
+| `LIFT_UNKNOWN` | The on-blocks lift check couldn't judge enough wheels (too little current to tell): a person checks the robot really sits on its blocks before driving again. |
 | `PAST_LIMITS` | The mechanism left its limits (or, measuring, kept going past its test window) and was stopped. A person looks at it before anything else runs. |
 | `SENSOR_FROZEN` | The measuring run saw the code's position reading stop changing while the motor's own encoder kept moving: a sensor, or its CAN messages, dropped out. A person checks that sensor's wiring and CAN ID before anything else runs on the mechanism. |
 | `RUNAWAY` | The measuring run's volts weren't controlling it: it sped up while braking, went the wrong way, or ran past twice its sweep speed (an arm's gravity far from its hold, slack, a spring, a loose sensor). A person looks at it before it is measured again. |

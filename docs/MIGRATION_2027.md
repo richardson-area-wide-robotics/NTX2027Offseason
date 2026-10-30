@@ -14,8 +14,8 @@ is in a single file. These are the files that change, counted from what each one
 | What changes in 2027 | Library files that change | Robot code that changes |
 |---|---|---|
 | `DriverStation` splits into `MatchState` and `RobotState` | `RobotSignals.Wpilib` for every read; `reportWarning`/`reportError` calls in `SlothTune`, `AkLogging`, `FieldLayouts` and `PhotonVisionSetup` if those move | Any subsystem reading the match state |
-| Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2`, and `SlothTune.install`, which builds it | All of it: both `Robot.java`, every subsystem, the controller bindings, PathPlanner's `NamedCommands` |
-| REVLib's 2027 API | `SparkChannel`, `YagslDrivetrainIO`, `MotorWatcher`, and `SlothTune`'s `watchMotor` overloads | Every subsystem that builds a `SparkMax` or `SparkFlex` (Peashooter's Shooter, Intake and Feeder; Black team's Shooter and Intake) |
+| Commands v3 (can't be installed alongside v2) | `DriveOwnership` / `CommandsV2`, and `SlothTune.install`, which builds it; `HoldCurrent`, and `TunableSystem.subsystem` (a v2 `Subsystem`) | All of it: both `Robot.java`, every subsystem, the controller bindings, PathPlanner's `NamedCommands` |
+| REVLib's 2027 API | `SparkChannel`, `YagslDrivetrainIO`, `MotorWatcher`, `SlothTune`'s `watchMotor` overloads, and `TunableSystem.sparkGains` | Every subsystem that builds a `SparkMax` or `SparkFlex` (Peashooter's Shooter, Intake and Feeder; Black team's Shooter and Intake) |
 | YAGSL, the module hardware | `DrivetrainIO` / `YagslDrivetrainIO`, and `SlothTune.install`, which takes a `SwerveDrive` | Each `Drive.java`, and the JSON files (see YAGSL below) |
 | Gyros: no SPI on SystemCore | `YagslDrivetrainIO` (it reads the navX and the Canandgyro directly) | `swervedrive.json`'s IMU; the navX comes off, and the Canandgyro (Boron) goes on: [GYRO_CANANDGYRO.md](GYRO_CANANDGYRO.md). ReduxLib 2027 moves it to `com.reduxrobotics.canandgyro` with a `CANPort`; YAGSL 2027 calls it `canandgyro_can` |
 | Alerts | `DashboardAlerts` | None |
@@ -26,8 +26,9 @@ is in a single file. These are the files that change, counted from what each one
 | SystemCore's addresses (hostname `robot`, USB and Wi-Fi addresses) | `link.py`'s `candidate_hosts` already tries them | None |
 
 `Sampler`, `SafetySupervisor`, `MotorGuard`'s logic, `VisionGate` and `VisionTrust` touch no WPILib
-API at all. In the library that is about a dozen files of 41 (39 in `slothtune`, 2 in its
-PhotonVision adapter); in the robot projects, nearly every file.
+API at all. In the library about 14 files of 57 change (55 in `slothtune`, 2 in its PhotonVision
+adapter; recounted October 30, 2026), and 33 import no WPILib or vendor API at all; in the robot
+projects, nearly every file.
 
 Three more, outside that table:
 

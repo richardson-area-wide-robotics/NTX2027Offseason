@@ -1,0 +1,12 @@
+# Sloth Tune's Python packages, for Python 3.12. From the repository folder:
+#   py -3.12 -m pip install -r tools/requirements.txt
+# Everything else the tool uses is Python's own library.
+#
+# pyntcore talks to the robot over NetworkTables; robotpy-wpiutil (which pyntcore brings anyway) reads
+# and writes .wpilog files. Both follow WPILib's year, so they match the robot code's 2026 WPILib.
+pyntcore>=2026,<2027
+robotpy-wpiutil>=2026,<2027
+
+# Only for the tests' page check (tests/test_page_smoke.py skips without it), not for the tool:
+#   py -3.12 -m pip install playwright
+#   py -3.12 -m playwright install chromium

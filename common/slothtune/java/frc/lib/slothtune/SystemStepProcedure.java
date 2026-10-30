@@ -14,11 +14,14 @@ import java.util.Locale;
  * <p>A pivot or elevator: from where it is to goal {@code a}, then {@code a} to {@code b} and back,
  * {@code moves} times, holding {@code hold_s} at each. It refuses without limits, keeps every goal
  * inside them with a margin, and stops at once if the mechanism leaves them or goes faster than
- * the test allows. A flywheel: up to speed {@code a}, then {@code b}, then back down, holding at each.
+ * the test allows, or if its position can't be read (lost, or frozen while its SPARK's own encoder
+ * moves, as identification checks), since then its limits can't be kept. A flywheel: up to speed
+ * {@code a}, then {@code b}, then back down, holding at each. Either stops if it pushes hard without
+ * moving: jammed.
  *
  * <p>Args: {@code system} (index), {@code a}, {@code b}, {@code vmax}, {@code amax}, {@code hold_s},
- * {@code moves}. Channels: {@code pos}, {@code vel}, {@code sp} (the moving goal), {@code sp_vel},
- * {@code goal} (where it is headed), and {@code amps0..}, {@code volts0..} for its motors.
+ * {@code moves}, {@code stop_amps}. Channels: {@code pos}, {@code vel}, {@code sp} (the moving goal),
+ * {@code sp_vel}, {@code goal} (where it is headed), and {@code amps0..}, {@code volts0..} for its motors.
  */
 final class SystemStepProcedure implements Procedure {
   /** Goals stay this far inside the limits, as a fraction of the range. */
@@ -27,6 +30,10 @@ final class SystemStepProcedure implements Procedure {
   static final double OVERRUN = 0.03;
   /** Faster than this times the allowed speed, it stops. */
   static final double SPEED_STOP = 1.5;
+  /** Pushing hard: a motor over {@code stop_amps}, or over this fraction of its own current limit if less. */
+  static final double JAM_LIMIT_FRACTION = 0.85;
+  /** A pivot or elevator pushing hard that moves less than this of its range, its goal farther: jammed. */
+  static final double JAM_TRAVEL = 0.01;
 
   private TunableSystem sys;
   private final List<double[]> legs = new ArrayList<>();
@@ -42,6 +49,15 @@ final class SystemStepProcedure implements Procedure {
   private double legFrom;
   private boolean held;
   private DriveOwnership owner;
+  /** Its motors the motor guard watches; the first that leads is the SPARK the frozen check reads. */
+  private final List<MotorGuard.Motor> mine = new ArrayList<>();
+  private MotorGuard.MotorChannel spark;
+  private final SystemIdProcedure.FrozenReading frozen = new SystemIdProcedure.FrozenReading();
+  private double stopAmps;
+  /** When it began pushing hard without moving, and where it was then (a flywheel: its speed). */
+  private double jamSince = Double.NaN;
+  private double jamFrom = Double.NaN;
+  private String cut;
 
   @Override
   public String name() {
@@ -86,8 +102,9 @@ final class SystemStepProcedure implements Procedure {
     if (!(v > 0) || !(a > 0)) {
       return "Give the test a maximum speed and acceleration: the Systems tab works them out from the mechanism's physics.";
     }
-    if (s.kind.positional && !s.hasLimits()) {
-      return "Set the limits of " + s.name + " first: move it by hand to both ends (Systems tab, Limits).";
+    String notReady = s.notReady();  // limits, then homed this boot
+    if (notReady != null) {
+      return notReady;
     }
     return null;
   }
@@ -113,6 +130,10 @@ final class SystemStepProcedure implements Procedure {
     vmax = cap(ctx.args.get("vmax", 0, 0, 1e6), sys.maxVelocity);
     amax = cap(ctx.args.get("amax", 0, 0, 1e7), sys.maxAccel);
     holdS = ctx.args.get("hold_s", 1.0, 0.2, 5);
+    stopAmps = ctx.args.get("stop_amps", 40, 10, 80);
+    cut = null;
+    jamSince = Double.NaN;
+    frozen.reset();
     int moves = (int) Math.round(ctx.args.get("moves", 2, 1, 6));
     double a = ctx.args.get("a", 0, -1e9, 1e9);
     double b = ctx.args.get("b", 0, -1e9, 1e9);
@@ -149,8 +170,14 @@ final class SystemStepProcedure implements Procedure {
         .channel("sp_vel", () -> spVel)
         .channel("goal", () -> target);
     int i = 0;
+    mine.clear();
+    spark = null;
     for (MotorGuard.Motor m : ctx.motors) {
       if (sys.motors.contains(m.name)) {
+        mine.add(m);
+        if (spark == null && !m.channel.follower()) {
+          spark = m.channel;
+        }
         ctx.sampler.channel("amps" + i, m::amps).channel("volts" + i, m::appliedVolts);
         ctx.note("motor " + i + ": " + m.name);
         i++;
@@ -216,6 +243,10 @@ final class SystemStepProcedure implements Procedure {
 
   @Override
   public boolean execute(TestContext ctx, double t) {
+    watch(t);
+    if (cut != null) {
+      return false;  // stopping: the goal stays where it was until the test ends
+    }
     if (!held) {
       // On the way: the goal moves along the limited path.
       double[] s = sys.kind.positional ? profile(legFrom, target, vmax, amax, t - legStart)
@@ -246,12 +277,67 @@ final class SystemStepProcedure implements Procedure {
     return false;
   }
 
+  /**
+   * The checks that need the time, each loop: a position reading frozen while its SPARK's own encoder
+   * moves (identification's {@link SystemIdProcedure.FrozenReading}), and a jam: a motor pushing hard
+   * for {@link SystemIdProcedure#STALL_S} while a pivot or elevator moves under {@link #JAM_TRAVEL} of
+   * its range with its goal farther than that, or a flywheel stays under 2% of the allowed speed.
+   */
+  private void watch(double t) {
+    if (cut != null) {
+      return;
+    }
+    double x;
+    boolean still;
+    boolean away;
+    if (sys.kind.positional) {
+      x = sys.position.getAsDouble();
+      if (!Double.isFinite(x)) {
+        return;  // abortReason stops it
+      }
+      double range = sys.max - sys.min;
+      cut = frozen.check(sys, range, t, x, spark == null ? Double.NaN : spark.feedbackPosition());
+      still = Double.isNaN(jamSince) || Math.abs(x - jamFrom) <= JAM_TRAVEL * range;
+      away = Math.abs(sp - x) > JAM_TRAVEL * range;
+    } else {
+      x = sys.velocity.getAsDouble();
+      still = Math.abs(x) < 0.02 * vmax;  // false for NaN: without a speed it can't tell
+      away = true;
+    }
+    double amps = 0;
+    boolean hard = false;
+    for (MotorGuard.Motor m : mine) {
+      double a = m.channel.amps();
+      if (Double.isFinite(a)) {
+        int limit = m.baseLimitA();
+        amps = Math.max(amps, a);
+        hard |= a > (limit > 0 ? Math.min(stopAmps, JAM_LIMIT_FRACTION * limit) : stopAmps);
+      }
+    }
+    if (!(hard && still && away)) {
+      jamSince = Double.NaN;
+    } else if (Double.isNaN(jamSince)) {
+      jamSince = t;
+      jamFrom = x;
+    } else if (cut == null && t - jamSince >= SystemIdProcedure.STALL_S) {
+      cut = String.format(Locale.ROOT, "%s didn't move with its motors at %.0f A: jammed, or something holds it. "
+          + "Stopped.", sys.name, amps);
+    }
+  }
+
   @Override
   public String abortReason(TestContext ctx) {
+    if (cut != null) {
+      return cut;
+    }
     double v = sys.velocity.getAsDouble();
     if (sys.kind.positional) {
       double p = sys.position.getAsDouble(), range = sys.max - sys.min;
-      if (Double.isFinite(p) && (p < sys.min - OVERRUN * range || p > sys.max + OVERRUN * range)) {
+      if (!Double.isFinite(p)) {
+        return "It can't read " + sys.name + "'s position (its sensor, or that sensor's CAN messages, dropped out), "
+            + "so it can't keep it inside its limits: stopped.";
+      }
+      if (p < sys.min - OVERRUN * range || p > sys.max + OVERRUN * range) {
         return String.format(Locale.ROOT, "%s went past its limits (%.3f, limits %.3f to %.3f %s): stopped.",
             sys.name, sys.shown(p), sys.shown(sys.min), sys.shown(sys.max), sys.shownUnits());
       }
@@ -279,6 +365,22 @@ final class SystemStepProcedure implements Procedure {
   @Override
   public void end(TestContext ctx, boolean aborted) {
     try {
+      stopSystem(ctx, sys);
+    } finally {
+      if (owner != null) {
+        owner.release();
+      }
+    }
+  }
+
+  /**
+   * Stops a mechanism the team's way: its {@code stop}, else its goal held where it is (a flywheel's
+   * at 0). If that throws, its motors are set to zero output directly ({@link #zeroOutput}), so a
+   * broken stop never leaves them running; what happened is noted, and the exception thrown on for the
+   * harness to report too.
+   */
+  static void stopSystem(TestContext ctx, TunableSystem sys) {
+    try {
       if (sys.stop != null) {
         sys.stop.run();
       } else if (sys.kind.positional) {
@@ -286,11 +388,43 @@ final class SystemStepProcedure implements Procedure {
       } else {
         sys.goal.accept(0);
       }
-    } finally {
-      if (owner != null) {
-        owner.release();
+    } catch (RuntimeException e) {
+      List<MotorGuard.Motor> ms = new ArrayList<>();
+      for (MotorGuard.Motor m : ctx.motors) {
+        if (sys.motors.contains(m.name)) {
+          ms.add(m);
+        }
       }
+      ctx.note(sys.name + "'s own stop raised " + e + ": " + zeroOutput(ms));
+      throw e;
     }
+  }
+
+  /**
+   * Zero output on each of {@code motors} that leads, outside the team's code, as bring-up runs a
+   * motor (a follower follows its leader to zero; commanding it would take it out of follow mode).
+   * Says what it did, for a note.
+   */
+  static String zeroOutput(List<MotorGuard.Motor> motors) {
+    List<String> zeroed = new ArrayList<>();
+    List<String> refused = new ArrayList<>();
+    for (MotorGuard.Motor m : motors) {
+      if (m.channel.follower()) {
+        continue;
+      }
+      boolean ok;
+      try {
+        ok = m.channel.testDuty(0);
+      } catch (RuntimeException e) {
+        ok = false;
+      }
+      (ok ? zeroed : refused).add(m.name);
+    }
+    if (zeroed.isEmpty()) {
+      return "the test couldn't set any of its motors to zero output: disable the robot.";
+    }
+    String did = String.join(", ", zeroed) + (zeroed.size() == 1 ? " was" : " were") + " set to zero output instead";
+    return refused.isEmpty() ? did + "." : did + ", but " + String.join(", ", refused) + " couldn't be: disable the robot.";
   }
 
   @Override

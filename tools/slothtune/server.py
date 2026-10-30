@@ -12,6 +12,8 @@ Two safety details:
 * The GUI deadman (the page's Hold to run button, held by mouse or touch; never a key, since SPACE
   is the Driver Station's E-STOP) must be refreshed every 100 ms by the page while it is held. A
   dropped refresh releases it.
+* Where the robot is ("On blocks", "On the floor") is a person's word about now. Each new connection,
+  and each restart of the robot code, tells the robot UNSET and the page asks again.
 """
 
 from __future__ import annotations
@@ -32,7 +34,7 @@ from urllib.parse import parse_qsl, unquote, urlparse
 from . import setup as setup_plans
 from . import (advisor, akit, battery, camcal, contract as C, controllers, diagnose, explain, fieldsurvey, geometry,
                designcheck, designlinks, logsummary, monitor, motorinv, netcheck, pdhports, plant, ppcheck, predict, progress,
-               rehearse, revspecs, robotlog, runs, systems, wiring, yagslcfg)
+               rehearse, revspecs, robotlog, robotrepo, runs, systems, wiring, yagslcfg)
 
 # A fresh secret each run: only the page this run served can change anything (see Handler).
 TOKEN = secrets.token_urlsafe(18)
@@ -72,13 +74,38 @@ class Session:
         self.robotlog = robotlog.Tally()
         self.console = None
         self.alerts_at = 0.0
+        # The robot code's boot id when this laptop last told it UNSET, and how often it has, and
+        # why: the page asks where the robot is each time the count goes up.
+        self.where_boot = None
+        self.where_asked = {"n": 0, "why": ""}
 
     # ------------------------------------------------------------------ browser presence
     def browser_alive(self):
+        """The heartbeat's gate, asked every 50 ms: has the page checked in within half a second? A held
+        Hold to run counts only until 300 ms after the page's last refresh of it."""
         alive = time.monotonic() - self.last_poll < 0.5
         if self.link is not None:
             self.link.set_gui_deadman(alive and time.monotonic() < self.deadman_until)
+            try:
+                self.watch_restart()
+            except Exception:  # noqa: BLE001 - never stop the heartbeat; the next beat looks again
+                traceback.print_exc()
         return alive
+
+    # ------------------------------------------------------------------ where the robot is
+    def forget_where(self, link, why):
+        """Tells the robot UNSET. The environment is a retained NetworkTables value, so "On blocks"
+        outlives the laptop that said it; a new connection must not inherit it unticked."""
+        link.set_environment("UNSET")
+        self.where_boot = link.get("int", C.BOOT_ID)
+        self.where_asked = {"n": self.where_asked["n"] + 1, "why": why}
+
+    def watch_restart(self):
+        """Robot code that restarted gets UNSET too. On reconnecting, NetworkTables sends a restarted
+        robot this laptop's last value, so without this it would come back "On blocks"."""
+        boot = self.link.get("int", C.BOOT_ID)
+        if boot and self.where_boot is not None and boot != self.where_boot:
+            self.forget_where(self.link, "restart")
 
     # ------------------------------------------------------------------ project
     def set_project(self, name):
@@ -119,15 +146,19 @@ class Session:
             return False
         if not lk.has_harness():
             lk.close()
-            self.connect_error = "Connected, but this robot code does not have SlothTune installed."
+            self.connect_error = ("Connected, but this robot code does not have Sloth Tune in it. Deploy the "
+                                  "robot code from the team repo's StuartTesting branch.")
             return False
         proto = lk.get("int", C.PROTOCOL)
         if proto != C.PROTOCOL_VERSION:
             lk.close()
-            self.connect_error = (f"Robot speaks protocol {proto}, this tool {C.PROTOCOL_VERSION}. "
-                                  "Deploy the code from this branch.")
+            self.connect_error = (f"Robot speaks protocol {proto}, this tool {C.PROTOCOL_VERSION}: the robot code "
+                                  "and this tool come from different versions of Sloth Tune. Deploy the robot code "
+                                  "from the team repo's StuartTesting branch, and run this tool from it too (or "
+                                  "from a Sloth Tune as new).")
             return False
         lk.set_gui_deadman(False)  # this client owns the deadman topic
+        self.forget_where(lk, "connect")
         lk.start_heartbeat(gate=self.browser_alive)
         self.link, self.target, self.connect_error = lk, target, ""
         name = lk.robot_info().get("name")
@@ -145,6 +176,7 @@ class Session:
             finally:
                 self.link = None
                 self.target = None
+                self.where_boot = None
 
     def wiring_map(self):
         if not self.project:
@@ -236,7 +268,8 @@ S = Session()
 
 def api_projects(_):
     names = [os.path.basename(d) for d in yagslcfg.find_projects(runs.ROBOTS)]
-    return {"projects": names, "current": S.project.name if S.project else None}
+    return {"projects": names, "current": S.project.name if S.project else None,
+            "none_found": "" if names else robotrepo.none_found(runs.ROBOTS)}
 
 
 def api_set_project(body):
@@ -247,7 +280,8 @@ def api_set_project(body):
 
 def api_lint(_):
     if not S.project:
-        return {"ok": False, "error": "Pick a robot project first."}
+        none = not yagslcfg.find_projects(runs.ROBOTS)
+        return {"ok": False, "error": robotrepo.none_found(runs.ROBOTS) if none else "Pick a robot project first."}
     S.reload_project()
     return {"ok": True, "project": S.project.name, "summary": yagslcfg.summary(S.project),
             "findings": yagslcfg.lint(S.project),
@@ -293,8 +327,7 @@ def _version_checks():
     connected robot) against PhotonLib: :mod:`versions`. Examples runs only in the simulator."""
     from . import versions, yagslcfg
 
-    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    projects = [(os.path.basename(p), p, None) for p in yagslcfg.find_projects(repo) if os.path.basename(p) != "Examples"]
+    projects = [(os.path.basename(p), p, None) for p in yagslcfg.find_projects(runs.ROBOTS) if os.path.basename(p) != "Examples"]
     cam = None
     if S.link and S.link.is_connected():
         try:
@@ -330,7 +363,7 @@ def api_state(_):
     S.last_poll = time.monotonic()
     st = {"connected": S.link is not None and S.link.is_connected(), "target": S.target,
           "project": S.project.name if S.project else None, "test": S.test_state,
-          "last_run": S.last_run, "connect_error": S.connect_error}
+          "last_run": S.last_run, "connect_error": S.connect_error, "where_asked": S.where_asked}
     st.update(motor_kinds=C.MOTOR_KINDS, max_override_s=C.MAX_OVERRIDE_S)
     if S.link:
         st.update(robot=S.link.robot_info(), environment=S.link.environment(),
@@ -351,6 +384,8 @@ def api_live(_):
             "status": S.link.status(), "test": S.test_state, "names": names,
             "locations": S.link.robot_info()["locations"],
             "deadman": S.link.get("bool", C.STATUS_DEADMAN_HELD),
+            # A controller on the deadman's port (robot code from before this says nothing: True).
+            "deadman_controller": S.link.get("bool", C.STATUS_DEADMAN_CONTROLLER, True),
             # A running test's newest rows, for a live graph (the Systems tab's).
             "test_live": S.link.test_live() if S.test_state.get("running") else None,
             "seen_tags": seen_tags(S.link.sightings(), live.get("t")),
@@ -658,6 +693,14 @@ def _edits_from(body):
     raise ValueError("unknown save kind")
 
 
+def _read_or_empty(path):
+    """A file's text, or "" if it isn't there yet: what a save's diff starts from."""
+    if not os.path.exists(path):
+        return ""
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
 def _layout_path():
     return os.path.join(S.project.path, "src", "main", "deploy", "apriltags", "surveyed.json")
 
@@ -668,7 +711,7 @@ def _layout_change(body):
     if not isinstance(d.get("tags"), list) or "field" not in d:
         raise ValueError("not an AprilTag layout")
     path = _layout_path()
-    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    old = _read_or_empty(path)
     return path, old, text
 
 
@@ -677,7 +720,8 @@ def _pathplanner_change(_body):
     never from the browser."""
     S.reload_project()
     path = ppcheck.settings_path(S.project)
-    old = open(path, encoding="utf-8").read()
+    with open(path, encoding="utf-8") as fh:
+        old = fh.read()
     _, new = ppcheck.fixed_text(S.project, ppcheck.check(S.project)["fixes"])
     return path, old, new
 
@@ -718,7 +762,7 @@ def api_ppcheck(_query=None):
 
 def _wiring_change(body):
     path = wiring.map_path(S.project)
-    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    old = _read_or_empty(path)
     return path, old, wiring.map_text(body["map"])
 
 
@@ -729,8 +773,19 @@ def _design_change(body):
     if not isinstance(d, dict) or not isinstance(d.get("motors"), list):
         raise ValueError("not a design file (it needs a motors list)")
     path = D.path(S.project)
-    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    old = _read_or_empty(path)
     return path, old, D.text(d)
+
+
+def _design_motors_change(body):
+    """The blanks a drafted design file leaves on its motors (which way is positive, the gear ratio,
+    the PDH port and its breaker), filled in on the Bring-up tab: applied to the file as it is now."""
+    from . import design as D
+    d = D.load(S.project)
+    if d is None:
+        raise ValueError("there is no design file yet: draft one from the code first")
+    path = D.path(S.project)
+    return path, _read_or_empty(path), D.text(D.edit_motors(d, body.get("edits")))
 
 
 def _report_change(body):
@@ -739,7 +794,7 @@ def _report_change(body):
     ctx = _setup_ctx()
     signed = {k: str(v)[:60] for k, v in (body.get("signed") or {}).items() if k in ("programming", "mechanical", "electrical")}
     path, text = bringup.report(S.project, ctx, signed)
-    old = open(path, encoding="utf-8").read() if os.path.exists(path) else ""
+    old = _read_or_empty(path)
     return path, old, text
 
 
@@ -792,7 +847,7 @@ def api_save_apply(body):
 
 CHANGES = {"wiring": lambda b: _wiring_change(b), "layout": lambda b: _layout_change(b),
            "pathplanner": lambda b: _pathplanner_change(b), "design": lambda b: _design_change(b),
-           "bringup_report": lambda b: _report_change(b)}
+           "design_motors": lambda b: _design_motors_change(b), "bringup_report": lambda b: _report_change(b)}
 
 
 def api_bringup(_query=None):
@@ -1066,10 +1121,6 @@ def api_setup(query=None):
 
 def _parts():
     return (progress.load(S.project.name) if S.project else {}).get("parts") or {}
-
-
-def _save_parts(parts):
-    progress.update(S.project.name, {"parts": parts})
 
 
 def api_parts(_query=None):
@@ -1514,7 +1565,7 @@ def api_camcal_sample(body):
     return out
 
 
-SURVEY = {"running": False, "sightings": [], "keys": set(), "thread": None}
+SURVEY = {"running": False, "sightings": [], "keys": set(), "thread": None, "dropped": ""}
 
 
 def api_survey_start(body=None):
@@ -1525,20 +1576,32 @@ def api_survey_start(body=None):
     if SURVEY["running"]:
         return {"ok": True}
     if (body or {}).get("keep"):
-        SURVEY.update(running=True)
+        SURVEY.update(running=True, dropped="")
     else:
-        SURVEY.update(running=True, sightings=[], keys=set())
+        SURVEY.update(running=True, sightings=[], keys=set(), dropped="")
 
     def work():
+        lost = None   # when the robot dropped out, while it is out
         while SURVEY["running"]:
+            link = S.link
             try:
-                for s in S.link.sightings():
+                if link is None or not link.is_connected():
+                    raise ConnectionError("not connected")
+                for s in link.sightings():
                     key = (s["camera"], s["tag"], s["t"])
                     if key not in SURVEY["keys"]:
                         SURVEY["keys"].add(key)
                         SURVEY["sightings"].append(s)
-            except Exception:  # noqa: BLE001 - a dropped connection just pauses the recording
-                pass
+                if lost:
+                    SURVEY["dropped"] = (f"The robot dropped out at {lost} and came back at {time.strftime('%H:%M:%S')}: "
+                                         "tags seen in between weren't recorded.")
+                    lost = None
+            except Exception as e:  # noqa: BLE001 - a dropped connection pauses the recording, and says so
+                if not lost:
+                    lost = time.strftime("%H:%M:%S")
+                    why = "" if isinstance(e, ConnectionError) else f" ({e})"
+                    SURVEY["dropped"] = f"The robot dropped out at {lost}{why}: recording paused until it is back."
+                time.sleep(0.2)
             time.sleep(0.02)
 
     SURVEY["thread"] = threading.Thread(target=work, name="slothtune-survey", daemon=True)
@@ -1557,7 +1620,8 @@ def api_survey_state(_query=None):
     for x in s:
         frames.setdefault((x["camera"], x["t"]), set()).add(x["tag"])
     return {"ok": True, "running": SURVEY["running"], "sightings": len(s),
-            "views": sum(1 for v in frames.values() if len(v) >= 2), "tags": sorted({x["tag"] for x in s})}
+            "views": sum(1 for v in frames.values() if len(v) >= 2), "tags": sorted({x["tag"] for x in s}),
+            "dropped": SURVEY["dropped"]}
 
 
 # ---------------------------------------------------------------------------- the camera itself
@@ -1774,7 +1838,7 @@ def api_newfield(_query=None):
 
 def api_newfield_reset(_):
     NEWFIELD.update(sweeps=[], samples=[], message="")
-    SURVEY.update(sightings=[], keys=set())
+    SURVEY.update(sightings=[], keys=set(), dropped="")
     return {"ok": True}
 
 
@@ -2196,12 +2260,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main(args):
-    if getattr(args, "project", None):
-        S.set_project(os.path.basename(args.project))
+    projects = yagslcfg.find_projects(runs.ROBOTS)
+    if not projects:
+        print(robotrepo.none_found(runs.ROBOTS))
+    elif getattr(args, "project", None):
+        if not S.set_project(os.path.basename(args.project)):
+            print(f"No robot project called {args.project!r} here. Known: "
+                  + ", ".join(os.path.basename(p) for p in projects))
     else:
-        projects = yagslcfg.find_projects(runs.ROBOTS)
-        if projects:
-            S.set_project(os.path.basename(projects[0]))
+        S.set_project(os.path.basename(projects[0]))
     port = getattr(args, "port", 5806)
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     url = f"http://127.0.0.1:{port}/"

@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 480" width="520" height="480" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="mxs-title mxs-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="mxs-title">Crimping a Molex SL terminal, step by step</title>
+<desc id="mxs-desc">Animated, six steps in a 12 second loop, with a numbered step list that lights up in step. 1: strip 0.100-0.125 in (2.5-3.2 mm) from 22-24 AWG wire; the cut piece of insulation slides off the bare strands. 2: the terminal (Molex 16-02-0103) lies open in the jaws of the Molex 63811-8700 hand tool and the wire slides in, bare copper under the conductor crimp and insulation under the insulation crimp. 3: the jaws close and both crimps fold around the wire. 4: check the crimp, front to back: nothing in the contact; the conductor crimp on bare copper only, seam closed; the strands 0-0.04 in (0-1.0 mm) past it; a window where copper and insulation both show; the insulation crimp gripping the insulation. 5: push the terminal into the housing until it latches; pin 1, the one the triangle on the housing marks, takes CAN-H, the bus's own color and never green; pin 2 takes CAN-L, always green. 6: tug each wire, one at a time; a good 24 AWG crimp holds 6.5 lb. A still panel shows the housing's end view: the triangle marks pin 1, CAN-H there, green CAN-L on pin 2, the same on every plug. With reduced motion the drawing shows the checked crimp.</desc>
+<style>
+.mxA { opacity: 0; animation: mxA 12s linear infinite; }
+@keyframes mxA {
+  0% { opacity: 1; }
+  15% { opacity: 1; }
+  17.083% { opacity: 0; }
+  98.5% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.mxSlugX { transform: translateX(0px); animation: mxSlugX 12s ease-in-out infinite; }
+@keyframes mxSlugX {
+  0% { transform: translateX(0px); }
+  4.583% { transform: translateX(0px); }
+  10.417% { transform: translateX(-46px); }
+  17.5% { transform: translateX(-46px); }
+  18.333% { transform: translateX(0px); }
+  100% { transform: translateX(0px); }
+}
+.mxSlugO { opacity: 1; animation: mxSlugO 12s linear infinite; }
+@keyframes mxSlugO {
+  0% { opacity: 1; }
+  6.667% { opacity: 1; }
+  10.417% { opacity: 0; }
+  17.5% { opacity: 0; }
+  18.333% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.mxBladeT { transform: translateY(-14px); animation: mxBladeT 12s ease-in-out infinite; }
+@keyframes mxBladeT {
+  0% { transform: translateY(-14px); }
+  1.25% { transform: translateY(-14px); }
+  3.75% { transform: translateY(0px); }
+  6.667% { transform: translateY(0px); }
+  9.167% { transform: translateY(-14px); }
+  100% { transform: translateY(-14px); }
+}
+.mxBladeB { transform: translateY(14px); animation: mxBladeB 12s ease-in-out infinite; }
+@keyframes mxBladeB {
+  0% { transform: translateY(14px); }
+  1.25% { transform: translateY(14px); }
+  3.75% { transform: translateY(0px); }
+  6.667% { transform: translateY(0px); }
+  9.167% { transform: translateY(14px); }
+  100% { transform: translateY(14px); }
+}
+.mxBlades { opacity: 0; animation: mxBlades 12s linear infinite; }
+@keyframes mxBlades {
+  0% { opacity: 0; }
+  0.417% { opacity: 0; }
+  2.083% { opacity: 1; }
+  8.75% { opacity: 1; }
+  10.417% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxDimA { opacity: 0; animation: mxDimA 12s linear infinite; }
+@keyframes mxDimA {
+  0% { opacity: 0; }
+  9.583% { opacity: 0; }
+  11.667% { opacity: 1; }
+  14.583% { opacity: 1; }
+  16.667% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxTerm { opacity: 1; animation: mxTerm 12s linear infinite; }
+@keyframes mxTerm {
+  0% { opacity: 0; }
+  16.667% { opacity: 0; }
+  18.75% { opacity: 1; }
+  96.25% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxWireX { transform: translateX(0px); animation: mxWireX 12s ease-in-out infinite; }
+@keyframes mxWireX {
+  0% { transform: translateX(60px); }
+  16.667% { transform: translateX(60px); }
+  19.583% { transform: translateX(60px); }
+  25.833% { transform: translateX(0px); }
+  98.333% { transform: translateX(0px); }
+  98.583% { transform: translateX(60px); }
+  100% { transform: translateX(60px); }
+}
+.mxJawL { opacity: 0; animation: mxJawL 12s linear infinite; }
+@keyframes mxJawL {
+  0% { opacity: 0; }
+  16.667% { opacity: 0; }
+  18.75% { opacity: 1; }
+  47.5% { opacity: 1; }
+  49.583% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxLblB { opacity: 0; animation: mxLblB 12s linear infinite; }
+@keyframes mxLblB {
+  0% { opacity: 0; }
+  25.417% { opacity: 0; }
+  27.5% { opacity: 1; }
+  31.667% { opacity: 1; }
+  33.75% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxJawU { opacity: 0; animation: mxJawU 12s linear infinite; }
+@keyframes mxJawU {
+  0% { opacity: 0; }
+  33.333% { opacity: 0; }
+  35.417% { opacity: 1; }
+  47.5% { opacity: 1; }
+  49.583% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxJawY { transform: translateY(0px); animation: mxJawY 12s ease-in-out infinite; }
+@keyframes mxJawY {
+  0% { transform: translateY(0px); }
+  33.333% { transform: translateY(0px); }
+  35.833% { transform: translateY(0px); }
+  41.25% { transform: translateY(30px); }
+  43.333% { transform: translateY(30px); }
+  47.083% { transform: translateY(0px); }
+  100% { transform: translateY(0px); }
+}
+.mxWingO { opacity: 0; animation: mxWingO 12s linear infinite; }
+@keyframes mxWingO {
+  0% { opacity: 0; }
+  16.667% { opacity: 0; }
+  18.75% { opacity: 1; }
+  37.5% { opacity: 1; }
+  41.25% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxWingC { opacity: 1; animation: mxWingC 12s linear infinite; }
+@keyframes mxWingC {
+  0% { opacity: 0; }
+  37.5% { opacity: 0; }
+  41.25% { opacity: 1; }
+  96.25% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxChk1 { opacity: 1; animation: mxChk1 12s linear infinite; }
+@keyframes mxChk1 {
+  0% { opacity: 0; }
+  49.167% { opacity: 0; }
+  51.25% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxChk2 { opacity: 1; animation: mxChk2 12s linear infinite; }
+@keyframes mxChk2 {
+  0% { opacity: 0; }
+  51.667% { opacity: 0; }
+  53.75% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxChk3 { opacity: 1; animation: mxChk3 12s linear infinite; }
+@keyframes mxChk3 {
+  0% { opacity: 0; }
+  54.167% { opacity: 0; }
+  56.25% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxChk4 { opacity: 1; animation: mxChk4 12s linear infinite; }
+@keyframes mxChk4 {
+  0% { opacity: 0; }
+  56.667% { opacity: 0; }
+  58.75% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxChk5 { opacity: 1; animation: mxChk5 12s linear infinite; }
+@keyframes mxChk5 {
+  0% { opacity: 0; }
+  59.167% { opacity: 0; }
+  61.25% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxHous { opacity: 0; animation: mxHous 12s linear infinite; }
+@keyframes mxHous {
+  0% { opacity: 0; }
+  66.667% { opacity: 0; }
+  69.167% { opacity: 1; }
+  95.833% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxAssy { transform: translateX(0px); animation: mxAssy 12s ease-in-out infinite; }
+@keyframes mxAssy {
+  0% { transform: translateX(0px); }
+  69.167% { transform: translateX(0px); }
+  77.5% { transform: translateX(-126px); }
+  86.25% { transform: translateX(-126px); }
+  87.917% { transform: translateX(-121px); }
+  89.583% { transform: translateX(-126px); }
+  91.25% { transform: translateX(-121px); }
+  92.917% { transform: translateX(-126px); }
+  98.333% { transform: translateX(-126px); }
+  98.583% { transform: translateX(0px); }
+  100% { transform: translateX(0px); }
+}
+.mxPush { opacity: 0; animation: mxPush 12s linear infinite; }
+@keyframes mxPush {
+  0% { opacity: 0; }
+  68.75% { opacity: 0; }
+  70.417% { opacity: 1; }
+  76.25% { opacity: 1; }
+  77.917% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxLatch { opacity: 0; animation: mxLatch 12s linear infinite; }
+@keyframes mxLatch {
+  0% { opacity: 0; }
+  77.5% { opacity: 0; }
+  79.167% { opacity: 1; }
+  96.667% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxTug { opacity: 0; animation: mxTug 12s linear infinite; }
+@keyframes mxTug {
+  0% { opacity: 0; }
+  85% { opacity: 0; }
+  86.667% { opacity: 1; }
+  94.167% { opacity: 1; }
+  95.833% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxHold { opacity: 0; animation: mxHold 12s linear infinite; }
+@keyframes mxHold {
+  0% { opacity: 0; }
+  88.333% { opacity: 0; }
+  90.417% { opacity: 1; }
+  96.25% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxs-hl1 { opacity: 0; animation: mxs-hl1 12s linear infinite; }
+@keyframes mxs-hl1 {
+  0% { opacity: 0; }
+  0.167% { opacity: 0; }
+  1.667% { opacity: 1; }
+  15.333% { opacity: 1; }
+  16.833% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxs-hl2 { opacity: 0; animation: mxs-hl2 12s linear infinite; }
+@keyframes mxs-hl2 {
+  0% { opacity: 0; }
+  16.833% { opacity: 0; }
+  18.333% { opacity: 1; }
+  32% { opacity: 1; }
+  33.5% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxs-hl3 { opacity: 0; animation: mxs-hl3 12s linear infinite; }
+@keyframes mxs-hl3 {
+  0% { opacity: 0; }
+  33.5% { opacity: 0; }
+  35% { opacity: 1; }
+  47% { opacity: 1; }
+  48.5% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxs-hl4 { opacity: 0; animation: mxs-hl4 12s linear infinite; }
+@keyframes mxs-hl4 {
+  0% { opacity: 0; }
+  48.5% { opacity: 0; }
+  50% { opacity: 1; }
+  65.333% { opacity: 1; }
+  66.833% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxs-hl5 { opacity: 0; animation: mxs-hl5 12s linear infinite; }
+@keyframes mxs-hl5 {
+  0% { opacity: 0; }
+  66.833% { opacity: 0; }
+  68.333% { opacity: 1; }
+  82% { opacity: 1; }
+  83.5% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.mxs-hl6 { opacity: 0; animation: mxs-hl6 12s linear infinite; }
+@keyframes mxs-hl6 {
+  0% { opacity: 0.111; }
+  0.167% { opacity: 0; }
+  83.5% { opacity: 0; }
+  85% { opacity: 1; }
+  98.667% { opacity: 1; }
+  100% { opacity: 0.111; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<defs>
+  <g id="mxs-box">
+    <rect x="30" y="158" width="120" height="44" rx="3" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5"/>
+    <line x1="37" y1="166" x2="144" y2="166" stroke="#7d8790" stroke-width="1"/>
+    <path d="M42 195 Q90 184 140 195" fill="none" stroke="#7d8790" stroke-width="1" stroke-dasharray="3 2"/>
+    <path d="M96 158 L130 146 L132 158" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5" stroke-linejoin="round"/>
+  </g>
+  <g id="mxs-floor" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2">
+    <rect x="148" y="195" width="56" height="7"/>
+    <rect x="262" y="195" width="62" height="7"/>
+  </g>
+  <g id="mxs-strands" stroke="#b87333" stroke-width="2.4" stroke-linecap="round">
+    <line x1="189" y1="176" x2="300" y2="176"/>
+    <line x1="187" y1="180" x2="300" y2="180"/>
+    <line x1="190" y1="184" x2="300" y2="184"/>
+    <line x1="188" y1="188" x2="300" y2="188"/>
+  </g>
+  <g id="mxs-closed">
+    <path d="M200 168 H252 Q259 168 266 162 V208 Q259 202 252 202 H200 Z" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5" stroke-linejoin="round"/>
+    <line x1="205" y1="175" x2="250" y2="175" stroke="#7d8790" stroke-width="1"/>
+    <rect x="320" y="160" width="50" height="42" rx="4" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.5"/>
+    <path d="M324 166 Q345 177 366 166" fill="none" stroke="#7d8790" stroke-width="1"/>
+  </g>
+</defs>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Crimping a Molex SL terminal, step by step</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Terminal 16-02-0103 for 22–24 AWG wire · Molex hand tool 63811-8700</text>
+<g class="mxA">
+  <path d="M255 139 H490 q5 6.5 0 13 q-5 6.5 0 13 H255 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+  <g stroke="#b87333" stroke-width="2.4" stroke-linecap="round">
+    <line x1="152" y1="146" x2="256" y2="146"/><line x1="150" y1="150" x2="256" y2="150"/>
+    <line x1="153" y1="154" x2="256" y2="154"/><line x1="151" y1="158" x2="256" y2="158"/>
+  </g>
+  <g class="mxSlugO"><g class="mxSlugX"><rect x="150" y="139" width="105" height="26" fill="#f2c200" stroke="#444444" stroke-width="1"/></g></g>
+  <g class="mxBlades">
+    <g class="mxBladeT"><path d="M245 117 L265 117 L255 142 Z" fill="#7a828a" stroke="#444444" stroke-width="1"/></g>
+    <g class="mxBladeB"><path d="M245 187 L265 187 L255 162 Z" fill="#7a828a" stroke="#444444" stroke-width="1"/></g>
+  </g>
+  <g class="mxDimA">
+    <g stroke="#5c5c5c" stroke-width="1"><line x1="150" y1="112" x2="150" y2="134"/><line x1="255" y1="112" x2="255" y2="134"/></g>
+    <line x1="202" y1="122" x2="158" y2="122" stroke="#5c5c5c" stroke-width="1.2"/><path d="M151 122 L158 118.15 L158 125.85 Z" fill="#5c5c5c"/><line x1="203" y1="122" x2="247" y2="122" stroke="#5c5c5c" stroke-width="1.2"/><path d="M254 122 L247 125.85 L247 118.15 Z" fill="#5c5c5c"/>
+    <text x="202.5" y="104" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">0.100–0.125 in (2.5–3.2 mm)</text>
+    <text x="202.5" y="190" font-size="13" fill="#5c5c5c" text-anchor="middle">bare copper</text>
+  </g>
+</g>
+<g class="mxJawL">
+  <rect x="312" y="173" width="200" height="26" rx="3" fill="#7a828a" stroke="#444444" stroke-width="1.2"/>
+  <text x="412" y="216" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Molex 63811-8700 jaws</text>
+</g>
+<g class="mxAssy"><g class="mxTerm"><g transform="translate(130 -30)">
+  <use href="#mxs-floor"/>
+  <g class="mxWingO" fill="#cfd5da" stroke="#7d8790" stroke-width="1.2">
+    <path d="M202 202 V142 Q202 139 205 139 H261 Q264 139 264 142 V202 Z"/>
+    <path d="M322 202 V138 Q322 135 325 135 H365 Q368 135 368 138 V202 Z"/>
+  </g>
+  <g class="mxWireX">
+    <use href="#mxs-strands"/>
+    <path d="M292 169 H760 V195 H292 Z" fill="#f2c200" stroke="#444444" stroke-width="1"/>
+  </g>
+  <use href="#mxs-box"/>
+  <g class="mxWingC"><use href="#mxs-closed"/></g>
+</g></g></g>
+<g class="mxJawU"><g class="mxJawY">
+  <rect x="312" y="72" width="200" height="28" rx="3" fill="#7a828a" stroke="#444444" stroke-width="1.2"/>
+</g></g>
+<g class="mxLblB">
+  <text x="170" y="86" font-size="13" font-weight="700" fill="#222222">Bare copper</text>
+  <text x="170" y="101" font-size="12" fill="#5c5c5c">under the conductor crimp</text>
+  <text x="372" y="70" font-size="13" font-weight="700" fill="#222222">Insulation</text>
+  <text x="372" y="85" font-size="12" fill="#5c5c5c">under the insulation crimp</text>
+  <g stroke="#5c5c5c" stroke-width="1" fill="none"><line x1="318" y1="99" x2="350" y2="146"/><line x1="470" y1="89" x2="476" y2="150"/></g>
+  <g fill="#222222"><circle cx="350" cy="148" r="2.5"/><circle cx="476" cy="152" r="2.5"/></g>
+</g>
+<g class="mxChk1">
+  <circle cx="150" cy="202" r="8" fill="#1a7f37"/><path d="M146.2 202.2 L148.9 204.9 L154 199.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="162" y="207" font-size="13" font-weight="700" fill="#222222">Contact: nothing in it</text>
+  <line x1="226" y1="194" x2="226" y2="170" stroke="#5c5c5c" stroke-width="1"/><circle cx="226" cy="168" r="2.5" fill="#222222"/>
+</g>
+<g class="mxChk2">
+  <circle cx="176" cy="84" r="8" fill="#1a7f37"/><path d="M172.2 84.2 L174.9 86.9 L180 81.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="188" y="89" font-size="13" font-weight="700" fill="#222222">Conductor crimp</text>
+  <text x="188" y="104" font-size="12" fill="#5c5c5c">bare copper only, seam closed</text>
+  <line x1="356" y1="109" x2="360" y2="130" stroke="#5c5c5c" stroke-width="1"/><circle cx="360" cy="132" r="2.5" fill="#222222"/>
+</g>
+<g class="mxChk3">
+  <circle cx="150" cy="228" r="8" fill="#1a7f37"/><path d="M146.2 228.2 L148.9 230.9 L154 225.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="162" y="233" font-size="13" font-weight="700" fill="#222222">Strands 0–0.04 in past it</text>
+  <text x="162" y="248" font-size="12" fill="#5c5c5c">(0–1.0 mm)</text>
+  <path d="M318 229 H321 V160" fill="none" stroke="#5c5c5c" stroke-width="1"/><circle cx="321" cy="158" r="2.5" fill="#222222"/>
+</g>
+<g class="mxChk4">
+  <circle cx="354" cy="202" r="8" fill="#1a7f37"/><path d="M350.2 202.2 L352.9 204.9 L358 199.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="366" y="207" font-size="13" font-weight="700" fill="#222222">Window</text>
+  <text x="366" y="222" font-size="12" fill="#5c5c5c">copper and insulation</text>
+  <text x="366" y="236" font-size="12" fill="#5c5c5c">both show</text>
+  <line x1="424" y1="194" x2="424" y2="162" stroke="#5c5c5c" stroke-width="1"/><circle cx="424" cy="160" r="2.5" fill="#222222"/>
+</g>
+<g class="mxChk5">
+  <circle cx="386" cy="84" r="8" fill="#1a7f37"/><path d="M382.2 84.2 L384.9 86.9 L390 81.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="398" y="89" font-size="13" font-weight="700" fill="#222222">Insulation crimp</text>
+  <text x="398" y="104" font-size="12" fill="#5c5c5c">grips the insulation</text>
+  <line x1="476" y1="108" x2="476" y2="128" stroke="#5c5c5c" stroke-width="1"/><circle cx="476" cy="130" r="2.5" fill="#222222"/>
+</g>
+<g class="mxHous">
+  <g transform="translate(4 28)">
+    <use href="#mxs-floor"/><use href="#mxs-strands"/>
+    <path d="M292 169 H760 V195 H292 Z" fill="#2e7d32" stroke="#444444" stroke-width="1"/>
+    <use href="#mxs-box"/><use href="#mxs-closed"/>
+  </g>
+  <rect x="22" y="112" width="144" height="124" rx="5" fill="#f4f4f4" stroke="#444444" stroke-width="2"/>
+  <line x1="30" y1="179" x2="158" y2="179" stroke="#c9c9c9" stroke-width="1.2"/>
+  <path d="M30 142 L30 158 L42 150 Z" fill="#222222"/>
+  <path d="M22 88 L22 102 L33 95 Z" fill="#222222"/>
+  <text x="39" y="100" font-size="13" font-weight="700" fill="#222222">Pin 1: CAN-H (not green)</text>
+  <text x="22" y="254" font-size="13" font-weight="700" fill="#222222">Pin 2: CAN-L (green)</text>
+  <text x="60" y="154" font-size="12" fill="#5c5c5c">housing</text>
+</g>
+<g class="mxPush"><line x1="500" y1="124" x2="450" y2="124" stroke="#222222" stroke-width="2.4"/><path d="M440 124 L450 118.5 L450 129.5 Z" fill="#222222"/><text x="470" y="114" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">push</text></g>
+<g class="mxLatch"><circle cx="238" cy="95" r="8" fill="#1a7f37"/><path d="M234.2 95.2 L236.9 97.9 L242 92.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><text x="250" y="100" font-size="13" font-weight="700" fill="#1a7f37">Latched</text></g>
+<g class="mxTug"><line x1="440" y1="124" x2="490" y2="124" stroke="#222222" stroke-width="2.4"/><path d="M500 124 L490 129.5 L490 118.5 Z" fill="#222222"/><text x="470" y="114" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">tug</text></g>
+<g class="mxHold"><circle cx="330" cy="95" r="8" fill="#1a7f37"/><path d="M326.2 95.2 L328.9 97.9 L334 92.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><text x="342" y="100" font-size="13" font-weight="700" fill="#1a7f37">Holds</text></g>
+<rect class="mxs-hl1" x="16" y="268" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="mxs-hl2" x="16" y="302" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="mxs-hl3" x="16" y="336" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="mxs-hl4" x="16" y="370" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="mxs-hl5" x="16" y="404" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="mxs-hl6" x="16" y="438" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<circle cx="32" cy="283.5" r="10" fill="#446ce3"/>
+<text x="32" y="287.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="50" y="282" font-size="13" font-weight="700" fill="#222222">Strip 0.100–0.125 in (2.5–3.2 mm).</text>
+<text x="50" y="296" font-size="12" fill="#5c5c5c">22–24 AWG wire</text>
+<circle cx="32" cy="317.5" r="10" fill="#446ce3"/>
+<text x="32" y="321.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="50" y="316" font-size="13" font-weight="700" fill="#222222">Lay it in the Molex 63811-8700 tool.</text>
+<text x="50" y="330" font-size="12" fill="#5c5c5c">bare copper under the conductor crimp</text>
+<circle cx="32" cy="351.5" r="10" fill="#446ce3"/>
+<text x="32" y="355.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="50" y="350" font-size="13" font-weight="700" fill="#222222">Squeeze until the jaws close.</text>
+<text x="50" y="364" font-size="12" fill="#5c5c5c">the crimps fold around the wire</text>
+<circle cx="32" cy="385.5" r="10" fill="#446ce3"/>
+<text x="32" y="389.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="50" y="384" font-size="13" font-weight="700" fill="#222222">Check the crimp.</text>
+<text x="50" y="398" font-size="12" fill="#5c5c5c">copper only in it; nothing in the contact</text>
+<circle cx="32" cy="419.5" r="10" fill="#446ce3"/>
+<text x="32" y="423.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+<text x="50" y="418" font-size="13" font-weight="700" fill="#222222">Push it into the housing until it latches.</text>
+<text x="50" y="432" font-size="12" fill="#5c5c5c">CAN-H (not green) in pin 1</text>
+<circle cx="32" cy="453.5" r="10" fill="#446ce3"/>
+<text x="32" y="457.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+<text x="50" y="452" font-size="13" font-weight="700" fill="#222222">Tug each wire, one at a time.</text>
+<text x="50" y="466" font-size="12" fill="#5c5c5c">a good 24 AWG crimp holds 6.5 lb</text>
+<rect x="326" y="268" width="178" height="200" rx="6" fill="#f6f6f6" stroke="#d6d6d6"/>
+<text x="338" y="287" font-size="13" font-weight="700" fill="#222222">Which hole?</text>
+<text x="338" y="302" font-size="12" fill="#5c5c5c">housing, end view</text>
+<rect x="338" y="310" width="62" height="92" rx="5" fill="#f4f4f4" stroke="#444444" stroke-width="1.5"/>
+<rect x="354" y="316" width="38" height="38" rx="3" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+<rect x="354" y="358" width="38" height="38" rx="3" fill="#ffffff" stroke="#444444" stroke-width="1"/>
+<circle cx="373" cy="335" r="13" fill="#f2c200" stroke="#444444" stroke-width="1"/><circle cx="373" cy="335" r="5.5" fill="#b87333"/>
+<circle cx="373" cy="377" r="13" fill="#2e7d32" stroke="#444444" stroke-width="1"/><circle cx="373" cy="377" r="5.5" fill="#b87333"/>
+<path d="M341 328 L341 342 L351 335 Z" fill="#222222"/>
+<text x="410" y="332" font-size="13" font-weight="700" fill="#222222">Pin 1: CAN-H</text>
+<text x="410" y="346" font-size="12" fill="#5c5c5c">not green</text>
+<text x="410" y="374" font-size="13" font-weight="700" fill="#222222">Pin 2: CAN-L</text>
+<text x="410" y="388" font-size="12" fill="#5c5c5c">always green</text>
+<g font-size="12" fill="#222222">
+  <text x="338" y="420">The triangle marks pin 1.</text>
+  <text x="338" y="435">CAN-H: the bus's own color,</text>
+  <text x="338" y="449">never green. CAN-L: green.</text>
+  <text x="338" y="463" fill="#5c5c5c">Same on every plug.</text>
+</g>
+</svg>

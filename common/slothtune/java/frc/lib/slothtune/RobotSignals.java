@@ -27,6 +27,14 @@ public interface RobotSignals {
   boolean controllerDeadman();
 
   /**
+   * Whether a controller is plugged in on the deadman's port at all. With one controller plugged in it
+   * lands on port 0, where its right bumper is the robot code's own button, not the deadman.
+   */
+  default boolean deadmanControllerConnected() {
+    return true;
+  }
+
+  /**
    * The CAN bus: {@code {utilization 0-1, busOffCount, txFullCount, receiveErrors, transmitErrors}}.
    * The error numbers are the CAN controller's live error counters, not totals: above zero means
    * errors are happening now. Bus-off and TX-full are counts since power-on. Empty if unknown.
@@ -118,6 +126,11 @@ public interface RobotSignals {
       edu.wpi.first.hal.can.CANStatus s = edu.wpi.first.wpilibj.RobotController.getCANStatus();
       return new double[] {s.percentBusUtilization, s.busOffCount, s.txFullCount,
           s.receiveErrorCount, s.transmitErrorCount};
+    }
+
+    @Override
+    public boolean deadmanControllerConnected() {
+      return DriverStation.isJoystickConnected(deadmanPort);
     }
 
     @Override

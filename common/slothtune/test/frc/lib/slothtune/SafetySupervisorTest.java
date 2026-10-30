@@ -255,6 +255,52 @@ class SafetySupervisorTest {
   }
 
   @Test
+  void aMomentaryBatteryDipDoesNotStopATest() {
+    // A motor starting pulls the battery down for a loop or so: only a sag that lasts risks a brownout.
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    for (double t = 1.0; t < 3.0; t += 0.2) {
+      in.nowS = t;
+      in.busVolts = 6.5;
+      assertTrue(sup.check(in, steering, true).isOk(), "a dip at " + t);
+      in.nowS = t + 0.1;
+      assertTrue(sup.check(in, steering, true).isOk(), "still under the sustain time at " + in.nowS);
+      in.nowS = t + 0.12;
+      in.busVolts = 11.5;
+      assertTrue(sup.check(in, steering, true).isOk(), "recovered at " + in.nowS);
+    }
+  }
+
+  @Test
+  void aSustainedBatterySagStopsTheTest() {
+    Inputs in = ok(TestEnvironment.BLOCKS);
+    in.busVolts = 7.0;  // at the line, not under it
+    in.nowS = 3.0;
+    assertTrue(sup.check(in, steering, true).isOk());
+    in.nowS = 4.0;
+    assertTrue(sup.check(in, steering, true).isOk());
+    in.busVolts = 6.5;
+    in.nowS = 4.0;
+    assertTrue(sup.check(in, steering, true).isOk(), "not yet sustained");
+    in.nowS = 4.1;
+    assertTrue(sup.check(in, steering, true).isOk(), "not yet sustained");
+    in.nowS = 4.2;
+    Verdict v = sup.check(in, steering, true);
+    assertEquals(Action.ABORT, v.action());
+    assertTrue(v.reason().startsWith("Battery sagged to 6") && v.reason().endsWith("V. Brownout risk."), v.reason());
+  }
+
+  @Test
+  void theSimulatorNeverStopsForABatterySag() {
+    // The simulator's battery sags with its modeled load, however long: never a brownout stop there.
+    Inputs in = ok(TestEnvironment.SIM);
+    in.busVolts = 5.0;
+    for (double t = 0; t <= 2.0; t += 0.1) {
+      in.nowS = t;
+      assertTrue(sup.check(in, steering, true).isOk(), "at " + t);
+    }
+  }
+
+  @Test
   void captureNeedsNothingButNoFms() {
     Inputs in = new Inputs();
     in.enabled = true;

@@ -3,6 +3,7 @@
 In the team's robot repo, Sloth Tune lives in tools/slothtune and the robots (Peashooter, Black team,
 Examples) sit beside tools/. In Sloth Tune's own repo there are no robots: set SLOTHTUNE_ROBOT_REPO to a
 checkout of the robot repo and the tool, and its tests of the real robots, read the robots from there.
+The robots are in the team repo, NTX2027Offseason, on its StuartTesting branch.
 """
 import os
 import unittest
@@ -24,3 +25,17 @@ def skip_module_without_robots():
     """For a test module that loads a robot as it is imported."""
     if not HAVE_ROBOTS:
         raise unittest.SkipTest(WHY)
+
+
+def none_found(robots=None):
+    """What the GUI and the command line say when there are no robot projects where they look
+    (robots, else ROBOTS), and how to fix it: run from the team repo, or point
+    SLOTHTUNE_ROBOT_REPO at a checkout of it."""
+    robots = robots or ROBOTS
+    where = (f"SLOTHTUNE_ROBOT_REPO is {robots}, and there are no robot projects there"
+             if os.environ.get("SLOTHTUNE_ROBOT_REPO") else f"No robot projects found in {robots}")
+    return (f"{where} (a robot project is a folder with src/main/deploy/swerve). The robots are in the team "
+            "repo, NTX2027Offseason, on its StuartTesting branch. Run Sloth Tune from there, where nothing "
+            "needs setting, or point this copy at a checkout of it: "
+            'setx SLOTHTUNE_ROBOT_REPO "C:\\path\\to\\NTX2027Offseason", then open a new terminal and start '
+            "it again.")

@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 436" width="520" height="436" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="encoder_sync-title encoder_sync-desc">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <title id="encoder_sync-title">Encoder auto-sync: re-align when the module is still</title>
-<desc id="encoder_sync-desc">Animated. A dial with two needles on one steering module: the absolute encoder, the truth, and the steering motor's encoder, with a gray deadband wedge around the absolute needle. While the module steers, the motor encoder's needle slowly drifts away. The module stops with a small gap inside the deadband: it is left alone. It steers again and the gap grows past the deadband; when the module is still, the motor encoder snaps back onto the absolute encoder: re-aligned. A graph below traces the gap over time, with the still times shaded. Auto-sync fixes slow drift of the motor encoder during a match; the deadband stops it from fighting tiny disagreements.</desc>
+<desc id="encoder_sync-desc">Animated. Auto-sync is off by default in YAGSL and on our robots, so the motor encoder is copied from the absolute encoder once, at boot; this shows what it does when turned on. A dial with two needles on one steering module: the absolute encoder, the truth, and the steering motor's encoder, with a gray deadband wedge around the absolute needle. While the module steers, the motor encoder's needle slowly drifts away. The module stops with a small gap inside the deadband: it is left alone. It steers again and the gap grows past the deadband; when the module is still, the motor encoder snaps back onto the absolute encoder: re-aligned. A graph below traces the gap over time, with the still times shaded. Turned on, auto-sync fixes slow drift of the motor encoder during a match; the deadband, 3 degrees by default in YAGSL, stops it from fighting tiny disagreements.</desc>
 <style>
 .es-mod { transform-box: view-box; transform-origin: 112px 160px; transform: rotate(0deg); animation: es-mod 8s linear infinite; }
 @keyframes es-mod {
@@ -1452,8 +1452,8 @@
 }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
-<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Encoder auto-sync: re-align when the module is still</text>
-<text x="16" y="47" font-size="12" fill="#5c5c5c">When the module is still, the motor encoder is set back to the absolute encoder.</text>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Encoder auto-sync: re-align when the robot is still</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Off by default (YAGSL, and our robots): turned on, it works like this.</text>
 <circle cx="112" cy="160" r="64" fill="#ffffff" stroke="#444444" stroke-width="1.6"/>
 <g opacity="0.35"><g class="es-mod"><rect x="99" y="118" width="26" height="84" rx="6" fill="#333333"/><line x1="102" y1="140" x2="122" y2="140" stroke="#5a5a5a" stroke-width="1.5"/><line x1="102" y1="151" x2="122" y2="151" stroke="#5a5a5a" stroke-width="1.5"/><line x1="102" y1="162" x2="122" y2="162" stroke="#5a5a5a" stroke-width="1.5"/><line x1="102" y1="173" x2="122" y2="173" stroke="#5a5a5a" stroke-width="1.5"/><line x1="102" y1="184" x2="122" y2="184" stroke="#5a5a5a" stroke-width="1.5"/></g></g>
 <line x1="112" y1="103" x2="112" y2="96" stroke="#444444" stroke-width="1.2"/><line x1="140.5" y1="110.64" x2="144" y2="104.57" stroke="#444444" stroke-width="1.2"/><line x1="161.36" y1="131.5" x2="167.43" y2="128" stroke="#444444" stroke-width="1.2"/><line x1="169" y1="160" x2="176" y2="160" stroke="#444444" stroke-width="1.2"/><line x1="161.36" y1="188.5" x2="167.43" y2="192" stroke="#444444" stroke-width="1.2"/><line x1="140.5" y1="209.36" x2="144" y2="215.43" stroke="#444444" stroke-width="1.2"/><line x1="112" y1="217" x2="112" y2="224" stroke="#444444" stroke-width="1.2"/><line x1="83.5" y1="209.36" x2="80" y2="215.43" stroke="#444444" stroke-width="1.2"/><line x1="62.64" y1="188.5" x2="56.57" y2="192" stroke="#444444" stroke-width="1.2"/><line x1="55" y1="160" x2="48" y2="160" stroke="#444444" stroke-width="1.2"/><line x1="62.64" y1="131.5" x2="56.57" y2="128" stroke="#444444" stroke-width="1.2"/><line x1="83.5" y1="110.64" x2="80" y2="104.57" stroke="#444444" stroke-width="1.2"/>
@@ -1483,6 +1483,6 @@
 <text x="208.16" y="364" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">still</text><text x="374.96" y="364" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">still</text><text x="126.08" y="364" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">moving</text><text x="290.24" y="364" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">moving</text>
 <text x="500" y="364" font-size="12" fill="#5c5c5c" text-anchor="end">time →</text>
 <line x1="16" y1="380" x2="504" y2="380" stroke="#d6d6d6" stroke-width="1"/>
-<text x="16" y="400" font-size="13" fill="#222222">Fixes slow drift of the motor encoder during a match.</text>
-<text x="16" y="420" font-size="13" fill="#222222">The deadband stops it from fighting tiny disagreements.</text>
+<text x="16" y="400" font-size="13" fill="#222222">Off, the motor encoder is copied from the absolute once, at boot.</text>
+<text x="16" y="420" font-size="13" fill="#222222">On, it fixes slow drift; the deadband (YAGSL: 3°) ignores tiny gaps.</text>
 </svg>

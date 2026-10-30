@@ -192,7 +192,7 @@ def from_log(series, wiring_map=None):
         return {"rows": [], "proposed": {}, "channels": 0, "source": "log", "findings": [{
             "level": "error", "title": "This log has no PDH or motor currents",
             "why": "It needs AdvantageKit's PowerDistribution log and the motor guard's Motors/<name>/Amps "
-                   "- a log from this branch's robot code."}]}
+                   "- a log from robot code with Sloth Tune in it (the team repo's StuartTesting branch)."}]}
     enabled = series.get("/DriverStation/Enabled") or []
     t0 = max(pdh[0][0], min(v[0][0] for v in motors.values()))
     t1 = pdh[-1][0]

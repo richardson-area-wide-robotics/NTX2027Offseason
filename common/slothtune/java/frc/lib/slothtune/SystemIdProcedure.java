@@ -139,18 +139,7 @@ final class SystemIdProcedure implements Procedure {
   private int steadyN;
   private int movingN;
   private double movingSign;
-  /**
-   * The frozen-reading check: the code's position against its SPARK's own, their ratio learned as it
-   * moves; the smallest change the code's reading has made; when it last changed, and where the
-   * SPARK's encoder was then.
-   */
-  private double pFirst = Double.NaN;
-  private double sFirst = Double.NaN;
-  private double sPerP = Double.NaN;
-  private double pStep = Double.POSITIVE_INFINITY;
-  private double lastP = Double.NaN;
-  private double frozenSince = Double.NaN;
-  private double sAtFreeze = Double.NaN;
+  private final FrozenReading frozen = new FrozenReading();
   /** The hold map: the volts asked at each place moving up, and down, at the first sweeps' speed. */
   private final double[] mapUp = new double[BINS];
   private final double[] mapDn = new double[BINS];
@@ -226,8 +215,9 @@ final class SystemIdProcedure implements Procedure {
     if (!(SystemStepProcedure.cap(ctx.args.get("vmax", 0, 0, 1e6), s.maxVelocity) > 0)) {
       return "Give the test a top speed (vmax): the Systems tab works it out from the mechanism's physics.";
     }
-    if (s.kind.positional && !s.hasLimits()) {
-      return "Set the limits of " + s.name + " first: move it by hand to both ends (Systems tab, Limits).";
+    String notReady = s.notReady();  // limits, then homed this boot
+    if (notReady != null) {
+      return notReady;
     }
     List<MotorGuard.Motor> ms = motors(ctx, s);
     if (ms.isEmpty()) {
@@ -363,13 +353,7 @@ final class SystemIdProcedure implements Procedure {
     uDn = Double.NaN;
     guess = uHold;
     holdKey = NO_KEY;
-    pFirst = Double.NaN;
-    sFirst = Double.NaN;
-    sPerP = Double.NaN;
-    pStep = Double.POSITIVE_INFINITY;
-    lastP = Double.NaN;
-    frozenSince = Double.NaN;
-    sAtFreeze = Double.NaN;
+    frozen.reset();
     brakeV = Double.NaN;
     movingN = 0;
     // Toward the middle first: resting on a stop, there is nowhere to go the other way.
@@ -552,41 +536,77 @@ final class SystemIdProcedure implements Procedure {
     return h;
   }
 
+  /** The frozen-reading check ({@link FrozenReading}) against the first motor it drives. */
+  private void checkFrozen(double t, double p) {
+    String why = frozen.check(sys, max - min, t, p, driven.isEmpty() ? Double.NaN : driven.get(0).feedbackPosition());
+    if (why != null) {
+      cut = why;
+    }
+  }
+
   /**
    * The code's position hasn't changed at all for {@link #FROZEN_S} while its SPARK's own encoder
    * moved more than a percent of the travel (or three of the reading's own smallest steps, whichever
    * is more): its sensor, or that sensor's CAN messages, dropped out, and the run would push on blind.
-   * Their ratio is learned as it moves, so a reading in other units, or coarser, never trips it.
+   * Their ratio is learned as it moves, so a reading in other units, or coarser, never trips it. Here
+   * and in the closed-loop test ({@link SystemStepProcedure}).
    */
-  private void checkFrozen(double t, double p) {
-    double s = driven.isEmpty() ? Double.NaN : driven.get(0).feedbackPosition();
-    if (!Double.isFinite(s)) {
-      return;  // no second reading to compare with
+  static final class FrozenReading {
+    /**
+     * The first readings of each, and their ratio once it has moved; the smallest change the code's
+     * reading has made; when it last changed, and where the SPARK's encoder was then.
+     */
+    private double pFirst = Double.NaN;
+    private double sFirst = Double.NaN;
+    private double sPerP = Double.NaN;
+    private double pStep = Double.POSITIVE_INFINITY;
+    private double lastP = Double.NaN;
+    private double frozenSince = Double.NaN;
+    private double sAtFreeze = Double.NaN;
+
+    void reset() {
+      pFirst = Double.NaN;
+      sFirst = Double.NaN;
+      sPerP = Double.NaN;
+      pStep = Double.POSITIVE_INFINITY;
+      lastP = Double.NaN;
+      frozenSince = Double.NaN;
+      sAtFreeze = Double.NaN;
     }
-    double range = max - min;
-    if (Double.isNaN(pFirst)) {
-      pFirst = p;
-      sFirst = s;
-    }
-    if (Math.abs(p - pFirst) > 0.05 * range && s != sFirst) {
-      sPerP = (s - sFirst) / (p - pFirst);
-    }
-    if (Double.isNaN(lastP) || p != lastP) {
-      if (!Double.isNaN(lastP)) {
-        pStep = Math.min(pStep, Math.abs(p - lastP));
+
+    /**
+     * One loop: {@code p} the code's position, {@code s} its SPARK's own (NaN when there is none to
+     * compare with), {@code range} its travel. The reason to stop, or null.
+     */
+    String check(TunableSystem sys, double range, double t, double p, double s) {
+      if (!Double.isFinite(s)) {
+        return null;  // no second reading to compare with
       }
-      frozenSince = t;
-      sAtFreeze = s;
-    }
-    lastP = p;
-    if (Double.isFinite(sPerP) && sPerP != 0 && t - frozenSince >= FROZEN_S) {
-      double moved = Math.abs((s - sAtFreeze) / sPerP);
-      double enough = Math.max(0.01 * range, Double.isFinite(pStep) ? 3 * pStep : 0);
-      if (moved > enough) {
-        cut = String.format(Locale.ROOT, "%s's position reading stopped changing for %.1f s while its motor's encoder "
-            + "moved %.3f %s: its sensor, or that sensor's CAN messages, dropped out. Stopped.", sys.name,
-            t - frozenSince, sys.shown(moved), sys.shownUnits());
+      if (Double.isNaN(pFirst)) {
+        pFirst = p;
+        sFirst = s;
       }
+      if (Math.abs(p - pFirst) > 0.05 * range && s != sFirst) {
+        sPerP = (s - sFirst) / (p - pFirst);
+      }
+      if (Double.isNaN(lastP) || p != lastP) {
+        if (!Double.isNaN(lastP)) {
+          pStep = Math.min(pStep, Math.abs(p - lastP));
+        }
+        frozenSince = t;
+        sAtFreeze = s;
+      }
+      lastP = p;
+      if (Double.isFinite(sPerP) && sPerP != 0 && t - frozenSince >= FROZEN_S) {
+        double moved = Math.abs((s - sAtFreeze) / sPerP);
+        double enough = Math.max(0.01 * range, Double.isFinite(pStep) ? 3 * pStep : 0);
+        if (moved > enough) {
+          return String.format(Locale.ROOT, "%s's position reading stopped changing for %.1f s while its motor's "
+              + "encoder moved %.3f %s: its sensor, or that sensor's CAN messages, dropped out. Stopped.", sys.name,
+              t - frozenSince, sys.shown(moved), sys.shownUnits());
+        }
+      }
+      return null;
     }
   }
 

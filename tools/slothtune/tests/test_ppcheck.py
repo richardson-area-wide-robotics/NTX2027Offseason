@@ -53,7 +53,8 @@ class PlantedTest(unittest.TestCase):
 
     def edit_json(self, rel, fn):
         p = os.path.join(self.pp, rel)
-        d = json.load(open(p, encoding="utf-8"))
+        with open(p, encoding="utf-8") as fh:
+            d = json.load(fh)
         fn(d)
         with open(p, "w", encoding="utf-8") as fh:
             json.dump(d, fh, indent=2)
@@ -61,7 +62,8 @@ class PlantedTest(unittest.TestCase):
     @needs_robots
     def test_the_fix_makes_the_model_match_and_touches_nothing_else(self):
         p = Y.Project(self.dir)
-        before = open(P.settings_path(p), encoding="utf-8").read()
+        with open(P.settings_path(p), encoding="utf-8") as fh:
+            before = fh.read()
         path, text = P.fixed_text(p, P.check(p)["fixes"])
         with open(path, "w", encoding="utf-8", newline="") as fh:
             fh.write(text)
@@ -76,9 +78,11 @@ class PlantedTest(unittest.TestCase):
     @needs_robots
     def test_a_weighed_and_measured_robot_is_compared_and_fixed(self):
         tune = os.path.join(self.dir, "src", "main", "deploy", "swerve", "slothtune.json")
-        text = open(tune, encoding="utf-8").read()
+        with open(tune, encoding="utf-8") as fh:
+            text = fh.read()
         text = Y.json_set(Y.json_set(text, ("robotMassKg",), 52.5), ("robotMoiKgM2",), 5.1)
-        open(tune, "w", encoding="utf-8").write(text)
+        with open(tune, "w", encoding="utf-8") as fh:
+            fh.write(text)
         p = Y.Project(self.dir)
         rows = {x["key"]: x for x in P.check(p)["rows"]}
         self.assertEqual((rows["robotMass"]["status"], rows["robotMass"]["code"]), ("differs", 52.5))
@@ -90,10 +94,12 @@ class PlantedTest(unittest.TestCase):
             d["command"]["data"]["commands"].append({"type": "path", "data": {"pathName": "gone path"}})
         self.edit_json("autos/Hub unload.auto", missing_path)
         robot = os.path.join(self.dir, "src", "main", "java", "frc", "robot", "Robot.java")
-        src = open(robot, encoding="utf-8").read()
+        with open(robot, encoding="utf-8") as fh:
+            src = fh.read()
         src = src.replace('NamedCommands.registerCommand("Shoot Hub"', 'NamedCommands.registerCommand("Shoot B", shooter.shootA());\n    NamedCommands.registerCommand("Shoot Hub"')
         src = src.replace('AutoBuilder.buildAuto("W auto")', 'AutoBuilder.buildAuto("W Auto")')
-        open(robot, "w", encoding="utf-8").write(src)
+        with open(robot, "w", encoding="utf-8") as fh:
+            fh.write(src)
         t = titles(P.check(Y.Project(self.dir)))
         self.assertIn("Auto 'Hub unload' uses path 'gone path', which doesn't exist", t)
         self.assertNotIn("'Shoot B'", t.replace("Named command 'Shoot B' is registered", ""), "registered now")

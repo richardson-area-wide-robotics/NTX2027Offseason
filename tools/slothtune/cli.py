@@ -28,7 +28,7 @@ import sys
 import time
 
 from . import (advisor, akit, analysis, contract as C, diagnose, explain, logsummary, monitor, motorinv,
-               netcheck, pdhports, plant, ppcheck, predict, rehearse, runs, units as U, wiring, yagslcfg)
+               netcheck, pdhports, plant, ppcheck, predict, rehearse, robotrepo, runs, units as U, wiring, yagslcfg)
 
 REPO = runs.REPO
 MAX_STEP_RATIO = 2.0
@@ -106,6 +106,15 @@ def project_dirs():
     return yagslcfg.find_projects(runs.ROBOTS)
 
 
+def all_projects():
+    """Every robot project, for a command run without --project; none at all is an error that says
+    how to fix it, not a command that quietly checks nothing."""
+    dirs = project_dirs()
+    if not dirs:
+        raise CliError(robotrepo.none_found(runs.ROBOTS), code="NO_PROJECT")
+    return [yagslcfg.Project(d) for d in dirs]
+
+
 class CliError(Exception):
     """A command that can't go on: becomes one JSON object with a code under --json."""
 
@@ -122,6 +131,8 @@ def resolve_project(name):
             return yagslcfg.Project(d)
     if os.path.isdir(name):
         return yagslcfg.Project(name)
+    if not project_dirs():
+        raise CliError(robotrepo.none_found(runs.ROBOTS), code="NO_PROJECT")
     raise CliError(f"No robot project called {name!r}. Known: "
                    + ", ".join(os.path.basename(d) for d in project_dirs()), code="NO_PROJECT")
 
@@ -183,7 +194,7 @@ def current_limits(project):
 
 
 def cmd_lint(args, out):
-    projects = [resolve_project(args.project)] if args.project else [yagslcfg.Project(d) for d in project_dirs()]
+    projects = [resolve_project(args.project)] if args.project else all_projects()
     result = {}
     for p in projects:
         findings = yagslcfg.lint(p)
@@ -524,7 +535,7 @@ def cmd_design(args, out):
 
 def cmd_ppcheck(args, out):
     """Does PathPlanner describe the same robot as the code? Exit 1 on any error, for CI."""
-    projects = [resolve_project(args.project)] if args.project else [yagslcfg.Project(d) for d in project_dirs()]
+    projects = [resolve_project(args.project)] if args.project else all_projects()
     errors = 0
     results = {}
     for p in projects:
@@ -543,7 +554,8 @@ def cmd_ppcheck(args, out):
         errors += sum(1 for f in r["findings"] if f["level"] == "error")
         if args.fix and r["fixes"]:
             path, new = ppcheck.fixed_text(p, r["fixes"])
-            old = open(path, encoding="utf-8").read()
+            with open(path, encoding="utf-8") as fh:
+                old = fh.read()
             out.say(yagslcfg.diff(old, new, os.path.relpath(path, p.path).replace(os.sep, "/")))
             if args.yes:
                 with open(path, "w", encoding="utf-8", newline="\n") as fh:
@@ -597,7 +609,7 @@ def cmd_logsummary(args, out):
 
 
 def cmd_layout(args, out):
-    projects = [resolve_project(args.project)] if args.project else [yagslcfg.Project(d) for d in project_dirs()]
+    projects = [resolve_project(args.project)] if args.project else all_projects()
     paths = [akit.write_layout(p, args.out_dir) for p in projects]
     out.put(layouts=paths)
     for p in paths:
@@ -1102,7 +1114,10 @@ def cmd_netcheck(args, out):
 
 def cmd_brief(args, out):
     path = os.path.join(REPO, "docs", "AGENT_TUNING.md")
-    text = open(path, encoding="utf-8").read() if os.path.exists(path) else "docs/AGENT_TUNING.md is missing."
+    text = "docs/AGENT_TUNING.md is missing."
+    if os.path.exists(path):
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
     out.put(brief=text)
     out.say(text)
     return out.done()

@@ -480,6 +480,67 @@ def _f(level, fid, title, why, fix=None, **evidence):
     return d
 
 
+def _braced(src, i):
+    """The text between the brace at src[i] and its partner (comments and strings not skipped:
+    enough for a method body)."""
+    depth = 0
+    for j in range(i, len(src)):
+        depth += {"{": 1, "}": -1}.get(src[j], 0)
+        if depth == 0:
+            return src[i + 1:j]
+    return src[i + 1:]
+
+
+def first_auto_findings(p):
+    """Why the first auto after a boot fails and the second works, as far as the code and the autos
+    show it. PathPlanner's docs: the first path command after a boot loads every class it uses and
+    runs much slower than later ones, so build the auto at startup and run its warmup command. An auto
+    that doesn't reset odometry starts from wherever odometry is, which after a boot is the code's
+    starting pose - and pushing the robot back by hand carries odometry with it, so a second run
+    looks fine."""
+    java = p.java or {}
+    code = "\n".join(java.values())
+    if not re.search(r"\bAutoBuilder\b|\bPathPlannerAuto\b", code):
+        return []
+    F = []
+    for rel, src in sorted(java.items()):
+        for m in re.finditer(r"\bvoid\s+autonomousInit\s*\(\s*\)\s*\{", src):
+            if re.search(r"AutoBuilder\s*\.\s*(buildAuto|buildAutoChooser)\s*\(|new\s+PathPlannerAuto\s*\(",
+                         _braced(src, m.end() - 1)):
+                F.append(_f("warn", "auto_built_late", f"{rel} builds its auto when auto starts",
+                            "Building an auto reads its .auto and .path files, and the first time after a "
+                            "boot it also loads every PathPlanner class, so the robot loop stalls just as "
+                            "auto begins: the first auto after a boot misbehaves and the second works.",
+                            {"kind": "manual", "file": rel,
+                             "instruction": "Build it once in the Robot constructor (AutoBuilder.buildAuto(...) "
+                                            "or an auto chooser) and only schedule it in autonomousInit."}))
+    if not re.search(r"\bwarmupCommand\s*\(", code):
+        F.append(_f("warn", "pathplanner_no_warmup", "The robot code never runs PathPlanner's warmup",
+                    "PathPlanner's docs: the first path command after a boot runs much slower than later "
+                    "ones, because every class it uses has to load. Its warmup command follows a made-up "
+                    "path in the background at startup and never drives the robot.",
+                    {"kind": "manual",
+                     "instruction": "In the Robot constructor: CommandScheduler.getInstance().schedule("
+                                    "FollowPathCommand.warmupCommand()); and PathfindingCommand.warmupCommand() "
+                                    "too if the code pathfinds."}))
+    autos = os.path.join(p.path, "src", "main", "deploy", "pathplanner", "autos")
+    for f in sorted(glob.glob(os.path.join(autos, "*.auto"))):
+        try:
+            with open(f, encoding="utf-8") as fh:
+                reset = json.load(fh).get("resetOdom", True)
+        except (OSError, ValueError):
+            continue
+        if reset is False:
+            name = os.path.splitext(os.path.basename(f))[0]
+            F.append(_f("warn", "auto_no_reset_odom", f"The auto \"{name}\" doesn't reset odometry to its start",
+                        "It starts from wherever odometry thinks the robot is. Right after a boot that is the "
+                        "code's starting pose, not where the robot stands, so the first run drives somewhere "
+                        "else; pushing the robot back by hand carries odometry with it, so a second run can "
+                        "look fine.",
+                        {"kind": "pathplanner"}, auto=name))
+    return F
+
+
 def lint(project):
     p = project
     F = []
@@ -772,6 +833,7 @@ def lint(project):
             F.append(_f(lvl, "pathplanner_defaults", title, why, fix))
         else:
             F.append(_f(lvl, "pathplanner_mismatch", title, why, fix))
+    F.extend(first_auto_findings(p))
 
     # ---- library versions and the 2027 road
     yv = p.vendordeps.get("YAGSL", "")

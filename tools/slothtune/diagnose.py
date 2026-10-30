@@ -477,6 +477,49 @@ SYMPTOMS = [
         ],
     },
     {
+        "id": "auto_first_run",
+        "title": "The first auto after a boot fails; the second works",
+        "looks_like": "Right after the robot is turned on, the auto stalls, lurches or goes the wrong "
+                      "way. Put the robot back and run it again, and it works every time after.",
+        "checks": [
+            check("Does the robot code build the auto at startup, not when auto starts?",
+                  "Config tab, or look at autonomousInit: it should only schedule the auto.", LAPTOP,
+                  "Building an auto in autonomousInit reads its files and, the first time after a boot, "
+                  "loads every PathPlanner class, so the robot loop stalls just as auto begins.",
+                  "Build the auto once in the Robot constructor (AutoBuilder.buildAuto or an auto "
+                  "chooser) and only schedule it in autonomousInit. Redeploy.", None,
+                  {"lint": ["auto_built_late"]}),
+            check("Does the robot code run PathPlanner's warmup at startup?",
+                  "Look for FollowPathCommand.warmupCommand() in the Robot constructor.", LAPTOP,
+                  "PathPlanner's docs: the first path command after a boot runs much slower than later "
+                  "ones, while every class it uses loads.",
+                  "Add CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand()); to the "
+                  "Robot constructor (and PathfindingCommand.warmupCommand() if you pathfind). It never "
+                  "drives the robot. Redeploy.", None,
+                  {"lint": ["pathplanner_no_warmup"]}),
+            check("Does every auto reset odometry to its start pose?",
+                  "In PathPlanner, open the auto: Reset Odom is on.", LAPTOP,
+                  "The auto starts from wherever odometry thinks the robot is. After a boot that is the "
+                  "code's starting pose, not where the robot stands; pushing it back by hand moves "
+                  "odometry with it, so the second run looks right.",
+                  "Turn Reset Odom on for the auto, or set the pose from vision before auto starts.", None,
+                  {"lint": ["auto_no_reset_odom"]}),
+            check("Is the Driver Station log free of loop overruns as the first auto starts?",
+                  "Driver Station log viewer: look for 'Loop time of 0.02s overrun' in the first second "
+                  "of auto. Its timing list names the slow part.", DISABLED,
+                  "Something else holds up the loop the first time: a log, a camera or a motor being "
+                  "set up when auto starts.",
+                  "Move that work to startup, so it is done before the match.", None),
+            check("Was the robot kept still after it was turned on, until its gyro finished calibrating?",
+                  "Both robots' navX calibrates its gyro as it powers up and must be held still while it "
+                  "does: about 15 s on an original navX-MXP, about 1 s on a navX2 (Kauai Labs). Next "
+                  "year's Canandgyro takes about 7 s (docs/GYRO_CANANDGYRO.md).", DISABLED,
+                  "A gyro moved while it calibrates drifts more, so the heading wanders through the auto.",
+                  "Turn the robot on where it sits and touch nothing for 15 seconds. Then check its drift: "
+                  "Calibrate tab, 4. Gyro.", None),
+        ],
+    },
+    {
         "id": "twitchy",
         "title": "Driving is twitchy, hard to control slowly",
         "looks_like": "Small stick movements give big speed changes; hard to line up precisely.",
@@ -855,6 +898,7 @@ GROUPS = {
     "wheel_slip": (["accuracy"], ["drive", "settings", "autos"]),
     "brownout": (["power"], ["power", "can", "drive"]),
     "auto_inaccurate": (["accuracy"], ["autos", "drive", "settings"]),
+    "auto_first_run": (["accuracy"], ["autos", "controller"]),
     "twitchy": (["shaky"], ["joysticks", "settings"]),
     "pod_jitter": (["shaky"], ["steer", "joysticks"]),
     "gear_ratio": (["accuracy"], ["drive", "steer", "settings"]),
@@ -886,6 +930,9 @@ SETTLED_BY_CONFIG = {
     ("robot_slow", "Is the max speed handed to YAGSL"),
     ("brownout", "Is four times the drive current limit sensible"),
     ("auto_inaccurate", "Does PathPlanner's robot config match YAGSL's"),
+    ("auto_first_run", "Does the robot code build the auto at startup"),
+    ("auto_first_run", "Does the robot code run PathPlanner's warmup"),
+    ("auto_first_run", "Does every auto reset odometry"),
     ("twitchy", "Is the max speed handed to YAGSL realistic"),
     ("twitchy", "Is the drive kP gentle"),
 }

@@ -191,6 +191,11 @@ final class HoldProcedure implements Procedure {
   public void end(TestContext ctx, boolean aborted) {
     try {
       hold.off();
+    } catch (RuntimeException e) {
+      // The team's own setter threw: its motor to zero directly, so a broken stop never leaves it pushing.
+      ctx.note("Stopping " + hold.motorName + "'s hold raised " + e + ": "
+          + SystemStepProcedure.zeroOutput(java.util.List.of(hold.motor)));
+      throw e;
     } finally {
       if (owner != null) {
         owner.release();

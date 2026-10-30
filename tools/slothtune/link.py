@@ -30,7 +30,8 @@ except ImportError:  # pragma: no cover - exercised on machines without pyntcore
 
 
 NT_PORT = 5810
-INSTALL_HINT = "pyntcore is not installed. Run:  py -3.12 -m pip install pyntcore"
+INSTALL_HINT = ("pyntcore is not installed. From the repository folder, run:  "
+                "py -3.12 -m pip install -r tools/requirements.txt")
 
 
 def _call(obj, camel, *args):
@@ -166,7 +167,7 @@ class RobotLink:
     def _topic(self, kind, name):
         getter = {"double": "getDoubleTopic", "int": "getIntegerTopic", "bool": "getBooleanTopic",
                   "str": "getStringTopic", "double[]": "getDoubleArrayTopic",
-                  "str[]": "getStringArrayTopic"}[kind]
+                  "str[]": "getStringArrayTopic", "bool[]": "getBooleanArrayTopic"}[kind]
         return _call(self.inst, getter, name)
 
     def _pub(self, kind, name):
@@ -183,7 +184,7 @@ class RobotLink:
 
     def get(self, kind, name, default=None):
         defaults = {"double": float("nan"), "int": 0, "bool": False, "str": "", "double[]": [],
-                    "str[]": []}
+                    "str[]": [], "bool[]": []}
         d = defaults[kind] if default is None else default
         return _call(self._sub(kind, name, d), "get")
 
@@ -578,12 +579,15 @@ class RobotLink:
         """Every mechanism the robot code registered (TunableSystem), with its live state, limits
         and gains: ``[{"index", "name", "kind", "units", "motors", "position", "velocity", "goal",
         "min", "max", "max_velocity", "max_accel", "limits_from", "gains": {name: {value, min, max}},
-        "control"}]``: ``control`` is the mode its code runs its SPARK in ("Position", "Velocity", ...)."""
+        "control", "homed"}]``: ``control`` is the mode its code runs its SPARK in ("Position", "Velocity", ...);
+        ``homed`` whether its limits fit this boot's readings (robot code from before homing says nothing,
+        read as homed: that code doesn't ask)."""
         names = list(self.get("str[]", C.SYSTEMS_NAMES))
         col = lambda t: list(self.get("str[]", t))
         num = lambda t: list(self.get("double[]", t))
         kinds, units, motors, frm = col(C.SYSTEMS_KINDS), col(C.SYSTEMS_UNITS), col(C.SYSTEMS_MOTORS), col(C.SYSTEMS_LIMITS_FROM)
         control = col(C.SYSTEMS_CONTROL)
+        homed = list(self.get("bool[]", C.SYSTEMS_HOMED))
         pos, vel, goal, lim = num(C.SYSTEMS_POSITION), num(C.SYSTEMS_VELOCITY), num(C.SYSTEMS_GOAL), num(C.SYSTEMS_LIMITS)
         at = lambda xs, i, d=None: xs[i] if i < len(xs) else d
         gains = {}
@@ -600,7 +604,7 @@ class RobotLink:
                         "position": at(pos, i), "velocity": at(vel, i), "goal": at(goal, i),
                         "min": at(lim, 4 * i), "max": at(lim, 4 * i + 1), "max_velocity": at(lim, 4 * i + 2),
                         "max_accel": at(lim, 4 * i + 3), "limits_from": at(frm, i, ""), "gains": gains.get(n, {}),
-                        "control": at(control, i, "")})
+                        "control": at(control, i, ""), "homed": bool(at(homed, i, True))})
         return out
 
     def set_system_gains(self, values, timeout=3.0):

@@ -75,6 +75,19 @@ public final class TunableSystem {
   double maxAccel = Double.NaN;
   /** Where the limits came from: "slothtune.json", or "moved by hand" this session. */
   String limitsFrom = "";
+  /** Its position reading survives a power cycle (an absolute encoder), so it never needs homing. */
+  boolean absolute;
+  /**
+   * Whether its position this boot is known to line up with its limits. A relative encoder starts
+   * wherever the mechanism was at power-on: after a battery swap with it resting somewhere else, the
+   * saved limits would sit in the wrong place, and so would the past-a-limit stop that uses them.
+   * True for an absolute sensor, limits moved by hand this boot, or a person homing it
+   * ({@code system_home}). {@link SlothTune#system} starts a real robot's mechanisms unhomed (not
+   * the simulator's); one made directly, in the tests, starts homed.
+   */
+  volatile boolean homed = true;
+  /** How far homing shifted its saved limits this boot, in its units; 0 when it hasn't. */
+  volatile double homeShift;
   /** The goal last set, for the laptop's live view; NaN until one is. */
   volatile double lastGoal = Double.NaN;
   /** Gains saved in slothtune.json (the Systems tab's Save), applied as each is declared. */
@@ -125,6 +138,16 @@ public final class TunableSystem {
   /** What stopping means for it: a pivot holds where it is, a flywheel coasts down. */
   public TunableSystem stop(Runnable stop) {
     this.stop = stop;
+    return this;
+  }
+
+  /**
+   * Its position reading is absolute: it reads the same place after a power cycle (a through-bore
+   * or other absolute encoder, a string potentiometer). It then never needs homing before a test.
+   */
+  public TunableSystem absolute() {
+    absolute = true;
+    homed = true;
     return this;
   }
 
@@ -265,15 +288,51 @@ public final class TunableSystem {
     }, min, max);
   }
 
-  /** Limits from a person moving it by hand, or from slothtune.json. */
+  /**
+   * Limits from a person moving it by hand, or from slothtune.json. Moved by hand, they are in this
+   * boot's encoder readings, so it counts as homed.
+   */
   void setLimits(double lo, double hi, String from) {
     min = Math.min(lo, hi);
     max = Math.max(lo, hi);
     limitsFrom = from;
+    if ("moved by hand".equals(from)) {
+      homed = true;
+      homeShift = 0;
+    }
   }
 
   boolean hasLimits() {
     return Double.isFinite(min) && Double.isFinite(max) && max > min;
+  }
+
+  /** Why a test may not move it yet, or null: a pivot or elevator needs its limits, then homing. */
+  String notReady() {
+    if (!kind.positional) {
+      return null;
+    }
+    if (!hasLimits()) {
+      return "Set the limits of " + name + " first: move it by hand to both ends (Systems tab, Limits).";
+    }
+    if (!homed) {
+      return "Home " + name + " first: its encoder starts wherever it was when the robot was turned on, so "
+          + "its saved limits may be in the wrong place. Move it by hand to one of its ends and press Home it "
+          + "(Systems tab, Limits), or set its limits again.";
+    }
+    return null;
+  }
+
+  /**
+   * Homed: it sits at its lower ({@code atMax} false) or upper end now, reading {@code reading}. The
+   * saved limits move by the difference, into this boot's encoder readings; the encoder itself, and
+   * the team's own code, are left alone.
+   */
+  void home(boolean atMax, double reading) {
+    double shift = reading - (atMax ? max : min);
+    min += shift;
+    max += shift;
+    homeShift += shift;
+    homed = true;
   }
 
   /**

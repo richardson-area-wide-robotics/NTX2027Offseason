@@ -834,7 +834,9 @@ def _system_plan(name, ctx, since, pmark):
                          go=dict(go, action="limits"),
                          how=["Robot disabled. Set limits by hand: its motors coast so it moves freely.",
                               "Move it slowly to its bottom (stowed) end, then all the way to its top end. Mind fingers at the hard stops.",
-                              "Then press Done, and save the limits."]))
+                              "Then press Done, and save the limits.",
+                              "On a relative encoder, home it after every power-off before a test: robot disabled, hold it "
+                              "still at one end and press Home it. One read by an absolute encoder never needs it."]))
         st = _mark_status(pmark("direction"), "it reads backwards: invert its encoder in the code first")
         jobs.append(_job("direction", "Toward its top end, its reading goes up", *(st or (
             ("todo" if moved else "later"), "Robot disabled: move it toward its top end, with its live reading in this step.")),

@@ -178,7 +178,8 @@ class SaveTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             path = netcheck.save(result, "Black team", 9990, folder=d)
             self.assertTrue(os.path.basename(path).startswith("netcheck-black-team-"))
-            doc = json.load(open(path, encoding="utf-8"))
+            with open(path, encoding="utf-8") as fh:
+                doc = json.load(fh)
         self.assertEqual((doc["robot"], doc["team"], doc["checks"][0]["id"]), ("Black team", 9990, "radio-link"))
         self.assertNotIn("hunter22", doc["facts"]["radio_page"])
         self.assertNotIn("abc123", doc["facts"]["radio_page"])

@@ -202,6 +202,7 @@ public class TwoJointArm extends SubsystemBase {
   /** The Systems tab: each joint on its own, in degrees, while the other holds still. */
   public void tuneWith(SlothTune tune) {
     tune.system("Arm shoulder", TunableSystem.Kind.PIVOT)
+        .absolute()  // its angle is the SPARK's absolute encoder: it never needs homing
         .units("degrees")
         .position(shoulderAngle::getPosition)
         .velocity(shoulderAngle::getVelocity)
@@ -211,6 +212,7 @@ public class TwoJointArm extends SubsystemBase {
         .motors("Arm shoulder", "Arm shoulder follower")
         .sparkGains(shoulder);
     tune.system("Arm elbow", TunableSystem.Kind.PIVOT)
+        .absolute()  // its angle is the SPARK's absolute encoder: it never needs homing
         .units("degrees")
         .position(elbowAngle::getPosition)
         .velocity(elbowAngle::getVelocity)

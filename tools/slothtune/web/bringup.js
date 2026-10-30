@@ -34,7 +34,7 @@ const Bringup = (() => {
             <label class="btn" data-tip="br.csv">Import a spreadsheet (CSV)…<input type="file" id="br-csv" accept=".csv,text/csv" hidden></label></div></div>
         ${HowTo.steps({ need: "The design team's list of every device: CAN IDs, PDH ports and breakers, roboRIO ports, gear ratios, which way is positive, and which motors share a shaft.",
           steps: ["No file yet: <b>Draft from the code</b> writes one from what the code says; or <b>Import a spreadsheet</b> saved as CSV (one row per motor or sensor).",
-            "Go through it with the mechanical and electrical leads: correct anything the code got wrong, fill in breakers, ratios and the positive direction.",
+            "Go through it with the mechanical and electrical leads: correct anything the code got wrong, fill in breakers, ratios and the positive direction (<b>Edit motors</b>).",
             "Save it. It lives with the code (deployed with it), in YAGSL's style: each device is <span class=\"mono\">{\"type\", \"id\", \"canbus\"}</span>."],
           good: "nothing to fix in the file itself." })}
         <div id="br-design-body"><p class="hint">Reading the design file…</p></div>
@@ -116,9 +116,12 @@ const Bringup = (() => {
       : `<p class="small"><span class="mono">${esc(data.path)}</span> · ${esc(d.controller || "")} ·
            ${(d.canBuses || []).map(b => `${swatch(b.color)}${b.label ? `<b>${esc(b.label)}</b> ` : ""}${esc(b.name)} (${esc(b.color)}/green)`).join(" · ")}
            <button class="btn small" id="br-buses" data-tip="br.buses">Edit buses…</button> ·
-           ${(d.motors || []).length} motors · ${(d.sensors || []).length} sensors</p>${findings(data.check)}`;
+           ${(d.motors || []).length} motors <button class="btn small" id="br-motors-edit" data-tip="br.motors-edit">Edit motors…</button> ·
+           ${(d.sensors || []).length} sensors</p>${findings(data.check)}`;
     const eb = $("#br-buses", root);
     if (eb) eb.onclick = () => editBuses(d);
+    const em = $("#br-motors-edit", root);
+    if (em) em.onclick = () => editMotors(d);
     $("#br-code-body", root).innerHTML = d ? findings(data.compare) : `<p class="hint">Needs the design file.</p>`;
     paintHandover(d);
     paintSensors(d);
@@ -293,7 +296,8 @@ const Bringup = (() => {
           <td class="small">${esc(m.shaft || "")}</td><td class="small">${esc(m.positive || "not written")}</td>
           <td class="small">${rep ? verdict(rep) : mk ? `<span class="chip ${mk.result === "pass" ? "good" : "bad"}">${mk.result === "pass" ? "right way" : "needs a fix"}</span> ${esc(mk.detail || "")}` : `<span class="muted">not run</span>`}
             ${rep && (rep.ask || []).length ? `<div class="row"><span class="small">${esc(rep.ask[0].question)}</span>
-              ${/^Did /.test(rep.ask[0].question) ? `<button class="btn small" data-yes="${i}" data-tip="br.yes">Yes</button><button class="btn small" data-no="${i}" data-tip="br.no">No, the other way</button>` : ""}</div>` : ""}</td>
+              ${/^Did /.test(rep.ask[0].question) ? `<button class="btn small" data-yes="${i}" data-tip="br.yes">Yes</button><button class="btn small" data-no="${i}" data-tip="br.no">No, the other way</button>`
+                : (rep.ask[0].ways || []).length ? `${rep.ask[0].ways.map((w, j) => `<button class="btn small" data-way="${i}:${j}" data-tip="br.way">${esc(w.say)}</button>`).join("")}<button class="btn small" data-way="${i}:other" data-tip="br.way-other">Other…</button>` : ""}</div>` : ""}</td>
           <td><button class="btn small" data-run="${i}" data-tip="br.run" ${can && here ? "" : "disabled"}>Run</button>
             ${can && !here ? `<div class="small warn-ink">Not one of the motors the robot watches</div>` : ""}</td></tr>`;
       }).join("")}</tbody></table></div>
@@ -312,6 +316,49 @@ const Bringup = (() => {
     };
     $$("[data-yes]", box).forEach(b => b.onclick = () => answer(+b.dataset.yes, true));
     $$("[data-no]", box).forEach(b => b.onclick = () => answer(+b.dataset.no, false));
+    $$("[data-way]", box).forEach(b => b.onclick = () => {
+      const [i, j] = b.dataset.way.split(":"), m = M[+i], rep = last["m:" + m.name] || {}, W = rep.ask[0].ways;
+      if (j === "other") {
+        App.modal(`<h2>Which way did ${esc(m.name)} go?</h2>
+          <input id="bw-text" style="width:100%" placeholder="e.g. it lifts the hood" autofocus data-tip="br.way-text">
+          <div class="row"><button class="btn primary" id="bw-next" data-tip="br.way-next">Next</button><button class="btn" id="bw-x">Cancel</button></div>`, mm => {
+          $("#bw-x", mm).onclick = () => App.closeModal();
+          $("#bw-next", mm).onclick = () => { const t = $("#bw-text", mm).value.trim(); if (t) went(m, rep, { positive: t }, null); };
+        });
+        return;
+      }
+      went(m, rep, W[+j], W[1 - j]);
+    });
+  }
+
+  // No positive direction in the design yet. The motor ran forward (positive output), so the way it
+  // went is its positive direction, unless the code has it backwards: a person says which, and the
+  // design file keeps the right one (with the PDH port the run found, if the file had none).
+  function went(m, rep, way, other) {
+    const bad = (rep.findings || []).find(f => f.level === "error");
+    const found = ((rep.motors || []).find(r => r.name === m.name) || {}).pdh_port;
+    const edit = positive => Object.assign({ positive }, (m.pdh || {}).port == null && found != null ? { pdhPort: found } : {});
+    const done = (ok, detail) => HowTo.mark("bringup", "bu_motor:" + m.name, ok && !bad, bad ? bad.title : detail)
+      .then(() => { delete last["m:" + m.name]; load(); });
+    App.modal(`<h2>When ${esc(m.name)} runs forward, ${esc(way.positive)}</h2>
+      <p>Is that the way the code should move it forward? Not sure: ask the programming lead, whose code decides.
+        ${found != null && (m.pdh || {}).port == null ? `It was fed from PDH port ${found}; that goes in the design file too.` : ""}</p>
+      <div class="row"><button class="btn primary" id="bw-yes" data-tip="br.way-yes">Yes, that is forward</button>
+        <button class="btn" id="bw-no" data-tip="br.way-no">${other ? `No, forward is ${esc(other.say.toLowerCase())}` : "No, that is backward"}</button>
+        <button class="btn" id="bw-x">Cancel</button></div>`, root2 => {
+      $("#bw-x", root2).onclick = () => App.closeModal();
+      $("#bw-yes", root2).onclick = async () => {
+        App.closeModal();
+        if (await App.previewAndSave({ kind: "design_motors", edits: { [m.name]: edit(way.positive) } }, `${m.name}: which way is positive`)) {
+          await done(true, `Turned so that ${way.positive}, written into the design file (${rep.summary || ""}).`);
+        }
+      };
+      $("#bw-no", root2).onclick = async () => {
+        App.closeModal();
+        if (other) await App.previewAndSave({ kind: "design_motors", edits: { [m.name]: edit(other.positive) } }, `${m.name}: which way is positive`);
+        await done(false, `Turned so that ${way.positive}, backward: flip its inversion in the code (and the design), then run it again.`);
+      };
+    });
   }
 
   // ---------------------------------------------------------------- shared shafts
@@ -346,6 +393,39 @@ const Bringup = (() => {
       if (!doc) return;
       const bad = ((doc.report || {}).findings || []).find(f => f.level === "error");
       await done(k, !bad && doc.outcome === "DONE", bad ? bad.title : doc.outcome !== "DONE" ? doc.message || "Stopped." : "Together they turned freely at low current.");
+    });
+  }
+
+  // ---------------------------------------------------------------- the motors' blanks
+  // What a drafted design file leaves blank on each motor: which way is positive, the gear ratio (two
+  // motors on one shaft need it), the PDH port and its breaker. The server checks each as it saves.
+  function editMotors(d) {
+    const M = d.motors || [];
+    const box = v => v == null ? "" : String(v);
+    const was = m => ({ positive: m.positive || "", gearRatio: box(m.gearRatio), pdhPort: box((m.pdh || {}).port), breaker: box((m.pdh || {}).breaker) });
+    App.modal(`<h2>Motors</h2>
+      <p class="small">Fill in what the code can't know, with the mechanical and electrical leads. Leave a box empty until someone knows.</p>
+      <div class="tblwrap"><table class="t"><thead><tr><th>Motor</th><th data-tip="br.positive" data-quiet>Positive is</th>
+        <th data-tip="br.m-ratio" data-quiet>Gear ratio</th><th data-tip="br.m-port" data-quiet>PDH port</th><th data-tip="br.m-breaker" data-quiet>Breaker (A)</th></tr></thead><tbody>
+      ${M.map((m, i) => { const w = was(m); return `<tr><td><b>${esc(m.name)}</b>${m.follows ? ` <span class="small muted">follows ${esc(m.follows.leader)}</span>` : ""}</td>
+        <td><input data-me="${i}" data-k="positive" value="${esc(w.positive)}" placeholder="e.g. it goes up" aria-label="${esc(m.name)}: positive is" data-tip="br.m-positive"></td>
+        <td><input type="number" data-me="${i}" data-k="gearRatio" step="any" min="0" style="width:5.5em" value="${esc(w.gearRatio)}" aria-label="${esc(m.name)}: gear ratio" data-tip="br.m-ratio"></td>
+        <td><input type="number" data-me="${i}" data-k="pdhPort" step="1" min="0" max="23" style="width:4.5em" value="${esc(w.pdhPort)}" aria-label="${esc(m.name)}: PDH port" data-tip="br.m-port"></td>
+        <td><input type="number" data-me="${i}" data-k="breaker" step="5" min="0" max="40" style="width:4.5em" value="${esc(w.breaker)}" aria-label="${esc(m.name)}: breaker" data-tip="br.m-breaker"></td></tr>`; }).join("")}
+      </tbody></table></div>
+      <div class="row"><button class="btn primary" id="bm-save" data-tip="br.m-save">Save to the design file…</button><button class="btn" id="bm-x">Cancel</button></div>`, m => {
+      $("#bm-x", m).onclick = () => App.closeModal();
+      $("#bm-save", m).onclick = async () => {
+        // Only what changed: a key left out stays as the file has it.
+        const edits = {};
+        $$("[data-me]", m).forEach(x => {
+          const mm = M[+x.dataset.me], v = x.value.trim();
+          if (v !== was(mm)[x.dataset.k]) (edits[mm.name] = edits[mm.name] || {})[x.dataset.k] = v;
+        });
+        if (!Object.keys(edits).length) { App.toast("Nothing changed."); return; }
+        App.closeModal();
+        if (await App.previewAndSave({ kind: "design_motors", edits }, "The design file's motors")) load();
+      };
     });
   }
 

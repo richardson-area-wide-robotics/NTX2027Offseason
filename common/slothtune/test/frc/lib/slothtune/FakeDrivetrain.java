@@ -50,6 +50,8 @@ final class FakeDrivetrain implements DrivetrainIO {
   double[] wallSlipA;
   final boolean[] slipping = new boolean[4];
   final double[] amps = new double[4];
+  /** A drive motor whose current reads zero, as a controller that doesn't report it. */
+  final boolean[] noCurrent = new boolean[4];
   /** Each wheel's acceleration in the last step, m/s^2, for its current. */
   final double[] accel = new double[4];
   double driveLimitA = 40;
@@ -207,6 +209,9 @@ final class FakeDrivetrain implements DrivetrainIO {
 
   @Override
   public double driveAmps(int m) {
+    if (noCurrent[m]) {
+      return 0;
+    }
     if (wallSlipA != null) {
       return amps[m];
     }

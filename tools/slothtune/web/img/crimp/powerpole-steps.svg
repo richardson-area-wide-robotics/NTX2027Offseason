@@ -1,0 +1,479 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 480" width="520" height="480" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="pps-title pps-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="pps-title">Crimping an Anderson Powerpole, step by step</title>
+<desc id="pps-desc">Animated, six steps in a 12 second loop, with a numbered step list that lights up in step. 1: strip 5/16 in (7.9 mm); the cut piece of red insulation slides off the bare strands. FRC motor leads are usually 12 AWG; contacts are 30 A for 16-12 AWG and 45 A for 14-10 AWG. 2: the contact sits open in a Powerpole crimp tool and the wire slides in until the copper reaches the wire stop, not past it, with the insulation just short of the barrel. 3: the jaws close and the barrel grips bare copper only. 4: check the crimp: bare copper only in the barrel, the tab not spread and no solder; nothing past the wire stop; the insulation just short of the barrel, leaving a small bare gap. 5: push the contact into the housing, its hooked edge toward the flat spring, until it clicks: the spring is pressed down as the hook passes, then snaps up behind it. 6: tug the wire, then push the contact from the front: a seated contact holds 20 lb. A still panel shows the mating face: black (-) on the left, red (+) on the right, tongues on top - red right, tongue top - so every pair built that way mates with every other; slide the dovetails together, never snap them on sideways. With reduced motion the drawing shows the checked crimp.</desc>
+<style>
+.ppA { opacity: 0; animation: ppA 12s linear infinite; }
+@keyframes ppA {
+  0% { opacity: 1; }
+  15% { opacity: 1; }
+  17.083% { opacity: 0; }
+  98.5% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.ppSlugX { transform: translateX(0px); animation: ppSlugX 12s ease-in-out infinite; }
+@keyframes ppSlugX {
+  0% { transform: translateX(0px); }
+  4.583% { transform: translateX(0px); }
+  10.417% { transform: translateX(-50px); }
+  17.5% { transform: translateX(-50px); }
+  18.333% { transform: translateX(0px); }
+  100% { transform: translateX(0px); }
+}
+.ppSlugO { opacity: 1; animation: ppSlugO 12s linear infinite; }
+@keyframes ppSlugO {
+  0% { opacity: 1; }
+  6.667% { opacity: 1; }
+  10.417% { opacity: 0; }
+  17.5% { opacity: 0; }
+  18.333% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.ppBladeT { transform: translateY(-14px); animation: ppBladeT 12s ease-in-out infinite; }
+@keyframes ppBladeT {
+  0% { transform: translateY(-14px); }
+  1.25% { transform: translateY(-14px); }
+  3.75% { transform: translateY(0px); }
+  6.667% { transform: translateY(0px); }
+  9.167% { transform: translateY(-14px); }
+  100% { transform: translateY(-14px); }
+}
+.ppBladeB { transform: translateY(14px); animation: ppBladeB 12s ease-in-out infinite; }
+@keyframes ppBladeB {
+  0% { transform: translateY(14px); }
+  1.25% { transform: translateY(14px); }
+  3.75% { transform: translateY(0px); }
+  6.667% { transform: translateY(0px); }
+  9.167% { transform: translateY(14px); }
+  100% { transform: translateY(14px); }
+}
+.ppBlades { opacity: 0; animation: ppBlades 12s linear infinite; }
+@keyframes ppBlades {
+  0% { opacity: 0; }
+  0.417% { opacity: 0; }
+  2.083% { opacity: 1; }
+  8.75% { opacity: 1; }
+  10.417% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppDimA { opacity: 0; animation: ppDimA 12s linear infinite; }
+@keyframes ppDimA {
+  0% { opacity: 0; }
+  9.583% { opacity: 0; }
+  11.667% { opacity: 1; }
+  14.583% { opacity: 1; }
+  16.667% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppB { opacity: 1; animation: ppB 12s linear infinite; }
+@keyframes ppB {
+  0% { opacity: 0; }
+  16.667% { opacity: 0; }
+  18.75% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppWireX { transform: translateX(0px); animation: ppWireX 12s ease-in-out infinite; }
+@keyframes ppWireX {
+  0% { transform: translateX(40px); }
+  16.667% { transform: translateX(40px); }
+  19.583% { transform: translateX(40px); }
+  25.833% { transform: translateX(0px); }
+  67.5% { transform: translateX(0px); }
+  67.917% { transform: translateX(40px); }
+  100% { transform: translateX(40px); }
+}
+.ppJawL { opacity: 0; animation: ppJawL 12s linear infinite; }
+@keyframes ppJawL {
+  0% { opacity: 0; }
+  16.667% { opacity: 0; }
+  18.75% { opacity: 1; }
+  47.5% { opacity: 1; }
+  49.583% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppLblB { opacity: 0; animation: ppLblB 12s linear infinite; }
+@keyframes ppLblB {
+  0% { opacity: 0; }
+  25.417% { opacity: 0; }
+  27.5% { opacity: 1; }
+  31.667% { opacity: 1; }
+  33.75% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppJawU { opacity: 0; animation: ppJawU 12s linear infinite; }
+@keyframes ppJawU {
+  0% { opacity: 0; }
+  33.333% { opacity: 0; }
+  35.417% { opacity: 1; }
+  47.5% { opacity: 1; }
+  49.583% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppJawY { transform: translateY(0px); animation: ppJawY 12s ease-in-out infinite; }
+@keyframes ppJawY {
+  0% { transform: translateY(0px); }
+  33.333% { transform: translateY(0px); }
+  35.833% { transform: translateY(0px); }
+  41.25% { transform: translateY(18px); }
+  43.333% { transform: translateY(18px); }
+  47.083% { transform: translateY(0px); }
+  100% { transform: translateY(0px); }
+}
+.ppOpen { opacity: 0; animation: ppOpen 12s linear infinite; }
+@keyframes ppOpen {
+  0% { opacity: 0; }
+  16.667% { opacity: 0; }
+  18.75% { opacity: 1; }
+  37.917% { opacity: 1; }
+  41.25% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppShut { opacity: 1; animation: ppShut 12s linear infinite; }
+@keyframes ppShut {
+  0% { opacity: 0; }
+  37.917% { opacity: 0; }
+  41.25% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppChk1 { opacity: 1; animation: ppChk1 12s linear infinite; }
+@keyframes ppChk1 {
+  0% { opacity: 0; }
+  49.167% { opacity: 0; }
+  51.25% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppChk2 { opacity: 1; animation: ppChk2 12s linear infinite; }
+@keyframes ppChk2 {
+  0% { opacity: 0; }
+  52.5% { opacity: 0; }
+  54.583% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppChk3 { opacity: 1; animation: ppChk3 12s linear infinite; }
+@keyframes ppChk3 {
+  0% { opacity: 0; }
+  55.833% { opacity: 0; }
+  57.917% { opacity: 1; }
+  65% { opacity: 1; }
+  67.083% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppE { opacity: 0; animation: ppE 12s linear infinite; }
+@keyframes ppE {
+  0% { opacity: 0; }
+  66.667% { opacity: 0; }
+  69.167% { opacity: 1; }
+  95.833% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppSeat { transform: translateX(0px); animation: ppSeat 12s linear infinite; }
+@keyframes ppSeat {
+  0% { transform: translateX(240px); }
+  66.667% { transform: translateX(240px); }
+  69.167% { transform: translateX(240px); }
+  74.583% { transform: translateX(40px); }
+  78.5% { transform: translateX(6px); }
+  79.583% { transform: translateX(0px); }
+  85.833% { transform: translateX(0px); }
+  87.083% { transform: translateX(3px); }
+  88.75% { transform: translateX(0px); }
+  91.667% { transform: translateX(0px); }
+  92.917% { transform: translateX(3px); }
+  94.583% { transform: translateX(0px); }
+  98.333% { transform: translateX(0px); }
+  98.75% { transform: translateX(240px); }
+  100% { transform: translateX(240px); }
+}
+.ppSprUp { opacity: 1; animation: ppSprUp 12s linear infinite; }
+@keyframes ppSprUp {
+  0% { opacity: 1; }
+  74.167% { opacity: 1; }
+  74.833% { opacity: 0; }
+  78.5% { opacity: 0; }
+  79% { opacity: 1; }
+  100% { opacity: 1; }
+}
+.ppSprDn { opacity: 0; animation: ppSprDn 12s linear infinite; }
+@keyframes ppSprDn {
+  0% { opacity: 0; }
+  74.167% { opacity: 0; }
+  74.833% { opacity: 1; }
+  78.5% { opacity: 1; }
+  79% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppPush { opacity: 0; animation: ppPush 12s linear infinite; }
+@keyframes ppPush {
+  0% { opacity: 0; }
+  68.333% { opacity: 0; }
+  70% { opacity: 1; }
+  77.5% { opacity: 1; }
+  79.167% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppClick { opacity: 0; animation: ppClick 12s linear infinite; }
+@keyframes ppClick {
+  0% { opacity: 0; }
+  78.75% { opacity: 0; }
+  80% { opacity: 1; }
+  97.083% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppHook { opacity: 0; animation: ppHook 12s linear infinite; }
+@keyframes ppHook {
+  0% { opacity: 0; }
+  78.75% { opacity: 0; }
+  80.417% { opacity: 1; }
+  96.667% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppTug { opacity: 0; animation: ppTug 12s linear infinite; }
+@keyframes ppTug {
+  0% { opacity: 0; }
+  84.583% { opacity: 0; }
+  85.833% { opacity: 1; }
+  89.167% { opacity: 1; }
+  90.417% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppFront { opacity: 0; animation: ppFront 12s linear infinite; }
+@keyframes ppFront {
+  0% { opacity: 0; }
+  90.417% { opacity: 0; }
+  91.667% { opacity: 1; }
+  95.417% { opacity: 1; }
+  96.667% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.ppHold { opacity: 0; animation: ppHold 12s linear infinite; }
+@keyframes ppHold {
+  0% { opacity: 0; }
+  87.083% { opacity: 0; }
+  89.167% { opacity: 1; }
+  96.25% { opacity: 1; }
+  98.333% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.pps-hl1 { opacity: 0; animation: pps-hl1 12s linear infinite; }
+@keyframes pps-hl1 {
+  0% { opacity: 0; }
+  0.167% { opacity: 0; }
+  1.667% { opacity: 1; }
+  15.333% { opacity: 1; }
+  16.833% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.pps-hl2 { opacity: 0; animation: pps-hl2 12s linear infinite; }
+@keyframes pps-hl2 {
+  0% { opacity: 0; }
+  16.833% { opacity: 0; }
+  18.333% { opacity: 1; }
+  32% { opacity: 1; }
+  33.5% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.pps-hl3 { opacity: 0; animation: pps-hl3 12s linear infinite; }
+@keyframes pps-hl3 {
+  0% { opacity: 0; }
+  33.5% { opacity: 0; }
+  35% { opacity: 1; }
+  47% { opacity: 1; }
+  48.5% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.pps-hl4 { opacity: 0; animation: pps-hl4 12s linear infinite; }
+@keyframes pps-hl4 {
+  0% { opacity: 0; }
+  48.5% { opacity: 0; }
+  50% { opacity: 1; }
+  65.333% { opacity: 1; }
+  66.833% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.pps-hl5 { opacity: 0; animation: pps-hl5 12s linear infinite; }
+@keyframes pps-hl5 {
+  0% { opacity: 0; }
+  66.833% { opacity: 0; }
+  68.333% { opacity: 1; }
+  82% { opacity: 1; }
+  83.5% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.pps-hl6 { opacity: 0; animation: pps-hl6 12s linear infinite; }
+@keyframes pps-hl6 {
+  0% { opacity: 0.111; }
+  0.167% { opacity: 0; }
+  83.5% { opacity: 0; }
+  85% { opacity: 1; }
+  98.667% { opacity: 1; }
+  100% { opacity: 0.111; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<defs>
+  <g id="pps-front" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M6 6 H100 V14 H84 V27 L56 14 H6 Q2 14 2 10 Q2 6 6 6 Z" vector-effect="non-scaling-stroke"/>
+    <rect x="100" y="0" width="7" height="32" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g id="pps-walls" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M107 0 H130 L137 4 H175 L182 0 H205 V5 H182 L175 9 H137 L130 5 H107 Z" vector-effect="non-scaling-stroke"/>
+    <path d="M107 32 H130 L137 28 H175 L182 32 H205 V27 H182 L175 23 H137 L130 27 H107 Z" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g id="pps-open" fill="#b0b8c0" stroke="#7d8790" stroke-width="1.2" stroke-linejoin="round">
+    <path d="M107 -9 H205 V-4 H107 Z" vector-effect="non-scaling-stroke"/>
+    <path d="M107 27 H205 V32 H107 Z" vector-effect="non-scaling-stroke"/>
+    <path d="M107 -4 V27 M205 -4 V27" fill="none" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>
+  </g>
+  <g id="pps-strands" stroke="#b87333" stroke-width="2.6">
+    <line x1="107" y1="10.75" x2="216" y2="10.75"/>
+    <line x1="107" y1="14.25" x2="216" y2="14.25"/>
+    <line x1="107" y1="17.75" x2="216" y2="17.75"/>
+    <line x1="107" y1="21.25" x2="216" y2="21.25"/>
+  </g>
+  <rect id="pps-ins" x="215" y="4" width="400" height="24" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+</defs>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Crimping an Anderson Powerpole, step by step</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Contacts: 30 A for 16–12 AWG, 45 A for 14–10 AWG. Use a Powerpole crimp tool.</text>
+<g class="ppA">
+  <path d="M285 135 H490 q6 7.5 0 15 q-6 7.5 0 15 H285 Z" fill="#d32f2f" stroke="#444444" stroke-width="1"/>
+  <g stroke="#b87333" stroke-width="3.2">
+    <line x1="150" y1="141.5" x2="286" y2="141.5"/><line x1="150" y1="147.5" x2="286" y2="147.5"/>
+    <line x1="150" y1="153.5" x2="286" y2="153.5"/><line x1="150" y1="159.5" x2="286" y2="159.5"/>
+  </g>
+  <g class="ppSlugO"><g class="ppSlugX"><rect x="150" y="135" width="135" height="30" fill="#d32f2f" stroke="#444444" stroke-width="1"/></g></g>
+  <g class="ppBlades">
+    <g class="ppBladeT"><path d="M275 112 L295 112 L285 138 Z" fill="#7a828a" stroke="#444444" stroke-width="1"/></g>
+    <g class="ppBladeB"><path d="M275 188 L295 188 L285 162 Z" fill="#7a828a" stroke="#444444" stroke-width="1"/></g>
+  </g>
+  <g class="ppDimA">
+    <g stroke="#5c5c5c" stroke-width="1"><line x1="150" y1="108" x2="150" y2="130"/><line x1="285" y1="108" x2="285" y2="130"/></g>
+    <line x1="217" y1="118" x2="158" y2="118" stroke="#5c5c5c" stroke-width="1.2"/><path d="M151 118 L158 114.15 L158 121.85 Z" fill="#5c5c5c"/><line x1="218" y1="118" x2="277" y2="118" stroke="#5c5c5c" stroke-width="1.2"/><path d="M284 118 L277 121.85 L277 114.15 Z" fill="#5c5c5c"/>
+    <text x="217.5" y="100" font-size="14" font-weight="700" fill="#222222" text-anchor="middle">5/16 in (7.9 mm)</text>
+    <text x="217.5" y="190" font-size="13" fill="#5c5c5c" text-anchor="middle">bare copper</text>
+  </g>
+</g>
+<g class="ppJawL">
+  <rect x="200" y="171" width="130" height="26" rx="3" fill="#7a828a" stroke="#444444" stroke-width="1.2"/>
+  <text x="265" y="214" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">Powerpole crimp tool</text>
+</g>
+<g class="ppB"><g transform="translate(70 130) scale(1.25)">
+  <g class="ppWireX"><use href="#pps-strands"/><use href="#pps-ins"/></g>
+  <g class="ppOpen"><use href="#pps-open"/></g>
+  <g class="ppShut"><use href="#pps-walls"/></g>
+  <use href="#pps-front"/>
+</g></g>
+<g class="ppJawU"><g class="ppJawY">
+  <rect x="200" y="82" width="130" height="30" rx="3" fill="#7a828a" stroke="#444444" stroke-width="1.2"/>
+</g></g>
+<g class="ppLblB">
+  <text x="40" y="88" font-size="13" font-weight="700" fill="#222222">Wire stop</text>
+  <text x="40" y="103" font-size="12" fill="#5c5c5c">copper up to it, not past</text>
+  <path d="M180 108 L198 126" fill="none" stroke="#5c5c5c" stroke-width="1"/><circle cx="199" cy="128" r="2.5" fill="#222222"/>
+  <text x="352" y="88" font-size="13" font-weight="700" fill="#222222">Insulation</text>
+  <text x="352" y="103" font-size="12" fill="#5c5c5c">just short of the barrel</text>
+  <path d="M360 108 L340 136" fill="none" stroke="#5c5c5c" stroke-width="1"/><circle cx="339" cy="138" r="2.5" fill="#222222"/>
+</g>
+<g class="ppChk1">
+  <circle cx="198" cy="88" r="8" fill="#1a7f37"/><path d="M194.2 88.2 L196.9 90.9 L202 85.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="210" y="93" font-size="13" font-weight="700" fill="#222222">Barrel: bare copper only</text>
+  <text x="210" y="108" font-size="12" fill="#5c5c5c">tab not spread, no solder</text>
+  <line x1="265" y1="113" x2="265" y2="133" stroke="#5c5c5c" stroke-width="1"/><circle cx="265" cy="135" r="2.5" fill="#222222"/>
+</g>
+<g class="ppChk2">
+  <circle cx="60" cy="204" r="8" fill="#1a7f37"/><path d="M56.2 204.2 L58.9 206.9 L64 201.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="72" y="209" font-size="13" font-weight="700" fill="#222222">Not past the wire stop</text>
+  <line x1="199" y1="196" x2="199" y2="173" stroke="#5c5c5c" stroke-width="1"/><circle cx="199" cy="171" r="2.5" fill="#222222"/>
+</g>
+<g class="ppChk3">
+  <circle cx="316" cy="204" r="8" fill="#1a7f37"/><path d="M312.2 204.2 L314.9 206.9 L320 201.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="328" y="209" font-size="13" font-weight="700" fill="#222222">Insulation just short</text>
+  <text x="328" y="224" font-size="12" fill="#5c5c5c">of the barrel: a small bare gap</text>
+  <line x1="333" y1="194" x2="333" y2="158" stroke="#5c5c5c" stroke-width="1"/><circle cx="333" cy="156" r="2.5" fill="#222222"/>
+</g>
+<g class="ppE">
+  <g transform="translate(76 130) scale(1.25)">
+    <g class="ppSeat"><use href="#pps-strands"/><use href="#pps-ins"/><use href="#pps-walls"/><use href="#pps-front"/></g>
+    <rect x="-8" y="-18" width="230" height="14" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <rect x="-8" y="38" width="230" height="14" fill="#d32f2f" stroke="#444444" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <g class="ppSprUp"><polyline points="5.6,36 80.6,36 91.7,19.4" fill="none" stroke="#555555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g>
+    <g class="ppSprDn"><polyline points="5.6,36 80.6,36 93.2,31.5" fill="none" stroke="#555555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></g>
+  </g>
+  <text x="80" y="121" font-size="12" fill="#ffffff">housing (cut away)</text>
+  <text x="60" y="222" font-size="13" font-weight="700" fill="#222222">Flat spring</text>
+  <path d="M96 208 L110 177" fill="none" stroke="#5c5c5c" stroke-width="1"/><circle cx="110" cy="175" r="2.5" fill="#222222"/>
+</g>
+<g class="ppHook">
+  <text x="168" y="222" font-size="13" font-weight="700" fill="#222222">Hooked edge</text>
+  <path d="M200 208 L172 163" fill="none" stroke="#5c5c5c" stroke-width="1"/><circle cx="171" cy="161" r="2.5" fill="#222222"/>
+</g>
+<g class="ppPush"><line x1="500" y1="118" x2="450" y2="118" stroke="#222222" stroke-width="2.4"/><path d="M440 118 L450 112.5 L450 123.5 Z" fill="#222222"/><text x="470" y="106" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">push</text></g>
+<g class="ppClick"><circle cx="196" cy="93" r="8" fill="#1a7f37"/><path d="M192.2 93.2 L194.9 95.9 L200 90.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><text x="208" y="98" font-size="14" font-weight="700" fill="#1a7f37">CLICK!</text></g>
+<g class="ppTug"><line x1="440" y1="118" x2="490" y2="118" stroke="#222222" stroke-width="2.4"/><path d="M500 118 L490 123.5 L490 112.5 Z" fill="#222222"/><text x="470" y="106" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">tug</text></g>
+<g class="ppFront"><line x1="14" y1="150" x2="48" y2="150" stroke="#222222" stroke-width="2.4"/><path d="M58 150 L48 155.5 L48 144.5 Z" fill="#222222"/><text x="36" y="138" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">push</text></g>
+<g class="ppHold"><circle cx="300" cy="93" r="8" fill="#1a7f37"/><path d="M296.2 93.2 L298.9 95.9 L304 90.3" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><text x="312" y="98" font-size="14" font-weight="700" fill="#1a7f37">Holds 20 lb</text></g>
+<rect class="pps-hl1" x="16" y="268" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="pps-hl2" x="16" y="302" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="pps-hl3" x="16" y="336" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="pps-hl4" x="16" y="370" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="pps-hl5" x="16" y="404" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<rect class="pps-hl6" x="16" y="438" width="300" height="31" rx="6" fill="#e6ecfb"/>
+<circle cx="32" cy="283.5" r="10" fill="#446ce3"/>
+<text x="32" y="287.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+<text x="50" y="282" font-size="13" font-weight="700" fill="#222222">Strip 5/16 in (7.9 mm).</text>
+<text x="50" y="296" font-size="12" fill="#5c5c5c">FRC motor leads: usually 12 AWG</text>
+<circle cx="32" cy="317.5" r="10" fill="#446ce3"/>
+<text x="32" y="321.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+<text x="50" y="316" font-size="13" font-weight="700" fill="#222222">Put it in a Powerpole crimp tool.</text>
+<text x="50" y="330" font-size="12" fill="#5c5c5c">wire in up to the wire stop, not past</text>
+<circle cx="32" cy="351.5" r="10" fill="#446ce3"/>
+<text x="32" y="355.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+<text x="50" y="350" font-size="13" font-weight="700" fill="#222222">Squeeze until the jaws close.</text>
+<text x="50" y="364" font-size="12" fill="#5c5c5c">the barrel grips bare copper only</text>
+<circle cx="32" cy="385.5" r="10" fill="#446ce3"/>
+<text x="32" y="389.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="50" y="384" font-size="13" font-weight="700" fill="#222222">Check the crimp.</text>
+<text x="50" y="398" font-size="12" fill="#5c5c5c">insulation stops just short of the barrel</text>
+<circle cx="32" cy="419.5" r="10" fill="#446ce3"/>
+<text x="32" y="423.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">5</text>
+<text x="50" y="418" font-size="13" font-weight="700" fill="#222222">Push it into the housing until it clicks.</text>
+<text x="50" y="432" font-size="12" fill="#5c5c5c">hooked edge toward the flat spring</text>
+<circle cx="32" cy="453.5" r="10" fill="#446ce3"/>
+<text x="32" y="457.8" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">6</text>
+<text x="50" y="452" font-size="13" font-weight="700" fill="#222222">Tug it, then push it from the front.</text>
+<text x="50" y="466" font-size="12" fill="#5c5c5c">a seated contact holds 20 lb</text>
+<rect x="326" y="268" width="178" height="200" rx="6" fill="#f6f6f6" stroke="#d6d6d6"/>
+<text x="338" y="287" font-size="13" font-weight="700" fill="#222222">Which way?</text>
+<text x="338" y="302" font-size="12" fill="#5c5c5c">looking at the mating face</text>
+<g transform="translate(338 312) scale(0.75)">
+  <rect x="0" y="0" width="72" height="72" rx="5" fill="#333333" stroke="#777777" stroke-width="1.5"/>
+  <rect x="12" y="10" width="48" height="40" rx="2" fill="#222222" stroke="#777777" stroke-width="1"/>
+  <rect x="15" y="13" width="42" height="9" rx="1.5" fill="#b0b8c0" stroke="#7d8790" stroke-width="1"/>
+  <rect x="72" y="0" width="72" height="72" rx="5" fill="#d32f2f" stroke="#444444" stroke-width="1.5"/>
+  <rect x="84" y="10" width="48" height="40" rx="2" fill="#222222" stroke="#444444" stroke-width="1"/>
+  <rect x="87" y="13" width="42" height="9" rx="1.5" fill="#b0b8c0" stroke="#7d8790" stroke-width="1"/>
+  <path d="M72 24 L81 20 L81 48 L72 44 Z" fill="#333333" stroke="#777777" stroke-width="1" stroke-linejoin="round"/>
+  <g font-size="22" font-weight="700" fill="#ffffff" text-anchor="middle"><text x="36" y="68">−</text><text x="108" y="68">+</text></g>
+</g>
+<text x="456" y="329" font-size="12" font-weight="700" fill="#222222">tongue</text>
+<line x1="454" y1="325" x2="437" y2="325" stroke="#222222" stroke-width="1"/><circle cx="436" cy="325" r="2" fill="#222222"/>
+<g font-size="12" text-anchor="middle" font-weight="700"><text x="365" y="380" fill="#222222">black −</text><text x="419" y="380" fill="#d32f2f">red +</text></g>
+<text x="338" y="402" font-size="13" font-weight="700" fill="#222222">Red right, tongue top.</text>
+<g font-size="12" fill="#222222">
+  <text x="338" y="419">Built that way, every pair</text>
+  <text x="338" y="433">mates with every other.</text>
+  <text x="338" y="449" fill="#5c5c5c">Slide the dovetails together;</text>
+  <text x="338" y="463" fill="#5c5c5c">never snap them on sideways.</text>
+</g>
+</svg>

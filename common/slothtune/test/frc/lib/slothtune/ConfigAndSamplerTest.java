@@ -174,6 +174,18 @@ class ConfigAndSamplerTest {
     assertTrue(p.validate(context(io, TestEnvironment.FIELD, 1.5, 0.6)).contains("at least"));
   }
 
+  /** The 2026 requirement: SysId sized to the team's 28 ft of carpet, even with a fast speed cap. */
+  @Test
+  void aFeedforwardRunFitsTheTeamsTwentyEightFeetOfCarpet() {
+    double carpetM = edu.wpi.first.math.util.Units.feetToMeters(28);
+    FakeDrivetrain io = new FakeDrivetrain();
+    DriveFeedforwardProcedure p = new DriveFeedforwardProcedure();
+    TestContext c = context(io, TestEnvironment.FIELD, 3.0, carpetM);
+    assertNull(p.validate(c));
+    assertTrue(p.spaceBudgetM(c) <= carpetM, "the run's geofence fits the carpet: " + p.spaceBudgetM(c));
+    assertTrue(p.expectedTopSpeedMps(c) <= 3.0 + 1e-9, "never faster than the cap");
+  }
+
   @Test
   void abbreviationsMatchYagslNames() {
     assertEquals("fl", SlothTune.abbreviation("frontleft"));

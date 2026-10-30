@@ -262,7 +262,8 @@ def accepted_images(project):
     """The roboRIO images the project's GradleRIO accepts at deploy, from its jar in Gradle's cache."""
     import zipfile
     try:
-        src = open(os.path.join(project.path, "build.gradle"), encoding="utf-8").read()
+        with open(os.path.join(project.path, "build.gradle"), encoding="utf-8") as fh:
+            src = fh.read()
     except (OSError, AttributeError):
         return []
     m = re.search(r'id\s+"edu\.wpi\.first\.GradleRIO"\s+version\s+"([^"]+)"', src)

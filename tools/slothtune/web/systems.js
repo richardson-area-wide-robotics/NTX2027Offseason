@@ -130,7 +130,8 @@ const Systems = (() => {
         : `${esc(ph.count || 1)} × ${esc(ph.motor)} through ${n4(ph.ratio)}:1. Free speed ${n4(ff && ff.free_speed * (s.scale || 1) * k)} ${esc(label)}${rate}${ff ? ` · kV ${n4(ff.kV)} · kA ${n4(ff.kA)}${ff.kG ? ` · kG ${n4(ff.kG)} V` : ""} (per ${s.kind === "ELEVATOR" ? "meter" : "radian"})` : ""}${ph.calculator ? ` <span class="muted">From ${esc(ph.calculator)}.</span>` : ""}${(ph.notes || []).length ? ` <span class="warn-ink">${ph.notes.map(esc).join(" ")}</span>` : ""}`}</p>
       <label class="row small" data-tip="sys.scale">One ${s.kind === "ELEVATOR" ? "meter" : "radian"} of it${positional(s) ? "" : " per second"} is <input id="sys-scale" type="number" step="any" value="${n4(s.scale)}" style="width:6em"> ${esc(s.units)}</label>
       ${positional(s) ? `<h3 data-tip="sys.limits">2. Its limits</h3>
-        <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${n4(s.min * k)} to ${n4(s.max * k)} ${esc(label)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
+        <div class="row small"><span style="flex:1">${Number.isFinite(s.min) && Number.isFinite(s.max) ? `${s.homed === false ? `<span class="warn-ink" data-tip="sys.homed">Not homed this boot:</span> ` : ""}${n4(s.min * k)} to ${n4(s.max * k)} ${esc(label)}${s.limits_from ? ` <span class="muted">(${esc(s.limits_from)})</span>` : ""}` : `<span class="warn-ink">Not set: nothing moves it until a person has moved it by hand to both ends.</span>`}</span>
+          ${s.homed === false && Number.isFinite(s.min) ? `<button class="btn small primary" id="sys-home" data-tip="sys.home-run">Home it…</button>` : ""}
           <button class="btn small" id="sys-limits" data-tip="sys.limits-run">Set limits by hand…</button></div>` : ""}
       <h3 data-tip="sys.top">${positional(s) ? "3" : "2"}. Its top speed</h3>
       <div class="row small"><label data-tip="sys.vmax">Team's maximum <input id="sys-vmax" type="number" step="any" value="${shown(val("maxVelocity"), k)}" style="width:6em"> ${esc(label)}${rate}</label>
@@ -166,6 +167,8 @@ const Systems = (() => {
     box.onchange = () => { const b = $("#sys-save", box); if (b) b.classList.toggle("primary", Object.keys(edits).length > 0); };
     const lim = $("#sys-limits", box);
     if (lim) lim.onclick = setLimits;
+    const home = $("#sys-home", box);
+    if (home) home.onclick = homeIt;
   }
 
   // What the edited settings give, before saving: the physics and the safe test.
@@ -190,6 +193,41 @@ const Systems = (() => {
     if (positional(s) && Number.isFinite(s.min) && Number.isFinite(s.max)) { put("min", s.min); put("max", s.max); }
     if (!e.length) { App.toast("Nothing to save yet."); return; }
     if (await App.previewAndSave({ kind: "edits", edits: e }, `${s.name}: its settings`)) { edits = {}; load(); }
+  }
+
+  // ---------------------------------------------------------------- homing
+  // Its encoder starts wherever it was when the robot was turned on, so saved limits may sit in the
+  // wrong place this boot. Held at one end, its reading moves them back; nothing moves it until then.
+  function homeIt() {
+    const s = current(), { label, k } = unit(s);
+    App.modal(`<h2>${esc(s.name)}: home it</h2>
+      <p class="small">Its encoder starts wherever it was when the robot was turned on, so its saved limits may be in the wrong place this boot. Homing puts them back; until then no test moves it.</p>
+      <ol class="small"><li><b>Disable the robot.</b></li>
+        <li>Move it by hand all the way to one end, against its hard stop, and hold it still. The lower end is the way its reading goes down.</li>
+        <li>Press the end it is at.</li></ol>
+      <p class="mono" id="sh-live">Reads ${n4(s.position * k)} ${esc(label)}</p>
+      <div class="row"><button class="btn primary" id="sh-lo">At its lower end</button><button class="btn primary" id="sh-hi">At its upper end</button><button class="btn" id="sh-x">Cancel</button></div>
+      <div id="sh-out" class="small"></div>`, m => {
+      const poll = setInterval(async () => {
+        const r = await App.api("/api/systems");
+        const now = ((r && r.systems) || []).find(x => x.name === s.name);
+        if (now && $("#sh-live", m)) $("#sh-live", m).textContent = `Reads ${n4(now.position * k)} ${label}`;
+      }, 500);
+      const done = () => { clearInterval(poll); $("#sh-x", m).textContent = "Close"; };
+      $("#sh-x", m).onclick = () => { clearInterval(poll); App.closeModal(); };
+      const go = async end => {
+        $("#sh-lo", m).disabled = $("#sh-hi", m).disabled = true;
+        try {
+          const doc = await App.runTest("system_home", "ALL", { system: s.index, end });
+          const rep = doc.report || {};
+          $("#sh-out", m).innerHTML = `<p><b>${esc(rep.summary || "")}</b></p>${(rep.findings || []).map(f => `<div class="${f.level === "error" ? "bad-ink" : f.level === "warn" ? "warn-ink" : ""}">${esc(f.title)}: ${esc(f.why)}</div>`).join("")}`;
+          load();
+        } catch (e) { $("#sh-out", m).innerHTML = `<p class="bad-ink">${esc(e.message)}</p>`; }
+        finally { done(); $("#sh-lo", m).disabled = $("#sh-hi", m).disabled = false; }
+      };
+      $("#sh-lo", m).onclick = () => go(0);
+      $("#sh-hi", m).onclick = () => go(1);
+    });
   }
 
   // ---------------------------------------------------------------- limits, by hand

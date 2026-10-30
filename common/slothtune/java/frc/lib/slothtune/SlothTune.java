@@ -134,6 +134,7 @@ public final class SlothTune {
   private final StringPublisher statusMessage;
   private final DoublePublisher statusProgress;
   private final BooleanPublisher statusDeadman;
+  private final BooleanPublisher statusDeadmanController;
   private final StringArrayPublisher statusLiveNames;
   private final DoubleArrayPublisher statusLiveRows;
   /** The channels a live view shows (those a test records), time first; and how many rows each loop. */
@@ -315,6 +316,7 @@ public final class SlothTune {
     procedures.put("sensors", SensorProcedure::new);
     procedures.put("can_load", CanLoadProcedure::new);
     procedures.put("system_limits", SystemLimitsProcedure::new);
+    procedures.put("system_home", SystemHomeProcedure::new);
     procedures.put("system_step", SystemStepProcedure::new);
     procedures.put("system_id", SystemIdProcedure::new);
     procedures.put("system_piece", PieceSenseProcedure::new);
@@ -364,6 +366,7 @@ public final class SlothTune {
     statusMessage = nt.getStringTopic(SlothTuneTopics.STATUS_MESSAGE).publish();
     statusProgress = nt.getDoubleTopic(SlothTuneTopics.STATUS_PROGRESS).publish();
     statusDeadman = nt.getBooleanTopic(SlothTuneTopics.STATUS_DEADMAN_HELD).publish();
+    statusDeadmanController = nt.getBooleanTopic(SlothTuneTopics.STATUS_DEADMAN_CONTROLLER).publish();
     statusLiveNames = nt.getStringArrayTopic(SlothTuneTopics.STATUS_LIVE_NAMES).publish();
     statusLiveRows = nt.getDoubleArrayTopic(SlothTuneTopics.STATUS_LIVE_ROWS).publish();
     resultSeq = nt.getIntegerTopic(SlothTuneTopics.RESULT_SEQ).publish();
@@ -535,6 +538,9 @@ public final class SlothTune {
   public TunableSystem system(String name, TunableSystem.Kind kind) {
     systems.removeIf(s -> s.name.equals(name));
     TunableSystem s = new TunableSystem(name, kind);
+    // On a robot nothing is homed until this boot says so (TunableSystem#homed); the simulator
+    // starts where it always does, so its saved limits still fit.
+    s.homed = simulation;
     s.saved = config.systemGains.getOrDefault(name, Map.of());
     s.report = this::startupLine;
     double[] lim = config.systems.get(name);
@@ -1500,7 +1506,9 @@ public final class SlothTune {
    * Before a blocks test that drives the wheels: a short pulse on every drive motor. A wheel in the
    * air gains speed fast for little current; one carrying the robot needs many times the current for
    * less speed. Two or more wheels like that and the robot is on the floor, whatever it was told:
-   * the test stops before it starts. Decided by physics, not by the test's own gains.
+   * the test stops before it starts. Decided by physics, not by the test's own gains. A wheel that
+   * draws too little current can't be judged, and fewer than three judged is no pass either: it
+   * stops, so a person checks the blocks.
    */
   private void liftCheck(double now) {
     SafetySupervisor.Limits lim = supervisor.limits();
@@ -1559,6 +1567,20 @@ public final class SlothTune {
                 + " amp-second (wheels in the air reach over %.1f), so they are carrying weight: the robot is on"
                 + " the floor, or the wheels touch the blocks. Put it on blocks, or set On the floor.",
             Units.metersToFeet(median), Units.metersToFeet(lim.liftMinMpsPerAmpS)));
+        return;
+      }
+      if (judged < 3) {
+        List<String> quiet = new ArrayList<>();
+        for (int m = 0; m < n; m++) {
+          if (Double.isNaN(ratio[m])) {
+            quiet.add(io.moduleName(m));
+          }
+        }
+        finish(State.ABORTED, String.format("Couldn't tell the wheels are off the ground: only %d of %d wheels drew"
+                + " enough current in the short pulse to judge (%s drew under 0.05 amp-seconds, too little to tell a"
+                + " wheel in the air from one carrying weight). Check the robot is on blocks with every wheel clear,"
+                + " and that those drive motors run and report their current.",
+            judged, n, String.join(", ", quiet)));
         return;
       }
       ctx.note(String.format("Lift check: wheels free (%.2f ft/s per amp-second).", Units.metersToFeet(median)));
@@ -1664,7 +1686,9 @@ public final class SlothTune {
         proc.end(ctx, outcome != State.DONE);
       }
     } catch (RuntimeException e) {
-      ctx.note("Cleanup raised " + e + "; motors stopped anyway.");
+      // A mechanism's own end() zeroes its motors if the team's stop throws, and notes it; here the drivetrain.
+      ctx.note("Cleanup raised " + e + (proc.spinsWheels() ? "; the drivetrain was stopped anyway." : "."));
+      DriverStation.reportError("[slothtune] " + proc.name() + "'s cleanup raised " + e, e.getStackTrace());
     }
     if (proc.spinsWheels()) {
       try {
@@ -1766,6 +1790,7 @@ public final class SlothTune {
     statusMessage.set(message);
     statusProgress.set(progress);
     statusDeadman.set(deadmanHeld);
+    statusDeadmanController.set(signals.deadmanControllerConnected());
   }
 
   private boolean visionInUseNow() {

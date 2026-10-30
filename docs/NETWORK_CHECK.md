@@ -14,8 +14,9 @@ firewall, the radios and, once connected, the robot. It changes nothing.
 
 ## Once, on the Driver Station laptop
 
-1. **Get the tools.** The laptop needs this repository on the `StuartTesting` branch, up to date
-   (`git pull`), and Python 3.12. The guide's
+1. **Get the tools.** The laptop needs the team repo (NTX2027Offseason) on its `StuartTesting` branch,
+   up to date (`git pull`): it has the robots' code and Sloth Tune, in `tools/`. Then Python 3.12 and
+   the tool's packages. The guide's
    [Setting up](SWERVE_TUNING_GUIDE.md#setting-up-once-per-laptop) section covers this.
 2. **Install the Driver Station.** It comes with FRC Game Tools 2026, then the latest update for it.
    - Its Diagnostics tab shows its version, which must be 26.x.
@@ -38,7 +39,7 @@ firewall, the radios and, once connected, the robot. It changes nothing.
 2. **Join its network.** Use the access point radio's network (a cable, or its Wi-Fi), or a cable
    into the robot radio's **DS** port.
 3. **Set the Driver Station** to this robot's team number (Setup tab, the gear).
-4. **Start the tools and check.** From the repository folder:
+4. **Start the tools and check.** From the team repo's folder:
 
    ```
    py -3.12 tools/slothtune gui

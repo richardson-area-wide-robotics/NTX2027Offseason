@@ -121,6 +121,99 @@ class DesignAgainstCodeTest(unittest.TestCase):
         self.assertTrue(any("Climber: not in the code" in t for t in E))
 
 
+class FillInTheBlanksTest(unittest.TestCase):
+    """What a draft leaves blank (positive, a shared shaft's gear ratios, PDH port, breaker), filled in
+    on the Bring-up tab through D.edit_motors: the same preview and write as every other save."""
+
+    def test_filling_in_a_motors_blanks(self):
+        d = design([motor("Tower", cid=18)])
+        out = D.edit_motors(d, {"Tower": {"positive": " it moves game pieces toward the shooter ", "gearRatio": "4",
+                                          "pdhPort": "7", "breaker": "40"}})
+        t = out["motors"][0]
+        self.assertEqual((t["positive"], t["gearRatio"], t["pdh"]), ("it moves game pieces toward the shooter", 4.0,
+                                                                    {"port": 7, "breaker": 40}))
+        self.assertIsNone(d["motors"][0]["pdh"]["port"], "the file given is left alone")
+
+    def test_a_key_left_out_stays_and_a_blank_clears(self):
+        d = design([motor("Tower", cid=18, positive="it goes up", gearRatio=4.0)])
+        out = D.edit_motors(d, {"Tower": {"breaker": "30"}})
+        self.assertEqual((out["motors"][0]["positive"], out["motors"][0]["gearRatio"]), ("it goes up", 4.0))
+        out = D.edit_motors(d, {"Tower": {"gearRatio": "", "positive": ""}})
+        self.assertEqual((out["motors"][0]["positive"], out["motors"][0]["gearRatio"]), ("", None))
+
+    def test_what_cant_be_right_never_reaches_the_file(self):
+        d = design([motor("Tower", cid=18)])
+        for bad, why in (({"Nope": {"positive": "x"}}, "no motor called"), ({"Tower": {"id": 3}}, "only"),
+                         ({"Tower": {"gearRatio": "four"}}, "not a number"), ({"Tower": {"gearRatio": 0}}, "gear ratio"),
+                         ({"Tower": {"pdhPort": 24}}, "0 to 23"), ({"Tower": {"pdhPort": 2.5}}, "0 to 23"),
+                         ({"Tower": {"breaker": 60}}, "40 A at most"), ({}, "nothing to change")):
+            with self.assertRaises(ValueError) as e:
+                D.edit_motors(d, bad)
+            self.assertIn(why, str(e.exception), bad)
+
+    def test_a_shared_shafts_ratios_clear_the_drafts_errors(self):
+        d = design([motor("Shooter leader", cid=10, shaft="shooter", gearRatio=None),
+                    motor("Shooter follower", cid=11, shaft="shooter", gearRatio=None,
+                          follows={"leader": "Shooter leader", "inverted": True})])
+        self.assertEqual(len(titles(D.check(d), "error")), 2)
+        out = D.edit_motors(d, {"Shooter leader": {"gearRatio": 1}, "Shooter follower": {"gearRatio": 1}})
+        self.assertEqual(D.check(out), [])
+
+    @needs_robots
+    def test_peashooters_draft_can_be_made_whole_in_the_app(self):
+        draft = D.from_code(Y.Project(os.path.join(ROBOTS, "Peashooter")))
+        errs = titles(D.check(draft), "error")
+        self.assertEqual(sorted(errs), ["Shooter follower shares shaft 'shooter' but has no gear ratio",
+                                        "Shooter leader shares shaft 'shooter' but has no gear ratio"])
+        mech = [m["name"] for m in draft["motors"] if not m["name"].endswith((" drive", " steer"))]
+        self.assertTrue(all(not m["positive"] for m in draft["motors"] if m["name"] in mech), "the draft can't know")
+        out = D.edit_motors(draft, {"Shooter leader": {"gearRatio": 1}, "Shooter follower": {"gearRatio": 1}})
+        self.assertEqual(titles(D.check(out), "error"), [])
+
+
+class FillInTheBlanksSaveTest(unittest.TestCase):
+    """The page's save: a preview of the lines that change, then the write, to the file as it is now."""
+
+    def setUp(self):
+        import json
+        import tempfile
+        import types
+        from unittest import mock
+        from slothtune import server
+        self.server, self.json = server, json
+        self.tmp = tempfile.mkdtemp(prefix="slothtune-design-")
+        p = mock.patch.object(server.S, "project", types.SimpleNamespace(path=self.tmp, name="Testbot"))
+        p.start()
+        self.addCleanup(p.stop)
+
+    def body(self, **edits):
+        return {"kind": "design_motors", "edits": edits}
+
+    def test_no_design_file_yet_says_draft_one(self):
+        r = self.server.api_save_preview(self.body(Tower={"positive": "it goes up"}))
+        self.assertFalse(r["ok"])
+        self.assertIn("draft one", r["error"])
+
+    def test_preview_then_write(self):
+        path = D.path(self.server.S.project)
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(D.text(design([motor("Tower", cid=18, positive="")])))
+        p = self.server.api_save_preview(self.body(Tower={"positive": "it goes up", "pdhPort": 7}))
+        self.assertTrue(p["ok"])
+        self.assertEqual(p["files"], ["src/main/deploy/design/devices.json"])
+        self.assertIn('+      "positive": "it goes up"', p["diff"])
+        with open(path, encoding="utf-8") as fh:
+            self.assertEqual(self.json.load(fh)["motors"][0]["positive"], "", "a preview writes nothing")
+        self.assertTrue(self.server.api_save_apply(self.body(Tower={"positive": "it goes up", "pdhPort": 7}))["ok"])
+        with open(path, encoding="utf-8") as fh:
+            t = self.json.load(fh)["motors"][0]
+        self.assertEqual((t["positive"], t["pdh"]["port"]), ("it goes up", 7))
+        bad = self.server.api_save_apply(self.body(Tower={"pdhPort": 30}))
+        self.assertFalse(bad["ok"])
+        self.assertIn("0 to 23", bad["error"])
+
+
 class DesignImportTest(unittest.TestCase):
     CSV = ("name,subsystem,kind,type,id,canbus,pdh_port,breaker,inverted,idle,current_limit,gear_ratio,positive,shaft,follows,follows_inverted,port,means\n"
            "Shooter leader,Shooter,motor,sparkflex_vortex,10,rio,4,40,no,coast,80,1,throws out,shooter,,,,\n"

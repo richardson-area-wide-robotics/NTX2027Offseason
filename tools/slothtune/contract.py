@@ -57,6 +57,7 @@ STATUS_STATE = ROOT + "/Status/State"
 STATUS_MESSAGE = ROOT + "/Status/Message"
 STATUS_PROGRESS = ROOT + "/Status/Progress"
 STATUS_DEADMAN_HELD = ROOT + "/Status/DeadmanHeld"
+STATUS_DEADMAN_CONTROLLER = ROOT + "/Status/DeadmanController"
 STATUS_LIVE_NAMES = ROOT + "/Status/LiveNames"
 STATUS_LIVE_ROWS = ROOT + "/Status/LiveRows"
 
@@ -170,6 +171,7 @@ SYSTEMS_VELOCITY = SYSTEMS + "Velocity"
 SYSTEMS_GOAL = SYSTEMS + "Goal"
 SYSTEMS_LIMITS = SYSTEMS + "Limits"
 SYSTEMS_LIMITS_FROM = SYSTEMS + "LimitsFrom"
+SYSTEMS_HOMED = SYSTEMS + "Homed"
 SYSTEMS_GAIN_NAMES = SYSTEMS + "GainNames"
 SYSTEMS_CONTROL = SYSTEMS + "Control"
 SYSTEMS_GAINS = SYSTEMS + "Gains/"
@@ -279,6 +281,16 @@ STOP_CODES = [
     # Bring-up's sensor readout and motor test.
     ("No sensors to read", "NO_SENSORS"), ("can't read the CAN bus", "NO_CAN_STATUS"), ("without turning", "JAMMED"),
     # Systems: a mechanism's limits and its closed-loop test.
+    # Homing a relative encoder (system_home), and what refuses a mechanism that isn't homed.
+    ("first: its encoder starts wherever", "NOT_HOMED"), ("no saved limits to home to", "NO_LIMITS"),
+    ("is homed;", "BAD_ARGS"), ("while it was read", "HOMING_MOVED"),
+    # A reading that dropped out (more specific than "can't read", a missing hook, below).
+    ("position reading stopped:", "SENSOR_LOST"), ("has no position reading", "SENSOR_LOST"),
+    ("It can't read", "SENSOR_LOST"),
+    # Enabled while a person had their hands on the mechanism (limits by hand, homing).
+    ("The robot was enabled while", "ENABLED_BY_HAND"),
+    # The lift check couldn't judge enough wheels to know the robot is on its blocks.
+    ("Couldn't tell the wheels are off the ground", "LIFT_UNKNOWN"),
     # Its identification (system_id): what it found while finding the volts that hold it.
     ("looked for the volts that hold it", "NEEDS_HOLD_GUESS"), ("inversion", "INVERTED"),
     ("didn't start moving", "JAMMED"), ("didn't move with", "JAMMED"), ("wouldn't stay still", "WONT_HOLD"),
@@ -386,5 +398,5 @@ def gain_spec(key):
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
 TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",
-         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_step", "system_piece", "system_hold",
+         "controller", "motor_test", "sensors", "can_load", "system_limits", "system_home", "system_step", "system_piece", "system_hold",
          "system_id")

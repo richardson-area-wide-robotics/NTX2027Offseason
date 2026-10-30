@@ -16,13 +16,17 @@ in the code's units, so the number on screen is the number in the file.
 ## Setting up (once per laptop)
 
 1. Install WPILib 2026 (it brings the JDK and VS Code), and Python 3.12 from python.org.
-2. In a terminal, install the one Python package the tools need:
+2. Get the team repo, NTX2027Offseason, on its `StuartTesting` branch (clone it, or pull the
+   latest). The robots' code and Sloth Tune (in `tools/`) are both there, so nothing needs setting.
+   Running Sloth Tune from its own repo instead: it has no robots, so set `SLOTHTUNE_ROBOT_REPO` to
+   the team repo's folder once, with `setx SLOTHTUNE_ROBOT_REPO "C:\path\to\NTX2027Offseason"`, and
+   open a new terminal (Sloth Tune's README has the details).
+3. In a terminal, from the repository folder, install the Python packages the tools need
+   (pyntcore and robotpy-wpiutil, the 2026 versions):
 
    ```
-   py -3.12 -m pip install pyntcore
+   py -3.12 -m pip install -r tools/requirements.txt
    ```
-
-3. Clone the repository, or pull the latest.
 
 ## Starting it
 
@@ -31,6 +35,8 @@ From the repository folder:
 ```
 py -3.12 tools/slothtune gui
 ```
+
+(or `cd tools`, then `py -3.12 -m slothtune gui --project Peashooter`).
 
 Your browser opens at `http://127.0.0.1:5806/`. Pick the **robot code** (Peashooter, Black
 team, or Examples, which runs only in the simulator), then who to talk to: the robot (by team number) or the **simulator on this laptop**, and
@@ -150,7 +156,9 @@ no communications, communications but no robot code, losing communication, and b
   ticking each check: bumpers on, people clear of its path, the deadman holder able to see it. Before a blocks test that drives
   the wheels, they get a short kick (a quarter second): a wheel in the air spins up fast for little
   current, one carrying the robot doesn't, and then the test stops before it starts. If the robot
-  turns while it's supposed to be on blocks, it stops too.
+  turns while it's supposed to be on blocks, it stops too. The app asks again, with every box
+  unticked, each time it connects and whenever the robot code restarts: what someone said earlier
+  never carries over.
 - **Stopping.** The red ABORT button or Esc stops everything. The Driver Station's disable is the
   real emergency stop and always works. Touching a joystick also hands the robot straight back.
 - It will not run on a match field (FMS attached) or in autonomous, and it stops if the laptop
@@ -190,7 +198,8 @@ purple, each with green.
 
 1. **The design file.** *Draft from the code*, or *Import a spreadsheet (CSV)* from the design
    team, then go through it with the mechanical and electrical leads and fill in what the code
-   can't know (breakers, gear ratios, which way is positive). The command line does the same:
+   can't know (breakers, PDH ports, gear ratios, which way is positive) with **Edit motors**. Two
+   motors on one shaft each need a gear ratio. The command line does the same:
    `py -3.12 tools/slothtune design --project Peashooter`.
 2. **The code against the design.** CAN IDs, a SPARK MAX created for a SPARK Flex, a follower set
    the wrong way, a port: fix whichever one is wrong.
@@ -203,7 +212,10 @@ purple, each with green.
    ports for the readout only; a port the code already uses needs registering to be seen.
 5. **Each mechanism motor alone**, on blocks with the deadman held: it runs at 8% for 0.6 s with
    the robot's own code paused, and you say which way it went. Its encoder always agrees with
-   the code, so only a person can tell if that is the right way.
+   the code, so only a person can tell if that is the right way. With no positive direction in
+   the design yet, press the way it went (**Up**, **In**, **To the shooter**, or **Other**), then
+   say whether that is the way the code should move it forward: the design file keeps the answer
+   (and the PDH port the run found, if it had none).
 6. **Motors that share a shaft:** first one alone with the others held at zero, so the shaft
    turns them; each must turn the way its own setting expects. Then all together: if two push
    against each other the robot stops it at once.
@@ -625,7 +637,8 @@ prints the rules an agent follows (`docs/AGENT_TUNING.md`).
 
 - **"pyntcore is not installed"**: run the pip command above with `py -3.12`.
 - **Can't connect**: is the laptop on the robot's network (or is the simulator running)? Is the
-  team number right? The robot code must be this branch's: the tools check they match. With two
+  team number right? The robot code must come from the team repo's `StuartTesting` branch, as new
+  as the tool: the tools check they match. With two
   networks or a VPN, press **Check the networks**.
 - **A Python change doesn't show up**: stop the app (Ctrl+C) and start it again. Browser-only
   changes just need a page reload.

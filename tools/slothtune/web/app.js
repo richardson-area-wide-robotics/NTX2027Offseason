@@ -15,7 +15,7 @@ const WHERE = { UNSET: "Where: not set", BLOCKS: "On blocks", FIELD: "On the flo
 const whereWord = k => WHERE[k] || k;
 const TEST_NAME = { steer_step: "Steering", drive_step: "Drive speed", drive_ff: "Feedforward", slip: "Slip current",
   spin: "Spin", straight: "Straight line", capture: "Sensor capture", pdh_map: "PDH port finder", motor_test: "Motor test",
-  moi: "Moment of inertia", controller: "Joystick check", spin_ff: "Spin feedforward", sensors: "Sensor readout", can_load: "CAN load test", system_limits: "Limits by hand", system_step: "System test", system_id: "System measure" };
+  moi: "Moment of inertia", controller: "Joystick check", spin_ff: "Spin feedforward", sensors: "Sensor readout", can_load: "CAN load test", system_limits: "Limits by hand", system_home: "Homing", system_step: "System test", system_id: "System measure" };
 const testName = k => TEST_NAME[k] || k;
 
 const App = {
@@ -135,6 +135,14 @@ function colorDiff(text) {
 async function loadProjects() {
   const p = await App.api("/api/projects");
   const sel = $("#project");
+  if (!p.projects.length) {
+    // No robots where the tool looks: say so, and how to fix it (robotrepo.py), not "pick one".
+    sel.innerHTML = `<option>No robot projects found</option>`;
+    sel.disabled = true;
+    App.modal(`<h2>No robot projects found</h2><p>${esc(p.none_found)}</p>
+      <div class="row"><button class="btn" onclick="App.closeModal()" autofocus>Close</button></div>`);
+    return;
+  }
   sel.innerHTML = p.projects.map(n => `<option ${n === p.current ? "selected" : ""}>${esc(n)}</option>`).join("");
   sel.onchange = async () => {
     await App.api("/api/project", { name: sel.value });
@@ -159,14 +167,33 @@ $("#connect").onclick = async () => {
   const r = await App.api("/api/connect", { target: $("#target").value, host: $("#host").value });
   $("#connect").disabled = false;
   if (!r.ok) App.modal(`<h2>Could not connect</h2><p>${esc(r.error)}</p>
-      <p class="hint">Robot code must be running with SlothTune installed (it is, on this branch). With the
-      robot on one network and the internet (or a VPN) on another, check how this laptop routes them.</p>
+      <p class="hint">Robot code must be running with Sloth Tune in it: the robot code on the team repo's StuartTesting
+      branch has it. With the robot on one network and the internet (or a VPN) on another, check how this laptop routes them.</p>
       <div class="row"><button class="btn primary" id="cc-net" data-tip="net.check">Check the networks</button>
         <button class="btn" onclick="App.closeModal()">Close</button></div>`, root => {
         $("#cc-net", root).onclick = () => { App.closeModal(); checkNetworks(); };
       });
-  else { App.toast("Connected."); await refreshLint(); }
+  else {
+    App.toast("Connected.");
+    App.state = await App.api("/api/state");
+    askWhere(true);
+    await refreshLint();
+  }
 };
+
+// "On blocks" or "On the floor" is a person's word about the robot now. The server tells the robot
+// UNSET on each new connection and whenever the robot code restarts (server.py, forget_where); each
+// time, the checklist comes back for a person to tick again. Not in the simulator: it is always SIM.
+let whereSeen = null;
+function askWhere(now) {
+  const w = App.state.where_asked || { n: 0 };
+  const fresh = whereSeen !== null && w.n !== whereSeen;
+  whereSeen = w.n;
+  if (!(fresh || now) || !App.connected() || App.env() === "SIM" || App.state.target === "sim") return;
+  const why = w.why === "restart" ? "The robot code restarted" : "Connected";
+  if ($("#modal").hidden) openEnvironment(null, why);
+  else App.toast(`${why}: say where the robot is again (the "Where" chip at the top).`, 6000);
+}
 
 // ------------------------------------------------------------------ the robot's network, and the internet
 // The Driver Station, this laptop's address, the firewall and the radios; and, for Claude, the
@@ -217,7 +244,7 @@ async function abortNow() {
 $("#env-chip").onclick = () => openEnvironment();
 $("#tags-chip").onclick = () => openEnvironment();
 
-function openEnvironment(preset) {
+function openEnvironment(preset, why) {
   if (!App.connected()) { App.toast("Connect first."); return; }
   const env = App.state.environment || {};
   const sim = App.env() === "SIM";
@@ -226,7 +253,7 @@ function openEnvironment(preset) {
   const inches = m => m > 0 ? Math.round(U.inches(m)) : "";
   const cap = +U.fps(env.speed_cap || 1.0).toFixed(1);
   App.modal(`<h2>Where is the robot?</h2>
-    <p>This decides which tests may run and how the robot keeps everyone safe. ${sim ? "<b>Simulation is always SIM.</b>" : ""}</p>
+    <p>${why ? `<b>${esc(why)}: say where the robot is, and tick each check again.</b> ` : ""}This decides which tests may run and how the robot keeps everyone safe. ${sim ? "<b>Simulation is always SIM.</b>" : ""}</p>
     <div class="grid2">
       <div class="envopt" data-mode="BLOCKS" data-tip="env.blocks"><b>On blocks</b>
         <span class="hint">Frame on blocks, all four wheels clear of the floor. Wheels spin only while someone holds the deadman; the robot must not move. If it turns, or a wheel works like it carries weight, the test stops.</span></div>
@@ -350,7 +377,10 @@ function paintHeader() {
   const tags = st.environment && st.environment.apriltags;
   setChip($("#tags-chip"), "AprilTags " + (tags ? (st.environment.vision_in_use ? "on" : "on, no source") : "off"), tags ? "info" : "");
   const held = App.live && App.live.deadman;
-  setChip($("#deadman-chip"), held ? "Deadman: HELD" : "Deadman: not held", held ? "good" : "");
+  // One controller plugged in lands on port 0, where its right bumper is the robot code's own button.
+  const noPad = !held && App.live && App.live.deadman_controller === false;
+  setChip($("#deadman-chip"), held ? "Deadman: HELD" : noPad ? "Deadman: no port 1 controller" : "Deadman: not held",
+    held ? "good" : noPad ? "warn" : "");
 
   const t = (App.live && App.live.test) || st.test || {};
   const status = (App.live && App.live.status) || st.status || {};
@@ -388,6 +418,7 @@ async function pollState() {
   try {
     App.state = await App.api("/api/state");
     App.emit("state", App.state);
+    askWhere();
   } catch (e) { /* server restarting */ }
   paintHeader();
   setTimeout(pollState, 1000);

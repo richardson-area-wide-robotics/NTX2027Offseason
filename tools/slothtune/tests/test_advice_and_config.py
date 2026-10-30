@@ -136,14 +136,16 @@ class CrossReferenceTest(unittest.TestCase):
     def test_symptom_links(self):
         known = set(diagnose.BY_ID)
         for name in ("advisor.py", "monitor.py", "diagnose.py", "yagslcfg.py"):
-            src = open(os.path.join(PKG, name), encoding="utf-8").read()
+            with open(os.path.join(PKG, name), encoding="utf-8") as fh:
+                src = fh.read()
             for sym in re.findall(r'"symptom":\s*"(\w+)"', src):
                 self.assertIn(sym, known, f"{name} points at missing symptom {sym}")
         for rule, (sym, _) in monitor.RULES.items():
             self.assertIn(sym, known, f"monitor rule {rule}")
 
     def test_lint_and_monitor_evidence_exist(self):
-        src = open(os.path.join(PKG, "yagslcfg.py"), encoding="utf-8").read()
+        with open(os.path.join(PKG, "yagslcfg.py"), encoding="utf-8") as fh:
+            src = fh.read()
         lint_ids = set(re.findall(r'_f\(\s*[^,]+,\s*f?"([\w{}]+)"', src))
         lint_ids |= {"drive_f_ignored", "angle_f_ignored"}
         lint_ids |= {i.replace("{part}", p) for i in lint_ids if "{part}" in i for p in ("drive", "steer")}

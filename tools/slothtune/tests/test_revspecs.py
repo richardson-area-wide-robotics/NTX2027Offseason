@@ -27,14 +27,16 @@ class MotorsTest(unittest.TestCase):
     def test_the_advisor_and_the_robots_motor_table_agree(self):
         for key, rpm in advisor.MOTOR_FREE_RPM.items():
             self.assertEqual(rpm, R.MOTORS[key]["free_rpm"])
-        src = open(os.path.join(JAVA, "MotorKind.java"), encoding="utf-8").read()
+        with open(os.path.join(JAVA, "MotorKind.java"), encoding="utf-8") as fh:
+            src = fh.read()
         rows = {label: float(rpm) for label, rpm in
                 re.findall(r'\w+\("([^"]+)",\s*\d+,\s*([\d.]+),', src)}
         for label, key in R.LABEL_TO_KEY.items():
             self.assertEqual(rows[label], R.MOTORS[key]["free_rpm"], label)
 
     def test_the_team_policy_stays_inside_reves_advice_where_rev_gives_any(self):
-        src = open(os.path.join(JAVA, "MotorKind.java"), encoding="utf-8").read()
+        with open(os.path.join(JAVA, "MotorKind.java"), encoding="utf-8") as fh:
+            src = fh.read()
         policy = {label: int(a) for label, a in re.findall(r'\w+\("([^"]+)",\s*(\d+),', src)}
         for label, key in R.LABEL_TO_KEY.items():
             advice = R.MOTORS[key]["current_limit_a"]
@@ -50,7 +52,8 @@ class SpeedSensorTest(unittest.TestCase):
     def test_yagsl_really_sets_10_ms_x_2_on_a_spark_flex(self):
         # The number above is read off YAGSL's bytecode (SparkFlexSwerve.configureIntegratedEncoder);
         # this keeps the claim next to where the robots set it.
-        src = open(os.path.join(JAVA, "YagslDrivetrainIO.java"), encoding="utf-8").read()
+        with open(os.path.join(JAVA, "YagslDrivetrainIO.java"), encoding="utf-8") as fh:
+            src = fh.read()
         self.assertIn("quadratureMeasurementPeriod", src, "the Flex's filter is the quadrature one")
 
 
@@ -98,7 +101,8 @@ def _si(cell):
 
 class DocsTest(unittest.TestCase):
     def test_the_student_reference_names_every_part(self):
-        text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
+        with open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8") as fh:
+            text = fh.read()
         for m in R.MOTORS.values():
             self.assertIn(m["part"], text)
         for c in R.CONTROLLERS.values():
@@ -121,7 +125,8 @@ class DocsTest(unittest.TestCase):
         return rows
 
     def test_the_motor_table_matches_the_numbers_the_tools_use(self):
-        text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
+        with open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8") as fh:
+            text = fh.read()
         rows = self._table(text, "")
         order = ["neo", "neo2", "vortex", "neo550"]
         for field, key, scale in (("Kv (rpm per volt)", "kv_rpm_per_v", 1), ("Free speed", "free_rpm", 1),
@@ -140,7 +145,8 @@ class DocsTest(unittest.TestCase):
         self.assertEqual(rows["Part"], [R.MOTORS[k]["part"] for k in order])
 
     def test_the_maxswerve_table_matches_the_ratios_and_free_speeds(self):
-        text = open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8").read()
+        with open(os.path.join(REPO, "docs", "REV_HARDWARE.md"), encoding="utf-8") as fh:
+            text = fh.read()
         rows = self._table(text, "REV's name")
         self.assertEqual(len(rows), len(ratios.MAXSWERVE_DRIVE))
         for name, ratio in ratios.MAXSWERVE_DRIVE:

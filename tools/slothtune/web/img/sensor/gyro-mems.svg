@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 460" width="520" height="460" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="gyro-title gyro-desc">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <title id="gyro-title">How a MEMS gyro feels turning</title>
-<desc id="gyro-desc">Animated top view of the sensing part inside a MEMS gyro chip, drawn huge and simplified. A small blue mass hangs on springs inside a frame and vibrates left and right all the time. The gray platform carrying the chip sits still, turns a quarter turn left, waits, then turns back right. Only while it turns, the mass is also pushed sideways, across its vibration (the Coriolis effect), one way for a left turn and the other way for a right turn. A turn-rate bar on the right fills only while the platform turns, and a heading needle and number change only while it turns, because heading is the turn rate added up over time. Notes: a vibrating mass gets pushed sideways when the chip turns (the Coriolis effect), and that push is the turn rate. Heading is the rate added up, so any tiny error adds up too: drift. Redux Canandgyro: calibrate it still for at least 7 s; drift about 0.2 deg an hour still, 0.25 deg a minute moving.</desc>
+<desc id="gyro-desc">Animated top view of the sensing part inside a MEMS gyro chip, drawn huge and simplified. A small blue mass hangs on springs inside a frame and vibrates left and right all the time. The gray platform carrying the chip sits still, turns a quarter turn left, waits, then turns back right. Only while it turns, the mass is also pushed sideways, across its vibration (the Coriolis effect), one way for a left turn and the other way for a right turn. A turn-rate bar on the right fills only while the platform turns, and a heading needle and number change only while it turns, because heading is the turn rate added up over time. Notes: a vibrating mass gets pushed sideways when the chip turns (the Coriolis effect), and that push is the turn rate. Heading is the rate added up, so any tiny error adds up too: drift. Ours today is a navX: hold the robot still while it calibrates at power-on, about 1 s on a navX2 and about 15 s on an original navX-MXP. From 2027 it is a Redux Canandgyro.</desc>
 <style>
 /* One 8 s loop: still 0-15 %, turn left 15-45 %, hold 45-60 %, turn right 60-90 %, still 90-100 %.
    Drive vibration is 0.8 s (10 % of the loop), so the Coriolis push stays phase-locked to it. */
@@ -200,7 +200,7 @@
   <text x="30" y="372">Turning, the Coriolis effect pushes the swinging mass sideways,</text>
   <text x="30" y="389">back and forth with each swing: how far says how fast it turns.</text>
   <text x="30" y="411">Heading is the rate added up, so any tiny error adds up too: drift.</text>
-  <text x="30" y="433"><tspan font-weight="700">Redux Canandgyro:</tspan> calibrate it still for at least 7 s; drift about</text>
-  <text x="30" y="450">0.2 deg an hour still, 0.25 deg a minute moving.</text>
+  <text x="30" y="433"><tspan font-weight="700">Ours today, a navX:</tspan> hold the robot still while it calibrates at</text>
+  <text x="30" y="450">power-on, about 1 s (navX2) or 15 s (original navX). From 2027: a Canandgyro.</text>
 </g>
 </svg>

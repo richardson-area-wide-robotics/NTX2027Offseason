@@ -22,6 +22,16 @@ MOVED_ROT = 0.05      # motor rotations: less than this is "didn't turn"
 RATIO_TOL = 0.30      # a shaft partner's turns within 30% of what the gear ratios predict
 PDH_RISE_A = 1.0      # a PDH channel rising more than this during the pulse fed the motor
 
+# The two ways a mechanism can go, told from its name: a person at the cart presses the one they saw,
+# and the design file keeps it as the motor's positive direction. (button, positive), first match wins.
+WAYS = ((r"pivot|arm|wrist|elevator|climb|lift|hood|tilt", (("Up", "it goes up"), ("Down", "it goes down"))),
+        (r"shoot|flywheel|launch", (("Out", "it throws a game piece out"), ("In", "it pulls a game piece back in"))),
+        (r"intake|roller", (("In", "it pulls a game piece in"), ("Out", "it pushes a game piece out"))),
+        (r"index|tower|feed|conveyor|hopper|kicker|belt",
+         (("To the shooter", "it moves game pieces toward the shooter"), ("Away", "it moves game pieces away from the shooter"))))
+TURNS = (("Clockwise", "its shaft turns clockwise, seen from the end that sticks out"),
+         ("Counter-clockwise", "its shaft turns counter-clockwise, seen from the end that sticks out"))
+
 
 def _windows(doc):
     ch = doc.get("channels") or {}
@@ -47,6 +57,13 @@ def roles(doc):
         if m:
             out[int(m.group(1))] = (m.group(2), {"run": "run", "held at zero": "held", "watched": "watched"}[m.group(3)])
     return out
+
+
+def ways(dm):
+    """The two ways this motor's mechanism can go, as ``[{"say": button, "positive": phrase}, ...]``."""
+    text = " ".join(str((dm or {}).get(k) or "") for k in ("name", "subsystem")).lower()
+    pair = next((p for pat, p in WAYS if re.search(pat, text)), TURNS)
+    return [{"say": say, "positive": pos} for say, pos in pair]
 
 
 def _shaft_sign(dm):
@@ -123,12 +140,20 @@ def motor_test_report(doc, design=None):
                                          "Its power lead is in another port than designed: move it, or fix the design and the "
                                          "breaker that protects it."))
     # The one thing only a person can see.
+    # With no positive written yet, the person says which way it went (it ran forward, so that way is
+    # positive unless the code has it backwards): the page writes it into the design file.
     ask = []
     for r in run:
-        pos = (by_name.get(r["name"]) or {}).get("positive") or ""
+        dm = by_name.get(r["name"]) or {}
+        pos = dm.get("positive") or ""
         sign = (doc.get("meta") or {}).get("duty", 0.08)
-        ask.append({"motor": r["name"], "question": f"Did {r['name']} turn so that {pos}?" if pos and sign > 0 else
-                    f"Which way did {r['name']} turn? Write its positive direction in the design file."})
+        if pos and sign > 0:
+            ask.append({"motor": r["name"], "question": f"Did {r['name']} turn so that {pos}?"})
+        elif sign > 0 and not sim and r["moved"]:
+            ask.append({"motor": r["name"], "question": f"Which way did {r['name']} go?", "ways": ways(dm)})
+        else:
+            ask.append({"motor": r["name"], "question": f"Which way did {r['name']} turn? Write its positive direction "
+                                                        "in the design file."})
     summary = ("Stopped: a motor pulled hard without turning." if stopped else
                "Simulator: only the sequence was checked." if sim else
                "; ".join(f"{r['name']} {r['turns']:+.2f} rot, {r['peak_a']:.0f} A" for r in rows) or "Nothing recorded.")

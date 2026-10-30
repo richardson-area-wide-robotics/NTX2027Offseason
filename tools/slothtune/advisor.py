@@ -1696,6 +1696,9 @@ def _analyze_test(result, gains=None, **kw):
     if test == "system_limits":
         from . import systems
         return systems.limits_report(result)
+    if test == "system_home":
+        from . import systems
+        return systems.home_report(result)
     if test == "system_id":
         from . import systems
         name = systems._system_note(result)[0]

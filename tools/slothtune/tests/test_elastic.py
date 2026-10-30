@@ -22,7 +22,8 @@ class ElasticLayoutTest(unittest.TestCase):
         by_type = {w["type"]: w for w in ws}
         self.assertEqual(by_type["ComboBox Chooser"]["properties"]["topic"] + "/selected", C.BATTERY_SELECTED)
         self.assertEqual(by_type["Text Display"]["properties"]["topic"], C.BATTERY_CHECK)
-        src = open(os.path.join(JAVA, "DashboardAlerts.java"), encoding="utf-8").read()
+        with open(os.path.join(JAVA, "DashboardAlerts.java"), encoding="utf-8") as fh:
+            src = fh.read()
         group = re.search(r'GROUP\s*=\s*"([^"]+)"', src).group(1)
         self.assertEqual(by_type["Alerts"]["properties"]["topic"], "/SmartDashboard/" + group)
 

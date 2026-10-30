@@ -513,6 +513,30 @@ def step_report(doc, all_settings=None, gains=None):
             "system": {"name": name, "kind": kind, "units": units}}
 
 
+def home_report(doc):
+    """A system_home run: held at one end, its saved limits moved into this boot's readings."""
+    meta = doc.get("meta") or {}
+    notes = doc.get("notes") or []
+    m = next((re.match(r"system: (.+) \((\w+), (.*)\), held at its (.+)$", n) for n in notes if n.startswith("system: ")), None)
+    name, units, end = (m.group(1), m.group(3), m.group(4)) if m else ("the mechanism", "", "end")
+    shift, lo, hi = meta.get("shift"), meta.get("min"), meta.get("max")
+    F = []
+    if shift is None:
+        summary = "It wasn't homed."
+        F.append(advisor.finding("error", f"{name} isn't homed", doc.get("message") or "Disable the robot, hold it "
+                                 "still at one of its ends, and home it again."))
+    else:
+        said, f = U.system_unit(units)
+        summary = f"{name} homed at its {end}: limits {lo * f:.4g} to {hi * f:.4g} {said} for this boot."
+        F.append(advisor.finding("ok", f"Homed at its {end}", f"Its saved limits moved {shift * f:.4g} {said}, into "
+                                 "this boot's encoder readings. Tests may move it now."))
+        if lo is not None and hi is not None and abs(shift) > hi - lo:
+            F.append(advisor.finding("warn", "That moved them more than its whole range", f"If it wasn't really at "
+                                     f"its {end}, set its limits by hand instead."))
+    return {"test": "system_home", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
+            "score": None, "next": None, "modules": {}, "limits": {"min": lo, "max": hi, "units": units, "name": name}}
+
+
 def limits_report(doc):
     """A system_limits run: the range a person moved it through."""
     meta = doc.get("meta") or {}
@@ -532,6 +556,16 @@ def limits_report(doc):
         summary = f"{name}: {lo * f_said:.4g} to {hi * f_said:.4g} {said}."
         F.append(advisor.finding("ok", f"Limits {lo * f_said:.4g} to {hi * f_said:.4g} {said}",
                                  "Held for this session; save them so the robot keeps them after a restart."))
+        r = meta.get("sensor_r")
+        if isinstance(r, (int, float)):
+            if abs(r) < 0.98:
+                F.append(advisor.finding("warn", "Its reading and its motor's own encoder didn't move together",
+                                         f"r {abs(r):.3f}, where 1 is a straight line: a belt or gear slipping, a loose "
+                                         "magnet or set screw, or the code reading a different encoder. Find it before "
+                                         "any test moves it."))
+            else:
+                F.append(advisor.finding("ok", "Its reading and its motor's own encoder agree",
+                                         f"They moved together as it was moved by hand (r {abs(r):.3f})."))
     return {"test": "system_limits", "env": doc.get("env", ""), "summary": summary, "findings": F, "targets": [],
             "score": None, "next": None, "modules": {}, "limits": {"min": lo, "max": hi, "units": units, "name": name}}
 

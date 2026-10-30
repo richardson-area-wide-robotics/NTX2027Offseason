@@ -97,6 +97,12 @@ public final class SlothTuneTopics {
   public static final String STATUS_MESSAGE = ROOT + "/Status/Message";
   public static final String STATUS_PROGRESS = ROOT + "/Status/Progress";
   public static final String STATUS_DEADMAN_HELD = ROOT + "/Status/DeadmanHeld";
+  /**
+   * Whether a controller is plugged in on the deadman's Driver Station port (the tester's, port 1).
+   * With one controller plugged in it lands on port 0, where its right bumper is the robot code's own
+   * button (Peashooter: the feeder), not the deadman.
+   */
+  public static final String STATUS_DEADMAN_CONTROLLER = ROOT + "/Status/DeadmanController";
   /** A running test's live view: the channels in it (time first), and its newest rows, flattened. */
   public static final String STATUS_LIVE_NAMES = ROOT + "/Status/LiveNames";
   public static final String STATUS_LIVE_ROWS = ROOT + "/Status/LiveRows";
@@ -287,6 +293,11 @@ public final class SlothTuneTopics {
   public static final String SYSTEMS_LIMITS = SYSTEMS + "Limits";
   /** Where each system's limits came from: "slothtune.json", "moved by hand", or "". */
   public static final String SYSTEMS_LIMITS_FROM = SYSTEMS + "LimitsFrom";
+  /**
+   * Whether each system's limits fit this boot's position readings: an absolute sensor, limits moved
+   * by hand this boot, or homed this boot. A pivot or elevator that isn't is never moved by a test.
+   */
+  public static final String SYSTEMS_HOMED = SYSTEMS + "Homed";
   /** Every live gain as "system/gain|min|max". */
   public static final String SYSTEMS_GAIN_NAMES = SYSTEMS + "GainNames";
   /** The mode each mechanism's code runs its SPARK in ("Position", "Velocity", ...); empty if none. */

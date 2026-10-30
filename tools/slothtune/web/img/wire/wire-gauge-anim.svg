@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 400" width="520" height="400" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="wga-title wga-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="wga-title">Same current, two wire gauges</title>
+<desc id="wga-desc">Animated. The same 150 A flows through two battery leads, 2 ft each way, drawn one above the other with their copper to scale: 6 AWG, the battery path minimum (R609), and this team's thicker 4 AWG. Current dots move at the same rate through both. The thinner 6 AWG glows warm, with heat rising off it: it loses 0.24 V and makes 36 W of heat. The thicker 4 AWG stays cooler: 0.15 V lost and 22 W of heat. A smaller AWG number is thicker wire, and more copper means less resistance.</desc>
+<style>
+.wg-flow{animation:wg-flow 8s linear infinite}
+@keyframes wg-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-512}}
+.wg-glow{opacity:0.4;animation:wg-glow 2s ease-in-out infinite}
+@keyframes wg-glow{0%{opacity:0.22}50%{opacity:0.55}100%{opacity:0.22}}
+.wg-hot{opacity:0.24;animation:wg-hot 2s ease-in-out infinite}
+@keyframes wg-hot{0%{opacity:0.12}50%{opacity:0.34}100%{opacity:0.12}}
+.wg-heat{animation:wg-heat 2s linear infinite}
+@keyframes wg-heat{0%{opacity:0;transform:translateY(6px)}25%{opacity:1}70%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+.wg-d1{animation-delay:-0.5s}
+.wg-d2{animation-delay:-1s}
+.wg-d3{animation-delay:-1.5s}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Same current, two wire gauges</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">150 A through a battery lead, 2 ft each way. Copper drawn to scale.</text>
+
+<defs><filter id="wg-blur" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>
+
+<!-- 6 AWG: thinner, glows warm -->
+<rect class="wg-glow" x="94" y="101" width="284" height="78" rx="39" fill="#c62828" filter="url(#wg-blur)"/>
+<rect x="132" y="109.3" width="236" height="61.4" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<rect x="132" y="115.3" width="236" height="49.4" fill="#b87333" stroke="#8a5216" stroke-width="1"/>
+<rect class="wg-hot" x="132" y="115.3" width="236" height="49.4" fill="#c62828"/>
+<path class="wg-flow" d="M132 140 H368" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 15.9"/>
+<circle cx="132" cy="140" r="30.7" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="132" cy="140" r="24.7" fill="#b87333" stroke="#8a5216" stroke-width="1"/>
+<circle class="wg-hot" cx="132" cy="140" r="24.7" fill="#c62828"/>
+<path class="wg-heat" d="M196 96 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+<path class="wg-heat wg-d2" d="M240 96 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+<path class="wg-heat wg-d1" d="M284 96 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+<path class="wg-heat wg-d3" d="M328 96 q-5 -5 0 -10 q5 -5 0 -10" fill="none" stroke="#b45309" stroke-width="2.5" stroke-linecap="round"/>
+<text x="16" y="135" font-size="16" font-weight="700" fill="#222222">6 AWG</text>
+<text x="16" y="153" font-size="12" fill="#5c5c5c">thinner</text>
+<text x="388" y="134" font-size="15" font-weight="700" fill="#c62828">0.24 V lost</text>
+<text x="388" y="153" font-size="13" fill="#b45309">36 W of heat</text>
+<text x="388" y="171" font-size="12" fill="#b45309">runs hotter</text>
+
+<text x="250" y="206" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">The same 150 A in both wires →</text>
+
+<!-- 4 AWG: thicker, stays cooler -->
+<rect x="132" y="224.9" width="236" height="74.2" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<rect x="132" y="230.9" width="236" height="62.2" fill="#b87333" stroke="#8a5216" stroke-width="1"/>
+<path class="wg-flow" d="M132 262 H368" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="0.1 15.9"/>
+<circle cx="132" cy="262" r="37.1" fill="#d9dee3" stroke="#9aa4ad" stroke-width="1"/>
+<circle cx="132" cy="262" r="31.1" fill="#b87333" stroke="#8a5216" stroke-width="1"/>
+<text x="16" y="257" font-size="16" font-weight="700" fill="#222222">4 AWG</text>
+<text x="16" y="275" font-size="12" fill="#5c5c5c">thicker</text>
+<text x="388" y="256" font-size="15" font-weight="700" fill="#1a7f37">0.15 V lost</text>
+<text x="388" y="275" font-size="13" fill="#1a7f37">22 W of heat</text>
+<text x="388" y="293" font-size="12" fill="#1a7f37">stays cooler</text>
+
+<!-- the note -->
+<rect x="16" y="318" width="488" height="70" rx="6" fill="#f4f4f4" stroke="#e2e2e2"/>
+<text x="28" y="340" font-size="14" font-weight="700" fill="#446ce3">A smaller number is thicker wire: 4 AWG is thicker than 6 AWG.</text>
+<text x="28" y="359" font-size="12" fill="#222222">More copper means less resistance: fewer volts lost and less heat.</text>
+<text x="28" y="377" font-size="12" fill="#5c5c5c">6 AWG is the battery path minimum (R609); this team's leads are 4 AWG.</text>
+</svg>

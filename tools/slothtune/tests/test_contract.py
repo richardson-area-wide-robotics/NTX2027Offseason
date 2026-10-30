@@ -15,7 +15,8 @@ JAVA = os.path.join(REPO, "common", "slothtune", "java", "frc", "lib", "slothtun
 
 
 def java_topics():
-    src = open(os.path.join(JAVA, "SlothTuneTopics.java"), encoding="utf-8").read()
+    with open(os.path.join(JAVA, "SlothTuneTopics.java"), encoding="utf-8") as fh:
+        src = fh.read()
     values = {}
     for name, expr in re.findall(r"public static final String (\w+)\s*=\s*([^;]+);", src):
         parts = [p.strip() for p in expr.split("+")]
@@ -58,7 +59,8 @@ class ContractTest(unittest.TestCase):
             self.assertIn(topic, topics.values())
 
     def test_gain_bounds_match_the_robot(self):
-        src = open(os.path.join(JAVA, "LiveGains.java"), encoding="utf-8").read()
+        with open(os.path.join(JAVA, "LiveGains.java"), encoding="utf-8") as fh:
+            src = fh.read()
         specs = {k: (float(a), float(b)) for k, a, b in
                  re.findall(r'spec\("([^"]+)",\s*([-\d.]+),\s*([-\d.]+),', src)}
         self.assertEqual(set(specs), set(C.GAIN_SPECS))
@@ -70,7 +72,8 @@ class ContractTest(unittest.TestCase):
             self.assertEqual(bounds, tuple(map(float, C.FF_SPECS["k" + letter])), letter)
 
     def test_every_robot_test_is_known(self):
-        src = open(os.path.join(JAVA, "SlothTune.java"), encoding="utf-8").read()
+        with open(os.path.join(JAVA, "SlothTune.java"), encoding="utf-8") as fh:
+            src = fh.read()
         robot = set(re.findall(r'procedures\.put\("(\w+)"', src))
         self.assertEqual(robot, set(C.TESTS))
 

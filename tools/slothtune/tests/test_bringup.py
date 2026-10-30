@@ -86,6 +86,42 @@ class MotorTestReportTest(unittest.TestCase):
         self.assertTrue(any("turns against" in t for t in titles(rep)))
 
 
+class NoPositiveYetTest(unittest.TestCase):
+    """A drafted design file leaves every mechanism motor's positive direction blank. Before, the
+    report could only say "write it in the design file", and the page offered no answer at all, so
+    no mechanism motor could ever pass bring-up. Now it offers the two ways the mechanism can go."""
+
+    def ask(self, name, turns=2.0, **kw):
+        rep = bringup.motor_test_report(run([(name, "run", turns, 5)], **kw), {"motors": [motor(name)]})
+        return rep["ask"][0]
+
+    def test_a_motor_with_no_positive_gets_buttons_naming_its_ways(self):
+        a = self.ask("Intake pivot")
+        self.assertEqual(a["question"], "Which way did Intake pivot go?")
+        self.assertEqual([w["say"] for w in a["ways"]], ["Up", "Down"], "a pivot is an intake's, but it goes up and down")
+        self.assertEqual(a["ways"][0]["positive"], "it goes up")
+
+    def test_the_ways_follow_the_mechanism(self):
+        self.assertEqual([w["say"] for w in self.ask("Intake roller 1")["ways"]], ["In", "Out"])
+        self.assertEqual([w["say"] for w in self.ask("Shooter leader")["ways"]], ["Out", "In"])
+        self.assertEqual([w["say"] for w in self.ask("Spindexter")["ways"]], ["To the shooter", "Away"])
+        self.assertEqual([w["say"] for w in self.ask("Tower")["ways"]], ["To the shooter", "Away"])
+        self.assertEqual([w["say"] for w in self.ask("Mystery")["ways"]], ["Clockwise", "Counter-clockwise"])
+
+    def test_each_way_reads_as_the_question_it_becomes(self):
+        for name in ("Intake pivot", "Intake roller", "Shooter", "Tower", "Mystery"):
+            for w in bringup.ways({"name": name}):
+                self.assertTrue(w["positive"].startswith(("it ", "its ")), w)
+        d = {"motors": [motor("Intake pivot", positive=bringup.ways({"name": "Intake pivot"})[0]["positive"])]}
+        rep = bringup.motor_test_report(run([("Intake pivot", "run", 2.0, 5)]), d)
+        self.assertEqual(rep["ask"][0]["question"], "Did Intake pivot turn so that it goes up?", "and then Yes or No")
+
+    def test_no_buttons_for_what_nobody_saw(self):
+        self.assertNotIn("ways", self.ask("Tower", turns=0.0), "it didn't turn")
+        self.assertNotIn("ways", self.ask("Tower", env="SIM"), "the simulator moves no mechanism")
+        self.assertNotIn("ways", self.ask("Tower", duty=-0.08), "run backward, the way it went isn't positive")
+
+
 def sensors_run(rows, env="UNSET"):
     """A sensors run: ``rows`` is [(name, how, changes or None if it couldn't be read, problem)]."""
     notes, meta, ch = [], {"count": len(rows), "duration_s": 60}, {"t": [0.02 * k for k in range(6)]}

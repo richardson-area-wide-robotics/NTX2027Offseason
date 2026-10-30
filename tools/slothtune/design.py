@@ -296,6 +296,66 @@ def from_code(project):
             "motors": motors, "sensors": sensors}
 
 
+# ---------------------------------------------------------------------------- filling in the blanks
+
+
+# What a person fills in on the Bring-up tab, by motor: the blanks a drafted file leaves.
+MOTOR_EDITS = ("positive", "gearRatio", "pdhPort", "breaker")
+
+
+def _blank(v):
+    return v is None or (isinstance(v, str) and not v.strip())
+
+
+def edit_motors(design, edits):
+    """A copy of the design file with each named motor's blanks filled in (or corrected):
+    ``{"Tower": {"positive": "it lifts a game piece", "gearRatio": 4, "pdhPort": 3, "breaker": 40}}``.
+    A key left out stays as it was; a blank clears it. Anything that can't be right is refused, so a
+    typo never reaches the file."""
+    if not isinstance(edits, dict) or not edits:
+        raise ValueError("nothing to change")
+    out = json.loads(json.dumps(design))
+    by_name = {m.get("name"): m for m in out.get("motors") or []}
+    for name, e in edits.items():
+        m = by_name.get(name)
+        if m is None:
+            raise ValueError(f"no motor called {name!r} in the design file")
+        if not isinstance(e, dict) or set(e) - set(MOTOR_EDITS):
+            raise ValueError(f"{name}: only {', '.join(MOTOR_EDITS)} can be changed here")
+        if "positive" in e:
+            pos = "" if _blank(e["positive"]) else str(e["positive"]).strip()
+            if len(pos) > 120:
+                raise ValueError(f"{name}: say which way is positive in a few words")
+            m["positive"] = pos
+        if "gearRatio" in e:
+            r = None if _blank(e["gearRatio"]) else _number(e["gearRatio"], f"{name}: gear ratio")
+            if r is not None and not 0 < r <= 1000:
+                raise ValueError(f"{name}: gear ratio {r:g} - motor turns for one turn of what it drives, more than 0")
+            m["gearRatio"] = r
+        pdh = m.setdefault("pdh", {})
+        if "pdhPort" in e:
+            p = None if _blank(e["pdhPort"]) else _number(e["pdhPort"], f"{name}: PDH port")
+            if p is not None and (p != int(p) or not 0 <= p <= 23):
+                raise ValueError(f"{name}: PDH port {p:g} - a REV PDH has ports 0 to 23")
+            pdh["port"] = None if p is None else int(p)
+        if "breaker" in e:
+            b = None if _blank(e["breaker"]) else _number(e["breaker"], f"{name}: breaker")
+            if b is not None and not 0 < b <= 40:
+                raise ValueError(f"{name}: a {b:g} A breaker - PDH breakers are 40 A at most")
+            pdh["breaker"] = None if b is None else (int(b) if b == int(b) else b)
+    return out
+
+
+def _number(v, what):
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        raise ValueError(f"{what} {v!r} is not a number") from None
+    if x != x or x in (float("inf"), float("-inf")):
+        raise ValueError(f"{what} {v!r} is not a number")
+    return x
+
+
 # ---------------------------------------------------------------------------- the file against the code
 
 

@@ -11,16 +11,30 @@ import java.util.Locale;
  * and no closed-loop test of it runs without them.
  *
  * <p>Arg {@code system}: the system's index in the robot's list. Ends when asked (the laptop's
- * Done) or after {@code duration_s}. Channels {@code pos}, {@code vel}; meta {@code min}, {@code max}.
+ * Done) or after {@code duration_s}; stops at once if the robot is enabled meanwhile (its code
+ * would drive the mechanism under someone's hands), its motors put back and no limits set, as a
+ * capture that coasts the drivetrain ends. Channels {@code pos}, {@code vel}, {@code spark}; meta
+ * {@code min}, {@code max}, and when its leader's own encoder could be read {@code sensor_r} (how
+ * closely the code's reading and that encoder moved together, 1 = exactly) and {@code sensor_ratio}.
  */
 final class SystemLimitsProcedure implements Procedure {
   static final double MIN_RANGE_FRACTION = 1e-3;
+  /** Below this the code's reading and its motor's own encoder didn't move together: something slips. */
+  static final double AGREE_R = 0.98;
   private volatile boolean stopRequested;
   private TunableSystem sys;
   private double lo = Double.NaN;
   private double hi = Double.NaN;
   private double durationS;
   private final List<Runnable> restore = new ArrayList<>();
+  /** Its leader's own encoder, compared with the code's reading as it is moved; null if none. */
+  private MotorGuard.MotorChannel encoder;
+  private double n;
+  private double sp;
+  private double ss;
+  private double spp;
+  private double sss;
+  private double sps;
 
   @Override
   public String name() {
@@ -85,9 +99,14 @@ final class SystemLimitsProcedure implements Procedure {
     lo = Double.NaN;
     hi = Double.NaN;
     restore.clear();
+    encoder = null;
+    n = sp = ss = spp = sss = sps = 0;
     // Coasting, so a person can move it: each motor goes back to how it was at the end.
     for (MotorGuard.Motor m : ctx.motors) {
       if (sys.motors.contains(m.name)) {
+        if (encoder == null && !m.channel.follower()) {
+          encoder = m.channel;
+        }
         Boolean was = m.channel.coast();
         if (m.channel.setCoast(true)) {
           boolean back = was == null ? false : was;
@@ -99,7 +118,8 @@ final class SystemLimitsProcedure implements Procedure {
       }
     }
     ctx.sampler.channel("pos", () -> track(sys.position.getAsDouble()))
-        .channel("vel", () -> sys.velocity.getAsDouble());
+        .channel("vel", () -> sys.velocity.getAsDouble())
+        .channel("spark", () -> encoder == null ? Double.NaN : encoder.feedbackPosition());
     ctx.note("system: " + sys.name + " (" + sys.kind + ", " + sys.units + ")");
   }
 
@@ -107,6 +127,15 @@ final class SystemLimitsProcedure implements Procedure {
     if (Double.isFinite(p)) {
       lo = Double.isNaN(lo) ? p : Math.min(lo, p);
       hi = Double.isNaN(hi) ? p : Math.max(hi, p);
+      double e = encoder == null ? Double.NaN : encoder.feedbackPosition();
+      if (Double.isFinite(e)) {
+        n++;
+        sp += p;
+        ss += e;
+        spp += p * p;
+        sss += e * e;
+        sps += p * e;
+      }
     }
     return p;
   }
@@ -115,6 +144,16 @@ final class SystemLimitsProcedure implements Procedure {
   public boolean execute(TestContext ctx, double t) {
     track(sys.position.getAsDouble());
     return stopRequested || t >= durationS;
+  }
+
+  /** Enabled mid-run: stopped, so end() puts its motors back to their own idle mode at once. */
+  @Override
+  public String abortReason(TestContext ctx) {
+    if (ctx.enabled.getAsBoolean()) {
+      return "The robot was enabled while " + sys.name + " was being moved by hand: stopped, and its motors put "
+          + "back in their normal idle mode. Its limits weren't set: disable the robot and find them again.";
+    }
+    return null;
   }
 
   @Override
@@ -135,7 +174,30 @@ final class SystemLimitsProcedure implements Procedure {
         sys.setLimits(lo, hi, "moved by hand");
         ctx.note(String.format(Locale.ROOT, "%s limits for this session: %.4f to %.4f %s", sys.name, sys.shown(lo),
             sys.shown(hi), sys.shownUnits()));
+        agreement(ctx);
       }
+    }
+  }
+
+  /**
+   * Moved by hand, the code's reading and its motor's own encoder should move together in a straight
+   * line (whatever gearing and units sit between them). If they don't, something slips or the code
+   * reads a different sensor: a belt or gear skipping, a loose magnet or set screw, the wrong encoder.
+   */
+  private void agreement(TestContext ctx) {
+    double vp = spp - sp * sp / n;
+    double vs = sss - ss * ss / n;
+    if (n < 10 || !(vp > 0) || !(vs > 0)) {
+      return;
+    }
+    double cov = sps - sp * ss / n;
+    double r = cov / Math.sqrt(vp * vs);
+    ctx.meta("sensor_r", r);
+    ctx.meta("sensor_ratio", cov / vp);
+    if (Math.abs(r) < AGREE_R) {
+      ctx.note(String.format(Locale.ROOT, "%s's reading and its motor's own encoder didn't move together (r %.3f): "
+          + "a belt or gear slipping, a loose sensor, or the code reading a different encoder. Check it before a test.",
+          sys.name, r));
     }
   }
 

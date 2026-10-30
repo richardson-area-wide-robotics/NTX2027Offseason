@@ -66,7 +66,8 @@ class ExportTest(unittest.TestCase):
 
 class LayoutTest(unittest.TestCase):
     def test_layouts_use_keys_the_robot_records(self):
-        src = open(JAVA, encoding="utf-8").read()
+        with open(JAVA, encoding="utf-8") as fh:
+            src = fh.read()
         recorded = set(re.findall(r'Logger\.recordOutput\("([^"]+)"', src))
         recorded |= {"Motors/" + suffix for suffix in re.findall(r'b \+ "(\w+)"', src)}
         for d in yagslcfg.find_projects(ROBOTS):

@@ -2,7 +2,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 382" width="520" height="382" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="hc-title hc-desc">
 <rect width="100%" height="100%" fill="#ffffff"/>
 <title id="hc-title">The hand check</title>
-<desc id="hc-desc">Animated. With the robot disabled and nothing powered, a swerve module seen from above is turned by hand one way, then back. Beside it, two markers on scales, the steering motor's encoder and the absolute encoder, move together toward plus while it turns one way and back toward minus as it turns back: each sensor counts the way the code expects, and the two agree 1.00 to 1. A different number means the gear ratio in the code is not the module's real one.</desc>
+<desc id="hc-desc">Animated. With the robot on but disabled and its motors coasting, so the sensors report but nothing can drive, a swerve module seen from above is turned by hand one way, then back. Beside it, two markers on scales, the steering motor's encoder and the absolute encoder, move together toward plus while it turns one way and back toward minus as it turns back: each sensor counts the way the code expects, and the two agree 1.00 to 1. A different number means the gear ratio in the code is not the module's real one.</desc>
 <style>
 .hc-mod{transform-box:view-box;transform-origin:128px 196px;animation:hc-mod 8s ease-in-out infinite}
 @keyframes hc-mod{0%{transform:rotate(0deg)}8%{transform:rotate(0deg)}42%{transform:rotate(-90deg)}54%{transform:rotate(-90deg)}88%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
@@ -15,9 +15,9 @@
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 <text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The hand check</text>
-<text x="16" y="47" font-size="12" fill="#5c5c5c">Robot disabled, nothing powered: turn it by hand and watch every sensor count.</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Robot on but disabled, motors coasting: turn it by hand and watch every sensor count.</text>
 <rect x="16" y="60" width="190" height="24" rx="12" fill="#eaf4ec" stroke="#1a7f37" stroke-width="1.2"/>
-<text x="111" y="76.5" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">DISABLED: nothing powered</text>
+<text x="111" y="76.5" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">DISABLED: motors coasting</text>
 <text x="128" y="106" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">turned by hand, both ways</text>
 <path d="M56.72 159.68A80 80 0 0 1 199.28 159.68" fill="none" stroke="#222222" stroke-width="2.5"/><path d="M199.28 159.68L188.9 152.63L199.68 147.13Z" fill="#222222"/><path d="M56.72 159.68L56.32 147.13L67.1 152.63Z" fill="#222222"/>
 <rect x="68" y="136" width="120" height="120" rx="12" fill="#e9ecef" stroke="#444444" stroke-width="1.4"/>

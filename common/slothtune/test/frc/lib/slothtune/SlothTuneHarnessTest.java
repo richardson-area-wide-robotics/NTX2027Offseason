@@ -53,6 +53,12 @@ class SlothTuneHarnessTest {
     boolean fms;
     double stick;
     boolean deadman;
+    boolean deadmanController = true;
+
+    @Override
+    public boolean deadmanControllerConnected() {
+      return deadmanController;
+    }
 
     @Override
     public boolean enabled() {
@@ -491,6 +497,44 @@ class SlothTuneHarnessTest {
     loop(3);
     assertEquals(SlothTune.State.WAITING, tune.state());
     assertTrue(tune.message().contains("off the floor"), tune.message());
+    loop(30);
+    assertEquals(SlothTune.State.RUNNING, tune.state(), tune.message());
+  }
+
+  @Test
+  void aLiftCheckThatCanJudgeOnlyTwoWheelsStopsAndSaysWhy() {
+    // Two drive motors read no current: the two left can't vouch that the robot is off the floor.
+    onBlocks();
+    io.noCurrent[1] = true;
+    io.noCurrent[3] = true;
+    loop(1);
+    send("drive_step", "ALL");
+    loop(30);
+    assertEquals(SlothTune.State.ABORTED, tune.state(), tune.message());
+    assertTrue(tune.message().startsWith("Couldn't tell the wheels are off the ground"), tune.message());
+    assertTrue(tune.message().contains("only 2 of 4") && tune.message().contains("frontright, backright"),
+        tune.message());
+    assertTrue(tune.message().contains("too little"), "says why: " + tune.message());
+    assertEquals(0, io.volts[0], 1e-9, "the pulse stopped");
+  }
+
+  @Test
+  void aLiftCheckThatCanJudgeNoWheelIsNoPass() {
+    onBlocks();
+    Arrays.fill(io.noCurrent, true);
+    loop(1);
+    send("drive_step", "ALL");
+    loop(30);
+    assertEquals(SlothTune.State.ABORTED, tune.state(), tune.message());
+    assertTrue(tune.message().contains("only 0 of 4"), tune.message());
+  }
+
+  @Test
+  void threeJudgedWheelsAreEnoughForTheLiftCheck() {
+    onBlocks();
+    io.noCurrent[2] = true;
+    loop(1);
+    send("drive_step", "ALL");
     loop(30);
     assertEquals(SlothTune.State.RUNNING, tune.state(), tune.message());
   }
@@ -1010,5 +1054,57 @@ class SlothTuneHarnessTest {
     send("gyro_dance", "ALL");
     loop(1);
     assertTrue(ackMessage().contains("Unknown gyro command"), ackMessage());
+  }
+
+  // ---------------------------------------------------------------- homing, and the deadman's port
+  @Test
+  void aRealRobotsPivotIsNotHomedUntilThisBootSaysSoAndTheLaptopSeesIt() {
+    TunableSystem s = tune.system("Intake pivot", TunableSystem.Kind.PIVOT).units("rot").position(() -> 4.0);
+    s.setLimits(0, 18, "slothtune.json");
+    loop(2);
+    boolean[] homed = nt.getBooleanArrayTopic(SlothTuneTopics.SYSTEMS_HOMED).subscribe(new boolean[0]).get();
+    assertArrayEquals(new boolean[] {false}, homed, "a relative encoder starts wherever it was at power-on");
+    assertTrue(s.notReady().startsWith("Home Intake pivot first"), s.notReady());
+    s.home(false, 4.0);
+    loop(2);
+    homed = nt.getBooleanArrayTopic(SlothTuneTopics.SYSTEMS_HOMED).subscribe(new boolean[0]).get();
+    assertArrayEquals(new boolean[] {true}, homed);
+    assertNull(s.notReady());
+  }
+
+  @Test
+  void anAbsoluteSensorOrLimitsMovedByHandNeedNoHoming() {
+    TunableSystem arm = tune.system("Arm", TunableSystem.Kind.PIVOT).absolute();
+    arm.setLimits(0, 90, "slothtune.json");
+    assertNull(arm.notReady(), "an absolute encoder reads the same place after a power cycle");
+    TunableSystem lift = tune.system("Lift", TunableSystem.Kind.ELEVATOR);
+    lift.setLimits(0, 1.2, "slothtune.json");
+    assertTrue(lift.notReady() != null, "saved limits alone aren't enough");
+    lift.setLimits(0.1, 1.3, "moved by hand");
+    assertNull(lift.notReady(), "limits found by hand this boot fit this boot's readings");
+  }
+
+  @Test
+  void theLaptopIsToldWhetherAControllerIsOnTheDeadmansPort() {
+    BooleanSubscriberHolder h = new BooleanSubscriberHolder(nt);
+    ds.deadmanController = false;
+    loop(2);
+    assertFalse(h.get(), "one controller plugged in sits on port 0: its right bumper isn't the deadman");
+    ds.deadmanController = true;
+    loop(2);
+    assertTrue(h.get());
+  }
+
+  /** The robot's word on the deadman's port, read as the laptop reads it. */
+  private static final class BooleanSubscriberHolder {
+    private final edu.wpi.first.networktables.BooleanSubscriber sub;
+
+    BooleanSubscriberHolder(NetworkTableInstance nt) {
+      sub = nt.getBooleanTopic(SlothTuneTopics.STATUS_DEADMAN_CONTROLLER).subscribe(true);
+    }
+
+    boolean get() {
+      return sub.get();
+    }
   }
 }
