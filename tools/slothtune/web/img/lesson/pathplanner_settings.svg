@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 452" width="520" height="452" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="pathplanner_settings-title pathplanner_settings-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="pathplanner_settings-title">PathPlanner's settings and the first auto</title>
+<desc id="pathplanner_settings-desc">Animated, two parts. Top, a card of PathPlanner's Robot Config, kept in its own settings file: the drive gearing, wheel radius, module offsets, drive motor and drive current limit must match the robot code; the mass with bumpers and battery, moment of inertia, wheel grip (COF) and true maximum drive speed are measured on the robot. The path-following PID is set in the code, in PPHolonomicDriveController. Bottom, two timelines after a boot: boot, then disabled while waiting, then auto, with a cursor moving along both. In the first, the auto is built in autonomousInit with no warmup: when auto starts, PathPlanner first loads its classes, so the robot sits still while the path's target point moves on, then lurches after it and stays behind, marked late. In the second, the auto is built at boot and PathPlanner's warmup command loads the classes in the background while the robot is disabled, so the robot follows the target point on time. The warmup never drives the robot.</desc>
+<style>
+.pp-cur{transform:translateX(361.1px);animation:pp-cur 8s linear infinite}
+.pp-tgt{transform:translateX(139px);animation:pp-tgt 8s linear infinite}
+.pp-late{transform:translateX(81px);animation:pp-late 8s linear infinite}
+.pp-on{transform:translateX(139px);animation:pp-on 8s linear infinite}
+.pp-load{opacity:1;animation:pp-load 8s linear infinite}
+.pp-warm{opacity:1;animation:pp-warm 8s linear infinite}
+.pp-gap{opacity:1;animation:pp-gap 8s linear infinite}
+@keyframes pp-cur{0%{transform:translateX(0px);opacity:0}1%{transform:translateX(1px);opacity:1}10%{transform:translateX(60.0px);opacity:1}45%{transform:translateX(240.0px);opacity:1}88%{transform:translateX(488.0px);opacity:1}92%{transform:translateX(488px);opacity:0}100%{transform:translateX(488px);opacity:0}}
+@keyframes pp-tgt{0%{transform:translateX(0px);opacity:0}44%{transform:translateX(0px);opacity:0}45%{transform:translateX(0px);opacity:1}88%{transform:translateX(224px);opacity:1}92%{transform:translateX(224px);opacity:0}100%{transform:translateX(224px);opacity:0}}
+@keyframes pp-late{0%{transform:translateX(0px);opacity:1}59%{transform:translateX(0px);opacity:1}67%{transform:translateX(67px);opacity:1}71%{transform:translateX(81px);opacity:1}88%{transform:translateX(179px);opacity:1}92%{transform:translateX(179px);opacity:0}97%{transform:translateX(0px);opacity:0}100%{transform:translateX(0px);opacity:1}}
+@keyframes pp-on{0%{transform:translateX(0px);opacity:1}45%{transform:translateX(0px);opacity:1}88%{transform:translateX(224px);opacity:1}92%{transform:translateX(224px);opacity:0}97%{transform:translateX(0px);opacity:0}100%{transform:translateX(0px);opacity:1}}
+@keyframes pp-load{0%{opacity:0.35}45%{opacity:0.35}46%{opacity:1}59%{opacity:1}60%{opacity:0.35}100%{opacity:0.35}}
+@keyframes pp-warm{0%{opacity:0.35}14%{opacity:0.35}15%{opacity:1}32%{opacity:1}33%{opacity:0.35}100%{opacity:0.35}}
+@keyframes pp-gap{0%{opacity:0}47%{opacity:0}49%{opacity:1}88%{opacity:1}90%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">PathPlanner's settings and the first auto</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Its robot config must match the robot; its classes should load before the match.</text>
+
+<rect x="16" y="60" width="488" height="128" rx="6" fill="#fafafa" stroke="#444444" stroke-width="1.2"/>
+<text x="28" y="80" font-size="13" font-weight="700" fill="#222222">Robot Config (PathPlanner's own settings file)</text>
+<text x="28" y="101" font-size="12" font-weight="700" fill="#446ce3">Must match the code</text>
+<text x="28" y="119" font-size="12" fill="#222222">drive gearing, wheel radius</text>
+<text x="28" y="136" font-size="12" fill="#222222">module offsets</text>
+<text x="28" y="153" font-size="12" fill="#222222">drive motor, drive current limit</text>
+<text x="268" y="101" font-size="12" font-weight="700" fill="#1a7f37">Measure on the robot</text>
+<text x="268" y="119" font-size="12" fill="#222222">mass (with bumpers and battery)</text>
+<text x="268" y="136" font-size="12" fill="#222222">MOI, wheel COF (grip)</text>
+<text x="268" y="153" font-size="12" fill="#222222">true max drive speed</text>
+<line x1="28" y1="162" x2="492" y2="162" stroke="#e2e2e2" stroke-width="1"/>
+<text x="28" y="180" font-size="12" fill="#5c5c5c">In the code: the path-following PID (PPHolonomicDriveController).</text>
+
+<text x="16" y="213" font-size="13" font-weight="700" fill="#c62828">Auto built in autonomousInit, no warmup</text>
+<rect x="16" y="226" width="60" height="24" fill="#eeeeee" stroke="#444444" stroke-width="1"/>
+<rect x="76" y="226" width="180" height="24" fill="#f7f7f7" stroke="#444444" stroke-width="1"/>
+<rect x="256" y="226" width="248" height="24" fill="#f7f7f7" stroke="#444444" stroke-width="1"/>
+<rect class="pp-load" x="258" y="228" width="108" height="20" rx="3" fill="#f8dcdc" stroke="#c62828" stroke-width="1.2"/>
+<text x="46.0" y="243" font-size="12" fill="#222222" text-anchor="middle">boot</text>
+<text x="312.0" y="243" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">loads classes</text>
+<line x1="268" y1="268" x2="492" y2="268" stroke="#c9ced4" stroke-width="3" stroke-linecap="round"/>
+<g class="pp-gap"><text x="262" y="273" font-size="12" font-weight="700" fill="#c62828" text-anchor="end">late</text></g>
+<g class="pp-tgt"><circle cx="268" cy="268" r="7" fill="#ffffff" stroke="#446ce3" stroke-width="2.2" stroke-dasharray="3 2"/></g>
+<g class="pp-late"><rect x="261" y="261" width="14" height="14" rx="2" fill="#5c5c5c" stroke="#222222" stroke-width="1"/></g>
+
+
+<text x="16" y="299" font-size="13" font-weight="700" fill="#1a7f37">Auto built at boot + warmup</text>
+<rect x="16" y="312" width="60" height="24" fill="#eeeeee" stroke="#444444" stroke-width="1"/>
+<rect x="76" y="312" width="180" height="24" fill="#f7f7f7" stroke="#444444" stroke-width="1"/>
+<rect x="256" y="312" width="248" height="24" fill="#f7f7f7" stroke="#444444" stroke-width="1"/>
+<rect class="pp-warm" x="90" y="314" width="152" height="20" rx="3" fill="#dfe8fb" stroke="#446ce3" stroke-width="1.2"/>
+<text x="46.0" y="329" font-size="12" fill="#222222" text-anchor="middle">boot</text>
+<text x="166.0" y="329" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">warmup loads them</text>
+<line x1="268" y1="354" x2="492" y2="354" stroke="#c9ced4" stroke-width="3" stroke-linecap="round"/>
+<g class="pp-gap"><text x="262" y="359" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="end">on time</text></g>
+<g class="pp-tgt"><circle cx="268" cy="354" r="7" fill="#ffffff" stroke="#446ce3" stroke-width="2.2" stroke-dasharray="3 2"/></g>
+<g class="pp-on"><rect x="261" y="347" width="14" height="14" rx="2" fill="#5c5c5c" stroke="#222222" stroke-width="1"/></g>
+
+<text x="166.0" y="243" font-size="12" fill="#5c5c5c" text-anchor="middle">disabled</text>
+<text x="436.0" y="243" font-size="12" fill="#5c5c5c" text-anchor="middle">auto</text>
+<text x="380.0" y="329" font-size="12" fill="#5c5c5c" text-anchor="middle">auto</text>
+<g class="pp-cur"><path d="M8 219 L16 227 L24 219Z" fill="#222222"/><path d="M8 305 L16 313 L24 305Z" fill="#222222"/></g>
+<circle cx="276" cy="380" r="6" fill="#ffffff" stroke="#446ce3" stroke-width="2" stroke-dasharray="3 2"/>
+<text x="288" y="384" font-size="12" fill="#5c5c5c">where the path wants it</text>
+<rect x="420" y="374" width="12" height="12" rx="2" fill="#5c5c5c" stroke="#222222" stroke-width="1"/>
+<text x="438" y="384" font-size="12" fill="#5c5c5c">robot</text>
+
+<line x1="16" y1="394" x2="504" y2="394" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="413" font-size="13" fill="#222222">The first path command after a boot loads every class it uses.</text>
+<text x="16" y="431" font-size="13" fill="#222222">Build the auto at boot and run FollowPathCommand.warmupCommand().</text>
+<text x="16" y="448" font-size="12" fill="#5c5c5c">The warmup follows a made-up path in the background; it never drives the robot.</text>
+</svg>

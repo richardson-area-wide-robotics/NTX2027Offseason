@@ -242,13 +242,22 @@ public final class AkLogging {
     return deleted;
   }
 
-  /** The module checks, every loop: each one's count for the session, for the post-match summary. */
+  /**
+   * The robot's checks (ModuleWatch): each one's count of episodes this session, under
+   * {@code SlothTune/Watch/<module, motor or Robot>/<check>}, for the post-match summary.
+   */
   static void recordWatch(List<ModuleWatch.Flag> flags) {
     if (!started) {
       return;
     }
-    for (ModuleWatch.Flag f : flags) {
-      Logger.recordOutput("SlothTune/Watch/" + f.module + "/" + f.rule.key, f.count);
+    // Each count when it changes (and once at the start): a log keeps a value until the next one,
+    // and a quiet loop then builds no keys and boxes no numbers.
+    for (int i = 0; i < flags.size(); i++) {
+      ModuleWatch.Flag f = flags.get(i);
+      if (f.count != f.loggedCount) {
+        f.loggedCount = f.count;
+        Logger.recordOutput(f.logKey, f.count);
+      }
     }
   }
 

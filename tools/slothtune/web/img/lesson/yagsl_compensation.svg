@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 460" width="520" height="460" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="yagsl_compensation-title yagsl_compensation-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="yagsl_compensation-title">YAGSL's cosine and skew compensation</title>
+<desc id="yagsl_compensation-desc">Animated, two parts. Top, cosine compensation: a swerve wheel seen from above turns from 90 degrees off its target to pointing at it. Beside it, the speed asked for is a full dashed bar, and the speed YAGSL sends is the asked speed times the cosine of how far off the wheel still points: none at 90 degrees off, half at 60 degrees off, all of it once on target. So a wheel still turning does not push sideways and scrub. Bottom, skew correction (angular velocity compensation): two robots drive to the right along a dashed straight line while each spins one full turn. Without it, the path bows away from the line and ends off to the side. With it, YAGSL turns the asked direction a little ahead of the spin, by the gyro's turn rate times a coefficient, and the robot stays on the line. Cosine compensation is on by default; skew correction is off until a coefficient is set, and if it makes the bow worse, flip the coefficient's sign.</desc>
+<style>
+.cc-wheel{transform-box:view-box;transform-origin:78px 146px;transform:rotate(60deg);animation:cc-wheel 8s linear infinite}
+.cc-bar{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0.5);animation:cc-bar 8s linear infinite}
+.sk-a{transform:translate(296.8px,15.5px);animation:sk-a 8s linear infinite}
+.sk-b{transform:translate(296.8px,0px);animation:sk-b 8s linear infinite}
+.sk-spin{transform-box:fill-box;transform-origin:50% 50%;transform:rotate(-252deg);animation:sk-spin 8s linear infinite}
+@keyframes cc-wheel{0%{transform:rotate(90.00deg)}2.5%{transform:rotate(84.38deg)}5%{transform:rotate(78.75deg)}7.5%{transform:rotate(73.12deg)}10%{transform:rotate(67.50deg)}12.5%{transform:rotate(61.88deg)}15%{transform:rotate(56.25deg)}17.5%{transform:rotate(50.62deg)}20%{transform:rotate(45.00deg)}22.5%{transform:rotate(39.38deg)}25%{transform:rotate(33.75deg)}27.5%{transform:rotate(28.12deg)}30%{transform:rotate(22.50deg)}32.5%{transform:rotate(16.88deg)}35%{transform:rotate(11.25deg)}37.5%{transform:rotate(5.62deg)}40%{transform:rotate(0.00deg)}42.5%{transform:rotate(0.00deg)}45%{transform:rotate(0.00deg)}47.5%{transform:rotate(0.00deg)}50%{transform:rotate(0.00deg)}52.5%{transform:rotate(0.00deg)}55%{transform:rotate(0.00deg)}57.5%{transform:rotate(0.00deg)}60%{transform:rotate(0.00deg)}62.5%{transform:rotate(0.00deg)}65%{transform:rotate(0.00deg)}67.5%{transform:rotate(0.00deg)}70%{transform:rotate(0.00deg)}72.5%{transform:rotate(0.00deg)}75%{transform:rotate(0.00deg)}77.5%{transform:rotate(0.00deg)}80%{transform:rotate(0.00deg)}82.5%{transform:rotate(28.12deg)}85%{transform:rotate(56.25deg)}87.5%{transform:rotate(84.38deg)}88%{transform:rotate(90.00deg)}90%{transform:rotate(90.00deg)}92.5%{transform:rotate(90.00deg)}95%{transform:rotate(90.00deg)}97.5%{transform:rotate(90.00deg)}100%{transform:rotate(90.00deg)}}
+@keyframes cc-bar{0%{transform:scaleX(0.0000)}2.5%{transform:scaleX(0.0980)}5%{transform:scaleX(0.1951)}7.5%{transform:scaleX(0.2903)}10%{transform:scaleX(0.3827)}12.5%{transform:scaleX(0.4714)}15%{transform:scaleX(0.5556)}17.5%{transform:scaleX(0.6344)}20%{transform:scaleX(0.7071)}22.5%{transform:scaleX(0.7730)}25%{transform:scaleX(0.8315)}27.5%{transform:scaleX(0.8819)}30%{transform:scaleX(0.9239)}32.5%{transform:scaleX(0.9569)}35%{transform:scaleX(0.9808)}37.5%{transform:scaleX(0.9952)}40%{transform:scaleX(1.0000)}42.5%{transform:scaleX(1.0000)}45%{transform:scaleX(1.0000)}47.5%{transform:scaleX(1.0000)}50%{transform:scaleX(1.0000)}52.5%{transform:scaleX(1.0000)}55%{transform:scaleX(1.0000)}57.5%{transform:scaleX(1.0000)}60%{transform:scaleX(1.0000)}62.5%{transform:scaleX(1.0000)}65%{transform:scaleX(1.0000)}67.5%{transform:scaleX(1.0000)}70%{transform:scaleX(1.0000)}72.5%{transform:scaleX(1.0000)}75%{transform:scaleX(1.0000)}77.5%{transform:scaleX(1.0000)}80%{transform:scaleX(1.0000)}82.5%{transform:scaleX(0.8819)}85%{transform:scaleX(0.5556)}87.5%{transform:scaleX(0.0980)}88%{transform:scaleX(0.0000)}90%{transform:scaleX(0.0000)}92.5%{transform:scaleX(0.0000)}95%{transform:scaleX(0.0000)}97.5%{transform:scaleX(0.0000)}100%{transform:scaleX(0.0000)}}
+@keyframes sk-a{0%{transform:translate(0.0px,0.0px);opacity:1}4%{transform:translate(21.2px,0.3px);opacity:1}8%{transform:translate(42.4px,0.7px);opacity:1}12%{transform:translate(63.6px,1.2px);opacity:1}16%{transform:translate(84.8px,1.8px);opacity:1}20%{transform:translate(106.0px,2.6px);opacity:1}24%{transform:translate(127.2px,3.5px);opacity:1}28%{transform:translate(148.4px,4.6px);opacity:1}32%{transform:translate(169.6px,5.8px);opacity:1}36%{transform:translate(190.8px,7.1px);opacity:1}40%{transform:translate(212.0px,8.5px);opacity:1}44%{transform:translate(233.2px,10.1px);opacity:1}48%{transform:translate(254.4px,11.8px);opacity:1}52%{transform:translate(275.6px,13.6px);opacity:1}56%{transform:translate(296.8px,15.5px);opacity:1}60%{transform:translate(318.0px,17.6px);opacity:1}64%{transform:translate(339.2px,19.8px);opacity:1}68%{transform:translate(360.4px,22.2px);opacity:1}72%{transform:translate(381.6px,24.7px);opacity:1}76%{transform:translate(402.8px,27.3px);opacity:1}80%{transform:translate(424.0px,30.0px);opacity:1}86%{transform:translate(424.0px,30.0px);opacity:0}96%{transform:translate(0.0px,0.0px);opacity:0}100%{transform:translate(0.0px,0.0px);opacity:1}}
+@keyframes sk-b{0%{transform:translate(0.0px,0.0px);opacity:1}4%{transform:translate(21.2px,0.0px);opacity:1}8%{transform:translate(42.4px,0.0px);opacity:1}12%{transform:translate(63.6px,0.0px);opacity:1}16%{transform:translate(84.8px,0.0px);opacity:1}20%{transform:translate(106.0px,0.0px);opacity:1}24%{transform:translate(127.2px,0.0px);opacity:1}28%{transform:translate(148.4px,0.0px);opacity:1}32%{transform:translate(169.6px,0.0px);opacity:1}36%{transform:translate(190.8px,0.0px);opacity:1}40%{transform:translate(212.0px,0.0px);opacity:1}44%{transform:translate(233.2px,0.0px);opacity:1}48%{transform:translate(254.4px,0.0px);opacity:1}52%{transform:translate(275.6px,0.0px);opacity:1}56%{transform:translate(296.8px,0.0px);opacity:1}60%{transform:translate(318.0px,0.0px);opacity:1}64%{transform:translate(339.2px,0.0px);opacity:1}68%{transform:translate(360.4px,0.0px);opacity:1}72%{transform:translate(381.6px,0.0px);opacity:1}76%{transform:translate(402.8px,0.0px);opacity:1}80%{transform:translate(424.0px,0.0px);opacity:1}86%{transform:translate(424.0px,0.0px);opacity:0}96%{transform:translate(0.0px,0.0px);opacity:0}100%{transform:translate(0.0px,0.0px);opacity:1}}
+@keyframes sk-spin{0%{transform:rotate(0deg)}80%{transform:rotate(-360deg)}100%{transform:rotate(-360deg)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">YAGSL's cosine and skew compensation</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Two small corrections between the speed asked for and what the wheels get.</text>
+
+<text x="16" y="76" font-size="13" font-weight="700" fill="#222222">Cosine compensation (on by default)</text>
+<circle cx="78" cy="146" r="46" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<line x1="78" y1="146" x2="78" y2="92" stroke="#446ce3" stroke-width="2" stroke-dasharray="5 4"/>
+<g class="cc-wheel">
+  <rect x="68" y="116" width="20" height="60" rx="5" fill="#5c5c5c" stroke="#222222" stroke-width="1.2"/>
+  <path d="M71 112 L78 102 L85 112Z" fill="#222222"/>
+</g>
+<circle cx="78" cy="146" r="6" fill="#ffffff" stroke="#444444" stroke-width="1.6"/>
+<text x="78" y="210" font-size="12" fill="#5c5c5c" text-anchor="middle">dashed: where it</text>
+<text x="78" y="225" font-size="12" fill="#5c5c5c" text-anchor="middle">should point</text>
+
+<text x="150" y="104" font-size="12" fill="#5c5c5c">speed asked for</text>
+<rect x="150" y="110" width="210" height="16" fill="none" stroke="#444444" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text x="150" y="150" font-size="12" font-weight="700" fill="#1a7f37">speed sent = asked × cos(how far off)</text>
+<rect x="150" y="156" width="210" height="16" fill="#f4f6f4" stroke="#444444" stroke-width="1.2"/>
+<rect class="cc-bar" x="150" y="156" width="210" height="16" fill="#1a7f37"/>
+<rect x="150" y="156" width="210" height="16" fill="none" stroke="#444444" stroke-width="1.2"/>
+<text x="150" y="196" font-size="12" fill="#222222">90° off: none</text>
+<text x="246" y="196" font-size="12" fill="#222222">60° off: half</text>
+<text x="350" y="196" font-size="12" fill="#222222">on target: all</text>
+<text x="150" y="214" font-size="12" fill="#5c5c5c">A wheel still turning doesn't scrub sideways.</text>
+
+<line x1="16" y1="236" x2="504" y2="236" stroke="#e2e2e2" stroke-width="1"/>
+<text x="16" y="256" font-size="13" font-weight="700" fill="#222222">Skew correction (off until you set a coefficient)</text>
+<text x="16" y="273" font-size="12" fill="#5c5c5c">Driving right while spinning. Dashed: the path asked for.</text>
+<line x1="52" y1="290" x2="496" y2="290" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 5"/>
+<path d="M52 290 Q264 292 476 320" fill="none" stroke="#c62828" stroke-width="2.4"/>
+<text x="496" y="282" font-size="12" font-weight="700" fill="#c62828" text-anchor="end">without: it bows away</text>
+<g class="sk-a"><g class="sk-spin">
+  <rect x="39" y="277" width="26" height="26" rx="3" fill="#d9dde3" stroke="#c62828" stroke-width="2.2"/>
+  <path d="M46 286 L52 279 L58 286Z" fill="#222222"/>
+</g></g>
+<line x1="52" y1="366" x2="496" y2="366" stroke="#446ce3" stroke-width="2" stroke-dasharray="6 5"/>
+<line x1="52" y1="366" x2="476" y2="366" stroke="#1a7f37" stroke-width="3"/>
+<text x="496" y="346" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="end">with it: stays on the line</text>
+<g class="sk-b"><g class="sk-spin">
+  <rect x="39" y="353" width="26" height="26" rx="3" fill="#d9dde3" stroke="#1a7f37" stroke-width="2.2"/>
+  <path d="M46 362 L52 355 L58 362Z" fill="#222222"/>
+</g></g>
+
+<line x1="16" y1="398" x2="504" y2="398" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="418" font-size="13" fill="#222222">Skew correction aims a little ahead of the spin: the gyro's turn rate</text>
+<text x="16" y="436" font-size="13" fill="#222222">× a coefficient. If the bow gets worse, flip the coefficient's sign.</text>
+<text x="16" y="453" font-size="12" fill="#5c5c5c">YAGSL 2026.4.1: setCosineCompensator, setAngularVelocityCompensation.</text>
+</svg>

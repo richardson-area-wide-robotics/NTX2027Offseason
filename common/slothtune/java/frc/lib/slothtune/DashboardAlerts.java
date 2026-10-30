@@ -31,6 +31,8 @@ final class DashboardAlerts {
   final Map<String, String> showing = new TreeMap<>();
   /** Where each motor is wired, so a line can say where to look. */
   private WiringMap wiring = WiringMap.NONE;
+  /** The robot's checks as last drawn ({@link ModuleWatch#changes}). */
+  private int watchSeen = -1;
 
   DashboardAlerts() {
     this(true);
@@ -68,16 +70,56 @@ final class DashboardAlerts {
 
   /** Red while slothtune.json switches protection off: nothing else on the robot would say so. */
   /**
-   * The module checks (ModuleWatch): yellow while it is happening and afterwards with its count,
-   * like every other "it happened" line, so the drive team sees it after the match.
+   * The robot's own checks (ModuleWatch): yellow while one is happening and afterwards with its
+   * count, like every other "it happened" line, so the drive team sees it after the match. Only the
+   * checks a drive team acts on ({@link ModuleWatch.Rule#shows}). A check most modules have raised
+   * is one line naming the shared cause, not a line per module. Redrawn only when a check starts,
+   * stops or counts, so a quiet loop builds no text.
    */
-  void modules(List<ModuleWatch.Flag> flags) {
-    for (ModuleWatch.Flag f : flags) {
-      String times = f.count == 1 ? "once" : f.count + " times";
-      set("watch/" + f.module + "/" + f.rule.key, AlertType.kWarning, f.count > 0,
-          f.module + ": " + f.rule.what + (f.active ? " now (" + f.detail + ")" : "") + ", " + times
-              + " this session. " + f.rule.look);
+  void modules(ModuleWatch w) {
+    if (w.changes() == watchSeen) {
+      return;
     }
+    watchSeen = w.changes();
+    boolean guarded = w.guarded();
+    int n = w.moduleCount();
+    for (ModuleWatch.Rule r : ModuleWatch.RULES) {
+      if (r.scope != ModuleWatch.Scope.MODULE) {
+        continue;
+      }
+      int hit = 0;
+      int total = 0;
+      StringBuilder who = new StringBuilder();
+      for (int m = 0; m < n; m++) {
+        ModuleWatch.Flag f = w.flag(m, r);
+        if (f.count > 0) {
+          who.append(hit++ > 0 ? ", " : "").append(f.module);
+          total += f.count;
+        }
+      }
+      boolean flood = n >= 4 && hit * 2 > n;
+      set("watch/modules/" + r.key, AlertType.kWarning, r.shows(guarded) && flood, hit + " modules (" + who
+          + "): " + r.what + ", " + times(total) + " in all this session. Several at once point at"
+          + " something they share (the battery, the CAN bus, the code's settings) before any one"
+          + " module. " + r.look);
+      for (int m = 0; m < n; m++) {
+        ModuleWatch.Flag f = w.flag(m, r);
+        set("watch/" + f.module + "/" + r.key, AlertType.kWarning, r.shows(guarded) && !flood && f.count > 0,
+            watchLine(f));
+      }
+    }
+    for (ModuleWatch.Flag f : w.flags()) {
+      if (f.rule.scope != ModuleWatch.Scope.MODULE) {
+        set("watch/" + (f.module.isEmpty() ? "robot" : f.module) + "/" + f.rule.key, AlertType.kWarning,
+            f.rule.shows(guarded) && f.count > 0, watchLine(f));
+      }
+    }
+  }
+
+  private static String watchLine(ModuleWatch.Flag f) {
+    String detail = f.active ? f.detail() : "";
+    return f.label() + ": " + f.rule.what + (f.active ? " now" + (detail.isEmpty() ? "" : " (" + detail + ")") : "")
+        + ", " + times(f.count) + " this session. " + f.rule.look;
   }
 
   void protectionOff(boolean guardOff, boolean policyOff) {

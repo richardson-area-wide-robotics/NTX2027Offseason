@@ -379,14 +379,16 @@ def cmd_analyze(args, out):
             project = None
     if getattr(args, "pod", None):
         doc = advisor.pod_doc(doc, args.pod)  # one pod, with its own gains
-    if args.tape_forward is not None and 0 < args.tape_forward < MIN_FLOOR_IN:
-        # The straight test drives feet, not inches: a number this small was typed in meters.
+    if args.tape_forward is not None and 0 < args.tape_forward < MIN_FLOOR_IN and doc.get("test") == "straight":
+        # The straight test drives feet, not inches: a number this small was typed in meters. (A
+        # maneuver that comes home really does stop an inch or two from its start mark.)
         raise CliError(f"--tape-forward {args.tape_forward:g} is under {MIN_FLOOR_IN} inches: it takes "
                        f"inches ({args.tape_forward:g} m would be {U.inches(args.tape_forward):.1f}).")
     # Typed in inches; the report works in meters.
     rep = advisor.analyze(doc, doc.get("gains"),
                           measured_forward_m=None if args.tape_forward is None else U.m_from_in(args.tape_forward),
                           measured_lateral_m=None if args.tape_lateral is None else U.m_from_in(args.tape_lateral),
+                          measured_heading_deg=getattr(args, "tape_heading", None),
                           **advisor.robot_context(project))
     out.put(report=_clean(rep), run_file=doc["_file"])
     print_report(out, rep)
@@ -1189,8 +1191,9 @@ def build_parser():
 
     s = sub.add_parser("analyze", help="re-analyze a saved run")
     s.add_argument("run")
-    s.add_argument("--tape-forward", type=float, help="straight test: tape-measured forward, inches")
-    s.add_argument("--tape-lateral", type=float, help="straight test: tape-measured sideways, inches")
+    s.add_argument("--tape-forward", type=float, help="straight or maneuver: tape-measured forward, inches")
+    s.add_argument("--tape-lateral", type=float, help="straight or maneuver: tape-measured sideways (left +), inches")
+    s.add_argument("--tape-heading", type=float, help="maneuver: degrees it faces off the plan, left +")
     s.add_argument("--pod", help="one pod only, judged against its own gains, e.g. frontleft")
     s.set_defaults(fn=cmd_analyze)
 

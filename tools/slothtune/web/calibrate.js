@@ -231,6 +231,28 @@
           <div id="nf-sweeps" class="small"></div></div>
         <div class="nf-part"><h3 data-tip="cal.nf-mount">3. Mount</h3><div id="nf-mount" class="small"><span class="muted">After a sweep.</span></div></div>
       </div>
+      <div class="panel" id="cal-accuracy">
+        <h2 data-tip="cal.accuracy">10. Accuracy</h2>
+        <div data-faults="accuracy"></div>
+        ${HowTo.steps({ need: "Clear floor (the picker says how much; the robot adds room to turn), a tape measure, masking tape, and someone holding the deadman.",
+          steps: ["Measure the positions, wheel sizes and gyro first (1 to 4): this checks them all together, the way an auto uses them.",
+            "Robot on the floor (top bar: On the floor, with the clear floor ahead and to each side). Tape a mark under the robot's center and a line along the way it faces.",
+            "Pick a maneuver and press <b>Run it</b>. Hold the deadman until it stops: it drives each leg on its own odometry, at the speed cap or slower, then stands still.",
+            "Measure from the mark to the robot's center: forward along the line, and left of it (right is negative). Type both, and the degrees it faces off if you can, then <b>Score it</b>."],
+          good: "within 1 in for every 10 ft driven (a 20 ft maneuver: 2 in), facing within 0.5°. Run a maneuver and its mirror: an error that changes sides with the turn is a turn error that depends on direction." })}
+        <div class="row" style="flex-wrap:wrap">
+          <label class="small" data-tip="cal.ac-pick">Maneuver <select id="ac-pick" style="max-width:30em"></select></label>
+          <button class="btn primary" id="ac-run" data-tip="cal.ac-run">Run it</button>
+          <span class="small muted" id="ac-info"></span>
+        </div>
+        <div class="row" style="flex-wrap:wrap">
+          <label class="small" data-tip="cal.ac-fwd">Forward (in) <input type="number" id="ac-fwd" step="0.125" style="width:6em"></label>
+          <label class="small" data-tip="cal.ac-left">Left (in) <input type="number" id="ac-left" step="0.125" style="width:6em"></label>
+          <label class="small" data-tip="cal.ac-hdg">Facing off (°, left +) <input type="number" id="ac-hdg" step="0.1" style="width:5em"></label>
+          <button class="btn" id="ac-score" disabled data-tip="cal.ac-score">Score it</button>
+        </div>
+        <div id="ac-out"></div>
+      </div>
     </div></div>`;
 
   function findings(F) {
@@ -492,6 +514,7 @@
     spin: { kind: "swerve", gyro: true, what: "the swerve motors and the gyro" },
     gyro: { gyro: true, what: "the gyro" },
     moi: { kind: "swerve", gyro: true, what: "the swerve motors and the gyro" },
+    accuracy: { kind: "swerve", gyro: true, what: "the swerve motors and the gyro" },
   };
   $$("[data-faults]", root).forEach(el => Faults.mount(el, FAULT_SCOPE[el.dataset.faults]));
 
@@ -716,4 +739,76 @@
       HowTo.mark("calibrate", "cal_spin", !bad, bad ? bad.title : "The gyro and the wheels agree.");
     }
   };
+
+  // ---------------------------------------------------------------- 10. Accuracy
+  // One maneuver from the 2026 catalog (maneuvers.py, the robot's ManeuverCatalog), asked for by its
+  // id so a robot with another list refuses rather than drive the wrong one. The odometry steers the
+  // run, so only the tape (or AprilTags) scores it.
+  let maneuvers = null, acRun = null;
+  const picked = () => (maneuvers || []).find(m => String(m.id) === $("#ac-pick", root).value);
+  function paintPick() {
+    const m = picked();
+    if (!m) return;
+    $("#ac-info", root).textContent = `${m.name}: ${fmt(m.travel_m * U.FT_PER_M, 0)} ft, budget ${U.length(m.budget_m)}; reaches ${U.length(m.ahead_m, 0)} ahead, ${U.length(m.side_m, 0)} to one side`;
+    try { localStorage.setItem("slothtune.maneuver", m.name); } catch (e) { /* storage blocked */ }
+  }
+  async function loadManeuvers() {
+    if (maneuvers) return;
+    const r = await App.api("/api/maneuvers");
+    if (!r.ok) return;
+    maneuvers = r.maneuvers;
+    const groups = {};
+    maneuvers.forEach(m => (groups[m.family_label] = groups[m.family_label] || []).push(m));
+    const sel = $("#ac-pick", root);
+    sel.innerHTML = Object.entries(groups).map(([label, list]) => `<optgroup label="${esc(label)}">${list.map(m =>
+      `<option value="${m.id}">${esc(m.description)} (${fmt(m.travel_m * U.FT_PER_M, 0)} ft)</option>`).join("")}</optgroup>`).join("");
+    let last = "";
+    try { last = localStorage.getItem("slothtune.maneuver") || ""; } catch (e) { /* storage blocked */ }
+    const keep = maneuvers.find(m => m.name === last);
+    if (keep) sel.value = String(keep.id);
+    paintPick();
+  }
+  function showAccuracy(doc, rep) {
+    const r = rep || doc.report || {}, m = r.measured || {}, out = $("#ac-out", root);
+    const deg = d => d == null || !isFinite(d) ? "–" : `${d > 0 ? "+" : ""}${fmt(d, 1)}°`;
+    const row = (label, x, y, d, off) => `<tr><td>${label}</td><td class="num mono">${inch(x)}</td><td class="num mono">${inch(y)}</td>
+      <td class="num mono">${deg(d)}</td><td class="num mono">${off == null ? "" : `<b>${inch(off)}</b>`}</td></tr>`;
+    const truth = m.truth ? row(m.truth === "the tape" ? "Tape" : "AprilTags", m.truth_x_m, m.truth_y_m,
+      m.heading_error_deg == null ? null : m.expected_deg + m.heading_error_deg, m.error_m) : "";
+    const fam = (r.findings || []).find(f => f.kind === "family");
+    const mirror = fam && fam.action && fam.action.args ? (maneuvers || []).find(x => x.id === fam.action.args.id) : null;
+    out.innerHTML = `<p><b>${esc(r.summary || "")}</b></p>
+      ${m.expected_x_m != null ? `<div class="tblwrap"><table class="t" style="width:auto"><thead><tr><th></th><th data-tip="cal.ac-fwd" data-quiet>Forward</th>
+        <th data-tip="cal.ac-left" data-quiet>Left</th><th data-tip="cal.ac-facing" data-quiet>Facing</th><th data-tip="cal.ac-off" data-quiet>From the plan</th></tr></thead><tbody>
+        ${row("Plan", m.expected_x_m, m.expected_y_m, m.expected_deg, null)}
+        ${row("Odometry", m.odometry_x_m, m.odometry_y_m, m.odometry_deg, m.odometry_residual_m)}${truth}</tbody></table></div>` : ""}
+      ${findings((r.findings || []).filter(f => f.learn !== "battery"))}
+      ${mirror ? `<div class="row"><button class="btn small" id="ac-mirror" data-tip="cal.ac-mirror">Run its mirror: ${esc(mirror.name)}</button></div>` : ""}`;
+    const b = $("#ac-mirror", out);
+    if (b) b.onclick = () => { $("#ac-pick", root).value = String(mirror.id); paintPick(); $("#ac-run", root).click(); };
+  }
+  $("#ac-pick", root).onchange = paintPick;
+  $("#ac-run", root).onclick = async () => {
+    const m = picked();
+    if (!m) { App.toast("The maneuver list didn't load: reload the page."); return; }
+    if (App.env() !== "FIELD") { App.toast("Set the environment to On the floor first (top bar), with the clear floor ahead and to each side."); return; }
+    $("#ac-out", root).innerHTML = `<p class="hint">Hold the deadman: ${esc(m.name)}, ${fmt(m.travel_m * U.FT_PER_M, 0)} ft, leg by leg, until it stands still…</p>`;
+    $("#ac-run", root).disabled = true;
+    try {
+      acRun = await App.runTest("maneuver", "ALL", { id: m.id });
+      ["#ac-fwd", "#ac-left", "#ac-hdg"].forEach(id => { $(id, root).value = ""; });
+      $("#ac-score", root).disabled = false;
+      showAccuracy(acRun);
+    } catch (e) { $("#ac-out", root).innerHTML = `<p class="hint">${esc(e.message)}</p>`; }
+    $("#ac-run", root).disabled = false;
+  };
+  $("#ac-score", root).onclick = async () => {
+    if (!acRun) return;
+    const f = $("#ac-fwd", root).value, l = $("#ac-left", root).value, h = $("#ac-hdg", root).value;
+    if (f === "" || l === "") { App.toast("Type where the robot's center stopped: forward and left of the start mark, in inches (0 is fine)."); return; }
+    // Typed in inches and degrees; the analysis takes meters.
+    showAccuracy(acRun, await App.api("/api/analyze", { file: acRun._file, tape_forward: U.mFromIn(+f), tape_lateral: U.mFromIn(+l),
+      tape_heading: h === "" ? null : +h }));
+  };
+  App.on("tab", t => { if (t === "calibrate") loadManeuvers(); });
 })();

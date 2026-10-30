@@ -133,11 +133,12 @@ class PreviewScenariosTest {
       for (int i = 0; i < 40; i++) {
         w.update(tt += 0.02, true, new double[] {0}, new double[] {25}, new double[] {0}, new double[] {1}, new double[] {1});
       }
-      for (int i = 0; i < 5; i++) {
+      // Back on its angle for over a second: a flag clears then, so the next is a new episode.
+      for (int i = 0; i < 60; i++) {
         w.update(tt += 0.02, true, new double[] {25}, new double[] {25}, new double[] {25}, new double[] {1}, new double[] {1});
       }
     }
-    c.alerts.modules(w.flags());
+    c.alerts.modules(w);
     c.alerts.battery("2");
     scenario("after_match", BatteryPicker.checkText("2", Double.NaN, grades.get("2"), "3"), c.alerts.showing);
     assertEquals(1, count(c.alerts.showing, "kError"), "the shooter cut off for heat");

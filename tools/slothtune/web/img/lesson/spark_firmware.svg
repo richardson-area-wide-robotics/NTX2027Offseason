@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 418" width="520" height="418" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="spark_firmware-title spark_firmware-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="spark_firmware-title">SPARK firmware: update it, match it, check it</title>
+<desc id="spark_firmware-desc">Animated. A laptop running REV Hardware Client 2 is plugged by USB-C into the PDH, which passes the update over the CAN bus to four SPARKs in turn: a SPARK Flex, a SPARK MAX, a Flex and a MAX. As each one receives its update, its light blinks white and yellow, then a green check and its new firmware version appear: 26.1.6 on a SPARK Flex and 26.1.5 on a SPARK MAX, the newest 2026 firmware. Below, a table matches the library to the firmware: robot code on REVLib 2026 wants 2026 firmware, version 26; REVLib 2027 goes with firmware 27.0.0, released October 29, 2026, which removes the conversion factors 2026 code relies on, so keep 26 until the code moves to 2027. Last, three ways to check: REV Hardware Client 2's summary for each device, Sloth Tune's Motors tab, and REVLib 2026.0.5's warning when a SPARK is not on 2026 firmware.</desc>
+<style>
+@keyframes fw-pk0{0%{transform:translateX(0px);opacity:0}6%{transform:translateX(0px);opacity:0}6.5%{transform:translateX(0px);opacity:1}9%{transform:translateX(45px);opacity:1}9.5%{transform:translateX(45px);opacity:0}100%{transform:translateX(45px);opacity:0}}
+@keyframes fw-bl0{0%{opacity:0}8.9%{opacity:0}9%{opacity:1}11.4%{opacity:1}11.5%{opacity:0}13.9%{opacity:0}14%{opacity:1}16.4%{opacity:1}16.5%{opacity:0}18.9%{opacity:0}19%{opacity:1}21.4%{opacity:1}21.5%{opacity:0}21.9%{opacity:0}22%{opacity:0}100%{opacity:0}}
+@keyframes fw-done0{0%{opacity:0.3}22%{opacity:0.3}22.6%{opacity:1}94%{opacity:1}98%{opacity:0.3}100%{opacity:0.3}}
+.fw-pk0{opacity:0;animation:fw-pk0 8s linear infinite}.fw-bl0{opacity:0;animation:fw-bl0 8s linear infinite}.fw-done0{opacity:1;animation:fw-done0 8s linear infinite}
+@keyframes fw-pk1{0%{transform:translateX(0px);opacity:0}27%{transform:translateX(0px);opacity:0}27.5%{transform:translateX(0px);opacity:1}30%{transform:translateX(117px);opacity:1}30.5%{transform:translateX(117px);opacity:0}100%{transform:translateX(117px);opacity:0}}
+@keyframes fw-bl1{0%{opacity:0}29.9%{opacity:0}30%{opacity:1}32.4%{opacity:1}32.5%{opacity:0}34.9%{opacity:0}35%{opacity:1}37.4%{opacity:1}37.5%{opacity:0}39.9%{opacity:0}40%{opacity:1}42.4%{opacity:1}42.5%{opacity:0}42.9%{opacity:0}43%{opacity:0}100%{opacity:0}}
+@keyframes fw-done1{0%{opacity:0.3}43%{opacity:0.3}43.6%{opacity:1}94%{opacity:1}98%{opacity:0.3}100%{opacity:0.3}}
+.fw-pk1{opacity:0;animation:fw-pk1 8s linear infinite}.fw-bl1{opacity:0;animation:fw-bl1 8s linear infinite}.fw-done1{opacity:1;animation:fw-done1 8s linear infinite}
+@keyframes fw-pk2{0%{transform:translateX(0px);opacity:0}48%{transform:translateX(0px);opacity:0}48.5%{transform:translateX(0px);opacity:1}51%{transform:translateX(189px);opacity:1}51.5%{transform:translateX(189px);opacity:0}100%{transform:translateX(189px);opacity:0}}
+@keyframes fw-bl2{0%{opacity:0}50.9%{opacity:0}51%{opacity:1}53.4%{opacity:1}53.5%{opacity:0}55.9%{opacity:0}56%{opacity:1}58.4%{opacity:1}58.5%{opacity:0}60.9%{opacity:0}61%{opacity:1}63.4%{opacity:1}63.5%{opacity:0}63.9%{opacity:0}64%{opacity:0}100%{opacity:0}}
+@keyframes fw-done2{0%{opacity:0.3}64%{opacity:0.3}64.6%{opacity:1}94%{opacity:1}98%{opacity:0.3}100%{opacity:0.3}}
+.fw-pk2{opacity:0;animation:fw-pk2 8s linear infinite}.fw-bl2{opacity:0;animation:fw-bl2 8s linear infinite}.fw-done2{opacity:1;animation:fw-done2 8s linear infinite}
+@keyframes fw-pk3{0%{transform:translateX(0px);opacity:0}69%{transform:translateX(0px);opacity:0}69.5%{transform:translateX(0px);opacity:1}72%{transform:translateX(261px);opacity:1}72.5%{transform:translateX(261px);opacity:0}100%{transform:translateX(261px);opacity:0}}
+@keyframes fw-bl3{0%{opacity:0}71.9%{opacity:0}72%{opacity:1}74.4%{opacity:1}74.5%{opacity:0}76.9%{opacity:0}77%{opacity:1}79.4%{opacity:1}79.5%{opacity:0}81.9%{opacity:0}82%{opacity:1}84.4%{opacity:1}84.5%{opacity:0}84.9%{opacity:0}85%{opacity:0}100%{opacity:0}}
+@keyframes fw-done3{0%{opacity:0.3}85%{opacity:0.3}85.6%{opacity:1}94%{opacity:1}98%{opacity:0.3}100%{opacity:0.3}}
+.fw-pk3{opacity:0;animation:fw-pk3 8s linear infinite}.fw-bl3{opacity:0;animation:fw-bl3 8s linear infinite}.fw-done3{opacity:1;animation:fw-done3 8s linear infinite}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">SPARK firmware: update it, match it, check it</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">One USB cable: REV Hardware Client 2 reaches every SPARK on the CAN bus.</text>
+
+<rect x="22" y="76" width="72" height="46" rx="3" fill="#e7edfb" stroke="#444444" stroke-width="1.4"/>
+<rect x="14" y="122" width="88" height="7" rx="2" fill="#444444"/>
+<text x="58" y="104" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">RHC2</text>
+<text x="58" y="146" font-size="12" fill="#5c5c5c" text-anchor="middle">laptop</text>
+<path d="M102 104 C116 104 116 104 128 104" stroke="#222222" stroke-width="3" fill="none"/>
+<text x="115" y="94" font-size="12" fill="#5c5c5c" text-anchor="middle">USB</text>
+<path d="M190 111 H504" stroke="#f2c200" stroke-width="2.6"/>
+<path d="M190 117 H504" stroke="#2e7d32" stroke-width="2.6"/>
+<rect x="128" y="80" width="62" height="44" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<text x="159" y="98" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">PDH</text>
+<path d="M162 111 H190" stroke="#f2c200" stroke-width="2.6"/><path d="M162 117 H190" stroke="#2e7d32" stroke-width="2.6"/>
+<text x="159" y="143" font-size="12" fill="#5c5c5c" text-anchor="middle">bridge</text>
+<rect x="214" y="80" width="62" height="44" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<path d="M214 111 H276" stroke="#f2c200" stroke-width="2.6"/><path d="M214 117 H276" stroke="#2e7d32" stroke-width="2.6"/>
+<text x="222" y="98" font-size="12" font-weight="700" fill="#222222">Flex</text>
+<circle cx="265" cy="93" r="6" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="fw-bl0" cx="265" cy="93" r="6" fill="#f2c200" stroke="#444444" stroke-width="1.2"/>
+<g class="fw-done0"><text x="252.0" y="143" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">26.1.6</text>
+<path d="M216.0 137 l4 4 l8 -9" fill="none" stroke="#1a7f37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect class="fw-pk0" x="189" y="107.5" width="22" height="13" rx="6.5" fill="#446ce3" fill-opacity="0.45"/>
+<rect x="286" y="80" width="62" height="44" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<path d="M286 111 H348" stroke="#f2c200" stroke-width="2.6"/><path d="M286 117 H348" stroke="#2e7d32" stroke-width="2.6"/>
+<text x="294" y="98" font-size="12" font-weight="700" fill="#222222">MAX</text>
+<circle cx="337" cy="93" r="6" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="fw-bl1" cx="337" cy="93" r="6" fill="#f2c200" stroke="#444444" stroke-width="1.2"/>
+<g class="fw-done1"><text x="324.0" y="143" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">26.1.5</text>
+<path d="M288.0 137 l4 4 l8 -9" fill="none" stroke="#1a7f37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect class="fw-pk1" x="189" y="107.5" width="22" height="13" rx="6.5" fill="#446ce3" fill-opacity="0.45"/>
+<rect x="358" y="80" width="62" height="44" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<path d="M358 111 H420" stroke="#f2c200" stroke-width="2.6"/><path d="M358 117 H420" stroke="#2e7d32" stroke-width="2.6"/>
+<text x="366" y="98" font-size="12" font-weight="700" fill="#222222">Flex</text>
+<circle cx="409" cy="93" r="6" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="fw-bl2" cx="409" cy="93" r="6" fill="#f2c200" stroke="#444444" stroke-width="1.2"/>
+<g class="fw-done2"><text x="396.0" y="143" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">26.1.6</text>
+<path d="M360.0 137 l4 4 l8 -9" fill="none" stroke="#1a7f37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect class="fw-pk2" x="189" y="107.5" width="22" height="13" rx="6.5" fill="#446ce3" fill-opacity="0.45"/>
+<rect x="430" y="80" width="62" height="44" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<path d="M430 111 H492" stroke="#f2c200" stroke-width="2.6"/><path d="M430 117 H492" stroke="#2e7d32" stroke-width="2.6"/>
+<text x="438" y="98" font-size="12" font-weight="700" fill="#222222">MAX</text>
+<circle cx="481" cy="93" r="6" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="fw-bl3" cx="481" cy="93" r="6" fill="#f2c200" stroke="#444444" stroke-width="1.2"/>
+<g class="fw-done3"><text x="468.0" y="143" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">26.1.5</text>
+<path d="M432.0 137 l4 4 l8 -9" fill="none" stroke="#1a7f37" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+<rect class="fw-pk3" x="189" y="107.5" width="22" height="13" rx="6.5" fill="#446ce3" fill-opacity="0.45"/>
+
+<line x1="16" y1="160" x2="504" y2="160" stroke="#e2e2e2" stroke-width="1"/>
+<text x="16" y="180" font-size="13" font-weight="700" fill="#222222">Match it to the library</text>
+<rect x="16" y="190" width="488" height="24" fill="#e6f2ea" stroke="#444444" stroke-width="1"/>
+<text x="26" y="207" font-size="12" font-weight="700" fill="#222222">REVLib 2026 (robot code today)</text>
+<text x="272" y="207" font-size="12" fill="#222222">26.x: MAX 26.1.5, Flex 26.1.6</text>
+<rect x="16" y="214" width="488" height="24" fill="#fdf0e1" stroke="#444444" stroke-width="1"/>
+<text x="26" y="231" font-size="12" font-weight="700" fill="#222222">REVLib 2027 (next season)</text>
+<text x="272" y="231" font-size="12" fill="#222222">27.0.0, out Oct 29, 2026</text>
+<text x="16" y="256" font-size="12" font-weight="700" fill="#c62828">27.0.0 drops the conversion factors 2026 code uses: keep 26.x until</text>
+<text x="16" y="272" font-size="12" font-weight="700" fill="#c62828">the code moves to 2027. Pick the version in RHC2's drop-down.</text>
+
+<line x1="16" y1="284" x2="504" y2="284" stroke="#e2e2e2" stroke-width="1"/>
+<text x="16" y="304" font-size="13" font-weight="700" fill="#222222">Check it</text>
+<text x="16" y="324" font-size="13" fill="#222222">REV Hardware Client 2: each device's Summary shows its firmware.</text>
+<text x="16" y="343" font-size="13" fill="#222222">Sloth Tune: the Motors tab lists every controller's firmware.</text>
+<text x="16" y="362" font-size="13" fill="#222222">REVLib 2026.0.5 warns when a SPARK isn't on 2026 firmware.</text>
+<line x1="16" y1="376" x2="504" y2="376" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="394" font-size="12" fill="#5c5c5c">Blinking white and yellow: updating over CAN, so leave it powered.</text>
+<text x="16" y="411" font-size="12" fill="#5c5c5c">The bridge (the device on USB) needs 2026 firmware first; older: Recovery Mode.</text>
+</svg>

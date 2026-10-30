@@ -70,6 +70,14 @@ class FirmwareTest(unittest.TestCase):
         self.assertEqual(level, "warn")
         self.assertIn("Hardware Client 2", why)
 
+    def test_firmware_for_2027_is_an_error_while_the_code_is_2026(self):
+        # 27.0.0 removes the conversion factors YAGSL 2026 sets: steering would read rotations as degrees.
+        level, title, why = R.firmware_finding("SPARK Flex", "27.0.0")
+        self.assertEqual(level, "error")
+        self.assertIn("2027", title)
+        self.assertIn("26.1.6", why)
+        self.assertEqual(R.firmware_finding("SPARK MAX", "v27.1.0")[0], "error")
+
 
 class MaxSwerveTest(unittest.TestCase):
     def test_every_ratio_is_three_times_spur_over_pinion(self):

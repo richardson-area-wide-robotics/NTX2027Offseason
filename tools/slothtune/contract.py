@@ -159,6 +159,13 @@ BATTERY_NEXT = ROOT + "/Battery/Next"
 # Utilization 0-1, bus-off count, TX-full count, receive errors, transmit errors, and the running
 # count of robot loops that saw any receive or transmit error (the wiggle test watches that one).
 WIRING_CAN = ROOT + "/Wiring/Can"
+# The robot's own checks (ModuleWatch), one entry per check: the monitor's rule name, and the module
+# or motor it is about ("" for the whole robot); then five numbers each: active 0/1, episodes this
+# session, since (robot seconds), and two readings for its detail. See monitor.robot_checks.
+WATCH = ROOT + "/Watch/"
+WATCH_RULES = WATCH + "Rules"
+WATCH_WHO = WATCH + "Who"
+WATCH_VALUES = WATCH + "Values"
 
 # Systems (TunableSystem): a team's mechanism, its live state and its live gains.
 SYSTEMS = ROOT + "/Systems/"
@@ -307,6 +314,9 @@ STOP_CODES = [
     ("The hold's motor", "NO_SYSTEM_HOOK"), ("reads a motor the motor guard doesn't watch", "NO_SYSTEM_HOOK"),
     ("Pick the mechanism that runs it", "NO_SYSTEM_HOOK"), ("Give the sweep a speed", "BAD_ARGS"),
     ("Give the roller the speed", "BAD_ARGS"),
+    # The accuracy maneuvers: which one, the two catalogs agreeing, and a pose that froze mid-run.
+    ("Pick a maneuver", "BAD_ARGS"), ("No maneuver at index", "BAD_ARGS"),
+    ("No maneuver has that id", "CATALOG_MISMATCH"), ("pose stopped changing while", "ODOMETRY_FROZEN"),
     ("doesn't give", "NO_SYSTEM_HOOK"), ("Give the test a maximum speed", "BAD_ARGS"), ("Set the limits of", "NO_LIMITS"),
     ("went past its limits", "PAST_LIMITS"), ("faster than the test allows", "OVERSPEED"), ("above the test's top speed", "OVERSPEED"), ("No motors are registered", "NO_MOTORS"), ("can't be run by a test", "NOT_SUPPORTED"),
     ("names a motor the robot", "BAD_ARGS"), ("No motor to run", "BAD_ARGS"),
@@ -397,6 +407,6 @@ def gain_spec(key):
     return None
 
 ENVIRONMENTS = ("UNSET", "SIM", "BLOCKS", "FIELD")
-TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "slip", "pdh_map", "spin_ff",
+TESTS = ("capture", "steer_step", "drive_step", "drive_ff", "spin", "straight", "maneuver", "slip", "pdh_map", "spin_ff",
          "controller", "motor_test", "sensors", "can_load", "system_limits", "system_home", "system_step", "system_piece", "system_hold",
          "system_id")

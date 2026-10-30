@@ -92,8 +92,11 @@ public final class SlothTune {
   private final SafetySupervisor supervisor;
   private final LiveGains gains;
   private final BatteryPicker battery;
-  /** The module checks the laptop's monitor makes, here too, so they watch matches. */
+  /** The checks the laptop's monitor makes, here too, so they watch matches. */
   private ModuleWatch watch;
+  /** Its readings, filled in place each loop, and where the laptop reads its flags. */
+  private final ModuleWatch.Inputs watchIn = new ModuleWatch.Inputs();
+  private ModuleWatch.Board watchBoard;
   private final long bootId;
   private final boolean manualSampling;
   private final Map<String, Supplier<Procedure>> procedures = new LinkedHashMap<>();
@@ -308,6 +311,7 @@ public final class SlothTune {
     procedures.put("drive_ff", DriveFeedforwardProcedure::new);
     procedures.put("spin", SpinProcedure::new);
     procedures.put("straight", StraightLineProcedure::new);
+    procedures.put("maneuver", ManeuverProcedure::new);
     procedures.put("slip", SlipProcedure::new);
     procedures.put("pdh_map", PdhMapProcedure::new);
     procedures.put("spin_ff", SpinFeedforwardProcedure::new);
@@ -1869,18 +1873,43 @@ public final class SlothTune {
         mods[m] = io.moduleName(m);
       }
       watch = new ModuleWatch(mods);
+      watchBoard = new ModuleWatch.Board(nt);
     }
-    // A tuning test makes big steering errors on purpose: it isn't a module going wrong.
-    if (state != State.RUNNING && state != State.WAITING) {
-      watch.update(now, signals.enabled(), steer, steerSp, steerMotor, driveV, driveSp);
-    }
-    if (dashboard != null) {
-      dashboard.modules(watch.flags());
-    }
-    AkLogging.recordWatch(watch.flags());
     DrivetrainIO.GyroStatus gyro = io.gyroStatus();
     liveGyro.set(new String[] {gyro.type(), gyro.connected() ? "connected" : "NOT CONNECTED",
         gyro.calibrating() ? "calibrating" : "ready", gyro.faults()});
+    if (guard.motorCount() != watch.motorCount()) {
+      watch.bindMotors(guard.motors());
+    }
+    ModuleWatch.Inputs in = watchIn;
+    in.enabled = signals.enabled();
+    // A tuning test makes big steering errors on purpose: it isn't a module going wrong.
+    in.testing = state == State.RUNNING || state == State.WAITING;
+    in.onField = environment() == TestEnvironment.FIELD || signals.fmsAttached();
+    in.driveLimitA = io.driveCurrentLimitA();
+    in.steer = steer;
+    in.steerSp = steerSp;
+    in.steerMotor = steerMotor;
+    in.v = driveV;
+    in.vSp = driveSp;
+    in.pos = drivePos;
+    in.driveAmps = driveAmps;
+    in.driveTemp = driveTemp;
+    in.steerTemp = steerTemp;
+    in.absIssue = absIssue;
+    in.faults = faults;
+    in.headingDeg = io.headingDeg();
+    in.busVolts = io.busVolts();
+    in.gyroType = gyro.type();
+    in.gyroConnected = gyro.connected();
+    in.gyroCalibrating = gyro.calibrating();
+    in.gyroFaults = gyro.faults();
+    watch.update(now, in);
+    watchBoard.publish(watch);
+    if (dashboard != null) {
+      dashboard.modules(watch);
+    }
+    AkLogging.recordWatch(watch.flags());
     if (now - lastGyroDetails >= 0.5) {
       lastGyroDetails = now;
       liveGyroDetails.set(io.gyroDetails());

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 388" width="520" height="388" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="navx-title navx-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="navx-title">The navX: keep still while it calibrates</title>
+<desc id="navx-desc">Animated. A navX board plugs into the 34-pin MXP port on top of the roboRIO. Its four lights are 3.3V (red, power), CAL (orange) and S1 and S2 (green). A cursor moves along a timeline after power-on: first every light comes on for a light check; then CAL blinks slowly while the gyro calibrates and the robot must be kept still, about 1 second on a navX2 and about 15 seconds on an older navX; then, after about 2 seconds with no motion, the navX sets its yaw to 0, and a dial that showed a wandering gray needle marked not set yet shows a green needle at 0; then it is ready and CAL is off. Bumped while it calibrates, it times out; its yaw may be less accurate. A navX2 drifts about 0.5 degrees a minute while moving and about 0.2 degrees an hour standing still. SystemCore, the 2027 controller, has no MXP port.</desc>
+<style>
+.nx-cal{opacity:1;animation:nx-cal 8s linear infinite}
+.nx-on{opacity:1;animation:nx-on 8s linear infinite}
+.nx-cur{transform:translateX(130px);animation:nx-cur 8s linear infinite}
+.nx-before{opacity:1;animation:nx-before 8s linear infinite}
+.nx-after{opacity:0;animation:nx-after 8s linear infinite}
+.nx-wander{transform-box:view-box;transform-origin:404px 150px;transform:rotate(40deg);animation:nx-wander 8s ease-in-out infinite}
+@keyframes nx-cal{0%{opacity:0}5.9%{opacity:0}6%{opacity:1}10.9%{opacity:1}11%{opacity:0.12}15.9%{opacity:0.12}16%{opacity:1}20.9%{opacity:1}21%{opacity:0.12}25.9%{opacity:0.12}26%{opacity:1}30.9%{opacity:1}31%{opacity:0.12}35.9%{opacity:0.12}36%{opacity:1}40.9%{opacity:1}41%{opacity:0.12}45.9%{opacity:0.12}46%{opacity:1}49.9%{opacity:1}50%{opacity:0}100%{opacity:0}}
+@keyframes nx-on{0%{opacity:0}0.5%{opacity:0}1%{opacity:1}100%{opacity:1}}
+@keyframes nx-cur{0%{transform:translateX(0px);opacity:0}1%{transform:translateX(0px);opacity:1}6%{transform:translateX(50px);opacity:1}50%{transform:translateX(260px);opacity:1}72%{transform:translateX(390px);opacity:1}95%{transform:translateX(488px);opacity:1}98%{transform:translateX(488px);opacity:0}100%{transform:translateX(488px);opacity:0}}
+@keyframes nx-before{0%{opacity:1}49%{opacity:1}49.8%{opacity:0}98.2%{opacity:0}99.4%{opacity:1}100%{opacity:1}}
+@keyframes nx-after{0%{opacity:0}50%{opacity:0}50.8%{opacity:1}96.8%{opacity:1}98%{opacity:0}100%{opacity:0}}
+@keyframes nx-wander{0%{transform:rotate(40deg)}15%{transform:rotate(52deg)}30%{transform:rotate(33deg)}45%{transform:rotate(44deg)}50%{transform:rotate(40deg)}100%{transform:rotate(40deg)}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">The navX: keep still while it calibrates</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Today's gyro sits on the roboRIO's MXP port and calibrates at power-on.</text>
+
+<rect x="40" y="70" width="180" height="46" rx="4" fill="#e7edfb" stroke="#444444" stroke-width="1.4"/>
+<text x="52" y="98" font-size="13" font-weight="700" fill="#222222">navX</text>
+<circle cx="118" cy="86" r="5.5" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="nx-on" cx="118" cy="86" r="5.5" fill="#c62828" stroke="#444444" stroke-width="1.2"/>
+<circle cx="146" cy="86" r="5.5" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="nx-cal" cx="146" cy="86" r="5.5" fill="#e8890c" stroke="#444444" stroke-width="1.2"/>
+<circle cx="172" cy="86" r="5.5" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="nx-on" cx="172" cy="86" r="5.5" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<circle cx="198" cy="86" r="5.5" fill="#ffffff" stroke="#444444" stroke-width="1.2"/>
+<circle class="nx-on" cx="198" cy="86" r="5.5" fill="#1a7f37" stroke="#444444" stroke-width="1.2"/>
+<text x="118" y="108" font-size="12" fill="#222222" text-anchor="middle">3.3V</text>
+<text x="146" y="108" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle">CAL</text>
+<text x="172" y="108" font-size="12" fill="#222222" text-anchor="middle">S1</text>
+<text x="198" y="108" font-size="12" fill="#222222" text-anchor="middle">S2</text>
+<rect x="66" y="116" width="128" height="8" fill="#444444"/>
+<rect x="24" y="124" width="212" height="80" rx="6" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<text x="130" y="144" font-size="12" fill="#5c5c5c" text-anchor="middle">MXP port: the navX talks SPI here</text>
+<text x="130" y="188" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">roboRIO</text>
+
+<line x1="262" y1="64" x2="262" y2="204" stroke="#d6d6d6" stroke-width="1"/>
+<text x="404" y="74" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">Its heading (yaw)</text>
+<circle cx="404" cy="150" r="50" fill="#fafafa" stroke="#444444" stroke-width="1.4"/>
+<line x1="404" y1="100" x2="404" y2="108" stroke="#444444" stroke-width="2"/>
+<text x="404" y="94" font-size="12" fill="#5c5c5c" text-anchor="middle">0°</text>
+<g class="nx-before"><g class="nx-wander"><line x1="404" y1="150" x2="404" y2="110" stroke="#8a8a8a" stroke-width="3" stroke-dasharray="5 4" stroke-linecap="round"/></g></g>
+<g class="nx-after"><line x1="404" y1="150" x2="404" y2="108" stroke="#1a7f37" stroke-width="4" stroke-linecap="round"/><path d="M397 114 L404 101 L411 114Z" fill="#1a7f37"/></g>
+<circle cx="404" cy="150" r="5" fill="#444444"/>
+<text class="nx-before" x="404" y="220" font-size="12" font-weight="700" fill="#5c5c5c" text-anchor="middle">not set yet</text>
+<text class="nx-after" x="404" y="220" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">yaw set to 0</text>
+
+<text x="16" y="234" font-size="13" font-weight="700" fill="#222222">After power-on (not to scale)</text>
+<rect x="16" y="250" width="50" height="24" fill="#eeeeee" stroke="#444444" stroke-width="1"/>
+<rect x="66" y="250" width="210" height="24" fill="#fdf0e1" stroke="#444444" stroke-width="1"/>
+<rect x="276" y="250" width="130" height="24" fill="#e7edfb" stroke="#444444" stroke-width="1"/>
+<rect x="406" y="250" width="98" height="24" fill="#e6f2ea" stroke="#444444" stroke-width="1"/>
+<text x="41" y="266" font-size="12" fill="#222222" text-anchor="middle">on</text>
+<text x="171" y="266" font-size="12" font-weight="700" fill="#b45309" text-anchor="middle">calibrating: keep still</text>
+<text x="341" y="266" font-size="12" font-weight="700" fill="#446ce3" text-anchor="middle">yaw set to 0</text>
+<text x="455" y="266" font-size="12" font-weight="700" fill="#1a7f37" text-anchor="middle">ready</text>
+<text x="171" y="292" font-size="12" fill="#5c5c5c" text-anchor="middle">navX2 about 1 s, older about 15 s</text>
+<text x="341" y="292" font-size="12" fill="#5c5c5c" text-anchor="middle">after ~2 s of no motion</text>
+<g class="nx-cur"><path d="M8 239 L16 249 L24 239Z" fill="#222222"/></g>
+
+<line x1="16" y1="306" x2="504" y2="306" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="326" font-size="13" fill="#222222">Bumped while it calibrates, it times out; its yaw may be less accurate.</text>
+<text x="16" y="345" font-size="13" fill="#222222">A navX2 drifts about 0.5° a minute moving, 0.2° an hour still.</text>
+<text x="16" y="364" font-size="12" fill="#5c5c5c">SystemCore (2027) has no MXP port or SPI, so the navX comes off then.</text>
+<text x="16" y="381" font-size="12" fill="#5c5c5c">Numbers: Kauai Labs.</text>
+</svg>

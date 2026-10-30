@@ -396,7 +396,7 @@ const Tune = (() => {
       const h = ch.heading || [], rate = h.map((v, k) => k ? (v - h[k - 1]) / (t[k] - t[k - 1]) : NaN);
       out.push({ x: t, y: times(ch.cmd_omega, U.DEG_PER_RAD), color: "--sp", dash: [5, 4], alpha: a, label: faded ? null : "told °/s" });
       out.push({ x: t, y: rate, color: COLORS[0], alpha: a, label: faded ? null : "gyro °/s" });
-    } else if (doc.test === "straight") {
+    } else if (doc.test === "straight" || doc.test === "maneuver") {
       out.push({ x: times(ch.x, U.IN_PER_M), y: times(ch.y, U.IN_PER_M), color: COLORS[0], alpha: a, label: faded ? null : "odometry path (in)" });
     } else if (doc.test === "slip") {
       for (const i of modIdx(ch, "amps")) out.push({ x: t, y: ch[`m${i}.amps`].map(Math.abs), color: COLORS[i % 4], alpha: a, label: label(i) });
@@ -410,7 +410,7 @@ const Tune = (() => {
 
   function axes(doc) {
     return { steer_step: ["s", "degrees"], drive_step: ["s", "ft/s"], drive_ff: ["ft/s", "volts"], spin: ["s", "°/s"],
-             straight: ["x (in)", "y (in)"], capture: ["s", "degrees"], slip: ["s", "amps"] }[doc.test] || ["s", ""];
+             straight: ["x (in)", "y (in)"], maneuver: ["x (in)", "y (in)"], capture: ["s", "degrees"], slip: ["s", "amps"] }[doc.test] || ["s", ""];
   }
 
   function explained() {

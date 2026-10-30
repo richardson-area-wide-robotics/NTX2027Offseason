@@ -2026,11 +2026,19 @@ def api_predict(body):
 def api_analyze(body):
     doc = runs.load(body["file"])
     rep = advisor.analyze(doc, doc.get("gains"), measured_forward_m=body.get("tape_forward"),
-                          measured_lateral_m=body.get("tape_lateral"))
+                          measured_lateral_m=body.get("tape_lateral"),
+                          measured_heading_deg=body.get("tape_heading"))
     if body.get("tape_forward") is not None and S.project:
         # The tape is what the straight-line step is graded on: it ticks (or un-ticks) the step.
         progress.record_run(S.project.name, doc, rep, doc.get("_file"))
     return rep
+
+
+def api_maneuvers(_):
+    """The accuracy maneuvers for the Calibrate tab's picker, in the robot library's order."""
+    from . import maneuvers
+    return {"ok": True, "maneuvers": maneuvers.listing(), "budget_per_m": maneuvers.BUDGET_PER_M,
+            "families": {f["key"]: f for f in maneuvers.FAMILIES.values()}}
 
 
 def api_offsets(body):
@@ -2137,7 +2145,7 @@ def api_sim(body):
 GET = {"/api/projects": api_projects, "/api/lint": api_lint, "/api/state": api_state, "/api/autotune": api_autotune,
        "/api/systems/autotune": api_sys_autotune,
        "/api/camera/lighting": api_camera_lighting_state, "/api/newfield": api_newfield, "/api/field": api_field,
-       "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms,
+       "/api/live": api_live, "/api/runs": api_runs, "/api/symptoms": api_symptoms, "/api/maneuvers": api_maneuvers,
        "/api/progress": api_progress_get, "/api/wiring": api_wiring, "/api/logs": api_logs,
        "/api/robotlog": api_robotlog, "/api/systems": api_systems,
        "/api/designs": api_designs,

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 384" width="520" height="384" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="steer_on_absolute-title steer_on_absolute-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="steer_on_absolute-title">Steering on the absolute encoder</title>
+<desc id="steer_on_absolute-desc">Animated, two MAXSwerve modules seen from above, each pointing at a dashed target, with its NEO 550 steering motor beside it and the absolute encoder on the steering axle in the middle. A blue ring marks the sensor the SPARK's steering loop reads. Left, YAGSL's default: the loop reads the motor encoder, which was copied from the absolute encoder at boot. Right, after useExternalFeedbackSensor(): the loop reads the absolute encoder itself. A gear skips in both. On the left the wheel is knocked 25 degrees and stays there, red, because the motor encoder never saw it move: the loop still sees 0 degrees until the encoder is copied again by encoder auto-sync or the next boot, and then it turns back. On the right the absolute encoder sees the wheel move and the loop turns it straight back. Below: the absolute encoder never drifts from the wheel, but each count is coarser, about 0.35 degrees against the NEO 550's 0.18 degrees, and it updates more slowly. Steering on it needs the angle factor 360 and steerFeedback set to absolute, together. The other fix keeps the motor encoder and turns on encoder auto-sync.</desc>
+<style>
+.so-wl{transform-box:view-box;transform-origin:110px 166px;transform:rotate(25deg);animation:so-wl 8s ease-in-out infinite}
+.so-wr{transform-box:view-box;transform-origin:362px 166px;transform:rotate(0deg);animation:so-wr 8s ease-in-out infinite}
+@keyframes so-wl{0%{transform:rotate(0deg)}30%{transform:rotate(0deg)}31.2%{transform:rotate(25deg)}85%{transform:rotate(25deg)}90%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+@keyframes so-wr{0%{transform:rotate(0deg)}30%{transform:rotate(0deg)}31.2%{transform:rotate(25deg)}32.6%{transform:rotate(25deg)}36%{transform:rotate(0deg)}100%{transform:rotate(0deg)}}
+.so-copy{opacity:1;animation:so-copy 8s linear infinite}
+@keyframes so-copy{0%{opacity:1}10%{opacity:1}10.6%{opacity:0}83.4%{opacity:0}84%{opacity:1}92%{opacity:1}92.6%{opacity:0}100%{opacity:0}}
+.so-skip{opacity:0;animation:so-skip 8s linear infinite}
+@keyframes so-skip{0%{opacity:0}28.9%{opacity:0}29.5%{opacity:1}34%{opacity:1}34.6%{opacity:0}100%{opacity:0}}
+.so-ok{opacity:0;animation:so-ok 8s linear infinite}
+@keyframes so-ok{0%{opacity:1}29%{opacity:1}29.6%{opacity:0}91.4%{opacity:0}92%{opacity:1}100%{opacity:1}}
+.so-okr{opacity:0;animation:so-okr 8s linear infinite}
+@keyframes so-okr{0%{opacity:1}29%{opacity:1}29.6%{opacity:0}100%{opacity:0}}
+.so-skipt{opacity:0;animation:so-skipt 8s linear infinite}
+@keyframes so-skipt{0%{opacity:0}29.4%{opacity:0}30%{opacity:1}34%{opacity:1}34.6%{opacity:0}100%{opacity:0}}
+.so-bad{opacity:1;animation:so-bad 8s linear infinite}
+@keyframes so-bad{0%{opacity:0}34%{opacity:0}34.6%{opacity:1}84%{opacity:1}84.6%{opacity:0}100%{opacity:0}}
+.so-fixl{opacity:0;animation:so-fixl 8s linear infinite}
+@keyframes so-fixl{0%{opacity:0}84%{opacity:0}84.6%{opacity:1}92%{opacity:1}92.6%{opacity:0}100%{opacity:0}}
+.so-fixr{opacity:1;animation:so-fixr 8s linear infinite}
+@keyframes so-fixr{0%{opacity:0}34%{opacity:0}34.6%{opacity:1}100%{opacity:1}}
+.so-red{opacity:1;animation:so-red 8s linear infinite}
+@keyframes so-red{0%{opacity:0}30.4%{opacity:0}31%{opacity:1}86%{opacity:1}86.6%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Steering on the absolute encoder</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Blue ring: the sensor the steering loop reads. Dashed: the target. A gear skips.</text>
+<line x1="260" y1="62" x2="260" y2="282" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="74" font-size="13" font-weight="700" fill="#222222">YAGSL's default</text>
+<text x="16" y="91" font-size="12" fill="#5c5c5c">loop reads the motor encoder</text>
+<text x="268" y="74" font-size="13" font-weight="700" fill="#222222">useExternalFeedbackSensor()</text>
+<text x="268" y="91" font-size="12" fill="#5c5c5c">loop reads the absolute encoder</text>
+
+<circle cx="110" cy="166" r="52" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<line x1="110" y1="166" x2="110" y2="102" stroke="#446ce3" stroke-width="2" stroke-dasharray="5 4"/>
+<g class="so-wl">
+  <rect x="99" y="132" width="22" height="68" rx="5" fill="#5c5c5c" stroke="#222222" stroke-width="1.2"/>
+  <path d="M102 128 L110 117 L118 128Z" fill="#222222"/>
+  <g class="so-red"><rect x="99" y="132" width="22" height="68" rx="5" fill="#c62828" fill-opacity="0.55"/><path d="M102 128 L110 117 L118 128Z" fill="#c62828"/></g>
+</g>
+<circle cx="110" cy="166" r="9" fill="#ffffff" stroke="#444444" stroke-width="2"/>
+<circle cx="190" cy="166" r="17" fill="#d9dde3" stroke="#444444" stroke-width="1.6"/>
+<circle cx="190" cy="166" r="5" fill="#444444"/>
+<path d="M162 160 L173 160 M162 172 L173 172" stroke="#444444" stroke-width="1.4"/>
+<g class="so-skip"><path d="M170 148 L163 164 L172 168 L165 184" fill="none" stroke="#c62828" stroke-width="3" stroke-linejoin="round"/></g>
+<text x="190" y="200" font-size="12" fill="#222222" text-anchor="middle">NEO 550</text>
+<text x="110" y="236" font-size="12" fill="#5c5c5c" text-anchor="middle">absolute encoder on the axle</text>
+
+
+<circle cx="362" cy="166" r="52" fill="#f4f4f4" stroke="#444444" stroke-width="1.6"/>
+<line x1="362" y1="166" x2="362" y2="102" stroke="#446ce3" stroke-width="2" stroke-dasharray="5 4"/>
+<g class="so-wr">
+  <rect x="351" y="132" width="22" height="68" rx="5" fill="#5c5c5c" stroke="#222222" stroke-width="1.2"/>
+  <path d="M354 128 L362 117 L370 128Z" fill="#222222"/>
+  
+</g>
+<circle cx="362" cy="166" r="9" fill="#ffffff" stroke="#444444" stroke-width="2"/>
+<circle cx="442" cy="166" r="17" fill="#d9dde3" stroke="#444444" stroke-width="1.6"/>
+<circle cx="442" cy="166" r="5" fill="#444444"/>
+<path d="M414 160 L425 160 M414 172 L425 172" stroke="#444444" stroke-width="1.4"/>
+<g class="so-skip"><path d="M422 148 L415 164 L424 168 L417 184" fill="none" stroke="#c62828" stroke-width="3" stroke-linejoin="round"/></g>
+<text x="442" y="200" font-size="12" fill="#222222" text-anchor="middle">NEO 550</text>
+<text x="362" y="236" font-size="12" fill="#5c5c5c" text-anchor="middle">absolute encoder on the axle</text>
+
+<circle cx="190" cy="166" r="23" fill="none" stroke="#446ce3" stroke-width="3.5"/>
+<circle cx="362" cy="166" r="14" fill="none" stroke="#446ce3" stroke-width="3.5"/>
+<g class="so-copy"><path d="M128 158 Q160 140 172 156" fill="none" stroke="#1a7f37" stroke-width="2.2"/><path d="M167 149 L174 159 L176 147Z" fill="#1a7f37"/></g>
+<text class="so-ok" x="110" y="262" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">on target</text>
+<text class="so-skipt" x="110" y="262" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle">a gear skips</text>
+<text class="so-bad" x="110" y="262" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle">25° off; the loop sees 0°</text>
+<text class="so-fixl" x="110" y="262" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">copied again: on target</text>
+<text class="so-bad" x="110" y="279" font-size="12" fill="#5c5c5c" text-anchor="middle">until auto-sync or the next boot</text>
+<text class="so-okr" x="362" y="262" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">on target</text>
+<text class="so-skipt" x="362" y="262" font-size="13" font-weight="700" fill="#c62828" text-anchor="middle">a gear skips</text>
+<text class="so-fixr" x="362" y="262" font-size="13" font-weight="700" fill="#1a7f37" text-anchor="middle">seen at once and fixed</text>
+<text x="362" y="279" font-size="12" fill="#5c5c5c" text-anchor="middle">the sensor turns with the wheel</text>
+<text x="150" y="128" font-size="12" fill="#1a7f37">copied at boot</text>
+
+<line x1="16" y1="294" x2="504" y2="294" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="314" font-size="13" fill="#222222">The absolute encoder never drifts from the wheel, but each count is</text>
+<text x="16" y="332" font-size="13" fill="#222222">coarser (about 0.35° against 0.18°) and it updates more slowly.</text>
+<text x="16" y="350" font-size="13" fill="#222222">Steering on it takes angle factor 360 and steerFeedback "absolute" together.</text>
+<text x="16" y="370" font-size="12" fill="#5c5c5c">The other fix keeps the motor encoder and turns on encoder auto-sync.</text>
+</svg>

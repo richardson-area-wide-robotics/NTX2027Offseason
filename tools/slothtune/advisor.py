@@ -1006,6 +1006,213 @@ def straight_report(result, measured_forward_m=None, measured_lateral_m=None):
     return _finish(report)
 
 
+# ============================================================================ accuracy maneuvers
+
+
+def _maneuver_legs(meta):
+    """The legs the robot ran, from its meta: ``[("drive", m) | ("turn", deg)]``, or None."""
+    n = int(meta.get("legs") or 0)
+    legs = []
+    for i in range(n):
+        v = meta.get(f"leg{i}_value")
+        if not A.finite(v):
+            return None
+        legs.append(("turn" if meta.get(f"leg{i}_turn") else "drive", float(v)))
+    return legs or None
+
+
+def _still_vision(ch, leg_value):
+    """The AprilTag pose averaged over the rows where the robot stood still at one end of the run
+    (``leg`` -1 at the start, the leg count at the end): ``(x, y, deg or None)`` or None."""
+    legs, vx, vy, vd = (ch.get(k) or [] for k in ("leg", "vx_vision", "vy_vision", "vdeg_vision"))
+    rows = [k for k in range(min(len(legs), len(vx), len(vy)))
+            if legs[k] == leg_value and A.finite(vx[k]) and A.finite(vy[k])]
+    if len(rows) < 3:
+        return None
+    degs = [vd[k] for k in rows if k < len(vd) and A.finite(vd[k])]
+    return (A.mean([vx[k] for k in rows]), A.mean([vy[k] for k in rows]),
+            A.mean(degs) if len(degs) >= 3 else None)
+
+
+def maneuver_report(result, measured_forward_m=None, measured_lateral_m=None, measured_heading_deg=None):
+    """One accuracy maneuver: where it ended against the plan, in inches and degrees, judged against
+    the 2026 requirement of 1 in for every 10 ft driven.
+
+    The robot steered every leg on its own pose, so its odometry ends on the plan almost by
+    construction: odometry measures itself. That number only shows the closed loop worked. The
+    accuracy comes from outside: a tape from the start mark to the robot's center where it stopped
+    (forward along the starting direction, left of it; ``measured_heading_deg`` is how far it faces
+    from where it should, left positive), or AprilTags seen standing still at both ends.
+    """
+    from . import maneuvers as MV
+
+    meta, ch = result.get("meta") or {}, result.get("channels") or {}
+    report = {"test": "maneuver", "env": result.get("env", ""), "findings": [], "targets": []}
+    F = report["findings"]
+    i = meta.get("maneuver_index")
+    known = MV.CATALOG[int(i)] if A.finite(i) and 0 <= int(i) < len(MV.CATALOG) else None
+    noted = next((n.split()[1] for n in result.get("notes") or [] if n.startswith("Maneuver ") and len(n.split()) > 1), None)
+    name = noted or (known or {}).get("name") or "maneuver"
+    legs = _maneuver_legs(meta) or (known or {}).get("legs") or []
+    family = int(meta["family"]) if A.finite(meta.get("family")) else (known or {}).get("family", MV.PERMUTATION)
+    fam = MV.FAMILIES.get(family, MV.FAMILIES[MV.PERMUTATION])
+    if known and (known["name"] != name or any(a[0] != b[0] or abs(a[1] - b[1]) > 1e-6 for a, b in zip(known["legs"], legs))
+                  or len(known["legs"]) != len(legs)):
+        F.append(finding("warn", "The tool's maneuver list and the robot's differ",
+                         f"The robot ran {name}; the tool's list has {known['name']} at that place. This "
+                         "report uses the legs the robot sent. Update the older of the robot library and "
+                         "the tool so the picker asks for what it shows."))
+    ex, ey, edeg = MV.expected_pose(legs)
+    travel = MV.travel(legs)
+    budget = travel * MV.BUDGET_PER_M
+    returns = family != MV.PERMUTATION
+    # Where the odometry ended, in the start's frame (the robot sends it; a run stopped before the
+    # start was laid out has none, and reads from its first row instead).
+    ox, oy, odeg = (meta.get(k) for k in ("end_x", "end_y", "end_deg"))
+    if not (A.finite(ox) and A.finite(oy) and A.finite(odeg)):
+        x, y, h = ch.get("x") or [], ch.get("y") or [], ch.get("heading") or []
+        if x and y and h:
+            h0 = math.radians(h[0])
+            dx, dy = x[-1] - x[0], y[-1] - y[0]
+            ox, oy, odeg = (dx * math.cos(h0) + dy * math.sin(h0), -dx * math.sin(h0) + dy * math.cos(h0),
+                            MV.wrap_deg(h[-1] - h[0]))
+        else:
+            ox = oy = odeg = float("nan")
+    resid = math.hypot(ox - ex, oy - ey)
+    resid_deg = MV.wrap_deg(odeg - edeg) if A.finite(odeg) else float("nan")
+    m = report["measured"] = {
+        "maneuver": name, "family": fam["key"], "returns_to_start": returns, "travel_m": travel,
+        "budget_m": budget, "heading_budget_deg": MV.HEADING_BUDGET_DEG,
+        "expected_x_m": ex, "expected_y_m": ey, "expected_deg": edeg,
+        "odometry_x_m": ox, "odometry_y_m": oy, "odometry_deg": odeg,
+        "odometry_residual_m": resid, "odometry_residual_deg": resid_deg}
+    budget_words = f"{U.length(budget)} for {travel / MV.FT:.0f} ft driven (1 in per 10 ft)"
+
+    # Ground truth: the tape, else AprilTags standing still at both ends.
+    truth = None
+    if measured_forward_m is not None or measured_lateral_m is not None:
+        tf = float(measured_forward_m or 0.0)
+        tl = float(measured_lateral_m or 0.0)
+        th = None if measured_heading_deg is None else edeg + float(measured_heading_deg)
+        truth = ("the tape", tf, tl, th)
+        m.update(tape_forward_m=tf, tape_lateral_m=tl)
+        if measured_heading_deg is not None:
+            m["tape_heading_deg"] = float(measured_heading_deg)
+        if measured_forward_m is None or measured_lateral_m is None:
+            F.append(finding("info", "Only one tape distance entered: the other is taken as 0",
+                             "Measure both: forward along the starting direction, and left of the start line."))
+    else:
+        v0, v1 = _still_vision(ch, -1), _still_vision(ch, len(legs))
+        if v0 and v1:
+            h0 = math.radians(v0[2]) if v0[2] is not None else math.radians((ch.get("heading") or [0])[0])
+            dx, dy = v1[0] - v0[0], v1[1] - v0[1]
+            th = MV.wrap_deg(v1[2] - v0[2]) if v0[2] is not None and v1[2] is not None else None
+            truth = ("AprilTags", dx * math.cos(h0) + dy * math.sin(h0), -dx * math.sin(h0) + dy * math.cos(h0), th)
+            m.update(vision_forward_m=truth[1], vision_lateral_m=truth[2])
+    if truth and math.hypot(truth[1] - ex, truth[2] - ey) > max(MV.FT, 0.1 * travel):
+        # A drivetrain is never this far off after a closed loop: a measuring mistake.
+        F.append(finding(
+            "error", f"{truth[0].capitalize()} put the end {U.length(math.hypot(truth[1] - ex, truth[2] - ey))} from the plan",
+            "That is too far to be the drivetrain. Measure from the start mark to the robot's center: "
+            f"forward along the direction it started in, and left of that line (right is negative). The "
+            f"plan ends {U.length(ex)} forward and {U.length(ey)} left. Enter it again.",
+            {"type": "troubleshoot", "symptom": "auto_inaccurate"}))
+        m["truth_rejected"] = truth[0]
+        truth = None
+
+    if truth:
+        src, tx, ty, th = truth
+        dx, dy = tx - ex, ty - ey
+        err = math.hypot(dx, dy)
+        h = math.radians(edeg)
+        along, cross = dx * math.cos(h) + dy * math.sin(h), -dx * math.sin(h) + dy * math.cos(h)
+        hdg = MV.wrap_deg(th - edeg) if th is not None else None
+        odo = math.hypot(ox - tx, oy - ty)
+        m.update(truth=src, truth_x_m=tx, truth_y_m=ty, error_m=err, along_m=along, cross_m=cross,
+                 odometry_vs_truth_m=odo)
+        if returns:
+            m["closure_m"] = math.hypot(tx, ty)
+        if hdg is not None:
+            m["heading_error_deg"] = hdg
+        report["targets"].append(_grade("end-pose error (in)", U.inches(err), round(U.inches(budget), 2)))
+        if hdg is not None:
+            report["targets"].append(_grade("heading error (deg)", abs(hdg), MV.HEADING_BUDGET_DEG))
+        where = (f"{U.length(along, sign=True)} along its last heading and {U.length(cross, sign=True)} across it "
+                 "(left positive)")
+        what = {MV.SAME_PATH: "On a same-path return wheel size cancels, so this is heading error, backlash or "
+                              "hysteresis: Calibrate's gyro check, the wheel offsets, and play in the modules.",
+                MV.DIFFERENT_PATH: "Here wheel size and heading add up. Along-track error is mostly wheel size "
+                                   "(Calibrate's wheel sizes, then the Straight line test); across it, heading "
+                                   "(the gyro's scale, the wheel offsets).",
+                MV.PERMUTATION: "Along the last leg is mostly wheel size (Calibrate's wheel sizes); across it, "
+                                "the turn's heading error or a wheel offset. Run its mirror to see whether the "
+                                "error follows the turn's direction."}[family]
+        if err <= budget and (hdg is None or abs(hdg) <= MV.HEADING_BUDGET_DEG):
+            F.append(finding("ok", f"Within the budget: {U.length(err)} off after {travel / MV.FT:.0f} ft",
+                             f"{src.capitalize()} put the end {where}. The budget is {budget_words}."))
+        else:
+            over = [f"{U.length(err)} off, budget {U.length(budget)}"] if err > budget else []
+            if hdg is not None and abs(hdg) > MV.HEADING_BUDGET_DEG:
+                over.append(f"facing {hdg:+.1f}° off, budget {MV.HEADING_BUDGET_DEG:g}°")
+            F.append(finding(
+                "error", "Over the accuracy budget: " + "; ".join(over),
+                f"{src.capitalize()} put the end {where}. {what}"
+                + (f" Facing {MV.HEADING_BUDGET_DEG:g}° off alone drifts about 1 in over the next 10 ft."
+                   if hdg is not None and abs(hdg) > MV.HEADING_BUDGET_DEG else ""),
+                {"type": "troubleshoot", "symptom": "auto_inaccurate"}))
+        # The pose the robot steered by against where it really was: an auto's error at this point.
+        level = "warn" if odo > budget else "info"
+        F.append(finding(
+            level, f"The odometry thought it ended {U.length(odo)} from where it really did",
+            "This is what an auto would get wrong here: the pose it steers by was off by this much. "
+            + ("Most of it is along the last heading: wheel size. Calibrate's wheel sizes measure it; the "
+               "Straight line test confirms it." if abs(along) >= abs(cross) else
+               "Most of it is across the last heading: the heading. Check the gyro on the Calibrate tab and "
+               "the wheel offsets."),
+            {"type": "run", "test": "straight", "env": "FIELD"} if level == "warn" and abs(along) >= abs(cross)
+            else ({"type": "troubleshoot", "symptom": "wont_drive_straight"} if level == "warn" else None)))
+        report["cost"] = round(err / budget + (abs(hdg) / MV.HEADING_BUDGET_DEG if hdg is not None else 0), 3) if budget else None
+        report["summary"] = (f"{name}: {U.length(err)} off by {src} after {travel / MV.FT:.0f} ft (budget "
+                             f"{U.length(budget)})" + (f", facing {hdg:+.1f}° off." if hdg is not None else "."))
+    else:
+        report["needs_truth"] = True
+        report["cost"] = None
+        F.append(finding(
+            "warn", "Not measured yet: odometry can't grade a run it steered",
+            f"Every leg steered on the robot's own pose, so the odometry ends on the plan "
+            f"({U.length(resid)} from it here) even with worn wheels: 2% small tread drives 2% too far and "
+            "still reports the planned distance. Measure from the start mark to the robot's center where it "
+            f"stopped: forward along the starting direction, and left of it. The plan ends {U.length(ex)} "
+            f"forward, {U.length(ey)} left. Enter it (or have AprilTags in view at both ends) to score it "
+            f"against {budget_words}."))
+        report["summary"] = (f"{name}: not measured yet; the odometry ended {U.length(resid)} from the plan "
+                             f"after {travel / MV.FT:.0f} ft.")
+
+    # The closed loop itself: every leg should settle on the plan before the next starts.
+    loose = [k for k in range(len(legs)) if meta.get(f"leg{k}_settled") == 0 and A.finite(meta.get(f"leg{k}_residual"))]
+    if loose or (A.finite(resid) and resid > budget):
+        bits = []
+        for k in loose[:3]:
+            r = meta.get(f"leg{k}_residual")
+            bits.append(f"leg {k + 1} stopped {r:+.1f}° short" if legs[k][0] == "turn" else f"leg {k + 1} stopped {U.length(r, sign=True)} short")
+        F.append(finding(
+            "warn", "The closed loop didn't settle on the plan" + (": " + ", ".join(bits) if bits else ""),
+            f"The odometry ended {U.length(resid)} from the plan. Each leg gets 1.5 s to creep the last fraction "
+            "of an inch; a wheel that won't move at a crawl needs its feedforward's kS measured on the floor.",
+            {"type": "run", "test": "drive_ff", "env": "FIELD"}))
+    mir = MV.mirror(name)
+    F.append(finding(
+        "info", f"What {fam['label'].lower()} isolates", fam["isolates"] + (f" Its mirror: {mir}." if mir else ""),
+        {"type": "run", "test": "maneuver", "env": "FIELD", "args": {"id": MV.ident(mir)}} if mir else None,
+        kind="family"))
+    if meta.get("vision_in_use"):
+        F.append(finding("info", "It steered on the AprilTag-corrected pose",
+                         "Closing on the fused pose takes wheel size out of where it stops, and puts the camera's "
+                         "calibration and the field's tag layout in: Calibrate's camera and field steps decide "
+                         "its accuracy now."))
+    return _finish(report)
+
+
 # ============================================================================ capture: health
 
 
@@ -1561,7 +1768,7 @@ def no_data_report(result):
             "targets": [], "score": None, "cost": None, "next": None, "modules": {}}
 
 
-WHEEL_TESTS = ("drive_step", "drive_ff", "straight", "slip", "spin", "spin_ff", "pdh_map")
+WHEEL_TESTS = ("drive_step", "drive_ff", "straight", "maneuver", "slip", "spin", "spin_ff", "pdh_map")
 
 
 MAX_STEP = 2.0
@@ -1675,6 +1882,9 @@ def _analyze_test(result, gains=None, **kw):
         return spin_report(result)
     if test == "straight":
         return straight_report(result, kw.get("measured_forward_m"), kw.get("measured_lateral_m"))
+    if test == "maneuver":
+        return maneuver_report(result, kw.get("measured_forward_m"), kw.get("measured_lateral_m"),
+                               kw.get("measured_heading_deg"))
     if test == "capture":
         return health_report(result)
     if test == "slip":

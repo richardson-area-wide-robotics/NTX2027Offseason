@@ -1,6 +1,7 @@
 """The environment a one-shot command line sets outlives the command (gap check, agent B1)."""
 
 import os
+import socket
 import subprocess
 import sys
 import time
@@ -15,7 +16,16 @@ from slothtune import contract as C
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TOOLS = os.path.dirname(os.path.dirname(HERE))
-PORT = 5897
+
+
+def free_port():
+    """A port nothing listens on, so two test runs at once never meet on one server."""
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+PORT = free_port()
 
 CLIENT = """
 import sys, time

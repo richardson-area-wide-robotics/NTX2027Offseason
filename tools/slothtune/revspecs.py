@@ -80,6 +80,9 @@ FIRMWARE_SOURCE = "https://github.com/REVrobotics/REV-Software-Binaries/releases
 # REVLib 2026.0.5 warns about SPARKs not on 2026 firmware, and REV Hardware Client 2 (needed for
 # 26.x) is the only one that updates them; Client 1 handles only 2025 and earlier.
 MIN_SEASON_FIRMWARE = 26
+# Firmware 27.0.0 (Oct 29, 2026, for REVLib 2027) removes the position and velocity conversion factors,
+# which YAGSL 2026 sets on every module: positions come back in rotations and speeds per minute.
+MAX_SEASON_FIRMWARE = 26
 REVLIB = {"2026": "2026.0.5", "2027": "2027.0.0-alpha-8"}
 
 
@@ -100,6 +103,12 @@ def firmware_finding(controller, firmware):
         return ("warn", f"{controller} firmware {firmware} is from before 2026",
                 f"REVLib 2026 expects 2026 firmware. Update to {latest} with REV Hardware Client 2 "
                 "(Client 1 can't install 2026 firmware).")
+    if have[0] > MAX_SEASON_FIRMWARE:
+        return ("error", f"{controller} firmware {firmware} is for 2027 code",
+                "It drops the conversion factors the robot code (REVLib and YAGSL 2026) sets, so this controller "
+                "reports positions in rotations and speeds per minute: steering angles and distances come out "
+                f"wrong. Put it back on {latest} with REV Hardware Client 2 (pick the version on its Update page) "
+                "before driving.")
     if have < firmware_tuple(latest):
         return ("info", f"{controller} firmware {firmware}; the newest is {latest}",
                 f"REV released {latest} on {spec['firmware_date']}. Update with REV Hardware Client 2 "

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 472" width="520" height="472" font-family="Segoe UI, Arial, sans-serif" role="img" aria-labelledby="breaker_sizing-title breaker_sizing-desc">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<title id="breaker_sizing-title">Breakers and current limits</title>
+<desc id="breaker_sizing-desc">Animated, three parts. Top, the power path with current flowing: battery, the 120 A main breaker, the PDH with a 40 A breaker on one channel, a 12 AWG wire to a SPARK, and the motor. Numbered: 1, the 120 A main breaker is the only one and shuts the whole robot off; 2, a channel breaker of 40 A at most per motor controller protects that circuit's wire; 3, the wire is sized to the breaker, 12 AWG or thicker for a 31 to 40 A breaker; 4, the SPARK's current limit protects the motor and caps its torque. Middle, with the motor's current held at an 80 A limit, the current from the battery is about the motor's current times the duty cycle: a quarter of it at 25 percent duty, growing to all of it at full duty; a dashed line marks the 40 A breaker. Bottom, a 40 A breaker heats up instead of tripping at once, time not to scale: at 40 A it holds for 30 minutes or more; at 54 A, 135 percent, it trips in about 70 seconds; at 80 A, 200 percent, in about 18 seconds, and then it resets itself.</desc>
+<style>
+.bk-flow{stroke-dasharray:4 10;animation:bk-flow 1.4s linear infinite}
+@keyframes bk-flow{from{stroke-dashoffset:0}to{stroke-dashoffset:-14}}
+.bk-duty{transform-box:fill-box;transform-origin:0 50%;transform:scaleX(0.5);animation:bk-duty 8s ease-in-out infinite}
+.bk-h{transform-box:fill-box;transform-origin:0 50%}
+.bk-h40{transform:scaleX(0.45);animation:bk-h40 8s linear infinite}
+.bk-h54{transform:scaleX(0.6);animation:bk-h54 8s linear infinite}
+.bk-h80{transform:scaleX(1);animation:bk-h80 8s linear infinite}
+.bk-t80{opacity:1;animation:bk-t80 8s linear infinite}
+.bk-t54{opacity:0;animation:bk-t54 8s linear infinite}
+@keyframes bk-duty{0%{transform:scaleX(0.25)}10%{transform:scaleX(0.25)}60%{transform:scaleX(1)}80%{transform:scaleX(1)}95%{transform:scaleX(0.25)}100%{transform:scaleX(0.25)}}
+@keyframes bk-h40{0%{transform:scaleX(0.05)}40%{transform:scaleX(0.45)}92%{transform:scaleX(0.45)}100%{transform:scaleX(0.05)}}
+@keyframes bk-h54{0%{transform:scaleX(0.05)}86%{transform:scaleX(1)}92%{transform:scaleX(1)}100%{transform:scaleX(0.05)}}
+@keyframes bk-h80{0%{transform:scaleX(0.05)}30%{transform:scaleX(1)}44%{transform:scaleX(1)}54%{transform:scaleX(0.3)}78%{transform:scaleX(1)}92%{transform:scaleX(1)}100%{transform:scaleX(0.05)}}
+@keyframes bk-t80{0%{opacity:0}29.5%{opacity:0}30%{opacity:1}44%{opacity:1}44.5%{opacity:0}77.5%{opacity:0}78%{opacity:1}92%{opacity:1}92.5%{opacity:0}100%{opacity:0}}
+@keyframes bk-t54{0%{opacity:0}85.5%{opacity:0}86%{opacity:1}92%{opacity:1}92.5%{opacity:0}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+<text x="16" y="28" font-size="16" font-weight="700" fill="#222222">Breakers and current limits</text>
+<text x="16" y="47" font-size="12" fill="#5c5c5c">Each one protects something different.</text>
+
+<path d="M56 96 H78 M110 96 H134" stroke="#c62828" stroke-width="5"/>
+<path d="M240 96 H332" stroke="#c62828" stroke-width="3"/>
+<path d="M388 90 H426 M388 96 H426 M388 102 H426" stroke="#444444" stroke-width="1.6"/>
+<path class="bk-flow" d="M56 96 H78 M110 96 H134" stroke="#ffffff" stroke-width="2.2" fill="none"/>
+<path class="bk-flow" d="M240 96 H332" stroke="#ffffff" stroke-width="1.4" fill="none"/>
+<rect x="16" y="78" width="40" height="36" rx="3" fill="#444444"/>
+<rect x="22" y="73" width="9" height="5" fill="#c62828"/><rect x="41" y="73" width="9" height="5" fill="#222222"/>
+<text x="36" y="101" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">12 V</text>
+<rect x="78" y="82" width="32" height="28" rx="4" fill="#222222"/><circle cx="94" cy="96" r="7" fill="#c62828"/>
+<rect x="134" y="74" width="106" height="44" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<text x="162" y="101" font-size="13" font-weight="700" fill="#222222" text-anchor="middle">PDH</text>
+<rect x="200" y="82" width="28" height="28" rx="3" fill="#e8890c" stroke="#444444" stroke-width="1"/>
+<text x="214" y="101" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">40</text>
+<rect x="332" y="80" width="56" height="32" rx="4" fill="#f4f4f4" stroke="#444444" stroke-width="1.4"/>
+<text x="360" y="101" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">SPARK</text>
+<circle cx="450" cy="96" r="24" fill="#d9dde3" stroke="#444444" stroke-width="1.4"/>
+<text x="450" y="100" font-size="12" font-weight="700" fill="#222222" text-anchor="middle">motor</text>
+<circle cx="94" cy="128" r="9" fill="#446ce3"/><text x="94" y="132.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">1</text><circle cx="214" cy="128" r="9" fill="#446ce3"/><text x="214" y="132.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">2</text><circle cx="286" cy="112" r="9" fill="#446ce3"/><text x="286" y="116.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">3</text><circle cx="360" cy="128" r="9" fill="#446ce3"/><text x="360" y="132.5" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">4</text>
+<text x="16" y="164" font-size="12" fill="#222222"><tspan font-weight="700">1</tspan>  120 A main breaker: the only one; it shuts the whole robot off.</text>
+<text x="16" y="182" font-size="12" fill="#222222"><tspan font-weight="700">2</tspan>  Channel breaker, 40 A at most per motor controller: protects its wire.</text>
+<text x="16" y="200" font-size="12" fill="#222222"><tspan font-weight="700">3</tspan>  Wire sized to the breaker: 12 AWG or thicker for a 31-40 A breaker.</text>
+<text x="16" y="218" font-size="12" fill="#222222"><tspan font-weight="700">4</tspan>  SPARK current limit: protects the motor and caps its torque.</text>
+
+<line x1="16" y1="230" x2="504" y2="230" stroke="#e2e2e2" stroke-width="1"/>
+<text x="16" y="250" font-size="13" font-weight="700" fill="#222222">Motor side and battery side</text>
+<text x="16" y="273" font-size="12" fill="#222222">motor, held at an 80 A limit</text>
+<rect x="196" y="262" width="240" height="14" fill="#446ce3"/>
+<text x="16" y="295" font-size="12" fill="#222222">battery ≈ motor × duty cycle</text>
+<rect x="196" y="284" width="240" height="14" fill="#f4f4f4" stroke="#444444" stroke-width="1"/>
+<rect class="bk-duty" x="196" y="284" width="240" height="14" fill="#b45309"/>
+<line x1="316" y1="256" x2="316" y2="304" stroke="#c62828" stroke-width="1.6" stroke-dasharray="4 3"/>
+<text x="316" y="318" font-size="12" fill="#c62828" text-anchor="middle">40 A breaker</text>
+<text x="196" y="318" font-size="12" fill="#5c5c5c" text-anchor="middle">0</text>
+<text x="436" y="318" font-size="12" fill="#5c5c5c" text-anchor="middle">80 A</text>
+
+<line x1="16" y1="328" x2="504" y2="328" stroke="#e2e2e2" stroke-width="1"/>
+<text x="16" y="348" font-size="13" font-weight="700" fill="#222222">A 40 A breaker heats up; it doesn't trip at once</text>
+<text x="504" y="348" font-size="12" fill="#5c5c5c" text-anchor="end">time not to scale</text>
+<text x="16" y="369" font-size="12" fill="#222222">40 A: holds 30 min or more</text>
+<rect x="196" y="358" width="270" height="14" fill="#f8f2f2" stroke="#444444" stroke-width="1"/>
+<rect class="bk-h bk-h40" x="196" y="358" width="270" height="14" fill="#e8890c"/>
+<rect x="196" y="358" width="270" height="14" fill="none" stroke="#444444" stroke-width="1"/>
+
+<text x="16" y="391" font-size="12" fill="#222222">54 A (135%): about 70 s</text>
+<rect x="196" y="380" width="270" height="14" fill="#f8f2f2" stroke="#444444" stroke-width="1"/>
+<rect class="bk-h bk-h54" x="196" y="380" width="270" height="14" fill="#e8890c"/>
+<rect x="196" y="380" width="270" height="14" fill="none" stroke="#444444" stroke-width="1"/>
+<text class="bk-t54" x="472" y="391" font-size="12" font-weight="700" fill="#c62828">trips</text>
+<text x="16" y="413" font-size="12" fill="#222222">80 A (200%): about 18 s</text>
+<rect x="196" y="402" width="270" height="14" fill="#f8f2f2" stroke="#444444" stroke-width="1"/>
+<rect class="bk-h bk-h80" x="196" y="402" width="270" height="14" fill="#e8890c"/>
+<rect x="196" y="402" width="270" height="14" fill="none" stroke="#444444" stroke-width="1"/>
+<text class="bk-t80" x="472" y="413" font-size="12" font-weight="700" fill="#c62828">trips</text>
+<line x1="466" y1="354" x2="466" y2="420" stroke="#c62828" stroke-width="1.6" stroke-dasharray="4 3"/>
+
+<line x1="16" y1="428" x2="504" y2="428" stroke="#d6d6d6" stroke-width="1"/>
+<text x="16" y="449" font-size="13" fill="#222222">The breaker protects the wire; the current limit protects the motor.</text>
+<text x="16" y="466" font-size="12" fill="#5c5c5c">Rules: 2026 game manual R609-R622. Times: REV's 40 A breaker datasheet.</text>
+</svg>

@@ -8,6 +8,7 @@
 """
 
 import os
+import socket
 import subprocess
 import sys
 import threading
@@ -21,6 +22,13 @@ try:
     import ntcore
 except ImportError:  # pragma: no cover
     ntcore = None
+
+
+def free_port():
+    """A port nothing listens on, so two test runs at once never meet on one server."""
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -188,7 +196,7 @@ class OverNetworkTablesTest(unittest.TestCase):
     """The same, as the robot sees it. The robot is a NetworkTables server in its own process, so
     restarting the robot code is what it really is: a new process with a new boot id."""
 
-    PORT = 5893
+    PORT = free_port()
     ROBOT = """
 import sys, time
 sys.path.insert(0, {tools!r})

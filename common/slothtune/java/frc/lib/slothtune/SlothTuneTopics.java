@@ -275,6 +275,17 @@ public final class SlothTuneTopics {
    */
   public static final String WIRING_CAN = ROOT + "/Wiring/Can";
 
+  /**
+   * The robot's own checks ({@code ModuleWatch}), one entry per check: the laptop monitor's rule
+   * name, and the module or motor it is about ("" for the whole robot). The laptop shows these in
+   * place of judging the same rules itself.
+   */
+  public static final String WATCH = ROOT + "/Watch/";
+  public static final String WATCH_RULES = WATCH + "Rules";
+  public static final String WATCH_WHO = WATCH + "Who";
+  /** Five numbers per check: active 0/1, episodes this session, since (robot s), two readings. */
+  public static final String WATCH_VALUES = WATCH + "Values";
+
   /** False when slothtune.json switched the guard off. */
   public static final String MOTORS_GUARD_ON = MOTORS + "GuardOn";
 

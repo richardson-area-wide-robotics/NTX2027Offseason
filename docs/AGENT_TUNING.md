@@ -106,7 +106,7 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `save gains [--keys Steer FF]` | Shows the diff of writing live gains to the files; `--yes` writes. |
 | `config --file F --path a.b --value V` | Shows the diff of one config change (a report's `config` action); `--yes` writes. Only the robot's own config files. |
 | `runs [--test steer_step] [--robot Peashooter] [--show robot\|sim\|practice\|all]` | Saved runs, newest first: file, test, outcome, score and cost, gains. Real robot runs only unless `--show` says otherwise; a run that stopped part-way has no score. |
-| `analyze <run> [--tape-forward 99]` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. For a `straight` run, `--tape-forward` is the distance a person measured with a tape, in inches: the ground truth the wheel size is graded on. |
+| `analyze <run> [--tape-forward 99]` / `explain <run>` / `predict <run> Steer/kP=0.02` | Re-reads a saved run; what the controller saw; "what if" with other gains. For a `straight` run, `--tape-forward` is the distance a person measured with a tape, in inches: the ground truth the wheel size is graded on. For a `maneuver` run, `--tape-forward` and `--tape-lateral` are where the robot's center stopped from the start mark (along the starting direction, and left of it; inches, either may be small or negative), `--tape-heading` how many degrees it faces off the plan (left positive). |
 | `offsets <run> --project P` | New absolute encoder offsets from a `capture` run with every wheel set straight (a person aligns them); `--yes` writes, with their OK. |
 | `watch [--seconds 30]` | Prints problems as the robot's monitor spots them (a dropout, a hot motor, a brownout) while people drive. |
 | `diagnose [symptom]` | The troubleshooter. |
@@ -117,7 +117,11 @@ person and a `code` (below). Exit codes: 0 done, 1 a test stopped part-way, 2 re
 | `design --project P [--draft \| --csv FILE] [--yes]` | The robot's design file (`src/main/deploy/design/devices.json`): what doesn't add up in it, and where the code disagrees with it (CAN IDs, MAX vs Flex, followers, inversion, ports). `--draft` drafts one from the code, `--csv` imports the design team's spreadsheet; `--yes` writes it only when none exists, with a person's OK. Exits 1 on an error. |
 
 Tests for `run`: `capture` (sensors only, disabled), `steer_step`, `drive_step`, `drive_ff`,
-`spin`, `spin_ff` (moment of inertia), `straight`, `slip`, `pdh_map`, `controller` (a Driver
+`spin`, `spin_ff` (moment of inertia), `straight`, `maneuver` (the accuracy run, on the floor
+only: one of the 25 catalog maneuvers, drive/turn/drive permutations and out-and-back loops, driven
+leg by leg through the drivetrain's own closed loop; its odometry ends on the plan by construction,
+so it is scored only against a tape, `analyze <run> --tape-forward --tape-lateral [--tape-heading]`,
+or AprilTags, at 1 in per 10 ft driven), `slip`, `pdh_map`, `controller` (a Driver
 Station joystick port as the robot sees it; disabled, moves nothing), `motor_test` (bring-up: runs chosen
 motors briefly at low output, on blocks, with the robot's own code paused; rule 9), `sensors`
 (bring-up: every sensor's value live while a person trips each by hand; moves nothing, runs
@@ -161,6 +165,7 @@ typed, so they are in its units: m/s, meters, rad/s, as each key says:
 | `drive_ff`, `spin_ff` | `max_v`, `ramp_vps`, `step_v`, `step_s`, `rest_s` |
 | `spin` | `omega` (rad/s), `duration_s` |
 | `straight` | `distance_m`, `speed`, `accel`, `return=1` (come back; leaves nothing to measure) |
+| `maneuver` | `id` (the catalog's number for a name: `maneuvers.ident`, what the GUI sends; preferred) or `index` (0-24 in the catalog's order: 16 permutations, 4 same-path, 5 different-path), `speed` (m/s, capped like `straight`), `accel`, `turn_dps`. It refuses a maneuver that doesn't fit the declared floor plus room to turn |
 | `slip` | `ceiling_a`, `ramp_vps`, `slip_mps`, `direction` (1 or -1) |
 | `pdh_map` | `volts` |
 | `controller` | `port`, `duration_s` |
@@ -241,6 +246,8 @@ Act on `next.action` and only on it. Every action is one the commands above carr
 | `INVERTED` | `system_id` pushed the mechanism one way and it went the other: its motor's inversion doesn't match its position reading. A programmer checks both; nothing else runs on it until then. |
 | `NEEDS_HOLD_GUESS` | `system_id` found the mechanism moving too fast while it looked for the volts that hold it: rerun with `hold` set to its physics' gravity volts (the Systems tab works it out), or have a programmer check its inversion. |
 | `WONT_HOLD` | `system_id` couldn't find, or keep, the volts that hold it still: a person looks at it (something loose, a spring, a cable pulling). |
+| `CATALOG_MISMATCH` | The robot library's maneuver list doesn't have the `id` the tool sent: the two are different versions. A person updates the older one (redeploy the robot code, or update the tool); never guess an `index` instead. |
+| `ODOMETRY_FROZEN` | A maneuver's pose stopped changing while its wheels drove, so the closed loop was steering on nothing: odometry stopped updating, or the robot is stuck. A person looks at the robot and the drivetrain's odometry before anything drives again. |
 | `NO_MOTORS`, `NOT_SUPPORTED` | The robot has no motors registered with its motor guard, or one the test can't run: tell the person. |
 | `NO_PROJECT`, `NOT_FOUND` | A robot project or saved run that doesn't exist: `runs` lists runs; the projects are Peashooter and Black team. |
 | `WRONG_PLACE` | The test can't run where the robot is (a floor test on blocks, the PDH map on the floor): ask a person to move it and set the environment. |
@@ -273,7 +280,7 @@ Follow the GUI's Guide tab order; each step depends on the ones before it:
 7. Steering on blocks, then on the floor (`steer_step`).
 8. Slip current on the floor against a wall (`slip`).
 9. Feedforward (`drive_ff`), then drive speed (`drive_step`).
-10. Spin and straight-line checks.
+10. Spin and straight-line checks, then the accuracy maneuvers (`maneuver`, a person taping each end).
 11. Second-order motion profiles stay locked until steering and drive pass on a real robot.
 12. A person saves, redeploys, checks the startup list, and commits.
 

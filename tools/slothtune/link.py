@@ -350,8 +350,17 @@ class RobotLink:
             "battery_id": self.get("str", C.BATTERY_ID),
             "battery_rest": self.get("double", C.BATTERY_REST_VOLTS),
             "battery_options": list(self.get("str[]", C.BATTERY_OPTIONS)),
+            "watch": self.watch(),
         })
         return out
+
+    def watch(self):
+        """The robot's own checks (ModuleWatch), as :func:`monitor.robot_checks` reads them; empty
+        from robot code that doesn't run them."""
+        from . import monitor
+
+        return monitor.robot_checks(list(self.get("str[]", C.WATCH_RULES)), list(self.get("str[]", C.WATCH_WHO)),
+                                    list(self.get("double[]", C.WATCH_VALUES)))
 
     def test_live(self):
         """A running test's newest rows: ``{"names": [...], "rows": [[t, ...], ...]}`` (time first)."""

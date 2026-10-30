@@ -11,7 +11,7 @@ judges them live: a run of them to the end of the chain is the cable at its star
 from __future__ import annotations
 
 from . import battery
-from . import diagnose, wiring
+from . import diagnose, monitor, wiring
 
 PREFIXES = ("/DriverStation/", "/SystemStats/", "/PowerDistribution/", "/RealOutputs/Motors/",
             "/RealOutputs/LoggedRobot/FullCycleMS", "/RealOutputs/SlothTune/Test",
@@ -240,17 +240,39 @@ def summarize(series, wiring_map=None):
                     seen.add(f)
                     ev(ts, "warn", f"{m}: {f}.", None, {"devices": [m]})
 
-    # The robot's module checks (ModuleWatch): each new episode, with the module and what to look at.
+    # The robot's own checks (ModuleWatch): each new episode, with who and what to look at. The
+    # same check starting on most modules within a second is one event: something they share.
     watch_words = {"SteerOff": ("steering more than 10\u00b0 from where it was told to point", "pod_wrong_direction"),
                    "SensorsDisagree": ("steering motor encoder and absolute encoder more than 3\u00b0 apart", "pod_drifts"),
                    "Backwards": ("wheel turned against its command", "wheel_backwards")}
+    for name, rule in monitor.ROBOT_LOG_NAMES.items():
+        symptom, text = monitor.RULES[rule]
+        watch_words.setdefault(name, (text[3:] if text.startswith("is ") else text, symptom))
+    watched, starts = {}, []
     for key in sorted(k for k in series if k.startswith("/RealOutputs/SlothTune/Watch/")):
         module, _, rule = key[len("/RealOutputs/SlothTune/Watch/"):].rpartition("/")
+        watched.setdefault(rule, set()).add(module)
+        starts += [(t, rule, module) for t, _ in _increments(series.get(key))]
+    starts.sort()
+    told = set()
+    for i, (t, rule, module) in enumerate(starts):
+        if i in told:
+            continue
         what, symptom = watch_words.get(rule, (rule, None))
         title = next((x["title"] for x in diagnose.SYMPTOMS if x["id"] == symptom), None)
-        for t, n in _increments(series.get(key)):
-            ev(t, "warn", f"{module}: {what}. Troubleshoot: \"{title}\"." if title else f"{module}: {what}.",
-               None, {"module": module, "symptom": symptom})
+        look = f" Troubleshoot: \"{title}\"." if title else ""
+        together = [j for j in range(i, len(starts)) if j not in told and starts[j][1] == rule
+                    and starts[j][0] - t <= 1.0]
+        mods = sorted({starts[j][2] for j in together})
+        if len(mods) >= 3 and 2 * len(mods) > len(watched[rule]):
+            told.update(together)
+            ev(t, "warn", f"{len(mods)} modules at once ({', '.join(mods)}): {what}. Look first at what they"
+               f" share: pushing or being pushed, the battery, the CAN bus.{look}", None,
+               {"modules": mods, "symptom": symptom})
+            continue
+        told.add(i)
+        who = "The robot" if module == "Robot" else module
+        ev(t, "warn", f"{who}: {what}.{look}", None, {"module": module, "symptom": symptom})
 
     # Gains changed while the robot code ran (from the laptop or AdvantageScope): a robot that
     # drove differently halfway through has its reason here.

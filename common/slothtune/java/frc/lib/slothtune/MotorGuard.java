@@ -520,6 +520,11 @@ public final class MotorGuard {
     return List.copyOf(motors.values());
   }
 
+  /** How many motors it watches, without copying the list (ModuleWatch checks it every loop). */
+  int motorCount() {
+    return motors.size();
+  }
+
   public Motor motor(String name) {
     return motors.get(name);
   }

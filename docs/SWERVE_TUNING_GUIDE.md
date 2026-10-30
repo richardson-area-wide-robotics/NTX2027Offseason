@@ -552,6 +552,13 @@ open the Battery tab, press **Send the grades to the robot**, and redeploy. Do i
 
    When most motors report the same thing at once (low voltage, CAN dropouts) it shows as one line
    naming the shared cause, the battery or the CAN chain, not a line per motor.
+   The robot also runs the laptop's live checks itself, every loop, so they watch a match with no
+   laptop connected: a module more than 10 degrees off its angle or swinging around it, its two
+   steering sensors apart, its absolute encoder not read, a wheel turning against its command, a
+   module reporting a different distance from the others, one swerve motor much hotter than its
+   siblings, the battery under 8 V while enabled, the gyro dropping out. Each is a yellow line with
+   its count. "A wheel short of its speed" and "a stalled drive motor" are left off, since pushing
+   does both all match; they are in the match log with the rest, and on the laptop's Live tab.
    Once the Wiring tab's map is saved and deployed, each line also says where to look: a power
    fault names the motor's PDH port, a CAN fault the devices either side of it on the cable (only
    after the cable order has been checked on the robot).
