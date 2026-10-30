@@ -284,6 +284,13 @@ Follow the GUI's Guide tab order; each step depends on the ones before it:
 11. Second-order motion profiles stay locked until steering and drive pass on a real robot.
 12. A person saves, redeploys, checks the startup list, and commits.
 
+On a live robot, run that order as a **session** (`docs/ROBOT_DAY.md`): `session start --project P`,
+then `session next`, `session check STEP` (add `--blocks` once a person has checked the wheels are
+free), `session mark STEP pass|fail --note "..."` for what only a person can see, and `session issue`
+for anything wrong with Sloth Tune itself. Each check runs the commands above and records the
+result, so `session report` is the record of the day. A step that needs the person to move
+something counts down and beeps on the laptop: tell them what to do before you start it.
+
 ## Telling the people what you are doing
 
 Before each test, say which test, where (blocks or floor), what will move, roughly how far (in

@@ -102,7 +102,8 @@ motors, and finding wiring faults: install its two packages once with
 `py -3.12 -m pip install -r tools/requirements.txt`, then `py -3.12 tools/slothtune gui`. Run it from
 here, where the robots sit beside it and nothing needs setting. It is developed in its own repository
 and copied here, together with its robot library (`common/slothtune`). Start with
-[`docs/SWERVE_TUNING_GUIDE.md`](docs/SWERVE_TUNING_GUIDE.md). Also in `docs/`: the
+[`docs/SWERVE_TUNING_GUIDE.md`](docs/SWERVE_TUNING_GUIDE.md); with a live robot, run the bring-up as a
+session ([`docs/ROBOT_DAY.md`](docs/ROBOT_DAY.md)). Also in `docs/`: the
 [controls review](docs/CONTROLS_REVIEW.md), [vision setup](docs/VISION_LUMA_PHOTONVISION.md),
 the [brief for AI agents](docs/AGENT_TUNING.md), [notes for 2027](docs/MIGRATION_2027.md), [next year's gyro, the Canandgyro](docs/GYRO_CANANDGYRO.md) and
 [REV's numbers for our motors, controllers, swerve modules and battery](docs/REV_HARDWARE.md).

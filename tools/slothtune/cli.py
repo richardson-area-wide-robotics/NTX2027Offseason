@@ -1324,6 +1324,9 @@ def build_parser():
     s.set_defaults(fn=cmd_setup)
     sub.add_parser("brief", help="the rules an AI agent follows").set_defaults(fn=cmd_brief)
 
+    from . import session
+    session.add_parser(sub).set_defaults(fn=session.cmd_session)
+
     s = sub.add_parser("gui", help="open the GUI in a browser")
     s.add_argument("--port", type=int, default=5806)
     s.add_argument("--no-browser", action="store_true")

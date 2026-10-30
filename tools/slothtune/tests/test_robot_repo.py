@@ -28,7 +28,7 @@ IN_TEAM_REPO = os.path.isdir(os.path.join(REPO, "Peashooter"))
 # The docs Sloth Tune ships, and copies into the team repo. The team repo has its own docs beside them
 # (the controls review), and its own README, which are not Sloth Tune's to check.
 SHIPPED_DOCS = ("AGENT_TUNING.md", "GYRO_CANANDGYRO.md", "MIGRATION_2027.md", "NETWORK_CHECK.md",
-                "REV_HARDWARE.md", "SWERVE_TUNING_GUIDE.md", "VISION_LUMA_PHOTONVISION.md")
+                "REV_HARDWARE.md", "ROBOT_DAY.md", "SWERVE_TUNING_GUIDE.md", "VISION_LUMA_PHOTONVISION.md")
 
 
 def read(path):
