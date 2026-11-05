@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import swervelib.SwerveDrive;
+import swervelib.SwerveModule;
+import swervelib.parser.PIDFConfig;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
@@ -28,16 +30,41 @@ public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
 
-    public Drive() {
+
+            public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(40,
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(100,
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+
+        var modules = swerveDrive.getModuleMap();
+        //First is drive second is ange
+        setModulePID(modules.get("backright"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("frontright"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
+
+        setModulePID(modules.get("backleft"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("frontleft"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
     }
+
+    private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
+        module.getDriveMotor().configurePIDF(drive);
+        module.getAngleMotor().configurePIDF(angle);
+    }
+    
         public void setupPathPlanner() {
 
         RobotConfig config;
