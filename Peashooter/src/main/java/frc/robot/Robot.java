@@ -19,7 +19,7 @@ public class Robot extends TimedRobot {
   Intake intake = new Intake();
   Shooter shooter = new Shooter();
   CommandXboxController controller = new CommandXboxController(0);
-  //CommandGenericHID controller = new CommandGenericHID(0);
+  
 
   private Command autonomousCommand; 
   public Robot() {
