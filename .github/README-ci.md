@@ -92,16 +92,28 @@ lets repository admins push straight through by default.
 
 ### The gap worth knowing about
 
-Nine people have **admin** on this repo, and a repo admin can delete or disable a
-repo-level ruleset. One of them is on the students team. So this stops an
-accidental push to `main`; it does not stop someone who decides to go around it.
+A repo admin can delete or disable a repo-level ruleset, so admin is the real
+perimeter here, not the rules.
 
-Closing that properly is one of:
+There were nine admins on 2026-09-14, one of them a student. That student is now
+`write`, which was the only repo-level grant of admin in the list. **The other
+eight are organization owners**, and an org owner has admin on every repository
+in the org by definition — a repo-level permission change cannot reduce them.
+Checked, not assumed: the set of remaining repo admins and the set of org owners
+are identical.
 
-- drop the admins who don't need admin down to write, or
-- move both rulesets to the organization level, where only org owners can change
-  them (Settings → Rules at the org, or `POST /orgs/{org}/rulesets`). The same
-  JSON works, with `conditions` widened to name the repositories it covers.
+So the honest statement of what these rules do: they stop an accident, and they
+stop anyone with `write` — which is everyone except the eight owners. They do not
+constrain an org owner.
+
+Narrowing it further is an org-level decision, not a repo one:
+
+- change who is an **organization owner** (Settings → People → Role at the org).
+  That affects every repo the org has, so it isn't a CI question.
+- move both rulesets to the **organization** level (Settings → Rules at the org,
+  or `POST /orgs/{org}/rulesets`). The same JSON works, with `conditions` widened
+  to name the repositories it covers. This doesn't shrink the owner list, but it
+  does mean nobody can quietly remove the rules from one repo.
 
 ## Where this is going
 
