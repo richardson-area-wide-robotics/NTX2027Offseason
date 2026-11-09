@@ -8,8 +8,8 @@
 #
 # and it stays correct as mentors come and go.
 
-*  @Stuart1745 @alexbhandari @nbgray @wsferenc
+*  @Stuart1745 @alexbhandari @nbgray @wsferenc @Gabefry
 
 # The build gate and the rules that protect main. Changes here should always
 # get a mentor's eyes, even if the rest of the repo loosens up later.
-/.github/  @Stuart1745 @alexbhandari @nbgray @wsferenc
+/.github/  @Stuart1745 @alexbhandari @nbgray @wsferenc @Gabefry
