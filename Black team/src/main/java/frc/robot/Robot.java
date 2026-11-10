@@ -3,10 +3,14 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Subsystems.Intake;
+import frc.robot.Subsystems.Shooter;
 
 public class Robot extends TimedRobot {
 
   Drive drive = new Drive();
+  Shooter shooter = new Shooter();
+  Intake intake = new Intake();
   CommandXboxController controller = new CommandXboxController(0);
 
   public Robot() {
@@ -16,7 +20,17 @@ public class Robot extends TimedRobot {
         () -> controller.getLeftY(),
         () -> controller.getRightX()));
 
-        controller.a().onTrue(drive.toggleFieldRelative());
+        controller.y().onTrue(drive.toggleFieldRelative());
+    controller.rightTrigger().whileTrue(shooter.shootHub());
+    controller.b().whileTrue(shooter.shootCornerA());
+    controller.leftTrigger().whileTrue(shooter.shootIntake());
+    controller.leftTrigger().whileTrue(intake.intakeIn());
+    controller.povDown().whileTrue(intake.intakeOut());
+
+    controller.povLeft().whileTrue(intake.intakeIn());
+    // other intakes during shoots
+    //controller.a().whileTrue(intake.intakeIn());
+    //controller.b().whileTrue(intake.intakeIn());
 }
 
  
