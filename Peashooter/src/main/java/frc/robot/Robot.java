@@ -1,16 +1,25 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Angle;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.reduxrobotics.canand.CanandEventLoop;
+import com.reduxrobotics.sensors.canandgyro.Canandgyro;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Subsystems.Feeder;
 import frc.robot.Subsystems.Intake;
 import frc.robot.Subsystems.Shooter;
+import swervelib.SwerveDrive;
+import swervelib.encoders.SwerveAbsoluteEncoder;
 
 public class Robot extends TimedRobot {
 
@@ -21,9 +30,11 @@ public class Robot extends TimedRobot {
   CommandXboxController controller = new CommandXboxController(0);
   //CommandGenericHID controller = new CommandGenericHID(0);
 
+  private final Canandgyro m_gyro = new Canandgyro(40);
+
   private Command autonomousCommand; 
   public Robot() {
-
+    CanandEventLoop.getInstance();
   
     NamedCommands.registerCommand("Shoot Hub", shooter.shootA());
     NamedCommands.registerCommand("Shoot Corner", shooter.shootCorner());
@@ -62,6 +73,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+
+    ChassisSpeeds speeds = drive.getSpeeds();
+    SmartDashboard.putNumber("Velocity X", speeds.vxMetersPerSecond);
+    SmartDashboard.putNumber("Velocity Y", speeds.vyMetersPerSecond);
   }
 
   @Override
@@ -77,7 +92,14 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    // Read the heading in rotations [-0.5, 0.5)
+    double heading = m_gyro.getYaw();
+
+    // Convert to degrees for easier reading
+    double degrees = heading * 360.0;
+    System.out.println("Robot Heading: " + degrees);
+  }
 
   @Override
   public void disabledInit() {}
