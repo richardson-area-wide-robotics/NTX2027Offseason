@@ -9,6 +9,9 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -28,6 +31,7 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
+    private final AprilTagFieldLayout tags = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
@@ -63,6 +67,28 @@ public class Drive extends SubsystemBase {
 
     public ChassisSpeeds getSpeeds() {
         return swerveDrive.getRobotVelocity();
+    }
+
+    @Override
+    public void periodic() {
+        var v = swerveDrive.getFieldVelocity();
+        SmartDashboard.putNumber("Velocity X (mps)", v.vxMetersPerSecond);
+        SmartDashboard.putNumber("Velocity Y (mps)", v.vyMetersPerSecond);
+        SmartDashboard.putNumber("Speed (mps)", Math.hypot(v.vxMetersPerSecond, v.vyMetersPerSecond));
+        SmartDashboard.putNumber("Direction (deg)", Math.toDegrees(Math.atan2(v.vyMetersPerSecond, v.vxMetersPerSecond)));
+
+        // Distance from odometry pose to the nearest AprilTag on the field
+        Translation2d pos = swerveDrive.getPose().getTranslation();
+        AprilTag nearest = null;
+        double best = Double.MAX_VALUE;
+        for (AprilTag t : tags.getTags()) {
+            double d = pos.getDistance(t.pose.toPose2d().getTranslation());
+            if (d < best) { best = d; nearest = t; }
+        }
+        if (nearest != null) {
+            SmartDashboard.putNumber("Nearest Tag ID", nearest.ID);
+            SmartDashboard.putNumber("Nearest Tag Dist (m)", best);
+        }
     }
 
     private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
