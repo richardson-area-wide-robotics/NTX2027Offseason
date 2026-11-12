@@ -36,7 +36,7 @@ public class Drive extends SubsystemBase {
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(100,
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(4.1, // real max m/s: NEO 5676rpm / 5.5 gear * 3in wheel
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
