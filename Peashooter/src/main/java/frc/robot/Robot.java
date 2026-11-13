@@ -93,10 +93,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    // Read the heading in rotations [-0.5, 0.5)
     double heading = m_gyro.getYaw();
-
-    // Convert to degrees for easier reading
+  
     double degrees = heading * 360.0;
     SmartDashboard.putNumber("Robot Heading", degrees);
   }
