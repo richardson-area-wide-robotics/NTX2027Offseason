@@ -98,7 +98,7 @@ public class Robot extends TimedRobot {
 
     // Convert to degrees for easier reading
     double degrees = heading * 360.0;
-    System.out.println("Robot Heading: " + degrees);
+    SmartDashboard.putNumber("Robot Heading", degrees);
   }
 
   @Override
