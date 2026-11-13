@@ -45,24 +45,12 @@ public class Drive extends SubsystemBase {
 
         swerveDrive.setChassisDiscretization(true, 0.02);
 
-        var modules = swerveDrive.getModuleMap();
-    
-        setModulePID(modules.get("backright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
-
-        setModulePID(modules.get("frontright"),
-            new PIDFConfig(0.05, 0, 0, 0, 0),
-            new PIDFConfig(0.008, 0, 0.0001, 0, 0));
-
-        setModulePID(modules.get("backleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
-
-        setModulePID(modules.get("frontleft"),
-            new PIDFConfig(0.05, 0, 0.0001, 0, 0),
-            new PIDFConfig(0.008, 0, 0.0001, 0, 0));
-
+        // Same PID on every module: mismatched drive P makes one end pull harder and the robot twist.
+        for (SwerveModule m : swerveDrive.getModules()) {
+            setModulePID(m,
+                new PIDFConfig(0.05, 0, 0, 0, 0),
+                new PIDFConfig(0.01, 0, 0.0001, 0, 0));
+        }
     }
 
     public ChassisSpeeds getSpeeds() {
