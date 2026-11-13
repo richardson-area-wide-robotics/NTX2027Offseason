@@ -36,7 +36,7 @@ public class Drive extends SubsystemBase {
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(4.1, // real max m/s: NEO 5676rpm / 5.5 gear * 3in wheel
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(4.1,
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -95,7 +95,7 @@ public class Drive extends SubsystemBase {
         module.getDriveMotor().configurePIDF(drive);
         module.getAngleMotor().configurePIDF(angle);
     }
-
+//
     public void setupPathPlanner() {
 
         RobotConfig config;
