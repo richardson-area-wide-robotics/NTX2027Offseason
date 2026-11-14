@@ -35,7 +35,7 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     // NEO, 5.50 gear ratio, 3in wheel: ~4.1 m/s free speed
-    private static final double MAX_SPEED = 4.1;
+    private static final double MAX_SPEED = 1;
     private static final double MAX_ROTATION = 2 * Math.PI;
     private boolean fieldR = true;
 
@@ -52,25 +52,10 @@ public class Drive extends SubsystemBase {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-              SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+        SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
 
-        var modules = swerveDrive.getModuleMap();
-        //First is drive second is ange
-        setModulePID(modules.get("backright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
 
-        setModulePID(modules.get("frontright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
-
-        setModulePID(modules.get("backleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
-
-        setModulePID(modules.get("frontleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
+       
     }
 
     private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
@@ -100,6 +85,19 @@ public class Drive extends SubsystemBase {
 
     public Command toggleFieldRelative() {
         return this.runOnce(() -> fieldR = !fieldR);
+    }
+    
+    @Override
+    public void periodic(){
+         SmartDashboard.putNumber(
+            "Gyro Yaw",
+            swerveDrive.getYaw().getDegrees()
+        );
+
+        SmartDashboard.putNumber(
+            "Robot Heading",
+            swerveDrive.getPose().getRotation().getDegrees()
+        );
     }
 
 }

@@ -29,7 +29,7 @@ public class Vision extends SubsystemBase{
     String cameraName = "OV9281";
     PhotonCamera camera;
     AprilTagFieldLayout aprilTagFieldLayout;
-    Transform3d cameraPosition = new Transform3d(0,0,0, new Rotation3d()); //the relative coords of the camera to the 3d center of the robot
+    Transform3d cameraPosition = new Transform3d(0,0,0, new Rotation3d(0,Math.toRadians(-45),Math.toRadians(180))); //the relative coords of the camera to the 3d center of the robot
 
     PhotonPoseEstimator poseEstimator;
     public List<EstimatedRobotPose> poseEstimations  = new ArrayList<>();
@@ -99,10 +99,19 @@ public List<Matrix<N3, N1>> calculateStdDeviations(){
 public void periodic(){
     List<PhotonPipelineResult> results = camera.getAllUnreadResults();
     updateVisionEstimate(results); 
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
     if(!camera.isConnected()) {
         camera = new PhotonCamera(cameraName);
         System.out.println("atempting camera reconection");
     }
+<<<<<<< Updated upstream
+=======
+>>>>>>> a2995575e8a457168d8e0e464304a949bef5cc28
+>>>>>>> Stashed changes
 }
 
 }

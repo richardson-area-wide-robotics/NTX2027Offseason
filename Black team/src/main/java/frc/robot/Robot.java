@@ -40,7 +40,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    drive.addVisionMeasurement(vision.poseEstimations, vision.poseEstimationsTimestamps, vision.calculateStdDeviations());
+    //drive.addVisionMeasurement(vision.poseEstimations, vision.poseEstimationsTimestamps, vision.calculateStdDeviations());
     vision.clearResults();
   }
 
