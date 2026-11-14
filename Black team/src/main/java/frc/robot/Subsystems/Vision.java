@@ -99,7 +99,10 @@ public List<Matrix<N3, N1>> calculateStdDeviations(){
 public void periodic(){
     List<PhotonPipelineResult> results = camera.getAllUnreadResults();
     updateVisionEstimate(results); 
-    if(!camera.isConnected()) camera = new PhotonCamera(cameraName);
+    if(!camera.isConnected()) {
+        camera = new PhotonCamera(cameraName);
+        System.out.println("atempting camera reconection");
+    }
 }
 
 }
