@@ -8,7 +8,6 @@ import edu.wpi.first.units.measure.Angle;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.reduxrobotics.canand.CanandEventLoop;
-import com.reduxrobotics.sensors.canandgyro.Canandgyro;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -29,8 +28,6 @@ public class Robot extends TimedRobot {
   Shooter shooter = new Shooter();
   CommandXboxController controller = new CommandXboxController(0);
   //CommandGenericHID controller = new CommandGenericHID(0);
-
-  private final Canandgyro m_gyro = new Canandgyro(40);
 
   private Command autonomousCommand; 
   public Robot() {
@@ -68,15 +65,21 @@ public class Robot extends TimedRobot {
     controller.a().whileTrue(shooter.shootA());
     controller.x().whileTrue(shooter.shootX());
 
+    // Drive tests: click these on the dashboard while enabled. Distance/speeds/PIDs are under "Tuning/".
+    SmartDashboard.putData("Drive Tests/Forward", drive.driveTest(1, 0, 0));
+    SmartDashboard.putData("Drive Tests/Backward", drive.driveTest(-1, 0, 0));
+    SmartDashboard.putData("Drive Tests/Left", drive.driveTest(0, 1, 0));
+    SmartDashboard.putData("Drive Tests/Right", drive.driveTest(0, -1, 0));
+    SmartDashboard.putData("Drive Tests/Forward + 360", drive.driveTest(1, 0, 360));
+    SmartDashboard.putData("Drive Tests/Backward + 360", drive.driveTest(-1, 0, 360));
+    SmartDashboard.putData("Drive Tests/Left + 360", drive.driveTest(0, 1, 360));
+    SmartDashboard.putData("Drive Tests/Right + 360", drive.driveTest(0, -1, 360));
+
   }
 
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-
-    ChassisSpeeds speeds = drive.getSpeeds();
-    SmartDashboard.putNumber("Velocity X", speeds.vxMetersPerSecond);
-    SmartDashboard.putNumber("Velocity Y", speeds.vyMetersPerSecond);
   }
 
   @Override
@@ -92,12 +95,16 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
+<<<<<<< Updated upstream
   public void teleopPeriodic() {
     double heading = m_gyro.getYaw();
   
     double degrees = heading * 360.0;
     SmartDashboard.putNumber("Robot Heading", degrees);
   }
+=======
+  public void teleopPeriodic() {}
+>>>>>>> Stashed changes
 
   @Override
   public void disabledInit() {}
