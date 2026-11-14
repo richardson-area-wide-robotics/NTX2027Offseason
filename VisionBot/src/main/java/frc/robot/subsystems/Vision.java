@@ -12,13 +12,10 @@ import org.photonvision.PhotonUtils;
 import org.photonvision.targeting.PhotonPipelineResult;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
-import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
@@ -36,12 +33,14 @@ public class Vision extends SubsystemBase{
     
     PhotonPoseEstimator poseEstimator;
     List<EstimatedRobotPose> poseEstimations  = new ArrayList<>();
+    List<Double> poseEstimationsTimestamps = new ArrayList<>();
+    
 
 
     public Vision() {
     camera = new PhotonCamera(cameraName);
 
-    if(!camera.isConnected()) { throw new RuntimeException("camera not found");}
+    if(!camera.isConnected()) { System.out.println("camera did not connect");}
 
     aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
@@ -109,6 +108,7 @@ private void updateVisionEstimate(List<PhotonPipelineResult> results){
         Optional<EstimatedRobotPose> estimation = poseEstimator.estimateCoprocMultiTagPose(result);
         if(estimation.isEmpty()) continue;
         poseEstimations.add(estimation.get());
+        poseEstimationsTimestamps.add(result.getTimestampSeconds());
     }
 }
 
@@ -148,6 +148,7 @@ public List<Matrix<N3, N1>> calculateStdDeviations(){
 public void periodic(){
     List<PhotonPipelineResult> results = camera.getAllUnreadResults();
     updateVisionEstimate(results); 
+    if(!camera.isConnected()) camera = new PhotonCamera(cameraName);
 }
 
 }
