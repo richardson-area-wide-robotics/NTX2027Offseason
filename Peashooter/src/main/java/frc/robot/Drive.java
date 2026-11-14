@@ -68,12 +68,23 @@ public class Drive extends SubsystemBase {
         // Counteracts the sideways drift ("skew") swerve gets when translating and rotating at once.
         swerveDrive.setAngularVelocityCompensation(true, true, DEFAULT_SKEW_COMP);
 
-        // Same PID on every module: mismatched drive P makes one end pull harder and the robot twist.
-        for (SwerveModule m : swerveDrive.getModules()) {
-            setModulePID(m,
-                new PIDFConfig(0.05, 0, 0, 0, 0),
-                new PIDFConfig(0.01, 0, 0.0001, 0, 0));
-        }
+        var modules = swerveDrive.getModuleMap();
+        //First is drive second is ange
+        setModulePID(modules.get("backright"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("frontright"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
+
+        setModulePID(modules.get("backleft"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("frontleft"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
 
         lastHeading = swerveDrive.getOdometryHeading();
 

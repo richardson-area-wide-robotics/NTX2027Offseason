@@ -95,16 +95,7 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
-<<<<<<< Updated upstream
-  public void teleopPeriodic() {
-    double heading = m_gyro.getYaw();
-  
-    double degrees = heading * 360.0;
-    SmartDashboard.putNumber("Robot Heading", degrees);
-  }
-=======
   public void teleopPeriodic() {}
->>>>>>> Stashed changes
 
   @Override
   public void disabledInit() {}
