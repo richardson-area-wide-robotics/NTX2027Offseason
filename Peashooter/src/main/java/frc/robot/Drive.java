@@ -37,22 +37,19 @@ public class Drive extends SubsystemBase {
     private boolean fieldR = true;
     private final AprilTagFieldLayout tags = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-    // Heading that keeps counting past 180 so a 360 spin can be tracked (radians).
     private double continuousHeading = 0;
     private Rotation2d lastHeading = new Rotation2d();
-    // Last direction of travel, held while the robot is stopped so it doesn't snap to 0.
     private double lastDirectionDeg = 0;
 
-    // ---- Drive-test tuning (live-editable on the dashboard under "Tuning/") ----
     private static final String TUNE = "Tuning/";
-    private static final double DEFAULT_TRANSLATION_P = 2.0;  // (m/s) per meter of position error
-    private static final double DEFAULT_HEADING_P = 4.0;      // (rad/s) per radian of heading error
-    private static final double DEFAULT_MAX_SPEED = 1.5;      // m/s
-    private static final double DEFAULT_MAX_ACCEL = 2.0;      // m/s^2
-    private static final double DEFAULT_MAX_SPIN = 180;       // deg/s
-    private static final double DEFAULT_MAX_SPIN_ACCEL = 360; // deg/s^2
-    private static final double DEFAULT_TEST_DISTANCE = 2.0;  // m
-    private static final double DEFAULT_SKEW_COMP = 0.1;      // YAGSL angular velocity compensation
+    private static final double DEFAULT_TRANSLATION_P = 2.0; 
+    private static final double DEFAULT_HEADING_P = 4.0;      
+    private static final double DEFAULT_MAX_SPEED = 1.5;      
+    private static final double DEFAULT_MAX_ACCEL = 2.0;      
+    private static final double DEFAULT_MAX_SPIN = 180;       
+    private static final double DEFAULT_MAX_SPIN_ACCEL = 360; 
+    private static final double DEFAULT_TEST_DISTANCE = 2.0;  
+    private static final double DEFAULT_SKEW_COMP = 0.1;      
 
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
@@ -65,10 +62,8 @@ public class Drive extends SubsystemBase {
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
 
         swerveDrive.setChassisDiscretization(true, 0.02);
-        // Counteracts the sideways drift ("skew") swerve gets when translating and rotating at once.
         swerveDrive.setAngularVelocityCompensation(true, true, DEFAULT_SKEW_COMP);
 
-        // Same PID on every module: mismatched drive P makes one end pull harder and the robot twist.
         for (SwerveModule m : swerveDrive.getModules()) {
             setModulePID(m,
                 new PIDFConfig(0.05, 0, 0, 0, 0),
@@ -93,7 +88,6 @@ public class Drive extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Unwrap the heading so it can go past +/-180 deg.
         Rotation2d h = swerveDrive.getOdometryHeading();
         continuousHeading += h.minus(lastHeading).getRadians();
         lastHeading = h;
@@ -106,7 +100,6 @@ public class Drive extends SubsystemBase {
 
         Pose2d pose = swerveDrive.getPose();
 
-        // Distance from odometry pose to the nearest AprilTag on the field
         AprilTag nearest = null;
         double best = Double.MAX_VALUE;
         for (AprilTag t : tags.getTags()) {
@@ -114,7 +107,6 @@ public class Drive extends SubsystemBase {
             if (d < best) { best = d; nearest = t; }
         }
 
-        // One key, overwritten every loop: a single dashboard line that updates in place.
         SmartDashboard.putString("Telemetry", String.format(
             "Vx %+.2f m/s | Vy %+.2f m/s | Dir %+.0f deg | Pos (%.2f, %.2f) m | Gyro %+.1f deg | Tag %s",
             v.vxMetersPerSecond,
