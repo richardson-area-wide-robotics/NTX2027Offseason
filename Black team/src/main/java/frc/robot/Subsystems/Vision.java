@@ -20,7 +20,6 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -98,20 +97,7 @@ public List<Matrix<N3, N1>> calculateStdDeviations(){
 @Override
 public void periodic(){
     List<PhotonPipelineResult> results = camera.getAllUnreadResults();
-    updateVisionEstimate(results); 
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
-    if(!camera.isConnected()) {
-        camera = new PhotonCamera(cameraName);
-        System.out.println("atempting camera reconection");
-    }
-<<<<<<< Updated upstream
-=======
->>>>>>> a2995575e8a457168d8e0e464304a949bef5cc28
->>>>>>> Stashed changes
+    updateVisionEstimate(results);
 }
 
 }

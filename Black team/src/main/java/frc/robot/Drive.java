@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -89,14 +90,9 @@ public class Drive extends SubsystemBase {
     
     @Override
     public void periodic(){
-         SmartDashboard.putNumber(
+         SmartDashboard.putData(
             "Gyro Yaw",
-            swerveDrive.getYaw().getDegrees()
-        );
-
-        SmartDashboard.putNumber(
-            "Robot Heading",
-            swerveDrive.getPose().getRotation().getDegrees()
+            (Sendable) swerveDrive.getPose()
         );
     }
 

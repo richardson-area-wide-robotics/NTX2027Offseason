@@ -3,9 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Subsystems.Intake;
-import frc.robot.Subsystems.Shooter;
-import frc.robot.Subsystems.Vision;
+import frc.robot.Subsystems.*;
 
 public class Robot extends TimedRobot {
 
