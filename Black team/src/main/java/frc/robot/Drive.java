@@ -19,6 +19,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -39,8 +41,8 @@ public class Drive extends SubsystemBase {
     private static final double MAX_SPEED = 1;
     private static final double MAX_ROTATION = 2 * Math.PI;
     private boolean fieldR = true;
-
-       
+    StructPublisher<Pose2d> posePublisher;
+    
             
 
      Drive() {
@@ -54,9 +56,8 @@ public class Drive extends SubsystemBase {
             throw new RuntimeException(e);
         }
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
-
-
-       
+       posePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("Pose", swerveDrive.getPose().struct).publish();
     }
 
     private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
@@ -87,13 +88,11 @@ public class Drive extends SubsystemBase {
     public Command toggleFieldRelative() {
         return this.runOnce(() -> fieldR = !fieldR);
     }
-    
+
     @Override
     public void periodic(){
-         SmartDashboard.putData(
-            "Gyro Yaw",
-            (Sendable) swerveDrive.getPose()
-        );
+        posePublisher.set(swerveDrive.getPose());
     }
+    
 
 }
