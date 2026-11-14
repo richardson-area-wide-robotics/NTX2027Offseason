@@ -38,7 +38,7 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     // NEO, 5.50 gear ratio, 3in wheel: ~4.1 m/s free speed
-    private static final double MAX_SPEED = 1;
+    private static final double MAX_SPEED = 4.1;
     private static final double MAX_ROTATION = 2 * Math.PI;
     private boolean fieldR = true;
     StructPublisher<Pose2d> posePublisher;
@@ -69,8 +69,8 @@ public class Drive extends SubsystemBase {
     return this.run(() -> {
         // Xbox stick: up/left are negative; WPILib: +x forward, +y left, +rot CCW
         swerveDrive.drive(new Translation2d(
-                -MathUtil.applyDeadband(translationY.getAsDouble(), 0.08) * MAX_SPEED,
-                -MathUtil.applyDeadband(translationX.getAsDouble(), 0.08) * MAX_SPEED),
+                MathUtil.applyDeadband(translationY.getAsDouble(), 0.08) * MAX_SPEED,
+                MathUtil.applyDeadband(translationX.getAsDouble(), 0.08) * MAX_SPEED),
             -MathUtil.applyDeadband(rotation.getAsDouble(), 0.08) * MAX_ROTATION,
             fieldR,
             false);
@@ -87,6 +87,10 @@ public class Drive extends SubsystemBase {
 
     public Command toggleFieldRelative() {
         return this.runOnce(() -> fieldR = !fieldR);
+    }
+
+    public Command resetGyro() {
+        return this.runOnce(() -> swerveDrive.zeroGyro());
     }
 
     @Override

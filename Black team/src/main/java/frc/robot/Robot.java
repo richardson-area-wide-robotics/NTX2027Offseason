@@ -20,7 +20,7 @@ public class Robot extends TimedRobot {
         () -> controller.getLeftY(),
         () -> controller.getRightX()));
 
-        controller.y().onTrue(drive.toggleFieldRelative());
+        controller.y().onTrue(drive.resetGyro());
     controller.rightTrigger().whileTrue(shooter.shootHub());
     controller.b().whileTrue(shooter.shootCornerA());
     controller.leftTrigger().whileTrue(shooter.shootIntake());
