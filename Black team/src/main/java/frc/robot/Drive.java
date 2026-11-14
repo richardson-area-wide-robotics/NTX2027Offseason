@@ -2,7 +2,10 @@ package frc.robot;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.function.DoubleSupplier;
+
+import org.photonvision.EstimatedRobotPose;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -10,9 +13,12 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -84,9 +90,16 @@ public class Drive extends SubsystemBase {
     });
 
     
-}
+    }  
+
+    public void addVisionMeasurement(List<EstimatedRobotPose> poses, List<Double> timestamps, List<Matrix<N3,N1>> listOfVisionMeasurementStdDevs) {
+        for(int i = 0; i < poses.size(); i++){
+            swerveDrive.addVisionMeasurement(poses.get(i).estimatedPose.toPose2d(), timestamps.get(i), listOfVisionMeasurementStdDevs.get(i));
+        }
+    }
 
     public Command toggleFieldRelative() {
-    return this.runOnce(() -> fieldR = !fieldR);
-}
+        return this.runOnce(() -> fieldR = !fieldR);
+    }
+
 }
