@@ -4,17 +4,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.DoubleSupplier;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import swervelib.SwerveDrive;
+import swervelib.SwerveModule;
+import swervelib.parser.PIDFConfig;
 import swervelib.parser.SwerveParser;
+import swervelib.simulation.ironmaple.simulation.opponentsim.SmartOpponentConfig.ModuleConfig;
 import swervelib.telemetry.SwerveDriveTelemetry;
-import swervelib.telemetry.SwerveDriveTelemetry;
+import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
@@ -22,6 +32,9 @@ public class Drive extends SubsystemBase {
     private static final double MAX_SPEED = 4.1;
     private static final double MAX_ROTATION = 2 * Math.PI;
     private boolean fieldR = true;
+
+       
+            
 
      Drive() {
         SwerveDriveTelemetry.verbosity = SwerveDriveTelemetry.TelemetryVerbosity.HIGH;
@@ -33,8 +46,32 @@ public class Drive extends SubsystemBase {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+              SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+
+        var modules = swerveDrive.getModuleMap();
+        //First is drive second is ange
+        setModulePID(modules.get("backright"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("frontright"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("backleft"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
+
+        setModulePID(modules.get("frontleft"),
+            new PIDFConfig(0.002, 0, 0, 0, 0),
+            new PIDFConfig(0.01, 0, 0, 0, 0));
     }
 
+    private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
+        module.getDriveMotor().configurePIDF(drive);
+        module.getAngleMotor().configurePIDF(angle);
+    }
+    
     public Command drive(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation) {
     return this.run(() -> {
         // Xbox stick: up/left are negative; WPILib: +x forward, +y left, +rot CCW
