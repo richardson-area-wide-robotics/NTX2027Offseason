@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
@@ -35,21 +36,10 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
-    private final AprilTagFieldLayout tags = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
+    
+    
+    StructPublisher<Pose2d> posePublisher;
 
-    private double continuousHeading = 0;
-    private Rotation2d lastHeading = new Rotation2d();
-    private double lastDirectionDeg = 0;
-
-    private static final String TUNE = "Tuning/";
-    private static final double DEFAULT_TRANSLATION_P = 2.0; 
-    private static final double DEFAULT_HEADING_P = 4.0;      
-    private static final double DEFAULT_MAX_SPEED = 1.5;      
-    private static final double DEFAULT_MAX_ACCEL = 2.0;      
-    private static final double DEFAULT_MAX_SPIN = 180;       
-    private static final double DEFAULT_MAX_SPIN_ACCEL = 360; 
-    private static final double DEFAULT_TEST_DISTANCE = 2.0;  
-    private static final double DEFAULT_SKEW_COMP = 0.1;      
 
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
@@ -60,79 +50,11 @@ public class Drive extends SubsystemBase {
             throw new RuntimeException(e);
         }
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
-
-        swerveDrive.setChassisDiscretization(true, 0.02);
-        swerveDrive.setAngularVelocityCompensation(true, true, DEFAULT_SKEW_COMP);
-
-        var modules = swerveDrive.getModuleMap();
-        //First is drive second is ange
-        setModulePID(modules.get("backright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
-
-        setModulePID(modules.get("frontright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
-
-        setModulePID(modules.get("backleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
-
-        setModulePID(modules.get("frontleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
-
-        lastHeading = swerveDrive.getOdometryHeading();
-
-        SmartDashboard.setDefaultNumber(TUNE + "Translation P", DEFAULT_TRANSLATION_P);
-        SmartDashboard.setDefaultNumber(TUNE + "Heading P", DEFAULT_HEADING_P);
-        SmartDashboard.setDefaultNumber(TUNE + "Max Speed (mps)", DEFAULT_MAX_SPEED);
-        SmartDashboard.setDefaultNumber(TUNE + "Max Accel (mps2)", DEFAULT_MAX_ACCEL);
-        SmartDashboard.setDefaultNumber(TUNE + "Max Spin (degps)", DEFAULT_MAX_SPIN);
-        SmartDashboard.setDefaultNumber(TUNE + "Max Spin Accel (degps2)", DEFAULT_MAX_SPIN_ACCEL);
-        SmartDashboard.setDefaultNumber(TUNE + "Test Distance (m)", DEFAULT_TEST_DISTANCE);
-        SmartDashboard.setDefaultNumber(TUNE + "Skew Comp", DEFAULT_SKEW_COMP);
     }
 
-    public ChassisSpeeds getSpeeds() {
-        return swerveDrive.getRobotVelocity();
-    }
-
-    @Override
-    public void periodic() {
-        Rotation2d h = swerveDrive.getOdometryHeading();
-        continuousHeading += h.minus(lastHeading).getRadians();
-        lastHeading = h;
-
-        var v = swerveDrive.getFieldVelocity();
-        double speed = Math.hypot(v.vxMetersPerSecond, v.vyMetersPerSecond);
-        if (speed > 0.05) {
-            lastDirectionDeg = Math.toDegrees(Math.atan2(v.vyMetersPerSecond, v.vxMetersPerSecond));
-        }
-
-        Pose2d pose = swerveDrive.getPose();
-
-        AprilTag nearest = null;
-        double best = Double.MAX_VALUE;
-        for (AprilTag t : tags.getTags()) {
-            double d = pose.getTranslation().getDistance(t.pose.toPose2d().getTranslation());
-            if (d < best) { best = d; nearest = t; }
-        }
-
-        SmartDashboard.putString("Telemetry", String.format(
-            "Vx %+.2f m/s | Vy %+.2f m/s | Dir %+.0f deg | Pos (%.2f, %.2f) m | Gyro %+.1f deg | Tag %s",
-            v.vxMetersPerSecond,
-            v.vyMetersPerSecond,
-            lastDirectionDeg,
-            pose.getX(),
-            pose.getY(),
-            swerveDrive.getYaw().getDegrees(),
-            nearest == null ? "--" : String.format("%d @ %.2f m", nearest.ID, best)));
-    }
-
-    private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
-        module.getDriveMotor().configurePIDF(drive);
-        module.getAngleMotor().configurePIDF(angle);
+        @Override
+    public void periodic(){
+        posePublisher.set(swerveDrive.getPose());
     }
 //
     public void setupPathPlanner() {
@@ -207,119 +129,9 @@ public class Drive extends SubsystemBase {
         return this.runOnce(() -> swerveDrive.zeroGyro());
     }
 
-    public Command driveTest(double forward, double left, double spinDeg) {
-        return new ProfiledMove(new Translation2d(forward, left), Math.toRadians(spinDeg));
-    }
+    
 
    
-    private class ProfiledMove extends Command {
-        private final Translation2d direction; // robot-relative unit direction at start
-        private final double spinRad;
-        private final Timer timer = new Timer();
-        private final PIDController xPid = new PIDController(0, 0, 0);
-        private final PIDController yPid = new PIDController(0, 0, 0);
-        private final PIDController headingPid = new PIDController(0, 0, 0);
-        private final TrapezoidProfile.State startState = new TrapezoidProfile.State(0, 0);
-        private final TrapezoidProfile.State goalState = new TrapezoidProfile.State(1, 0);
-
-        private TrapezoidProfile profile;
-        private double totalTime;
-        private Translation2d startPos;
-        private Translation2d delta;   // field-relative displacement for the whole move
-        private double startHeading;
-        private double maxSpeed;
-        private double maxSpin;
-
-        ProfiledMove(Translation2d direction, double spinRad) {
-            this.direction = direction;
-            this.spinRad = spinRad;
-            addRequirements(Drive.this);
-        }
-
-        @Override
-        public void initialize() {
-            double kP = SmartDashboard.getNumber(TUNE + "Translation P", DEFAULT_TRANSLATION_P);
-            xPid.setP(kP);
-            yPid.setP(kP);
-            headingPid.setP(SmartDashboard.getNumber(TUNE + "Heading P", DEFAULT_HEADING_P));
-            xPid.reset();
-            yPid.reset();
-            headingPid.reset();
-            swerveDrive.setAngularVelocityCompensation(true, true,
-                SmartDashboard.getNumber(TUNE + "Skew Comp", DEFAULT_SKEW_COMP));
-
-            maxSpeed = SmartDashboard.getNumber(TUNE + "Max Speed (mps)", DEFAULT_MAX_SPEED);
-            double maxAccel = SmartDashboard.getNumber(TUNE + "Max Accel (mps2)", DEFAULT_MAX_ACCEL);
-            maxSpin = Math.toRadians(SmartDashboard.getNumber(TUNE + "Max Spin (degps)", DEFAULT_MAX_SPIN));
-            double maxSpinAccel = Math.toRadians(
-                SmartDashboard.getNumber(TUNE + "Max Spin Accel (degps2)", DEFAULT_MAX_SPIN_ACCEL));
-            double distance = SmartDashboard.getNumber(TUNE + "Test Distance (m)", DEFAULT_TEST_DISTANCE);
-
-            Pose2d pose = swerveDrive.getPose();
-            startPos = pose.getTranslation();
-            delta = direction.times(distance).rotateBy(pose.getRotation());
-            startHeading = continuousHeading;
-
-            // Profile a progress value s from 0 to 1. Its limits are the tighter of the
-            // translation and rotation limits, so neither axis exceeds its max.
-            double length = delta.getNorm();
-            double angle = Math.abs(spinRad);
-            double sVel = Double.MAX_VALUE;
-            double sAccel = Double.MAX_VALUE;
-            if (length > 1e-6) {
-                sVel = Math.min(sVel, maxSpeed / length);
-                sAccel = Math.min(sAccel, maxAccel / length);
-            }
-            if (angle > 1e-6) {
-                sVel = Math.min(sVel, maxSpin / angle);
-                sAccel = Math.min(sAccel, maxSpinAccel / angle);
-            }
-            if (sVel == Double.MAX_VALUE) { sVel = 1; sAccel = 1; }
-
-            profile = new TrapezoidProfile(new TrapezoidProfile.Constraints(sVel, sAccel));
-            profile.calculate(0, startState, goalState);
-            totalTime = profile.totalTime();
-            timer.restart();
-        }
-
-        @Override
-        public void execute() {
-            TrapezoidProfile.State s = profile.calculate(timer.get(), startState, goalState);
-
-            Translation2d target = startPos.plus(delta.times(s.position));
-            Translation2d feedforward = delta.times(s.velocity);
-            Translation2d pos = swerveDrive.getPose().getTranslation();
-
-            double vx = feedforward.getX() + xPid.calculate(pos.getX(), target.getX());
-            double vy = feedforward.getY() + yPid.calculate(pos.getY(), target.getY());
-            Translation2d v = new Translation2d(vx, vy);
-            double limit = maxSpeed * 1.2; // a little headroom for correction
-            if (v.getNorm() > limit) {
-                v = v.times(limit / v.getNorm());
-            }
-
-            double headingTarget = startHeading + spinRad * s.position;
-            double omega = spinRad * s.velocity + headingPid.calculate(continuousHeading, headingTarget);
-            omega = MathUtil.clamp(omega, -maxSpin * 1.2, maxSpin * 1.2);
-
-            swerveDrive.drive(v, omega, true, false);
-        }
-
-        @Override
-        public boolean isFinished() {
-            double t = timer.get();
-            if (t < totalTime) return false;
-            if (t > totalTime + 1.5) return true; // don't hang if it can't settle
-            Translation2d goal = startPos.plus(delta);
-            boolean atPos = swerveDrive.getPose().getTranslation().getDistance(goal) < 0.03;
-            boolean atHeading = Math.abs(startHeading + spinRad - continuousHeading) < Math.toRadians(2);
-            return atPos && atHeading;
-        }
-
-        @Override
-        public void end(boolean interrupted) {
-            swerveDrive.drive(new Translation2d(), 0, true, false);
-        }
-    }
+    
 
 }

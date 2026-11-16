@@ -64,17 +64,7 @@ public class Robot extends TimedRobot {
     controller.b().whileTrue(shooter.shootB());
     controller.a().whileTrue(shooter.shootA());
     controller.x().whileTrue(shooter.shootX());
-
-    // Drive tests: click these on the dashboard while enabled. Distance/speeds/PIDs are under "Tuning/".
-    SmartDashboard.putData("Drive Tests/Forward", drive.driveTest(1, 0, 0));
-    SmartDashboard.putData("Drive Tests/Backward", drive.driveTest(-1, 0, 0));
-    SmartDashboard.putData("Drive Tests/Left", drive.driveTest(0, 1, 0));
-    SmartDashboard.putData("Drive Tests/Right", drive.driveTest(0, -1, 0));
-    SmartDashboard.putData("Drive Tests/Forward + 360", drive.driveTest(1, 0, 360));
-    SmartDashboard.putData("Drive Tests/Backward + 360", drive.driveTest(-1, 0, 360));
-    SmartDashboard.putData("Drive Tests/Left + 360", drive.driveTest(0, 1, 360));
-    SmartDashboard.putData("Drive Tests/Right + 360", drive.driveTest(0, -1, 360));
-
+\
   }
 
   @Override

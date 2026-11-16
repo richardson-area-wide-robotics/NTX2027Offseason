@@ -20,7 +20,6 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -29,11 +28,11 @@ public class Vision extends SubsystemBase{
     String cameraName = "OV9281";
     PhotonCamera camera;
     AprilTagFieldLayout aprilTagFieldLayout;
-    Transform3d cameraPosition = new Transform3d(0,0,0, new Rotation3d()); //the relative coords of the camera to the 3d center of the robot
-    
+    Transform3d cameraPosition = new Transform3d(0,0,0, new Rotation3d(0,Math.toRadians(0),Math.toRadians(180))); //the relative coords of the camera to the 3d center of the robot
+
     PhotonPoseEstimator poseEstimator;
-    List<EstimatedRobotPose> poseEstimations  = new ArrayList<>();
-    List<Double> poseEstimationsTimestamps = new ArrayList<>();
+    public List<EstimatedRobotPose> poseEstimations  = new ArrayList<>();
+    public List<Double> poseEstimationsTimestamps = new ArrayList<>();
     
 
 
@@ -45,19 +44,27 @@ public class Vision extends SubsystemBase{
     aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltAndymark);
 
     poseEstimator = new PhotonPoseEstimator(aprilTagFieldLayout, PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, cameraPosition);
-    }
 
+    }
 
 
 
 private void updateVisionEstimate(List<PhotonPipelineResult> results){
-    poseEstimations.clear();
     for (PhotonPipelineResult result : results){
+        for(var target : result.targets){
+            System.out.println(target.fiducialId);
+        }
         Optional<EstimatedRobotPose> estimation = poseEstimator.estimateCoprocMultiTagPose(result);
-        if(estimation.isEmpty()) continue;
+        if (estimation.isEmpty()) estimation = poseEstimator.estimateLowestAmbiguityPose(result);
+        if(estimation.isEmpty()) continue; 
         poseEstimations.add(estimation.get());
-        poseEstimationsTimestamps.add(result.getTimestampSeconds());
+        poseEstimationsTimestamps.add(estimation.get().timestampSeconds);
     }
+}
+
+public void clearResults(){ //called by drive after query
+    poseEstimations.clear();
+    poseEstimationsTimestamps.clear();
 }
 
 public List<Matrix<N3, N1>> calculateStdDeviations(){
@@ -89,14 +96,14 @@ public List<Matrix<N3, N1>> calculateStdDeviations(){
         stdDeviatinMatrices.add(estStdDevs);
     }
     return stdDeviatinMatrices;
-}
+    }   
 
 
-@Override
-public void periodic(){
-    List<PhotonPipelineResult> results = camera.getAllUnreadResults();
-    updateVisionEstimate(results); 
-    if(!camera.isConnected()) camera = new PhotonCamera(cameraName);
-}
+    @Override
+    public void periodic(){
+        List<PhotonPipelineResult> results = camera.getAllUnreadResults();
+        updateVisionEstimate(results);
+        
+    }
 
 }
