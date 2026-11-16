@@ -165,7 +165,7 @@ public class Drive extends SubsystemBase {
 
                 new PPHolonomicDriveController(
                         new PIDConstants(5.0, 0.0, 0.1),
-                        new PIDConstants(5.0, 0.0, 0.0)
+                        new PIDConstants(5.0, 0.0, 0.1)
                 ),
 
 
@@ -207,27 +207,11 @@ public class Drive extends SubsystemBase {
         return this.runOnce(() -> swerveDrive.zeroGyro());
     }
 
-    // ---------------------------------------------------------------------------------------------
-    // Drive tests
-    // ---------------------------------------------------------------------------------------------
-
-    /**
-     * Drives the "Tuning/Test Distance (m)" in a straight line while optionally spinning.
-     *
-     * @param forward  +1 forward, -1 backward, 0 none (robot-relative, from where the robot starts)
-     * @param left     +1 left, -1 right, 0 none
-     * @param spinDeg  total rotation during the move; 0 holds the starting heading, 360 does a full turn
-     */
     public Command driveTest(double forward, double left, double spinDeg) {
         return new ProfiledMove(new Translation2d(forward, left), Math.toRadians(spinDeg));
     }
 
-    /**
-     * Moves the robot along a straight line and turns it at the same time, both following one
-     * shared motion profile so the spin starts and finishes exactly with the translation.
-     * Translation is field-relative, so spinning never bends the path. Feedforward from the
-     * profile does most of the work; P loops on position and heading correct drift.
-     */
+   
     private class ProfiledMove extends Command {
         private final Translation2d direction; // robot-relative unit direction at start
         private final double spinRad;
