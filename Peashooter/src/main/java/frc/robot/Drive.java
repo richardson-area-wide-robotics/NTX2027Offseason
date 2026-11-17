@@ -2,7 +2,10 @@ package frc.robot;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.function.DoubleSupplier;
+
+import org.photonvision.EstimatedRobotPose;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -13,12 +16,16 @@ import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -50,6 +57,8 @@ public class Drive extends SubsystemBase {
             throw new RuntimeException(e);
         }
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+        posePublisher = NetworkTableInstance.getDefault()
+            .getStructTopic("Pose", swerveDrive.getPose().struct).publish();
     }
 
         @Override
@@ -129,7 +138,11 @@ public class Drive extends SubsystemBase {
         return this.runOnce(() -> swerveDrive.zeroGyro());
     }
 
-    
+    public void addVisionMeasurement(List<EstimatedRobotPose> poses, List<Double> timestamps, List<Matrix<N3,N1>> listOfVisionMeasurementStdDevs) {
+        for(int i = 0; i < poses.size(); i++){
+            swerveDrive.addVisionMeasurement(poses.get(i).estimatedPose.toPose2d(), timestamps.get(i), listOfVisionMeasurementStdDevs.get(i));
+        }
+    }
 
    
     
