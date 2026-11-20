@@ -2,10 +2,7 @@ package frc.robot;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.function.DoubleSupplier;
-
-import org.photonvision.EstimatedRobotPose;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -15,14 +12,10 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -60,13 +53,37 @@ public class Drive extends SubsystemBase {
         } 
     }
 
-        @Override
-    public void periodic(){
-        posePublisher.set(swerveDrive.getPose());
+    public ChassisSpeeds getSpeeds() {
+        return swerveDrive.getRobotVelocity();
     }
-//
+
+    @Override
+    public void periodic() {
+        var v = swerveDrive.getFieldVelocity();
+        SmartDashboard.putNumber("Velocity X (mps)", v.vxMetersPerSecond);
+        SmartDashboard.putNumber("Velocity Y (mps)", v.vyMetersPerSecond);
+        SmartDashboard.putNumber("Speed (mps)", Math.hypot(v.vxMetersPerSecond, v.vyMetersPerSecond));
+        SmartDashboard.putNumber("Direction (deg)", Math.toDegrees(Math.atan2(v.vyMetersPerSecond, v.vxMetersPerSecond)));
+
+        // Distance from odometry pose to the nearest AprilTag on the field
+        Translation2d pos = swerveDrive.getPose().getTranslation();
+        AprilTag nearest = null;
+        double best = Double.MAX_VALUE;
+        for (AprilTag t : tags.getTags()) {
+            double d = pos.getDistance(t.pose.toPose2d().getTranslation());
+            if (d < best) { best = d; nearest = t; }
         }
         if (nearest != null) {
+            SmartDashboard.putNumber("Nearest Tag ID", nearest.ID);
+            SmartDashboard.putNumber("Nearest Tag Dist (m)", best);
+        }
+    }
+
+    private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
+        module.getDriveMotor().configurePIDF(drive);
+        module.getAngleMotor().configurePIDF(angle);
+    }
+//`
     public void setupPathPlanner() {
 
         RobotConfig config;
@@ -81,26 +98,26 @@ public class Drive extends SubsystemBase {
         }
 
         AutoBuilder.configure(
-
+                
                 swerveDrive::getPose,
 
-
+                
                 swerveDrive::resetOdometry,
 
                 swerveDrive::getRobotVelocity,
 
-
+                
                 (speeds, feedforwards) -> {
                     swerveDrive.setChassisSpeeds(speeds);
                 },
 
-
+               
                 new PPHolonomicDriveController(
                         new PIDConstants(5.0, 0.0, 0.1),
-                        new PIDConstants(5.0, 0.0, 0.1)
+                        new PIDConstants(5.0, 0.0, 0.0)
                 ),
 
-
+                
                 config,
 
                 

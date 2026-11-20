@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Subsystems.Feeder;
 import frc.robot.Subsystems.Intake;
 import frc.robot.Subsystems.Shooter;
-import frc.robot.Subsystems.Vision;
 import swervelib.SwerveDrive;
 import swervelib.encoders.SwerveAbsoluteEncoder;
 
@@ -28,7 +27,6 @@ public class Robot extends TimedRobot {
   Intake intake = new Intake();
   Shooter shooter = new Shooter();
   CommandXboxController controller = new CommandXboxController(0);
-  Vision vision = new Vision();
   //CommandGenericHID controller = new CommandGenericHID(0);
 
   private Command autonomousCommand; 
