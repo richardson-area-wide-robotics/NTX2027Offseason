@@ -16,20 +16,15 @@ import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -43,10 +38,7 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
-    
-    
-    StructPublisher<Pose2d> posePublisher;
-
+    private final AprilTagFieldLayout tags = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
@@ -57,8 +49,15 @@ public class Drive extends SubsystemBase {
             throw new RuntimeException(e);
         }
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
-        posePublisher = NetworkTableInstance.getDefault()
-            .getStructTopic("Pose", swerveDrive.getPose().struct).publish();
+
+        swerveDrive.setChassisDiscretization(true, 0.02);
+
+        // Same PID on every module: mismatched drive P makes one end pull harder and the robot twist.
+        for (SwerveModule m : swerveDrive.getModules()) {
+            setModulePID(m,
+                new PIDFConfig(0.05, 0, 0, 0, 0),
+                new PIDFConfig(0.01, 0, 0.0001, 0, 0));
+        } 
     }
 
         @Override
@@ -66,6 +65,8 @@ public class Drive extends SubsystemBase {
         posePublisher.set(swerveDrive.getPose());
     }
 //
+        }
+        if (nearest != null) {
     public void setupPathPlanner() {
 
         RobotConfig config;
@@ -102,13 +103,13 @@ public class Drive extends SubsystemBase {
 
                 config,
 
-
+                
                 () -> DriverStation.getAlliance()
                         .map(alliance ->
                                 alliance == DriverStation.Alliance.Red)
                         .orElse(false),
 
-
+                
                 this
         );
     }
@@ -116,6 +117,10 @@ public class Drive extends SubsystemBase {
     public Command drive(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation) {
 
         return this.run(() -> {
+            SmartDashboard.putNumber("x", translationX.getAsDouble());
+            SmartDashboard.putNumber("y", translationY.getAsDouble());
+            SmartDashboard.putNumber("rot", rotation.getAsDouble());
+
             double max = swerveDrive.getMaximumChassisVelocity()*0.8;
 
             swerveDrive.drive(
@@ -137,14 +142,5 @@ public class Drive extends SubsystemBase {
     public Command resetPosition() {
         return this.runOnce(() -> swerveDrive.zeroGyro());
     }
-
-    public void addVisionMeasurement(List<EstimatedRobotPose> poses, List<Double> timestamps, List<Matrix<N3,N1>> listOfVisionMeasurementStdDevs) {
-        for(int i = 0; i < poses.size(); i++){
-            swerveDrive.addVisionMeasurement(poses.get(i).estimatedPose.toPose2d(), timestamps.get(i), listOfVisionMeasurementStdDevs.get(i));
-        }
-    }
-
-   
-    
 
 }

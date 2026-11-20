@@ -67,14 +67,23 @@ public class Robot extends TimedRobot {
     controller.a().whileTrue(shooter.shootA());
     controller.x().whileTrue(shooter.shootX());
 
+    // Drive tests: click these on the dashboard while enabled. Distance/speeds/PIDs are under "Tuning/".
+    SmartDashboard.putData("Drive Tests/Forward", drive.driveTest(1, 0, 0));
+    SmartDashboard.putData("Drive Tests/Backward", drive.driveTest(-1, 0, 0));
+    SmartDashboard.putData("Drive Tests/Left", drive.driveTest(0, 1, 0));
+    SmartDashboard.putData("Drive Tests/Right", drive.driveTest(0, -1, 0));
+    SmartDashboard.putData("Drive Tests/Forward + 360", drive.driveTest(1, 0, 360));
+    SmartDashboard.putData("Drive Tests/Backward + 360", drive.driveTest(-1, 0, 360));
+    SmartDashboard.putData("Drive Tests/Left + 360", drive.driveTest(0, 1, 360));
+    SmartDashboard.putData("Drive Tests/Right + 360", drive.driveTest(0, -1, 360));
+
   }
 
-   @Override
+  @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
-    drive.addVisionMeasurement(vision.poseEstimations, vision.poseEstimationsTimestamps, vision.calculateStdDeviations());
-    vision.clearResults();
   }
+
   @Override
   public void autonomousInit() {
     autonomousCommand = AutoBuilder.buildAuto("W auto");
@@ -88,7 +97,12 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    double heading = m_gyro.getYaw();
+  
+    double degrees = heading * 360.0;
+    SmartDashboard.putNumber("Robot Heading", degrees);
+  }
 
   @Override
   public void disabledInit() {}

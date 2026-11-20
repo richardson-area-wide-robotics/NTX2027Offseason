@@ -41,7 +41,7 @@ public class Drive extends SubsystemBase {
         swerveDrive.drive(new Translation2d(
                 -MathUtil.applyDeadband(translationY.getAsDouble(), 0.08) * MAX_SPEED,
                 -MathUtil.applyDeadband(translationX.getAsDouble(), 0.08) * MAX_SPEED),
-            -MathUtil.applyDeadband(rotation.getAsDouble(), 0.08) * MAX_ROTATION,
+                -MathUtil.applyDeadband(rotation.getAsDouble(), 0.08) * MAX_ROTATION,
             fieldR,
             false);
     });
@@ -49,7 +49,9 @@ public class Drive extends SubsystemBase {
     
 }
 
-    public Command toggleFieldRelative() {
-    return this.runOnce(() -> fieldR = !fieldR);
+    public Command zeroGyro() {
+    return this.runOnce(() -> swerveDrive.zeroGyro());
+    
 }
+
 }
