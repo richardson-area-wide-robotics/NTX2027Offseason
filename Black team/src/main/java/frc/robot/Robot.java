@@ -18,9 +18,9 @@ public class Robot extends TimedRobot {
     drive.setDefaultCommand(drive.drive(
         () -> controller.getLeftX(),
         () -> controller.getLeftY(),
-        () -> controller.getRightX()));
+        () -> -controller.getRightX()));
 
-        controller.y().onTrue(drive.resetGyro());
+        controller.y().onTrue(drive.zeroGyro());
     controller.rightTrigger().whileTrue(shooter.shootHub());
     controller.b().whileTrue(shooter.shootCornerA());
     controller.leftTrigger().whileTrue(shooter.shootIntake());

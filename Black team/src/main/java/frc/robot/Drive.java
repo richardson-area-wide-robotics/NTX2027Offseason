@@ -69,9 +69,9 @@ public class Drive extends SubsystemBase {
     return this.run(() -> {
         // Xbox stick: up/left are negative; WPILib: +x forward, +y left, +rot CCW
         swerveDrive.drive(new Translation2d(
-                MathUtil.applyDeadband(translationY.getAsDouble(), 0.08) * MAX_SPEED,
-                MathUtil.applyDeadband(translationX.getAsDouble(), 0.08) * MAX_SPEED),
-            -MathUtil.applyDeadband(rotation.getAsDouble(), 0.08) * MAX_ROTATION,
+                -MathUtil.applyDeadband(translationY.getAsDouble(), 0.08) * MAX_SPEED,
+                -MathUtil.applyDeadband(translationX.getAsDouble(), 0.08) * MAX_SPEED),
+                -MathUtil.applyDeadband(rotation.getAsDouble(), 0.08) * MAX_ROTATION,
             fieldR,
             false);
     });
@@ -85,18 +85,9 @@ public class Drive extends SubsystemBase {
         }
     }
 
-    public Command toggleFieldRelative() {
-        return this.runOnce(() -> fieldR = !fieldR);
-    }
-
-    public Command resetGyro() {
-        return this.runOnce(() -> swerveDrive.zeroGyro());
-    }
-
-    @Override
-    public void periodic(){
-        posePublisher.set(swerveDrive.getPose());
-    }
+    public Command zeroGyro() {
+    return this.runOnce(() -> swerveDrive.zeroGyro());
     
+}
 
 }
