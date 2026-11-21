@@ -3,11 +3,11 @@ package frc.robot;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.Subsystems.Intake;
-import frc.robot.Subsystems.Shooter;
+import frc.robot.Subsystems.*;
 
 public class Robot extends TimedRobot {
 
+  Vision vision = new Vision();
   Drive drive = new Drive();
   Shooter shooter = new Shooter();
   Intake intake = new Intake();
@@ -38,6 +38,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
+    drive.addVisionMeasurement(vision.poseEstimations, vision.poseEstimationsTimestamps, vision.calculateStdDeviations());
+    vision.clearResults();
   }
 
   @Override

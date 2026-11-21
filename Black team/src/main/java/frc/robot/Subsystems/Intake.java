@@ -10,7 +10,6 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-/** Simple intake: one NEO on a SPARK MAX, in or out. */
 public class Intake extends SubsystemBase {
 
   private static final int CAN_ID = 9;
