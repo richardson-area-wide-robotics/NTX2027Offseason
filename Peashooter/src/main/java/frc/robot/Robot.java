@@ -8,6 +8,7 @@ import edu.wpi.first.units.measure.Angle;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.reduxrobotics.canand.CanandEventLoop;
+import com.reduxrobotics.sensors.canandgyro.Canandgyro;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -22,6 +23,7 @@ import swervelib.encoders.SwerveAbsoluteEncoder;
 
 public class Robot extends TimedRobot {
 
+  Canandgyro m_gyro = new Canandgyro(40);
   Drive drive = new Drive();
   Feeder feeder = new Feeder();
   Intake intake = new Intake();
@@ -32,7 +34,7 @@ public class Robot extends TimedRobot {
   private Command autonomousCommand; 
   public Robot() {
     CanandEventLoop.getInstance();
-  
+    m_gyro.startCalibration();
     NamedCommands.registerCommand("Shoot Hub", shooter.shootA());
     NamedCommands.registerCommand("Shoot Corner", shooter.shootCorner());
     NamedCommands.registerCommand("Shoot Tower", shooter.shootB());
@@ -66,15 +68,6 @@ public class Robot extends TimedRobot {
     controller.x().whileTrue(shooter.shootX());
 
     // Drive tests: click these on the dashboard while enabled. Distance/speeds/PIDs are under "Tuning/".
-    SmartDashboard.putData("Drive Tests/Forward", drive.driveTest(1, 0, 0));
-    SmartDashboard.putData("Drive Tests/Backward", drive.driveTest(-1, 0, 0));
-    SmartDashboard.putData("Drive Tests/Left", drive.driveTest(0, 1, 0));
-    SmartDashboard.putData("Drive Tests/Right", drive.driveTest(0, -1, 0));
-    SmartDashboard.putData("Drive Tests/Forward + 360", drive.driveTest(1, 0, 360));
-    SmartDashboard.putData("Drive Tests/Backward + 360", drive.driveTest(-1, 0, 360));
-    SmartDashboard.putData("Drive Tests/Left + 360", drive.driveTest(0, 1, 360));
-    SmartDashboard.putData("Drive Tests/Right + 360", drive.driveTest(0, -1, 360));
-
   }
 
   @Override
