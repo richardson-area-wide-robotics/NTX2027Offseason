@@ -1,16 +1,24 @@
 package frc.robot;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.Angle;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import com.reduxrobotics.canand.CanandEventLoop;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Subsystems.Feeder;
 import frc.robot.Subsystems.Intake;
 import frc.robot.Subsystems.Shooter;
+import swervelib.SwerveDrive;
+import swervelib.encoders.SwerveAbsoluteEncoder;
 
 public class Robot extends TimedRobot {
 
@@ -23,7 +31,7 @@ public class Robot extends TimedRobot {
 
   private Command autonomousCommand; 
   public Robot() {
-
+    CanandEventLoop.getInstance();
   
     NamedCommands.registerCommand("Shoot Hub", shooter.shootA());
     NamedCommands.registerCommand("Shoot Corner", shooter.shootCorner());
@@ -57,6 +65,16 @@ public class Robot extends TimedRobot {
     controller.a().whileTrue(shooter.shootA());
     controller.x().whileTrue(shooter.shootX());
 
+    // Drive tests: click these on the dashboard while enabled. Distance/speeds/PIDs are under "Tuning/".
+    SmartDashboard.putData("Drive Tests/Forward", drive.driveTest(1, 0, 0));
+    SmartDashboard.putData("Drive Tests/Backward", drive.driveTest(-1, 0, 0));
+    SmartDashboard.putData("Drive Tests/Left", drive.driveTest(0, 1, 0));
+    SmartDashboard.putData("Drive Tests/Right", drive.driveTest(0, -1, 0));
+    SmartDashboard.putData("Drive Tests/Forward + 360", drive.driveTest(1, 0, 360));
+    SmartDashboard.putData("Drive Tests/Backward + 360", drive.driveTest(-1, 0, 360));
+    SmartDashboard.putData("Drive Tests/Left + 360", drive.driveTest(0, 1, 360));
+    SmartDashboard.putData("Drive Tests/Right + 360", drive.driveTest(0, -1, 360));
+
   }
 
   @Override
@@ -77,7 +95,12 @@ public class Robot extends TimedRobot {
   public void teleopInit() {}
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+    double heading = m_gyro.getYaw();
+  
+    double degrees = heading * 360.0;
+    SmartDashboard.putNumber("Robot Heading", degrees);
+  }
 
   @Override
   public void disabledInit() {}

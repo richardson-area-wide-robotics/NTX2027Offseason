@@ -4,16 +4,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.function.DoubleSupplier;
 
-
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -29,43 +31,60 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class Drive extends SubsystemBase {
     private SwerveDrive swerveDrive;
     private boolean fieldR = true;
+    private final AprilTagFieldLayout tags = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
-
-            public Drive() {
+    public Drive() {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
-            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(100,
+            swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(4.1,
                 new Pose2d(new Translation2d(2, 2), new Rotation2d()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
 
-        var modules = swerveDrive.getModuleMap();
-        //First is drive second is ange
-        setModulePID(modules.get("backright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
+        swerveDrive.setChassisDiscretization(true, 0.02);
 
-        setModulePID(modules.get("frontright"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
+        // Same PID on every module: mismatched drive P makes one end pull harder and the robot twist.
+        for (SwerveModule m : swerveDrive.getModules()) {
+            setModulePID(m,
+                new PIDFConfig(0.05, 0, 0, 0, 0),
+                new PIDFConfig(0.01, 0, 0.0001, 0, 0));
+        } 
+    }
 
-        setModulePID(modules.get("backleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.01, 0, 0, 0, 0));
+    public ChassisSpeeds getSpeeds() {
+        return swerveDrive.getRobotVelocity();
+    }
 
-        setModulePID(modules.get("frontleft"),
-            new PIDFConfig(0.002, 0, 0, 0, 0),
-            new PIDFConfig(0.012, 0, 0.0001, 0, 0));
+    @Override
+    public void periodic() {
+        var v = swerveDrive.getFieldVelocity();
+        SmartDashboard.putNumber("Velocity X (mps)", v.vxMetersPerSecond);
+        SmartDashboard.putNumber("Velocity Y (mps)", v.vyMetersPerSecond);
+        SmartDashboard.putNumber("Speed (mps)", Math.hypot(v.vxMetersPerSecond, v.vyMetersPerSecond));
+        SmartDashboard.putNumber("Direction (deg)", Math.toDegrees(Math.atan2(v.vyMetersPerSecond, v.vxMetersPerSecond)));
+
+        // Distance from odometry pose to the nearest AprilTag on the field
+        Translation2d pos = swerveDrive.getPose().getTranslation();
+        AprilTag nearest = null;
+        double best = Double.MAX_VALUE;
+        for (AprilTag t : tags.getTags()) {
+            double d = pos.getDistance(t.pose.toPose2d().getTranslation());
+            if (d < best) { best = d; nearest = t; }
+        }
+        if (nearest != null) {
+            SmartDashboard.putNumber("Nearest Tag ID", nearest.ID);
+            SmartDashboard.putNumber("Nearest Tag Dist (m)", best);
+        }
     }
 
     private void setModulePID(SwerveModule module, PIDFConfig drive, PIDFConfig angle) {
         module.getDriveMotor().configurePIDF(drive);
         module.getAngleMotor().configurePIDF(angle);
     }
-    
-        public void setupPathPlanner() {
+//`
+    public void setupPathPlanner() {
 
         RobotConfig config;
 
@@ -79,50 +98,52 @@ public class Drive extends SubsystemBase {
         }
 
         AutoBuilder.configure(
-                // Robot pose supplier
+                
                 swerveDrive::getPose,
 
-                // Reset robot odometry
+                
                 swerveDrive::resetOdometry,
 
-                // Current robot-relative chassis speeds
                 swerveDrive::getRobotVelocity,
 
-                // Drive robot-relative
+                
                 (speeds, feedforwards) -> {
                     swerveDrive.setChassisSpeeds(speeds);
                 },
 
-                // Holonomic controller
+               
                 new PPHolonomicDriveController(
                         new PIDConstants(5.0, 0.0, 0.1),
                         new PIDConstants(5.0, 0.0, 0.0)
                 ),
 
-                // PathPlanner robot configuration
+                
                 config,
 
-                // Mirror paths for red alliance
+                
                 () -> DriverStation.getAlliance()
                         .map(alliance ->
                                 alliance == DriverStation.Alliance.Red)
                         .orElse(false),
 
-                // Subsystem requirement
+                
                 this
         );
     }
 
     public Command drive(DoubleSupplier translationX, DoubleSupplier translationY, DoubleSupplier rotation) {
-        
 
         return this.run(() -> {
             SmartDashboard.putNumber("x", translationX.getAsDouble());
             SmartDashboard.putNumber("y", translationY.getAsDouble());
+            SmartDashboard.putNumber("rot", rotation.getAsDouble());
+
+            double max = swerveDrive.getMaximumChassisVelocity()*0.8;
+
             swerveDrive.drive(
                 new Translation2d(
-                    translationX.getAsDouble()*swerveDrive.getMaximumChassisVelocity(),
-                    translationY.getAsDouble()*swerveDrive.getMaximumChassisVelocity()
+                    translationX.getAsDouble() * max,
+                    translationY.getAsDouble() * max
                 ),
                 rotation.getAsDouble()*3,
                 fieldR,
@@ -130,12 +151,13 @@ public class Drive extends SubsystemBase {
             );
         });
     }
-    
+
     public Command toggleFieldRelative() {
         return this.runOnce(() -> fieldR = !fieldR);
     }
+
     public Command resetPosition() {
         return this.runOnce(() -> swerveDrive.zeroGyro());
     }
-    
+
 }
