@@ -1,10 +1,12 @@
 {
+  "$schema": "https://config.yagsl.com/schemas/swervedrive.json",
   "imu": {
-    "type": "navx_spi",
-    "id": 0,
-    "canbus": null
+    "type": "canandgyro",
+    "id": 12,
+    "canbus": ""
   },
-  "invertedIMU": false,
+  "gyroAxis": "yaw",
+  "gyroInvert": false,
   "modules": [
     "frontleft.json",
     "frontright.json",

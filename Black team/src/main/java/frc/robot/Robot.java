@@ -1,19 +1,24 @@
 package frc.robot;
 
+import com.reduxrobotics.canand.CanandEventLoop;
+import com.reduxrobotics.sensors.canandgyro.Canandgyro;
+
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Subsystems.*;
 
 public class Robot extends TimedRobot {
-
+  Canandgyro canandgyro = new Canandgyro(12);
   Vision vision = new Vision();
   Drive drive = new Drive();
   Shooter shooter = new Shooter();
   Intake intake = new Intake();
   CommandXboxController controller = new CommandXboxController(0);
 
+
   public Robot() {
+   
 
     drive.setDefaultCommand(drive.drive(
         () -> controller.getLeftX(),
@@ -31,10 +36,14 @@ public class Robot extends TimedRobot {
     // other intakes during shoots
     //controller.a().whileTrue(intake.intakeIn());
     //controller.b().whileTrue(intake.intakeIn());
+  
 }
 
  
-
+  public void robotInit(){
+    CanandEventLoop.getInstance();
+    canandgyro.startCalibration();
+  }
   @Override
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();
@@ -49,10 +58,12 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {}
 
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {    if(canandgyro.isCalibrating()) {System.err.println("Teleop started before Gyro finished calibrating;\nyou're on your own now");}
+}
 
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+  }
 
   @Override
   public void disabledInit() {}

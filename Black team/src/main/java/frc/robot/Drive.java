@@ -11,6 +11,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.reduxrobotics.sensors.canandgyro.Canandgyro;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
@@ -50,6 +51,7 @@ public class Drive extends SubsystemBase {
         File swerveConfigDirectory = new File(Filesystem.getDeployDirectory(), "swerve");
         try {
             SwerveDriveTelemetry.verbosity = SwerveDriveTelemetry.TelemetryVerbosity.HIGH;
+            SwerveParser parser = new SwerveParser(swerveConfigDirectory);
             swerveDrive = new SwerveParser(swerveConfigDirectory).createSwerveDrive(MAX_SPEED,
              new Pose2d(new Translation2d(2,2), new Rotation2d()));
         } catch (IOException e) {
@@ -89,5 +91,4 @@ public class Drive extends SubsystemBase {
     return this.runOnce(() -> swerveDrive.zeroGyro());
     
 }
-
 }
